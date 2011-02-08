@@ -1,0 +1,58 @@
+#!/bin/sh
+# locl-kernel - Examine a OpenCL bytecode and generate a loadable module
+#               with kernel function information.
+# 
+# Copyright (c) 2011 Universidad Rey Juan Carlos
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+while getopts k:o: o
+do
+    case "$o" in
+	k)   kernel="${OPTARG}";;
+	o)   output_file="${OPTARG}";;
+	[?]) echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1;;
+    esac
+done
+shift $((${OPTIND}-1))
+
+if [[ "x$kernel" == x ]]
+then
+    echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
+fi
+
+if [[ "x$output_file" == x ]]
+then
+    echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
+fi
+
+trampoline_prelink_bc="`dirname $1`/`basename $1 .bc`_trampoline_prelink.bc"
+trampoline_bc="`dirname $1`/`basename $1 .bc`_trampoline.bc"
+trampoline_s="`dirname $1`/`basename $1 .bc`_trampoline.s"
+
+if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
+then
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -trampoline -kernel=${kernel} -o ${trampoline_prelink_bc} $1
+else
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -trampoline -kernel=${kernel} -o ${trampoline_prelink_bc} $1
+fi
+@LLVM_LD@ -link-as-library -export-dynamic -o ${trampoline_bc} ${trampoline_prelink_bc}
+@LLC@ -relocation-model=pic -o ${trampoline_s} ${trampoline_bc}
+
+gcc -bundle -o ${output_file} -x assembler ${trampoline_s}
