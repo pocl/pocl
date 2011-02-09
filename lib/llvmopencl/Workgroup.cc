@@ -67,6 +67,48 @@ Workgroup::runOnModule(Module &M)
 {
   IRBuilder<> builder(M.getContext());
 
+  GlobalVariable *gv_sx = M.getGlobalVariable("_size_x");
+  if (gv_sx != NULL)
+    gv_sx->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32), Size[0]));
+
+  GlobalVariable *gv_sy = M.getGlobalVariable("_size_y");
+  if (gv_sy != NULL)
+    gv_sy->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32), Size[1]));
+
+  GlobalVariable *gv_sz = M.getGlobalVariable("_size_z");
+  if (gv_sz != NULL)
+    gv_sz->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32), Size[2]));
+
+  const FunctionType *ft = TypeBuilder<void(types::i<32>, types::i<32>, types::i<32>), true>::get(M.getContext());
+  Function *workgroup = dyn_cast<Function>(M.getOrInsertFunction("_workgroup", ft));
+  assert(workgroup != NULL);
+
+  builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
+
+  Function::arg_iterator ai = workgroup->arg_begin();
+
+  GlobalVariable *gv_gx = M.getGlobalVariable("_group_x");
+  if (gv_gx != NULL) {
+    gv_gx->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+    builder.CreateStore(ai, gv_gx);
+  }
+
+  ++ai;
+
+  GlobalVariable *gv_gy = M.getGlobalVariable("_group_y");
+  if (gv_gy != NULL) {
+    gv_gy->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+    builder.CreateStore(ai, gv_gy);
+  }
+
+  ++ai;
+
+  GlobalVariable *gv_gz = M.getGlobalVariable("_group_z");
+  if (gv_gz != NULL) {
+    gv_gz->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+    builder.CreateStore(ai, gv_gz);
+  }
+
   GlobalVariable *gv_x = M.getGlobalVariable("_local_x");
   if (gv_x != NULL)
     gv_x->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
@@ -79,12 +121,7 @@ Workgroup::runOnModule(Module &M)
   if (gv_z != NULL)
     gv_z->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
 
-  const FunctionType *ft = TypeBuilder<void(types::i<32>, types::i<32>, types::i<32>), true>::get(M.getContext());
-  Function *workgroup = dyn_cast<Function>(M.getOrInsertFunction("_workgroup", ft));
-  assert(workgroup != NULL);
-
   SmallVector<Value*, 8> arguments;
-  builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
   BasicInliner BI;
 

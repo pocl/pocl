@@ -37,6 +37,12 @@
 
 #define LOCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
 
+struct locl_argument_list {
+  void *value;
+  size_t size;
+  struct locl_argument_list *next;
+};
+
 struct _cl_device_id {
   /* queries */
   cl_device_type type;
@@ -90,13 +96,15 @@ struct _cl_device_id {
   char *version;
   char *extensions;
   /* implementation */
-  void *(*malloc)(void *data, cl_mem_flags flags,
-		 size_t size, void *host_ptr);
-  void (*free)(void *data, void *ptr);
-  void (*read)(void *data, void *host_ptr, void *device_ptr);
-  void (*run)(void *data, const char *bytecode,
-	      cl_kernel kernel,
-	      size_t x, size_t y, size_t z);
+  void (*init) (cl_device_id device);
+  void *(*malloc) (void *data, cl_mem_flags flags,
+		   size_t size, void *host_ptr);
+  void (*free) (void *data, void *ptr);
+  void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
+  void (*run) (void *data, const char *bytecode,
+	       struct locl_argument_list *arguments,
+	       cl_kernel kernel,
+	       size_t x, size_t y, size_t z);
   void *data;
 };
 
@@ -155,12 +163,6 @@ struct _cl_kernel {
   const char trampoline_filename[LOCL_FILENAME_LENGTH];
   lt_dlhandle dlhandle;
   struct _cl_kernel *next;
-};
-
-struct locl_argument {
-  int is_local;
-  size_t size;
-  void *value;
 };
 
 typedef void (*workgroup) (size_t, size_t, size_t);

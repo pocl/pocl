@@ -23,8 +23,10 @@
 
 #include "locl_cl.h"
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define COMMAND_LENGTH 256
+#define ARGUMENT_STRING_LENGTH 32
 
 CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueNDRangeKernel(cl_command_queue command_queue,
@@ -50,6 +52,14 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
+  struct locl_argument_list *arguments, *p;
+  char arg_string[ARGUMENT_STRING_LENGTH];
+  char size_string[ARGUMENT_STRING_LENGTH];
+  void *arg;
+  size_t *size;
+  int *is_pointer;
+  cl_mem mem;
+  unsigned i, j;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -129,6 +139,56 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   error = system(command);
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
+  
+  if (kernel->num_args > 0)
+    arguments = malloc (sizeof (struct locl_argument_list));
+  
+  p = arguments;
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      error = snprintf(arg_string, ARGUMENT_STRING_LENGTH,
+		       "_arg%d", i);
+      if (error < 0)
+	return CL_OUT_OF_HOST_MEMORY;
+
+      error = snprintf(size_string, ARGUMENT_STRING_LENGTH,
+		       "_size%d", i);
+      if (error < 0)
+	return CL_OUT_OF_HOST_MEMORY;
+
+      arg = lt_dlsym (kernel->dlhandle, arg_string);
+      size = (size_t *) lt_dlsym (kernel->dlhandle, size_string);
+      is_pointer = (int *) lt_dlsym (kernel->dlhandle, "_is_pointer");
+      if ((arg == NULL) || (size == NULL) || (is_pointer == NULL))
+	return CL_INVALID_KERNEL;
+
+      if (!is_pointer[i])
+	{
+	  p->value = arg;
+	  p->size = *size;
+	  p->next = NULL;
+	}
+      else
+	{
+	  mem = *(cl_mem *) arg;
+
+	  for (j = 0; j < command_queue->context->num_devices; ++j)
+	    {
+	      if (command_queue->context->devices[j] ==
+		  command_queue->device)
+		break;
+	    }
+
+	  p->value = &(mem->device_ptrs[j]);
+	  p->size = sizeof (void *);
+	  p->next = NULL;
+	}
+    
+      if (i + 1 < kernel->num_args) {
+	p->next = malloc (sizeof (struct locl_argument_list));
+	p = p->next;
+      }
+    }
 
   for (z = offset_z; z < global_z; z += local_z)
     {
@@ -137,6 +197,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
 	  for (x = offset_x; x < global_x; x += local_x)
 	    command_queue->device->run(command_queue->device->data,
 				       parallel_filename,
+				       arguments,
 				       kernel,
 				       x, y, z);
 	}

@@ -79,6 +79,8 @@ Trampoline::runOnModule(Module &M)
 	     ee = F.arg_end();
 	   ii != ee; ++ii)
 	++num_args;
+
+      Constant **is_pointer = new Constant *[num_args];
       
       int i = 0;
       for (Function::const_arg_iterator ii = F.arg_begin(),
@@ -92,13 +94,18 @@ Trampoline::runOnModule(Module &M)
 			   GlobalVariable::ExternalLinkage,
 			   UndefValue::get(IntegerType::get(M.getContext(), 32)),
 			   "_size" + Twine(i));
-	++i;
 
 	const PointerType *p = dyn_cast<PointerType> (ii->getType());
 	
-	if (p == NULL)
+	if (p == NULL) {
+	  is_pointer[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 0);
+	  ++i;
 	  continue;
+	}
 	
+	is_pointer[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 1);
+	++i;
+
 	switch (p->getAddressSpace()) {
 	case LOCL_ADDRESS_SPACE_GLOBAL:
 	case LOCL_ADDRESS_SPACE_CONSTANT:
@@ -108,6 +115,15 @@ Trampoline::runOnModule(Module &M)
 	  llvm_unreachable("Invalid address space qualifier on kernel argument!");
 	}
       }
+
+      new GlobalVariable(M, VectorType::get(IntegerType::get(M.getContext(), 32), num_args),
+			 true,
+			 GlobalVariable::ExternalLinkage,
+			 ConstantVector::get(is_pointer, num_args),
+			 "_is_pointer");
+
+      delete[] is_pointer;
+			 
     }
   }
 
