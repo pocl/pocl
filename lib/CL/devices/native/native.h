@@ -26,13 +26,15 @@
 
 #include "locl_cl.h"
 
-void *locl_native_malloc(void *data, cl_mem_flags flags,
-			 size_t size, void *host_ptr);
-void locl_native_free(void *data, void *ptr);
-void locl_native_read(void *data, void *host_ptr, void *device_ptr);
-void locl_native_run(void *data, const char *bytecode,
-		     cl_kernel kernel,
-		     size_t x, size_t y, size_t z);
+void locl_native_init (cl_device_id device);
+void *locl_native_malloc (void *data, cl_mem_flags flags,
+			  size_t size, void *host_ptr);
+void locl_native_free (void *data, void *ptr);
+void locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
+void locl_native_run (void *data, const char *bytecode,
+		      struct locl_argument_list *arguments,
+		      cl_kernel kernel,
+		      size_t x, size_t y, size_t z);
 
 extern size_t locl_native_max_work_item_sizes[];
 
@@ -88,6 +90,7 @@ extern size_t locl_native_max_work_item_sizes[];
   "OpenCL 1.0 llvmopencl", /* version */				\
   "", /* extensions */							\
   /* implementation */							\
+    locl_native_init, /* init */                                        \
   locl_native_malloc, /* malloc */					\
   locl_native_free, /* free */						\
   locl_native_read, /* read */						\

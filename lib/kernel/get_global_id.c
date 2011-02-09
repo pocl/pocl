@@ -21,6 +21,14 @@
    THE SOFTWARE.
 */
 
+extern uint _size_x;
+extern uint _size_y;
+extern uint _size_z;
+
+extern uint _group_x;
+extern uint _group_y;
+extern uint _group_z;
+
 extern uint _local_x;
 extern uint _local_y;
 extern uint _local_z;
@@ -30,9 +38,9 @@ get_global_id(uint dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _local_x;
-    case 1: return _local_y;
-    case 2: return _local_z;
+    case 0: return _size_x * _group_x + _local_x;
+    case 1: return _size_y * _group_y + _local_y;
+    case 2: return _size_z * _group_z + _local_z;
     default: return 0;
     }
 }

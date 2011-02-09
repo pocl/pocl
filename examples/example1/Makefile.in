@@ -73,7 +73,7 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_example1_OBJECTS = example1.$(OBJEXT)
+am_example1_OBJECTS = example1.$(OBJEXT) example1_exec.$(OBJEXT)
 example1_OBJECTS = $(am_example1_OBJECTS)
 example1_DEPENDENCIES = ../../lib/CL/libCL.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -217,7 +217,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-example1_SOURCES = example1.c example1.cl
+example1_SOURCES = example1.c example1_exec.c example1.cl
 example1_LDADD = ../../lib/CL/libCL.la
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'
 all: all-am
@@ -274,6 +274,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example1_exec.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

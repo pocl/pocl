@@ -60,7 +60,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->read(device_id->data, ptr, buffer->device_ptrs[i]);
+  device_id->read(device_id->data, ptr, buffer->device_ptrs[i], cb);
 
   return CL_SUCCESS;
 }

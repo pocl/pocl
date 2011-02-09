@@ -58,6 +58,7 @@ clCreateContextFromType(const cl_context_properties *properties,
     if ((locl_devices[i].type == device_type) &&
 	(locl_devices[i].available == CL_TRUE)) {
       context->devices[j] = &locl_devices[i];
+      context->devices[j]->init(context->devices[j]);
       ++j;
     }
   }   

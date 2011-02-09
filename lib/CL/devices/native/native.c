@@ -24,37 +24,117 @@
 #include "native.h"
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
 
 #define COMMAND_LENGTH 256
 #define ARGUMENT_STRING_LENGTH 32
 
+struct pointer_list {
+  void *pointer;
+  struct pointer_list *next;
+};
+
+struct data {
+  /* Buffers where host pointer is used, and thus
+     should not be deallocated on free. */
+  struct pointer_list *host_buffers;
+  /* Currently loaded kernel. */
+  cl_kernel current_kernel;
+  /* Loaded kernel dynamic library handle. */
+  lt_dlhandle current_dlhandle;
+};
+
 size_t locl_native_max_work_item_sizes[] = {1};
 
+void
+locl_native_init (cl_device_id device)
+{
+  struct data *d;
+  
+  d = (struct data *) malloc (sizeof (struct data));
+  
+  d->host_buffers = NULL;
+  d->current_kernel = NULL;
+  d->current_dlhandle = 0;
+
+  device->data = d;
+}
+
 void *
-locl_native_malloc(void *data, cl_mem_flags flags,
-		   size_t size, void *host_ptr)
+locl_native_malloc (void *data, cl_mem_flags flags,
+		    size_t size, void *host_ptr)
 {
+  struct data *d;
+  void *b;
+  struct pointer_list *p;
+
+  d = (struct data *) data;
+
+  if (flags & CL_MEM_COPY_HOST_PTR)
+    {
+      b = malloc (size);
+      memcpy (b, host_ptr, size);
+      
+      return b;
+    }
+
   if (host_ptr != NULL)
-    return host_ptr;
+    {
+      if (d->host_buffers == NULL)
+	d->host_buffers = malloc (sizeof (struct pointer_list));
+      
+      p = d->host_buffers;
+      while (p->next != NULL)
+	p = p->next;
+
+      p->next = malloc (sizeof (struct pointer_list));
+      p = p->next;
+
+      p->pointer = host_ptr;
+      p->next = NULL;
+      
+      return host_ptr;
+    }
   else
-    return malloc(size);
+    return malloc (size);
 }
 
 void
-locl_native_free(void *data, void *ptr)
+locl_native_free (void *data, void *ptr)
 {
+  struct data *d;
+  struct pointer_list *p;
+
+  d = (struct data *) data;
+
+  p = d->host_buffers;
+  while (p != NULL)
+    {
+      if (p->pointer == ptr)
+	return;
+
+      p = p->next;
+    }
+  
+  free (ptr);
 }
 
 void
-locl_native_read(void *data, void *host_ptr, void *device_ptr)
+locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 {
+  if (host_ptr == device_ptr)
+    return;
+
+  memcpy (host_ptr, device_ptr, cb);
 }
 
 void
-locl_native_run(void *data, const char *parallel_filename,
-		cl_kernel kernel,
-		size_t x, size_t y, size_t z)
+locl_native_run (void *data, const char *parallel_filename,
+		 struct locl_argument_list *arguments,
+		 cl_kernel kernel,
+		 size_t x, size_t y, size_t z)
 {
+  struct data *d;
   char template[] = ".naruXXXXXX";
   char *tmpdir;
   int error;
@@ -62,85 +142,85 @@ locl_native_run(void *data, const char *parallel_filename,
   char assembly[LOCL_FILENAME_LENGTH];
   char module[LOCL_FILENAME_LENGTH];
   char command[COMMAND_LENGTH];
-  lt_dlhandle dlhandle;
   char arg_string[ARGUMENT_STRING_LENGTH];
-  char size_string[ARGUMENT_STRING_LENGTH];
-  void *native_arg, *kernel_arg;
-  size_t *size;
+  void *arg;
+  struct locl_argument_list *p;
   unsigned i;
   workgroup w;
 
-  tmpdir = mkdtemp(template);
-  assert(tmpdir != NULL);
+  d = (struct data *) data;
 
-  error = snprintf(bytecode, LOCL_FILENAME_LENGTH,
-		   "%s/parallel.bc",
-		   tmpdir);
-  assert(error >= 0);
+  if (d->current_kernel != kernel)
+    {
+      tmpdir = mkdtemp (template);
+      assert (tmpdir != NULL);
+      
+      error = snprintf (bytecode, LOCL_FILENAME_LENGTH,
+			"%s/parallel.bc",
+			tmpdir);
+      assert (error >= 0);
+      
+      error = snprintf (command, COMMAND_LENGTH,
+			LLVM_LD " -link-as-library -o %s %s",
+			bytecode,
+			parallel_filename);
+      assert (error >= 0);
+      
+      error = system(command);
+      assert (error == 0);
+      
+      error = snprintf (assembly, LOCL_FILENAME_LENGTH,
+			"%s/parallel.s",
+			tmpdir);
+      assert (error >= 0);
+      
+      error = snprintf (command, COMMAND_LENGTH,
+			LLC " -relocation-model=pic -o %s %s",
+			assembly,
+			bytecode);
+      assert (error >= 0);
+      
+      error = system (command);
+      assert (error == 0);
+      
+      error = snprintf (module, LOCL_FILENAME_LENGTH,
+			"%s/parallel.so",
+			tmpdir);
+      assert (error >= 0);
+      
+      error = snprintf (command, COMMAND_LENGTH,
+			"gcc -bundle -o %s %s",
+			module,
+			assembly);
+      assert (error >= 0);
+      
+      error = system (command);
+      assert (error == 0);
+      
+      d->current_dlhandle = lt_dlopen (module);
+      assert (d->current_dlhandle != NULL);
 
-  error = snprintf(command, COMMAND_LENGTH,
-		   LLVM_LD " -link-as-library -o %s %s",
-		   bytecode,
-		   parallel_filename);
-  assert(error >= 0);
+      d->current_kernel = kernel;
+    }
 
-  error = system(command);
-  assert(error == 0);
+  i = 0;
+  p = arguments;
+  while (p != NULL)
+    {
+      error = snprintf (arg_string, ARGUMENT_STRING_LENGTH,
+			"_arg%d", i);
+      assert (error > 0);
+      
+      arg = lt_dlsym (d->current_dlhandle, arg_string);
 
-  error = snprintf(assembly, LOCL_FILENAME_LENGTH,
-		   "%s/parallel.s",
-		   tmpdir);
-  assert(error >= 0);
-  
-  error = snprintf(command, COMMAND_LENGTH,
-		   LLC " -relocation-model=pic -o %s %s",
-		   assembly,
-		   bytecode);
-  assert(error >= 0);
+      memcpy (arg, p->value, p->size);
 
-  error = system(command);
-  assert(error == 0);
+      ++i;
+      p = p->next;
+    }
 
-  error = snprintf(module, LOCL_FILENAME_LENGTH,
-		   "%s/parallel.so",
-		   tmpdir);
-  assert(error >= 0);
-  
-  error = snprintf(command, COMMAND_LENGTH,
-		   "gcc -bundle -o %s %s",
-		   module,
-		   assembly);
-  assert(error >= 0);
-
-  error = system(command);
-  assert(error == 0);
-
-  dlhandle = lt_dlopen(module);
-  assert(dlhandle != NULL);
-
-
-/*   kernel_arguments = (struct locl_argument *) lt_dlsym(kernel->dlhandle, "_arguments"); */
-/*   native_arguments = (struct locl_argument *) lt_dlsym(dlhandle, "_arguments"); */
-/*   assert(kernel_arguments != NULL && native_arguments != NULL); */
-
-  for (i = 0; i < kernel->num_args; ++i) {
-    error = snprintf(arg_string, ARGUMENT_STRING_LENGTH,
-		     "_arg%d", i);
-    assert(error > 0);
-    error = snprintf(size_string, ARGUMENT_STRING_LENGTH,
-		     "_size%d", i);
-    assert(error > 0);
-
-    native_arg = lt_dlsym(dlhandle, arg_string);
-    kernel_arg = lt_dlsym(kernel->dlhandle, arg_string);
-    size = (size_t *) lt_dlsym(kernel->dlhandle, size_string);
-    assert((native_arg != NULL) && (kernel_arg != NULL) && (size != NULL));
-
-    memcpy(native_arg, kernel_arg, *size);
-  }
-
-  w = (workgroup) lt_dlsym(dlhandle, "_workgroup");
+  w = (workgroup) lt_dlsym (d->current_dlhandle, "_workgroup");
   assert (w != NULL);
 
-  w(x, y, z);
+  w (x, y, z);
 }
