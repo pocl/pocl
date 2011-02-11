@@ -136,6 +136,7 @@ LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBS_TRANSFORMUTILS = @LIBS_TRANSFORMUTILS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LLC = @LLC@
@@ -164,6 +165,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
+SHARED = @SHARED@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
@@ -230,7 +232,8 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]CLANG[@],$(CLANG),g'				\
                -e 's,[@]OPT[@],$(OPT),g'				\
                -e 's,[@]LLVM_LD[@],$(LLVM_LD),g'			\
-               -e 's,[@]LLC[@],$(LLC),g'
+               -e 's,[@]LLC[@],$(LLC),g'				\
+               -e 's,[@]SHARED[@],$(SHARED),g'
 
 all: all-am
 

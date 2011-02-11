@@ -94,7 +94,7 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
-llvmopencl_la_LIBADD =
+llvmopencl_la_DEPENDENCIES =
 am_llvmopencl_la_OBJECTS = Trampoline.lo Workgroup.lo
 llvmopencl_la_OBJECTS = $(am_llvmopencl_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -154,6 +154,7 @@ LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBS_TRANSFORMUTILS = @LIBS_TRANSFORMUTILS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LLC = @LLC@
@@ -182,6 +183,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
+SHARED = @SHARED@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
@@ -240,9 +242,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkglib_LTLIBRARIES = llvmopencl.la
 AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
-AM_LDFLAGS = -module -export-dynamic 
-#`@LLVM_CONFIG@ --ldflags`
+AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
 llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc
+llvmopencl_la_LIBADD = -lLLVMTransformUtils
 all: all-am
 
 .SUFFIXES:

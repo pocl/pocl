@@ -41,11 +41,25 @@ AC_PATH_PROG([OPT], [opt])
 AC_PATH_PROG([LLVM_LD], [llvm-ld])
 AC_PATH_PROG([LLC], [llc])
 
-AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"],[Absolute path of build directory.])
+old_LDFLAGS=$LDFLAGS
+LDFLAGS=-bundle
+AC_LINK_IFELSE([
+int
+test(int a, int b)
+{
+  return a + b;
+}
+],[SHARED=-bundle], [SHARED=-shared])
+LDFLAGS=$old_LDFLAGS
+AC_SUBST([SHARED])
+
+AC_DEFINE_UNQUOTED([SHARED], ["$SHARED"], [Parameter to compiler to generate loadable module.])
+AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [Path to LLVM linker.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [Path to LLVM compiler.])
 
 # Checks for libraries.
+AC_SUBST([LIBS_TRANSFORMUTILS], [`$LLVM_CONFIG --libs transformutils`])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h unistd.h])

@@ -34,27 +34,27 @@ do
 done
 shift $((${OPTIND}-1))
 
-if [[ "x$kernel" == x ]]
+if [ "x$kernel" = x ]
 then
     echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
 fi
 
-if [[ "x$size_x" == x ]]
+if [ "x$size_x" = x ]
 then
     size_x=1
 fi
 
-if [[ "x$size_y" == x ]]
+if [ "x$size_y" = x ]
 then
     size_y=1
 fi
 
-if [[ "x$size_z" == x ]]
+if [ "x$size_z" = x ]
 then
     size_z=1
 fi
 
-if [[ "x$output_file" == x ]]
+if [ "x$output_file" = x ]
 then
     echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
 fi

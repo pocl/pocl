@@ -23,6 +23,7 @@
 
 #include "devices/devices.h"
 #include "locl_cl.h"
+#include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
 clCreateContextFromType(const cl_context_properties *properties,

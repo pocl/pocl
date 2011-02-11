@@ -32,12 +32,12 @@ do
 done
 shift $((${OPTIND}-1))
 
-if [[ "x$kernel" == x ]]
+if [ "x$kernel" = x ]
 then
     echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
 fi
 
-if [[ "x$output_file" == x ]]
+if [ "x$output_file" = x ]
 then
     echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
 fi
@@ -55,4 +55,4 @@ fi
 @LLVM_LD@ -link-as-library -export-dynamic -o ${trampoline_bc} ${trampoline_prelink_bc}
 @LLC@ -relocation-model=pic -o ${trampoline_s} ${trampoline_bc}
 
-gcc -bundle -o ${output_file} -x assembler ${trampoline_s}
+gcc @SHARED@ -o ${output_file} -x assembler ${trampoline_s}

@@ -30,7 +30,7 @@ do
 done
 shift $((${OPTIND}-1))
 
-if [[ "x$output_file" == x ]]
+if [ "x$output_file" = x ]
 then
     echo >&2 "Usage: $0 -o output input" && exit 1
 fi
