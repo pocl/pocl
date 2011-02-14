@@ -190,11 +190,11 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       }
     }
 
-  for (z = offset_z; z < global_z; z += local_z)
+  for (z = 0; z < global_z / local_z; ++z)
     {
-      for (y = offset_y; y < global_y; y += local_y)
+      for (y = 0; y < global_y / local_y; ++y)
 	{
-	  for (x = offset_x; x < global_x; x += local_x)
+	  for (x = 0; x < global_x / local_x; ++x)
 	    command_queue->device->run(command_queue->device->data,
 				       parallel_filename,
 				       arguments,

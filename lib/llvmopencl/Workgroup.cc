@@ -41,6 +41,15 @@ using namespace llvm;
 typedef vector<BasicBlock*> BasicBlockVector;
 typedef map<Value*, Value*> Value2ValueMap;
 
+static void createSizeGlobals(Module &M);
+static void createTrampoline(Module &M, Function *F);
+static void replicateRegion(BasicBlockVector bbv,
+			    unsigned size_x, unsigned size_y, unsigned size_z,
+			    GlobalVariable *gv_x,
+			    GlobalVariable *gv_y,
+			    GlobalVariable *gv_z,
+			    Value2ValueMap &vm);
+
 extern cl::opt<string> Kernel;
 
 cl::list<int>
@@ -49,13 +58,14 @@ Size("size",
      cl::multi_val(3));
 
 namespace {
-  struct Workgroup : public ModulePass {
-    
+  class Workgroup : public ModulePass {
+  
+  public:
     static char ID;
     Workgroup() : ModulePass(ID) {}
 
     virtual bool runOnModule(Module &M);
-//     virtual void getAnalisysUsage(AnalisysUsage &Info) const;
+    //     virtual void getAnalisysUsage(AnalisysUsage &Info) const;
   };
   
   char Workgroup::ID = 0;
@@ -67,47 +77,22 @@ Workgroup::runOnModule(Module &M)
 {
   IRBuilder<> builder(M.getContext());
 
-  GlobalVariable *gv_sx = M.getGlobalVariable("_size_x");
-  if (gv_sx != NULL)
-    gv_sx->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32), Size[0]));
+  createSizeGlobals(M);
 
-  GlobalVariable *gv_sy = M.getGlobalVariable("_size_y");
-  if (gv_sy != NULL)
-    gv_sy->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32), Size[1]));
+  BasicInliner BI;
 
-  GlobalVariable *gv_sz = M.getGlobalVariable("_size_z");
-  if (gv_sz != NULL)
-    gv_sz->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32), Size[2]));
+  Function *F;
+  
+  for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
+    BI.addFunction(i);
 
-  const FunctionType *ft = TypeBuilder<void(types::i<32>, types::i<32>, types::i<32>), true>::get(M.getContext());
-  Function *workgroup = dyn_cast<Function>(M.getOrInsertFunction("_workgroup", ft));
-  assert(workgroup != NULL);
-
-  builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
-
-  Function::arg_iterator ai = workgroup->arg_begin();
-
-  GlobalVariable *gv_gx = M.getGlobalVariable("_group_x");
-  if (gv_gx != NULL) {
-    gv_gx->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
-    builder.CreateStore(ai, gv_gx);
+    if (i->getName() == Kernel)
+      F = i;
   }
 
-  ++ai;
+  createTrampoline(M, F);
 
-  GlobalVariable *gv_gy = M.getGlobalVariable("_group_y");
-  if (gv_gy != NULL) {
-    gv_gy->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
-    builder.CreateStore(ai, gv_gy);
-  }
-
-  ++ai;
-
-  GlobalVariable *gv_gz = M.getGlobalVariable("_group_z");
-  if (gv_gz != NULL) {
-    gv_gz->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
-    builder.CreateStore(ai, gv_gz);
-  }
+  BI.inlineFunctions();
 
   GlobalVariable *gv_x = M.getGlobalVariable("_local_x");
   if (gv_x != NULL)
@@ -121,117 +106,15 @@ Workgroup::runOnModule(Module &M)
   if (gv_z != NULL)
     gv_z->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
 
-  SmallVector<Value*, 8> arguments;
-
-  BasicInliner BI;
-
-  Function *F;
-  
-  for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    BI.addFunction(i);
-
-    if (i->getName() == Kernel) {
-      F = i;
-      
-      int j = 0;
-      for (Function::const_arg_iterator ii = i->arg_begin(),
-	     ee = i->arg_end();
-	   ii != ee; ++ii) {
-	const Type *t = ii->getType();
-	
-	GlobalVariable *gv = new GlobalVariable(M, t, false, GlobalVariable::ExternalLinkage,
-						UndefValue::get(t), "_arg" + Twine(j));
-	arguments.push_back(builder.CreateLoad(gv));
-	++j;
-      }
-    }
-  }
-
-  builder.CreateCall(F, arguments.begin(), arguments.end());
-  builder.CreateRetVoid();
-
-  BI.inlineFunctions();
-
   BasicBlockVector original;
-  BasicBlockVector replicated;
 
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++e)
     original.push_back(i);
 
-  BasicBlock *bb_insertion_point = original.front();
+  Value2ValueMap vm;
 
-  for (int z = Size[2] - 1; z >= 0; --z) {
-    for (int y = Size[1] - 1; y >= 0; --y) {
-      for (int x = Size[0] - 1; x >= 0; --x) {
-
-	if (x == 0 && y == 0 && z == 0)
-	  continue;
-
-	Value2ValueMap vm;
-
-	for (BasicBlockVector::const_iterator i = original.begin(),
-	       e = original.end();
-	     i != e; ++i) {
-	  BasicBlock *bb = BasicBlock::Create((*i)->getContext(),
-					      "",
-					      (*i)->getParent(),
-					      bb_insertion_point);
-
-	  replicated.push_back(bb);
-	  vm.insert(make_pair((*i), bb));
-
-	  for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
-	       ii != ee; ++ii) {
-	    Instruction *c = ii->clone();
-	    vm.insert(make_pair(ii, c));
-	    bb->getInstList().push_back(c);
-	  }
-	}
-
-	vm.erase(original.back()->getTerminator());
-	replicated.back()->getTerminator()->eraseFromParent();
-
-	for (BasicBlockVector::iterator i = replicated.begin(), e = replicated.end();
-	     i != e; ++i) {
-	  for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
-	       ii != ee; ++ii) {
-	    for (Value2ValueMap::const_iterator vi = vm.begin(), ve = vm.end();
-		 vi != ve; ++vi) {
-	      assert(vi->first != NULL && vi->second != NULL);
-	      ii->replaceUsesOfWith(vi->first, vi->second);
-	    }
-	  }
-	}
-
-	builder.SetInsertPoint(replicated.back());
-	builder.CreateBr(bb_insertion_point);
-
-	if (gv_x != NULL) {
-	  builder.SetInsertPoint(bb_insertion_point, bb_insertion_point->front());
-	  builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), x),
-			      gv_x);
-	}
-
-	bb_insertion_point = replicated.front();
-
-	original = replicated;
-	replicated.clear();
-      }
-
-      builder.SetInsertPoint(bb_insertion_point, bb_insertion_point->front());
-      if (gv_y != NULL)
-	builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), y),
-			    gv_y);
-    }
-    if (gv_z != NULL)
-      builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), z),
-			  gv_z);
-  }
-
-  builder.SetInsertPoint(bb_insertion_point, bb_insertion_point->front());
-  if (gv_x != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), 0),
-			gv_x);
+  replicateRegion(original, Size[0], Size[1], Size[2],
+		  gv_x, gv_y, gv_z, vm);
 
   F->removeFnAttr(Attribute::NoInline);
   F->addFnAttr(Attribute::AlwaysInline);
@@ -280,3 +163,175 @@ Workgroup::runOnModule(Module &M)
 // {
 //   AU.addRequiredTransitive<
 // }
+
+static void
+createSizeGlobals(Module &M)
+{
+  GlobalVariable *x = M.getGlobalVariable("_size_x");
+  if (x != NULL)
+    x->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
+				       Size[0]));
+  
+  GlobalVariable *y = M.getGlobalVariable("_size_y");
+  if (y != NULL)
+    y->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
+				       Size[1]));
+  
+  GlobalVariable *z = M.getGlobalVariable("_size_z");
+  if (z != NULL)
+    z->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
+				       Size[2]));
+}
+
+static void
+createTrampoline(Module &M, Function *F)
+{
+  IRBuilder<> builder(M.getContext());
+
+  const FunctionType *ft =
+    TypeBuilder<void(types::i<32>,
+		     types::i<32>,
+		     types::i<32>), true>::get(M.getContext());
+
+  Function *workgroup =
+    dyn_cast<Function>(M.getOrInsertFunction("_workgroup", ft));
+  assert(workgroup != NULL);
+
+  builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
+
+  Function::arg_iterator ai = workgroup->arg_begin();
+
+  GlobalVariable *x = M.getGlobalVariable("_group_x");
+  if (x != NULL) {
+    x->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+    builder.CreateStore(ai, x);
+  }
+
+  ++ai;
+
+  GlobalVariable *y = M.getGlobalVariable("_group_y");
+  if (y != NULL) {
+    y->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+    builder.CreateStore(ai, y);
+  }
+
+  ++ai;
+
+  GlobalVariable *z = M.getGlobalVariable("_group_z");
+  if (z != NULL) {
+    z->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+    builder.CreateStore(ai, z);
+  }
+
+  SmallVector<Value*, 8> arguments;
+  int i = 0;
+  for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
+       ii != ee; ++ii) {
+	const Type *t = ii->getType();
+	
+	GlobalVariable *gv =
+	  new GlobalVariable(M, t, false, GlobalVariable::ExternalLinkage,
+			     UndefValue::get(t), "_arg" + Twine(i));
+	arguments.push_back(builder.CreateLoad(gv));
+	++i;
+  }
+  
+  builder.CreateCall(F, arguments.begin(), arguments.end());
+  builder.CreateRetVoid();
+}
+
+// Replicate region formed by BasicBlocks in bbv, by size_{x,y,z}
+// times in each corresponding dimension. Local IDs are stored
+// in gv{x, y, z} at the start of code correponding to each
+// workitem. vm is updated to contain a map from old value
+// references to newly created ones. This function must be
+// called for every region in dominance order, so vm already
+// contains use update values for every previous BasicBlock.
+static void
+replicateRegion(BasicBlockVector bbv,
+		unsigned size_x, unsigned size_y, unsigned size_z,
+		GlobalVariable *gv_x,
+		GlobalVariable *gv_y,
+		GlobalVariable *gv_z,
+		Value2ValueMap &vm)
+{
+  Module &M = *bbv.front()->getParent()->getParent();
+
+  IRBuilder<> builder(M.getContext());
+
+  BasicBlockVector new_bbv;
+  BasicBlock *bb_insertion_point = bbv.front();
+
+  for (int z = size_z - 1; z >= 0; --z) {
+    for (int y = size_y - 1; y >= 0; --y) {
+      for (int x = size_x - 1; x >= 0; --x) {
+	
+	if (x == 0 && y == 0 && z == 0)
+	  continue;
+
+	for (BasicBlockVector::const_iterator i = bbv.begin(),
+	       e = bbv.end();
+	     i != e; ++i) {
+	  BasicBlock *bb = BasicBlock::Create((*i)->getContext(),
+					      "",
+					      (*i)->getParent(),
+					      bb_insertion_point);
+	  
+	  new_bbv.push_back(bb);
+	  vm.insert(make_pair((*i), bb));
+
+	  for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
+	       ii != ee; ++ii) {
+	    Instruction *c = ii->clone();
+	    vm.insert(make_pair(ii, c));
+	    bb->getInstList().push_back(c);
+	  }
+	}
+
+	vm.erase(bbv.back()->getTerminator());
+	new_bbv.back()->getTerminator()->eraseFromParent();
+
+	for (BasicBlockVector::iterator i = new_bbv.begin(), e = new_bbv.end();
+	     i != e; ++i) {
+	  for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
+	       ii != ee; ++ii) {
+	    for (Value2ValueMap::const_iterator vi = vm.begin(), ve = vm.end();
+		 vi != ve; ++vi) {
+	      assert(vi->first != NULL && vi->second != NULL);
+	      ii->replaceUsesOfWith(vi->first, vi->second);
+	    }
+	  }
+	}
+	
+	builder.SetInsertPoint(new_bbv.back());
+	builder.CreateBr(bb_insertion_point);
+
+	if (gv_x != NULL) {
+	  builder.SetInsertPoint(bb_insertion_point, bb_insertion_point->front());
+	  builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), x),
+			      gv_x);
+	}
+	
+	bb_insertion_point = new_bbv.front();
+
+	bbv = new_bbv;
+	new_bbv.clear();
+      }
+
+      builder.SetInsertPoint(bb_insertion_point, bb_insertion_point->front());
+      if (gv_y != NULL)
+	builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), y),
+			    gv_y);
+    }
+
+    if (gv_z != NULL)
+      builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), z),
+			  gv_z);
+  }
+
+  builder.SetInsertPoint(bb_insertion_point, bb_insertion_point->front());
+  if (gv_x != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M.getContext(), 32), 0),
+			gv_x);
+}
+
