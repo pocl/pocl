@@ -25,7 +25,8 @@
 pkglib_LIBRARIES = libkernel.a
 
 libkernel_a_SOURCES = get_global_id.c		\
-                      dot.c
+                      dot.c			\
+                      barrier.c
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar

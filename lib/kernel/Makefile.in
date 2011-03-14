@@ -97,7 +97,8 @@ LIBRARIES = $(pkglib_LIBRARIES)
 ARFLAGS = cru
 libkernel_a_AR = $(AR) $(ARFLAGS)
 libkernel_a_LIBADD =
-am_libkernel_a_OBJECTS = get_global_id.$(OBJEXT) dot.$(OBJEXT)
+am_libkernel_a_OBJECTS = get_global_id.$(OBJEXT) dot.$(OBJEXT) \
+	barrier.$(OBJEXT)
 libkernel_a_OBJECTS = $(am_libkernel_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
@@ -242,7 +243,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkglib_LIBRARIES = libkernel.a
 libkernel_a_SOURCES = get_global_id.c		\
-                      dot.c
+                      dot.c			\
+                      barrier.c
 
 all: all-am
 
@@ -321,6 +323,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/barrier.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_global_id.Po@am__quote@
 

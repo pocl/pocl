@@ -1,4 +1,4 @@
-/* OpenCL built-in library: dot()
+/* OpenCL built-in library: barrier()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,8 +21,8 @@
    THE SOFTWARE.
 */
 
-float
-dot(float4 a, float4 b)
+__attribute__ ((noinline)) void
+barrier (cl_mem_fence_flags flags)
 {
-  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
+

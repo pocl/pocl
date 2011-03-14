@@ -1,4 +1,4 @@
-/* OpenCL runtime library: get_global_id()
+/* OpenCL built-in library: get_global_id()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
