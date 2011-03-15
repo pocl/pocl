@@ -23,25 +23,25 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
-static BasicBlock *find_barriers_dfs(BasicBlock *bb,
-				     BasicBlock *entry,
-				     std::set<BasicBlock *> &processed_barriers,
-				     std::set<BasicBlock *> &bbs_to_replicate);
 static bool block_has_barrier(const BasicBlock *bb);
 static bool find_subgraph(std::set<BasicBlock *> &subgraph,
 			  BasicBlock *entry,
 			  BasicBlock *exit);
-static void replicate_basicblocks(std::set<BasicBlock *> &new_graph,
-				  std::map<Value *, Value *> &reference_map,
-				  const std::set<BasicBlock *> &graph);
-static void update_references(const std::set<BasicBlock *>&graph,
-			      const std::map<Value *, Value *> &reference_map);
+
+cl::list<int>
+LocalSize("local-size",
+	  cl::desc("Local size (x y z)"),
+	  cl::multi_val(3));
 
 namespace {
+  typedef std::set<BasicBlock *> BasicBlockSet;
+  typedef std::map<Value *, Value *> ValueValueMap;
+
   class WorkitemReplication : public FunctionPass {
 
   public:
@@ -49,59 +49,65 @@ namespace {
     WorkitemReplication(): FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F);
+
+  private:
+    BasicBlockSet ProcessedBarriers;
+
+    BasicBlock *FindBarriersDFS(BasicBlock *bb,
+				BasicBlock *entry,
+				BasicBlockSet &bbs_to_replicate);
+    void ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
+				   BasicBlock *entry,
+				   BasicBlock *exit);
+    void ReplicateBasicblocks(std::set<BasicBlock *> &new_graph,
+			      std::map<Value *, Value *> &reference_map,
+			      const std::set<BasicBlock *> &graph);
+    void UpdateReferences(const std::set<BasicBlock *>&graph,
+			  const std::map<Value *, Value *> &reference_map);
   };
 
   char WorkitemReplication::ID = 0;
   static
   RegisterPass<WorkitemReplication> X("workitems",
-				      "Workitem tail replication pass",
+				      "Workitem replication pass",
 				      false, false);
 }
 
 bool
 WorkitemReplication::runOnFunction(Function &F)
 {
-  std::set<BasicBlock *> processed_barriers;
-  std::set<BasicBlock *> bbs_to_replicate;
+  BasicBlockSet subgraph;
 
-  BasicBlock *exit = find_barriers_dfs(&(F.getEntryBlock()),
-				       &(F.getEntryBlock()),
-				       processed_barriers,
-				       bbs_to_replicate);
+  BasicBlock *exit = FindBarriersDFS(&(F.getEntryBlock()),
+				     &(F.getEntryBlock()),
+				     subgraph);
 
-  std::set<BasicBlock *> v;
-  std::map<Value *, Value *> m;
-  replicate_basicblocks(v, m, bbs_to_replicate);
-  update_references(v, m);
-  if (exit != NULL) {
-    BranchInst::Create(cast<BasicBlock>(m[&(F.getEntryBlock())]),
-		       exit->getTerminator());
-    exit->getTerminator()->eraseFromParent();
-  }
+  ReplicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
 
   return true;
 }
 
-static BasicBlock*
-find_barriers_dfs(BasicBlock *bb,
-		  BasicBlock *entry,
-		  std::set<BasicBlock *> &processed_barriers,
-		  std::set<BasicBlock *> &bbs_to_replicate)
+// Perform a deep first seach on the subgraph starting on bb. On the
+// outermost recursive call, entry = bb. Barriers are handled by
+// recursive calls, so on return only subgraph needs still to be
+// replicated. Return value is last basicblock (exit) of original graph.
+BasicBlock*
+WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
+				     BasicBlock *entry,
+				     BasicBlockSet &subgraph)
 {
   TerminatorInst *t = bb->getTerminator();
   
   if (block_has_barrier(bb) &&
-      (processed_barriers.count(bb) == 0))
+      (ProcessedBarriers.count(bb) == 0))
     {      
-      // Replicate subgraph from entry to the barrier for
-      // all workitems.
-      std::set<BasicBlock *> subgraph;
-      find_subgraph(subgraph, entry, bb);
-      for (std::set<BasicBlock *>::const_iterator i = subgraph.begin(),
-	     e = subgraph.end();
+      BasicBlockSet pre_subgraph;
+      find_subgraph(pre_subgraph, entry, bb);
+      for (std::set<BasicBlock *>::const_iterator i = pre_subgraph.begin(),
+	     e = pre_subgraph.end();
 	   i != e; ++i) {
 	if (block_has_barrier(*i) &&
-	    processed_barriers.count(*i) == 0) {
+	    ProcessedBarriers.count(*i) == 0) {
 	  // Subgraph to this barriers has still unprocessed barriers. Do
 	  // not process this barrier yet (it will be done when coming
 	  // from the path through the previous barrier).
@@ -110,38 +116,22 @@ find_barriers_dfs(BasicBlock *bb,
       }
 
       // Mark this barrier as processed.
-      processed_barriers.insert(bb);
+      ProcessedBarriers.insert(bb);
       
       // Replicate subgraph from entry to the barrier for
       // all workitems.
-      std::set<BasicBlock *> v;
-      std::map<Value *, Value *> m;
-      replicate_basicblocks(v, m, subgraph);
-      update_references(v, m);
-
-      // Make original subgraph branch to replicated one.
-      BasicBlock *b = cast<BasicBlock>(m[entry]);
-      m.clear();
-      m.insert(std::make_pair(bb, b));
-      update_references(subgraph, m);
+      ReplicateWorkitemSubgraph(pre_subgraph, entry, bb->getSinglePredecessor());
 
       // Continue processing after the barrier.
+      BasicBlockSet post_subgraph;
       bb = t->getSuccessor(0);
-      subgraph.clear();
-      v.clear();
-      m.clear();
-      BasicBlock *exit = find_barriers_dfs(bb, bb, processed_barriers, subgraph);
-      replicate_basicblocks(v, m, subgraph);
-      update_references(v, m);
-      if (exit != NULL) {
-	BranchInst::Create(cast<BasicBlock>(m[bb]), exit->getTerminator());
-	exit->getTerminator()->eraseFromParent();
-      }
+      BasicBlock *exit = FindBarriersDFS(bb, bb, post_subgraph);
+      ReplicateWorkitemSubgraph(post_subgraph, bb, exit);
 
       return NULL;
     }
 
-  bbs_to_replicate.insert(bb);
+  subgraph.insert(bb);
 
   if (t->getNumSuccessors() == 0)
     return t->getParent();
@@ -150,7 +140,7 @@ find_barriers_dfs(BasicBlock *bb,
   BasicBlock *r = NULL;
   BasicBlock *s;
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
-    s = find_barriers_dfs(t->getSuccessor(i), entry, processed_barriers, bbs_to_replicate);
+    s = FindBarriersDFS(t->getSuccessor(i), entry, subgraph);
     if (s != NULL) {
       assert((r == NULL || r == s) &&
 	     "More than one function tail within same barrier path!\n");
@@ -159,6 +149,41 @@ find_barriers_dfs(BasicBlock *bb,
   }
 
   return r;
+}
+
+void
+WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
+					       BasicBlock *entry,
+					       BasicBlock *exit)
+{
+  BasicBlockSet s;
+  ValueValueMap m;
+
+  assert (entry != NULL && exit != NULL);
+
+  for (int z = LocalSize[2] - 1; z >= 0; --z) {
+    for (int y = LocalSize[1] - 1; y >= 0; --y) {
+      for (int x = LocalSize[0] - 1; x >= 0; --x) {
+
+	if (x == 0 && y == 0 && z == 0)
+	  return;
+
+	ReplicateBasicblocks(s, m, subgraph);
+	UpdateReferences(s, m);
+	
+	BranchInst::Create(cast<BasicBlock>(m[entry]),
+			   exit->getTerminator());
+	exit->getTerminator()->eraseFromParent();
+
+	subgraph = s;
+	entry = cast<BasicBlock>(m[entry]);
+	exit = cast<BasicBlock>(m[exit]);
+
+	s.clear();
+	m.clear();
+      }
+    }
+  }
 }
 
 static bool
@@ -170,6 +195,7 @@ block_has_barrier(const BasicBlock *bb)
       const Value *v = c->getCalledValue();
       if (v->getName().equals(BARRIER_FUNCTION_NAME)) {
 	assert((bb->size() == 2) &&
+	       (bb->getSinglePredecessor() != NULL) &&
 	       (bb->getTerminator()->getNumSuccessors() == 1) &&
 	       ("Invalid barrier basicblock found!\n"));
 	return true;
@@ -180,8 +206,10 @@ block_has_barrier(const BasicBlock *bb)
   return false;
 }
 
+// Find subgraph between entry and exit basicblocks.
+// Exit is not included in returned subgraph.
 static bool
-find_subgraph(std::set<BasicBlock *> &subgraph,
+find_subgraph(BasicBlockSet &subgraph,
 	      BasicBlock *entry,
 	      BasicBlock *exit)
 {
@@ -199,10 +227,10 @@ find_subgraph(std::set<BasicBlock *> &subgraph,
   return found;
 }
 
-static void
-replicate_basicblocks(std::set<BasicBlock *> &new_graph,
-		      std::map<Value *, Value *> &reference_map,
-		      const std::set<BasicBlock *> &graph)
+void
+WorkitemReplication::ReplicateBasicblocks(BasicBlockSet &new_graph,
+					  ValueValueMap &reference_map,
+					  const BasicBlockSet &graph)
 {
   for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
 	 e = graph.end();
@@ -223,9 +251,9 @@ replicate_basicblocks(std::set<BasicBlock *> &new_graph,
   }
 }
 
-static void
-update_references(const std::set<BasicBlock *>&graph,
-		  const std::map<Value *, Value *> &reference_map)
+void
+WorkitemReplication::UpdateReferences(const BasicBlockSet &graph,
+				      const ValueValueMap &reference_map)
 {
   for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
 	 e = graph.end();
