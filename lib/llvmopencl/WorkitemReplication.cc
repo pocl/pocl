@@ -22,8 +22,10 @@
 
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/IRBuilder.h"
 using namespace llvm;
 
 #define BARRIER_FUNCTION_NAME "barrier"
@@ -57,6 +59,7 @@ namespace {
 
   private:
     BasicBlockSet ProcessedBarriers;
+
     // This stores the reference substitution map for each workitem.
     // Even when some basic blocks are replicated more than once (due
     // to barriers creating several execution paths), blocks are
@@ -65,17 +68,20 @@ namespace {
     // complex bookeeping.
     ValueValueMap *ReferenceMap;
 
-    BasicBlock *FindBarriersDFS(BasicBlock *bb,
+    GlobalVariable *LocalX, *LocalY, *LocalZ;
+
+    BasicBlock *findBarriersDFS(BasicBlock *bb,
 				BasicBlock *entry,
 				BasicBlockSet &bbs_to_replicate);
-    void ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
+    void replicateWorkitemSubgraph(BasicBlockSet subgraph,
 				   BasicBlock *entry,
 				   BasicBlock *exit);
-    void ReplicateBasicblocks(std::set<BasicBlock *> &new_graph,
+    void replicateBasicblocks(std::set<BasicBlock *> &new_graph,
 			      std::map<Value *, Value *> &reference_map,
 			      const std::set<BasicBlock *> &graph);
-    void UpdateReferences(const std::set<BasicBlock *>&graph,
+    void updateReferences(const std::set<BasicBlock *>&graph,
 			  const std::map<Value *, Value *> &reference_map);
+    bool isReplicable(const Instruction *i);
   };
 
   char WorkitemReplication::ID = 0;
@@ -93,6 +99,10 @@ WorkitemReplication::doInitialization(Module &M)
   int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
   ReferenceMap = new ValueValueMap[i];
 
+  LocalX = M.getGlobalVariable("_local_x");
+  LocalY = M.getGlobalVariable("_local_y");
+  LocalZ = M.getGlobalVariable("_local_z");
+
   return false;
 }
 
@@ -101,11 +111,11 @@ WorkitemReplication::runOnFunction(Function &F)
 {
   BasicBlockSet subgraph;
 
-  BasicBlock *exit = FindBarriersDFS(&(F.getEntryBlock()),
+  BasicBlock *exit = findBarriersDFS(&(F.getEntryBlock()),
 				     &(F.getEntryBlock()),
 				     subgraph);
 
-  ReplicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
+  replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
 
   return true;
 }
@@ -123,7 +133,7 @@ WorkitemReplication::doFinalization(Module &M)
 // recursive calls, so on return only subgraph needs still to be
 // replicated. Return value is last basicblock (exit) of original graph.
 BasicBlock*
-WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
+WorkitemReplication::findBarriersDFS(BasicBlock *bb,
 				     BasicBlock *entry,
 				     BasicBlockSet &subgraph)
 {
@@ -152,13 +162,13 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
       
       // Replicate subgraph from entry to the barrier for
       // all workitems.
-      ReplicateWorkitemSubgraph(pre_subgraph, entry, bb->getSinglePredecessor());
+      replicateWorkitemSubgraph(pre_subgraph, entry, bb->getSinglePredecessor());
 
       // Continue processing after the barrier.
       BasicBlockSet post_subgraph;
       bb = t->getSuccessor(0);
-      BasicBlock *exit = FindBarriersDFS(bb, bb, post_subgraph);
-      ReplicateWorkitemSubgraph(post_subgraph, bb, exit);
+      BasicBlock *exit = findBarriersDFS(bb, bb, post_subgraph);
+      replicateWorkitemSubgraph(post_subgraph, bb, exit);
 
       return NULL;
     }
@@ -172,7 +182,7 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
   BasicBlock *r = NULL;
   BasicBlock *s;
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
-    s = FindBarriersDFS(t->getSuccessor(i), entry, subgraph);
+    s = findBarriersDFS(t->getSuccessor(i), entry, subgraph);
     if (s != NULL) {
       assert((r == NULL || r == s) &&
 	     "More than one function tail within same barrier path!\n");
@@ -184,7 +194,7 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
 }
 
 void
-WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
+WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 					       BasicBlock *entry,
 					       BasicBlock *exit)
 {
@@ -192,24 +202,59 @@ WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
 
   assert (entry != NULL && exit != NULL);
 
-  for (int z = LocalSize[2] - 1; z >= 0; --z) {
-    for (int y = LocalSize[1] - 1; y >= 0; --y) {
-      for (int x = LocalSize[0] - 1; x >= 0; --x) {
+  IRBuilder<> builder(entry->getContext());
 
-	if (x == 0 && y == 0 && z == 0)
+  for (int z = 0; z < LocalSize[2]; ++z) {
+    for (int y = 0; y < LocalSize[1]; ++y) {
+      for (int x = 0; x < LocalSize[0]; ++x) {
+	
+	if (x == (LocalSize[0] - 1) &&
+	    y == (LocalSize[1] - 1) &&
+	    z == (LocalSize[2] - 1)) {
+	  builder.SetInsertPoint(entry, entry->front());
+	  if (LocalX != NULL) {
+	    builder.CreateStore(ConstantInt::get(IntegerType::
+						 get(entry->getContext(),
+						     32), x), LocalX);
+	    
+	  }
 	  return;
+	}
 
-	int i = (z + 1) * (y + 1) * (x + 1) - 2;
+	int i = (z + 1) * (y + 1) * (x + 1) - 1;
 
-	ReplicateBasicblocks(s, ReferenceMap[i], subgraph);
+	replicateBasicblocks(s, ReferenceMap[i], subgraph);
 	purge_subgraph(s, subgraph,
 		       cast<BasicBlock> (ReferenceMap[i][exit]));
-	UpdateReferences(s, ReferenceMap[i]);
+	updateReferences(s, ReferenceMap[i]);
 	
 	ReferenceMap[i].erase(exit->getTerminator());
 	BranchInst::Create(cast<BasicBlock>(ReferenceMap[i][entry]),
 			   exit->getTerminator());
 	exit->getTerminator()->eraseFromParent();
+
+	builder.SetInsertPoint(entry, entry->front());
+	if (LocalX != NULL) {
+	  builder.CreateStore(ConstantInt::get(IntegerType::
+					       get(entry->getContext(),
+						   32), x), LocalX);
+	  
+	}
+	if (x == 0) {
+	  if (LocalY != NULL) {
+	    builder.CreateStore(ConstantInt::get(IntegerType::
+						 get(entry->getContext(),
+						     32), y), LocalY);
+	    
+	  }
+	  if (y == 0) {
+	    if (LocalZ != NULL) {
+	      builder.CreateStore(ConstantInt::get(IntegerType::
+						   get(entry->getContext(),
+						       32), z), LocalZ);
+	    }
+	  }
+	}
 
 	subgraph = s;
 	entry = cast<BasicBlock>(ReferenceMap[i][entry]);
@@ -290,7 +335,7 @@ find_subgraph(BasicBlockSet &subgraph,
 }
 
 void
-WorkitemReplication::ReplicateBasicblocks(BasicBlockSet &new_graph,
+WorkitemReplication::replicateBasicblocks(BasicBlockSet &new_graph,
 					  ValueValueMap &reference_map,
 					  const BasicBlockSet &graph)
 {
@@ -307,15 +352,17 @@ WorkitemReplication::ReplicateBasicblocks(BasicBlockSet &new_graph,
 
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
 	 i2 != e2; ++i2) {
-      Instruction *i = i2->clone();
-      reference_map.insert(std::make_pair(i2, i));
-      new_b->getInstList().push_back(i);
+      if (isReplicable(i2)) {
+	Instruction *i = i2->clone();
+	reference_map.insert(std::make_pair(i2, i));
+	new_b->getInstList().push_back(i);
+      }
     }
   }
 }
 
 void
-WorkitemReplication::UpdateReferences(const BasicBlockSet &graph,
+WorkitemReplication::updateReferences(const BasicBlockSet &graph,
 				      const ValueValueMap &reference_map)
 {
   for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
@@ -332,4 +379,17 @@ WorkitemReplication::UpdateReferences(const BasicBlockSet &graph,
       }
     }
   }
+}
+
+bool
+WorkitemReplication::isReplicable(const Instruction *i)
+{
+  if (const StoreInst *s = dyn_cast<StoreInst>(i)) {
+    const Value *v = s->getPointerOperand();
+    const GlobalVariable *gv = dyn_cast<GlobalVariable>(v);
+    if (gv == LocalX || gv == LocalY || gv == LocalZ)
+      return false;
+  }
+
+  return true;
 }
