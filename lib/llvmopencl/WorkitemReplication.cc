@@ -32,6 +32,9 @@ static bool block_has_barrier(const BasicBlock *bb);
 static bool find_subgraph(std::set<BasicBlock *> &subgraph,
 			  BasicBlock *entry,
 			  BasicBlock *exit);
+static void purge_subgraph(std::set<BasicBlock *> &new_subgraph,
+			   const std::set<BasicBlock *> &original_subgraph,
+			   const BasicBlock *exit);
 
 cl::list<int>
 LocalSize("local-size",
@@ -199,6 +202,8 @@ WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
 	int i = (z + 1) * (y + 1) * (x + 1) - 2;
 
 	ReplicateBasicblocks(s, ReferenceMap[i], subgraph);
+	purge_subgraph(s, subgraph,
+		       cast<BasicBlock> (ReferenceMap[i][exit]));
 	UpdateReferences(s, ReferenceMap[i]);
 	
 	ReferenceMap[i].erase(exit->getTerminator());
@@ -211,6 +216,32 @@ WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
 	exit = cast<BasicBlock>(ReferenceMap[i][exit]);
 
 	s.clear();
+      }
+    }
+  }
+}
+
+static void
+purge_subgraph(std::set<BasicBlock *> &new_subgraph,
+	       const std::set<BasicBlock *> &original_subgraph,
+	       const BasicBlock *exit)
+{
+  for (std::set<BasicBlock *>::iterator i = new_subgraph.begin(),
+	 e = new_subgraph.end();
+       i != e; ++i) {
+    if (*i == exit)
+      continue;
+    // Remove CFG edges going to basic blocks which
+    // were not contained in original graph (impossible
+    // branches).
+    TerminatorInst *t = (*i)->getTerminator();
+    for (unsigned u = 0; u < t->getNumSuccessors(); ++u) {
+      if (original_subgraph.count(t->getSuccessor(u)) == 0) {
+	BasicBlock *unreachable = BasicBlock::Create((*i)->getContext(),
+						     "unreachable",
+						     (*i)->getParent());
+	new UnreachableInst((*i)->getContext(), unreachable);
+	t->setSuccessor(u, unreachable);
       }
     }
   }
