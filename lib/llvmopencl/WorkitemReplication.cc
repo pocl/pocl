@@ -48,10 +48,19 @@ namespace {
     static char ID;
     WorkitemReplication(): FunctionPass(ID) {}
 
+    virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function &F);
+    virtual bool doFinalization(Module &M);
 
   private:
     BasicBlockSet ProcessedBarriers;
+    // This stores the reference substitution map for each workitem.
+    // Even when some basic blocks are replicated more than once (due
+    // to barriers creating several execution paths), blocks are
+    // always processed from dominator to function end, making last
+    // added reference the correct one, thus no need for more
+    // complex bookeeping.
+    ValueValueMap *ReferenceMap;
 
     BasicBlock *FindBarriersDFS(BasicBlock *bb,
 				BasicBlock *entry,
@@ -74,6 +83,17 @@ namespace {
 }
 
 bool
+WorkitemReplication::doInitialization(Module &M)
+{
+  // Allocate space for workitem reference maps. Workitem 0 does
+  // not need it.
+  int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
+  ReferenceMap = new ValueValueMap[i];
+
+  return false;
+}
+
+bool
 WorkitemReplication::runOnFunction(Function &F)
 {
   BasicBlockSet subgraph;
@@ -85,6 +105,14 @@ WorkitemReplication::runOnFunction(Function &F)
   ReplicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
 
   return true;
+}
+
+bool
+WorkitemReplication::doFinalization(Module &M)
+{
+  delete []ReferenceMap;
+
+  return false;
 }
 
 // Perform a deep first seach on the subgraph starting on bb. On the
@@ -103,6 +131,7 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
     {      
       BasicBlockSet pre_subgraph;
       find_subgraph(pre_subgraph, entry, bb);
+      pre_subgraph.erase(bb); // Remove barrier basicblock from subgraph.
       for (std::set<BasicBlock *>::const_iterator i = pre_subgraph.begin(),
 	     e = pre_subgraph.end();
 	   i != e; ++i) {
@@ -157,7 +186,6 @@ WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
 					       BasicBlock *exit)
 {
   BasicBlockSet s;
-  ValueValueMap m;
 
   assert (entry != NULL && exit != NULL);
 
@@ -168,19 +196,21 @@ WorkitemReplication::ReplicateWorkitemSubgraph(BasicBlockSet subgraph,
 	if (x == 0 && y == 0 && z == 0)
 	  return;
 
-	ReplicateBasicblocks(s, m, subgraph);
-	UpdateReferences(s, m);
+	int i = (z + 1) * (y + 1) * (x + 1) - 2;
+
+	ReplicateBasicblocks(s, ReferenceMap[i], subgraph);
+	UpdateReferences(s, ReferenceMap[i]);
 	
-	BranchInst::Create(cast<BasicBlock>(m[entry]),
+	ReferenceMap[i].erase(exit->getTerminator());
+	BranchInst::Create(cast<BasicBlock>(ReferenceMap[i][entry]),
 			   exit->getTerminator());
 	exit->getTerminator()->eraseFromParent();
 
 	subgraph = s;
-	entry = cast<BasicBlock>(m[entry]);
-	exit = cast<BasicBlock>(m[exit]);
+	entry = cast<BasicBlock>(ReferenceMap[i][entry]);
+	exit = cast<BasicBlock>(ReferenceMap[i][exit]);
 
 	s.clear();
-	m.clear();
       }
     }
   }
@@ -207,14 +237,15 @@ block_has_barrier(const BasicBlock *bb)
 }
 
 // Find subgraph between entry and exit basicblocks.
-// Exit is not included in returned subgraph.
 static bool
 find_subgraph(BasicBlockSet &subgraph,
 	      BasicBlock *entry,
 	      BasicBlock *exit)
 {
-  if (entry == exit)
+  if (entry == exit) {
+    subgraph.insert(entry);
     return true;
+  }
 
   bool found = false;
   const TerminatorInst *t = entry->getTerminator();
@@ -239,7 +270,8 @@ WorkitemReplication::ReplicateBasicblocks(BasicBlockSet &new_graph,
     BasicBlock *new_b = BasicBlock::Create(b->getContext(),
 					   b->getName(),
 					   b->getParent());
-    reference_map.insert(std::make_pair(b, new_b));
+    
+    reference_map[b] = new_b;
     new_graph.insert(new_b);
 
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
