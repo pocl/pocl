@@ -20,14 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "BarrierTailReplication.h"
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/Pass.h"
 #include <map>
 #include <set>
 
 using namespace llvm;
+using namespace locl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
@@ -45,21 +46,13 @@ static void update_references(const std::set<BasicBlock *>&graph,
 			      const std::map<Value *, Value *> &reference_map);
   
 namespace {
-  class BarrierTailReplication : public FunctionPass {
-
-  public:
-    static char ID;
-    BarrierTailReplication(): FunctionPass(ID) {}
-
-    virtual bool runOnFunction(Function &F);
-  };
-
-  char BarrierTailReplication::ID = 0;
   static
   RegisterPass<BarrierTailReplication> X("barriertails",
 					 "Barrier tail replication pass",
 					 false, false);
 }
+
+char BarrierTailReplication::ID = 0;
 
 bool
 BarrierTailReplication::runOnFunction(Function &F)

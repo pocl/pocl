@@ -73,6 +73,7 @@ AC_CONFIG_FILES([Makefile
 		 lib/kernel/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
+		 examples/barriers/Makefile
                  scripts/Makefile])
 
 AC_OUTPUT

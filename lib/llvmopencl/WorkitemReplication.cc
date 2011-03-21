@@ -20,13 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/Function.h"
+#include "WorkitemReplication.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
+
 using namespace llvm;
+using namespace locl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
@@ -44,52 +45,13 @@ LocalSize("local-size",
 	  cl::multi_val(3));
 
 namespace {
-  typedef std::set<BasicBlock *> BasicBlockSet;
-  typedef std::map<Value *, Value *> ValueValueMap;
-
-  class WorkitemReplication : public FunctionPass {
-
-  public:
-    static char ID;
-    WorkitemReplication(): FunctionPass(ID) {}
-
-    virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function &F);
-    virtual bool doFinalization(Module &M);
-
-  private:
-    BasicBlockSet ProcessedBarriers;
-
-    // This stores the reference substitution map for each workitem.
-    // Even when some basic blocks are replicated more than once (due
-    // to barriers creating several execution paths), blocks are
-    // always processed from dominator to function end, making last
-    // added reference the correct one, thus no need for more
-    // complex bookeeping.
-    ValueValueMap *ReferenceMap;
-
-    GlobalVariable *LocalX, *LocalY, *LocalZ;
-
-    BasicBlock *findBarriersDFS(BasicBlock *bb,
-				BasicBlock *entry,
-				BasicBlockSet &bbs_to_replicate);
-    void replicateWorkitemSubgraph(BasicBlockSet subgraph,
-				   BasicBlock *entry,
-				   BasicBlock *exit);
-    void replicateBasicblocks(std::set<BasicBlock *> &new_graph,
-			      std::map<Value *, Value *> &reference_map,
-			      const std::set<BasicBlock *> &graph);
-    void updateReferences(const std::set<BasicBlock *>&graph,
-			  const std::map<Value *, Value *> &reference_map);
-    bool isReplicable(const Instruction *i);
-  };
-
-  char WorkitemReplication::ID = 0;
   static
   RegisterPass<WorkitemReplication> X("workitems",
 				      "Workitem replication pass",
 				      false, false);
 }
+
+char WorkitemReplication::ID = 0;
 
 bool
 WorkitemReplication::doInitialization(Module &M)

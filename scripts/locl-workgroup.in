@@ -77,7 +77,7 @@ else
 fi
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -kernel=${kernel} -size=${size_x} ${size_y} ${size_z} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -o ${output_file} ${linked_bc}
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -kernel=${kernel} -size=${size_x} ${size_y} ${size_z} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -o ${output_file} ${linked_bc}
 fi

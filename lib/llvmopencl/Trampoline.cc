@@ -61,7 +61,7 @@ Trampoline::runOnModule(Module &M)
   Function **functions_to_delete = new Function *[M.size()];
   memset(functions_to_delete, M.size() * sizeof(Function *), 0);
 
-  int index = 0;
+  unsigned index = 0;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     Function &F = *i;
@@ -79,6 +79,9 @@ Trampoline::runOnModule(Module &M)
 	     ee = F.arg_end();
 	   ii != ee; ++ii)
 	++num_args;
+
+      if (num_args == 0)
+	continue;
 
       Constant **is_pointer = new Constant *[num_args];
       

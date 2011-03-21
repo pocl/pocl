@@ -29,9 +29,9 @@ extern uint _group_x;
 extern uint _group_y;
 extern uint _group_z;
 
-extern uint _local_x;
-extern uint _local_y;
-extern uint _local_z;
+uint _local_x;
+uint _local_y;
+uint _local_z;
 
 uint
 get_global_id(uint dimindx)

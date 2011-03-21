@@ -95,7 +95,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 llvmopencl_la_LIBADD =
-am_llvmopencl_la_OBJECTS = Trampoline.lo Workgroup.lo
+am_llvmopencl_la_OBJECTS = Trampoline.lo Workgroup.lo \
+	BarrierTailReplication.lo WorkitemReplication.lo
 llvmopencl_la_OBJECTS = $(am_llvmopencl_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
@@ -242,7 +243,10 @@ pkglib_LTLIBRARIES = llvmopencl.la
 AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
 AM_LDFLAGS = -module -export-dynamic 
 #`@LLVM_CONFIG@ --ldflags`
-llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc
+llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc	\
+			BarrierTailReplication.cc	\
+			WorkitemReplication.cc
+
 all: all-am
 
 .SUFFIXES:
@@ -317,8 +321,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BarrierTailReplication.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Trampoline.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Workgroup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorkitemReplication.Plo@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -548,6 +554,8 @@ uninstall-am: uninstall-pkglibLTLIBRARIES
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-pkglibLTLIBRARIES
 
+#llvmopencl_la_SOURCES = BarrierTailReplication.cc \
+#			WorkitemReplication.cc
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

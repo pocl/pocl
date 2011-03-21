@@ -16126,7 +16126,7 @@ _ACEOF
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
-ac_config_files="$ac_config_files Makefile include/Makefile include/CL/Makefile lib/Makefile lib/CL/Makefile lib/llvmopencl/Makefile lib/kernel/Makefile examples/Makefile examples/example1/Makefile scripts/Makefile"
+ac_config_files="$ac_config_files Makefile include/Makefile include/CL/Makefile lib/Makefile lib/CL/Makefile lib/llvmopencl/Makefile lib/kernel/Makefile examples/Makefile examples/example1/Makefile examples/barriers/Makefile scripts/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -17255,6 +17255,7 @@ do
     "lib/kernel/Makefile") CONFIG_FILES="$CONFIG_FILES lib/kernel/Makefile" ;;
     "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
     "examples/example1/Makefile") CONFIG_FILES="$CONFIG_FILES examples/example1/Makefile" ;;
+    "examples/barriers/Makefile") CONFIG_FILES="$CONFIG_FILES examples/barriers/Makefile" ;;
     "scripts/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
