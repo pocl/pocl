@@ -130,7 +130,7 @@ exec_dot_product_kernel(const char *program_source,
  
   // set work-item dimensions 
   global_work_size[0] = n; 
-  local_work_size[0]= 1; 
+  local_work_size[0]= 2; 
  
   // execute kernel 
   err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, 

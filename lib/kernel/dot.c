@@ -1,4 +1,4 @@
-/* OpenCL runtime library: dot()
+/* OpenCL built-in library: dot()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    

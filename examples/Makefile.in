@@ -156,6 +156,7 @@ LIBS_TRANSFORMUTILS = @LIBS_TRANSFORMUTILS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LLC = @LLC@
+LLVM_AS = @LLVM_AS@
 LLVM_CONFIG = @LLVM_CONFIG@
 LLVM_LD = @LLVM_LD@
 LN_S = @LN_S@
@@ -238,7 +239,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = example1
+SUBDIRS = example1 barriers
 all: all-recursive
 
 .SUFFIXES:

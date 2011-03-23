@@ -95,7 +95,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 llvmopencl_la_DEPENDENCIES =
-am_llvmopencl_la_OBJECTS = Trampoline.lo Workgroup.lo
+am_llvmopencl_la_OBJECTS = Trampoline.lo Workgroup.lo \
+	BarrierTailReplication.lo WorkitemReplication.lo
 llvmopencl_la_OBJECTS = $(am_llvmopencl_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
@@ -158,6 +159,7 @@ LIBS_TRANSFORMUTILS = @LIBS_TRANSFORMUTILS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LLC = @LLC@
+LLVM_AS = @LLVM_AS@
 LLVM_CONFIG = @LLVM_CONFIG@
 LLVM_LD = @LLVM_LD@
 LN_S = @LN_S@
@@ -243,7 +245,10 @@ top_srcdir = @top_srcdir@
 pkglib_LTLIBRARIES = llvmopencl.la
 AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
 AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
-llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc
+llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc	\
+			BarrierTailReplication.cc	\
+			WorkitemReplication.cc
+
 llvmopencl_la_LIBADD = -lLLVMTransformUtils
 all: all-am
 
@@ -319,8 +324,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BarrierTailReplication.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Trampoline.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Workgroup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorkitemReplication.Plo@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

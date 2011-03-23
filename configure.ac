@@ -40,16 +40,17 @@ AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 AC_PATH_PROG([OPT], [opt])
 AC_PATH_PROG([LLVM_LD], [llvm-ld])
 AC_PATH_PROG([LLC], [llc])
+AC_PATH_PROG([LLVM_AS], [llvm-as])
 
 old_LDFLAGS=$LDFLAGS
 LDFLAGS=-bundle
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([[
 int
 test(int a, int b)
 {
   return a + b;
 }
-],[SHARED=-bundle], [SHARED=-shared])
+]])],[SHARED=-bundle], [SHARED=-shared])
 LDFLAGS=$old_LDFLAGS
 AC_SUBST([SHARED])
 
@@ -87,6 +88,7 @@ AC_CONFIG_FILES([Makefile
 		 lib/kernel/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
+		 examples/barriers/Makefile
                  scripts/Makefile])
 
 AC_OUTPUT

@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/lib/kernel.
+# Makefile.am for llvmopencl/examples/example1.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,19 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX=
+noinst_PROGRAMS = barriers
 
-pkglib_LIBRARIES = libkernel.a
+barriers_SOURCES = barriers.c barriers.cl
+barriers_LDADD = ../../lib/CL/libCL.la
 
-libkernel_a_SOURCES = get_global_id.c		\
-                      dot.c			\
-                      barrier.ll
-
-RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
-AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
-
-.c.o:
-	$(CLANG) $(AM_CPPFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'
