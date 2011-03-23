@@ -140,6 +140,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
   
+  arguments = NULL;
   if (kernel->num_args > 0)
     arguments = malloc (sizeof (struct locl_argument_list));
   

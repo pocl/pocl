@@ -22,14 +22,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+LEX=
+
 pkglib_LIBRARIES = libkernel.a
 
 libkernel_a_SOURCES = get_global_id.c		\
                       dot.c			\
-                      barrier.c
+                      barrier.ll
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+barrier.o: barrier.ll
+	$(LLVM_AS) -o $@ $<

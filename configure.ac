@@ -40,6 +40,7 @@ AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 AC_PATH_PROG([OPT], [opt])
 AC_PATH_PROG([LLVM_LD], [llvm-ld])
 AC_PATH_PROG([LLC], [llc])
+AC_PATH_PROG([LLVM_AS], [llvm-as])
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"],[Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [Path to LLVM linker.])

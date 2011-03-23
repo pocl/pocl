@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-__attribute__ ((noinline)) void
+__attribute__ ((noinline)) volatile void
 barrier (cl_mem_fence_flags flags)
 {
 }

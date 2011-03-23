@@ -38,6 +38,7 @@ static bool find_subgraph(std::set<BasicBlock *> &subgraph,
 static void purge_subgraph(std::set<BasicBlock *> &new_subgraph,
 			   const std::set<BasicBlock *> &original_subgraph,
 			   const BasicBlock *exit);
+static void split_barriers(Function &F);
 
 cl::list<int>
 LocalSize("local-size",
@@ -73,11 +74,17 @@ WorkitemReplication::runOnFunction(Function &F)
 {
   BasicBlockSet subgraph;
 
+  // Split basicblock at barriers. Barrier blocks must have a single
+  // predecessor, single sucessor, and just the barrier call and
+  // the terminator as body.
+  split_barriers(F);
+
   BasicBlock *exit = findBarriersDFS(&(F.getEntryBlock()),
 				     &(F.getEntryBlock()),
 				     subgraph);
 
-  replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
+  if (exit != NULL)
+    replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
 
   return true;
 }
@@ -354,4 +361,34 @@ WorkitemReplication::isReplicable(const Instruction *i)
   }
 
   return true;
+}
+
+static void
+split_barriers(Function &F)
+{
+  std::set<Instruction *> SplitPoints;
+
+  for (Function::iterator i = F.begin(), e = F.end();
+       i != e; ++i) {
+    BasicBlock *b = i;
+    for (BasicBlock::iterator i = b->begin(), e = b->end();
+	 i != e; ++i) {
+      if (CallInst *c = dyn_cast<CallInst>(i)) {
+	if (Function *f = c->getCalledFunction()) {
+	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
+	    BasicBlock::iterator j = i;
+	    SplitPoints.insert(j);
+	    SplitPoints.insert(++j);
+	  }
+	}
+      }
+    }
+  }
+
+  for (std::set<Instruction *>::iterator i = SplitPoints.begin(),
+	 e = SplitPoints.end();
+       i != e; ++i) {
+    BasicBlock *b = (*i)->getParent();
+    b->splitBasicBlock(*i);
+  }
 }
