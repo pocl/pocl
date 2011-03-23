@@ -110,9 +110,8 @@ libCL_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(libCL_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
-depcomp = $(SHELL) $(top_srcdir)/config/depcomp
-am__depfiles_maybe = depfiles
-am__mv = mv -f
+depcomp =
+am__depfiles_maybe =
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -288,9 +287,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign lib/CL/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps lib/CL/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign lib/CL/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps lib/CL/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -349,163 +348,65 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clBuildProgram.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clCreateBuffer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clCreateCommandQueue.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clCreateContextFromType.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clCreateKernel.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clCreateProgramWithSource.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clEnqueueNDRangeKernel.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clEnqueueReadBuffer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clGetContextInfo.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clReleaseCommandQueue.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clReleaseContext.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clReleaseKernel.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clReleaseMemObject.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clReleaseProgram.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-clSetKernelArg.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-devices.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libCL_la-native.Plo@am__quote@
-
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+	$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+	$(LTCOMPILE) -c -o $@ $<
 
 libCL_la-clCreateContextFromType.lo: clCreateContextFromType.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clCreateContextFromType.lo -MD -MP -MF $(DEPDIR)/libCL_la-clCreateContextFromType.Tpo -c -o libCL_la-clCreateContextFromType.lo `test -f 'clCreateContextFromType.c' || echo '$(srcdir)/'`clCreateContextFromType.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clCreateContextFromType.Tpo $(DEPDIR)/libCL_la-clCreateContextFromType.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clCreateContextFromType.c' object='libCL_la-clCreateContextFromType.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateContextFromType.lo `test -f 'clCreateContextFromType.c' || echo '$(srcdir)/'`clCreateContextFromType.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateContextFromType.lo `test -f 'clCreateContextFromType.c' || echo '$(srcdir)/'`clCreateContextFromType.c
 
 libCL_la-clReleaseContext.lo: clReleaseContext.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clReleaseContext.lo -MD -MP -MF $(DEPDIR)/libCL_la-clReleaseContext.Tpo -c -o libCL_la-clReleaseContext.lo `test -f 'clReleaseContext.c' || echo '$(srcdir)/'`clReleaseContext.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clReleaseContext.Tpo $(DEPDIR)/libCL_la-clReleaseContext.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clReleaseContext.c' object='libCL_la-clReleaseContext.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseContext.lo `test -f 'clReleaseContext.c' || echo '$(srcdir)/'`clReleaseContext.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseContext.lo `test -f 'clReleaseContext.c' || echo '$(srcdir)/'`clReleaseContext.c
 
 libCL_la-clGetContextInfo.lo: clGetContextInfo.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clGetContextInfo.lo -MD -MP -MF $(DEPDIR)/libCL_la-clGetContextInfo.Tpo -c -o libCL_la-clGetContextInfo.lo `test -f 'clGetContextInfo.c' || echo '$(srcdir)/'`clGetContextInfo.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clGetContextInfo.Tpo $(DEPDIR)/libCL_la-clGetContextInfo.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clGetContextInfo.c' object='libCL_la-clGetContextInfo.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clGetContextInfo.lo `test -f 'clGetContextInfo.c' || echo '$(srcdir)/'`clGetContextInfo.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clGetContextInfo.lo `test -f 'clGetContextInfo.c' || echo '$(srcdir)/'`clGetContextInfo.c
 
 libCL_la-clCreateCommandQueue.lo: clCreateCommandQueue.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clCreateCommandQueue.lo -MD -MP -MF $(DEPDIR)/libCL_la-clCreateCommandQueue.Tpo -c -o libCL_la-clCreateCommandQueue.lo `test -f 'clCreateCommandQueue.c' || echo '$(srcdir)/'`clCreateCommandQueue.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clCreateCommandQueue.Tpo $(DEPDIR)/libCL_la-clCreateCommandQueue.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clCreateCommandQueue.c' object='libCL_la-clCreateCommandQueue.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateCommandQueue.lo `test -f 'clCreateCommandQueue.c' || echo '$(srcdir)/'`clCreateCommandQueue.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateCommandQueue.lo `test -f 'clCreateCommandQueue.c' || echo '$(srcdir)/'`clCreateCommandQueue.c
 
 libCL_la-clReleaseCommandQueue.lo: clReleaseCommandQueue.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clReleaseCommandQueue.lo -MD -MP -MF $(DEPDIR)/libCL_la-clReleaseCommandQueue.Tpo -c -o libCL_la-clReleaseCommandQueue.lo `test -f 'clReleaseCommandQueue.c' || echo '$(srcdir)/'`clReleaseCommandQueue.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clReleaseCommandQueue.Tpo $(DEPDIR)/libCL_la-clReleaseCommandQueue.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clReleaseCommandQueue.c' object='libCL_la-clReleaseCommandQueue.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseCommandQueue.lo `test -f 'clReleaseCommandQueue.c' || echo '$(srcdir)/'`clReleaseCommandQueue.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseCommandQueue.lo `test -f 'clReleaseCommandQueue.c' || echo '$(srcdir)/'`clReleaseCommandQueue.c
 
 libCL_la-clCreateBuffer.lo: clCreateBuffer.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clCreateBuffer.lo -MD -MP -MF $(DEPDIR)/libCL_la-clCreateBuffer.Tpo -c -o libCL_la-clCreateBuffer.lo `test -f 'clCreateBuffer.c' || echo '$(srcdir)/'`clCreateBuffer.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clCreateBuffer.Tpo $(DEPDIR)/libCL_la-clCreateBuffer.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clCreateBuffer.c' object='libCL_la-clCreateBuffer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateBuffer.lo `test -f 'clCreateBuffer.c' || echo '$(srcdir)/'`clCreateBuffer.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateBuffer.lo `test -f 'clCreateBuffer.c' || echo '$(srcdir)/'`clCreateBuffer.c
 
 libCL_la-clEnqueueReadBuffer.lo: clEnqueueReadBuffer.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clEnqueueReadBuffer.lo -MD -MP -MF $(DEPDIR)/libCL_la-clEnqueueReadBuffer.Tpo -c -o libCL_la-clEnqueueReadBuffer.lo `test -f 'clEnqueueReadBuffer.c' || echo '$(srcdir)/'`clEnqueueReadBuffer.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clEnqueueReadBuffer.Tpo $(DEPDIR)/libCL_la-clEnqueueReadBuffer.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clEnqueueReadBuffer.c' object='libCL_la-clEnqueueReadBuffer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clEnqueueReadBuffer.lo `test -f 'clEnqueueReadBuffer.c' || echo '$(srcdir)/'`clEnqueueReadBuffer.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clEnqueueReadBuffer.lo `test -f 'clEnqueueReadBuffer.c' || echo '$(srcdir)/'`clEnqueueReadBuffer.c
 
 libCL_la-clReleaseMemObject.lo: clReleaseMemObject.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clReleaseMemObject.lo -MD -MP -MF $(DEPDIR)/libCL_la-clReleaseMemObject.Tpo -c -o libCL_la-clReleaseMemObject.lo `test -f 'clReleaseMemObject.c' || echo '$(srcdir)/'`clReleaseMemObject.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clReleaseMemObject.Tpo $(DEPDIR)/libCL_la-clReleaseMemObject.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clReleaseMemObject.c' object='libCL_la-clReleaseMemObject.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseMemObject.lo `test -f 'clReleaseMemObject.c' || echo '$(srcdir)/'`clReleaseMemObject.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseMemObject.lo `test -f 'clReleaseMemObject.c' || echo '$(srcdir)/'`clReleaseMemObject.c
 
 libCL_la-clCreateProgramWithSource.lo: clCreateProgramWithSource.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clCreateProgramWithSource.lo -MD -MP -MF $(DEPDIR)/libCL_la-clCreateProgramWithSource.Tpo -c -o libCL_la-clCreateProgramWithSource.lo `test -f 'clCreateProgramWithSource.c' || echo '$(srcdir)/'`clCreateProgramWithSource.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clCreateProgramWithSource.Tpo $(DEPDIR)/libCL_la-clCreateProgramWithSource.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clCreateProgramWithSource.c' object='libCL_la-clCreateProgramWithSource.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateProgramWithSource.lo `test -f 'clCreateProgramWithSource.c' || echo '$(srcdir)/'`clCreateProgramWithSource.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateProgramWithSource.lo `test -f 'clCreateProgramWithSource.c' || echo '$(srcdir)/'`clCreateProgramWithSource.c
 
 libCL_la-clReleaseProgram.lo: clReleaseProgram.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clReleaseProgram.lo -MD -MP -MF $(DEPDIR)/libCL_la-clReleaseProgram.Tpo -c -o libCL_la-clReleaseProgram.lo `test -f 'clReleaseProgram.c' || echo '$(srcdir)/'`clReleaseProgram.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clReleaseProgram.Tpo $(DEPDIR)/libCL_la-clReleaseProgram.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clReleaseProgram.c' object='libCL_la-clReleaseProgram.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseProgram.lo `test -f 'clReleaseProgram.c' || echo '$(srcdir)/'`clReleaseProgram.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseProgram.lo `test -f 'clReleaseProgram.c' || echo '$(srcdir)/'`clReleaseProgram.c
 
 libCL_la-clBuildProgram.lo: clBuildProgram.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clBuildProgram.lo -MD -MP -MF $(DEPDIR)/libCL_la-clBuildProgram.Tpo -c -o libCL_la-clBuildProgram.lo `test -f 'clBuildProgram.c' || echo '$(srcdir)/'`clBuildProgram.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clBuildProgram.Tpo $(DEPDIR)/libCL_la-clBuildProgram.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clBuildProgram.c' object='libCL_la-clBuildProgram.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clBuildProgram.lo `test -f 'clBuildProgram.c' || echo '$(srcdir)/'`clBuildProgram.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clBuildProgram.lo `test -f 'clBuildProgram.c' || echo '$(srcdir)/'`clBuildProgram.c
 
 libCL_la-clCreateKernel.lo: clCreateKernel.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clCreateKernel.lo -MD -MP -MF $(DEPDIR)/libCL_la-clCreateKernel.Tpo -c -o libCL_la-clCreateKernel.lo `test -f 'clCreateKernel.c' || echo '$(srcdir)/'`clCreateKernel.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clCreateKernel.Tpo $(DEPDIR)/libCL_la-clCreateKernel.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clCreateKernel.c' object='libCL_la-clCreateKernel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateKernel.lo `test -f 'clCreateKernel.c' || echo '$(srcdir)/'`clCreateKernel.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clCreateKernel.lo `test -f 'clCreateKernel.c' || echo '$(srcdir)/'`clCreateKernel.c
 
 libCL_la-clReleaseKernel.lo: clReleaseKernel.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clReleaseKernel.lo -MD -MP -MF $(DEPDIR)/libCL_la-clReleaseKernel.Tpo -c -o libCL_la-clReleaseKernel.lo `test -f 'clReleaseKernel.c' || echo '$(srcdir)/'`clReleaseKernel.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clReleaseKernel.Tpo $(DEPDIR)/libCL_la-clReleaseKernel.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clReleaseKernel.c' object='libCL_la-clReleaseKernel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseKernel.lo `test -f 'clReleaseKernel.c' || echo '$(srcdir)/'`clReleaseKernel.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clReleaseKernel.lo `test -f 'clReleaseKernel.c' || echo '$(srcdir)/'`clReleaseKernel.c
 
 libCL_la-clSetKernelArg.lo: clSetKernelArg.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clSetKernelArg.lo -MD -MP -MF $(DEPDIR)/libCL_la-clSetKernelArg.Tpo -c -o libCL_la-clSetKernelArg.lo `test -f 'clSetKernelArg.c' || echo '$(srcdir)/'`clSetKernelArg.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clSetKernelArg.Tpo $(DEPDIR)/libCL_la-clSetKernelArg.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clSetKernelArg.c' object='libCL_la-clSetKernelArg.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clSetKernelArg.lo `test -f 'clSetKernelArg.c' || echo '$(srcdir)/'`clSetKernelArg.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clSetKernelArg.lo `test -f 'clSetKernelArg.c' || echo '$(srcdir)/'`clSetKernelArg.c
 
 libCL_la-clEnqueueNDRangeKernel.lo: clEnqueueNDRangeKernel.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-clEnqueueNDRangeKernel.lo -MD -MP -MF $(DEPDIR)/libCL_la-clEnqueueNDRangeKernel.Tpo -c -o libCL_la-clEnqueueNDRangeKernel.lo `test -f 'clEnqueueNDRangeKernel.c' || echo '$(srcdir)/'`clEnqueueNDRangeKernel.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-clEnqueueNDRangeKernel.Tpo $(DEPDIR)/libCL_la-clEnqueueNDRangeKernel.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='clEnqueueNDRangeKernel.c' object='libCL_la-clEnqueueNDRangeKernel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clEnqueueNDRangeKernel.lo `test -f 'clEnqueueNDRangeKernel.c' || echo '$(srcdir)/'`clEnqueueNDRangeKernel.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-clEnqueueNDRangeKernel.lo `test -f 'clEnqueueNDRangeKernel.c' || echo '$(srcdir)/'`clEnqueueNDRangeKernel.c
 
 libCL_la-devices.lo: devices/devices.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-devices.lo -MD -MP -MF $(DEPDIR)/libCL_la-devices.Tpo -c -o libCL_la-devices.lo `test -f 'devices/devices.c' || echo '$(srcdir)/'`devices/devices.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-devices.Tpo $(DEPDIR)/libCL_la-devices.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='devices/devices.c' object='libCL_la-devices.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-devices.lo `test -f 'devices/devices.c' || echo '$(srcdir)/'`devices/devices.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-devices.lo `test -f 'devices/devices.c' || echo '$(srcdir)/'`devices/devices.c
 
 libCL_la-native.lo: devices/native/native.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libCL_la-native.lo -MD -MP -MF $(DEPDIR)/libCL_la-native.Tpo -c -o libCL_la-native.lo `test -f 'devices/native/native.c' || echo '$(srcdir)/'`devices/native/native.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libCL_la-native.Tpo $(DEPDIR)/libCL_la-native.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='devices/native/native.c' object='libCL_la-native.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-native.lo `test -f 'devices/native/native.c' || echo '$(srcdir)/'`devices/native/native.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCL_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libCL_la-native.lo `test -f 'devices/native/native.c' || echo '$(srcdir)/'`devices/native/native.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -633,7 +534,6 @@ clean-am: clean-generic clean-libtool clean-pkglibLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -679,7 +579,6 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
