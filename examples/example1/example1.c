@@ -50,6 +50,8 @@ main (void)
 
   fread (source, source_size, 1, source_file);
 
+  fclose (source_file);
+
   srcA = (cl_float4 *) malloc (N * sizeof (cl_float4));
   srcB = (cl_float4 *) malloc (N * sizeof (cl_float4));
   dst = (cl_float *) malloc (N * sizeof (cl_float));

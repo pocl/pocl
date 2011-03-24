@@ -97,8 +97,9 @@ LIBRARIES = $(pkglib_LIBRARIES)
 ARFLAGS = cru
 libkernel_a_AR = $(AR) $(ARFLAGS)
 libkernel_a_LIBADD =
-am_libkernel_a_OBJECTS = get_global_id.$(OBJEXT) dot.$(OBJEXT) \
-	barrier.$(OBJEXT)
+am_libkernel_a_OBJECTS = get_global_id.$(OBJEXT) \
+	get_group_id.$(OBJEXT) get_local_id.$(OBJEXT) dot.$(OBJEXT) \
+	mad24.$(OBJEXT) barrier.$(OBJEXT)
 libkernel_a_OBJECTS = $(am_libkernel_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
@@ -260,7 +261,10 @@ top_srcdir = @top_srcdir@
 LEX = 
 pkglib_LIBRARIES = libkernel.a
 libkernel_a_SOURCES = get_global_id.c		\
+                      get_group_id.c		\
+                      get_local_id.c		\
                       dot.c			\
+                      mad24.c			\
                       barrier.ll
 
 all: all-am
@@ -343,6 +347,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/barrier.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_global_id.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_group_id.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_local_id.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mad24.Po@am__quote@
 
 .c.obj:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`

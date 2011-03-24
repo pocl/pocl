@@ -1,5 +1,4 @@
-/* llvmopencl/_kernel.h - OpenCL types and runtime library
-   functions declarations.
+/* OpenCL built-in library: mad24()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -22,23 +21,9 @@
    THE SOFTWARE.
 */
 
-#define __kernel __attribute__ ((noinline))
-#define __global __attribute__ ((address_space(3)))
-#define __local __attribute__ ((address_space(1)))
+int
+mad24(int x, int y, int z)
+{
+  return x * y + z;
+}
 
-typedef float float4 __attribute__((ext_vector_type(4)));
-typedef unsigned uint;
-typedef enum {
-  CLK_LOCAL_MEM_FENCE = 0x1,
-  CLK_GLOBAL_MEM_FECE = 0x2
-} cl_mem_fence_flags;
-
-uint get_global_id(uint);
-uint get_group_id(uint);
-uint get_local_id(uint);
-
-int mad24(int x, int y, int z);
-
-float dot(float4 a, float4 b);
-
-__attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);

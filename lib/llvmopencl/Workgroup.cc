@@ -135,26 +135,20 @@ createTrampoline(Module &M, Function *F)
   Function::arg_iterator ai = workgroup->arg_begin();
 
   GlobalVariable *x = M.getGlobalVariable("_group_x");
-  if (x != NULL) {
-    x->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+  if (x != NULL)
     builder.CreateStore(ai, x);
-  }
 
   ++ai;
 
   GlobalVariable *y = M.getGlobalVariable("_group_y");
-  if (y != NULL) {
-    y->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+  if (y != NULL)
     builder.CreateStore(ai, y);
-  }
 
   ++ai;
 
   GlobalVariable *z = M.getGlobalVariable("_group_z");
-  if (z != NULL) {
-    z->setInitializer(UndefValue::get(IntegerType::get(M.getContext(), 32)));
+  if (z != NULL)
     builder.CreateStore(ai, z);
-  }
 
   SmallVector<Value*, 8> arguments;
   int i = 0;

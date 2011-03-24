@@ -1,4 +1,4 @@
-/* barriers - OpenCL synchronization barriers example.
+/* example2 - Matric transpose example from OpenCL specification.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -25,7 +25,11 @@
 #include <stdio.h>
 #include <CL/opencl.h>
 
-#define N 4
+#define WIDTH 256
+#define HEIGHT 4096
+#define PADDING 32
+
+static void delete_memobjs(cl_mem *memobjs, int n) ;
 
 int
 main (void)
@@ -33,17 +37,21 @@ main (void)
   FILE *source_file;
   char *source;
   int source_size;
-  cl_context context;
+  cl_float *input, *output;
+  int i;
+  int j;
+  cl_context  context; 
   size_t cb;
   cl_device_id *devices;
   cl_command_queue cmd_queue;
   cl_program program;
   cl_int err;
   cl_kernel kernel;
-  size_t global_work_size[1];
-  size_t local_work_size[1];
+  cl_mem memobjs[2];
+  size_t global_work_size[2];
+  size_t local_work_size[2];
 
-  source_file = fopen (SRCDIR "/barriers.cl", "r");
+  source_file = fopen (SRCDIR "/example2.cl", "r");
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
@@ -53,7 +61,16 @@ main (void)
 
   fread (source, source_size, 1, source_file);
 
-  fclose(source_file);
+  fclose (source_file);
+
+  input = (cl_float *) malloc (WIDTH * HEIGHT * sizeof (cl_float));
+  output = (cl_float *) malloc (WIDTH * (HEIGHT + PADDING) * sizeof (cl_float));
+
+  for (i = 0; i < HEIGHT; ++i)
+    {
+      for (j = 0; j < WIDTH; ++j)
+	input[i * WIDTH + j] = drand48();
+    }
   
   context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_GPU, 
 				    NULL, NULL, NULL); 
@@ -73,6 +90,27 @@ main (void)
     } 
   free(devices); 
 
+  memobjs[0] = clCreateBuffer(context,
+			      CL_MEM_READ_WRITE,
+			      sizeof(cl_float) * WIDTH * (HEIGHT + PADDING), NULL, NULL);
+  if (memobjs[0] == (cl_mem)0) 
+    { 
+      clReleaseCommandQueue(cmd_queue); 
+      clReleaseContext(context); 
+      return -1; 
+    } 
+
+  memobjs[1] = clCreateBuffer(context,
+			      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+			      sizeof(cl_float) * WIDTH * HEIGHT, input, NULL);
+  if (memobjs[1] == (cl_mem)0) 
+    { 
+      delete_memobjs(memobjs, 1);
+      clReleaseCommandQueue(cmd_queue); 
+      clReleaseContext(context); 
+      return -1; 
+    } 
+
   program = clCreateProgramWithSource(context, 
 				      1, (const char**)&source, NULL, NULL); 
   if (program == (cl_program)0) 
@@ -91,7 +129,7 @@ main (void)
       return -1; 
     } 
  
-  kernel = clCreateKernel(program, "barriers", NULL); 
+  kernel = clCreateKernel(program, "matrix_transpose", NULL); 
   if (kernel == (cl_kernel)0) 
     { 
       clReleaseProgram(program); 
@@ -100,17 +138,79 @@ main (void)
       return -1; 
     } 
 
-  global_work_size[0] = N; 
-  local_work_size[0]= 2; 
+  err = clSetKernelArg(kernel,  0,  
+		       sizeof(cl_mem), (void *) &memobjs[0]); 
+  err |= clSetKernelArg(kernel, 1,  
+			sizeof(cl_mem), (void *) &memobjs[1]); 
+  err |= clSetKernelArg(kernel, 2,
+			33 + 66 * 15 + 31, NULL);
  
-  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, 
+  if (err != CL_SUCCESS) 
+    { 
+      delete_memobjs(memobjs, 2); 
+      clReleaseKernel(kernel); 
+      clReleaseProgram(program); 
+      clReleaseCommandQueue(cmd_queue); 
+      clReleaseContext(context); 
+      return -1; 
+    } 
+
+  global_work_size[0] = 2 * WIDTH; 
+  global_work_size[1] = HEIGHT / 32; 
+  local_work_size[0]= 64; 
+  local_work_size[1]= 1; 
+
+  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 2, NULL, 
 			       global_work_size, local_work_size,  
 			       0, NULL, NULL); 
 
+  if (err != CL_SUCCESS) 
+    { 
+      delete_memobjs(memobjs, 2); 
+      clReleaseKernel(kernel); 
+      clReleaseProgram(program); 
+      clReleaseCommandQueue(cmd_queue); 
+      clReleaseContext(context); 
+      return -1; 
+    } 
+ 
+  err = clEnqueueReadBuffer(cmd_queue, memobjs[0], CL_TRUE, 
+			    0, WIDTH * (HEIGHT + PADDING) * sizeof(cl_float), output, 
+			    0, NULL, NULL); 
+  if (err != CL_SUCCESS) 
+    { 
+      delete_memobjs(memobjs, 2); 
+      clReleaseKernel(kernel); 
+      clReleaseProgram(program); 
+      clReleaseCommandQueue(cmd_queue); 
+      clReleaseContext(context); 
+      return -1; 
+    } 
+ 
+  delete_memobjs(memobjs, 2); 
   clReleaseKernel(kernel); 
   clReleaseProgram(program); 
   clReleaseCommandQueue(cmd_queue); 
   clReleaseContext(context); 
 
+  for (i = 0; i < HEIGHT; ++i)
+    {
+      for (j = 0; j < WIDTH; ++j) {
+	if (input[i * WIDTH + j] != output[j * (HEIGHT + PADDING) + i]) {
+	  printf ("FAIL\n");
+	  return -1;
+	}
+      }
+    }
+  
+  printf ("OK\n");
   return 0;
 }
+
+static void 
+delete_memobjs(cl_mem *memobjs, int n) 
+{ 
+  int i; 
+  for (i=0; i<n; i++) 
+    clReleaseMemObject(memobjs[i]); 
+} 

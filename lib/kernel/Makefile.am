@@ -27,7 +27,10 @@ LEX=
 pkglib_LIBRARIES = libkernel.a
 
 libkernel_a_SOURCES = get_global_id.c		\
+                      get_group_id.c		\
+                      get_local_id.c		\
                       dot.c			\
+                      mad24.c			\
                       barrier.ll
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib

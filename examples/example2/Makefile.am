@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/examples.
+# Makefile.am for llvmopencl/examples/example2.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,4 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 barriers
+noinst_PROGRAMS = example2
+
+example2_SOURCES = example2.c example2.cl
+example2_LDADD = ../../lib/CL/libCL.la
+
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'

@@ -17,7 +17,7 @@
 
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/examples/barriers.
+# Makefile.am for llvmopencl/examples/example2.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -58,8 +58,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = barriers$(EXEEXT)
-subdir = examples/barriers
+noinst_PROGRAMS = example2$(EXEEXT)
+subdir = examples/example2
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -73,9 +73,9 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_barriers_OBJECTS = barriers.$(OBJEXT)
-barriers_OBJECTS = $(am_barriers_OBJECTS)
-barriers_DEPENDENCIES = ../../lib/CL/libCL.la
+am_example2_OBJECTS = example2.$(OBJEXT)
+example2_OBJECTS = $(am_example2_OBJECTS)
+example2_DEPENDENCIES = ../../lib/CL/libCL.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -89,8 +89,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(barriers_SOURCES)
-DIST_SOURCES = $(barriers_SOURCES)
+SOURCES = $(example2_SOURCES)
+DIST_SOURCES = $(example2_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -220,8 +220,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-barriers_SOURCES = barriers.c barriers.cl
-barriers_LDADD = ../../lib/CL/libCL.la
+example2_SOURCES = example2.c example2.cl
+example2_LDADD = ../../lib/CL/libCL.la
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'
 all: all-am
 
@@ -236,9 +236,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign examples/barriers/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign examples/example2/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign examples/barriers/Makefile
+	  $(AUTOMAKE) --foreign examples/example2/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -266,9 +266,9 @@ clean-noinstPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-barriers$(EXEEXT): $(barriers_OBJECTS) $(barriers_DEPENDENCIES) 
-	@rm -f barriers$(EXEEXT)
-	$(LINK) $(barriers_OBJECTS) $(barriers_LDADD) $(LIBS)
+example2$(EXEEXT): $(example2_OBJECTS) $(example2_DEPENDENCIES) 
+	@rm -f example2$(EXEEXT)
+	$(LINK) $(example2_OBJECTS) $(example2_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -276,7 +276,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/barriers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/example2.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

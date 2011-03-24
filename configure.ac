@@ -89,6 +89,7 @@ AC_CONFIG_FILES([Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
 		 examples/barriers/Makefile
+		 examples/example2/Makefile
                  scripts/Makefile])
 
 AC_OUTPUT

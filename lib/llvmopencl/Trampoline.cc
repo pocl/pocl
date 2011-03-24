@@ -84,6 +84,7 @@ Trampoline::runOnModule(Module &M)
 	continue;
 
       Constant **is_pointer = new Constant *[num_args];
+      Constant **is_local = new Constant *[num_args];
       
       int i = 0;
       for (Function::const_arg_iterator ii = F.arg_begin(),
@@ -102,21 +103,26 @@ Trampoline::runOnModule(Module &M)
 	
 	if (p == NULL) {
 	  is_pointer[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 0);
+	  is_local[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 0);
 	  ++i;
 	  continue;
 	}
 	
 	is_pointer[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 1);
-	++i;
 
 	switch (p->getAddressSpace()) {
 	case LOCL_ADDRESS_SPACE_GLOBAL:
 	case LOCL_ADDRESS_SPACE_CONSTANT:
+	  is_local[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 0);
+	  break;
 	case LOCL_ADDRESS_SPACE_LOCAL:
+	  is_local[i] = ConstantInt::get(IntegerType::get(M.getContext(), 32), 1);
 	  break;
 	default:
 	  llvm_unreachable("Invalid address space qualifier on kernel argument!");
 	}
+
+	++i;
       }
 
       new GlobalVariable(M, VectorType::get(IntegerType::get(M.getContext(), 32), num_args),
@@ -125,11 +131,17 @@ Trampoline::runOnModule(Module &M)
 			 ConstantVector::get(is_pointer, num_args),
 			 "_is_pointer");
 
+      new GlobalVariable(M, VectorType::get(IntegerType::get(M.getContext(), 32), num_args),
+			 true,
+			 GlobalVariable::ExternalLinkage,
+			 ConstantVector::get(is_local, num_args),
+			 "_is_local");
+
       delete[] is_pointer;
-			 
+      delete[] is_local;
     }
   }
-
+  
   for (unsigned i = 0; i < M.size(); ++i) {
     if (functions_to_delete[i] != NULL)
       functions_to_delete[i]->eraseFromParent();

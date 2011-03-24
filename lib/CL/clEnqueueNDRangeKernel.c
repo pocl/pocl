@@ -58,6 +58,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   void *arg;
   size_t *size;
   int *is_pointer;
+  int *is_local;
   cl_mem mem;
   unsigned i, j;
 
@@ -160,7 +161,9 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       arg = lt_dlsym (kernel->dlhandle, arg_string);
       size = (size_t *) lt_dlsym (kernel->dlhandle, size_string);
       is_pointer = (int *) lt_dlsym (kernel->dlhandle, "_is_pointer");
-      if ((arg == NULL) || (size == NULL) || (is_pointer == NULL))
+      is_local = (int *) lt_dlsym (kernel->dlhandle, "_is_local");
+      if ((arg == NULL) || (size == NULL) ||
+	  (is_pointer == NULL) || (is_local == NULL))
 	return CL_INVALID_KERNEL;
 
       if (!is_pointer[i])
@@ -170,19 +173,32 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
 	  p->next = NULL;
 	}
       else
-	{
-	  mem = *(cl_mem *) arg;
-
-	  for (j = 0; j < command_queue->context->num_devices; ++j)
+	{ 
+	  if (!is_local[i]) 
 	    {
-	      if (command_queue->context->devices[j] ==
-		  command_queue->device)
-		break;
+	      mem = *(cl_mem *) arg;
+	      
+	      for (j = 0; j < command_queue->context->num_devices; ++j)
+		{
+		  if (command_queue->context->devices[j] ==
+		      command_queue->device)
+		    break;
+		}
+	      
+	      p->value = &(mem->device_ptrs[j]);
+	      p->size = sizeof (void *);
+	      p->next = NULL;
 	    }
-
-	  p->value = &(mem->device_ptrs[j]);
-	  p->size = sizeof (void *);
-	  p->next = NULL;
+	  else
+	    {
+	      p->value = malloc (sizeof (void *));
+	      *(void **)(p->value) = command_queue->device->malloc(command_queue->device->data,
+								   0,
+								   *size,
+								   NULL);
+	      p->size = sizeof (void *);
+	      p->next = NULL;
+	    }
 	}
     
       if (i + 1 < kernel->num_args) {

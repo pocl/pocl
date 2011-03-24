@@ -35,7 +35,7 @@ clSetKernelArg(cl_kernel kernel,
 {
   char s[ARGUMENT_STRING_LENGTH];
   int error;
-  void *p;
+  void **p;
 
   if (kernel == NULL)
     return CL_INVALID_KERNEL;
@@ -51,7 +51,10 @@ clSetKernelArg(cl_kernel kernel,
   if (p == NULL)
     return CL_INVALID_KERNEL;
 
-  memcpy(p, arg_value, arg_size);
+  if (arg_value == NULL)
+    *p = NULL;
+  else
+    memcpy(p, arg_value, arg_size);
 
   error = snprintf(s, ARGUMENT_STRING_LENGTH,
 		   "_size%u", arg_index);
