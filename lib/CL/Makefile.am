@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkglib_LTLIBRARIES = libCL.la
+lib_LTLIBRARIES = libCL.la
 
 libCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\

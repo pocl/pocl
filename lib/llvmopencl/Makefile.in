@@ -111,6 +111,15 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SOURCES = $(llvmopencl_la_SOURCES)
 DIST_SOURCES = $(llvmopencl_la_SOURCES)
 ETAGS = etags
@@ -245,9 +254,9 @@ top_srcdir = @top_srcdir@
 pkglib_LTLIBRARIES = llvmopencl.la
 AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
 AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
-llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc	\
-			BarrierTailReplication.cc	\
-			WorkitemReplication.cc
+llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc				\
+			BarrierTailReplication.h BarrierTailReplication.cc	\
+			WorkitemReplication.h WorkitemReplication.cc
 
 llvmopencl_la_LIBADD = -lLLVMTransformUtils
 all: all-am

@@ -30,8 +30,9 @@ libkernel_a_SOURCES = get_global_id.c		\
                       get_group_id.c		\
                       get_local_id.c		\
                       dot.c			\
-                      mad24.c			\
-                      barrier.ll
+                      mad24.c
+libkernel_a_LIBADD = barrier.o
+EXTRA_DIST = barrier.ll
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
