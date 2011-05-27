@@ -71,8 +71,7 @@ Trampoline::runOnModule(Module &M)
       functions_to_delete[index] = &F;
       ++index;
     } else {
-      while (!F.empty())
-	F.front().eraseFromParent();
+      F.deleteBody();
 
       num_args = 0;
       for (Function::const_arg_iterator ii = F.arg_begin(),

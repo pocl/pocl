@@ -1,3 +1,4 @@
+
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
@@ -88,8 +89,9 @@ AC_CONFIG_FILES([Makefile
 		 lib/kernel/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
-		 examples/barriers/Makefile
 		 examples/example2/Makefile
+		 examples/barriers/Makefile
+		 examples/forloops/Makefile
                  scripts/Makefile])
 
 AC_OUTPUT

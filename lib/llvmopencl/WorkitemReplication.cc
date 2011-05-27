@@ -106,6 +106,11 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
 				     BasicBlock *entry,
 				     BasicBlockSet &subgraph)
 {
+  // Do nothing if basicblock already visited, to avoid
+  // infinite recursion when processing loops.
+  if (subgraph.count(bb))
+    return NULL;
+
   TerminatorInst *t = bb->getTerminator();
   
   if (block_has_barrier(bb) &&
