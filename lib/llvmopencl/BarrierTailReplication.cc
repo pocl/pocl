@@ -32,7 +32,7 @@ using namespace locl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
-static void find_barriers_dfs(BasicBlock *bb);
+static void find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs);
 static bool block_has_barrier(const BasicBlock *bb);
 static BasicBlock *replicate_subgraph(BasicBlock *entry,
 				      Function *f);
@@ -57,14 +57,21 @@ char BarrierTailReplication::ID = 0;
 bool
 BarrierTailReplication::runOnFunction(Function &F)
 {
-  find_barriers_dfs(&(F.getEntryBlock()));
+  std::set<BasicBlock *> processed_bbs;
+
+  find_barriers_dfs(&(F.getEntryBlock()), processed_bbs);
 
   return true;
 }
 
 static void
-find_barriers_dfs(BasicBlock *bb)
+find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs)
 {
+  if (processed_bbs.count(bb) != 0)
+    return;
+
+  processed_bbs.insert(bb);
+
   Function *f = bb->getParent();
   TerminatorInst *t = bb->getTerminator();
 
@@ -80,7 +87,7 @@ find_barriers_dfs(BasicBlock *bb)
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    find_barriers_dfs(t->getSuccessor(i));
+    find_barriers_dfs(t->getSuccessor(i), processed_bbs);
 }
 
 static bool
@@ -119,6 +126,9 @@ static void
 find_subgraph(std::set<BasicBlock *> &subgraph,
 	      BasicBlock *entry)
 {
+  if (subgraph.count(entry) != 0)
+    return;
+
   subgraph.insert(entry);
 
   const TerminatorInst *t = entry->getTerminator();
