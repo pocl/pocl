@@ -71,6 +71,8 @@ Workgroup::runOnModule(Module &M)
   Function *F;
   
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
+    if (!i->isDeclaration())
+      i->setLinkage(Function::InternalLinkage);
     BI.addFunction(i);
 
     if (i->getName() == Kernel)

@@ -160,7 +160,7 @@ struct _cl_kernel {
   cl_context context;
   cl_program program;
   /* implementation */
-  const char trampoline_filename[LOCL_FILENAME_LENGTH];
+  char trampoline_filename[LOCL_FILENAME_LENGTH];
   lt_dlhandle dlhandle;
   struct _cl_kernel *next;
 };

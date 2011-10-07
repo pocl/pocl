@@ -52,7 +52,7 @@ then
 else
     @OPT@ -load=@pkglibdir@/llvmopencl.so -trampoline -kernel=${kernel} -o ${trampoline_prelink_bc} $1
 fi
-@LLVM_LD@ -link-as-library -export-dynamic -o ${trampoline_bc} ${trampoline_prelink_bc}
-@LLC@ -relocation-model=pic -o ${trampoline_s} ${trampoline_bc}
+@LLVM_LD@ -link-as-library -o ${trampoline_bc} ${trampoline_prelink_bc}
+@LLC@ -o ${trampoline_s} ${trampoline_bc}
 
 gcc @SHARED@ -o ${output_file} -x assembler ${trampoline_s}

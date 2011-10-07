@@ -88,6 +88,9 @@ clCreateProgramWithSource(cl_context context,
   program->context = context;
   program->num_devices = context->num_devices;
   program->devices = context->devices;
+  program->binary_size = 0;
+  program->binary = NULL;
+  program->kernels = NULL;
   
   return program;
 }

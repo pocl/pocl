@@ -36,7 +36,7 @@ clBuildProgram(cl_program program,
                void (CL_CALLBACK *pfn_notify)(cl_program program, void *user_data),
                void *user_data) CL_API_SUFFIX__VERSION_1_0
 {
-  const char source_file_name[L_tmpnam], binary_file_name[L_tmpnam];
+  char source_file_name[L_tmpnam], binary_file_name[L_tmpnam];
   FILE *source_file, *binary_file;
   size_t n;
   struct stat buf;

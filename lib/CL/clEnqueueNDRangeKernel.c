@@ -124,13 +124,13 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
  
   if (stat(BUILDDIR "/scripts/" LOCL_WORKGROUP, &buf) == 0)
     error = snprintf(command, COMMAND_LENGTH,
-		     BUILDDIR "/scripts/" LOCL_WORKGROUP " -k %s -x %lu -y %lu -z %lu -o %s %s",
+		     BUILDDIR "/scripts/" LOCL_WORKGROUP " -k %s -x %u -y %u -z %u -o %s %s",
 		     kernel->function_name,
 		     local_x, local_y, local_z,
 		     parallel_filename, kernel_filename);
   else
     error = snprintf(command, COMMAND_LENGTH,
-		     LOCL_WORKGROUP " -k %s -x %lu -y %lu -z %lu -o %s %s",
+		     LOCL_WORKGROUP " -k %s -x %u -y %u -z %u -o %s %s",
 		     kernel->function_name,
 		     local_x, local_y, local_z,
 		     parallel_filename, kernel_filename);

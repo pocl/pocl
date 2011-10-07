@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <CL/opencl.h>
 
 #define WIDTH 256
@@ -66,6 +67,7 @@ main (void)
   input = (cl_float *) malloc (WIDTH * HEIGHT * sizeof (cl_float));
   output = (cl_float *) malloc (WIDTH * (HEIGHT + PADDING) * sizeof (cl_float));
 
+  srand48(0);
   for (i = 0; i < HEIGHT; ++i)
     {
       for (j = 0; j < WIDTH; ++j)
@@ -143,7 +145,7 @@ main (void)
   err |= clSetKernelArg(kernel, 1,  
 			sizeof(cl_mem), (void *) &memobjs[1]); 
   err |= clSetKernelArg(kernel, 2,
-			33 + 66 * 15 + 31, NULL);
+			(32 + 1) * 32 * sizeof(float), NULL);
  
   if (err != CL_SUCCESS) 
     { 

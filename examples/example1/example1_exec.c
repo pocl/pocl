@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <CL/opencl.h>
 
 void 
