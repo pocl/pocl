@@ -56,10 +56,10 @@ namespace {
 
     virtual bool runOnModule(Module &M);
   };
-  
-  char Workgroup::ID = 0;
-  INITIALIZE_PASS(Workgroup, "workgroup", "Workgroup creation pass", false, false);
 }
+  
+char Workgroup::ID = 0;
+static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 
 bool
 Workgroup::runOnModule(Module &M)
@@ -123,7 +123,7 @@ createTrampoline(Module &M, Function *F)
 {
   IRBuilder<> builder(M.getContext());
 
-  const FunctionType *ft =
+  FunctionType *ft =
     TypeBuilder<void(types::i<32>,
 		     types::i<32>,
 		     types::i<32>), true>::get(M.getContext());
@@ -156,15 +156,15 @@ createTrampoline(Module &M, Function *F)
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++ii) {
-	const Type *t = ii->getType();
-	
-	GlobalVariable *gv =
-	  new GlobalVariable(M, t, false, GlobalVariable::ExternalLinkage,
-			     UndefValue::get(t), "_arg" + Twine(i));
-	arguments.push_back(builder.CreateLoad(gv));
-	++i;
+    Type *t = ii->getType();
+    
+    GlobalVariable *gv =
+      new GlobalVariable(M, t, false, GlobalVariable::ExternalLinkage,
+			 UndefValue::get(t), "_arg" + Twine(i));
+    arguments.push_back(builder.CreateLoad(gv));
+    ++i;
   }
   
-  builder.CreateCall(F, arguments.begin(), arguments.end());
+  builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 }

@@ -27,6 +27,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/PassSupport.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/DerivedTypes.h"
@@ -48,10 +49,10 @@ namespace {
     
     virtual bool runOnModule(Module &M);
   };
-  
-  char Trampoline::ID = 0;
-  INITIALIZE_PASS(Trampoline, "trampoline", "Trampoline identification pass", false, false);
 }
+
+char Trampoline::ID = 0;
+static RegisterPass<Trampoline> X("trampoline", "Trampoline identification pass");
 
 bool
 Trampoline::runOnModule(Module &M)
@@ -89,7 +90,7 @@ Trampoline::runOnModule(Module &M)
       for (Function::const_arg_iterator ii = F.arg_begin(),
 	     ee = F.arg_end();
 	   ii != ee; ++ii) {
-	const Type *t = ii->getType();
+	Type *t = ii->getType();
 
 	new GlobalVariable(M, t, false, GlobalVariable::ExternalLinkage,
 			   UndefValue::get(t), "_arg" + Twine(i));
@@ -127,13 +128,13 @@ Trampoline::runOnModule(Module &M)
       new GlobalVariable(M, VectorType::get(IntegerType::get(M.getContext(), 32), num_args),
 			 true,
 			 GlobalVariable::ExternalLinkage,
-			 ConstantVector::get(is_pointer, num_args),
+			 ConstantVector::get(ArrayRef<Constant*>(is_pointer, num_args)),
 			 "_is_pointer");
 
       new GlobalVariable(M, VectorType::get(IntegerType::get(M.getContext(), 32), num_args),
 			 true,
 			 GlobalVariable::ExternalLinkage,
-			 ConstantVector::get(is_local, num_args),
+			 ConstantVector::get(ArrayRef<Constant*>(is_local, num_args)),
 			 "_is_local");
 
       delete[] is_pointer;

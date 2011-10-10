@@ -22,6 +22,8 @@
 
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include <set>
+#include <map>
 
 namespace locl {
   typedef std::set<llvm::BasicBlock *> BasicBlockSet;

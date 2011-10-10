@@ -45,14 +45,8 @@ LocalSize("local-size",
 	  cl::desc("Local size (x y z)"),
 	  cl::multi_val(3));
 
-namespace {
-  static
-  RegisterPass<WorkitemReplication> X("workitems",
-				      "Workitem replication pass",
-				      false, false);
-}
-
 char WorkitemReplication::ID = 0;
+static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
 
 bool
 WorkitemReplication::doInitialization(Module &M)
@@ -350,6 +344,15 @@ WorkitemReplication::updateReferences(const BasicBlockSet &graph,
 	     reference_map.begin(), e3 = reference_map.end();
 	   i3 != e3; ++i3) {
 	i->replaceUsesOfWith(i3->first, i3->second);
+	// PHINode incoming BBs are no longer uses, we need a special case
+	// for them.
+	if (PHINode *phi = dyn_cast<PHINode>(i)) {
+	  for (unsigned i4 = 0, e4 = phi->getNumIncomingValues(); i4 != e4; ++i4) {
+	    if (phi->getIncomingBlock(i4) == i3->first) {
+	      phi->setIncomingBlock(i4, cast<BasicBlock>(i3->second));
+	    }
+	  }
+	}
       }
     }
   }
