@@ -22,9 +22,10 @@
    THE SOFTWARE.
 */
 
-#define __kernel __attribute__ ((noinline))
+//#define __kernel __attribute__ ((noinline))
 #define __global __attribute__ ((address_space(3)))
-#define __local __attribute__ ((address_space(1)))
+#define __local __attribute__ ((address_space(4)))
+#define __constant __attribute__ ((address_space(5)))
 
 typedef float float4 __attribute__((ext_vector_type(4)));
 typedef unsigned uint;
