@@ -95,7 +95,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 llvmopencl_la_DEPENDENCIES =
-am_llvmopencl_la_OBJECTS = Trampoline.lo Workgroup.lo \
+am_llvmopencl_la_OBJECTS = GenerateHeader.lo Workgroup.lo \
 	BarrierTailReplication.lo WorkitemReplication.lo
 llvmopencl_la_OBJECTS = $(am_llvmopencl_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -254,7 +254,7 @@ top_srcdir = @top_srcdir@
 pkglib_LTLIBRARIES = llvmopencl.la
 AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
 AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
-llvmopencl_la_SOURCES = Trampoline.cc Workgroup.cc				\
+llvmopencl_la_SOURCES = GenerateHeader.cc Workgroup.cc				\
 			BarrierTailReplication.h BarrierTailReplication.cc	\
 			WorkitemReplication.h WorkitemReplication.cc
 
@@ -334,7 +334,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BarrierTailReplication.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Trampoline.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GenerateHeader.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Workgroup.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorkitemReplication.Plo@am__quote@
 

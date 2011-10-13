@@ -68,7 +68,7 @@ Workgroup::runOnModule(Module &M)
 
   BasicInliner BI;
 
-  Function *F;
+  Function *F = NULL;
   
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())

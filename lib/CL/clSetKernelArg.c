@@ -25,46 +25,54 @@
 #include <assert.h>
 #include <string.h>
 
-#define ARGUMENT_STRING_LENGTH 32
-
 CL_API_ENTRY cl_int CL_API_CALL
 clSetKernelArg(cl_kernel kernel,
                cl_uint arg_index,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0
 {
-  char s[ARGUMENT_STRING_LENGTH];
-  int error;
-  void **p;
-
+  struct locl_argument_list *p;
+  void *value;
+  unsigned i;
+  
   if (kernel == NULL)
     return CL_INVALID_KERNEL;
 
   if (arg_index >= kernel->num_args)
     return CL_INVALID_ARG_INDEX;
-
-  error = snprintf(s, ARGUMENT_STRING_LENGTH,
-		   "_arg%u", arg_index);
-  assert(error > 0);
   
-  p = lt_dlsym(kernel->dlhandle, s);
-  if (p == NULL)
-    return CL_INVALID_KERNEL;
+  if (kernel->arguments == NULL)
+    {
+      kernel->arguments = malloc (sizeof (struct locl_argument_list));
+      kernel->arguments->next = NULL;
+    }
 
-  if (arg_value == NULL)
-    *p = NULL;
-  else
-    memcpy(p, arg_value, arg_size);
-
-  error = snprintf(s, ARGUMENT_STRING_LENGTH,
-		   "_size%u", arg_index);
-  assert(error > 0);
+  i = 0;
+  p = kernel->arguments;
+  while (i < arg_index)
+    {
+      if (p->next == NULL)
+	{
+	  p->next = malloc (sizeof (struct locl_argument_list));
+	  p->next->next = NULL;
+	}
+      
+      p = p->next;
+      ++i;
+    }
   
-  p = lt_dlsym(kernel->dlhandle, s);
-  if (p == NULL)
-    return CL_INVALID_KERNEL;
+  if (arg_value != NULL)
+    {
+      value = malloc (arg_size);
+      if (value == NULL)
+	return CL_OUT_OF_HOST_MEMORY;
+      
+      memcpy (value, arg_value, arg_size);
 
-  *(size_t *) p = arg_size;
+      p->value = value;
+    }
+
+  p->size = arg_size;
 
   return CL_SUCCESS;
 }

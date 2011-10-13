@@ -37,6 +37,7 @@ clCreateKernel(cl_program program,
   char binary_filename[LOCL_FILENAME_LENGTH];
   FILE *binary_file;
   size_t n;
+  char descriptor_filename[LOCL_FILENAME_LENGTH];
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
@@ -73,8 +74,8 @@ clCreateKernel(cl_program program,
   if (kernel == NULL)
     LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  error = snprintf(kernel->trampoline_filename, LOCL_FILENAME_LENGTH,
-		   "%s/trampoline.so",
+  error = snprintf(descriptor_filename, LOCL_FILENAME_LENGTH,
+		   "%s/descriptor.so",
 		   tmpdir);
   if (error < 0)
     LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
@@ -83,13 +84,13 @@ clCreateKernel(cl_program program,
     error = snprintf(command, COMMAND_LENGTH,
 		     BUILDDIR "/scripts/" LOCL_KERNEL " -k %s -o %s %s",
 		     kernel_name,
-		     kernel->trampoline_filename,
+		     descriptor_filename,
 		     binary_filename);
   else
     error = snprintf(command, COMMAND_LENGTH,
 		     LOCL_KERNEL " -k %s -o %s %s",
 		     kernel_name,
-		     kernel->trampoline_filename,
+		     descriptor_filename,
 		     binary_filename);
   if (error < 0)
     LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
@@ -98,7 +99,7 @@ clCreateKernel(cl_program program,
   if (error != 0)
     LOCL_ERROR(CL_INVALID_KERNEL_NAME);
 
-  dlhandle = lt_dlopen(kernel->trampoline_filename);
+  dlhandle = lt_dlopen(descriptor_filename);
   if (dlhandle == NULL)
     LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
@@ -108,6 +109,8 @@ clCreateKernel(cl_program program,
   kernel->context = program->context;
   kernel->program = program;
   kernel->dlhandle = dlhandle;
+  kernel->arg_is_pointer = lt_dlsym(dlhandle, "_arg_is_pointer");
+  kernel->arg_is_local = lt_dlsym(dlhandle, "_arg_is_local");
   kernel->next = NULL;
 
   if (program->kernels == NULL)

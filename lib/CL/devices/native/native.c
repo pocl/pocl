@@ -130,7 +130,6 @@ locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 
 void
 locl_native_run (void *data, const char *parallel_filename,
-		 struct locl_argument_list *arguments,
 		 cl_kernel kernel,
 		 size_t x, size_t y, size_t z)
 {
@@ -144,6 +143,7 @@ locl_native_run (void *data, const char *parallel_filename,
   char command[COMMAND_LENGTH];
   char arg_string[ARGUMENT_STRING_LENGTH];
   void *arg;
+  unsigned device;
   struct locl_argument_list *p;
   unsigned i;
   workgroup w;
@@ -203,8 +203,19 @@ locl_native_run (void *data, const char *parallel_filename,
       d->current_kernel = kernel;
     }
 
+  /* Find which device number within the context correspond
+     to current device.  */
+  for (i = 0; i < kernel->context->num_devices; ++i)
+    {
+      if (kernel->context->devices[i]->data == data)
+	{
+	  device = i;
+	  break;
+	}
+    }
+
   i = 0;
-  p = arguments;
+  p = kernel->arguments;
   while (p != NULL)
     {
       error = snprintf (arg_string, ARGUMENT_STRING_LENGTH,
@@ -213,7 +224,10 @@ locl_native_run (void *data, const char *parallel_filename,
       
       arg = lt_dlsym (d->current_dlhandle, arg_string);
 
-      memcpy (arg, p->value, p->size);
+      if ((kernel->arg_is_pointer[i]) && (!kernel->arg_is_local[i]))
+	memcpy (arg, &((*(cl_mem *) (p->value))->device_ptrs[device]), sizeof (void *));
+      else
+	memcpy (arg, p->value, p->size);
 
       ++i;
       p = p->next;

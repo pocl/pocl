@@ -52,15 +52,8 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
-  struct locl_argument_list *arguments, *p;
-  char arg_string[ARGUMENT_STRING_LENGTH];
-  char size_string[ARGUMENT_STRING_LENGTH];
-  void *arg;
-  size_t *size;
-  int *is_pointer;
-  int *is_local;
-  cl_mem mem;
-  unsigned i, j;
+  struct locl_argument_list *p;
+  unsigned i;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -141,70 +134,22 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
   
-  arguments = NULL;
-  if (kernel->num_args > 0)
-    arguments = malloc (sizeof (struct locl_argument_list));
-  
-  p = arguments;
+  p = kernel->arguments;
   for (i = 0; i < kernel->num_args; ++i)
     {
-      error = snprintf(arg_string, ARGUMENT_STRING_LENGTH,
-		       "_arg%d", i);
-      if (error < 0)
-	return CL_OUT_OF_HOST_MEMORY;
-
-      error = snprintf(size_string, ARGUMENT_STRING_LENGTH,
-		       "_size%d", i);
-      if (error < 0)
-	return CL_OUT_OF_HOST_MEMORY;
-
-      arg = lt_dlsym (kernel->dlhandle, arg_string);
-      size = (size_t *) lt_dlsym (kernel->dlhandle, size_string);
-      is_pointer = (int *) lt_dlsym (kernel->dlhandle, "_is_pointer");
-      is_local = (int *) lt_dlsym (kernel->dlhandle, "_is_local");
-      if ((arg == NULL) || (size == NULL) ||
-	  (is_pointer == NULL) || (is_local == NULL))
-	return CL_INVALID_KERNEL;
-
-      if (!is_pointer[i])
+      if (kernel->arg_is_local[i])
 	{
-	  p->value = arg;
-	  p->size = *size;
-	  p->next = NULL;
+	  if (p->value == NULL)
+	    p->value = malloc (sizeof (void *));
+	  
+	  *(void **)(p->value) = command_queue->device->malloc(command_queue->device->data,
+							       0,
+							       p->size,
+							       NULL);
+	  p->size = sizeof (void *);
 	}
-      else
-	{ 
-	  if (!is_local[i]) 
-	    {
-	      mem = *(cl_mem *) arg;
-	      
-	      for (j = 0; j < command_queue->context->num_devices; ++j)
-		{
-		  if (command_queue->context->devices[j] ==
-		      command_queue->device)
-		    break;
-		}
-	      
-	      p->value = &(mem->device_ptrs[j]);
-	      p->size = sizeof (void *);
-	      p->next = NULL;
-	    }
-	  else
-	    {
-	      p->value = malloc (sizeof (void *));
-	      *(void **)(p->value) = command_queue->device->malloc(command_queue->device->data,
-								   0,
-								   *size,
-								   NULL);
-	      p->size = sizeof (void *);
-	      p->next = NULL;
-	    }
-	}
-    
-      if (i + 1 < kernel->num_args) {
-	p->next = malloc (sizeof (struct locl_argument_list));
-	p = p->next;
-      }
+
+      p = p->next;
     }
 
   for (z = 0; z < global_z / local_z; ++z)
@@ -214,11 +159,18 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
 	  for (x = 0; x < global_x / local_x; ++x)
 	    command_queue->device->run(command_queue->device->data,
 				       parallel_filename,
-				       arguments,
 				       kernel,
 				       x, y, z);
 	}
     }
-    
+
+  p = kernel->arguments;
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      if (kernel->arg_is_local[i])
+	command_queue->device->free (command_queue->device->data,
+				     *(void**)(p->value));
+    }
+
   return CL_SUCCESS;
 }
