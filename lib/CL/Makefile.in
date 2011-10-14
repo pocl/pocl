@@ -269,7 +269,7 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
-                   locl_cl.h			\
+                   pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\
                    devices/native/native.h	\
