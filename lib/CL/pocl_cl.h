@@ -1,4 +1,4 @@
-/* locl_cl.h - local runtime library declarations.
+/* pocl_cl.h - local runtime library declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,26 +21,26 @@
    THE SOFTWARE.
 */
 
-#ifndef LOCL_CL_H
-#define LOCL_CL_H
+#ifndef POCL_CL_H
+#define POCL_CL_H
 
 #include "config.h"
 #include <stdio.h>
 #include <ltdl.h>
 #include "CL/opencl.h"
 
-#define LOCL_FILENAME_LENGTH 128
+#define POCL_FILENAME_LENGTH 128
 
-#define LOCL_BUILD "locl-build"
-#define LOCL_KERNEL "locl-kernel"
-#define LOCL_WORKGROUP "locl-workgroup"
+#define POCL_BUILD "pocl-build"
+#define POCL_KERNEL "pocl-kernel"
+#define POCL_WORKGROUP "pocl-workgroup"
 
-#define LOCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
+#define POCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
 
-struct locl_argument_list {
+struct pocl_argument_list {
   size_t size;
   void *value;
-  struct locl_argument_list *next;
+  struct pocl_argument_list *next;
 };
 
 struct _cl_device_id {
@@ -162,10 +162,10 @@ struct _cl_kernel {
   lt_dlhandle dlhandle;
   int *arg_is_pointer;
   int *arg_is_local;
-  struct locl_argument_list *arguments;
+  struct pocl_argument_list *arguments;
   struct _cl_kernel *next;
 };
 
 typedef void (*workgroup) (void **, size_t, size_t, size_t);
 
-#endif /* LOCL_CL_H */
+#endif /* POCL_CL_H */

@@ -24,6 +24,6 @@
 #include "devices.h"
 #include "native/native.h"
 
-struct _cl_device_id locl_devices[LOCL_NUM_DEVICES] = {
-  LOCL_DEVICES_NATIVE
+struct _cl_device_id pocl_devices[POCL_NUM_DEVICES] = {
+  POCL_DEVICES_NATIVE
 };

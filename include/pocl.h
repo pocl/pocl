@@ -1,4 +1,4 @@
-/* locl.h - global llvmopencl declarations.
+/* pocl.h - global pocl declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,12 +21,12 @@
    THE SOFTWARE.
 */
 
-#ifndef LOCL_H
-#define LOCL_H
+#ifndef POCL_H
+#define POCL_H
 
-#define LOCL_ADDRESS_SPACE_PRIVATE 0
-#define LOCL_ADDRESS_SPACE_GLOBAL 3
-#define LOCL_ADDRESS_SPACE_LOCAL 4
-#define LOCL_ADDRESS_SPACE_CONSTANT 5
+#define POCL_ADDRESS_SPACE_PRIVATE 0
+#define POCL_ADDRESS_SPACE_GLOBAL 3
+#define POCL_ADDRESS_SPACE_LOCAL 4
+#define POCL_ADDRESS_SPACE_CONSTANT 5
 
-#endif /* LOCL_H */
+#endif /* POCL_H */

@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -44,15 +44,15 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
   char *tmpdir;
-  char kernel_filename[LOCL_FILENAME_LENGTH];
+  char kernel_filename[POCL_FILENAME_LENGTH];
   FILE *kernel_file;
-  char parallel_filename[LOCL_FILENAME_LENGTH];
+  char parallel_filename[POCL_FILENAME_LENGTH];
   size_t x, y, z;
   size_t n;
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
-  struct locl_argument_list *p;
+  struct pocl_argument_list *p;
   unsigned i;
 
   if (command_queue == NULL)
@@ -92,7 +92,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (tmpdir == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  error = snprintf(kernel_filename, LOCL_FILENAME_LENGTH,
+  error = snprintf(kernel_filename, POCL_FILENAME_LENGTH,
 		   "%s/kernel.bc",
 		   tmpdir);
   if (error < 0)
@@ -109,21 +109,21 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   
   fclose(kernel_file);
 
-  error = snprintf(parallel_filename, LOCL_FILENAME_LENGTH,
+  error = snprintf(parallel_filename, POCL_FILENAME_LENGTH,
 		   "%s/parallel.bc",
 		   tmpdir);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
  
-  if (stat(BUILDDIR "/scripts/" LOCL_WORKGROUP, &buf) == 0)
+  if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
     error = snprintf(command, COMMAND_LENGTH,
-		     BUILDDIR "/scripts/" LOCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
+		     BUILDDIR "/scripts/" POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
 		     kernel->function_name,
 		     local_x, local_y, local_z,
 		     parallel_filename, kernel_filename);
   else
     error = snprintf(command, COMMAND_LENGTH,
-		     LOCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
+		     POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
 		     kernel->function_name,
 		     local_x, local_y, local_z,
 		     parallel_filename, kernel_filename);

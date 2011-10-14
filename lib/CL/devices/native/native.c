@@ -44,10 +44,10 @@ struct data {
   lt_dlhandle current_dlhandle;
 };
 
-size_t locl_native_max_work_item_sizes[] = {1};
+size_t pocl_native_max_work_item_sizes[] = {1};
 
 void
-locl_native_init (cl_device_id device)
+pocl_native_init (cl_device_id device)
 {
   struct data *d;
   
@@ -61,7 +61,7 @@ locl_native_init (cl_device_id device)
 }
 
 void *
-locl_native_malloc (void *data, cl_mem_flags flags,
+pocl_native_malloc (void *data, cl_mem_flags flags,
 		    size_t size, void *host_ptr)
 {
   struct data *d;
@@ -100,7 +100,7 @@ locl_native_malloc (void *data, cl_mem_flags flags,
 }
 
 void
-locl_native_free (void *data, void *ptr)
+pocl_native_free (void *data, void *ptr)
 {
   struct data *d;
   struct pointer_list *p;
@@ -120,7 +120,7 @@ locl_native_free (void *data, void *ptr)
 }
 
 void
-locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
+pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
@@ -129,7 +129,7 @@ locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 }
 
 void
-locl_native_run (void *data, const char *parallel_filename,
+pocl_native_run (void *data, const char *parallel_filename,
 		 cl_kernel kernel,
 		 size_t x, size_t y, size_t z)
 {
@@ -137,13 +137,13 @@ locl_native_run (void *data, const char *parallel_filename,
   char template[] = ".naruXXXXXX";
   char *tmpdir;
   int error;
-  char bytecode[LOCL_FILENAME_LENGTH];
-  char assembly[LOCL_FILENAME_LENGTH];
-  char module[LOCL_FILENAME_LENGTH];
+  char bytecode[POCL_FILENAME_LENGTH];
+  char assembly[POCL_FILENAME_LENGTH];
+  char module[POCL_FILENAME_LENGTH];
   char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
-  struct locl_argument_list *p;
+  struct pocl_argument_list *p;
   unsigned i;
   workgroup w;
 
@@ -154,7 +154,7 @@ locl_native_run (void *data, const char *parallel_filename,
       tmpdir = mkdtemp (template);
       assert (tmpdir != NULL);
       
-      error = snprintf (bytecode, LOCL_FILENAME_LENGTH,
+      error = snprintf (bytecode, POCL_FILENAME_LENGTH,
 			"%s/parallel.bc",
 			tmpdir);
       assert (error >= 0);
@@ -168,7 +168,7 @@ locl_native_run (void *data, const char *parallel_filename,
       error = system(command);
       assert (error == 0);
       
-      error = snprintf (assembly, LOCL_FILENAME_LENGTH,
+      error = snprintf (assembly, POCL_FILENAME_LENGTH,
 			"%s/parallel.s",
 			tmpdir);
       assert (error >= 0);
@@ -182,7 +182,7 @@ locl_native_run (void *data, const char *parallel_filename,
       error = system (command);
       assert (error == 0);
       
-      error = snprintf (module, LOCL_FILENAME_LENGTH,
+      error = snprintf (module, POCL_FILENAME_LENGTH,
 			"%s/parallel.so",
 			tmpdir);
       assert (error >= 0);

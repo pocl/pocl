@@ -40,7 +40,7 @@
 
 using namespace std;
 using namespace llvm;
-using namespace locl;
+using namespace pocl;
 
 static void createSizeGlobals(Module &M);
 static void createWorkgroup(Module &M, Function *F);

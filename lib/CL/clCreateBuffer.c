@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
 clCreateBuffer(cl_context context,
@@ -36,16 +36,16 @@ clCreateBuffer(cl_context context,
   unsigned i;
 
   if (context == NULL)
-    LOCL_ERROR(CL_INVALID_CONTEXT);
+    POCL_ERROR(CL_INVALID_CONTEXT);
 
   mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
   mem->device_ptrs = (void **) malloc(context->num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
       free(mem);
-      LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
     }
   
   for (i = 0; i < context->num_devices; ++i)
@@ -55,7 +55,7 @@ clCreateBuffer(cl_context context,
       if (device_ptr == NULL)
 	{
 	  clReleaseMemObject(mem);
-	  LOCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
+	  POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
 	}
       mem->device_ptrs[i] = device_ptr;
     }

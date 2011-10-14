@@ -21,13 +21,13 @@
    THE SOFTWARE.
 */
 
-#ifndef LOCL_DEVICES_H
-#define LOCL_DEVICES_H
+#ifndef POCL_DEVICES_H
+#define POCL_DEVICES_H
 
-#include "../locl_cl.h"
+#include "../pocl_cl.h"
 
-#define LOCL_NUM_DEVICES 1
+#define POCL_NUM_DEVICES 1
 
-extern struct _cl_device_id locl_devices[LOCL_NUM_DEVICES];
+extern struct _cl_device_id pocl_devices[POCL_NUM_DEVICES];
 
-#endif /* LOCL_DEVICES_H */
+#endif /* POCL_DEVICES_H */

@@ -21,28 +21,28 @@
    THE SOFTWARE.
 */
 
-#ifndef LOCL_NATIVE_H
-#define LOCL_NATIVE_H
+#ifndef POCL_NATIVE_H
+#define POCL_NATIVE_H
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 
-void locl_native_init (cl_device_id device);
-void *locl_native_malloc (void *data, cl_mem_flags flags,
+void pocl_native_init (cl_device_id device);
+void *pocl_native_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
-void locl_native_free (void *data, void *ptr);
-void locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
-void locl_native_run (void *data, const char *bytecode,
+void pocl_native_free (void *data, void *ptr);
+void pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
+void pocl_native_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
 		      size_t x, size_t y, size_t z);
 
-extern size_t locl_native_max_work_item_sizes[];
+extern size_t pocl_native_max_work_item_sizes[];
 
-#define LOCL_DEVICES_NATIVE {						\
+#define POCL_DEVICES_NATIVE {						\
   CL_DEVICE_TYPE_GPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   1, /* max_work_item_dimensions */					\
-  locl_native_max_work_item_sizes, /* max_work_item_sizes */		\
+  pocl_native_max_work_item_sizes, /* max_work_item_sizes */		\
   1, /*max_work_group_size */						\
   0, /* preferred_vector_width_char */					\
   0, /* preferred_vector_width_shortr */				\
@@ -83,18 +83,18 @@ extern size_t locl_native_max_work_item_sizes[];
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   "native", /* name */							\
-  "llvmopencl", /* vendor */						\
+  "pocl", /* vendor */							\
   "0.1", /* driver_version */						\
   "FULL_PROFILE", /* profile */						\
-  "OpenCL 1.0 llvmopencl", /* version */				\
+  "OpenCL 1.0 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\
-    locl_native_init, /* init */                                        \
-  locl_native_malloc, /* malloc */					\
-  locl_native_free, /* free */						\
-  locl_native_read, /* read */						\
-  locl_native_run, /* run */						\
+    pocl_native_init, /* init */                                        \
+  pocl_native_malloc, /* malloc */					\
+  pocl_native_free, /* free */						\
+  pocl_native_read, /* read */						\
+  pocl_native_run, /* run */						\
   NULL /* data */							\
 }
 
-#endif /* LOCL_NATIVE_H */
+#endif /* POCL_NATIVE_H */

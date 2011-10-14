@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/examples/forloops.
+# Makefile.am for pocl/examples/forloops.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 

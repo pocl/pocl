@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
 clCreateCommandQueue(cl_context context, 
@@ -31,7 +31,7 @@ clCreateCommandQueue(cl_context context,
 {
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   command_queue->context = context;
   command_queue->device = device;

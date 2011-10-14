@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.61])
-AC_INIT([llvmopencl], [20110324], [carlos.delalama@urjc.es])
+AC_INIT([pocl], [20111014], [carlos.delalama@urjc.es])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])

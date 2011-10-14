@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 #include <assert.h>
 #include <string.h>
 
@@ -31,7 +31,7 @@ clSetKernelArg(cl_kernel kernel,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0
 {
-  struct locl_argument_list *p;
+  struct pocl_argument_list *p;
   void *value;
   unsigned i;
   
@@ -43,7 +43,7 @@ clSetKernelArg(cl_kernel kernel,
   
   if (kernel->arguments == NULL)
     {
-      kernel->arguments = malloc (sizeof (struct locl_argument_list));
+      kernel->arguments = malloc (sizeof (struct pocl_argument_list));
       kernel->arguments->next = NULL;
     }
 
@@ -53,7 +53,7 @@ clSetKernelArg(cl_kernel kernel,
     {
       if (p->next == NULL)
 	{
-	  p->next = malloc (sizeof (struct locl_argument_list));
+	  p->next = malloc (sizeof (struct pocl_argument_list));
 	  p->next->next = NULL;
 	}
       

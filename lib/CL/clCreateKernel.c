@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 #include <sys/stat.h>
 
 #define COMMAND_LENGTH 256
@@ -34,74 +34,74 @@ clCreateKernel(cl_program program,
   char template[] = ".clckXXXXXX";
   cl_kernel kernel;
   char *tmpdir;
-  char binary_filename[LOCL_FILENAME_LENGTH];
+  char binary_filename[POCL_FILENAME_LENGTH];
   FILE *binary_file;
   size_t n;
-  char descriptor_filename[LOCL_FILENAME_LENGTH];
+  char descriptor_filename[POCL_FILENAME_LENGTH];
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
   lt_dlhandle dlhandle;
 
   if (program == NULL)
-    LOCL_ERROR(CL_INVALID_PROGRAM);
+    POCL_ERROR(CL_INVALID_PROGRAM);
 
   if (program->binary == NULL)
-    LOCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
+    POCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
 
   tmpdir = mkdtemp(template);
   if (tmpdir == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  error = snprintf(binary_filename, LOCL_FILENAME_LENGTH,
+  error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
 		   "%s/kernel.bc",
 		   tmpdir);
   if (error < 0)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   binary_file = fopen(binary_filename, "w+");
   if (binary_file == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   n = fwrite(program->binary, 1,
 	     program->binary_size, binary_file);
   if (n < program->binary_size)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
   
   fclose(binary_file);
 
   kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  error = snprintf(descriptor_filename, LOCL_FILENAME_LENGTH,
+  error = snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
 		   "%s/descriptor.so",
 		   tmpdir);
   if (error < 0)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  if (stat(BUILDDIR "/scripts/" LOCL_KERNEL, &buf) == 0)
+  if (stat(BUILDDIR "/scripts/" POCL_KERNEL, &buf) == 0)
     error = snprintf(command, COMMAND_LENGTH,
-		     BUILDDIR "/scripts/" LOCL_KERNEL " -k %s -o %s %s",
+		     BUILDDIR "/scripts/" POCL_KERNEL " -k %s -o %s %s",
 		     kernel_name,
 		     descriptor_filename,
 		     binary_filename);
   else
     error = snprintf(command, COMMAND_LENGTH,
-		     LOCL_KERNEL " -k %s -o %s %s",
+		     POCL_KERNEL " -k %s -o %s %s",
 		     kernel_name,
 		     descriptor_filename,
 		     binary_filename);
   if (error < 0)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   error = system(command);
   if (error != 0)
-    LOCL_ERROR(CL_INVALID_KERNEL_NAME);
+    POCL_ERROR(CL_INVALID_KERNEL_NAME);
 
   dlhandle = lt_dlopen(descriptor_filename);
   if (dlhandle == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   kernel->function_name = kernel_name;
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");

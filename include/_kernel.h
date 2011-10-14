@@ -1,4 +1,4 @@
-/* llvmopencl/_kernel.h - OpenCL types and runtime library
+/* pocl/_kernel.h - OpenCL types and runtime library
    functions declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos

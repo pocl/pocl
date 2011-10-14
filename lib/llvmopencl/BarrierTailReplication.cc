@@ -28,7 +28,7 @@
 #include <set>
 
 using namespace llvm;
-using namespace locl;
+using namespace pocl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 

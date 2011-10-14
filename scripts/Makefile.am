@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/scripts.
+# Makefile.am for pocl/scripts.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,9 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-bin_SCRIPTS = locl-build locl-kernel locl-workgroup
-CLEANFILES = locl-build locl-kernel locl-workgroup
-EXTRA_DIST = locl-build.in locl-kernel.in locl-workgroup.in
+bin_SCRIPTS = pocl-build pocl-kernel pocl-workgroup
+CLEANFILES = pocl-build pocl-kernel pocl-workgroup
+EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in
 
 do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]abs_top_builddir[@],$(abs_top_builddir),g'	\
@@ -36,14 +36,14 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]LLC[@],$(LLC),g'				\
                -e 's,[@]SHARED[@],$(SHARED),g'
 
-locl-build: locl-build.in
+pocl-build: pocl-build.in
 	$(do_subst) < $(srcdir)/$< > $@
 	chmod +x $@
 
-locl-kernel: locl-kernel.in
+pocl-kernel: pocl-kernel.in
 	$(do_subst) < $(srcdir)/$< > $@
 	chmod +x $@
 
-locl-workgroup: locl-workgroup.in
+pocl-workgroup: pocl-workgroup.in
 	$(do_subst) < $(srcdir)/$< > $@
 	chmod +x $@

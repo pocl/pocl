@@ -1,5 +1,5 @@
 #!/bin/sh
-# locl-workgroup - Parallelize a kernel from an OpenCL bytecode file.
+# pocl-workgroup - Parallelize a kernel from an OpenCL bytecode file.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -58,14 +58,6 @@ if [ "x$output_file" = x ]
 then
     echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
 fi
-
-#context_bc="`dirname $1`/`basename $1 .bc`_context.bc"
-#linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
-#parallel_bc="`dirname $1`/`basename $1 .bc`_parallel.bc"
-#
-#@OPT@ -load=@pkglibdir@/llvmopencl_old.so -add-context -flatten-kernels -o ${context_bc} $1
-#cp ${context_bc} ${linked_bc}
-#@OPT@ -load=@pkglibdir@/llvmopencl_old.so -std-compile-opts -opencl -o ${parallel_bc} ${context_bc}
 
 linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
 

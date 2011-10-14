@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
@@ -37,17 +37,17 @@ clCreateProgramWithSource(cl_context context,
   unsigned i;
 
   if (count == 0)
-    LOCL_ERROR(CL_INVALID_VALUE);
+    POCL_ERROR(CL_INVALID_VALUE);
 
   program = (cl_program) malloc(sizeof(struct _cl_program));
   if (program == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   size = 0;
   for (i = 0; i < count; ++i)
     {
       if (strings[i] == NULL)
-	LOCL_ERROR(CL_INVALID_VALUE);
+	POCL_ERROR(CL_INVALID_VALUE);
 
       if (lengths == NULL)
 	size += strlen(strings[i]);
@@ -59,7 +59,7 @@ clCreateProgramWithSource(cl_context context,
   
   source = (char *) malloc(size + 1);
   if (source == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   program->source = source;
 

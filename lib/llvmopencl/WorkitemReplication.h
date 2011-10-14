@@ -25,7 +25,7 @@
 #include <set>
 #include <map>
 
-namespace locl {
+namespace pocl {
   typedef std::set<llvm::BasicBlock *> BasicBlockSet;
   typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 

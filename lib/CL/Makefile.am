@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/lib/CL.
+# Makefile.am for pocl/lib/CL.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -39,7 +39,7 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
-                   locl_cl.h			\
+                   pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\
                    devices/native/native.h	\

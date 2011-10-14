@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile for the top-level directory of llvmopencl.
+# Makefile for the top-level directory of pocl.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 

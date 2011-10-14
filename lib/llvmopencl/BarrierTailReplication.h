@@ -22,7 +22,7 @@
 
 #include "llvm/Pass.h"
 
-namespace locl {
+namespace pocl {
   class BarrierTailReplication : public llvm::FunctionPass {
 
   public:

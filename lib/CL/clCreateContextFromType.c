@@ -22,7 +22,7 @@
 */
 
 #include "devices/devices.h"
-#include "locl_cl.h"
+#include "pocl_cl.h"
 #include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
@@ -39,26 +39,26 @@ clCreateContextFromType(const cl_context_properties *properties,
 
   cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
-    LOCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   num_devices = 0;
-  for (i = 0; i < LOCL_NUM_DEVICES; ++i) {
-    if ((locl_devices[i].type == device_type) &&
-	(locl_devices[i].available == CL_TRUE))
+  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
+    if ((pocl_devices[i].type == device_type) &&
+	(pocl_devices[i].available == CL_TRUE))
       ++num_devices;
   }
 
   if (num_devices == 0)
-    LOCL_ERROR(CL_DEVICE_NOT_AVAILABLE);
+    POCL_ERROR(CL_DEVICE_NOT_AVAILABLE);
 
   context->num_devices = num_devices;
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
   
   j = 0;
-  for (i = 0; i < LOCL_NUM_DEVICES; ++i) {
-    if ((locl_devices[i].type == device_type) &&
-	(locl_devices[i].available == CL_TRUE)) {
-      context->devices[j] = &locl_devices[i];
+  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
+    if ((pocl_devices[i].type == device_type) &&
+	(pocl_devices[i].available == CL_TRUE)) {
+      context->devices[j] = &pocl_devices[i];
       context->devices[j]->init(context->devices[j]);
       ++j;
     }

@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "locl_cl.h"
+#include "pocl_cl.h"
 #include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -66,12 +66,12 @@ clBuildProgram(cl_program program,
       
       tmpnam(binary_file_name);
 
-      if (stat(BUILDDIR "/scripts/" LOCL_BUILD, &buf) == 0)
+      if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
 	error = snprintf(command, COMMAND_LENGTH,
-			 BUILDDIR "/scripts/" LOCL_BUILD " -o %s %s",
+			 BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
 			 binary_file_name, source_file_name);
       else
-	error = snprintf(command, COMMAND_LENGTH, LOCL_BUILD " -o %s %s",
+	error = snprintf(command, COMMAND_LENGTH, POCL_BUILD " -o %s %s",
 			 binary_file_name, source_file_name);
       if (error < 0)
 	return CL_OUT_OF_HOST_MEMORY;

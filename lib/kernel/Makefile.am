@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/lib/kernel.
+# Makefile.am for pocl/lib/kernel.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 

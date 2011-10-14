@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "locl.h"
+#include "pocl.h"
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -96,11 +96,11 @@ GenerateHeader::runOnFunction(Function &F)
     is_pointer[i] = true;
 
     switch (p->getAddressSpace()) {
-    case LOCL_ADDRESS_SPACE_GLOBAL:
-    case LOCL_ADDRESS_SPACE_CONSTANT:
+    case POCL_ADDRESS_SPACE_GLOBAL:
+    case POCL_ADDRESS_SPACE_CONSTANT:
       is_local[i] = false;
       break;
-    case LOCL_ADDRESS_SPACE_LOCAL:
+    case POCL_ADDRESS_SPACE_LOCAL:
       is_local[i] = true;
       break;
     default:

@@ -23,7 +23,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "locl_cl.h"
+#include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 clGetContextInfo(cl_context context, 

@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/include.
+# Makefile.am for pocl/include.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_HEADERS = locl.h
+noinst_HEADERS = pocl.h
 pkginclude_HEADERS = _kernel.h
 
 SUBDIRS = CL

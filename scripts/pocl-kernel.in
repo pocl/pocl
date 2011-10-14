@@ -1,6 +1,7 @@
 #!/bin/sh
-# locl-build - Compile a OpenCL kernel to bytecode usign clang.
-#
+# pocl-kernel - Examine a OpenCL bytecode and generate a loadable module
+#               with kernel function information.
+# 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,23 +22,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-while getopts o: o
+while getopts k:o: o
 do
     case "$o" in
-	o)   output_file="$OPTARG";;
-	[?]) echo >&2 "Usage: $0 -o output input" && exit 1;;
+	k)   kernel="${OPTARG}";;
+	o)   output_file="${OPTARG}";;
+	[?]) echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
-if [ "x$output_file" = x ]
+if [ "x$kernel" = x ]
 then
-    echo >&2 "Usage: $0 -o output input" && exit 1
+    echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
 fi
 
-if [ -f @abs_top_srcdir@/include/_kernel.h ]
-then 
-    @CLANG@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
-else
-    @CLANG@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
+if [ "x$output_file" = x ]
+then
+    echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
 fi
+
+header="`dirname $1`/`basename $1 .bc`_header.h"
+
+if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
+then
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
+else
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
+fi
+
+gcc @SHARED@ -o ${output_file} -x c - <<EOF
+#include "${header}"
+
+unsigned _num_args = _NUM_ARGS;
+int _arg_is_pointer[] = _ARG_IS_POINTER;
+int _arg_is_local[] = _ARG_IS_LOCAL;
+EOF

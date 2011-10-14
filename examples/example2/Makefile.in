@@ -17,7 +17,7 @@
 
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for llvmopencl/examples/example2.
+# Makefile.am for pocl/examples/example2.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
