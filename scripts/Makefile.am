@@ -22,9 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-bin_SCRIPTS = pocl-build pocl-kernel pocl-workgroup
-CLEANFILES = pocl-build pocl-kernel pocl-workgroup
-EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in
+bin_SCRIPTS = pocl-build pocl-kernel pocl-workgroup pocl-standalone
+CLEANFILES = pocl-build pocl-kernel pocl-workgroup pocl-standalone
+EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in pocl-standalone.in
 
 do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]abs_top_builddir[@],$(abs_top_builddir),g'	\
@@ -46,5 +46,9 @@ pocl-kernel: pocl-kernel.in
 	chmod +x $@
 
 pocl-workgroup: pocl-workgroup.in
+	$(do_subst) < $< > $@
+	chmod +x $@
+
+pocl-standalone: pocl-standalone.in
 	$(do_subst) < $< > $@
 	chmod +x $@

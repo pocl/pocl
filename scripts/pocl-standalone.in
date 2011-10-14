@@ -1,0 +1,97 @@
+#!/bin/sh
+# pocl-standalone - Run parallelization passes directly on an OpenCL source
+#                   file and generate a parallel bytecode and a kernel description
+#                   header file.
+# 
+# Copyright (c) 2011 Universidad Rey Juan Carlos
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+while getopts k:h:o: o
+do
+    case "$o" in
+	k)   kernel="${OPTARG}";;
+	h)   header="${OPTARG}";;
+	o)   output_file="${OPTARG}";;
+	[?]) echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1;;
+    esac
+done
+shift $((${OPTIND}-1))
+
+if [ "x$kernel" = x ]
+then
+    echo >&2 "Usage: $0 -k <kernel> -header <header> -o <output_file> <input_file>" && exit 1
+fi
+
+if [ "x$header" = x ]
+then
+    echo >&2 "Usage: $0 -k <kernel> -header <header> -o <output_file> <input_file>" && exit 1
+fi
+
+if [ "x$output_file" = x ]
+then
+    echo >&2 "Usage: $0 -k <kernel> -header <header> -o <output_file> <input_file>" && exit 1
+fi
+
+tempdir="`dirname ${output_file}`/.pocl$$"
+mkdir ${tempdir}
+
+kernel_bc="${tempdir}/kernel.bc"
+
+if [ -f @abs_top_srcdir@/include/_kernel.h ]
+then 
+    @CLANG@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
+else
+    @CLANG@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
+fi
+
+if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
+then
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} ${kernel_bc}
+else
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} ${kernel_bc}
+fi
+
+gcc @SHARED@ -o ${output_file} -x c - <<EOF
+#include "${header}"
+
+unsigned _num_args = _NUM_ARGS;
+int _arg_is_pointer[] = _ARG_IS_POINTER;
+int _arg_is_local[] = _ARG_IS_LOCAL;
+EOF
+
+linked_bc="${tempdir}/linked.bc"
+
+if [ -f @abs_top_builddir@/lib/kernel/libkernel.a ]
+then
+    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel -lkernel
+else
+    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@pkglibdir@ -lkernel
+fi
+
+locals_header="${tempdir}/locals_header.h"
+
+if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
+then
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -kernel=${kernel} -local-size=2 2 2 -header=${locals_header} -o ${output_file} ${linked_bc}
+else
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -kernel=${kernel} -local-size=2 2 2 -header=${locals_header} -o ${output_file} ${linked_bc}
+fi
+
+cat ${locals_header} >> ${header}
