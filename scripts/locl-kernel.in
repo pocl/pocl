@@ -42,17 +42,19 @@ then
     echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
 fi
 
-trampoline_prelink_bc="`dirname $1`/`basename $1 .bc`_trampoline_prelink.bc"
-trampoline_bc="`dirname $1`/`basename $1 .bc`_trampoline.bc"
-trampoline_s="`dirname $1`/`basename $1 .bc`_trampoline.s"
+header="`dirname $1`/`basename $1 .bc`_header.h"
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -trampoline -kernel=${kernel} -o ${trampoline_prelink_bc} $1
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -trampoline -kernel=${kernel} -o ${trampoline_prelink_bc} $1
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
 fi
-@LLVM_LD@ -link-as-library -o ${trampoline_bc} ${trampoline_prelink_bc}
-@LLC@ -o ${trampoline_s} ${trampoline_bc}
 
-gcc @SHARED@ -o ${output_file} -x assembler ${trampoline_s}
+gcc @SHARED@ -o ${output_file} -x c - <<EOF
+#include "${header}"
+
+unsigned _num_args = _NUM_ARGS;
+int _arg_is_pointer[] = _ARG_IS_POINTER;
+int _arg_is_local[] = _ARG_IS_LOCAL;
+EOF

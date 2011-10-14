@@ -33,6 +33,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicInliner.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <map>
@@ -42,9 +43,10 @@ using namespace llvm;
 using namespace locl;
 
 static void createSizeGlobals(Module &M);
-static void createTrampoline(Module &M, Function *F);
+static void createWorkgroup(Module &M, Function *F);
 
 extern cl::opt<string> Kernel;
+extern cl::opt<string> Header;
 extern cl::list<int> LocalSize;
 
 namespace {
@@ -68,7 +70,7 @@ Workgroup::runOnModule(Module &M)
 
   BasicInliner BI;
 
-  Function *F;
+  Function *F = NULL;
   
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
@@ -81,6 +83,11 @@ Workgroup::runOnModule(Module &M)
 
   BI.inlineFunctions();
 
+  string ErrorInfo;
+  raw_fd_ostream out(Header.c_str(), ErrorInfo);
+  out << "#define _NUM_LOCALS 0\n";
+  out << "#define _LOCAL_SIZE {}\n";
+
   BarrierTailReplication BTR;
   BTR.runOnFunction(*F);
 
@@ -89,7 +96,7 @@ Workgroup::runOnModule(Module &M)
   WR.runOnFunction(*F);
   WR.doFinalization(M);
 
-  createTrampoline(M, F);
+  createWorkgroup(M, F);
 
   F->removeFnAttr(Attribute::NoInline);
   F->addFnAttr(Attribute::AlwaysInline);
@@ -119,22 +126,39 @@ createSizeGlobals(Module &M)
 }
 
 static void
-createTrampoline(Module &M, Function *F)
+createWorkgroup(Module &M, Function *F)
 {
   IRBuilder<> builder(M.getContext());
 
   FunctionType *ft =
-    TypeBuilder<void(types::i<32>,
+    TypeBuilder<void(types::i<8>*[],
+		     types::i<32>,
 		     types::i<32>,
 		     types::i<32>), true>::get(M.getContext());
 
   Function *workgroup =
-    dyn_cast<Function>(M.getOrInsertFunction("_workgroup", ft));
+    dyn_cast<Function>(M.getOrInsertFunction("_" + Kernel + "_workgroup", ft));
   assert(workgroup != NULL);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
   Function::arg_iterator ai = workgroup->arg_begin();
+
+  SmallVector<Value*, 8> arguments;
+  int i = 0;
+  for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
+       ii != ee; ++ii) {
+    Type *t = ii->getType();
+    
+    Value *gep = builder.CreateGEP(ai, 
+				   ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
+    Value *pointer = builder.CreateLoad(gep);
+    Value *bc = builder.CreateBitCast(pointer, t->getPointerTo());
+    arguments.push_back(builder.CreateLoad(bc));
+    ++i;
+  }
+
+  ++ai;
 
   GlobalVariable *x = M.getGlobalVariable("_group_x");
   if (x != NULL)
@@ -151,19 +175,6 @@ createTrampoline(Module &M, Function *F)
   GlobalVariable *z = M.getGlobalVariable("_group_z");
   if (z != NULL)
     builder.CreateStore(ai, z);
-
-  SmallVector<Value*, 8> arguments;
-  int i = 0;
-  for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
-       ii != ee; ++ii) {
-    Type *t = ii->getType();
-    
-    GlobalVariable *gv =
-      new GlobalVariable(M, t, false, GlobalVariable::ExternalLinkage,
-			 UndefValue::get(t), "_arg" + Twine(i));
-    arguments.push_back(builder.CreateLoad(gv));
-    ++i;
-  }
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();

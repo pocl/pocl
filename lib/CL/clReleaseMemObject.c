@@ -36,7 +36,6 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
     }
 
   free(memobj->device_ptrs);
-  free(memobj);
 
   return CL_SUCCESS;
 }

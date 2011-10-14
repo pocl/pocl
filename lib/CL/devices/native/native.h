@@ -32,7 +32,6 @@ void *locl_native_malloc (void *data, cl_mem_flags flags,
 void locl_native_free (void *data, void *ptr);
 void locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
 void locl_native_run (void *data, const char *bytecode,
-		      struct locl_argument_list *arguments,
 		      cl_kernel kernel,
 		      size_t x, size_t y, size_t z);
 

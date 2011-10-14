@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 #define COMMAND_LENGTH 256
-#define ARGUMENT_STRING_LENGTH 32
+#define WORKGROUP_STRING_LENGTH 128
 
 struct pointer_list {
   void *pointer;
@@ -130,7 +130,6 @@ locl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 
 void
 locl_native_run (void *data, const char *parallel_filename,
-		 struct locl_argument_list *arguments,
 		 cl_kernel kernel,
 		 size_t x, size_t y, size_t z)
 {
@@ -142,8 +141,8 @@ locl_native_run (void *data, const char *parallel_filename,
   char assembly[LOCL_FILENAME_LENGTH];
   char module[LOCL_FILENAME_LENGTH];
   char command[COMMAND_LENGTH];
-  char arg_string[ARGUMENT_STRING_LENGTH];
-  void *arg;
+  char workgroup_string[WORKGROUP_STRING_LENGTH];
+  unsigned device;
   struct locl_argument_list *p;
   unsigned i;
   workgroup w;
@@ -203,24 +202,37 @@ locl_native_run (void *data, const char *parallel_filename,
       d->current_kernel = kernel;
     }
 
+  /* Find which device number within the context correspond
+     to current device.  */
+  for (i = 0; i < kernel->context->num_devices; ++i)
+    {
+      if (kernel->context->devices[i]->data == data)
+	{
+	  device = i;
+	  break;
+	}
+    }
+
+  void *arguments[kernel->num_args];
+
   i = 0;
-  p = arguments;
+  p = kernel->arguments;
   while (p != NULL)
     {
-      error = snprintf (arg_string, ARGUMENT_STRING_LENGTH,
-			"_arg%d", i);
-      assert (error > 0);
-      
-      arg = lt_dlsym (d->current_dlhandle, arg_string);
-
-      memcpy (arg, p->value, p->size);
+      if ((kernel->arg_is_pointer[i]) && (!kernel->arg_is_local[i]))
+	arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+      else
+	arguments[i] = p->value;
 
       ++i;
       p = p->next;
     }
 
-  w = (workgroup) lt_dlsym (d->current_dlhandle, "_workgroup");
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+	    "_%s_workgroup", kernel->function_name);
+
+  w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
 
-  w (x, y, z);
+  w (arguments, x, y, z);
 }
