@@ -166,6 +166,6 @@ struct _cl_kernel {
   struct _cl_kernel *next;
 };
 
-typedef void (*workgroup) (size_t, size_t, size_t);
+typedef void (*workgroup) (void **, size_t, size_t, size_t);
 
 #endif /* LOCL_CL_H */

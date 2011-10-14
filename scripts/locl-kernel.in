@@ -44,10 +44,6 @@ fi
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
-info_prelink_bc="`dirname $1`/`basename $1 .bc`_trampoline_prelink.bc"
-info_bc="`dirname $1`/`basename $1 .bc`_trampoline.bc"
-info_s="`dirname $1`/`basename $1 .bc`_trampoline.s"
-
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
     @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
