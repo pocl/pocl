@@ -26,7 +26,7 @@ LEX=
 
 pkglib_LIBRARIES = libkernel.a
 
-libkernel_a_SOURCES = get_global_id.cl		\
+libkernel_a_SOURCES = get_global_id.c		\
                       get_group_id.cl		\
                       get_local_id.cl		\
                       dot.cl			\
@@ -38,6 +38,9 @@ RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .cl.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+get_global_id.o: get_global_id.c
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 barrier.o: barrier.ll
