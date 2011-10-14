@@ -27,6 +27,10 @@
 #define __local __attribute__ ((address_space(4)))
 #define __constant __attribute__ ((address_space(5)))
 
+#define global __attribute__ ((address_space(3)))
+#define local __attribute__ ((address_space(4)))
+#define constant __attribute__ ((address_space(5)))
+
 typedef float float4 __attribute__((ext_vector_type(4)));
 typedef unsigned uint;
 typedef enum {
