@@ -461,15 +461,15 @@ uninstall-am: uninstall-binSCRIPTS
 
 
 pocl-build: pocl-build.in
-	$(do_subst) < $(srcdir)/$< > $@
+	$(do_subst) < $< > $@
 	chmod +x $@
 
 pocl-kernel: pocl-kernel.in
-	$(do_subst) < $(srcdir)/$< > $@
+	$(do_subst) < $< > $@
 	chmod +x $@
 
 pocl-workgroup: pocl-workgroup.in
-	$(do_subst) < $(srcdir)/$< > $@
+	$(do_subst) < $< > $@
 	chmod +x $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

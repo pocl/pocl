@@ -37,13 +37,13 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]SHARED[@],$(SHARED),g'
 
 pocl-build: pocl-build.in
-	$(do_subst) < $(srcdir)/$< > $@
+	$(do_subst) < $< > $@
 	chmod +x $@
 
 pocl-kernel: pocl-kernel.in
-	$(do_subst) < $(srcdir)/$< > $@
+	$(do_subst) < $< > $@
 	chmod +x $@
 
 pocl-workgroup: pocl-workgroup.in
-	$(do_subst) < $(srcdir)/$< > $@
+	$(do_subst) < $< > $@
 	chmod +x $@
