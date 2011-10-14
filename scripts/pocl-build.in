@@ -37,7 +37,7 @@ fi
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
+    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
 else
-    @CLANG@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
+    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
 fi

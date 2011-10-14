@@ -26,11 +26,11 @@ LEX=
 
 pkglib_LIBRARIES = libkernel.a
 
-libkernel_a_SOURCES = get_global_id.c		\
-                      get_group_id.c		\
-                      get_local_id.c		\
-                      dot.c			\
-                      mad24.c
+libkernel_a_SOURCES = get_global_id.cl		\
+                      get_group_id.cl		\
+                      get_local_id.cl		\
+                      dot.cl			\
+                      mad24.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 
@@ -38,7 +38,7 @@ RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<

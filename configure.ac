@@ -36,6 +36,9 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 
+AC_ARG_VAR([CLANG], [Program to compile to bytecode])
+AC_ARG_VAR([CLANGFLAGS], [Flags to be used when compiling to bytecode])
+
 AC_PATH_PROG([CLANG], [clang])
 AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 AC_PATH_PROG([OPT], [opt])

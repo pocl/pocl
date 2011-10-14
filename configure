@@ -615,6 +615,7 @@ LLC
 LLVM_LD
 OPT
 LLVM_CONFIG
+CLANGFLAGS
 CLANG
 CXXCPP
 am__fastdepCXX_FALSE
@@ -754,7 +755,9 @@ CPP
 CXX
 CXXFLAGS
 CCC
-CXXCPP'
+CXXCPP
+CLANG
+CLANGFLAGS'
 
 
 # Initialize some variables set by options.
@@ -1403,6 +1406,8 @@ Some influential environment variables:
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
   CXXCPP      C++ preprocessor
+  CLANG       Program to compile to bytecode
+  CLANGFLAGS  Flags to be used when compiling to bytecode
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -15758,6 +15763,9 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+
 
 
 
