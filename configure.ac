@@ -95,6 +95,7 @@ AC_CONFIG_FILES([Makefile
 		 examples/example2/Makefile
 		 examples/barriers/Makefile
 		 examples/forloops/Makefile
+		 examples/standalone/Makefile
                  scripts/Makefile])
 
 AC_OUTPUT

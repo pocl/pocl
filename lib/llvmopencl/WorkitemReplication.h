@@ -37,7 +37,6 @@ namespace pocl {
 
     virtual bool doInitialization(llvm::Module &M);
     virtual bool runOnFunction(llvm::Function &F);
-    virtual bool doFinalization(llvm::Module &M);
 
   private:
     BasicBlockSet ProcessedBarriers;

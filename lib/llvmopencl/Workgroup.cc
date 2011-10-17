@@ -42,7 +42,6 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static void createSizeGlobals(Module &M);
 static void createWorkgroup(Module &M, Function *F);
 
 extern cl::opt<string> Kernel;
@@ -66,8 +65,6 @@ static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 bool
 Workgroup::runOnModule(Module &M)
 {
-  createSizeGlobals(M);
-
   BasicInliner BI;
 
   Function *F = NULL;
@@ -79,6 +76,18 @@ Workgroup::runOnModule(Module &M)
 
     if (i->getName() == Kernel)
       F = i;
+  }
+
+  NamedMDNode *SizeInfo = M.getNamedMetadata("opencl.kernel_wg_size_info");
+  if (SizeInfo) {
+    for (unsigned i = 0, e = SizeInfo->getNumOperands(); i != e; ++i) {
+      MDNode *KernelSizeInfo = SizeInfo->getOperand(i);
+      if (KernelSizeInfo->getOperand(0)->getName() == Kernel) {
+	LocalSize[0] = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+	LocalSize[1] = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+	LocalSize[2] = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+      }
+    }
   }
 
   BI.inlineFunctions();
@@ -94,8 +103,7 @@ Workgroup::runOnModule(Module &M)
   WorkitemReplication WR;
   WR.doInitialization(M);
   WR.runOnFunction(*F);
-  WR.doFinalization(M);
-
+  
   createWorkgroup(M, F);
 
   F->removeFnAttr(Attribute::NoInline);
@@ -104,25 +112,6 @@ Workgroup::runOnModule(Module &M)
   BI.inlineFunctions();
 
   return true;
-}
-
-static void
-createSizeGlobals(Module &M)
-{
-  GlobalVariable *x = M.getGlobalVariable("_size_x");
-  if (x != NULL)
-    x->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[0]));
-  
-  GlobalVariable *y = M.getGlobalVariable("_size_y");
-  if (y != NULL)
-    y->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[1]));
-  
-  GlobalVariable *z = M.getGlobalVariable("_size_z");
-  if (z != NULL)
-    z->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[2]));
 }
 
 static void

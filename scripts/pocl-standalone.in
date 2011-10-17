@@ -56,9 +56,9 @@ kernel_bc="${tempdir}/kernel.bc"
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
+    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
 else
-    @CLANG@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
+    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 fi
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
@@ -89,9 +89,9 @@ locals_header="${tempdir}/locals_header.h"
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -kernel=${kernel} -local-size=2 2 2 -header=${locals_header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -kernel=${kernel} -local-size=1 1 1 -header=${locals_header} -o ${output_file} ${linked_bc}
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -kernel=${kernel} -local-size=2 2 2 -header=${locals_header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -kernel=${kernel} -local-size=1 1 1 -header=${locals_header} -o ${output_file} ${linked_bc}
 fi
 
 cat ${locals_header} >> ${header}
