@@ -95,3 +95,4 @@ else
 fi
 
 cat ${locals_header} >> ${header}
+rm -fr ${tempdir}
