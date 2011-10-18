@@ -1,4 +1,3 @@
-
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
@@ -39,12 +38,19 @@ AC_PROG_LIBTOOL
 AC_ARG_VAR([CLANG], [Program to compile to bytecode])
 AC_ARG_VAR([CLANGFLAGS], [Flags to be used when compiling to bytecode])
 
-AC_PATH_PROG([CLANG], [clang])
-AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
-AC_PATH_PROG([OPT], [opt])
-AC_PATH_PROG([LLVM_LD], [llvm-ld])
-AC_PATH_PROG([LLC], [llc])
-AC_PATH_PROG([LLVM_AS], [llvm-as])
+AC_CHECK_TOOL([CLANG], [clang])
+test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
+
+AC_CHECK_TOOL([LLVM_CONFIG], [llvm-config])
+AC_CHECK_TOOL([OPT], [opt])
+AC_CHECK_TOOL([LLVM_LD], [llvm-ld])
+AC_CHECK_TOOL([LLC], [llc])
+AC_CHECK_TOOL([LLVM_AS], [llvm-as])
+test -z "$LLVM_CONFIG" || \
+test -z "$OPT" || \
+test -z "$LLVM_LD" || \
+test -z "$LLC" || \
+test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH])
 
 old_LDFLAGS=$LDFLAGS
 LDFLAGS=-bundle
