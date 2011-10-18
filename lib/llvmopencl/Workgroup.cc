@@ -35,7 +35,6 @@
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicInliner.h"
-#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <map>
 
@@ -43,6 +42,7 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
+static void noaliasArguments(Function *F);
 static void createWorkgroup(Module &M, Function *F);
 
 extern cl::opt<string> Kernel;
@@ -116,15 +116,20 @@ Workgroup::runOnModule(Module &M)
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
 
-    createWorkgroup(M, K);
+    noaliasArguments(K);
 
-    // K->removeFnAttr(Attribute::NoInline);
-    // K->addFnAttr(Attribute::AlwaysInline);
-    // BI.addFunction(K);
-    // BI.inlineFunctions();g1
+    createWorkgroup(M, K);
   }
 
   return true;
+}
+
+static void
+noaliasArguments(Function *F)
+{
+  // Argument 0 is return type, so add 1 to index here.
+  for (unsigned i = 0, e = F->getFunctionType()->getNumParams(); i != e; ++i)
+    F->setDoesNotAlias(i + 1);
 }
 
 static void
@@ -180,7 +185,4 @@ createWorkgroup(Module &M, Function *F)
   
   CallInst *C = builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
-
-  InlineFunctionInfo IFI;
-  InlineFunction(C, IFI);
 }
