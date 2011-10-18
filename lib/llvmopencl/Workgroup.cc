@@ -183,6 +183,6 @@ createWorkgroup(Module &M, Function *F)
   if (z != NULL)
     builder.CreateStore(ai, z);
   
-  CallInst *C = builder.CreateCall(F, ArrayRef<Value*>(arguments));
+  builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 }
