@@ -35,7 +35,7 @@ typedef float float4 __attribute__((ext_vector_type(4)));
 typedef unsigned uint;
 typedef enum {
   CLK_LOCAL_MEM_FENCE = 0x1,
-  CLK_GLOBAL_MEM_FECE = 0x2
+  CLK_GLOBAL_MEM_FENCE = 0x2
 } cl_mem_fence_flags;
 
 uint get_global_id(uint);
