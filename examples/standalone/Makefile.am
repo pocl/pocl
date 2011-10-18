@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile for the top-level directory of pocl.
+# Makefile.am for pocl/examples/standalone.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,6 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = include lib scripts examples
+EXTRA_DIST = standalone.cl
 
-ACLOCAL_AMFLAGS = -I m4
+noinst_DATA = $(EXTRA_DIST:.cl=.bc)
+
+.cl.bc:
+	../../scripts/pocl-standalone -h $(@:.bc=.h) -o $@ $<
+
+clean-local:
+	rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)

@@ -44,6 +44,8 @@ fi
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
+rm -f ${header}
+
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
     @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
@@ -54,7 +56,7 @@ fi
 gcc @SHARED@ -o ${output_file} -x c - <<EOF
 #include "${header}"
 
-unsigned _num_args = _NUM_ARGS;
-int _arg_is_pointer[] = _ARG_IS_POINTER;
-int _arg_is_local[] = _ARG_IS_LOCAL;
+unsigned _num_args = _${kernel}_NUM_ARGS;
+int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
+int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
 EOF

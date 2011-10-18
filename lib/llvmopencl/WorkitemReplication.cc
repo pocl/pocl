@@ -51,10 +51,20 @@ static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pas
 bool
 WorkitemReplication::doInitialization(Module &M)
 {
-  // Allocate space for workitem reference maps. Workitem 0 does
-  // not need it.
-  int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
-  ReferenceMap = new ValueValueMap[i];
+  GlobalVariable *x = M.getGlobalVariable("_size_x");
+  if (x != NULL)
+    x->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
+				       LocalSize[0]));
+  
+  GlobalVariable *y = M.getGlobalVariable("_size_y");
+  if (y != NULL)
+    y->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
+				       LocalSize[1]));
+  
+  GlobalVariable *z = M.getGlobalVariable("_size_z");
+  if (z != NULL)
+    z->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
+				       LocalSize[2]));
 
   LocalX = M.getGlobalVariable("_local_x");
   LocalY = M.getGlobalVariable("_local_y");
@@ -66,6 +76,11 @@ WorkitemReplication::doInitialization(Module &M)
 bool
 WorkitemReplication::runOnFunction(Function &F)
 {
+  // Allocate space for workitem reference maps. Workitem 0 does
+  // not need it.
+  int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
+  ReferenceMap = new ValueValueMap[i];
+
   BasicBlockSet subgraph;
 
   // Split basicblock at barriers. Barrier blocks must have a single
@@ -80,15 +95,9 @@ WorkitemReplication::runOnFunction(Function &F)
   if (exit != NULL)
     replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
 
-  return true;
-}
-
-bool
-WorkitemReplication::doFinalization(Module &M)
-{
   delete []ReferenceMap;
 
-  return false;
+  return true;
 }
 
 // Perform a deep first seach on the subgraph starting on bb. On the
