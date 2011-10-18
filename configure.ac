@@ -35,8 +35,8 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 
-AC_ARG_VAR([CLANG], [Program to compile to bytecode])
-AC_ARG_VAR([CLANGFLAGS], [Flags to be used when compiling to bytecode])
+AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
+AC_ARG_VAR([CLANGFLAGS], [Flags to be passed to CLANG])
 
 AC_CHECK_TOOL([CLANG], [clang])
 test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
