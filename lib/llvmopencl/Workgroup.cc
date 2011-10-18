@@ -79,7 +79,6 @@ Workgroup::runOnModule(Module &M)
   BarrierTailReplication BTR;
 
   WorkitemReplication WR;
-  WR.doInitialization(M);
 
   string ErrorInfo;
   raw_fd_ostream out(Header.c_str(), ErrorInfo);
@@ -112,6 +111,7 @@ Workgroup::runOnModule(Module &M)
 	}
       }
     }
+    WR.doInitialization(M);
     WR.runOnFunction(*K);
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
