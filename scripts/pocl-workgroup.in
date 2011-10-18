@@ -67,6 +67,7 @@ then
 else
     @LLVM_LD@ -b ${linked_bc} $1 -L@pkglibdir@ -lkernel
 fi
+rm a.out
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 

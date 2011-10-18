@@ -1,5 +1,13 @@
-Makefile
+# srcdir
 Makefile.in
+./aclocal.m4
+./autom4te.cache
+./configure
+./config/*
+./m4/*
+
+# builddir
+Makefile
 stamp-h1
 .deps
 .libs
@@ -7,18 +15,17 @@ stamp-h1
 *.o
 *.la
 
-./configure
 ./libtool
 ./config.h
 ./config.log
 ./config.status
-./aclocal.m4
-./autom4te.cache
 
 examples/barriers/barriers
 examples/example1/example1
 examples/example2/example2
 examples/forloops/forloops
+examples/standalone/standalone.bc
+examples/standalone/standalone.h
 scripts/pocl-build
 scripts/pocl-kernel
 scripts/pocl-standalone

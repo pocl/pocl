@@ -72,6 +72,7 @@ then
 else
     @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@pkglibdir@ -lkernel
 fi
+rm a.out
 
 locals_header="${tempdir}/locals_header.h"
 
