@@ -35,6 +35,7 @@
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicInliner.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <map>
 
@@ -67,49 +68,61 @@ Workgroup::runOnModule(Module &M)
 {
   BasicInliner BI;
 
-  Function *F = NULL;
-  
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
       i->setLinkage(Function::InternalLinkage);
     BI.addFunction(i);
-
-    if (i->getName() == Kernel)
-      F = i;
-  }
-
-  NamedMDNode *SizeInfo = M.getNamedMetadata("opencl.kernel_wg_size_info");
-  if (SizeInfo) {
-    for (unsigned i = 0, e = SizeInfo->getNumOperands(); i != e; ++i) {
-      MDNode *KernelSizeInfo = SizeInfo->getOperand(i);
-      if (KernelSizeInfo->getOperand(0)->getName() == Kernel) {
-	LocalSize[0] = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-	LocalSize[1] = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-	LocalSize[2] = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-      }
-    }
   }
 
   BI.inlineFunctions();
 
-  string ErrorInfo;
-  raw_fd_ostream out(Header.c_str(), ErrorInfo);
-  out << "#define _NUM_LOCALS 0\n";
-  out << "#define _LOCAL_SIZE {}\n";
-
   BarrierTailReplication BTR;
-  BTR.runOnFunction(*F);
 
   WorkitemReplication WR;
   WR.doInitialization(M);
-  WR.runOnFunction(*F);
-  
-  createWorkgroup(M, F);
 
-  F->removeFnAttr(Attribute::NoInline);
-  F->addFnAttr(Attribute::AlwaysInline);
-  BI.addFunction(F);
-  BI.inlineFunctions();
+  string ErrorInfo;
+  raw_fd_ostream out(Header.c_str(), ErrorInfo);
+
+  NamedMDNode *SizeInfo = M.getNamedMetadata("opencl.kernel_wg_size_info");
+
+  NamedMDNode *Kernels = M.getNamedMetadata("opencl.kernels");
+  for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
+    Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
+
+    if ((Kernel != "") && (K->getName() != Kernel))
+      continue;
+
+    out << "#define _" << K->getName() << "_NUM_LOCALS 0\n";
+    out << "#define _" << K->getName() << "_LOCAL_SIZE {}\n";
+
+    BTR.runOnFunction(*K);
+
+    int OldLocalSize[3];
+    for (int i = 0; i < 3; ++i)
+      OldLocalSize[i] = LocalSize[i];;
+
+    if (SizeInfo) {
+      for (unsigned i = 0, e = SizeInfo->getNumOperands(); i != e; ++i) {
+	MDNode *KernelSizeInfo = SizeInfo->getOperand(i);
+	if (KernelSizeInfo->getOperand(0) == K) {
+	  LocalSize[0] = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+	  LocalSize[1] = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+	  LocalSize[2] = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+	}
+      }
+    }
+    WR.runOnFunction(*K);
+    for (int i = 0; i < 3; ++i)
+      LocalSize[i] = OldLocalSize[i];;
+
+    createWorkgroup(M, K);
+
+    // K->removeFnAttr(Attribute::NoInline);
+    // K->addFnAttr(Attribute::AlwaysInline);
+    // BI.addFunction(K);
+    // BI.inlineFunctions();g1
+  }
 
   return true;
 }
@@ -126,7 +139,7 @@ createWorkgroup(Module &M, Function *F)
 		     types::i<32>), true>::get(M.getContext());
 
   Function *workgroup =
-    dyn_cast<Function>(M.getOrInsertFunction("_" + Kernel + "_workgroup", ft));
+    dyn_cast<Function>(M.getOrInsertFunction("_" + F->getNameStr() + "_workgroup", ft));
   assert(workgroup != NULL);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
@@ -165,6 +178,9 @@ createWorkgroup(Module &M, Function *F)
   if (z != NULL)
     builder.CreateStore(ai, z);
   
-  builder.CreateCall(F, ArrayRef<Value*>(arguments));
+  CallInst *C = builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
+
+  InlineFunctionInfo IFI;
+  InlineFunction(C, IFI);
 }

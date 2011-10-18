@@ -23,30 +23,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-while getopts k:h:o: o
+while getopts h:o: o
 do
     case "$o" in
-	k)   kernel="${OPTARG}";;
 	h)   header="${OPTARG}";;
 	o)   output_file="${OPTARG}";;
-	[?]) echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1;;
+	[?]) echo >&2 "Usage: $0 -o <output_file> <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
-if [ "x$kernel" = x ]
-then
-    echo >&2 "Usage: $0 -k <kernel> -header <header> -o <output_file> <input_file>" && exit 1
-fi
-
 if [ "x$header" = x ]
 then
-    echo >&2 "Usage: $0 -k <kernel> -header <header> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 -header <header> -o <output_file> <input_file>" && exit 1
 fi
 
 if [ "x$output_file" = x ]
 then
-    echo >&2 "Usage: $0 -k <kernel> -header <header> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 -header <header> -o <output_file> <input_file>" && exit 1
 fi
 
 tempdir="`dirname ${output_file}`/.pocl$$"
@@ -61,20 +55,14 @@ else
     @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 fi
 
+rm -f ${header}
+
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} ${kernel_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} ${kernel_bc}
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
 fi
-
-gcc @SHARED@ -o ${output_file} -x c - <<EOF
-#include "${header}"
-
-unsigned _num_args = _NUM_ARGS;
-int _arg_is_pointer[] = _ARG_IS_POINTER;
-int _arg_is_local[] = _ARG_IS_LOCAL;
-EOF
 
 linked_bc="${tempdir}/linked.bc"
 
@@ -89,9 +77,9 @@ locals_header="${tempdir}/locals_header.h"
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -kernel=${kernel} -local-size=1 1 1 -header=${locals_header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workgroup -local-size=1 1 1 -header=${locals_header} -o ${output_file} ${linked_bc}
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -kernel=${kernel} -local-size=1 1 1 -header=${locals_header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -workgroup -local-size=1 1 1 -header=${locals_header} -o ${output_file} ${linked_bc}
 fi
 
 cat ${locals_header} >> ${header}
