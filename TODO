@@ -4,14 +4,18 @@ High priority:
     * complete kernel runtime library.
     * make workgroups thread-safe.
     * create workgroups by looping instead of fully unrolling.
+    * handle barriers inside loops.
 
 Medium priority:
     * complete host runtime library.
     * vectorize workgroups.
     * native-thread device which uses threads for different workgroups.
+    * ttasim target (heterogeneous TCE scenario).
+    * device supporting ATI cards.
     * device supporting IBM Cell BE.
 
 Low priority:
     * gdb target (generates code for any llvm-compatible target and launches.
       workgroups on gdb simulator).
     * standalone target (and standalone-threading?).
+    * ICD support.
