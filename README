@@ -8,9 +8,9 @@ distribution.
 This file provides additional information on required software packages,
 special configure flags pocl might use, running pocl examples and using
 pocl as the OpenCL implementation with any program that uses OpenCL. It
-also describes the standalone compilation mode which might be used to
-statically link kernels with your own program, and how to call any
-host C library or syscall in your kernels which might be usefull for
+also describes the "standalone compilation mode" which might be used to
+statically link kernels with the host program, and how to call any
+host C library or syscall in your kernels which might be useful for
 kernel debugging (see HOST LIBRARY CALLS).
 
 
@@ -19,8 +19,8 @@ REQUIRED SOFTWARE PACKAGES
 To build pocl, apart from a decent development environment (C/C++ compiler,
 make) the following packages are needed:
 
-llvm (3.0 branch)
-clang (3.0 branch)
+   llvm 3.0
+   clang 3.0
 
 
 CONFIGURING
@@ -30,24 +30,26 @@ scripts need to be regenerated. This is achieved by issuing the command
 
     ./autogen.sh
 
-in the root of the source tree (you will need a decent version of GNU
-autotools).
+in the root of the source tree. You will need a decent version of GNU
+autotools, usually installable from distribution packages 'automake', 
+'autoconf', and 'libtool'.
 
 Once that is done, the usual GNU build system
 
     ./configure && make
 
 is enough to build pocl. Builds out of source directory are also supported.
+
 The configure script will use the following special environment variables,
 if present or passed in the command line:
 
-    CLANG         Program to compile kernels to bytecode
-    CLANGFLAGS    Flags to be passed to CLANG
+    CLANG         The program to compile kernels to bytecode.
+    CLANGFLAGS    The flags to be passed to the CLANG compiler.
 
 
 EXAMPLES
 
-After build is complete, a number of examples are ready to be run on
+After the build is complete, a number of examples are ready to be run on
 the subdirectories under examples/. To run them, just go to each directory
 and run the executable there (executable name matches subdirectory name).
 
@@ -64,14 +66,15 @@ During installation, pocl places a copy of standard OpenCL headers in
 <prefix>/include/CL, and the host runtime OpenCL library (libCL) in
 <prefix>/lib.
 
-Passing the appropiate linker flags is enough to use pocl in your
-program. Bear in mind that:
+Passing the appropriate linker flags is enough to use pocl in your
+program. However, please bear in mind that:
 
     1. The current distribution only supports one device, "native",
        which runs the kernels in the host system.
     2. Current implementation of both host and kernel runtime libraries
        is far for complete. If your program uses any of the unimplemented
-       API calls, it will not work.
+       API calls, it will not work. Please implement the mssing APIs
+       when you need them and submit us a patch :)
 
 
 STANDALONE
@@ -81,8 +84,13 @@ STANDALONE
 
 HOST LIBRARY CALLS
 
-When using the "native" device, that runs the kernels on the host (after
-statically replicating them), the kernels might use any library or system
-call in the host. Examples "barriers" and "forloops" show how to call
-"printf" inside the kernel, but any other host function can be called
-as well. This can prove quite useful when debugging OpenCL kernels.
+When using the "native" device that runs the kernels on the host (after
+statically replicating their work items), the kernels might use any
+library or system call in the host. The examples "barriers" and "forloops"
+show how to call "printf" inside the kernel, but any other host function 
+can be called as well. This can prove quite useful when debugging OpenCL 
+kernels.
+
+KERNEL REPLICATION
+
+(todo)
