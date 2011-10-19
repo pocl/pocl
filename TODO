@@ -9,13 +9,14 @@ High priority:
 Medium priority:
     * complete host runtime library.
     * vectorize workgroups.
-    * native-thread device which uses threads for different workgroups.
+    * native-multithread (mt) device which creates N threads for different workgroups.
     * ttasim target (heterogeneous TCE scenario).
     * device supporting ATI cards.
-    * device supporting IBM Cell BE.
 
 Low priority:
     * gdb target (generates code for any llvm-compatible target and launches.
       workgroups on gdb simulator).
-    * standalone target (and standalone-threading?).
+    * standalone target (and standalone-mt).
     * ICD support.
+    * device supporting IBM Cell BE.
+    
