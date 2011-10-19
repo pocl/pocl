@@ -4,11 +4,11 @@ Makefile.in
 ./autom4te.cache
 ./configure
 ./config/*
+./config.h.in
 ./m4/*
 
 # builddir
 Makefile
-stamp-h1
 .deps
 .libs
 *.lo
@@ -19,6 +19,7 @@ stamp-h1
 ./config.h
 ./config.log
 ./config.status
+./stamp-h1
 
 examples/barriers/barriers
 examples/example1/example1

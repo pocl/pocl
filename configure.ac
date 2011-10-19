@@ -66,11 +66,24 @@ AC_SUBST([SHARED])
 
 AC_DEFINE_UNQUOTED([SHARED], ["$SHARED"], [Parameter to compiler to generate loadable module.])
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
-AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [Path to LLVM linker.])
-AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [Path to LLVM compiler.])
+AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
+AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
 # Checks for libraries.
-AC_SUBST([LIBS_TRANSFORMUTILS], [`$LLVM_CONFIG --libs transformutils`])
+AC_LANG([C++])
+old_LDFLAGS=$LDFLAGS
+LDFLAGS+=`$LLVM_CONFIG --ldflags`
+old_LIBS=$LIBS
+LIBS=
+AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
+               [LLVM-3.0 LLVMTransformUtils],
+	       , ,
+               [`$LLVM_CONFIG --libs transformutils`])
+AC_SUBST([LIBS_LLVMTRANSFORMUTILS], ["$LIBS"])
+test "$ac_cv_search_LLVMInitializeTransformUtils" = "no" && \
+  AC_MSG_FAILURE([Unable to link with LLVM libraries])
+LIBS=$old_LIBS
+LDFLAGS=$old_LDFLAGS
 
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h unistd.h])

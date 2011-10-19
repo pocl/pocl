@@ -30,4 +30,4 @@ AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
 llvmopencl_la_SOURCES = GenerateHeader.cc Workgroup.cc				\
 			BarrierTailReplication.h BarrierTailReplication.cc	\
 			WorkitemReplication.h WorkitemReplication.cc
-llvmopencl_la_LIBADD = -lLLVMTransformUtils
+llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@
