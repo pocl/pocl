@@ -79,8 +79,23 @@ program. However, please bear in mind that:
 
 STANDALONE
 
-(todo)
+The "standalone compilation mode" is especially useful for embedded standalone 
+platforms which do not include an operating system with a dynamic linker
+and still want to run OpenCL programs to exploit the language's parallelism.
 
+The key idea in the standalone mode is to link the OpenCL kernels statically 
+to the host program and make the kernels appear in the "kernel registry" of 
+the host API so they can be lauched from the main program without needing to
+invoke the runtime kernel compilation. 
+
+The original targets of this method are the application-specific TTA processors 
+designed with the TTA-Based Co-design Environment (http://tce.cs.tut.fi) which 
+now uses pocl for kernel compilation. TCE's compiler driver script tcecc serves 
+as an example how to register and launch the kernels seamlessly in the 
+compilation/linkage chain of standalone OpenCL programs.
+
+The 'pocl-standalone' script can be used to compile OpenCL C kernels separately
+to be linked with the main program in this setting.
 
 HOST LIBRARY CALLS
 
