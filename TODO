@@ -1,0 +1,17 @@
+Portable OpenCL --- TODO
+
+High priority:
+    * complete kernel runtime library.
+    * make workgroups thread-safe.
+    * create workgroups by looping instead of fully unrolling.
+
+Medium priority:
+    * complete host runtime library.
+    * vectorize workgroups.
+    * native-thread device which uses threads for different workgroups.
+    * device supporting IBM Cell BE.
+
+Low priority:
+    * gdb target (generates code for any llvm-compatible target and launches.
+      workgroups on gdb simulator).
+    * standalone target (and standalone-threading?).
