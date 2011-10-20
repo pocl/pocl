@@ -21,8 +21,74 @@
    THE SOFTWARE.
 */
 
-float
+float __attribute__ ((overloadable))
+dot(float a, float b)
+{
+  return a * b;
+}
+
+float __attribute__ ((overloadable))
+dot(float2 a, float2 b)
+{
+  return a.s0 * b.s0 + a.s1 * b.s1;
+}
+
+float __attribute__ ((overloadable))
+dot(float3 a, float3 b)
+{
+  return dot(a.s01, b.s01) + a.s2 * b.s2;
+}
+
+float __attribute__ ((overloadable))
 dot(float4 a, float4 b)
 {
-  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+  return dot(a.s01, b.s01) + dot(a.s23, b.s23);
+}
+
+float __attribute__ ((overloadable))
+dot(float8 a, float8 b)
+{
+  return dot(a.s0123, b.s0123) + dot(a.s4567, b.s4567);
+}
+
+float __attribute__ ((overloadable))
+dot(float16 a, float16 b)
+{
+  return dot(a.s01234567, b.s01234567) + dot(a.s89abcdef, b.s89abcdef);
+}
+
+double __attribute__ ((overloadable))
+dot(double a, double b)
+{
+  return a * b;
+}
+
+double __attribute__ ((overloadable))
+dot(double2 a, double2 b)
+{
+  return a.s0 * b.s0 + a.s1 * b.s1;
+}
+
+double __attribute__ ((overloadable))
+dot(double3 a, double3 b)
+{
+  return dot(a.s01, b.s01) + a.s2 * b.s2;
+}
+
+double __attribute__ ((overloadable))
+dot(double4 a, double4 b)
+{
+  return dot(a.s01, b.s01) + dot(a.s23, b.s23);
+}
+
+double __attribute__ ((overloadable))
+dot(double8 a, double8 b)
+{
+  return dot(a.s0123, b.s0123) + dot(a.s4567, b.s4567);
+}
+
+double __attribute__ ((overloadable))
+dot(double16 a, double16 b)
+{
+  return dot(a.s01234567, b.s01234567) + dot(a.s89abcdef, b.s89abcdef);
 }
