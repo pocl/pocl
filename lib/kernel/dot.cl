@@ -21,8 +21,14 @@
    THE SOFTWARE.
 */
 
-float
+float __attribute__ ((overloadable))
 dot(float4 a, float4 b)
 {
   return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+float __attribute__ ((overloadable))
+dot(float3 a, float3 b)
+{
+  return a.x * b.x + a.y + b.y + a.z + b.z;
 }
