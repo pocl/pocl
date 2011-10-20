@@ -30,6 +30,7 @@ libkernel_a_SOURCES = get_global_id.c		\
                       get_group_id.cl		\
                       get_local_id.cl		\
                       dot.cl			\
+                      sin.cl			\
                       mad24.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll

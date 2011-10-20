@@ -63,18 +63,23 @@ uint get_local_id(uint);
 
 int mad24(int x, int y, int z);
 
-float __attribute__ ((overloadable)) dot(float a, float b);
-float __attribute__ ((overloadable)) dot(float2 a, float2 b);
-float __attribute__ ((overloadable)) dot(float3 a, float3 b);
-float __attribute__ ((overloadable)) dot(float4 a, float4 b);
-float __attribute__ ((overloadable)) dot(float8 a, float8 b);
-float __attribute__ ((overloadable)) dot(float16 a, float16 b);
+#define dot cl_dot
+float __attribute__ ((overloadable)) cl_dot(float a, float b);
+float __attribute__ ((overloadable)) cl_dot(float2 a, float2 b);
+float __attribute__ ((overloadable)) cl_dot(float3 a, float3 b);
+float __attribute__ ((overloadable)) cl_dot(float4 a, float4 b);
+float __attribute__ ((overloadable)) cl_dot(float8 a, float8 b);
+float __attribute__ ((overloadable)) cl_dot(float16 a, float16 b);
 
-double __attribute__ ((overloadable)) dot(double a, double b);
-double __attribute__ ((overloadable)) dot(double2 a, double2 b);
-double __attribute__ ((overloadable)) dot(double3 a, double3 b);
-double __attribute__ ((overloadable)) dot(double4 a, double4 b);
-double __attribute__ ((overloadable)) dot(double8 a, double8 b);
-double __attribute__ ((overloadable)) dot(double16 a, double16 b);
+double __attribute__ ((overloadable)) cl_dot(double a, double b);
+double __attribute__ ((overloadable)) cl_dot(double2 a, double2 b);
+double __attribute__ ((overloadable)) cl_dot(double3 a, double3 b);
+double __attribute__ ((overloadable)) cl_dot(double4 a, double4 b);
+double __attribute__ ((overloadable)) cl_dot(double8 a, double8 b);
+double __attribute__ ((overloadable)) cl_dot(double16 a, double16 b);
+
+#define sin cl_sin
+float __attribute__ ((overloadable)) sin(float b);
+double __attribute__ ((overloadable)) sin(double b);
 
 __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
