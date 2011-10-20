@@ -51,24 +51,17 @@ static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pas
 bool
 WorkitemReplication::doInitialization(Module &M)
 {
-  GlobalVariable *x = M.getGlobalVariable("_size_x");
-  if (x != NULL)
-    x->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[0]));
-  
-  GlobalVariable *y = M.getGlobalVariable("_size_y");
-  if (y != NULL)
-    y->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[1]));
-  
-  GlobalVariable *z = M.getGlobalVariable("_size_z");
-  if (z != NULL)
-    z->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[2]));
+  GlobalVariable *local_size = M.getGlobalVariable("_local_size");
+  if (local_size  != NULL) {
+    SmallVector<Constant*, 3> c(3);
+    c[0] = ConstantInt::get(IntegerType::get(M.getContext(), 32), LocalSize[0]);
+    c[1] = ConstantInt::get(IntegerType::get(M.getContext(), 32), LocalSize[1]);
+    c[2] = ConstantInt::get(IntegerType::get(M.getContext(), 32), LocalSize[2]);
+    ArrayType *t = ArrayType::get(IntegerType::get(M.getContext(), 32), 3);
+    local_size->setInitializer(ConstantArray::get(t, ArrayRef<Constant*>(c)));
+  }
 
-  LocalX = M.getGlobalVariable("_local_x");
-  LocalY = M.getGlobalVariable("_local_y");
-  LocalZ = M.getGlobalVariable("_local_z");
+  LocalID = M.getGlobalVariable("_local_id");
 
   return false;
 }
@@ -189,11 +182,11 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 	    y == (LocalSize[1] - 1) &&
 	    z == (LocalSize[2] - 1)) {
 	  builder.SetInsertPoint(entry, entry->front());
-	  if (LocalX != NULL) {
+	  if (LocalID != NULL) {
+	    Value *local_x = builder.CreateConstGEP2_32(LocalID, 0, 0);
 	    builder.CreateStore(ConstantInt::get(IntegerType::
 						 get(entry->getContext(),
-						     32), x), LocalX);
-	    
+						     32), x), local_x);
 	  }
 	  return;
 	}
@@ -211,24 +204,27 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 	exit->getTerminator()->eraseFromParent();
 
 	builder.SetInsertPoint(entry, entry->front());
-	if (LocalX != NULL) {
+	if (LocalID != NULL) {
+	  Value *local_x = builder.CreateConstGEP2_32(LocalID, 0, 0);
 	  builder.CreateStore(ConstantInt::get(IntegerType::
 					       get(entry->getContext(),
-						   32), x), LocalX);
+						   32), x), local_x);
 	  
 	}
 	if (x == 0) {
-	  if (LocalY != NULL) {
+	  if (LocalID != NULL) {
+	    Value *local_y = builder.CreateConstGEP2_32(LocalID, 0, 1);
 	    builder.CreateStore(ConstantInt::get(IntegerType::
 						 get(entry->getContext(),
-						     32), y), LocalY);
+						     32), y), local_y);
 	    
 	  }
 	  if (y == 0) {
-	    if (LocalZ != NULL) {
+	    if (LocalID != NULL) {
+	      Value *local_z = builder.CreateConstGEP2_32(LocalID, 0, 2);
 	      builder.CreateStore(ConstantInt::get(IntegerType::
 						   get(entry->getContext(),
-						       32), z), LocalZ);
+						       32), z), local_z);
 	    }
 	  }
 	}
@@ -372,9 +368,12 @@ WorkitemReplication::isReplicable(const Instruction *i)
 {
   if (const StoreInst *s = dyn_cast<StoreInst>(i)) {
     const Value *v = s->getPointerOperand();
-    const GlobalVariable *gv = dyn_cast<GlobalVariable>(v);
-    if (gv == LocalX || gv == LocalY || gv == LocalZ)
-      return false;
+    const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v);
+    if (gep != NULL) {
+      const GlobalVariable *gv = dyn_cast<GlobalVariable>(gep->getPointerOperand());
+      if (gv == LocalID)
+	return false;
+    }
   }
 
   return true;

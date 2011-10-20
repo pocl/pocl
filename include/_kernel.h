@@ -32,6 +32,7 @@
 #define constant __attribute__ ((address_space(5)))
 
 typedef float float4 __attribute__((ext_vector_type(4)));
+typedef float float3 __attribute__((ext_vector_type(3)));
 typedef unsigned uint;
 typedef enum {
   CLK_LOCAL_MEM_FENCE = 0x1,
@@ -41,9 +42,11 @@ typedef enum {
 uint get_global_id(uint);
 uint get_group_id(uint);
 uint get_local_id(uint);
+uint get_global_size(uint);
 
 int mad24(int x, int y, int z);
 
-float dot(float4 a, float4 b);
+float __attribute__ ((overloadable)) dot(float4 a, float4 b);
+float __attribute__ ((overloadable)) dot(float3 a, float3 b);
 
 __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);

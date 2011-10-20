@@ -118,6 +118,8 @@ Workgroup::runOnModule(Module &M)
 
     noaliasArguments(K);
 
+    // Function *L = createLauncher(M, K);
+
     createWorkgroup(M, K);
   }
 
@@ -165,23 +167,24 @@ createWorkgroup(Module &M, Function *F)
     ++i;
   }
 
-  ++ai;
+  GlobalVariable *GroupID = M.getGlobalVariable("_group_id");
+  if (GroupID != NULL) {
 
-  GlobalVariable *x = M.getGlobalVariable("_group_x");
-  if (x != NULL)
-    builder.CreateStore(ai, x);
+    ++ai;
 
-  ++ai;
+    Value *group_x = builder.CreateConstGEP2_32(GroupID, 0, 0);
+    builder.CreateStore(ai, group_x);
 
-  GlobalVariable *y = M.getGlobalVariable("_group_y");
-  if (y != NULL)
-    builder.CreateStore(ai, y);
+    ++ai;
 
-  ++ai;
+    Value *group_y = builder.CreateConstGEP2_32(GroupID, 0, 1);
+    builder.CreateStore(ai, group_y);
+    
+    ++ai;
 
-  GlobalVariable *z = M.getGlobalVariable("_group_z");
-  if (z != NULL)
-    builder.CreateStore(ai, z);
+    Value *group_z = builder.CreateConstGEP2_32(GroupID, 0, 2);
+    builder.CreateStore(ai, group_z);
+  }
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();

@@ -21,19 +21,14 @@
    THE SOFTWARE.
 */
 
-uint _group_x;
-uint _group_y;
-uint _group_z;
+uint _group_id[3];
 
 uint
 get_group_id(uint dimindx)
 {
-  switch(dimindx)
-    {
-    case 0: return _group_x;
-    case 1: return _group_y;
-    case 2: return _group_z;
-    default: return 0;
-    }
+  if (dimindx >= 3)
+    return 0;
+
+  return _group_id[dimindx];
 }
 
