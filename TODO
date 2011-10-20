@@ -1,6 +1,7 @@
 Portable OpenCL --- TODO
 
 High priority:
+    * get_global_size implementation
     * complete kernel runtime library.
     * make workgroups thread-safe.
     * create workgroups by looping instead of fully unrolling.
