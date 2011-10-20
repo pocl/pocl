@@ -23,8 +23,9 @@
 
 #include "pocl_cl.h"
 #include <sys/stat.h>
+#include <unistd.h>
 
-#define COMMAND_LENGTH 256
+#define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_kernel CL_API_CALL
 clCreateKernel(cl_program program,

@@ -29,7 +29,7 @@
 #include <ltdl.h>
 #include "CL/opencl.h"
 
-#define POCL_FILENAME_LENGTH 128
+#define POCL_FILENAME_LENGTH 1024
 
 #define POCL_BUILD "pocl-build"
 #define POCL_KERNEL "pocl-kernel"

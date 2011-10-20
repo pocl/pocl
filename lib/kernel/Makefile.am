@@ -29,8 +29,13 @@ pkglib_LIBRARIES = libkernel.a
 libkernel_a_SOURCES = get_global_id.c		\
                       get_group_id.cl		\
                       get_local_id.cl		\
+                      as_type.cl		\
+                      cos.cl			\
                       dot.cl			\
+                      fabs.cl			\
                       sin.cl			\
+                      sqrt.cl			\
+                      tan.cl			\
                       mad24.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll

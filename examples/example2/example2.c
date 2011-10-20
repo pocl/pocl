@@ -1,4 +1,4 @@
-/* example2 - Matric transpose example from OpenCL specification.
+/* example2 - Matrix transpose example from OpenCL specification.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
