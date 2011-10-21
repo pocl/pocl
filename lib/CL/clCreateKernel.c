@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include <unistd.h>
 #include <sys/stat.h>
 
 #define COMMAND_LENGTH 256
