@@ -61,6 +61,7 @@ clSetKernelArg(cl_kernel kernel,
       ++i;
     }
   
+  p->value = NULL;
   if (arg_value != NULL)
     {
       value = malloc (arg_size);

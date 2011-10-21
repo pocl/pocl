@@ -188,7 +188,7 @@ pocl_native_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"gcc " SHARED " -o %s %s",
+			"clang " SHARED " -o %s %s",
 			module,
 			assembly);
       assert (error >= 0);
