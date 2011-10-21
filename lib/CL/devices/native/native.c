@@ -145,6 +145,7 @@ pocl_native_run (void *data, const char *parallel_filename,
   unsigned device;
   struct pocl_argument_list *p;
   unsigned i;
+  struct _pocl_context pc;
   workgroup w;
 
   d = (struct data *) data;
@@ -231,8 +232,12 @@ pocl_native_run (void *data, const char *parallel_filename,
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
 	    "_%s_workgroup", kernel->function_name);
 
+  pc.group_id[0] = x;
+  pc.group_id[1] = y;
+  pc.group_id[2] = z;
+
   w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
 
-  w (arguments, x, y, z);
+  w (arguments, &pc);
 }

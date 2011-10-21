@@ -166,6 +166,13 @@ struct _cl_kernel {
   struct _cl_kernel *next;
 };
 
-typedef void (*workgroup) (void **, size_t, size_t, size_t);
+struct _pocl_context {
+  cl_uint work_dim;
+  cl_uint num_groups[3];
+  cl_uint group_id[3];
+  cl_uint global_offset[3];
+};
+
+typedef void (*workgroup) (void **, struct _pocl_context *);
 
 #endif /* POCL_CL_H */

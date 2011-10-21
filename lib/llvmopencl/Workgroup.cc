@@ -43,6 +43,7 @@ using namespace llvm;
 using namespace pocl;
 
 static void noaliasArguments(Function *F);
+static Function *createLauncher(Module &M, Function *F);
 static void createWorkgroup(Module &M, Function *F);
 
 extern cl::opt<string> Kernel;
@@ -58,7 +59,43 @@ namespace {
 
     virtual bool runOnModule(Module &M);
   };
+
 }
+
+namespace llvm {
+
+  typedef struct _pocl_context PoclContext;
+  
+  template<bool xcompile> class TypeBuilder<PoclContext, xcompile> {
+  public:
+    static StructType *get(LLVMContext &Context) {
+        return StructType::get(
+        TypeBuilder<types::i<32>, xcompile>::get(Context),
+	TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+	TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+	TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+        NULL);
+    }
+  
+    enum Fields {
+      WORK_DIM,
+      NUM_GROUPS,
+      GROUP_ID,
+      GLOBAL_OFFSET
+    };
+  };
+
+  // template<bool xcompile> raw_ostream& operator<<(raw_ostream &OS, const TypeBuilder<PoclContext, xcompile> &T) {
+  //   OS << "struct _pocl_context {\n";
+  //   OS << "  cl_uint work_dim;\n";
+  //   OS << "  cl_uint num_groups[3];\n";
+  //   OS << "  cl_uint group_id[3];\n";
+  //   OS << "  cl_uint global_offset[3];\n";
+  //   OS << "};\n";
+  //   return OS;
+  // }
+  
+}  // namespace llvm
   
 char Workgroup::ID = 0;
 static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
@@ -116,11 +153,12 @@ Workgroup::runOnModule(Module &M)
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
 
-    noaliasArguments(K);
+    Function *L = createLauncher(M, K);
 
-    // Function *L = createLauncher(M, K);
+    L->addFnAttr(Attribute::NoInline);
+    noaliasArguments(L);
 
-    createWorkgroup(M, K);
+    createWorkgroup(M, L);
   }
 
   return true;
@@ -134,6 +172,47 @@ noaliasArguments(Function *F)
     F->setDoesNotAlias(i + 1);
 }
 
+static Function *
+createLauncher(Module &M, Function *F)
+{
+  SmallVector<Type *, 8> v;
+
+  for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
+       i != e; ++i)
+    v.push_back (i->getType());
+  v.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
+
+  FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
+				       ArrayRef<Type *> (v),
+				       false);
+  Function *L = Function::Create(ft,
+				 Function::ExternalLinkage,
+				 "_" + F->getNameStr(),
+				 &M);
+
+  SmallVector<Value *, 8> arguments;
+  Function::arg_iterator ai = L->arg_begin();
+  for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i)  {
+    arguments.push_back(ai);
+    ++ai;
+  }
+
+  IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
+
+  GlobalVariable *GroupID = M.getGlobalVariable("_group_id");
+  if (GroupID != NULL) {
+    Value *ptr = builder.CreateStructGEP(ai,
+					 TypeBuilder<PoclContext, true>::GROUP_ID);
+    Value *v = builder.CreateLoad(ptr);
+    builder.CreateStore(v, GroupID);
+  }
+
+  builder.CreateCall(F, ArrayRef<Value*>(arguments));
+  builder.CreateRetVoid();
+  
+  return L;
+  }
+
 static void
 createWorkgroup(Module &M, Function *F)
 {
@@ -141,12 +220,10 @@ createWorkgroup(Module &M, Function *F)
 
   FunctionType *ft =
     TypeBuilder<void(types::i<8>*[],
-		     types::i<32>,
-		     types::i<32>,
-		     types::i<32>), true>::get(M.getContext());
+		     PoclContext*), true>::get(M.getContext());
 
   Function *workgroup =
-    dyn_cast<Function>(M.getOrInsertFunction("_" + F->getNameStr() + "_workgroup", ft));
+    dyn_cast<Function>(M.getOrInsertFunction(F->getNameStr() + "_workgroup", ft));
   assert(workgroup != NULL);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
@@ -167,24 +244,7 @@ createWorkgroup(Module &M, Function *F)
     ++i;
   }
 
-  GlobalVariable *GroupID = M.getGlobalVariable("_group_id");
-  if (GroupID != NULL) {
-
-    ++ai;
-
-    Value *group_x = builder.CreateConstGEP2_32(GroupID, 0, 0);
-    builder.CreateStore(ai, group_x);
-
-    ++ai;
-
-    Value *group_y = builder.CreateConstGEP2_32(GroupID, 0, 1);
-    builder.CreateStore(ai, group_y);
-    
-    ++ai;
-
-    Value *group_z = builder.CreateConstGEP2_32(GroupID, 0, 2);
-    builder.CreateStore(ai, group_z);
-  }
+  arguments.back() = ++ai;
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();

@@ -5,6 +5,7 @@ High priority:
     * make workgroups thread-safe.
     * create workgroups by looping instead of fully unrolling.
     * handle barriers inside loops.
+    * proper support for automatic local variables.
 
 Medium priority:
     * complete host runtime library.
