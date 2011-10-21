@@ -25,7 +25,7 @@ extern uint _local_size[3];
 extern uint _num_groups[3];
 
 uint
-get_global_id(uint dimindx)
+get_global_size(uint dimindx)
 {
   if (dimindx >= 3)
     return 0;
