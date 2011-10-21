@@ -207,6 +207,14 @@ createLauncher(Module &M, Function *F)
     builder.CreateStore(v, GroupID);
   }
 
+  GlobalVariable *NumGroups = M.getGlobalVariable("_num_groups");
+  if (NumGroups != NULL) {
+    Value *ptr = builder.CreateStructGEP(ai,
+					 TypeBuilder<PoclContext, true>::NUM_GROUPS);
+    Value *v = builder.CreateLoad(ptr);
+    builder.CreateStore(v, NumGroups);
+  }
+
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
   
