@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef sinpi
-#define TRIG sinpi
-#include "call-libc.h"
+DEFINE_EXPR_1(sinpi, (stype)M_PI*cos(a))

@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef atan2
-#define TRIG atan2
-#include "call-libc2.h"
+DEFINE_SCALARISE_2(atan2)

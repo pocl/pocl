@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef sin
-#define TRIG sin
-#include "call-libc.h"
+DEFINE_SCALARISE_1(sin)

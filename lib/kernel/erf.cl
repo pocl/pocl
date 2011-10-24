@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef erf
-#define TRIG erf
-#include "call-libc.h"
+DEFINE_SCALARISE_1(erf)

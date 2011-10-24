@@ -21,72 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef minmag
-
-
-
-#define CL_DEFINE_FUNC2(NAME, EXPR)                                     \
-                                                                        \
-  float __attribute__ ((overloadable)) cl_##NAME(float a, float b)      \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  float2 __attribute__ ((overloadable)) cl_##NAME(float2 a, float2 b)   \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  float3 __attribute__ ((overloadable)) cl_##NAME(float3 a, float3 b)   \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  float4 __attribute__ ((overloadable)) cl_##NAME(float4 a, float4 b)   \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  float8 __attribute__ ((overloadable)) cl_##NAME(float8 a, float8 b)   \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  float16 __attribute__ ((overloadable)) cl_##NAME(float16 a, float16 b) \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  double __attribute__ ((overloadable)) cl_##NAME(double a, double b)   \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  double2 __attribute__ ((overloadable)) cl_##NAME(double2 a, double2 b) \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  double3 __attribute__ ((overloadable)) cl_##NAME(double3 a, double3 b) \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  double4 __attribute__ ((overloadable)) cl_##NAME(double4 a, double4 b) \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  double8 __attribute__ ((overloadable)) cl_##NAME(double8 a, double8 b) \
-  {                                                                     \
-    return EXPR;                                                        \
-  }                                                                     \
-                                                                        \
-  double16 __attribute__ ((overloadable)) cl_##NAME(double16 a, double16 b) \
-  {                                                                     \
-    return EXPR;                                                        \
-  }
-
-
-
-CL_DEFINE_FUNC2(minmag, fmin(fabs(a), fabs(b)))
+DEFINE_EXPR_2(minmag, fmin(fabs(a), fabs(b)))

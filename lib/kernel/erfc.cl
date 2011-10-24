@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef erfc
-#define TRIG erfc
-#include "call-libc.h"
+DEFINE_SCALARISE_1(erfc)

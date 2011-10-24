@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef pow
-#define TRIG pow
-#include "call-libc2.h"
+DEFINE_SCALARISE_2(pow)

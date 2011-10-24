@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef fmod
-#define TRIG fmod
-#include "call-libc2.h"
+DEFINE_SCALARISE_2(fmod)

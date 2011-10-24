@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef acos
-#define TRIG acos
-#include "call-libc.h"
+DEFINE_SCALARISE_1(acos)

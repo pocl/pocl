@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef nextafter
-#define TRIG nextafter
-#include "call-libc2.h"
+DEFINE_SCALARISE_2(nextafter)

@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef cos
-#define TRIG cos
-#include "call-libc.h"
+DEFINE_SCALARISE_1(cos)

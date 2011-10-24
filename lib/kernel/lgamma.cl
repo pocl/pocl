@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef lgamma
-#define TRIG lgamma
-#include "call-libc.h"
+DEFINE_SCALARISE_1(lgamma)

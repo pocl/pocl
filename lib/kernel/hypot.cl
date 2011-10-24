@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef hypot
-#define TRIG hypot
-#include "call-libc2.h"
+DEFINE_SCALARISE_2(hypot)

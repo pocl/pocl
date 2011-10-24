@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef cbrt
-#define TRIG cbrt
-#include "call-libc.h"
+DEFINE_SCALARISE_1(cbrt)

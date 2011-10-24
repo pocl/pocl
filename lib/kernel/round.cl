@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef round
-#define TRIG round
-#include "call-libc.h"
+DEFINE_SCALARISE_1(round)

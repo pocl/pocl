@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef acospi
-#define TRIG acospi
-#include "call-libc.h"
+DEFINE_EXPR_1(acospi, acos(a)/(stype)M_PI)

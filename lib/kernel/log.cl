@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef log
-#define TRIG log
-#include "call-libc.h"
+DEFINE_SCALARISE_1(log)

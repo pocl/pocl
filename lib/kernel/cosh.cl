@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef cosh
-#define TRIG cosh
-#include "call-libc.h"
+DEFINE_SCALARISE_1(cosh)

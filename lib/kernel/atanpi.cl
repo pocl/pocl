@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef atanpi
-#define TRIG atanpi
-#include "call-libc.h"
+DEFINE_EXPR_1(atanpi, atan(a)/(stype)M_PI)

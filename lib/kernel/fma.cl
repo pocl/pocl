@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef fma
-#define TRIG fma
-#include "call-libc3.h"
+DEFINE_SCALARISE_3(fma)

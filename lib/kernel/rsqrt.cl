@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef rsqrt
-#define TRIG rsqrt
-#include "call-libc.h"
+DEFINE_EXPR_1(rsqrt, (stype)1.0/sqrt(a))

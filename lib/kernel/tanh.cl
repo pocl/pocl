@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef tanh
-#define TRIG tanh
-#include "call-libc.h"
+DEFINE_SCALARISE_1(tanh)

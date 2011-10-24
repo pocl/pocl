@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef cospi
-#define TRIG cospi
-#include "call-libc.h"
+DEFINE_EXPR_1(cospi, (stype)M_PI*cos(a))

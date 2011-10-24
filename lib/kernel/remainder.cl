@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef remainder
-#define TRIG remainder
-#include "call-libc2.h"
+DEFINE_SCALARISE_2(remainder)

@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef asin
-#define TRIG asin
-#include "call-libc.h"
+DEFINE_SCALARISE_1(asin)

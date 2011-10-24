@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef asinh
-#define TRIG asinh
-#include "call-libc.h"
+DEFINE_SCALARISE_1(asinh)

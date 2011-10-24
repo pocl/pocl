@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef trunc
-#define TRIG trunc
-#include "call-libc.h"
+DEFINE_SCALARISE_1(trunc)

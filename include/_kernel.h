@@ -128,6 +128,61 @@ uint get_local_id(uint);
 
 int mad24(int x, int y, int z);
 
+/* Constants */
+
+#define FLT_DIG          6
+#define FLT_MANT_DIG     24
+#define FLT_MAX_10_EXP   +38
+#define FLT_MAX_EXP      +128
+#define FLT_MIN_10_EXP   -37
+#define FLT_MIN_EXP      -125
+#define FLT_RADIX        2
+#define FLT_MAX          0x1.fffffep127f
+#define FLT_MIN          0x1.0p-126f
+#define FLT_EPSILON      0x1.0p-23f
+
+#define HUGE_VALF __builtin_huge_valf()
+
+#define M_E_F        2.71828182845904523536028747135f
+#define M_LOG2E_F    1.44269504088896340735992468100f
+#define M_LOG10E_F   0.434294481903251827651128918917f
+#define M_LN2_F      0.693147180559945309417232121458f
+#define M_LN10_F     2.30258509299404568401799145468f
+#define M_PI_F       3.14159265358979323846264338328f
+#define M_PI_2_F     1.57079632679489661923132169164f
+#define M_PI_4_F     0.785398163397448309615660845820f
+#define M_1_PI_F     0.318309886183790671537767526745f
+#define M_2_PI_F     0.636619772367581343075535053490f
+#define M_2_SQRTPI_F 1.12837916709551257389615890312f
+#define M_SQRT2_F    1.41421356237309504880168872421f
+#define M_SQRT1_2_F  0.707106781186547524400844362105f
+
+#define DBL_DIG        15
+#define DBL_MANT_DIG   53
+#define DBL_MAX_10_EXP +308
+#define DBL_MAX_EXP    +1024
+#define DBL_MIN_10_EXP -307
+#define DBL_MIN_EXP    -1021
+#define DBL_MAX        0x1.fffffffffffffp1023
+#define DBL_MIN        0x1.0p-1022
+#define DBL_EPSILON    0x1.0p-52
+
+#define HUGE_VAL __builtin_huge_val()
+
+#define M_E        2.71828182845904523536028747135
+#define M_LOG2E    1.44269504088896340735992468100
+#define M_LOG10E   0.434294481903251827651128918917
+#define M_LN2      0.693147180559945309417232121458
+#define M_LN10     2.30258509299404568401799145468
+#define M_PI       3.14159265358979323846264338328
+#define M_PI_2     1.57079632679489661923132169164
+#define M_PI_4     0.785398163397448309615660845820
+#define M_1_PI     0.318309886183790671537767526745
+#define M_2_PI     0.636619772367581343075535053490
+#define M_2_SQRTPI 1.12837916709551257389615890312
+#define M_SQRT2    1.41421356237309504880168872421
+#define M_SQRT1_2  0.707106781186547524400844362105
+
 /* Conversion functions */
 
 #define CL_DECLARE_AS_TYPE(SRC, DST)                    \
@@ -324,6 +379,7 @@ CL_DECLARE_AS_TYPE_128(double16)
   double16 __attribute__ ((overloadable))               \
     cl_##NAME(double16 a, double16 b, double16 c);
 
+#define acos      cl_acos
 #define acosh     cl_acosh
 #define acospi    cl_acospi
 #define asin      cl_asin
@@ -361,7 +417,6 @@ CL_DECLARE_AS_TYPE_128(double16)
 #define log1p     cl_log1p
 #define logb      cl_logb
 #define mad       cl_mad
-#define mad24     cl_mad24
 #define maxmag    cl_maxmag
 #define minmag    cl_minmag
 #define nextafter cl_nextafter
@@ -380,6 +435,7 @@ CL_DECLARE_AS_TYPE_128(double16)
 #define tgamma    cl_tgamma
 #define trunc     cl_trunc
 
+CL_DECLARE_FUNC1(acos)
 CL_DECLARE_FUNC1(acosh)
 CL_DECLARE_FUNC1(acospi)
 CL_DECLARE_FUNC1(asin)

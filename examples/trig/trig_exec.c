@@ -11,14 +11,14 @@ delete_memobjs(cl_mem *memobjs, int n)
  
 int 
 exec_trig_kernel(const char *program_source, 
-                 int n, void *srcA, void *srcB, void *dst) 
+                 int n, void *srcA, void *dst) 
 { 
   cl_context  context; 
   cl_command_queue cmd_queue; 
   cl_device_id  *devices; 
   cl_program  program; 
   cl_kernel  kernel; 
-  cl_mem       memobjs[3]; 
+  cl_mem       memobjs[2]; 
   size_t       global_work_size[1]; 
   size_t       local_work_size[1]; 
   size_t       cb; 
@@ -57,22 +57,11 @@ exec_trig_kernel(const char *program_source,
     } 
  
   memobjs[1] = clCreateBuffer(context, 
-                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-                              sizeof(cl_float4) * n, srcB, NULL); 
+			      CL_MEM_READ_WRITE, 
+			      sizeof(cl_float) * n, NULL, NULL); 
   if (memobjs[1] == (cl_mem)0) 
     { 
       delete_memobjs(memobjs, 1); 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1;
-    } 
- 
-  memobjs[2] = clCreateBuffer(context, 
-			      CL_MEM_READ_WRITE, 
-			      sizeof(cl_float) * n, NULL, NULL); 
-  if (memobjs[2] == (cl_mem)0) 
-    { 
-      delete_memobjs(memobjs, 2); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
       return -1; 
@@ -83,7 +72,7 @@ exec_trig_kernel(const char *program_source,
 				      1, (const char**)&program_source, NULL, NULL); 
   if (program == (cl_program)0) 
     { 
-      delete_memobjs(memobjs, 3); 
+      delete_memobjs(memobjs, 2); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
       return -1; 
@@ -93,7 +82,7 @@ exec_trig_kernel(const char *program_source,
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
   if (err != CL_SUCCESS) 
     { 
-      delete_memobjs(memobjs, 3); 
+      delete_memobjs(memobjs, 2); 
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
@@ -104,7 +93,7 @@ exec_trig_kernel(const char *program_source,
   kernel = clCreateKernel(program, "trig", NULL); 
   if (kernel == (cl_kernel)0) 
     { 
-      delete_memobjs(memobjs, 3); 
+      delete_memobjs(memobjs, 2); 
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
@@ -114,14 +103,12 @@ exec_trig_kernel(const char *program_source,
   // set the args values 
   err = clSetKernelArg(kernel,  0,  
 		       sizeof(cl_mem), (void *) &memobjs[0]); 
-  err |= clSetKernelArg(kernel, 1,  
+  err |= clSetKernelArg(kernel, 1,
 			sizeof(cl_mem), (void *) &memobjs[1]); 
-  err |= clSetKernelArg(kernel, 2,
-			sizeof(cl_mem), (void *) &memobjs[2]); 
  
   if (err != CL_SUCCESS) 
     { 
-      delete_memobjs(memobjs, 3); 
+      delete_memobjs(memobjs, 2); 
       clReleaseKernel(kernel); 
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
@@ -139,7 +126,7 @@ exec_trig_kernel(const char *program_source,
 			       0, NULL, NULL); 
   if (err != CL_SUCCESS) 
     { 
-      delete_memobjs(memobjs, 3); 
+      delete_memobjs(memobjs, 2); 
       clReleaseKernel(kernel); 
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
@@ -148,12 +135,12 @@ exec_trig_kernel(const char *program_source,
     } 
  
   // read output image 
-  err = clEnqueueReadBuffer(cmd_queue, memobjs[2], CL_TRUE, 
+  err = clEnqueueReadBuffer(cmd_queue, memobjs[1], CL_TRUE, 
 			    0, n * sizeof(cl_float), dst, 
 			    0, NULL, NULL); 
   if (err != CL_SUCCESS) 
     { 
-      delete_memobjs(memobjs, 3); 
+      delete_memobjs(memobjs, 2); 
       clReleaseKernel(kernel); 
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
@@ -162,7 +149,7 @@ exec_trig_kernel(const char *program_source,
     } 
  
   // release kernel, program, and memory objects 
-  delete_memobjs(memobjs, 3); 
+  delete_memobjs(memobjs, 2); 
   clReleaseKernel(kernel); 
   clReleaseProgram(program); 
   clReleaseCommandQueue(cmd_queue); 

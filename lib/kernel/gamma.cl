@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef gamma
-#define TRIG gamma
-#include "call-libc.h"
+DEFINE_SCALARISE_1(gamma)

@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef rint
-#define TRIG rint
-#include "call-libc.h"
+DEFINE_SCALARISE_1(rint)

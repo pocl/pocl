@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef expm1
-#define TRIG expm1
-#include "call-libc.h"
+DEFINE_SCALARISE_1(expm1)

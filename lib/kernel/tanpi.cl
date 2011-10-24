@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef tanpi
-#define TRIG tanpi
-#include "call-libc.h"
+DEFINE_EXPR_1(tanpi, (stype)M_PI*tan(a))

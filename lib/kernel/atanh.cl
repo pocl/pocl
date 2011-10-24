@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 #undef atanh
-#define TRIG atanh
-#include "call-libc.h"
+DEFINE_SCALARISE_1(atanh)
