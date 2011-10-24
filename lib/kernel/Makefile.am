@@ -26,9 +26,11 @@ LEX=
 
 pkglib_LIBRARIES = libkernel.a
 
-libkernel_a_SOURCES = get_global_id.c		\
-                      get_group_id.cl		\
+libkernel_a_SOURCES = get_global_size.c		\
+                      get_global_id.c		\
                       get_local_id.cl		\
+                      get_num_groups.cl		\
+                      get_group_id.cl		\
                       as_type.cl		\
                       acosh.cl			\
                       acospi.cl			\
@@ -94,7 +96,7 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .cl.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-get_global_id.o: get_global_id.c
+.c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 barrier.o: barrier.ll

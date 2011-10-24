@@ -53,6 +53,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   char command[COMMAND_LENGTH];
   int error;
   struct pocl_argument_list *p;
+  struct pocl_context pc;
   unsigned i;
 
   if (command_queue == NULL)
@@ -152,15 +153,25 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       p = p->next;
     }
 
+  pc.work_dim = work_dim;
+  pc.num_groups[0] = global_x / local_x;
+  pc.num_groups[1] = global_y / local_y;
+  pc.num_groups[2] = global_z / local_z;
+
   for (z = 0; z < global_z / local_z; ++z)
     {
       for (y = 0; y < global_y / local_y; ++y)
 	{
 	  for (x = 0; x < global_x / local_x; ++x)
-	    command_queue->device->run(command_queue->device->data,
-				       parallel_filename,
-				       kernel,
-				       x, y, z);
+	    {
+	      pc.group_id[0] = x;
+	      pc.group_id[1] = y;
+	      pc.group_id[2] = z;
+	      command_queue->device->run(command_queue->device->data,
+					 parallel_filename,
+					 kernel,
+					 &pc);
+	    }
 	}
     }
 

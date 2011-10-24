@@ -51,24 +51,24 @@ static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pas
 bool
 WorkitemReplication::doInitialization(Module &M)
 {
-  GlobalVariable *x = M.getGlobalVariable("_size_x");
+  GlobalVariable *x = M.getGlobalVariable("_local_size_x");
   if (x != NULL)
     x->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
 				       LocalSize[0]));
   
-  GlobalVariable *y = M.getGlobalVariable("_size_y");
+  GlobalVariable *y = M.getGlobalVariable("_local_size_y");
   if (y != NULL)
     y->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
 				       LocalSize[1]));
   
-  GlobalVariable *z = M.getGlobalVariable("_size_z");
+  GlobalVariable *z = M.getGlobalVariable("_local_size_z");
   if (z != NULL)
     z->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
 				       LocalSize[2]));
 
-  LocalX = M.getGlobalVariable("_local_x");
-  LocalY = M.getGlobalVariable("_local_y");
-  LocalZ = M.getGlobalVariable("_local_z");
+  LocalX = M.getGlobalVariable("_local_id_x");
+  LocalY = M.getGlobalVariable("_local_id_y");
+  LocalZ = M.getGlobalVariable("_local_id_z");
 
   return false;
 }
@@ -193,7 +193,6 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 	    builder.CreateStore(ConstantInt::get(IntegerType::
 						 get(entry->getContext(),
 						     32), x), LocalX);
-	    
 	  }
 	  return;
 	}

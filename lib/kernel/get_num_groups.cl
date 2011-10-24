@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_group_id()
+/* OpenCL built-in library: get_num_groups()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,18 +21,19 @@
    THE SOFTWARE.
 */
 
-uint _group_id_x;
-uint _group_id_y;
-uint _group_id_z;
+uint _num_groups_x;
+uint _num_groups_y;
+uint _num_groups_z;
 
 uint
-get_group_id(uint dimindx)
+get_num_groups(uint dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _group_id_x;
-    case 1: return _group_id_y;
-    case 2: return _group_id_z;
+    case 0: return  _num_groups_x;
+    case 1: return  _num_groups_y;
+    case 2: return  _num_groups_z;
     default: return 0;
     }
- }
+}
+

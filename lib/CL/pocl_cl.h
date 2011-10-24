@@ -43,6 +43,13 @@ struct pocl_argument_list {
   struct pocl_argument_list *next;
 };
 
+struct pocl_context {
+  cl_uint work_dim;
+  cl_uint num_groups[3];
+  cl_uint group_id[3];
+  cl_uint global_offset[3];
+};
+
 struct _cl_device_id {
   /* queries */
   cl_device_type type;
@@ -103,7 +110,7 @@ struct _cl_device_id {
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
-	       size_t x, size_t y, size_t z);
+	       struct pocl_context *pc);
   void *data;
 };
 
@@ -166,6 +173,6 @@ struct _cl_kernel {
   struct _cl_kernel *next;
 };
 
-typedef void (*workgroup) (void **, size_t, size_t, size_t);
+typedef void (*workgroup) (void **, struct pocl_context *);
 
 #endif /* POCL_CL_H */

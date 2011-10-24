@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_group_id()
+/* OpenCL built-in library: get_global_size()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,18 +21,23 @@
    THE SOFTWARE.
 */
 
-uint _group_id_x;
-uint _group_id_y;
-uint _group_id_z;
+extern uint _local_size_x;
+extern uint _local_size_y;
+extern uint _local_size_z;
+
+extern uint _num_groups_x;
+extern uint _num_groups_y;
+extern uint _num_groups_z;
 
 uint
-get_group_id(uint dimindx)
+get_global_size(uint dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _group_id_x;
-    case 1: return _group_id_y;
-    case 2: return _group_id_z;
+    case 0: return _local_size_x * _num_groups_x;
+    case 1: return _local_size_y * _num_groups_y;
+    case 2: return _local_size_z * _num_groups_z;
     default: return 0;
     }
- }
+}
+

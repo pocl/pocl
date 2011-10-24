@@ -122,9 +122,11 @@ typedef enum {
   CLK_GLOBAL_MEM_FENCE = 0x2
 } cl_mem_fence_flags;
 
+uint get_global_size(uint);
 uint get_global_id(uint);
-uint get_group_id(uint);
 uint get_local_id(uint);
+uint get_num_groups(uint);
+uint get_group_id(uint);
 
 int mad24(int x, int y, int z);
 
