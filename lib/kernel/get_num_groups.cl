@@ -21,14 +21,19 @@
    THE SOFTWARE.
 */
 
-uint _num_groups[3];
+uint _num_groups_x;
+uint _num_groups_y;
+uint _num_groups_z;
 
 uint
 get_num_groups(uint dimindx)
 {
-  if (dimindx >= 3)
-    return 0;
-
-  return _num_groups[dimindx];
+  switch(dimindx)
+    {
+    case 0: return  _num_groups_x;
+    case 1: return  _num_groups_y;
+    case 2: return  _num_groups_z;
+    default: return 0;
+    }
 }
 

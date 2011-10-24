@@ -49,7 +49,7 @@ namespace pocl {
     // complex bookeeping.
     ValueValueMap *ReferenceMap;
 
-    llvm::GlobalVariable *LocalID;
+    llvm::GlobalVariable *LocalX, *LocalY, *LocalZ;
 
     llvm::BasicBlock *findBarriersDFS(llvm::BasicBlock *bb,
 				      llvm::BasicBlock *entry,

@@ -21,15 +21,23 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size[3];
-extern uint _num_groups[3];
+extern uint _local_size_x;
+extern uint _local_size_y;
+extern uint _local_size_z;
+
+extern uint _num_groups_x;
+extern uint _num_groups_y;
+extern uint _num_groups_z;
 
 uint
 get_global_size(uint dimindx)
 {
-  if (dimindx >= 3)
-    return 0;
-
-  return _local_size[dimindx] * _num_groups[dimindx];
+  switch(dimindx)
+    {
+    case 0: return _local_size_x * _num_groups_x;
+    case 1: return _local_size_y * _num_groups_y;
+    case 2: return _local_size_z * _num_groups_z;
+    default: return 0;
+    }
 }
 

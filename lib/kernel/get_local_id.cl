@@ -21,14 +21,18 @@
    THE SOFTWARE.
 */
 
-uint _local_id[3];
+uint _local_id_x;
+uint _local_id_y;
+uint _local_id_z;
 
 uint
 get_local_id(uint dimindx)
 {
-  if (dimindx >= 3)
-    return 0;
-  
-  return _local_id[dimindx];
-}
-
+  switch(dimindx)
+    {
+    case 0: return  _local_id_x;
+    case 1: return  _local_id_y;
+    case 2: return  _local_id_z;
+    default: return 0;
+    }
+ }

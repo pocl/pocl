@@ -21,16 +21,27 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size[3];
-extern uint _group_id[3];
-extern uint _local_id[3];
+extern uint _local_size_x;
+extern uint _local_size_y;
+extern uint _local_size_z;
+
+extern uint _group_id_x;
+extern uint _group_id_y;
+extern uint _group_id_z;
+
+extern uint _local_id_x;
+extern uint _local_id_y;
+extern uint _local_id_z;
 
 uint
 get_global_id(uint dimindx)
 {
-  if (dimindx >= 3)
-    return 0;
-
-  return _local_size[dimindx] * _group_id[dimindx] + _local_id[dimindx];
+  switch(dimindx)
+    {
+    case 0: return _local_size_x * _group_id_x + _local_id_x;
+    case 1: return _local_size_y * _group_id_y + _local_id_y;
+    case 2: return _local_size_z * _group_id_z + _local_id_z;
+    default: return 0;
+    }
 }
 
