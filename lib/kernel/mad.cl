@@ -25,17 +25,80 @@
 
 
 
-float madf(float a, float b, float c)
-{
-  return a*b+c;
-}
+#define CL_DEFINE_FUNC3(NAME, EXPR)             \
+                                                \
+  float __attribute__ ((overloadable))          \
+  cl_##NAME(float a, float b, float c)          \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  float2 __attribute__ ((overloadable))         \
+  cl_##NAME(float2 a, float2 b, float2 c)       \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  float3 __attribute__ ((overloadable))         \
+  cl_##NAME(float3 a, float3 b, float3 c)       \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  float4 __attribute__ ((overloadable))         \
+  cl_##NAME(float4 a, float4 b, float4 c)       \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  float8 __attribute__ ((overloadable))         \
+  cl_##NAME(float8 a, float8 b, float8 c)       \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  float16 __attribute__ ((overloadable))        \
+  cl_##NAME(float16 a, float16 b, float16 c)    \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  double __attribute__ ((overloadable))         \
+  cl_##NAME(double a, double b, double c)       \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  double2 __attribute__ ((overloadable))        \
+  cl_##NAME(double2 a, double2 b, double2 c)    \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  double3 __attribute__ ((overloadable))        \
+  cl_##NAME(double3 a, double3 b, double3 c)    \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  double4 __attribute__ ((overloadable))        \
+  cl_##NAME(double4 a, double4 b, double4 c)    \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  double8 __attribute__ ((overloadable))        \
+  cl_##NAME(double8 a, double8 b, double8 c)    \
+  {                                             \
+    return EXPR;                                \
+  }                                             \
+                                                \
+  double16 __attribute__ ((overloadable))       \
+  cl_##NAME(double16 a, double16 b, double16 c) \
+  {                                             \
+    return EXPR;                                \
+  }
 
-double mad(double a, double b, double c)
-{
-  return a*b+c;
-}
 
 
-
-#define TRIG mad
-#include "call-libc3.h"
+CL_DEFINE_FUNC3(mad, a*b+c)
