@@ -1,15 +1,21 @@
 Portable OpenCL --- TODO
 
 High priority:
-    * complete kernel runtime library.
-    * make workgroups thread-safe.
-    * create workgroups by looping instead of fully unrolling.
-    * handle barriers inside loops.
+    * get_global_size implementation (1.0)
+    * make NVIDIA OpenCL SDK examples to work (1.0)
+    * make Intel OpenCL SDK examples to work (1.0)    
+    * make AMD OpenCL SDK examples to work (1.0)        
+    * make workgroups thread-safe (1.0)
+    * create workgroups by looping instead of fully unrolling for
+      flexible WG parallelization (1.0)
+    * handle barriers inside kerlen for-loops (1.0)
 
 Medium priority:
+    * complete kernel runtime library.   
     * complete host runtime library.
-    * vectorize workgroups.
-    * native-multithread (mt) device which creates N threads for different workgroups.
+    * vectorize workgroups (1.0)
+    * native-multithread (mt) device which creates N threads for    
+      different workgroups (1.0)   
     * ttasim target (heterogeneous TCE scenario).
     * device supporting ATI cards.
 
@@ -19,4 +25,5 @@ Low priority:
     * standalone target (and standalone-mt).
     * ICD support.
     * device supporting IBM Cell BE.
-    
+
+(1.0) == requirement for the pocl 1.0 release
