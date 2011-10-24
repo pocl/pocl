@@ -22,6 +22,7 @@
 */
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/opencl.h>
@@ -39,6 +40,7 @@ main (void)
   int source_size;
   cl_float4 *srcA;
   cl_float4 *dst;
+  cl_float *dstS;
   int i;
 
   source_file = fopen (SRCDIR "/trig.cl", "r");
@@ -56,6 +58,7 @@ main (void)
 
   srcA = (cl_float4 *) malloc (N * sizeof (cl_float4));
   dst = (cl_float4 *) malloc (N * sizeof (cl_float4));
+  dstS = (cl_float *) malloc (N * sizeof (cl_float));
 
   for (i = 0; i < N; ++i)
     {
@@ -63,6 +66,13 @@ main (void)
       srcA[i].s1 = i;
       srcA[i].s2 = i;
       srcA[i].s3 = i;
+      switch (i % 5) {
+      case 0: dstS[i] = cosf((float)i); break;
+      case 1: dstS[i] = fabsf((float)i); break;
+      case 2: dstS[i] = sinf((float)i); break;
+      case 3: dstS[i] = sqrtf((float)i); break;
+      case 4: dstS[i] = tanf((float)i); break;
+      }
     }
 
   exec_trig_kernel (source, N, srcA, dst);
@@ -72,6 +82,14 @@ main (void)
       printf ("f(%f, %f, %f, %f) = (%f, %f, %f, %f)\n",
 	      srcA[i].s0, srcA[i].s1, srcA[i].s2, srcA[i].s3,
 	      dst[i].s0, dst[i].s1, dst[i].s2, dst[i].s3);
+      if (dst[i].s0 != dstS[i] ||
+          dst[i].s1 != dstS[i] ||
+          dst[i].s2 != dstS[i] ||
+          dst[i].s3 != dstS[i])
+	{
+	  printf ("FAIL\n");
+	  return -1;
+	}
     }
 
   printf ("OK\n");

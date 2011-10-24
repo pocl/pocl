@@ -58,7 +58,7 @@ exec_trig_kernel(const char *program_source,
  
   memobjs[1] = clCreateBuffer(context, 
 			      CL_MEM_READ_WRITE, 
-			      sizeof(cl_float) * n, NULL, NULL); 
+			      sizeof(cl_float4) * n, NULL, NULL); 
   if (memobjs[1] == (cl_mem)0) 
     { 
       delete_memobjs(memobjs, 1); 
@@ -136,7 +136,7 @@ exec_trig_kernel(const char *program_source,
  
   // read output image 
   err = clEnqueueReadBuffer(cmd_queue, memobjs[1], CL_TRUE, 
-			    0, n * sizeof(cl_float), dst, 
+			    0, n * sizeof(cl_float4), dst, 
 			    0, NULL, NULL); 
   if (err != CL_SUCCESS) 
     { 
