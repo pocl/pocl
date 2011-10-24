@@ -1,4 +1,4 @@
-/* OpenCL built-in library: tan()
+/* OpenCL built-in library: fdim()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,6 +21,6 @@
    THE SOFTWARE.
 */
 
-#undef tan
-#define TRIG tan
-#include "call-libc.h"
+#undef fdim
+#define TRIG fdim
+#include "call-libc2.h"

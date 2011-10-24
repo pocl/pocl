@@ -1,4 +1,4 @@
-/* OpenCL built-in library: tan()
+/* OpenCL built-in library: mad()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,6 +21,21 @@
    THE SOFTWARE.
 */
 
-#undef tan
-#define TRIG tan
-#include "call-libc.h"
+#undef mad
+
+
+
+float madf(float a, float b, float c)
+{
+  return a*b+c;
+}
+
+double mad(double a, double b, double c)
+{
+  return a*b+c;
+}
+
+
+
+#define TRIG mad
+#include "call-libc3.h"

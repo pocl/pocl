@@ -46,6 +46,7 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
+/* Ensure the data types have the right sizes */
 #define cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
 cl_static_assert(char, sizeof(char) == 1);
 cl_static_assert(uchar, sizeof(uchar) == 1);
@@ -256,90 +257,182 @@ CL_DECLARE_AS_TYPE_128(long16)
 CL_DECLARE_AS_TYPE_128(ulong16)
 CL_DECLARE_AS_TYPE_128(double16)
 
-/* Trigonometric functions */
+/* Trigonometric and other functions */
 
-#define cos cl_cos
-float __attribute__ ((overloadable)) cl_cos(float a);
-float2 __attribute__ ((overloadable)) cl_cos(float2 a);
-float3 __attribute__ ((overloadable)) cl_cos(float3 a);
-float4 __attribute__ ((overloadable)) cl_cos(float4 a);
-float8 __attribute__ ((overloadable)) cl_cos(float8 a);
-float16 __attribute__ ((overloadable)) cl_cos(float16 a);
-double __attribute__ ((overloadable)) cl_cos(double a);
-double2 __attribute__ ((overloadable)) cl_cos(double2 a);
-double3 __attribute__ ((overloadable)) cl_cos(double3 a);
-double4 __attribute__ ((overloadable)) cl_cos(double4 a);
-double8 __attribute__ ((overloadable)) cl_cos(double8 a);
-double16 __attribute__ ((overloadable)) cl_cos(double16 a);
+#define CL_DECLARE_FUNC1(NAME)                                          \
+  float __attribute__ ((overloadable)) cl_##NAME(float a);              \
+  float2 __attribute__ ((overloadable)) cl_##NAME(float2 a);            \
+  float3 __attribute__ ((overloadable)) cl_##NAME(float3 a);            \
+  float4 __attribute__ ((overloadable)) cl_##NAME(float4 a);            \
+  float8 __attribute__ ((overloadable)) cl_##NAME(float8 a);            \
+  float16 __attribute__ ((overloadable)) cl_##NAME(float16 a);          \
+  double __attribute__ ((overloadable)) cl_##NAME(double a);            \
+  double2 __attribute__ ((overloadable)) cl_##NAME(double2 a);          \
+  double3 __attribute__ ((overloadable)) cl_##NAME(double3 a);          \
+  double4 __attribute__ ((overloadable)) cl_##NAME(double4 a);          \
+  double8 __attribute__ ((overloadable)) cl_##NAME(double8 a);          \
+  double16 __attribute__ ((overloadable)) cl_##NAME(double16 a);
+#define CL_DECLARE_FUNC2(NAME)                                          \
+  float __attribute__ ((overloadable)) cl_##NAME(float a, float b);     \
+  float2 __attribute__ ((overloadable)) cl_##NAME(float2 a, float2 b);  \
+  float3 __attribute__ ((overloadable)) cl_##NAME(float3 a, float3 b);  \
+  float4 __attribute__ ((overloadable)) cl_##NAME(float4 a, float4 b);  \
+  float8 __attribute__ ((overloadable)) cl_##NAME(float8 a, float8 b);  \
+  float16 __attribute__ ((overloadable)) cl_##NAME(float16 a, float16 b); \
+  double __attribute__ ((overloadable)) cl_##NAME(double a, double b);  \
+  double2 __attribute__ ((overloadable)) cl_##NAME(double2 a, double2 b); \
+  double3 __attribute__ ((overloadable)) cl_##NAME(double3 a, double3 b); \
+  double4 __attribute__ ((overloadable)) cl_##NAME(double4 a, double4 b); \
+  double8 __attribute__ ((overloadable)) cl_##NAME(double8 a, double8 b); \
+  double16 __attribute__ ((overloadable)) cl_##NAME(double16 a, double16 b);
+#define CL_DECLARE_SFUNC2(NAME)                                         \
+  float __attribute__ ((overloadable)) cl_##NAME(float a, float b);     \
+  float __attribute__ ((overloadable)) cl_##NAME(float2 a, float2 b);   \
+  float __attribute__ ((overloadable)) cl_##NAME(float3 a, float3 b);   \
+  float __attribute__ ((overloadable)) cl_##NAME(float4 a, float4 b);   \
+  float __attribute__ ((overloadable)) cl_##NAME(float8 a, float8 b);   \
+  float __attribute__ ((overloadable)) cl_##NAME(float16 a, float16 b); \
+  double __attribute__ ((overloadable)) cl_##NAME(double a, double b);  \
+  double __attribute__ ((overloadable)) cl_##NAME(double2 a, double2 b); \
+  double __attribute__ ((overloadable)) cl_##NAME(double3 a, double3 b); \
+  double __attribute__ ((overloadable)) cl_##NAME(double4 a, double4 b); \
+  double __attribute__ ((overloadable)) cl_##NAME(double8 a, double8 b); \
+  double __attribute__ ((overloadable)) cl_##NAME(double16 a, double16 b);
+#define CL_DECLARE_FUNC3(NAME)                          \
+  float __attribute__ ((overloadable))                  \
+    cl_##NAME(float a, float b, float c);               \
+  float2 __attribute__ ((overloadable))                 \
+    cl_##NAME(float2 a, float2 b, float2 c);            \
+  float3 __attribute__ ((overloadable))                 \
+    cl_##NAME(float3 a, float3 b, float3 c);            \
+  float4 __attribute__ ((overloadable))                 \
+    cl_##NAME(float4 a, float4 b, float4 c);            \
+  float8 __attribute__ ((overloadable))                 \
+    cl_##NAME(float8 a, float8 b, float8 c);            \
+  float16 __attribute__ ((overloadable))                \
+    cl_##NAME(float16 a, float16 b, float16 c);         \
+  double __attribute__ ((overloadable))                 \
+    cl_##NAME(double a, double b, double c);            \
+  double2 __attribute__ ((overloadable))                \
+    cl_##NAME(double2 a, double2 b, double2 c);         \
+  double3 __attribute__ ((overloadable))                \
+    cl_##NAME(double3 a, double3 b, double3 c);         \
+  double4 __attribute__ ((overloadable))                \
+    cl_##NAME(double4 a, double4 b, double4 c);         \
+  double8 __attribute__ ((overloadable))                \
+    cl_##NAME(double8 a, double8 b, double8 c);         \
+  double16 __attribute__ ((overloadable))               \
+    cl_##NAME(double16 a, double16 b, double16 c);
 
-#define dot cl_dot
-float __attribute__ ((overloadable)) cl_dot(float a, float b);
-float __attribute__ ((overloadable)) cl_dot(float2 a, float2 b);
-float __attribute__ ((overloadable)) cl_dot(float3 a, float3 b);
-float __attribute__ ((overloadable)) cl_dot(float4 a, float4 b);
-float __attribute__ ((overloadable)) cl_dot(float8 a, float8 b);
-float __attribute__ ((overloadable)) cl_dot(float16 a, float16 b);
-double __attribute__ ((overloadable)) cl_dot(double a, double b);
-double __attribute__ ((overloadable)) cl_dot(double2 a, double2 b);
-double __attribute__ ((overloadable)) cl_dot(double3 a, double3 b);
-double __attribute__ ((overloadable)) cl_dot(double4 a, double4 b);
-double __attribute__ ((overloadable)) cl_dot(double8 a, double8 b);
-double __attribute__ ((overloadable)) cl_dot(double16 a, double16 b);
+#define acosh     cl_acosh
+#define acospi    cl_acospi
+#define asin      cl_asin
+#define asinh     cl_asinh
+#define asinpi    cl_asinpi
+#define atan      cl_atan
+#define atan2     cl_atan2
+#define atan2pi   cl_atan2pi
+#define atanh     cl_atanh
+#define atanpi    cl_atanpi
+#define cbrt      cl_cbrt
+#define copysign  cl_copysign
+#define cos       cl_cos
+#define cosh      cl_cosh
+#define cospi     cl_cospi
+#define dot       cl_dot
+#define erfc      cl_erfc
+#define erf       cl_erf
+#define exp       cl_exp
+#define exp2      cl_exp2
+#define exp10     cl_exp10
+#define expm1     cl_expm1
+#define fabs      cl_fabs
+#define fdim      cl_fdim
+#define fma       cl_fma
+#define fmax      cl_fmax
+#define fmin      cl_fmin
+#define fmod      cl_fmod
+#define gamma     cl_gamma
+#define hypot     cl_hypot
+#define lgamma    cl_lgamma
+#define log       cl_log
+#define log2      cl_log2
+#define log10     cl_log10
+#define log1p     cl_log1p
+#define logb      cl_logb
+#define mad       cl_mad
+#define mad24     cl_mad24
+#define maxmag    cl_maxmag
+#define minmag    cl_minmag
+#define nextafter cl_nextafter
+#define pow       cl_pow
+#define remainder cl_remainder
+#define rint      cl_rint
+#define round     cl_round
+#define rsqrt     cl_rsqrt
+#define sin       cl_sin
+#define sinh      cl_sinh
+#define sinpi     cl_sinpi
+#define sqrt      cl_sqrt
+#define tan       cl_tan
+#define tanh      cl_tanh
+#define tanpi     cl_tanpi
+#define tgamma    cl_tgamma
+#define trunc     cl_trunc
 
-#define fabs cl_fabs
-float __attribute__ ((overloadable)) cl_fabs(float a);
-float2 __attribute__ ((overloadable)) cl_fabs(float2 a);
-float3 __attribute__ ((overloadable)) cl_fabs(float3 a);
-float4 __attribute__ ((overloadable)) cl_fabs(float4 a);
-float8 __attribute__ ((overloadable)) cl_fabs(float8 a);
-float16 __attribute__ ((overloadable)) cl_fabs(float16 a);
-double __attribute__ ((overloadable)) cl_fabs(double a);
-double2 __attribute__ ((overloadable)) cl_fabs(double2 a);
-double3 __attribute__ ((overloadable)) cl_fabs(double3 a);
-double4 __attribute__ ((overloadable)) cl_fabs(double4 a);
-double8 __attribute__ ((overloadable)) cl_fabs(double8 a);
-double16 __attribute__ ((overloadable)) cl_fabs(double16 a);
-
-#define sin cl_sin
-float __attribute__ ((overloadable)) cl_sin(float a);
-float2 __attribute__ ((overloadable)) cl_sin(float2 a);
-float3 __attribute__ ((overloadable)) cl_sin(float3 a);
-float4 __attribute__ ((overloadable)) cl_sin(float4 a);
-float8 __attribute__ ((overloadable)) cl_sin(float8 a);
-float16 __attribute__ ((overloadable)) cl_sin(float16 a);
-double __attribute__ ((overloadable)) cl_sin(double a);
-double2 __attribute__ ((overloadable)) cl_sin(double2 a);
-double3 __attribute__ ((overloadable)) cl_sin(double3 a);
-double4 __attribute__ ((overloadable)) cl_sin(double4 a);
-double8 __attribute__ ((overloadable)) cl_sin(double8 a);
-double16 __attribute__ ((overloadable)) cl_sin(double16 a);
-
-#define sqrt cl_sqrt
-float __attribute__ ((overloadable)) cl_sqrt(float a);
-float2 __attribute__ ((overloadable)) cl_sqrt(float2 a);
-float3 __attribute__ ((overloadable)) cl_sqrt(float3 a);
-float4 __attribute__ ((overloadable)) cl_sqrt(float4 a);
-float8 __attribute__ ((overloadable)) cl_sqrt(float8 a);
-float16 __attribute__ ((overloadable)) cl_sqrt(float16 a);
-double __attribute__ ((overloadable)) cl_sqrt(double a);
-double2 __attribute__ ((overloadable)) cl_sqrt(double2 a);
-double3 __attribute__ ((overloadable)) cl_sqrt(double3 a);
-double4 __attribute__ ((overloadable)) cl_sqrt(double4 a);
-double8 __attribute__ ((overloadable)) cl_sqrt(double8 a);
-double16 __attribute__ ((overloadable)) cl_sqrt(double16 a);
-
-#define tan cl_tan
-float __attribute__ ((overloadable)) cl_tan(float a);
-float2 __attribute__ ((overloadable)) cl_tan(float2 a);
-float3 __attribute__ ((overloadable)) cl_tan(float3 a);
-float4 __attribute__ ((overloadable)) cl_tan(float4 a);
-float8 __attribute__ ((overloadable)) cl_tan(float8 a);
-float16 __attribute__ ((overloadable)) cl_tan(float16 a);
-double __attribute__ ((overloadable)) cl_tan(double a);
-double2 __attribute__ ((overloadable)) cl_tan(double2 a);
-double3 __attribute__ ((overloadable)) cl_tan(double3 a);
-double4 __attribute__ ((overloadable)) cl_tan(double4 a);
-double8 __attribute__ ((overloadable)) cl_tan(double8 a);
-double16 __attribute__ ((overloadable)) cl_tan(double16 a);
+CL_DECLARE_FUNC1(acosh)
+CL_DECLARE_FUNC1(acospi)
+CL_DECLARE_FUNC1(asin)
+CL_DECLARE_FUNC1(asinh)
+CL_DECLARE_FUNC1(asinpi)
+CL_DECLARE_FUNC1(atan)
+CL_DECLARE_FUNC2(atan2)
+CL_DECLARE_FUNC2(atan2pi)
+CL_DECLARE_FUNC1(atanh)
+CL_DECLARE_FUNC1(atanpi)
+CL_DECLARE_FUNC1(cbrt)
+CL_DECLARE_FUNC2(copysign)
+CL_DECLARE_FUNC1(cos)
+CL_DECLARE_FUNC1(cosh)
+CL_DECLARE_FUNC1(cospi)
+CL_DECLARE_SFUNC2(dot)
+CL_DECLARE_FUNC1(erfc)
+CL_DECLARE_FUNC1(erf)
+CL_DECLARE_FUNC1(exp)
+CL_DECLARE_FUNC1(exp2)
+CL_DECLARE_FUNC1(exp10)
+CL_DECLARE_FUNC1(expm1)
+CL_DECLARE_FUNC1(fabs)
+CL_DECLARE_FUNC2(fdim)
+CL_DECLARE_FUNC3(fma)
+CL_DECLARE_FUNC2(fmax)
+CL_DECLARE_FUNC2(fmin)
+CL_DECLARE_FUNC2(fmod)
+CL_DECLARE_FUNC1(gamma)
+CL_DECLARE_FUNC2(hypot)
+CL_DECLARE_FUNC1(lgamma)
+CL_DECLARE_FUNC1(log)
+CL_DECLARE_FUNC1(log2)
+CL_DECLARE_FUNC1(log10)
+CL_DECLARE_FUNC1(log1p)
+CL_DECLARE_FUNC1(logb)
+CL_DECLARE_FUNC3(mad)
+CL_DECLARE_FUNC2(maxmag)
+CL_DECLARE_FUNC2(minmag)
+CL_DECLARE_FUNC2(nextafter)
+CL_DECLARE_FUNC1(pow)
+CL_DECLARE_FUNC2(remainder)
+CL_DECLARE_FUNC1(rint)
+CL_DECLARE_FUNC1(round)
+CL_DECLARE_FUNC1(rsqrt)
+CL_DECLARE_FUNC1(sin)
+CL_DECLARE_FUNC1(sinh)
+CL_DECLARE_FUNC1(sinpi)
+CL_DECLARE_FUNC1(sqrt)
+CL_DECLARE_FUNC1(tan)
+CL_DECLARE_FUNC1(tanh)
+CL_DECLARE_FUNC1(tanpi)
+CL_DECLARE_FUNC1(tgamma)
+CL_DECLARE_FUNC1(trunc)
 
 __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);

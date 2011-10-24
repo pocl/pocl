@@ -30,13 +30,61 @@ libkernel_a_SOURCES = get_global_id.c		\
                       get_group_id.cl		\
                       get_local_id.cl		\
                       as_type.cl		\
+                      acosh.cl			\
+                      acospi.cl			\
+                      asin.cl			\
+                      asinh.cl			\
+                      asinpi.cl			\
+                      atan.cl			\
+                      atan2.cl			\
+                      atan2pi.cl		\
+                      atanh.cl			\
+                      atanpi.cl			\
+                      cbrt.cl			\
+                      copysign.cl		\
                       cos.cl			\
+                      cosh.cl			\
+                      cospi.cl			\
                       dot.cl			\
+                      erfc.cl			\
+                      erf.cl			\
+                      exp.cl			\
+                      exp2.cl			\
+                      exp10.cl			\
+                      expm1.cl			\
                       fabs.cl			\
+                      fdim.cl			\
+                      fma.cl			\
+                      fmax.cl			\
+                      fmin.cl			\
+                      fmod.cl			\
+                      gamma.cl			\
+                      hypot.cl			\
+                      lgamma.cl			\
+                      log.cl			\
+                      log2.cl			\
+                      log10.cl			\
+                      log1p.cl			\
+                      logb.cl			\
+                      mad.cl			\
+                      mad24.cl			\
+                      maxmag.cl			\
+                      minmag.cl			\
+                      nextafter.cl		\
+                      pow.cl			\
+                      remainder.cl		\
+                      rint.cl			\
+                      round.cl			\
+                      rsqrt.cl			\
                       sin.cl			\
+                      sinh.cl			\
+                      sinpi.cl			\
                       sqrt.cl			\
                       tan.cl			\
-                      mad24.cl
+                      tanh.cl			\
+                      tanpi.cl			\
+                      tgamma.cl			\
+                      trunc.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 

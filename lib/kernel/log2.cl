@@ -1,4 +1,4 @@
-/* OpenCL built-in library: tan()
+/* OpenCL built-in library: log2()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,6 +21,6 @@
    THE SOFTWARE.
 */
 
-#undef tan
-#define TRIG tan
+#undef log2
+#define TRIG log2
 #include "call-libc.h"

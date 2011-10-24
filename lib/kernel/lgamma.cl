@@ -1,4 +1,4 @@
-/* OpenCL built-in library: tan()
+/* OpenCL built-in library: lgamma()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,6 +21,6 @@
    THE SOFTWARE.
 */
 
-#undef tan
-#define TRIG tan
+#undef lgamma
+#define TRIG lgamma
 #include "call-libc.h"
