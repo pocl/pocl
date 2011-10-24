@@ -131,7 +131,7 @@ pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 void
 pocl_native_run (void *data, const char *parallel_filename,
 		 cl_kernel kernel,
-		 size_t x, size_t y, size_t z)
+		 struct pocl_context *pc)
 {
   struct data *d;
   char template[] = ".naruXXXXXX";
@@ -234,5 +234,5 @@ pocl_native_run (void *data, const char *parallel_filename,
   w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
 
-  w (arguments, x, y, z);
+  w (arguments, pc);
 }

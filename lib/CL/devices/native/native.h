@@ -33,7 +33,7 @@ void pocl_native_free (void *data, void *ptr);
 void pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
 void pocl_native_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
-		      size_t x, size_t y, size_t z);
+		      struct pocl_context *pc);
 
 extern size_t pocl_native_max_work_item_sizes[];
 

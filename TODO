@@ -1,14 +1,13 @@
 Portable OpenCL --- TODO
 
 High priority:
-    * get_global_size implementation (1.0)
     * make NVIDIA OpenCL SDK examples to work (1.0)
     * make Intel OpenCL SDK examples to work (1.0)    
     * make AMD OpenCL SDK examples to work (1.0)        
-    * make workgroups thread-safe (1.0)
     * create workgroups by looping instead of fully unrolling for
       flexible WG parallelization (1.0)
-    * handle barriers inside kerlen for-loops (1.0)
+    * handle barriers inside kernel for-loops (1.0)
+    * proper support for automatic local variables.
 
 Medium priority:
     * complete kernel runtime library.   
