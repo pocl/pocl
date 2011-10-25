@@ -239,7 +239,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
 	{
-	  for (x = 0; x < pc->num_groups[0]; +++x)
+	  for (x = 0; x < pc->num_groups[0]; ++x)
 	    {
 	      pc->group_id[0] = x;
 	      pc->group_id[1] = y;
