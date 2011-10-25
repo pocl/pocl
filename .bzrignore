@@ -27,8 +27,8 @@ examples/example2/example2
 examples/forloops/forloops
 examples/standalone/standalone.bc
 examples/standalone/standalone.h
+examples/trig/trig
 scripts/pocl-build
 scripts/pocl-kernel
 scripts/pocl-standalone
 scripts/pocl-workgroup
-

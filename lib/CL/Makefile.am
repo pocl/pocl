@@ -43,7 +43,9 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    devices/devices.h		\
                    devices/devices.c		\
                    devices/native/native.h	\
-                   devices/native/native.c
+                   devices/native/native.c	\
+                   devices/pthread/pthread.h	\
+                   devices/pthread/pthread.c
 
 libCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
 libCL_la_LDFLAGS = -lltdl

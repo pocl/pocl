@@ -24,7 +24,8 @@
 
 noinst_PROGRAMS = trig
 
-trig_SOURCES = trig.c trig.cl
-trig_LDADD = ../../lib/CL/libCL.la
+trig_SOURCES = trig.c trig_exec.c trig.cl
+trig_LDADD = ../../lib/CL/libCL.la @PTHREAD_LIBS@
+example1_CFLAGS = @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'
