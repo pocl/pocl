@@ -24,3 +24,4 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_2(hypot)
+// DEFINE_EXPR_2(hypot, sqrt(a*a + b*b))

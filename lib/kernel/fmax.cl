@@ -25,7 +25,12 @@
 float __attribute__ ((overloadable))
 fmax(float a, float b)
 {
+#ifdef __SSE__
+  // LLVM does not optimise this on its own
+  return ((float4)__builtin_ia32_maxss(*(float4*)&a, *(float4*)&b)).s0;
+#else
   return __builtin_fmaxf(a, b);
+#endif
 }
 
 float2 __attribute__ ((overloadable))
@@ -77,7 +82,12 @@ fmax(float16 a, float16 b)
 double __attribute__ ((overloadable))
 fmax(double a, double b)
 {
+#ifdef __SSE2__
+  // LLVM does not optimise this on its own
+  return ((double2)__builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b)).s0;
+#else
   return __builtin_fmax(a, b);
+#endif
 }
 
 double2 __attribute__ ((overloadable))

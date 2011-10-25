@@ -44,14 +44,20 @@
 float __attribute__ ((overloadable))
 cl_ceil(float a)
 {
+#ifdef __SSE4_1__
+  // LLVM does not optimise this on its own
+  return ((float4)__builtin_ia32_roundss(*(float4*)&a, *(float4*)&a,
+                                         _MM_FROUND_CEIL)).s0;
+#else
   return __builtin_ceilf(a);
+#endif
 }
 
 float2 __attribute__ ((overloadable))
 cl_ceil(float2 a)
 {
 #ifdef __SSE4_1__
-  return ((float4)cl_ceil(*(float4)&a).s01;
+  return ((float4)cl_ceil(*(float4)&a)).s01;
 #else
   return (float2)(cl_ceil(a.lo), cl_ceil(a.hi));
 #endif
@@ -61,7 +67,7 @@ float3 __attribute__ ((overloadable))
 cl_ceil(float3 a)
 {
 #ifdef __SSE4_1__
-  return ((float4)cl_ceil(*(float4)&a).s012;
+  return ((float4)cl_ceil(*(float4)&a)).s012;
 #else
   return (float3)(cl_ceil(a.s01), cl_ceil(a.s2));
 #endif
@@ -96,7 +102,13 @@ cl_ceil(float16 a)
 double __attribute__ ((overloadable))
 cl_ceil(double a)
 {
+#ifdef __SSE4_1__
+  // LLVM does not optimise this on its own
+  return ((double2)__builtin_ia32_roundss(*(double2*)&a, *(double2*)&a,
+                                          _MM_FROUND_CEIL)).s0;
+#else
   return __builtin_ceil(a);
+#endif
 }
 
 double2 __attribute__ ((overloadable))
@@ -113,7 +125,7 @@ double3 __attribute__ ((overloadable))
 cl_ceil(double3 a)
 {
 #ifdef __AVX__
-  return ((double4)cl_ceil(*(double4)&a).s012;
+  return ((double4)cl_ceil(*(double4)&a)).s012;
 #else
   return (double3)(cl_ceil(a.s01), cl_ceil(a.s2));
 #endif

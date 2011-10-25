@@ -24,3 +24,4 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_3(fma)
+// DEFINE_EXPR_3(fma, a*b+c)

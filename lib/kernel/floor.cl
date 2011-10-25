@@ -42,14 +42,20 @@
 float __attribute__ ((overloadable))
 floor(float a)
 {
+#ifdef __SSE4_1__
+  // LLVM does not optimise this on its own
+  return ((float4)__builtin_ia32_roundss(*(float4*)&a, *(float4*)&a,
+                                         _MM_FROUND_FLOOR)).s0;
+#else
   return __builtin_floorf(a);
+#endif
 }
 
 float2 __attribute__ ((overloadable))
 floor(float2 a)
 {
 #ifdef __SSE4_1__
-  return ((float4)floor(*(float4)&a).s01;
+  return ((float4)floor(*(float4)&a)).s01;
 #else
   return (float2)(floor(a.lo), floor(a.hi));
 #endif
@@ -59,7 +65,7 @@ float3 __attribute__ ((overloadable))
 floor(float3 a)
 {
 #ifdef __SSE4_1__
-  return ((float4)floor(*(float4)&a).s012;
+  return ((float4)floor(*(float4)&a)).s012;
 #else
   return (float3)(floor(a.s01), floor(a.s2));
 #endif
@@ -94,7 +100,13 @@ floor(float16 a)
 double __attribute__ ((overloadable))
 floor(double a)
 {
+#ifdef __SSE4_1__
+  // LLVM does not optimise this on its own
+  return ((double2)__builtin_ia32_roundss(*(double2*)&a, *(double2*)&a,
+                                          _MM_FROUND_FLOOR)).s0;
+#else
   return __builtin_floor(a);
+#endif
 }
 
 double2 __attribute__ ((overloadable))
@@ -111,7 +123,7 @@ double3 __attribute__ ((overloadable))
 floor(double3 a)
 {
 #ifdef __AVX__
-  return ((double4)floor(*(double4)&a).s012;
+  return ((double4)floor(*(double4)&a)).s012;
 #else
   return (double3)(floor(a.s01), floor(a.s2));
 #endif
