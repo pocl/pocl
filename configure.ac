@@ -69,8 +69,10 @@ AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
-# Checks for libraries.
 AC_LANG([C++])
+ACX_PTHREAD()
+
+# Checks for libraries.
 old_LDFLAGS=$LDFLAGS
 LDFLAGS+=`$LLVM_CONFIG --ldflags`
 old_LIBS=$LIBS
