@@ -25,6 +25,7 @@
 noinst_PROGRAMS = forloops
 
 forloops_SOURCES = forloops.c forloops.cl
-forloops_LDADD = ../../lib/CL/libCL.la
+forloops_LDADD = ../../lib/CL/libCL.la @PTHREAD_LIBS@
+forloops_CFLAGS = @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'

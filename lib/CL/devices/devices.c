@@ -23,7 +23,8 @@
 
 #include "devices.h"
 #include "native/native.h"
+#include "pthread/pthread.h"
 
 struct _cl_device_id pocl_devices[POCL_NUM_DEVICES] = {
-  POCL_DEVICES_NATIVE
+  POCL_DEVICES_PTHREAD
 };

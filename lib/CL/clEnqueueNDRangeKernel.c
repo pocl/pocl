@@ -47,7 +47,6 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   char kernel_filename[POCL_FILENAME_LENGTH];
   FILE *kernel_file;
   char parallel_filename[POCL_FILENAME_LENGTH];
-  size_t x, y, z;
   size_t n;
   struct stat buf;
   char command[COMMAND_LENGTH];
@@ -135,53 +134,15 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
   
-  p = kernel->arguments;
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      if (kernel->arg_is_local[i])
-	{
-	  if (p->value == NULL)
-	    p->value = malloc (sizeof (void *));
-	  
-	  *(void **)(p->value) = command_queue->device->malloc(command_queue->device->data,
-							       0,
-							       p->size,
-							       NULL);
-	  p->size = sizeof (void *);
-	}
-
-      p = p->next;
-    }
-
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
   pc.num_groups[1] = global_y / local_y;
   pc.num_groups[2] = global_z / local_z;
 
-  for (z = 0; z < global_z / local_z; ++z)
-    {
-      for (y = 0; y < global_y / local_y; ++y)
-	{
-	  for (x = 0; x < global_x / local_x; ++x)
-	    {
-	      pc.group_id[0] = x;
-	      pc.group_id[1] = y;
-	      pc.group_id[2] = z;
-	      command_queue->device->run(command_queue->device->data,
-					 parallel_filename,
-					 kernel,
-					 &pc);
-	    }
-	}
-    }
-
-  p = kernel->arguments;
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      if (kernel->arg_is_local[i])
-	command_queue->device->free (command_queue->device->data,
-				     *(void**)(p->value));
-    }
+  command_queue->device->run(command_queue->device->data,
+			     parallel_filename,
+			     kernel,
+			     &pc);
 
   return CL_SUCCESS;
 }

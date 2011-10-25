@@ -25,6 +25,7 @@
 noinst_PROGRAMS = example1
 
 example1_SOURCES = example1.c example1_exec.c example1.cl
-example1_LDADD = ../../lib/CL/libCL.la
+example1_LDADD = ../../lib/CL/libCL.la @PTHREAD_LIBS@
+example1_CFLAGS = @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(srcdir)"'

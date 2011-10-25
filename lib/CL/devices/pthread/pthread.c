@@ -1,4 +1,4 @@
-/* OpenCL native device implementation.
+/* OpenCL native pthreaded device implementation.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,8 +21,9 @@
    THE SOFTWARE.
 */
 
-#include "native.h"
+#include "pthread.h"
 #include <assert.h>
+#include <pthread.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -32,6 +33,14 @@
 struct pointer_list {
   void *pointer;
   struct pointer_list *next;
+};
+
+struct thread_arguments {
+  void *data;
+  cl_kernel kernel;
+  unsigned device;
+  struct pocl_context pc;
+  workgroup workgroup;
 };
 
 struct data {
@@ -44,10 +53,12 @@ struct data {
   lt_dlhandle current_dlhandle;
 };
 
-size_t pocl_native_max_work_item_sizes[] = {1};
+static void * workgroup_thread (void *p);
+
+size_t pocl_pthread_max_work_item_sizes[] = {1};
 
 void
-pocl_native_init (cl_device_id device)
+pocl_pthread_init (cl_device_id device)
 {
   struct data *d;
   
@@ -61,7 +72,7 @@ pocl_native_init (cl_device_id device)
 }
 
 void *
-pocl_native_malloc (void *data, cl_mem_flags flags,
+pocl_pthread_malloc (void *data, cl_mem_flags flags,
 		    size_t size, void *host_ptr)
 {
   struct data *d;
@@ -100,7 +111,7 @@ pocl_native_malloc (void *data, cl_mem_flags flags,
 }
 
 void
-pocl_native_free (void *data, void *ptr)
+pocl_pthread_free (void *data, void *ptr)
 {
   struct data *d;
   struct pointer_list *p;
@@ -120,7 +131,7 @@ pocl_native_free (void *data, void *ptr)
 }
 
 void
-pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
+pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
@@ -129,7 +140,7 @@ pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 }
 
 void
-pocl_native_run (void *data, const char *parallel_filename,
+pocl_pthread_run (void *data, const char *parallel_filename,
 		 cl_kernel kernel,
 		 struct pocl_context *pc)
 {
@@ -220,7 +231,10 @@ pocl_native_run (void *data, const char *parallel_filename,
   w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
 
-  void *arguments[kernel->num_args];
+  struct thread_arguments
+    arguments[pc->num_groups[0]][pc->num_groups[1]][pc->num_groups[2]];
+  pthread_t
+    thread[pc->num_groups[0]][pc->num_groups[1]][pc->num_groups[2]];
 
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
@@ -228,41 +242,76 @@ pocl_native_run (void *data, const char *parallel_filename,
 	{
 	  for (x = 0; x < pc->num_groups[0]; +++x)
 	    {
-	      i = 0;
-	      p = kernel->arguments;
-	      while (p != NULL)
-		{
-		  if (kernel->arg_is_local[i])
-		    {
-		      arguments[i] = malloc (sizeof (void *));
-		      *(void **)(arguments[i]) = pocl_native_malloc(data, 0, p->size, NULL);
-		    }
-		  else if (kernel->arg_is_pointer[i])
-		    arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
-		  else
-		    arguments[i] = p->value;
-
-		  ++i;
-		  p = p->next;
-		}
-
 	      pc->group_id[0] = x;
 	      pc->group_id[1] = y;
 	      pc->group_id[2] = z;
 
-	      w (arguments, pc);
+	      arguments[x][y][z].data = data;
+	      arguments[x][y][z].kernel = kernel;
+	      arguments[x][y][z].device = device;
+	      arguments[x][y][z].pc = *pc;
+	      arguments[x][y][z].workgroup = w;
 
-	      i = 0;
-	      p = kernel->arguments;
-	      while (p != NULL)
-		{
-		  if (kernel->arg_is_local[i])
-		    pocl_native_free(data, *(void **)(arguments[i]));
-
-		  ++i;
-		  p = p->next;
-		}
+	      printf ("pepepeep\n");
+	      pthread_create (&thread[x][y][z],
+			      NULL,
+			      workgroup_thread,
+			      &arguments[x][y][z]);
 	    }
 	}
     }
+
+  for (z = 0; z < pc->num_groups[2]; ++z)
+    {
+      for (y = 0; y < pc->num_groups[1]; ++y)
+	{
+	  for (x = 0; x < pc->num_groups[0]; +++x)
+	    pthread_join(thread[x][y][z], NULL);
+	}
+    }
 }
+
+void *
+workgroup_thread (void *p)
+{
+  struct thread_arguments *ta = (struct thread_arguments *) p;
+  void *arguments[ta->kernel->num_args];
+  struct pocl_argument_list *al;  
+  unsigned i;
+
+  i = 0;
+  al = ta->kernel->arguments;
+  while (al != NULL)
+    {
+      if (ta->kernel->arg_is_local[i])
+	{
+	  arguments[i] = malloc (sizeof (void *));
+	  *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
+	}
+      else if (ta->kernel->arg_is_pointer[i])
+	arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+      else
+	arguments[i] = al->value;
+      
+      ++i;
+      al = al->next;
+    }
+
+  ta->workgroup (arguments, &(ta->pc));
+
+  i = 0;
+  al = ta->kernel->arguments;
+  while (al != NULL)
+    {
+      if (ta->kernel->arg_is_local[i])
+	{
+	  pocl_pthread_free(ta->data, *(void **)(arguments[i]));
+	  free (arguments[i]);
+	}
+
+      ++i;
+      al = al->next;
+    }
+}
+  
+  
