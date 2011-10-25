@@ -52,7 +52,7 @@ test -z "$LLVM_LD" || \
 test -z "$LLC" || \
 test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH])
 
-old_LDFLAGS=$LDFLAGS
+old_LDFLAGS="$LDFLAGS"
 LDFLAGS=-bundle
 AC_LINK_IFELSE([AC_LANG_SOURCE([[
 int
@@ -61,7 +61,7 @@ test(int a, int b)
   return a + b;
 }
 ]])],[SHARED=-bundle], [SHARED=-shared])
-LDFLAGS=$old_LDFLAGS
+LDFLAGS="$old_LDFLAGS"
 AC_SUBST([SHARED])
 
 AC_DEFINE_UNQUOTED([SHARED], ["$SHARED"], [Parameter to compiler to generate loadable module.])
@@ -73,9 +73,9 @@ AC_LANG([C++])
 ACX_PTHREAD()
 
 # Checks for libraries.
-old_LDFLAGS=$LDFLAGS
+old_LDFLAGS="$LDFLAGS"
 LDFLAGS+=`$LLVM_CONFIG --ldflags`
-old_LIBS=$LIBS
+old_LIBS="$LIBS"
 LIBS=
 AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
                [LLVM-3.0 LLVMTransformUtils],
@@ -84,8 +84,8 @@ AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
 AC_SUBST([LIBS_LLVMTRANSFORMUTILS], ["$LIBS"])
 test "$ac_cv_search_LLVMInitializeTransformUtils" = "no" && \
   AC_MSG_FAILURE([Unable to link with LLVM libraries])
-LIBS=$old_LIBS
-LDFLAGS=$old_LDFLAGS
+LIBS="$old_LIBS"
+LDFLAGS="$old_LDFLAGS"
 
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h unistd.h])

@@ -144,6 +144,7 @@ pocl_native_run (void *data, const char *parallel_filename,
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
   struct pocl_argument_list *p;
+  size_t x, y, z;
   unsigned i;
   workgroup w;
 
@@ -213,26 +214,55 @@ pocl_native_run (void *data, const char *parallel_filename,
 	}
     }
 
-  void *arguments[kernel->num_args];
-
-  i = 0;
-  p = kernel->arguments;
-  while (p != NULL)
-    {
-      if ((kernel->arg_is_pointer[i]) && (!kernel->arg_is_local[i]))
-	arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
-      else
-	arguments[i] = p->value;
-
-      ++i;
-      p = p->next;
-    }
-
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
 	    "_%s_workgroup", kernel->function_name);
-
+  
   w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
 
-  w (arguments, pc);
+  void *arguments[kernel->num_args];
+
+  for (z = 0; z < pc->num_groups[2]; ++z)
+    {
+      for (y = 0; y < pc->num_groups[1]; ++y)
+	{
+	  for (x = 0; x < pc->num_groups[0]; ++x)
+	    {
+	      i = 0;
+	      p = kernel->arguments;
+	      while (p != NULL)
+		{
+		  if (kernel->arg_is_local[i])
+		    {
+		      arguments[i] = malloc (sizeof (void *));
+		      *(void **)(arguments[i]) = pocl_native_malloc(data, 0, p->size, NULL);
+		    }
+		  else if (kernel->arg_is_pointer[i])
+		    arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+		  else
+		    arguments[i] = p->value;
+
+		  ++i;
+		  p = p->next;
+		}
+
+	      pc->group_id[0] = x;
+	      pc->group_id[1] = y;
+	      pc->group_id[2] = z;
+
+	      w (arguments, pc);
+
+	      i = 0;
+	      p = kernel->arguments;
+	      while (p != NULL)
+		{
+		  if (kernel->arg_is_local[i])
+		    pocl_native_free(data, *(void **)(arguments[i]));
+
+		  ++i;
+		  p = p->next;
+		}
+	    }
+	}
+    }
 }
