@@ -32,6 +32,7 @@ libkernel_a_SOURCES = get_global_size.c		\
                       get_num_groups.cl		\
                       get_group_id.cl		\
                       as_type.cl		\
+                      acos.cl			\
                       acosh.cl			\
                       acospi.cl			\
                       asin.cl			\

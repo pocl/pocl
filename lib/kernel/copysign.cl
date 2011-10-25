@@ -31,15 +31,20 @@ double copysign(double a, double b);
 float __attribute__ ((overloadable))
 cl_copysign(float a, float b)
 {
+#ifdef __SSE__
+  const uint sign_mask = 0x80000000U;
+  return as_float((~sign_mask & as_uint(a)) | (sign_mask & as_uint(b)));
+#else
   return copysignf(a, b);
+#endif
 }
 
 float2 __attribute__ ((overloadable))
 cl_copysign(float2 a, float2 b)
 {
 #ifdef __SSE__
-  return ((float4)cl_copysign((float4)(a, 0.0f, 0.0f),
-                              (float4)(b, 0.0f, 0.0f))).s01;
+  const uint2 sign_mask = {0x80000000U, 0x80000000U};
+  return as_float2((~sign_mask & as_uint2(a)) | (sign_mask & as_uint2(b)));
 #else
   return (float2)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 #endif
@@ -49,8 +54,7 @@ float3 __attribute__ ((overloadable))
 cl_copysign(float3 a, float3 b)
 {
 #ifdef __SSE__
-  return ((float4)cl_copysign((float4)(a, 0.0f),
-                              (float4)(b, 0.0f))).s012;
+  return cl_copysign(*(float4*)&a, *(float4*)&b).s012;
 #else
   return (float3)(cl_copysign(a.s01, b.s01), cl_copysign(a.s2, b.s2));
 #endif
@@ -89,7 +93,12 @@ cl_copysign(float16 a, float16 b)
 double __attribute__ ((overloadable))
 cl_copysign(double a, double b)
 {
+#ifdef __SSE2__
+  const ulong sign_mask = 0x8000000000000000UL;
+  return as_double((~sign_mask & as_ulong(a)) | (sign_mask & as_ulong(b)));
+#else
   return copysign(a, b);
+#endif
 }
 
 double2 __attribute__ ((overloadable))
@@ -107,8 +116,7 @@ double3 __attribute__ ((overloadable))
 cl_copysign(double3 a, double3 b)
 {
 #ifdef __AVX__
-  return ((double4)cl_copysign((double4)(a, 0.0),
-                               (double4)(b, 0.0))).s012;
+  return cl_copysign(*(double4*)&a, *(double4*)&b).s012;
 #else
   return (double3)(cl_copysign(a.s01, b.s01), cl_copysign(a.s2, b.s2));
 #endif

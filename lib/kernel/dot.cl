@@ -80,7 +80,7 @@ cl_dot(double3 a, double3 b)
 double __attribute__ ((overloadable))
 cl_dot(double4 a, double4 b)
 {
-  return cl_dot(a.s01, b.s01) + cl_dot(a.s23, b.s23);
+  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
 }
 
 double __attribute__ ((overloadable))
