@@ -23,25 +23,6 @@
 
 #undef fabs
 
-// Import Intel/AMD vector instructions
-#ifdef __SSE__
-#  define extern
-#  define static
-#  include <xmmintrin.h>
-#endif
-
-#ifdef __SSE2__
-#  define extern
-#  define static
-#  include <emmintrin.h>
-#endif
-
-#ifdef __AVX__
-#  define extern
-#  define static
-#  include <immintrin.h>
-#endif
-
 float fabsf(float a);
 double fabs(double a);
 
@@ -50,16 +31,22 @@ double fabs(double a);
 float __attribute__ ((overloadable))
 cl_fabs(float a)
 {
+#ifdef __SSE__
+  const uint sign_mask = 0x80000000U;
+  return as_float(~sign_mask & as_uint(a));
+#else
   return fabsf(a);
+#endif
 }
 
 float2 __attribute__ ((overloadable))
 cl_fabs(float2 a)
 {
 #ifdef __SSE__
-  return ((float4)cl_fabs((float4)(a, 0.0f, 0.0f))).s01;
+  const uint2 sign_mask = {0x80000000U, 0x80000000U};
+  return as_float2(~sign_mask & as_uint2(a));
 #else
-  return (float2)(cl_fabs(a.s0), cl_fabs(a.s1));
+  return (float2)(cl_fabs(a.lo), cl_fabs(a.hi));
 #endif
 }
 
@@ -67,7 +54,7 @@ float3 __attribute__ ((overloadable))
 cl_fabs(float3 a)
 {
 #ifdef __SSE__
-  return ((float4)cl_fabs((float4)(a, 0.0f))).s012;
+  return cl_fabs(*(float4*)&a).s012;
 #else
   return (float3)(cl_fabs(a.s01), cl_fabs(a.s2));
 #endif
@@ -77,11 +64,10 @@ float4 __attribute__ ((overloadable))
 cl_fabs(float4 a)
 {
 #ifdef __SSE__
-  const float4 sign_mask =
-    as_float4((uint4)(0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U));
-  return _mm_andnot_ps(sign_mask, a);
+  const uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
+  return as_float4(~sign_mask & as_uint4(a));
 #else
-  return (float4)(cl_fabs(a.s01), cl_fabs(a.s23));
+  return (float4)(cl_fabs(a.lo), cl_fabs(a.hi));
 #endif
 }
 
@@ -89,36 +75,40 @@ float8 __attribute__ ((overloadable))
 cl_fabs(float8 a)
 {
 #ifdef __AVX__
-  const float8 sign_mask =
-    as_float8((uint8)(0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U,
-                      0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U));
-  return _mm256_andnot_ps(sign_mask, a);
+  const uint8 sign_mask =
+    {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U,
+     0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
+  return as_float8(~sign_mask & as_uint8(a));
 #else
-  return (float8)(cl_fabs(a.s0123), cl_fabs(a.s4567));
+  return (float8)(cl_fabs(a.lo), cl_fabs(a.hi));
 #endif
 }
 
 float16 __attribute__ ((overloadable))
 cl_fabs(float16 a)
 {
-  return (float16)(cl_fabs(a.s01234567), cl_fabs(a.s89abcdef));
+  return (float16)(cl_fabs(a.lo), cl_fabs(a.hi));
 }
 
 double __attribute__ ((overloadable))
 cl_fabs(double a)
 {
+#ifdef __SSE2__
+  const ulong sign_mask = 0x8000000000000000UL;
+  return as_double(~sign_mask & as_ulong(a));
+#else
   return fabs(a);
+#endif
 }
 
 double2 __attribute__ ((overloadable))
 cl_fabs(double2 a)
 {
 #ifdef __SSE2__
-  const double2 sign_mask =
-    as_double2((ulong2)(0x8000000000000000UL, 0x8000000000000000UL));
-  return _mm_andnot_pd(sign_mask, a);
+  const ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};
+  return as_double2(~sign_mask & as_ulong2(a));
 #else
-  return (double2)(cl_fabs(a.s0), cl_fabs(a.s1));
+  return (double2)(cl_fabs(a.lo), cl_fabs(a.hi));
 #endif
 }
 
@@ -126,7 +116,7 @@ double3 __attribute__ ((overloadable))
 cl_fabs(double3 a)
 {
 #ifdef __AVX__
-  return ((double4)cl_fabs((double4)(a, 0.0))).s012;
+  return cl_fabs(*(double4*)&a).s012;
 #else
   return (double3)(cl_fabs(a.s01), cl_fabs(a.s2));
 #endif
@@ -136,23 +126,23 @@ double4 __attribute__ ((overloadable))
 cl_fabs(double4 a)
 {
 #ifdef __AVX__
-  const double4 sign_mask =
-    as_double4((ulong4)(0x8000000000000000UL, 0x8000000000000000UL,
-                        0x8000000000000000UL, 0x8000000000000000UL));
-  return _mm256_andnot_pd(sign_mask, a);
+  const ulong4 sign_mask =
+    {0x8000000000000000UL, 0x8000000000000000UL,
+     0x8000000000000000UL, 0x8000000000000000UL};
+  return as_double4(~sign_mask & as_ulong4(a));
 #else
-  return (double4)(cl_fabs(a.s01), cl_fabs(a.s23));
+  return (double4)(cl_fabs(a.lo), cl_fabs(a.hi));
 #endif
 }
 
 double8 __attribute__ ((overloadable))
 cl_fabs(double8 a)
 {
-  return (double8)(cl_fabs(a.s0123), cl_fabs(a.s4567));
+  return (double8)(cl_fabs(a.lo), cl_fabs(a.hi));
 }
 
 double16 __attribute__ ((overloadable))
 cl_fabs(double16 a)
 {
-  return (double16)(cl_fabs(a.s01234567), cl_fabs(a.s89abcdef));
+  return (double16)(cl_fabs(a.lo), cl_fabs(a.hi));
 }

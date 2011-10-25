@@ -23,25 +23,6 @@
 
 #undef copysign
 
-// Import Intel/AMD vector instructions
-#ifdef __SSE__
-#  define extern
-#  define static
-#  include <xmmintrin.h>
-#endif
-
-#ifdef __SSE2__
-#  define extern
-#  define static
-#  include <emmintrin.h>
-#endif
-
-#ifdef __AVX__
-#  define extern
-#  define static
-#  include <immintrin.h>
-#endif
-
 float copysignf(float a, float b);
 double copysign(double a, double b);
 
@@ -60,8 +41,7 @@ cl_copysign(float2 a, float2 b)
   return ((float4)cl_copysign((float4)(a, 0.0f, 0.0f),
                               (float4)(b, 0.0f, 0.0f))).s01;
 #else
-  return (float2)(cl_copysign(a.s0, b.s0),
-                  cl_copysign(a.s1, b.s1));
+  return (float2)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 #endif
 }
 
@@ -72,8 +52,7 @@ cl_copysign(float3 a, float3 b)
   return ((float4)cl_copysign((float4)(a, 0.0f),
                               (float4)(b, 0.0f))).s012;
 #else
-  return (float3)(cl_copysign(a.s01, b.s01),
-                  cl_copysign(a.s2, b.s2));
+  return (float3)(cl_copysign(a.s01, b.s01), cl_copysign(a.s2, b.s2));
 #endif
 }
 
@@ -81,13 +60,10 @@ float4 __attribute__ ((overloadable))
 cl_copysign(float4 a, float4 b)
 {
 #ifdef __SSE__
-  const float4 sign_mask =
-    as_float4((uint4)(0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U));
-  return _mm_or_ps(_mm_andnot_ps(sign_mask, a),
-                   _mm_and_ps(sign_mask, b));
+  const uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
+  return as_float4((~sign_mask & as_uint4(a)) | (sign_mask & as_uint4(b)));
 #else
-  return (float4)(cl_copysign(a.s01, b.s01),
-                  cl_copysign(a.s23, b.s23));
+  return (float4)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 #endif
 }
 
@@ -95,22 +71,19 @@ float8 __attribute__ ((overloadable))
 cl_copysign(float8 a, float8 b)
 {
 #ifdef __AVX__
-  const float8 sign_mask =
-    as_float8((uint8)(0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U,
-                      0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U));
-  return _mm256_or_ps(_mm256_andnot_ps(sign_mask, a),
-                      _mm256_and_ps(sign_mask, b));
+  const uint8 sign_mask =
+    {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U,
+     0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
+  return as_float8((~sign_mask & as_uint8(a)) | (sign_mask & as_uint8(b)));
 #else
-  return (float8)(cl_copysign(a.s0123, b.s0123),
-                  cl_copysign(a.s4567, b.s4567));
+  return (float8)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 #endif
 }
 
 float16 __attribute__ ((overloadable))
 cl_copysign(float16 a, float16 b)
 {
-  return (float16)(cl_copysign(a.s01234567, b.s01234567),
-                   cl_copysign(a.s89abcdef, b.s89abcdef));
+  return (float16)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 }
 
 double __attribute__ ((overloadable))
@@ -123,13 +96,10 @@ double2 __attribute__ ((overloadable))
 cl_copysign(double2 a, double2 b)
 {
 #ifdef __SSE2__
-  const double2 sign_mask =
-    as_double2((ulong2)(0x8000000000000000UL, 0x8000000000000000UL));
-  return _mm_or_pd(_mm_andnot_pd(sign_mask, a),
-                   _mm_and_pd(sign_mask, b));
+  const ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};
+  return as_double2((~sign_mask & as_ulong2(a)) | (sign_mask & as_ulong2(b)));
 #else
-  return (double2)(cl_copysign(a.s0, b.s0),
-                   cl_copysign(a.s1, b.s1));
+  return (double2)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 #endif
 }
 
@@ -140,8 +110,7 @@ cl_copysign(double3 a, double3 b)
   return ((double4)cl_copysign((double4)(a, 0.0),
                                (double4)(b, 0.0))).s012;
 #else
-  return (double3)(cl_copysign(a.s01, b.s01),
-                   cl_copysign(a.s2, b.s2));
+  return (double3)(cl_copysign(a.s01, b.s01), cl_copysign(a.s2, b.s2));
 #endif
 }
 
@@ -149,27 +118,23 @@ double4 __attribute__ ((overloadable))
 cl_copysign(double4 a, double4 b)
 {
 #ifdef __AVX__
-  const double4 sign_mask =
-    as_double4((long4)(0x8000000000000000UL, 0x8000000000000000UL,
-                       0x8000000000000000UL, 0x8000000000000000UL));
-  return _mm256_or_pd(_mm256_andnot_pd(sign_mask, a),
-                      _mm256_and_pd(sign_mask, b));
+  const ulong4 sign_mask =
+    {0x8000000000000000UL, 0x8000000000000000UL,
+     0x8000000000000000UL, 0x8000000000000000UL};
+  return as_double4((~sign_mask & as_ulong4(a)) | (sign_mask & as_ulong4(b)));
 #else
-  return (double4)(cl_copysign(a.s01, b.s01),
-                   cl_copysign(a.s23, b.s23));
+  return (double4)(cl_copysign(a.lo, b.hi), cl_copysign(a.lo, b.hi));
 #endif
 }
 
 double8 __attribute__ ((overloadable))
 cl_copysign(double8 a, double8 b)
 {
-  return (double8)(cl_copysign(a.s0123, b.s0123),
-                   cl_copysign(a.s4567, b.s4567));
+  return (double8)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 }
 
 double16 __attribute__ ((overloadable))
 cl_copysign(double16 a, double16 b)
 {
-  return (double16)(cl_copysign(a.s01234567, b.s01234567),
-                    cl_copysign(a.s89abcdef, b.s89abcdef));
+  return (double16)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
 }

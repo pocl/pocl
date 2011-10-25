@@ -32,7 +32,7 @@ cl_dot(float a, float b)
 float __attribute__ ((overloadable))
 cl_dot(float2 a, float2 b)
 {
-  return a.s0 * b.s0 + a.s1 * b.s1;
+  return a.lo * b.lo + a.hi * b.hi;
 }
 
 float __attribute__ ((overloadable))
@@ -44,19 +44,19 @@ cl_dot(float3 a, float3 b)
 float __attribute__ ((overloadable))
 cl_dot(float4 a, float4 b)
 {
-  return cl_dot(a.s01, b.s01) + cl_dot(a.s23, b.s23);
+  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
 }
 
 float __attribute__ ((overloadable))
 cl_dot(float8 a, float8 b)
 {
-  return cl_dot(a.s0123, b.s0123) + cl_dot(a.s4567, b.s4567);
+  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
 }
 
 float __attribute__ ((overloadable))
 cl_dot(float16 a, float16 b)
 {
-  return cl_dot(a.s01234567, b.s01234567) + cl_dot(a.s89abcdef, b.s89abcdef);
+  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
 }
 
 double __attribute__ ((overloadable))
@@ -68,7 +68,7 @@ cl_dot(double a, double b)
 double __attribute__ ((overloadable))
 cl_dot(double2 a, double2 b)
 {
-  return a.s0 * b.s0 + a.s1 * b.s1;
+  return a.lo * b.lo + a.hi * b.hi;
 }
 
 double __attribute__ ((overloadable))
@@ -86,11 +86,11 @@ cl_dot(double4 a, double4 b)
 double __attribute__ ((overloadable))
 cl_dot(double8 a, double8 b)
 {
-  return cl_dot(a.s0123, b.s0123) + cl_dot(a.s4567, b.s4567);
+  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
 }
 
 double __attribute__ ((overloadable))
 cl_dot(double16 a, double16 b)
 {
-  return cl_dot(a.s01234567, b.s01234567) + cl_dot(a.s89abcdef, b.s89abcdef);
+  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
 }

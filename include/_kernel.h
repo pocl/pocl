@@ -393,6 +393,7 @@ CL_DECLARE_AS_TYPE_128(double16)
 #define atanh     cl_atanh
 #define atanpi    cl_atanpi
 #define cbrt      cl_cbrt
+#define ceil      cl_ceil
 #define copysign  cl_copysign
 #define cos       cl_cos
 #define cosh      cl_cosh
@@ -406,6 +407,7 @@ CL_DECLARE_AS_TYPE_128(double16)
 #define expm1     cl_expm1
 #define fabs      cl_fabs
 #define fdim      cl_fdim
+#define floor     cl_floor
 #define fma       cl_fma
 #define fmax      cl_fmax
 #define fmin      cl_fmin
@@ -449,6 +451,7 @@ CL_DECLARE_FUNC2(atan2pi)
 CL_DECLARE_FUNC1(atanh)
 CL_DECLARE_FUNC1(atanpi)
 CL_DECLARE_FUNC1(cbrt)
+CL_DECLARE_FUNC1(ceil)
 CL_DECLARE_FUNC2(copysign)
 CL_DECLARE_FUNC1(cos)
 CL_DECLARE_FUNC1(cosh)
@@ -462,6 +465,7 @@ CL_DECLARE_FUNC1(exp10)
 CL_DECLARE_FUNC1(expm1)
 CL_DECLARE_FUNC1(fabs)
 CL_DECLARE_FUNC2(fdim)
+CL_DECLARE_FUNC1(floor)
 CL_DECLARE_FUNC3(fma)
 CL_DECLARE_FUNC2(fmax)
 CL_DECLARE_FUNC2(fmin)

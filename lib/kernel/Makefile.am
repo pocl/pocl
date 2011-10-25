@@ -43,6 +43,7 @@ libkernel_a_SOURCES = get_global_size.c		\
                       atanh.cl			\
                       atanpi.cl			\
                       cbrt.cl			\
+                      ceil.cl			\
                       copysign.cl		\
                       cos.cl			\
                       cosh.cl			\
@@ -56,6 +57,7 @@ libkernel_a_SOURCES = get_global_size.c		\
                       expm1.cl			\
                       fabs.cl			\
                       fdim.cl			\
+                      floor.cl			\
                       fma.cl			\
                       fmax.cl			\
                       fmin.cl			\
@@ -93,10 +95,10 @@ EXTRA_DIST = barrier.ll
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
-.cl.o:
+.cl.o: $(top_srcdir)/include/_kernel.h templates.h
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-.c.o:
+.c.o: $(top_srcdir)/include/_kernel.h
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 barrier.o: barrier.ll
