@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef rsqrt
 DEFINE_EXPR_1(rsqrt, (stype)1.0/sqrt(a))

@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef trunc
-DEFINE_SCALARISE_1(trunc)
+DEFINE_BUILTIN_1(trunc)

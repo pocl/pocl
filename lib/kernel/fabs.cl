@@ -21,58 +21,46 @@
    THE SOFTWARE.
 */
 
-#undef fabs
-
-float fabsf(float a);
-double fabs(double a);
-
-
-
 float __attribute__ ((overloadable))
-cl_fabs(float a)
+fabs(float a)
 {
-#ifdef __SSE__
-  const uint sign_mask = 0x80000000U;
-  return as_float(~sign_mask & as_uint(a));
-#else
-  return fabsf(a);
-#endif
+  return __builtin_fabsf(a);
 }
 
 float2 __attribute__ ((overloadable))
-cl_fabs(float2 a)
+fabs(float2 a)
 {
 #ifdef __SSE__
   const uint2 sign_mask = {0x80000000U, 0x80000000U};
   return as_float2(~sign_mask & as_uint2(a));
 #else
-  return (float2)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (float2)(fabs(a.lo), fabs(a.hi));
 #endif
 }
 
 float3 __attribute__ ((overloadable))
-cl_fabs(float3 a)
+fabs(float3 a)
 {
 #ifdef __SSE__
-  return cl_fabs(*(float4*)&a).s012;
+  return fabs(*(float4*)&a).s012;
 #else
-  return (float3)(cl_fabs(a.s01), cl_fabs(a.s2));
+  return (float3)(fabs(a.s01), fabs(a.s2));
 #endif
 }
 
 float4 __attribute__ ((overloadable))
-cl_fabs(float4 a)
+fabs(float4 a)
 {
 #ifdef __SSE__
   const uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
   return as_float4(~sign_mask & as_uint4(a));
 #else
-  return (float4)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (float4)(fabs(a.lo), fabs(a.hi));
 #endif
 }
 
 float8 __attribute__ ((overloadable))
-cl_fabs(float8 a)
+fabs(float8 a)
 {
 #ifdef __AVX__
   const uint8 sign_mask =
@@ -80,50 +68,45 @@ cl_fabs(float8 a)
      0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
   return as_float8(~sign_mask & as_uint8(a));
 #else
-  return (float8)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (float8)(fabs(a.lo), fabs(a.hi));
 #endif
 }
 
 float16 __attribute__ ((overloadable))
-cl_fabs(float16 a)
+fabs(float16 a)
 {
-  return (float16)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (float16)(fabs(a.lo), fabs(a.hi));
 }
 
 double __attribute__ ((overloadable))
-cl_fabs(double a)
+fabs(double a)
 {
-#ifdef __SSE2__
-  const ulong sign_mask = 0x8000000000000000UL;
-  return as_double(~sign_mask & as_ulong(a));
-#else
-  return fabs(a);
-#endif
+  return __builtin_fabs(a);
 }
 
 double2 __attribute__ ((overloadable))
-cl_fabs(double2 a)
+fabs(double2 a)
 {
 #ifdef __SSE2__
   const ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};
   return as_double2(~sign_mask & as_ulong2(a));
 #else
-  return (double2)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (double2)(fabs(a.lo), fabs(a.hi));
 #endif
 }
 
 double3 __attribute__ ((overloadable))
-cl_fabs(double3 a)
+fabs(double3 a)
 {
 #ifdef __AVX__
-  return cl_fabs(*(double4*)&a).s012;
+  return fabs(*(double4*)&a).s012;
 #else
-  return (double3)(cl_fabs(a.s01), cl_fabs(a.s2));
+  return (double3)(fabs(a.s01), fabs(a.s2));
 #endif
 }
 
 double4 __attribute__ ((overloadable))
-cl_fabs(double4 a)
+fabs(double4 a)
 {
 #ifdef __AVX__
   const ulong4 sign_mask =
@@ -131,18 +114,18 @@ cl_fabs(double4 a)
      0x8000000000000000UL, 0x8000000000000000UL};
   return as_double4(~sign_mask & as_ulong4(a));
 #else
-  return (double4)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (double4)(fabs(a.lo), fabs(a.hi));
 #endif
 }
 
 double8 __attribute__ ((overloadable))
-cl_fabs(double8 a)
+fabs(double8 a)
 {
-  return (double8)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (double8)(fabs(a.lo), fabs(a.hi));
 }
 
 double16 __attribute__ ((overloadable))
-cl_fabs(double16 a)
+fabs(double16 a)
 {
-  return (double16)(cl_fabs(a.lo), cl_fabs(a.hi));
+  return (double16)(fabs(a.lo), fabs(a.hi));
 }

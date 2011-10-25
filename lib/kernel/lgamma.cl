@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef lgamma
-DEFINE_SCALARISE_1(lgamma)
+DEFINE_BUILTIN_1(lgamma)

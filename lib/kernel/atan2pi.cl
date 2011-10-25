@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef atan2pi
 DEFINE_EXPR_2(atan2pi, atan2(a, b)/(stype)M_PI)

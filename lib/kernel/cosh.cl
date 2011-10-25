@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef cosh
-DEFINE_SCALARISE_1(cosh)
+DEFINE_BUILTIN_1(cosh)

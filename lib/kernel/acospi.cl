@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef acospi
 DEFINE_EXPR_1(acospi, acos(a)/(stype)M_PI)

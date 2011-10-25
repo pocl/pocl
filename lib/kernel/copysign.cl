@@ -21,58 +21,45 @@
    THE SOFTWARE.
 */
 
-#undef copysign
-
-float copysignf(float a, float b);
-double copysign(double a, double b);
-
-
-
 float __attribute__ ((overloadable))
-cl_copysign(float a, float b)
+copysign(float a, float b)
 {
-#ifdef __SSE__
-  const uint sign_mask = 0x80000000U;
-  return as_float((~sign_mask & as_uint(a)) | (sign_mask & as_uint(b)));
-#else
-  return copysignf(a, b);
-#endif
+  return __builtin_copysignf(a, b);
 }
 
 float2 __attribute__ ((overloadable))
-cl_copysign(float2 a, float2 b)
+copysign(float2 a, float2 b)
 {
 #ifdef __SSE__
-  const uint2 sign_mask = {0x80000000U, 0x80000000U};
-  return as_float2((~sign_mask & as_uint2(a)) | (sign_mask & as_uint2(b)));
+  return copysign(*(float4*)&a, *(float4*)&b).s01;
 #else
-  return (float2)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (float2)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 #endif
 }
 
 float3 __attribute__ ((overloadable))
-cl_copysign(float3 a, float3 b)
+copysign(float3 a, float3 b)
 {
 #ifdef __SSE__
-  return cl_copysign(*(float4*)&a, *(float4*)&b).s012;
+  return copysign(*(float4*)&a, *(float4*)&b).s012;
 #else
-  return (float3)(cl_copysign(a.s01, b.s01), cl_copysign(a.s2, b.s2));
+  return (float3)(copysign(a.s01, b.s01), copysign(a.s2, b.s2));
 #endif
 }
 
 float4 __attribute__ ((overloadable))
-cl_copysign(float4 a, float4 b)
+copysign(float4 a, float4 b)
 {
 #ifdef __SSE__
   const uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
   return as_float4((~sign_mask & as_uint4(a)) | (sign_mask & as_uint4(b)));
 #else
-  return (float4)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (float4)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 #endif
 }
 
 float8 __attribute__ ((overloadable))
-cl_copysign(float8 a, float8 b)
+copysign(float8 a, float8 b)
 {
 #ifdef __AVX__
   const uint8 sign_mask =
@@ -80,50 +67,45 @@ cl_copysign(float8 a, float8 b)
      0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U};
   return as_float8((~sign_mask & as_uint8(a)) | (sign_mask & as_uint8(b)));
 #else
-  return (float8)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (float8)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 #endif
 }
 
 float16 __attribute__ ((overloadable))
-cl_copysign(float16 a, float16 b)
+copysign(float16 a, float16 b)
 {
-  return (float16)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (float16)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 }
 
 double __attribute__ ((overloadable))
-cl_copysign(double a, double b)
+copysign(double a, double b)
 {
-#ifdef __SSE2__
-  const ulong sign_mask = 0x8000000000000000UL;
-  return as_double((~sign_mask & as_ulong(a)) | (sign_mask & as_ulong(b)));
-#else
-  return copysign(a, b);
-#endif
+  return __builtin_copysign(a, b);
 }
 
 double2 __attribute__ ((overloadable))
-cl_copysign(double2 a, double2 b)
+copysign(double2 a, double2 b)
 {
 #ifdef __SSE2__
   const ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};
   return as_double2((~sign_mask & as_ulong2(a)) | (sign_mask & as_ulong2(b)));
 #else
-  return (double2)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (double2)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 #endif
 }
 
 double3 __attribute__ ((overloadable))
-cl_copysign(double3 a, double3 b)
+copysign(double3 a, double3 b)
 {
 #ifdef __AVX__
-  return cl_copysign(*(double4*)&a, *(double4*)&b).s012;
+  return copysign(*(double4*)&a, *(double4*)&b).s012;
 #else
-  return (double3)(cl_copysign(a.s01, b.s01), cl_copysign(a.s2, b.s2));
+  return (double3)(copysign(a.s01, b.s01), copysign(a.s2, b.s2));
 #endif
 }
 
 double4 __attribute__ ((overloadable))
-cl_copysign(double4 a, double4 b)
+copysign(double4 a, double4 b)
 {
 #ifdef __AVX__
   const ulong4 sign_mask =
@@ -131,18 +113,18 @@ cl_copysign(double4 a, double4 b)
      0x8000000000000000UL, 0x8000000000000000UL};
   return as_double4((~sign_mask & as_ulong4(a)) | (sign_mask & as_ulong4(b)));
 #else
-  return (double4)(cl_copysign(a.lo, b.hi), cl_copysign(a.lo, b.hi));
+  return (double4)(copysign(a.lo, b.hi), copysign(a.lo, b.hi));
 #endif
 }
 
 double8 __attribute__ ((overloadable))
-cl_copysign(double8 a, double8 b)
+copysign(double8 a, double8 b)
 {
-  return (double8)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (double8)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 }
 
 double16 __attribute__ ((overloadable))
-cl_copysign(double16 a, double16 b)
+copysign(double16 a, double16 b)
 {
-  return (double16)(cl_copysign(a.lo, b.lo), cl_copysign(a.hi, b.hi));
+  return (double16)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 }

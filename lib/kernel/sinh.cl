@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef sinh
-DEFINE_SCALARISE_1(sinh)
+DEFINE_BUILTIN_1(sinh)

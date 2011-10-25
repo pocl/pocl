@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef hypot
-DEFINE_SCALARISE_2(hypot)
+DEFINE_BUILTIN_2(hypot)

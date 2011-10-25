@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef nextafter
-DEFINE_SCALARISE_2(nextafter)
+DEFINE_BUILTIN_2(nextafter)

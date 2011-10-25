@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef exp10
-DEFINE_SCALARISE_1(exp10)
+DEFINE_EXPR_1(exp10, exp((stype)M_LN10*a))

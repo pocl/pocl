@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef mad
 DEFINE_EXPR_3(mad, a*b+c)

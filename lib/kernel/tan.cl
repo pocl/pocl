@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef tan
-DEFINE_SCALARISE_1(tan)
+DEFINE_BUILTIN_1(tan)

@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef maxmag
 DEFINE_EXPR_2(maxmag, fmax(fabs(a), fabs(b)))

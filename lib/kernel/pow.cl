@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef pow
-DEFINE_SCALARISE_2(pow)
+DEFINE_BUILTIN_2(pow)

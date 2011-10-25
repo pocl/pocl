@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef atanh
-DEFINE_SCALARISE_1(atanh)
+DEFINE_BUILTIN_1(atanh)

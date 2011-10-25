@@ -23,6 +23,4 @@
 
 #include "templates.h"
 
-#undef fdim
-// DEFINE_SCALARISE_2(fdim)
-DEFINE_EXPR_2(fdim, fmax(a-b, (stype)0.0));
+DEFINE_EXPR_2(fdim, fmax(a-b, (stype)0.0))

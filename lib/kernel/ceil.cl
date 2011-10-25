@@ -21,11 +21,6 @@
    THE SOFTWARE.
 */
 
-#undef ceil
-
-float ceilf(float a);
-double ceil(double a);
-
 
 
 #define _MM_FROUND_TO_NEAREST_INT 0x00
@@ -49,12 +44,7 @@ double ceil(double a);
 float __attribute__ ((overloadable))
 cl_ceil(float a)
 {
-#ifdef __SSE4_1__
-  return ((float4)__builtin_ia32_roundss(*(float4)&a, *(float4*)&a,
-                                         _MM_FROUND_CEIL)).s0;
-#else
-  return ceilf(a);
-#endif
+  return __builtin_ceilf(a);
 }
 
 float2 __attribute__ ((overloadable))
@@ -106,12 +96,7 @@ cl_ceil(float16 a)
 double __attribute__ ((overloadable))
 cl_ceil(double a)
 {
-#ifdef __SSE4_1__
-  return ((double2)__builtin_ia32_roundsd(*(double2)&a, *(double2*)&a,
-                                          _MM_FROUND_CEIL)).s0;
-#else
-  return ceil(a);
-#endif
+  return __builtin_ceil(a);
 }
 
 double2 __attribute__ ((overloadable))

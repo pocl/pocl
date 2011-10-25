@@ -21,117 +21,102 @@
    THE SOFTWARE.
 */
 
-#undef sqrt
-
-float sqrtf(float a);
-double sqrt(double a);
-
-
-
 float __attribute__ ((overloadable))
-cl_sqrt(float a)
+sqrt(float a)
 {
-#ifdef __SSE__
-  return ((float4)__builtin_ia32_sqrtss(*(float4*)&a)).s0;
-#else
-  return sqrtf(a);
-#endif
+  return __builtin_sqrtf(a);
 }
 
 float2 __attribute__ ((overloadable))
-cl_sqrt(float2 a)
+sqrt(float2 a)
 {
 #ifdef __SSE__
-  return ((float4)cl_sqrt(*(float4*)&a)).s01;
+  return ((float4)sqrt(*(float4*)&a)).s01;
 #else
-  return (float2)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (float2)(sqrt(a.lo), sqrt(a.hi));
 #endif
 }
 
 float3 __attribute__ ((overloadable))
-cl_sqrt(float3 a)
+sqrt(float3 a)
 {
 #ifdef __SSE__
-  return ((float4)cl_sqrt(*(float4*)&a)).s012;
+  return ((float4)sqrt(*(float4*)&a)).s012;
 #else
-  return (float3)(cl_sqrt(a.s01), cl_sqrt(a.s2));
+  return (float3)(sqrt(a.s01), sqrt(a.s2));
 #endif
 }
 
 float4 __attribute__ ((overloadable))
-cl_sqrt(float4 a)
+sqrt(float4 a)
 {
 #ifdef __SSE__
   return __builtin_ia32_sqrtps(a);
 #else
-  return (float4)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (float4)(sqrt(a.lo), sqrt(a.hi));
 #endif
 }
 
 float8 __attribute__ ((overloadable))
-cl_sqrt(float8 a)
+sqrt(float8 a)
 {
 #ifdef __AVX__
   return __builtin_ia32_sqrtps256(a);
 #else
-  return (float8)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (float8)(sqrt(a.lo), sqrt(a.hi));
 #endif
 }
 
 float16 __attribute__ ((overloadable))
-cl_sqrt(float16 a)
+sqrt(float16 a)
 {
-  return (float16)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (float16)(sqrt(a.lo), sqrt(a.hi));
 }
 
 double __attribute__ ((overloadable))
-cl_sqrt(double a)
+sqrt(double a)
 {
-#ifdef __SSE2__
-  return ((double2)__builtin_ia32_sqrtss(*(double2*)&a)).s0;
-#else
-  return sqrt(a);
-#endif
+  return __builtin_sqrt(a);
 }
 
 double2 __attribute__ ((overloadable))
-cl_sqrt(double2 a)
+sqrt(double2 a)
 {
 #ifdef __SSE2__
   return __builtin_ia32_sqrtpd(a);
 #else
-  return (double2)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (double2)(sqrt(a.lo), sqrt(a.hi));
 #endif
 }
 
 double3 __attribute__ ((overloadable))
-cl_sqrt(double3 a)
+sqrt(double3 a)
 {
 #ifdef __AVX__
-  return ((double4)cl_sqrt(*(double4*)&a)).s012;
+  return ((double4)sqrt(*(double4*)&a)).s012;
 #else
-  return (double3)(cl_sqrt(a.s01), cl_sqrt(a.s2));
+  return (double3)(sqrt(a.s01), sqrt(a.s2));
 #endif
 }
 
 double4 __attribute__ ((overloadable))
-cl_sqrt(double4 a)
+sqrt(double4 a)
 {
 #ifdef __AVX__
   return __builtin_ia32_pd256(a);
 #else
-  return (double4)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (double4)(sqrt(a.lo), sqrt(a.hi));
 #endif
 }
 
 double8 __attribute__ ((overloadable))
-cl_sqrt(double8 a)
+sqrt(double8 a)
 {
-  return (double8)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (double8)(sqrt(a.lo), sqrt(a.hi));
 }
 
 double16 __attribute__ ((overloadable))
-cl_sqrt(double16 a)
+sqrt(double16 a)
 {
-  return (double16)(cl_sqrt(a.lo), cl_sqrt(a.hi));
+  return (double16)(sqrt(a.lo), sqrt(a.hi));
 }

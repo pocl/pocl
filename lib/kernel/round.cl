@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef round
-DEFINE_SCALARISE_1(round)
+DEFINE_BUILTIN_1(round)

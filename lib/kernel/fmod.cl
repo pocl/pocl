@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef fmod
-DEFINE_SCALARISE_2(fmod)
+DEFINE_BUILTIN_2(fmod)

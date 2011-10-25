@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef erfc
-DEFINE_SCALARISE_1(erfc)
+DEFINE_BUILTIN_1(erfc)

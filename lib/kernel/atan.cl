@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef atan
-DEFINE_SCALARISE_1(atan)
+DEFINE_BUILTIN_1(atan)

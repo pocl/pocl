@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef acosh
-DEFINE_SCALARISE_1(acosh)
+DEFINE_BUILTIN_1(acosh)

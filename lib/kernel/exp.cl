@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef exp
-DEFINE_SCALARISE_1(exp)
+DEFINE_BUILTIN_1(exp)

@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef fma
-DEFINE_SCALARISE_3(fma)
+DEFINE_BUILTIN_3(fma)

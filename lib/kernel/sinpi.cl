@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef sinpi
 DEFINE_EXPR_1(sinpi, sin((stype)M_PI*a))

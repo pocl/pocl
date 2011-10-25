@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef log10
-DEFINE_SCALARISE_1(log10)
+DEFINE_BUILTIN_1(log10)

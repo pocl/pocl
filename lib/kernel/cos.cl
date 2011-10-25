@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef cos
-DEFINE_SCALARISE_1(cos)
+DEFINE_BUILTIN_1(cos)

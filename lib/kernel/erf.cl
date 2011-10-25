@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef erf
-DEFINE_SCALARISE_1(erf)
+DEFINE_BUILTIN_1(erf)

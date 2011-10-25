@@ -21,13 +21,6 @@
    THE SOFTWARE.
 */
 
-#undef floor
-
-float floorf(float a);
-double floor(double a);
-
-
-
 #define _MM_FROUND_TO_NEAREST_INT 0x00
 #define _MM_FROUND_TO_NEG_INF     0x01
 #define _MM_FROUND_TO_POS_INF     0x02
@@ -47,111 +40,101 @@ double floor(double a);
 
 
 float __attribute__ ((overloadable))
-cl_floor(float a)
+floor(float a)
 {
-#ifdef __SSE4_1__
-  return ((float4)__builtin_ia32_roundss(*(float4)&a, *(float4*)&a,
-                                         _MM_FROUND_FLOOR)).s0;
-#else
-  return floorf(a);
-#endif
+  return __builtin_floorf(a);
 }
 
 float2 __attribute__ ((overloadable))
-cl_floor(float2 a)
+floor(float2 a)
 {
 #ifdef __SSE4_1__
-  return ((float4)cl_floor(*(float4)&a).s01;
+  return ((float4)floor(*(float4)&a).s01;
 #else
-  return (float2)(cl_floor(a.lo), cl_floor(a.hi));
+  return (float2)(floor(a.lo), floor(a.hi));
 #endif
 }
 
 float3 __attribute__ ((overloadable))
-cl_floor(float3 a)
+floor(float3 a)
 {
 #ifdef __SSE4_1__
-  return ((float4)cl_floor(*(float4)&a).s012;
+  return ((float4)floor(*(float4)&a).s012;
 #else
-  return (float3)(cl_floor(a.s01), cl_floor(a.s2));
+  return (float3)(floor(a.s01), floor(a.s2));
 #endif
 }
 
 float4 __attribute__ ((overloadable))
-cl_floor(float4 a)
+floor(float4 a)
 {
 #ifdef __SSE4_1__
   return __builtin_ia32_roundps(a, _MM_FROUND_FLOOR);
 #else
-  return (float4)(cl_floor(a.lo), cl_floor(a.hi));
+  return (float4)(floor(a.lo), floor(a.hi));
 #endif
 }
 
 float8 __attribute__ ((overloadable))
-cl_floor(float8 a)
+floor(float8 a)
 {
 #ifdef __AVX__
   return __builtin_ia32_roundps256(a, _MM_FROUND_FLOOR);
 #else
-  return (float8)(cl_floor(a.lo), cl_floor(a.hi));
+  return (float8)(floor(a.lo), floor(a.hi));
 #endif
 }
 
 float16 __attribute__ ((overloadable))
-cl_floor(float16 a)
+floor(float16 a)
 {
-  return (float16)(cl_floor(a.lo), cl_floor(a.hi));
+  return (float16)(floor(a.lo), floor(a.hi));
 }
 
 double __attribute__ ((overloadable))
-cl_floor(double a)
+floor(double a)
 {
-#ifdef __SSE4_1__
-  return ((double2)__builtin_ia32_roundsd(*(double2)&a, *(double2*)&a,
-                                          _MM_FROUND_FLOOR)).s0;
-#else
-  return floor(a);
-#endif
+  return __builtin_floor(a);
 }
 
 double2 __attribute__ ((overloadable))
-cl_floor(double2 a)
+floor(double2 a)
 {
 #ifdef __SSE4_1__
   return __builtin_ia32_roundpd(a, _MM_FROUND_FLOOR);
 #else
-  return (double2)(cl_floor(a.lo), cl_floor(a.hi));
+  return (double2)(floor(a.lo), floor(a.hi));
 #endif
 }
 
 double3 __attribute__ ((overloadable))
-cl_floor(double3 a)
+floor(double3 a)
 {
 #ifdef __AVX__
-  return ((double4)cl_floor(*(double4)&a).s012;
+  return ((double4)floor(*(double4)&a).s012;
 #else
-  return (double3)(cl_floor(a.s01), cl_floor(a.s2));
+  return (double3)(floor(a.s01), floor(a.s2));
 #endif
 }
 
 double4 __attribute__ ((overloadable))
-cl_floor(double4 a)
+floor(double4 a)
 {
 #ifdef __AVX__
   return __builtin_ia32_roundpd256(a, _MM_FROUND_FLOOR);
 #else
-  return (double4)(cl_floor(a.lo), cl_floor(a.hi));
+  return (double4)(floor(a.lo), floor(a.hi));
 #endif
 }
 
 double8 __attribute__ ((overloadable))
-cl_floor(double8 a)
+floor(double8 a)
 {
-  return (double8)(cl_floor(a.lo), cl_floor(a.hi));
+  return (double8)(floor(a.lo), floor(a.hi));
 }
 
 double16 __attribute__ ((overloadable))
-cl_floor(double16 a)
+floor(double16 a)
 {
-  return (double16)(cl_floor(a.lo), cl_floor(a.hi));
+  return (double16)(floor(a.lo), floor(a.hi));
 }

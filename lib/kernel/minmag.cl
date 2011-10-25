@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef minmag
 DEFINE_EXPR_2(minmag, fmin(fabs(a), fabs(b)))

@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef remainder
-DEFINE_SCALARISE_2(remainder)
+DEFINE_BUILTIN_2(remainder)

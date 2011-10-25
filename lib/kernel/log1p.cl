@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef log1p
-DEFINE_SCALARISE_1(log1p)
+DEFINE_BUILTIN_1(log1p)

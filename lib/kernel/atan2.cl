@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef atan2
-DEFINE_SCALARISE_2(atan2)
+DEFINE_BUILTIN_2(atan2)

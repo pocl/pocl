@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef tanpi
 DEFINE_EXPR_1(tanpi, tan((stype)M_PI*a))

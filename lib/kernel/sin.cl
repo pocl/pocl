@@ -23,5 +23,4 @@
 
 #include "templates.h"
 
-#undef sin
-DEFINE_SCALARISE_1(sin)
+DEFINE_BUILTIN_1(sin)
