@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel.
+# Makefile.am for pocl/lib/kernel/dummy.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,11 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX=
+targetpkglibdir = $(pkglibdir)/dummy
+targetpkglib_LIBRARIES = libkernel.a
 
-SUBDIRS = dummy
-
-pkglib_LIBRARIES = libkernel.a
+VPATH = @srcdir@:@srcdir@/..
 
 libkernel_a_SOURCES = get_global_size.c		\
                       get_global_id.c		\
