@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: ldexp()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,5 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+DEFINE_BUILTIN_V_VJ(ldexp)
+DEFINE_BUILTIN_V_VI(ldexp)

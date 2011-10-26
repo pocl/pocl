@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_2(maxmag, fmax(fabs(a), fabs(b)))
+DEFINE_EXPR_V_VV(maxmag, fmax(fabs(a), fabs(b)))

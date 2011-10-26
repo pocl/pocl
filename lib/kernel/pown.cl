@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: pown()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,9 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+// Map to the right builtin
+#define __builtin_pownf __builtin_powif
+#define __builtin_pown __builtin_powi
+
+DEFINE_BUILTIN_V_VJ(pown)
+DEFINE_BUILTIN_V_VI(pown)

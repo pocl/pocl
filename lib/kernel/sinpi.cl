@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_1(sinpi, sin((stype)M_PI*a))
+DEFINE_EXPR_V_V(sinpi, sin((stype)M_PI*a))

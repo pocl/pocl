@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_3(mad, a*b+c)
+DEFINE_EXPR_V_VVV(mad, a*b+c)

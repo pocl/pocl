@@ -63,7 +63,10 @@ libkernel_a_SOURCES = get_global_size.c		\
                       fmax.cl			\
                       fmin.cl			\
                       fmod.cl			\
+                      fract.cl			\
                       hypot.cl			\
+                      ilogb.cl			\
+                      ldexp.cl			\
                       lgamma.cl			\
                       log.cl			\
                       log2.cl			\
@@ -71,13 +74,16 @@ libkernel_a_SOURCES = get_global_size.c		\
                       log1p.cl			\
                       logb.cl			\
                       mad.cl			\
-                      mad24.cl			\
                       maxmag.cl			\
                       minmag.cl			\
+                      nan.cl			\
                       nextafter.cl		\
                       pow.cl			\
+                      pown.cl			\
+                      powr.cl			\
                       remainder.cl		\
                       rint.cl			\
+                      rootn.cl			\
                       round.cl			\
                       rsqrt.cl			\
                       sin.cl			\
@@ -88,7 +94,12 @@ libkernel_a_SOURCES = get_global_size.c		\
                       tanh.cl			\
                       tanpi.cl			\
                       tgamma.cl			\
-                      trunc.cl
+                      trunc.cl			\
+                      abs.cl			\
+                      abs_diff.cl		\
+                      add_sat.cl		\
+                      hadd.cl			\
+                      mad24.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 

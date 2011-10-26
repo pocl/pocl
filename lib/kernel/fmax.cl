@@ -21,6 +21,11 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
+DEFINE_EXPR_V_VS(fmax, fmax(a, (vtype)b))
+
+
 
 float __attribute__ ((overloadable))
 fmax(float a, float b)

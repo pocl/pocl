@@ -23,522 +23,733 @@
 
 
 
-#define DEFINE_BUILTIN_1(NAME)                  \
-                                                \
+#define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a)                                         \
+  {                                                     \
+    return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
+  }
+#define DEFINE_BUILTIN_V_V(NAME)                \
   float __attribute__ ((overloadable))          \
   NAME(float a)                                 \
   {                                             \
     return __builtin_##NAME##f(a);              \
   }                                             \
-                                                \
-  float2 __attribute__ ((overloadable))         \
-  NAME(float2 a)                                \
-  {                                             \
-    return (float2)(NAME(a.lo),                 \
-                    NAME(a.hi));                \
-  }                                             \
-                                                \
-  float3 __attribute__ ((overloadable))         \
-  NAME(float3 a)                                \
-  {                                             \
-    return (float3)(NAME(a.s01),                \
-                    NAME(a.s2));                \
-  }                                             \
-                                                \
-  float4 __attribute__ ((overloadable))         \
-  NAME(float4 a)                                \
-  {                                             \
-    return (float4)(NAME(a.lo),                 \
-                    NAME(a.hi));                \
-  }                                             \
-                                                \
-  float8 __attribute__ ((overloadable))         \
-  NAME(float8 a)                                \
-  {                                             \
-    return (float8)(NAME(a.lo),                 \
-                    NAME(a.hi));                \
-  }                                             \
-                                                \
-  float16 __attribute__ ((overloadable))        \
-  NAME(float16 a)                               \
-  {                                             \
-    return (float16)(NAME(a.lo),                \
-                     NAME(a.hi));               \
-  }                                             \
-                                                \
   double __attribute__ ((overloadable))         \
   NAME(double a)                                \
   {                                             \
     return __builtin_##NAME(a);                 \
   }                                             \
-                                                \
-  double2 __attribute__ ((overloadable))        \
-  NAME(double2 a)                               \
-  {                                             \
-    return (double2)(NAME(a.lo),                \
-                     NAME(a.hi));               \
-  }                                             \
-                                                \
-  double3 __attribute__ ((overloadable))        \
-  NAME(double3 a)                               \
-  {                                             \
-    return (double3)(NAME(a.s01),               \
-                     NAME(a.s2));               \
-  }                                             \
-                                                \
-  double4 __attribute__ ((overloadable))        \
-  NAME(double4 a)                               \
-  {                                             \
-    return (double4)(NAME(a.lo),                \
-                     NAME(a.hi));               \
-  }                                             \
-                                                \
-  double8 __attribute__ ((overloadable))        \
-  NAME(double8 a)                               \
-  {                                             \
-    return (double8)(NAME(a.lo),                \
-                     NAME(a.hi));               \
-  }                                             \
-                                                \
-  double16 __attribute__ ((overloadable))       \
-  NAME(double16 a)                              \
-  {                                             \
-    return (double16)(NAME(a.lo),               \
-                      NAME(a.hi));              \
+  IMPLEMENT_BUILTIN_V_V(NAME, float2  , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, float4  , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, float3  , lo, s2) \
+  IMPLEMENT_BUILTIN_V_V(NAME, float8  , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, float16 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, double2 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, double3 , lo, s2) \
+  IMPLEMENT_BUILTIN_V_V(NAME, double4 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, double8 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi)
+
+#define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, LO, HI)     \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b)                                \
+  {                                                     \
+    return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
   }
+#define DEFINE_BUILTIN_V_VV(NAME)                       \
+  float __attribute__ ((overloadable))                  \
+  NAME(float a, float b)                                \
+  {                                                     \
+    return __builtin_##NAME##f(a, b);                   \
+  }                                                     \
+  double __attribute__ ((overloadable))                 \
+  NAME(double a, double b)                              \
+  {                                                     \
+    return __builtin_##NAME(a, b);                      \
+  }                                                     \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float2  , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float3  , lo, s2)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float4  , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float8  , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float16 , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double2 , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double3 , lo, s2)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double4 , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double8 , lo, hi)        \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double16, lo, hi)
 
-
-
-#define DEFINE_BUILTIN_2(NAME)                  \
-                                                \
-  float __attribute__ ((overloadable))          \
-  NAME(float a, float b)                        \
-  {                                             \
-    return __builtin_##NAME##f(a, b);           \
-  }                                             \
-                                                \
-  float2 __attribute__ ((overloadable))         \
-  NAME(float2 a, float2 b)                      \
-  {                                             \
-    return (float2)(NAME(a.lo, b.lo),           \
-                    NAME(a.hi, b.hi));          \
-  }                                             \
-                                                \
-  float3 __attribute__ ((overloadable))         \
-  NAME(float3 a, float3 b)                      \
-  {                                             \
-    return (float3)(NAME(a.s01, b.s01),         \
-                    NAME(a.s2, b.s2));          \
-  }                                             \
-                                                \
-  float4 __attribute__ ((overloadable))         \
-  NAME(float4 a, float4 b)                      \
-  {                                             \
-    return (float4)(NAME(a.lo, b.lo),           \
-                    NAME(a.hi, b.hi));          \
-  }                                             \
-                                                \
-  float8 __attribute__ ((overloadable))         \
-  NAME(float8 a, float8 b)                      \
-  {                                             \
-    return (float8)(NAME(a.lo, b.lo),           \
-                    NAME(a.hi, b.hi));          \
-  }                                             \
-                                                \
-  float16 __attribute__ ((overloadable))        \
-  NAME(float16 a, float16 b)                    \
-  {                                             \
-    return (float16)(NAME(a.lo, b.lo),          \
-                     NAME(a.hi, b.hi));         \
-  }                                             \
-                                                \
-  double __attribute__ ((overloadable))         \
-  NAME(double a, double b)                      \
-  {                                             \
-    return __builtin_##NAME(a, b);              \
-  }                                             \
-                                                \
-  double2 __attribute__ ((overloadable))        \
-  NAME(double2 a, double2 b)                    \
-  {                                             \
-    return (double2)(NAME(a.lo, b.lo),          \
-                     NAME(a.hi, b.hi));         \
-  }                                             \
-                                                \
-  double3 __attribute__ ((overloadable))        \
-  NAME(double3 a, double3 b)                    \
-  {                                             \
-    return (double3)(NAME(a.s01, b.s01),        \
-                     NAME(a.s2, b.s2));         \
-  }                                             \
-                                                \
-  double4 __attribute__ ((overloadable))        \
-  NAME(double4 a, double4 b)                    \
-  {                                             \
-    return (double4)(NAME(a.lo, b.lo),          \
-                     NAME(a.hi, b.hi));         \
-  }                                             \
-                                                \
-  double8 __attribute__ ((overloadable))        \
-  NAME(double8 a, double8 b)                    \
-  {                                             \
-    return (double8)(NAME(a.lo, b.lo),          \
-                     NAME(a.hi, b.hi));         \
-  }                                             \
-                                                \
-  double16 __attribute__ ((overloadable))       \
-  NAME(double16 a, double16 b)                  \
-  {                                             \
-    return (double16)(NAME(a.lo, b.lo),         \
-                      NAME(a.hi, b.hi));        \
+#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, LO, HI)                    \
+  VTYPE __attribute__ ((overloadable))                                  \
+  NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
+  {                                                                     \
+    return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
   }
+#define DEFINE_BUILTIN_V_VVV(NAME)                      \
+  float __attribute__ ((overloadable))                  \
+  NAME(float a, float b, float c)                       \
+  {                                                     \
+    return __builtin_##NAME##f(a, b, c);                \
+  }                                                     \
+  double __attribute__ ((overloadable))                 \
+  NAME(double a, double b, double c)                    \
+  {                                                     \
+    return __builtin_##NAME(a, b, c);                   \
+  }                                                     \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float2  , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float3  , lo, s2)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float4  , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float8  , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float16 , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double2 , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double3 , lo, s2)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double4 , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double8 , lo, hi)       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double16, lo, hi)
 
-
-
-#define DEFINE_BUILTIN_3(NAME)                  \
-                                                \
-  float __attribute__ ((overloadable))          \
-  NAME(float a, float b, float c)               \
-  {                                             \
-    return __builtin_##NAME##f(a, b, c);        \
-  }                                             \
-                                                \
-  float2 __attribute__ ((overloadable))         \
-  NAME(float2 a, float2 b, float2 c)            \
-  {                                             \
-    return (float2)(NAME(a.lo, b.lo, c.lo),     \
-                    NAME(a.hi, b.hi, c.hi));    \
-  }                                             \
-                                                \
-  float3 __attribute__ ((overloadable))         \
-  NAME(float3 a, float3 b, float3 c)            \
-  {                                             \
-    return (float3)(NAME(a.s01, b.s01, c.s01),  \
-                    NAME(a.s2, b.s2, c.s2));    \
-  }                                             \
-                                                \
-  float4 __attribute__ ((overloadable))         \
-  NAME(float4 a, float4 b, float4 c)            \
-  {                                             \
-    return (float4)(NAME(a.lo, b.lo, c.lo),     \
-                    NAME(a.hi, b.hi, c.hi));    \
-  }                                             \
-                                                \
-  float8 __attribute__ ((overloadable))         \
-  NAME(float8 a, float8 b, float8 c)            \
-  {                                             \
-    return (float8)(NAME(a.lo, b.lo, c.lo),     \
-                    NAME(a.hi, b.hi, c.hi));    \
-  }                                             \
-                                                \
-  float16 __attribute__ ((overloadable))        \
-  NAME(float16 a, float16 b, float16 c)         \
-  {                                             \
-    return (float16)(NAME(a.lo, b.lo, c.lo),    \
-                     NAME(a.hi, b.hi, c.hi));   \
-  }                                             \
-                                                \
-  double __attribute__ ((overloadable))         \
-  NAME(double a, double b, double c)            \
-  {                                             \
-    return __builtin_##NAME(a, b, c);           \
-  }                                             \
-                                                \
-  double2 __attribute__ ((overloadable))        \
-  NAME(double2 a, double2 b, double2 c)         \
-  {                                             \
-    return (double2)(NAME(a.lo, b.lo, c.lo),    \
-                     NAME(a.hi, b.hi, c.hi));   \
-  }                                             \
-                                                \
-  double3 __attribute__ ((overloadable))        \
-  NAME(double3 a, double3 b, double3 c)         \
-  {                                             \
-    return (double3)(NAME(a.s01, b.s01, c.s01), \
-                     NAME(a.s2, b.s2, c.s2));   \
-  }                                             \
-                                                \
-  double4 __attribute__ ((overloadable))        \
-  NAME(double4 a, double4 b, double4 c)         \
-  {                                             \
-    return (double4)(NAME(a.lo, b.lo, c.lo),    \
-                     NAME(a.hi, b.hi, c.hi));   \
-  }                                             \
-                                                \
-  double8 __attribute__ ((overloadable))        \
-  NAME(double8 a, double8 b, double8 c)         \
-  {                                             \
-    return (double8)(NAME(a.lo, b.lo, c.lo),    \
-                     NAME(a.hi, b.hi, c.hi));   \
-  }                                             \
-                                                \
-  double16 __attribute__ ((overloadable))       \
-  NAME(double16 a, double16 b, double16 c)      \
-  {                                             \
-    return (double16)(NAME(a.lo, b.lo, c.lo),   \
-                      NAME(a.hi, b.hi, c.hi));  \
+#define IMPLEMENT_BUILTIN_V_U(NAME, VTYPE, UTYPE, LO, HI)       \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(UTYPE a)                                                 \
+  {                                                             \
+    return (VTYPE)(NAME(a.LO), NAME(a.HI));                     \
   }
+#define DEFINE_BUILTIN_V_U(NAME)                        \
+  float __attribute__ ((overloadable))                  \
+  NAME(uint a)                                          \
+  {                                                     \
+    return __builtin_##NAME##f(a);                      \
+  }                                                     \
+  double __attribute__ ((overloadable))                 \
+  NAME(ulong a)                                         \
+  {                                                     \
+    return __builtin_##NAME(a);                         \
+  }                                                     \
+  IMPLEMENT_BUILTIN_V_U(NAME, float2  , uint2  , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, float3  , uint3  , lo, s2) \
+  IMPLEMENT_BUILTIN_V_U(NAME, float4  , uint4  , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, float8  , uint8  , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, float16 , uint16 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, double2 , ulong2 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, double3 , ulong3 , lo, s2) \
+  IMPLEMENT_BUILTIN_V_U(NAME, double4 , ulong4 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, double8 , ulong8 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_U(NAME, double16, ulong16, lo, hi)
 
-
-
-#define DEFINE_EXPR_1(NAME, EXPR)               \
-                                                \
-  float __attribute__ ((overloadable))          \
-  NAME(float a)                                 \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float2 __attribute__ ((overloadable))         \
-  NAME(float2 a)                                \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float3 __attribute__ ((overloadable))         \
-  NAME(float3 a)                                \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float4 __attribute__ ((overloadable))         \
-  NAME(float4 a)                                \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float8 __attribute__ ((overloadable))         \
-  NAME(float8 a)                                \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float16 __attribute__ ((overloadable))        \
-  NAME(float16 a)                               \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double __attribute__ ((overloadable))         \
-  NAME(double a)                                \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double2 __attribute__ ((overloadable))        \
-  NAME(double2 a)                               \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double3 __attribute__ ((overloadable))        \
-  NAME(double3 a)                               \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double4 __attribute__ ((overloadable))        \
-  NAME(double4 a)                               \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double8 __attribute__ ((overloadable))        \
-  NAME(double8 a)                               \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double16 __attribute__ ((overloadable))       \
-  NAME(double16 a)                              \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
+#define IMPLEMENT_BUILTIN_V_VJ(NAME, VTYPE, JTYPE, LO, HI)      \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, JTYPE b)                                        \
+  {                                                             \
+    return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));         \
   }
+#define DEFINE_BUILTIN_V_VJ(NAME)                       \
+  float __attribute__ ((overloadable))                  \
+  NAME(float a, int b)                                  \
+  {                                                     \
+    return __builtin_##NAME##f(a, b);                   \
+  }                                                     \
+  double __attribute__ ((overloadable))                 \
+  NAME(double a, int b)                                 \
+  {                                                     \
+    return __builtin_##NAME(a, b);                      \
+  }                                                     \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float2  , int2 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float3  , int3 , lo, s2) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float4  , int4 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float8  , int8 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float16 , int16, lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double2 , int2 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double3 , int3 , lo, s2) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double4 , int4 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double8 , int8 , lo, hi) \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double16, int16, lo, hi)
 
-
-
-#define DEFINE_EXPR_2(NAME, EXPR)               \
-                                                \
-  float __attribute__ ((overloadable))          \
-  NAME(float a, float b)                        \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float2 __attribute__ ((overloadable))         \
-  NAME(float2 a, float2 b)                      \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float3 __attribute__ ((overloadable))         \
-  NAME(float3 a, float3 b)                      \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float4 __attribute__ ((overloadable))         \
-  NAME(float4 a, float4 b)                      \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float8 __attribute__ ((overloadable))         \
-  NAME(float8 a, float8 b)                      \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float16 __attribute__ ((overloadable))        \
-  NAME(float16 a, float16 b)                    \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double __attribute__ ((overloadable))         \
-  NAME(double a, double b)                      \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double2 __attribute__ ((overloadable))        \
-  NAME(double2 a, double2 b)                    \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double3 __attribute__ ((overloadable))        \
-  NAME(double3 a, double3 b)                    \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double4 __attribute__ ((overloadable))        \
-  NAME(double4 a, double4 b)                    \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double8 __attribute__ ((overloadable))        \
-  NAME(double8 a, double8 b)                    \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double16 __attribute__ ((overloadable))       \
-  NAME(double16 a, double16 b)                  \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
+#define IMPLEMENT_BUILTIN_V_VI(NAME, VTYPE, ITYPE, LO, HI)      \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, ITYPE b)                                        \
+  {                                                             \
+    return (VTYPE)(NAME(a.LO, b), NAME(a.HI, b));               \
   }
+#define DEFINE_BUILTIN_V_VI(NAME)                       \
+  IMPLEMENT_BUILTIN_V_VI(NAME, float2  , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, float3  , int, lo, s2)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, float4  , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, float8  , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, float16 , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, double2 , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, double3 , int, lo, s2)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, double4 , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, double8 , int, lo, hi)   \
+  IMPLEMENT_BUILTIN_V_VI(NAME, double16, int, lo, hi)
 
-
-
-#define DEFINE_EXPR_3(NAME, EXPR)               \
-                                                \
-  float __attribute__ ((overloadable))          \
-  NAME(float a, float b, float c)               \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float2 __attribute__ ((overloadable))         \
-  NAME(float2 a, float2 b, float2 c)            \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float3 __attribute__ ((overloadable))         \
-  NAME(float3 a, float3 b, float3 c)            \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float4 __attribute__ ((overloadable))         \
-  NAME(float4 a, float4 b, float4 c)            \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float8 __attribute__ ((overloadable))         \
-  NAME(float8 a, float8 b, float8 c)            \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  float16 __attribute__ ((overloadable))        \
-  NAME(float16 a, float16 b, float16 c)         \
-  {                                             \
-    typedef float stype;                        \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double __attribute__ ((overloadable))         \
-  NAME(double a, double b, double c)            \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double2 __attribute__ ((overloadable))        \
-  NAME(double2 a, double2 b, double2 c)         \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double3 __attribute__ ((overloadable))        \
-  NAME(double3 a, double3 b, double3 c)         \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double4 __attribute__ ((overloadable))        \
-  NAME(double4 a, double4 b, double4 c)         \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double8 __attribute__ ((overloadable))        \
-  NAME(double8 a, double8 b, double8 c)         \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
-  }                                             \
-                                                \
-  double16 __attribute__ ((overloadable))       \
-  NAME(double16 a, double16 b, double16 c)      \
-  {                                             \
-    typedef double stype;                       \
-    return EXPR;                                \
+#define IMPLEMENT_BUILTIN_J_V(NAME, JTYPE, VTYPE, LO, HI)       \
+  JTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a)                                                 \
+  {                                                             \
+    return (JTYPE)(NAME(a.LO), NAME(a.HI));                     \
   }
+#define DEFINE_BUILTIN_J_V(NAME)                        \
+  int __attribute__ ((overloadable))                    \
+  NAME(float a)                                         \
+  {                                                     \
+    return __builtin_##NAME##f(a);                      \
+  }                                                     \
+  int __attribute__ ((overloadable))                    \
+  NAME(double a)                                        \
+  {                                                     \
+    return __builtin_##NAME(a);                         \
+  }                                                     \
+  IMPLEMENT_BUILTIN_J_V(NAME, int2 , float2  , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int3 , float3  , lo, s2)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int4 , float4  , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int8 , float8  , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int16, float16 , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int2 , double2 , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int3 , double3 , lo, s2)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int4 , double4 , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int8 , double8 , lo, hi)  \
+  IMPLEMENT_BUILTIN_J_V(NAME, int16, double16, lo, hi)
+
+
+
+#define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE)    \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b)                                \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_V(NAME, EXPR)                     \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float   , float )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float2  , float )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float3  , float )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float4  , float )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float8  , float )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float16 , float )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double  , double)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double2 , double)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double3 , double)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double4 , double)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double8 , double)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_VV(NAME, EXPR, VTYPE, STYPE)   \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b)                                \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_VV(NAME, EXPR)                    \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float   , float )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float2  , float )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float3  , float )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float4  , float )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float8  , float )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float16 , float )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double  , double)     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double2 , double)     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double3 , double)     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double4 , double)     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double8 , double)     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE)  \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b, VTYPE c)                       \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_VVV(NAME, EXPR)                   \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float   , float )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float2  , float )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float3  , float )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float4  , float )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float8  , float )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float16 , float )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double  , double)    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double2 , double)    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double3 , double)    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double4 , double)    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double8 , double)    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_U(NAME, EXPR, VTYPE, STYPE, UTYPE)     \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(UTYPE a)                                                 \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef UTYPE utype;                                        \
+    return EXPR;                                                \
+  }
+#define DEFINE_EXPR_V_U(NAME, EXPR)                             \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, float   , float , uint   )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, float2  , float , uint2  )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, float3  , float , uint3  )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, float4  , float , uint4  )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, float8  , float , uint8  )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, float16 , float , uint16 )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, double  , double, ulong  )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, double2 , double, ulong2 )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, double3 , double, ulong3 )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, double4 , double, ulong4 )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, double8 , double, ulong8 )     \
+  IMPLEMENT_EXPR_V_U(NAME, EXPR, double16, double, ulong16)
+
+#define IMPLEMENT_EXPR_V_VS(NAME, EXPR, VTYPE, STYPE)   \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, STYPE b)                                \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_VS(NAME, EXPR)                    \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, float2  , float )     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, float3  , float )     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, float4  , float )     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, float8  , float )     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, float16 , float )     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double2 , double)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double3 , double)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double4 , double)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double8 , double)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_VJ(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, JTYPE b)                                        \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
+  }
+#define DEFINE_EXPR_V_VJ(NAME, EXPR)                            \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float   , float , int  )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float2  , float , int2 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float3  , float , int3 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float4  , float , int4 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float8  , float , int8 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float16 , float , int16)      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double  , double, int  )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double2 , double, int2 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double3 , double, int3 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double4 , double, int4 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double8 , double, int8 )      \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double16, double, int16)
+
+#define IMPLEMENT_EXPR_V_VI(NAME, EXPR, VTYPE, STYPE, ITYPE)    \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, ITYPE b)                                        \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef ITYPE itype;                                        \
+    return EXPR;                                                \
+  }
+#define DEFINE_EXPR_V_VI(NAME, EXPR)                            \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float2  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float3  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float4  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float8  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float16 , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double2 , double , int)       \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double3 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double4 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double8 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double16, double, int)
+
+#define IMPLEMENT_EXPR_V_VPV(NAME, EXPR, VTYPE, STYPE)  \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, __global VTYPE *b)                      \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }                                                     \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, __local VTYPE *b)                       \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }                                                     \
+  /* __private is not supported yet                     \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, __private VTYPE *b)                     \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+    }                                                   \
+  */
+#define DEFINE_EXPR_V_VPV(NAME, EXPR)                   \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float   , float )    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float2  , float )    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float3  , float )    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float4  , float )    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float8  , float )    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float16 , float )    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, double  , double)    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, double2 , double)    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, double3 , double)    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, double4 , double)    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, double8 , double)    \
+  IMPLEMENT_EXPR_V_VPV(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_SV(NAME, EXPR, VTYPE, STYPE)   \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(STYPE a, VTYPE b)                                \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_SV(NAME, EXPR)                    \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, float2  , float )     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, float3  , float )     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, float4  , float )     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, float8  , float )     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, float16 , float )     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, double2 , double)     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, double3 , double)     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, double4 , double)     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, double8 , double)     \
+  IMPLEMENT_EXPR_V_SV(NAME, EXPR, double16, double)
+
+
+
+#define IMPLEMENT_BUILTIN_UG_G(NAME, GTYPE, UGTYPE, LO, HI)     \
+  UGTYPE __attribute__ ((overloadable))                         \
+  NAME(GTYPE a)                                                 \
+  {                                                             \
+    return (UGTYPE)(NAME(a.LO), NAME(a.HI));                    \
+  }
+#define DEFINE_BUILTIN_UG_G(NAME)                               \
+  uchar __attribute__ ((overloadable))                          \
+  NAME(char a)                                                  \
+  {                                                             \
+    return __builtin_hh##NAME(a);                               \
+  }                                                             \
+  ushort __attribute__ ((overloadable))                         \
+  NAME(short a)                                                 \
+  {                                                             \
+    return __builtin_h##NAME(a);                                \
+  }                                                             \
+  uint __attribute__ ((overloadable))                           \
+  NAME(int a)                                                   \
+  {                                                             \
+    return __builtin_##NAME(a);                                 \
+  }                                                             \
+  ulong __attribute__ ((overloadable))                          \
+  NAME(long a)                                                  \
+  {                                                             \
+    return __builtin_l##NAME(a);                                \
+  }                                                             \
+  uchar __attribute__ ((overloadable))                          \
+  NAME(uchar a)                                                 \
+  {                                                             \
+    return __builtin_uhh##NAME(a);                              \
+  }                                                             \
+  ushort __attribute__ ((overloadable))                         \
+  NAME(ushort a)                                                \
+  {                                                             \
+    return __builtin_uh##NAME(a);                               \
+  }                                                             \
+  uint __attribute__ ((overloadable))                           \
+  NAME(uint a)                                                  \
+  {                                                             \
+    return __builtin_u##NAME(a);                                \
+  }                                                             \
+  ulong __attribute__ ((overloadable))                          \
+  NAME(ulong a)                                                 \
+  {                                                             \
+    return __builtin_ul##NAME(a);                               \
+  }                                                             \
+  IMPLEMENT_BUILTIN_UG_G(NAME, char2   , uchar2  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, char3   , uchar3  , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, char4   , uchar4  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, char8   , uchar8  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, char16  , uchar16 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, short2  , ushort2 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, short3  , ushort3 , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, short4  , ushort4 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, short8  , ushort8 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, short16 , ushort16, lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, int2    , uint2   , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, int3    , uint3   , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, int4    , uint4   , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, int8    , uint8   , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, int16   , uint16  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, long2   , ulong2  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, long3   , ulong3  , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, long4   , ulong4  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, long8   , ulong8  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, long16  , ulong16 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uchar2  , uchar2  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uchar3  , uchar3  , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uchar4  , uchar4  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uchar8  , uchar8  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uchar16 , uchar16 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ushort2 , ushort2 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ushort3 , ushort3 , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ushort4 , ushort4 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ushort8 , ushort8 , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ushort16, ushort16, lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uint2   , uint2   , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uint3   , uint3   , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uint4   , uint4   , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uint8   , uint8   , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, uint16  , uint16  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ulong2  , ulong2  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ulong3  , ulong3  , lo, s2)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ulong4  , ulong4  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ulong8  , ulong8  , lo, hi)      \
+  IMPLEMENT_BUILTIN_UG_G(NAME, ulong16 , ulong16 , lo, hi)
+
+
+
+#define IMPLEMENT_EXPR_G_G(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE)  \
+  GTYPE __attribute__ ((overloadable))                                  \
+  NAME(GTYPE a)                                                         \
+  {                                                                     \
+    typedef GTYPE gtype;                                                \
+    typedef SGTYPE sgtype;                                              \
+    typedef UGTYPE ugtype;                                              \
+    typedef SUGTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_G_G(NAME, EXPR)                                     \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, char    , char  , uchar   , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, char2   , char  , uchar2  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, char3   , char  , uchar3  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, char4   , char  , uchar4  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, char8   , char  , uchar8  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, char16  , char  , uchar16 , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, short   , short , ushort  , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, short2  , short , ushort2 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, short3  , short , ushort3 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, short4  , short , ushort4 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, short8  , short , ushort8 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, short16 , short , ushort16, ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, int     , int   , uint    , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, int2    , int   , uint2   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, int3    , int   , uint3   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, int4    , int   , uint4   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, int8    , int   , uint8   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, int16   , int   , uint16  , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, long    , long  , ulong   , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, long2   , long  , ulong2  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, long3   , long  , ulong3  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, long4   , long  , ulong4  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, long8   , long  , ulong8  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, long16  , long  , ulong16 , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uchar   , uchar , uchar   , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uchar2  , uchar , uchar2  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uchar3  , uchar , uchar3  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uchar4  , uchar , uchar4  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uchar8  , uchar , uchar8  , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uchar16 , uchar , uchar16 , uchar )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ushort  , ushort, ushort  , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ushort2 , ushort, ushort2 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ushort3 , ushort, ushort3 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ushort4 , ushort, ushort4 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ushort8 , ushort, ushort8 , ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ushort16, ushort, ushort16, ushort)    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uint    , uint  , uint    , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uint2   , uint  , uint2   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uint3   , uint  , uint3   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uint4   , uint  , uint4   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uint8   , uint  , uint8   , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, uint16  , uint  , uint16  , uint  )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ulong   , ulong , ulong   , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ulong2  , ulong , ulong2  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ulong3  , ulong , ulong3  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )    \
+  IMPLEMENT_EXPR_G_G(NAME, EXPR, ulong16 , ulong , ulong16 , ulong )
+
+#define IMPLEMENT_EXPR_UG_G(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
+  UGTYPE __attribute__ ((overloadable))                                 \
+  NAME(GTYPE a)                                                         \
+  {                                                                     \
+    typedef GTYPE gtype;                                                \
+    typedef SGTYPE sgtype;                                              \
+    typedef UGTYPE ugtype;                                              \
+    typedef SUGTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_UG_G(NAME, EXPR)                                    \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, char    , char  , uchar   , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, char2   , char  , uchar2  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, char3   , char  , uchar3  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, char4   , char  , uchar4  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, char8   , char  , uchar8  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, char16  , char  , uchar16 , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, short   , short , ushort  , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, short2  , short , ushort2 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, short3  , short , ushort3 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, short4  , short , ushort4 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, short8  , short , ushort8 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, short16 , short , ushort16, ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, int     , int   , uint    , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, int2    , int   , uint2   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, int3    , int   , uint3   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, int4    , int   , uint4   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, int8    , int   , uint8   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, int16   , int   , uint16  , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, long    , long  , ulong   , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, long2   , long  , ulong2  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, long3   , long  , ulong3  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, long4   , long  , ulong4  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, long8   , long  , ulong8  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, long16  , long  , ulong16 , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uchar   , uchar , uchar   , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uchar2  , uchar , uchar2  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uchar3  , uchar , uchar3  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uchar4  , uchar , uchar4  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uchar8  , uchar , uchar8  , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uchar16 , uchar , uchar16 , uchar )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ushort  , ushort, ushort  , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ushort2 , ushort, ushort2 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ushort3 , ushort, ushort3 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ushort4 , ushort, ushort4 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ushort8 , ushort, ushort8 , ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ushort16, ushort, ushort16, ushort)   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uint    , uint  , uint    , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uint2   , uint  , uint2   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uint3   , uint  , uint3   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uint4   , uint  , uint4   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uint8   , uint  , uint8   , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, uint16  , uint  , uint16  , uint  )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ulong   , ulong , ulong   , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ulong2  , ulong , ulong2  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ulong3  , ulong , ulong3  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )   \
+  IMPLEMENT_EXPR_UG_G(NAME, EXPR, ulong16 , ulong , ulong16 , ulong )
+
+#define IMPLEMENT_EXPR_G_GG(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
+  GTYPE __attribute__ ((overloadable))                                  \
+  NAME(GTYPE a, GTYPE b)                                                \
+  {                                                                     \
+    typedef GTYPE gtype;                                                \
+    typedef SGTYPE sgtype;                                              \
+    typedef UGTYPE ugtype;                                              \
+    typedef SUGTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_G_GG(NAME, EXPR)                                    \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, char    , char  , uchar   , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, char2   , char  , uchar2  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, char3   , char  , uchar3  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, char4   , char  , uchar4  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, char8   , char  , uchar8  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, char16  , char  , uchar16 , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, short   , short , ushort  , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, short2  , short , ushort2 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, short3  , short , ushort3 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, short4  , short , ushort4 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, short8  , short , ushort8 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, short16 , short , ushort16, ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, int     , int   , uint    , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, int2    , int   , uint2   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, int3    , int   , uint3   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, int4    , int   , uint4   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, int8    , int   , uint8   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, int16   , int   , uint16  , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, long    , long  , ulong   , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, long2   , long  , ulong2  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, long3   , long  , ulong3  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, long4   , long  , ulong4  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, long8   , long  , ulong8  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, long16  , long  , ulong16 , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uchar   , uchar , uchar   , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uchar2  , uchar , uchar2  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uchar3  , uchar , uchar3  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uchar4  , uchar , uchar4  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uchar8  , uchar , uchar8  , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uchar16 , uchar , uchar16 , uchar )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ushort  , ushort, ushort  , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ushort2 , ushort, ushort2 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ushort3 , ushort, ushort3 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ushort4 , ushort, ushort4 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ushort8 , ushort, ushort8 , ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ushort16, ushort, ushort16, ushort)   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uint    , uint  , uint    , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uint2   , uint  , uint2   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uint3   , uint  , uint3   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uint4   , uint  , uint4   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uint8   , uint  , uint8   , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, uint16  , uint  , uint16  , uint  )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong   , ulong , ulong   , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong2  , ulong , ulong2  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong3  , ulong , ulong3  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )   \
+  IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong16 , ulong , ulong16 , ulong )
+
+#define IMPLEMENT_EXPR_UG_GG(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
+  UGTYPE __attribute__ ((overloadable))                                 \
+  NAME(GTYPE a, GTYPE b)                                                \
+  {                                                                     \
+    typedef GTYPE gtype;                                                \
+    typedef SGTYPE sgtype;                                              \
+    typedef UGTYPE ugtype;                                              \
+    typedef SUGTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_UG_GG(NAME, EXPR)                                   \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, char    , char  , uchar   , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, char2   , char  , uchar2  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, char3   , char  , uchar3  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, char4   , char  , uchar4  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, char8   , char  , uchar8  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, char16  , char  , uchar16 , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, short   , short , ushort  , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, short2  , short , ushort2 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, short3  , short , ushort3 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, short4  , short , ushort4 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, short8  , short , ushort8 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, short16 , short , ushort16, ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, int     , int   , uint    , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, int2    , int   , uint2   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, int3    , int   , uint3   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, int4    , int   , uint4   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, int8    , int   , uint8   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, int16   , int   , uint16  , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, long    , long  , ulong   , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, long2   , long  , ulong2  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, long3   , long  , ulong3  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, long4   , long  , ulong4  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, long8   , long  , ulong8  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, long16  , long  , ulong16 , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uchar   , uchar , uchar   , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uchar2  , uchar , uchar2  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uchar3  , uchar , uchar3  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uchar4  , uchar , uchar4  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uchar8  , uchar , uchar8  , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uchar16 , uchar , uchar16 , uchar )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ushort  , ushort, ushort  , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ushort2 , ushort, ushort2 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ushort3 , ushort, ushort3 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ushort4 , ushort, ushort4 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ushort8 , ushort, ushort8 , ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ushort16, ushort, ushort16, ushort)  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uint    , uint  , uint    , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uint2   , uint  , uint2   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uint3   , uint  , uint3   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uint4   , uint  , uint4   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uint8   , uint  , uint8   , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, uint16  , uint  , uint16  , uint  )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong   , ulong , ulong   , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong2  , ulong , ulong2  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong3  , ulong , ulong3  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )  \
+  IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong16 , ulong , ulong16 , ulong )

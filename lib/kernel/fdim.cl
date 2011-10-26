@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_2(fdim, fmax(a-b, (stype)0.0))
+DEFINE_EXPR_V_VV(fdim, fmax(a-b, (stype)0.0))

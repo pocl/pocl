@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_1(acospi, acos(a)/(stype)M_PI)
+DEFINE_EXPR_V_V(acospi, acos(a)/(stype)M_PI)

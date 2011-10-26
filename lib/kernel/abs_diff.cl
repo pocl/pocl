@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: abs_diff()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+DEFINE_EXPR_UG_GG(abs_diff, abs(a-b))

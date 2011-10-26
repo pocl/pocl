@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_1(exp2)
+DEFINE_BUILTIN_V_V(exp2)

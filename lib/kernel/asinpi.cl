@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_1(asinpi, asin(a)/(stype)M_PI)
+DEFINE_EXPR_V_V(asinpi, asin(a)/(stype)M_PI)

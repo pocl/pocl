@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_1(tanpi, tan((stype)M_PI*a))
+DEFINE_EXPR_V_V(tanpi, tan((stype)M_PI*a))

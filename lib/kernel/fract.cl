@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: fract()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+DEFINE_EXPR_V_VPV(fract, fmin(a - floor(a), (vtype)(stype)(sizeof(stype)==4 ? 0x1.fffffep-1f : 0x1.fffffffffffffp-1)))

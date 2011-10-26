@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_1(tgamma)
+DEFINE_BUILTIN_V_V(tgamma)

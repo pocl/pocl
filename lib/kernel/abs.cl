@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: abs()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,13 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+/* Define "missing" builtins */
+#define __builtin_hhabs(a)  (uchar)(a>=0 ? a : -a)
+#define __builtin_habs(a)   (ushort)(a>=0 ? a : -a)
+#define __builtin_labs(a)   (ulong)(a>=0 ? a : -a)
+#define __builtin_uhhabs(a) a
+#define __builtin_uhabs(a)  a
+#define __builtin_uabs(a)   a
+#define __builtin_ulabs(a)  a
+
+DEFINE_BUILTIN_UG_G(abs)

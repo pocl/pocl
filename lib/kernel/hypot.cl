@@ -23,5 +23,5 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_2(hypot)
-// DEFINE_EXPR_2(hypot, sqrt(a*a + b*b))
+DEFINE_BUILTIN_V_VV(hypot)
+// DEFINE_EXPR_V_VV(hypot, sqrt(a*a + b*b))

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: nan()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,24 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+#define FLT_MANT_MASK ((1U << FLT_MANT_DIG) - 1)
+
+#define DBL_MANT_MASK ((1UL << DBL_MANT_DIG) - 1)
+
+/* Fall-back implementation which ignores the nancode */
+// DEFINE_EXPR_V_U(nan, (vtype)(0.0/0.0))
+
+/* LLVM's __builtin_nan expects a char* argument, so we need to roll
+   our own. Note this assume IEEE bit layout. */
+// #define __builtin_nanf(nancode)                                         \
+//   ((~FLT_MANT_MASK & as_uint(NANF)) | (FLT_MANT_MASK & nancode))
+// #define __builtin_nan(nancode)                                          \
+//   ((~DBL_MANT_MASK & as_ulong(NAN)) | (DBL_MANT_MASK & nancode))
+
+// DEFINE_BUILTIN_V_U(nan)
+
+/* This is faster than the above because it is vectorised */
+DEFINE_EXPR_V_U(nan,
+                sizeof(stype)==4 /* float  */ ? (vtype)((utype)(~FLT_MANT_MASK & as_uint (        NAN)) | ((utype)FLT_MANT_MASK & a)) :
+                sizeof(stype)==8 /* double */ ? (vtype)((utype)(~DBL_MANT_MASK & as_ulong((double)NAN)) | ((utype)DBL_MANT_MASK & a)) :
+                (vtype)NAN)

@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_1(asin)
+DEFINE_BUILTIN_V_V(asin)

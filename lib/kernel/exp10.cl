@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_1(exp10, exp((stype)M_LN10*a))
+DEFINE_EXPR_V_V(exp10, exp((stype)M_LN10*a))

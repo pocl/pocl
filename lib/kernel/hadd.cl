@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: hadd()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,23 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+// This could do with some testing
+// This could probably also be optimised (i.e. the ?: operators eliminated)
+DEFINE_EXPR_G_GG(hadd,
+                 (sgtype)-1 < (sgtype)0 ?
+                 /* signed */
+                 ({
+                   (a^b) < (gtype)0 ?
+                     /* different signs: all is fine */
+                     (a+b) >> (sgtype)1 :
+                     /* same sign: test for carry */
+                     a >= (gtype)0 ?
+                     /* positive: add carry */
+                     (a >> (sgtype)1) + (b >> (sgtype)1) + (a & b & (gtype)1) :
+                     /* negative: subtract carry */
+                     (a >> (sgtype)1) + (b >> (sgtype)1) - (a & b & (gtype)1);
+                 }) :
+                 /* unsigned */
+                 ({
+                   (a >> (sgtype)1) + (b >> (sgtype)1) + (a & b & (gtype)1);
+                 }))

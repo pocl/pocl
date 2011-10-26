@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_2(minmag, fmin(fabs(a), fabs(b)))
+DEFINE_EXPR_V_VV(minmag, fmin(fabs(a), fabs(b)))

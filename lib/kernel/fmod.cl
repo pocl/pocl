@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_2(fmod)
+DEFINE_BUILTIN_V_VV(fmod)

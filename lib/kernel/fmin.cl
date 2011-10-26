@@ -21,6 +21,11 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
+DEFINE_EXPR_V_VS(fmin, fmin(a, (vtype)b))
+
+
 
 float __attribute__ ((overloadable))
 fmin(float a, float b)

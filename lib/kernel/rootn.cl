@@ -1,4 +1,4 @@
-/* OpenCL built-in library: atan()
+/* OpenCL built-in library: rootn()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,13 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(atan)
+/* We don't have type conversions yet */
+// DEFINE_EXPR_V_VJ(rootn, pow(a, (stype)1.0 / convert_##vtype(b)))
+// DEFINE_EXPR_V_VI(rootn, pow(a, (vtype)((stype)1.0 / (stype)b)))
+
+// Define pseudo builtins
+#define __builtin_rootnf(a,b) pow(a, 1.0f / (float)b)
+#define __builtin_rootn(a,b) pow(a, 1.0 / (double)b)
+
+DEFINE_BUILTIN_V_VJ(rootn)
+DEFINE_BUILTIN_V_VI(rootn)

@@ -24,4 +24,4 @@
 #include "templates.h"
 
 #undef cospi
-DEFINE_EXPR_1(cospi, cos((stype)M_PI*a))
+DEFINE_EXPR_V_V(cospi, cos((stype)M_PI*a))
