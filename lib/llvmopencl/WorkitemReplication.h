@@ -35,7 +35,6 @@ namespace pocl {
     static char ID;
     WorkitemReplication(): FunctionPass(ID) {}
 
-    virtual bool doInitialization(llvm::Module &M);
     virtual bool runOnFunction(llvm::Function &F);
 
   private:

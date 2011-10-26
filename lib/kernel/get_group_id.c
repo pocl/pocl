@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_local_id()
+/* OpenCL built-in library: get_group_id()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,18 +21,18 @@
    THE SOFTWARE.
 */
 
-uint _local_id_x;
-uint _local_id_y;
-uint _local_id_z;
+extern uint _group_id_x;
+extern uint _group_id_y;
+extern uint _group_id_z;
 
 uint
-get_local_id(uint dimindx)
+get_group_id(uint dimindx)
 {
   switch(dimindx)
     {
-    case 0: return  _local_id_x;
-    case 1: return  _local_id_y;
-    case 2: return  _local_id_z;
+    case 0: return _group_id_x;
+    case 1: return _group_id_y;
+    case 2: return _group_id_z;
     default: return 0;
     }
  }
