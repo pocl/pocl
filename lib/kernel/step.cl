@@ -1,4 +1,4 @@
-/* OpenCL built-in library: clamp()
+/* OpenCL built-in library: step()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,6 +23,7 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_G_GGG(clamp, min(max(a, b), c))
-DEFINE_EXPR_V_VVV(clamp, fmin(fmax(a, b), c))
-DEFINE_EXPR_V_VSS(clamp, fmin(fmax(a, (vtype)b), (vtype)c))
+// This segfaults Clang 3.0, so we work around
+// DEFINE_EXPR_V_VV(step, b < a ? (vtype)0.0 : (vtype)1.0)
+DEFINE_EXPR_V_VV(step, (vtype)0.5 + copysign((vtype)0.5, b - a))
+DEFINE_EXPR_V_SV(step, step((vtype)a, b))

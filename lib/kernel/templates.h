@@ -277,6 +277,46 @@
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double8 , double)    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double)
 
+#define IMPLEMENT_EXPR_V_VVS(NAME, EXPR, VTYPE, STYPE)  \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b, STYPE c)                       \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_VVS(NAME, EXPR)                   \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, float2  , float )    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, float3  , float )    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, float4  , float )    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, float8  , float )    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, float16 , float )    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, double2 , double)    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, double3 , double)    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, double4 , double)    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, double8 , double)    \
+  IMPLEMENT_EXPR_V_VVS(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_VSS(NAME, EXPR, VTYPE, STYPE)  \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, STYPE b, STYPE c)                       \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_VSS(NAME, EXPR)                   \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float2  , float )    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float3  , float )    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float4  , float )    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float8  , float )    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float16 , float )    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double2 , double)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double3 , double)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double4 , double)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double8 , double)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double16, double)
+
 #define IMPLEMENT_EXPR_V_U(NAME, EXPR, VTYPE, STYPE, UTYPE)     \
   VTYPE __attribute__ ((overloadable))                          \
   NAME(UTYPE a)                                                 \

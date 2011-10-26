@@ -532,6 +532,28 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   double4  __attribute__ ((overloadable)) NAME(double4 , double4 , double4 ); \
   double8  __attribute__ ((overloadable)) NAME(double8 , double8 , double8 ); \
   double16 __attribute__ ((overloadable)) NAME(double16, double16, double16);
+#define _CL_DECLARE_FUNC_V_VVS(NAME)                                    \
+  float2   __attribute__ ((overloadable)) NAME(float2  , float2  , float ); \
+  float3   __attribute__ ((overloadable)) NAME(float3  , float3  , float ); \
+  float4   __attribute__ ((overloadable)) NAME(float4  , float4  , float ); \
+  float8   __attribute__ ((overloadable)) NAME(float8  , float8  , float ); \
+  float16  __attribute__ ((overloadable)) NAME(float16 , float16 , float ); \
+  double2  __attribute__ ((overloadable)) NAME(double2 , double2 , double); \
+  double3  __attribute__ ((overloadable)) NAME(double3 , double3 , double); \
+  double4  __attribute__ ((overloadable)) NAME(double4 , double4 , double); \
+  double8  __attribute__ ((overloadable)) NAME(double8 , double8 , double); \
+  double16 __attribute__ ((overloadable)) NAME(double16, double16, double);
+#define _CL_DECLARE_FUNC_V_VSS(NAME)                                    \
+  float2   __attribute__ ((overloadable)) NAME(float2  , float , float ); \
+  float3   __attribute__ ((overloadable)) NAME(float3  , float , float ); \
+  float4   __attribute__ ((overloadable)) NAME(float4  , float , float ); \
+  float8   __attribute__ ((overloadable)) NAME(float8  , float , float ); \
+  float16  __attribute__ ((overloadable)) NAME(float16 , float , float ); \
+  double2  __attribute__ ((overloadable)) NAME(double2 , double, double); \
+  double3  __attribute__ ((overloadable)) NAME(double3 , double, double); \
+  double4  __attribute__ ((overloadable)) NAME(double4 , double, double); \
+  double8  __attribute__ ((overloadable)) NAME(double8 , double, double); \
+  double16 __attribute__ ((overloadable)) NAME(double16, double, double);
 #define _CL_DECLARE_FUNC_V_U(NAME)                              \
   float    __attribute__ ((overloadable)) NAME(uint   );        \
   float2   __attribute__ ((overloadable)) NAME(uint2  );        \
@@ -1134,3 +1156,20 @@ _CL_DECLARE_FUNC_G_GG(sub_sat)
 _CL_DECLARE_FUNC_LG_GUG(upsample)
 _CL_DECLARE_FUNC_J_JJJ(mad24)
 _CL_DECLARE_FUNC_J_JJ(mul24)
+
+
+
+/* Common Functions */
+
+_CL_DECLARE_FUNC_V_VVV(clamp)
+_CL_DECLARE_FUNC_V_VSS(clamp)
+_CL_DECLARE_FUNC_V_V(degrees)
+_CL_DECLARE_FUNC_V_VV(max)
+_CL_DECLARE_FUNC_V_VS(max)
+_CL_DECLARE_FUNC_V_VV(min)
+_CL_DECLARE_FUNC_V_VS(min)
+_CL_DECLARE_FUNC_V_VVV(mix)
+_CL_DECLARE_FUNC_V_VVS(mix)
+_CL_DECLARE_FUNC_V_V(radians)
+_CL_DECLARE_FUNC_V_VV(step)
+_CL_DECLARE_FUNC_V_SV(step)

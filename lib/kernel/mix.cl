@@ -1,4 +1,4 @@
-/* OpenCL built-in library: clamp()
+/* OpenCL built-in library: mix()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,6 +23,5 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_G_GGG(clamp, min(max(a, b), c))
-DEFINE_EXPR_V_VVV(clamp, fmin(fmax(a, b), c))
-DEFINE_EXPR_V_VSS(clamp, fmin(fmax(a, (vtype)b), (vtype)c))
+DEFINE_EXPR_V_VVV(mix, mad(b-a, c, a))
+DEFINE_EXPR_V_VVS(mix, mix(a, b, (vtype)c))

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: clamp()
+/* OpenCL built-in library: radians()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,6 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_G_GGG(clamp, min(max(a, b), c))
-DEFINE_EXPR_V_VVV(clamp, fmin(fmax(a, b), c))
-DEFINE_EXPR_V_VSS(clamp, fmin(fmax(a, (vtype)b), (vtype)c))
+DEFINE_EXPR_V_V(radians, (stype)(M_PI / 180.0) * a)

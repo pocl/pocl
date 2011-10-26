@@ -25,3 +25,7 @@
 
 DEFINE_EXPR_G_GG(max, a>=b ? a : b)
 DEFINE_EXPR_G_GS(max, max(a, (gtype)b))
+
+// Note: max() has no special semantics for inf/nan, even if fmax does
+DEFINE_EXPR_V_VV(max, fmax(a, b))
+DEFINE_EXPR_V_VS(max, max(a, (vtype)b))

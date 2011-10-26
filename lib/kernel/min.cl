@@ -25,3 +25,7 @@
 
 DEFINE_EXPR_G_GG(min, a<b ? a : b)
 DEFINE_EXPR_G_GS(min, min(a, (gtype)b))
+
+// Note: min() has no special semantics for inf/nan, even if fmin does
+DEFINE_EXPR_V_VV(min, fmin(a, b))
+DEFINE_EXPR_V_VS(min, min(a, (vtype)b))

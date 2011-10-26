@@ -44,9 +44,9 @@ DEFINE_EXPR_G_GG(add_sat,
                      a+b :
                      a >= (gtype)0 ?
                      /* a and b positive: can overflow */
-                     (a > max+b ? max : a-b) :
+                     (a > max-b ? max : a+b) :
                      /* a and b negative: can underflow */
-                     (a < min+b ? min : a-b);
+                     (a < min-b ? min : a+b);
                  }) :
                  /* unsigned */
                  ({

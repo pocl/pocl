@@ -114,7 +114,11 @@ libkernel_a_SOURCES = get_global_size.c		\
                       sub_sat.cl		\
                       upsample.cl		\
                       mad24.cl			\
-                      mul24.cl
+                      mul24.cl			\
+                      degrees.cl		\
+                      mix.cl			\
+                      radians.cl		\
+                      step.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 
