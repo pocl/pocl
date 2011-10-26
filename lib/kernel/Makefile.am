@@ -99,6 +99,10 @@ libkernel_a_SOURCES = get_global_size.c		\
                       abs_diff.cl		\
                       add_sat.cl		\
                       hadd.cl			\
+                      rhadd.cl			\
+                      clamp.cl			\
+                      max.cl			\
+                      min.cl			\
                       mad24.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll

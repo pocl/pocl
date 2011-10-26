@@ -23,31 +23,28 @@
 
 #include "templates.h"
 
+// Available SSE2 builtins:
+//    char     __builtin_ia32_paddsb128
+//    short    __builtin_ia32_paddsw128
+//    uchar    __builtin_ia32_paddusb128
+//    ushort   __builtin_ia32_paddusw128
+// Other types don't seem to be supported.
+
 // This could do with some testing
 // This could probably also be optimised (i.e. the ?: operators eliminated)
 DEFINE_EXPR_G_GG(add_sat,
                  (sgtype)-1 < (sgtype)0 ?
                  /* signed */
                  ({
-                   gtype min = (sgtype)(sizeof(sgtype)==1 ? CHAR_MIN :
-                                        sizeof(sgtype)==2 ? SHRT_MIN :
-                                        sizeof(sgtype)==4 ? INT_MIN :
-                                        sizeof(sgtype)==8 ? LONG_MIN :
-                                        0);
-                   gtype max = (sgtype)(sizeof(sgtype)==1 ? CHAR_MAX :
-                                        sizeof(sgtype)==2 ? SHRT_MAX :
-                                        sizeof(sgtype)==4 ? INT_MAX :
-                                        sizeof(sgtype)==8 ? LONG_MAX :
-                                        0);
-                   (a^b) < (gtype)0 ?
-                     /* different signs: all is fine */
-                     a+b :
-                     /* same sign: test for overflow */
-                     a >= (gtype)0 ?
-                     /* positive: compare to max */
-                     (a > max-b ? max : a+b) :
-                     /* negative: compare to min */
-                     (a < min-b ? min : a+b);
+                   int bits = CHAR_BIT * sizeof(sgtype);
+                   gtype min = (sgtype)1 << (sgtype)(bits-1);
+                   gtype sum = a+b;
+                   /* overflow if same sign, and sum has different
+                      sign, i.e. if sum has different sign than both a
+                      and b, i.e. if overflow is negative */
+                   gtype overflow = (a^sum) & (b^sum);
+                   /* Note that max = min+1 */
+                   overflow < (gtype)0 ? min + (gtype)(a>=(gtype)0) : sum;
                  }) :
                  /* unsigned */
                  ({

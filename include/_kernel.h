@@ -724,6 +724,96 @@ _CL_DECLARE_FUNC_V_V(trunc)
   ulong4   __attribute__ ((overloadable)) NAME(ulong4  , ulong4  );     \
   ulong8   __attribute__ ((overloadable)) NAME(ulong8  , ulong8  );     \
   ulong16  __attribute__ ((overloadable)) NAME(ulong16 , ulong16 );
+#define _CL_DECLARE_FUNC_G_GGG(NAME)                                    \
+  char     __attribute__ ((overloadable)) NAME(char    , char    , char    ); \
+  char2    __attribute__ ((overloadable)) NAME(char2   , char2   , char2   ); \
+  char3    __attribute__ ((overloadable)) NAME(char3   , char3   , char3   ); \
+  char4    __attribute__ ((overloadable)) NAME(char4   , char4   , char4   ); \
+  char8    __attribute__ ((overloadable)) NAME(char8   , char8   , char8   ); \
+  char16   __attribute__ ((overloadable)) NAME(char16  , char16  , char16  ); \
+  short    __attribute__ ((overloadable)) NAME(short   , short   , short   ); \
+  short2   __attribute__ ((overloadable)) NAME(short2  , short2  , short2  ); \
+  short3   __attribute__ ((overloadable)) NAME(short3  , short3  , short3  ); \
+  short4   __attribute__ ((overloadable)) NAME(short4  , short4  , short4  ); \
+  short8   __attribute__ ((overloadable)) NAME(short8  , short8  , short8  ); \
+  short16  __attribute__ ((overloadable)) NAME(short16 , short16 , short16 ); \
+  int      __attribute__ ((overloadable)) NAME(int     , int     , int     ); \
+  int2     __attribute__ ((overloadable)) NAME(int2    , int2    , int2    ); \
+  int3     __attribute__ ((overloadable)) NAME(int3    , int3    , int3    ); \
+  int4     __attribute__ ((overloadable)) NAME(int4    , int4    , int4    ); \
+  int8     __attribute__ ((overloadable)) NAME(int8    , int8    , int8    ); \
+  int16    __attribute__ ((overloadable)) NAME(int16   , int16   , int16   ); \
+  long     __attribute__ ((overloadable)) NAME(long    , long    , long    ); \
+  long2    __attribute__ ((overloadable)) NAME(long2   , long2   , long2   ); \
+  long3    __attribute__ ((overloadable)) NAME(long3   , long3   , long3   ); \
+  long4    __attribute__ ((overloadable)) NAME(long4   , long4   , long4   ); \
+  long8    __attribute__ ((overloadable)) NAME(long8   , long8   , long8   ); \
+  long16   __attribute__ ((overloadable)) NAME(long16  , long16  , long16  ); \
+  uchar    __attribute__ ((overloadable)) NAME(uchar   , uchar   , uchar   ); \
+  uchar2   __attribute__ ((overloadable)) NAME(uchar2  , uchar2  , uchar2  ); \
+  uchar3   __attribute__ ((overloadable)) NAME(uchar3  , uchar3  , uchar3  ); \
+  uchar4   __attribute__ ((overloadable)) NAME(uchar4  , uchar4  , uchar4  ); \
+  uchar8   __attribute__ ((overloadable)) NAME(uchar8  , uchar8  , uchar8  ); \
+  uchar16  __attribute__ ((overloadable)) NAME(uchar16 , uchar16 , uchar16 ); \
+  ushort   __attribute__ ((overloadable)) NAME(ushort  , ushort  , ushort  ); \
+  ushort2  __attribute__ ((overloadable)) NAME(ushort2 , ushort2 , ushort2 ); \
+  ushort3  __attribute__ ((overloadable)) NAME(ushort3 , ushort3 , ushort3 ); \
+  ushort4  __attribute__ ((overloadable)) NAME(ushort4 , ushort4 , ushort4 ); \
+  ushort8  __attribute__ ((overloadable)) NAME(ushort8 , ushort8 , ushort8 ); \
+  ushort16 __attribute__ ((overloadable)) NAME(ushort16, ushort16, ushort16); \
+  uint     __attribute__ ((overloadable)) NAME(uint    , uint    , uint    ); \
+  uint2    __attribute__ ((overloadable)) NAME(uint2   , uint2   , uint2   ); \
+  uint3    __attribute__ ((overloadable)) NAME(uint3   , uint3   , uint3   ); \
+  uint4    __attribute__ ((overloadable)) NAME(uint4   , uint4   , uint4   ); \
+  uint8    __attribute__ ((overloadable)) NAME(uint8   , uint8   , uint8   ); \
+  uint16   __attribute__ ((overloadable)) NAME(uint16  , uint16  , uint16  ); \
+  ulong    __attribute__ ((overloadable)) NAME(ulong   , ulong   , ulong   ); \
+  ulong2   __attribute__ ((overloadable)) NAME(ulong2  , ulong2  , ulong2  ); \
+  ulong3   __attribute__ ((overloadable)) NAME(ulong3  , ulong3  , ulong3  ); \
+  ulong4   __attribute__ ((overloadable)) NAME(ulong4  , ulong4  , ulong4  ); \
+  ulong8   __attribute__ ((overloadable)) NAME(ulong8  , ulong8  , ulong8  ); \
+  ulong16  __attribute__ ((overloadable)) NAME(ulong16 , ulong16 , ulong16 );
+#define _CL_DECLARE_FUNC_G_GS(NAME)                                     \
+  char2    __attribute__ ((overloadable)) NAME(char2   , char  );       \
+  char3    __attribute__ ((overloadable)) NAME(char3   , char  );       \
+  char4    __attribute__ ((overloadable)) NAME(char4   , char  );       \
+  char8    __attribute__ ((overloadable)) NAME(char8   , char  );       \
+  char16   __attribute__ ((overloadable)) NAME(char16  , char  );       \
+  short2   __attribute__ ((overloadable)) NAME(short2  , short );       \
+  short3   __attribute__ ((overloadable)) NAME(short3  , short );       \
+  short4   __attribute__ ((overloadable)) NAME(short4  , short );       \
+  short8   __attribute__ ((overloadable)) NAME(short8  , short );       \
+  short16  __attribute__ ((overloadable)) NAME(short16 , short );       \
+  int2     __attribute__ ((overloadable)) NAME(int2    , int   );       \
+  int3     __attribute__ ((overloadable)) NAME(int3    , int   );       \
+  int4     __attribute__ ((overloadable)) NAME(int4    , int   );       \
+  int8     __attribute__ ((overloadable)) NAME(int8    , int   );       \
+  int16    __attribute__ ((overloadable)) NAME(int16   , int   );       \
+  long2    __attribute__ ((overloadable)) NAME(long2   , long  );       \
+  long3    __attribute__ ((overloadable)) NAME(long3   , long  );       \
+  long4    __attribute__ ((overloadable)) NAME(long4   , long  );       \
+  long8    __attribute__ ((overloadable)) NAME(long8   , long  );       \
+  long16   __attribute__ ((overloadable)) NAME(long16  , long  );       \
+  uchar2   __attribute__ ((overloadable)) NAME(uchar2  , uchar );       \
+  uchar3   __attribute__ ((overloadable)) NAME(uchar3  , uchar );       \
+  uchar4   __attribute__ ((overloadable)) NAME(uchar4  , uchar );       \
+  uchar8   __attribute__ ((overloadable)) NAME(uchar8  , uchar );       \
+  uchar16  __attribute__ ((overloadable)) NAME(uchar16 , uchar );       \
+  ushort2  __attribute__ ((overloadable)) NAME(ushort2 , ushort);       \
+  ushort3  __attribute__ ((overloadable)) NAME(ushort3 , ushort);       \
+  ushort4  __attribute__ ((overloadable)) NAME(ushort4 , ushort);       \
+  ushort8  __attribute__ ((overloadable)) NAME(ushort8 , ushort);       \
+  ushort16 __attribute__ ((overloadable)) NAME(ushort16, ushort);       \
+  uint2    __attribute__ ((overloadable)) NAME(uint2   , uint  );       \
+  uint3    __attribute__ ((overloadable)) NAME(uint3   , uint  );       \
+  uint4    __attribute__ ((overloadable)) NAME(uint4   , uint  );       \
+  uint8    __attribute__ ((overloadable)) NAME(uint8   , uint  );       \
+  uint16   __attribute__ ((overloadable)) NAME(uint16  , uint  );       \
+  ulong2   __attribute__ ((overloadable)) NAME(ulong2  , ulong );       \
+  ulong3   __attribute__ ((overloadable)) NAME(ulong3  , ulong );       \
+  ulong4   __attribute__ ((overloadable)) NAME(ulong4  , ulong );       \
+  ulong8   __attribute__ ((overloadable)) NAME(ulong8  , ulong );       \
+  ulong16  __attribute__ ((overloadable)) NAME(ulong16 , ulong );
 #define _CL_DECLARE_FUNC_U_G(NAME)                              \
   uchar    __attribute__ ((overloadable)) NAME(char    );       \
   uchar2   __attribute__ ((overloadable)) NAME(char2   );       \
@@ -827,3 +917,12 @@ _CL_DECLARE_FUNC_U_G(abs)
 _CL_DECLARE_FUNC_U_GG(abs_diff)
 _CL_DECLARE_FUNC_G_GG(add_sat)
 _CL_DECLARE_FUNC_G_GG(hadd)
+_CL_DECLARE_FUNC_G_GG(rhadd)
+_CL_DECLARE_FUNC_G_GGG(clamp)
+// clz
+// mad_hi
+// mad_sat
+_CL_DECLARE_FUNC_G_GG(max)
+_CL_DECLARE_FUNC_G_GS(max)
+_CL_DECLARE_FUNC_G_GG(min)
+_CL_DECLARE_FUNC_G_GS(min)

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: hadd()
+/* OpenCL built-in library: rhadd()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -25,5 +25,5 @@
 
 // This could do with some testing
 // This could probably also be optimised (i.e. the ?: operators eliminated)
-DEFINE_EXPR_G_GG(hadd,
-                 (a >> (sgtype)1) + (b >> (sgtype)1) + (a & b & (gtype)1))
+DEFINE_EXPR_G_GG(rhadd,
+                 (a >> (sgtype)1) + (b >> (sgtype)1) + ((a | b) & (gtype)1))
