@@ -37,7 +37,10 @@
 #include "llvm/Transforms/Utils/BasicInliner.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include <cstdio>
 #include <map>
+
+#define STRING_LENGTH 32
 
 using namespace std;
 using namespace llvm;
@@ -139,7 +142,6 @@ Workgroup::runOnModule(Module &M)
 	}
       }
     }
-    WR.doInitialization(M);
     WR.runOnFunction(*K);
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
@@ -168,15 +170,15 @@ noaliasArguments(Function *F)
 static Function *
 createLauncher(Module &M, Function *F)
 {
-  SmallVector<Type *, 8> v;
+  SmallVector<Type *, 8> sv;
 
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
-    v.push_back (i->getType());
-  v.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
+    sv.push_back (i->getType());
+  sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
 
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
-				       ArrayRef<Type *> (v),
+				       ArrayRef<Type *> (sv),
 				       false);
   Function *L = Function::Create(ft,
 				 Function::ExternalLinkage,
@@ -190,47 +192,30 @@ createLauncher(Module &M, Function *F)
     ++ai;
   }
 
-  GlobalVariable *x;
-  GlobalVariable *y;
-  GlobalVariable *z;
-  Value *ptr;
+  Value *ptr, *v;
+  char s[STRING_LENGTH];
+  GlobalVariable *gv;
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
-  x = M.getGlobalVariable("_group_id_x");
-  if (x != NULL) {
-    Value *v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 0));
-    builder.CreateStore(v, x);
-  }
-  y = M.getGlobalVariable("_group_id_y");
-  if (y != NULL) {
-    Value *v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 1));
-    builder.CreateStore(v, y);
-  }
-  z = M.getGlobalVariable("_group_id_z");
-  if (z != NULL) {
-    Value *v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 2));
-    builder.CreateStore(v, z);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
+    gv = M.getGlobalVariable(s);
+    if (gv != NULL) {
+      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      builder.CreateStore(v, gv);
+    }
   }
 
-  ptr = builder.CreateStructGEP(ai,
-				TypeBuilder<PoclContext, true>::NUM_GROUPS);
-  x = M.getGlobalVariable("_num_groups_x");
-  if (x != NULL) {
-    Value *v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 0));
-    builder.CreateStore(v, x);
-  }
-  y = M.getGlobalVariable("_num_groups_y");
-  if (y != NULL) {
-    Value *v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 1));
-    builder.CreateStore(v, y);
-  }
-  z = M.getGlobalVariable("_num_groups_z");
-  if (z != NULL) {
-    Value *v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 2));
-    builder.CreateStore(v, z);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    gv = M.getGlobalVariable(s);
+    if (gv != NULL) {
+      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      builder.CreateStore(v, gv);
+    }
   }
 
   CallInst *c = builder.CreateCall(F, ArrayRef<Value*>(arguments));
@@ -245,155 +230,93 @@ createLauncher(Module &M, Function *F)
 static void
 privatizeContext(Module &M, Function *F)
 {
+  char s[STRING_LENGTH];
+  GlobalVariable *gv[3];
+  AllocaInst *ai[3];
+
   IRBuilder<> builder(F->getEntryBlock().getFirstNonPHI());
-  
-  // Privatize _local_id
-  GlobalVariable *LocalIDX = M.getGlobalVariable("_local_id_x");
-  AllocaInst *PrivateLocalIDX;
-  if (LocalIDX != NULL) {
-    PrivateLocalIDX = builder.CreateAlloca(LocalIDX->getType()->getElementType(),
-					   0, "local_id_x");
-    if (LocalIDX->hasInitializer()) {
-      Constant *initializer = LocalIDX->getInitializer();
-      builder.CreateStore(initializer, PrivateLocalIDX);
+
+  // Privatize _local_id  
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_local_id_%c", 'x' + i);
+    gv[i] = M.getGlobalVariable(s);
+    if (gv[i] != NULL) {
+      ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
+				   0, s);
+      if(gv[i]->hasInitializer()) {
+	Constant *c = gv[i]->getInitializer();
+	builder.CreateStore(c, ai[i]);
+      }
     }
   }
-  GlobalVariable *LocalIDY = M.getGlobalVariable("_local_id_y");
-  AllocaInst *PrivateLocalIDY;
-  if (LocalIDY != NULL) {
-    PrivateLocalIDY = builder.CreateAlloca(LocalIDY->getType()->getElementType(),
-					   0, "local_id_y");
-    if (LocalIDY->hasInitializer()) {
-      Constant *initializer = LocalIDY->getInitializer();
-      builder.CreateStore(initializer, PrivateLocalIDY);
-    }
-  }
-  GlobalVariable *LocalIDZ = M.getGlobalVariable("_local_id_z");
-  AllocaInst *PrivateLocalIDZ;
-  if (LocalIDZ != NULL) {
-    PrivateLocalIDZ= builder.CreateAlloca(LocalIDZ->getType()->getElementType(),
-					  0, "local_id_z");
-    if (LocalIDZ->hasInitializer()) {
-      Constant *initializer = LocalIDZ->getInitializer();
-      builder.CreateStore(initializer, PrivateLocalIDZ);
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      for (int j = 0; j < 3; ++j)
+	ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
   
   // Privatize _local_size
-  GlobalVariable *LocalSizeX = M.getGlobalVariable("_local_size_x");
-  AllocaInst *PrivateLocalSizeX;
-  if (LocalSizeX != NULL) {
-    PrivateLocalSizeX = builder.CreateAlloca(LocalSizeX->getType()->getElementType(),
-					     0, "local_size_x");
-    if (LocalSizeX->hasInitializer()) {
-      Constant *initializer = LocalSizeX->getInitializer();
-      builder.CreateStore(initializer, PrivateLocalSizeX);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
+    gv[i] = M.getGlobalVariable(s);
+    if (gv[i] != NULL) {
+      ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
+				   0, s);
+      if(gv[i]->hasInitializer()) {
+	Constant *c = gv[i]->getInitializer();
+	builder.CreateStore(c, ai[i]);
+      }
     }
   }
-  GlobalVariable *LocalSizeY = M.getGlobalVariable("_local_size_y");
-  AllocaInst *PrivateLocalSizeY;
-  if (LocalSizeY != NULL) {
-    PrivateLocalSizeY = builder.CreateAlloca(LocalSizeY->getType()->getElementType(),
-					     0, "local_size_y");
-    if (LocalSizeY->hasInitializer()) {
-      Constant *initializer = LocalSizeY->getInitializer();
-      builder.CreateStore(initializer, PrivateLocalSizeY);
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      for (int j = 0; j < 3; ++j)
+	ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
-  GlobalVariable *LocalSizeZ = M.getGlobalVariable("_local_size_z");
-  AllocaInst *PrivateLocalSizeZ;
-  if (LocalSizeZ != NULL) {
-    PrivateLocalSizeZ= builder.CreateAlloca(LocalSizeZ->getType()->getElementType(),
-					    0, "local_size_z");
-    if (LocalSizeZ->hasInitializer()) {
-      Constant *initializer = LocalSizeZ->getInitializer();
-      builder.CreateStore(initializer, PrivateLocalSizeZ);
-    }
-  }
-  
+
   // Privatize _group_id
-  GlobalVariable *GroupIDX = M.getGlobalVariable("_group_id_x");
-  AllocaInst *PrivateGroupIDX;
-  if (GroupIDX != NULL) {
-    PrivateGroupIDX = builder.CreateAlloca(GroupIDX->getType()->getElementType(),
-					   0, "group_id_x");
-    if (GroupIDX->hasInitializer()) {
-      Constant *initializer = GroupIDX->getInitializer();
-      builder.CreateStore(initializer, PrivateGroupIDX);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
+    gv[i] = M.getGlobalVariable(s);
+    if (gv[i] != NULL) {
+      ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
+				   0, s);
+      if(gv[i]->hasInitializer()) {
+	Constant *c = gv[i]->getInitializer();
+	builder.CreateStore(c, ai[i]);
+      }
     }
   }
-  GlobalVariable *GroupIDY = M.getGlobalVariable("_group_id_y");
-  AllocaInst *PrivateGroupIDY;
-  if (GroupIDY != NULL) {
-    PrivateGroupIDY = builder.CreateAlloca(GroupIDY->getType()->getElementType(),
-					   0, "group_id_y");
-    if (GroupIDY->hasInitializer()) {
-      Constant *initializer = GroupIDY->getInitializer();
-      builder.CreateStore(initializer, PrivateGroupIDY);
-    }
-  }
-  GlobalVariable *GroupIDZ = M.getGlobalVariable("_group_id_z");
-  AllocaInst *PrivateGroupIDZ;
-  if (GroupIDZ != NULL) {
-    PrivateGroupIDZ= builder.CreateAlloca(GroupIDZ->getType()->getElementType(),
-					  0, "group_id_z");
-    if (GroupIDZ->hasInitializer()) {
-      Constant *initializer = GroupIDZ->getInitializer();
-      builder.CreateStore(initializer, PrivateGroupIDZ);
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      for (int j = 0; j < 3; ++j)
+	ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
   
   // Privatize _num_groups
-  GlobalVariable *NumGroupsX = M.getGlobalVariable("_num_groups_x");
-  AllocaInst *PrivateNumGroupsX;
-  if (NumGroupsX != NULL) {
-    PrivateNumGroupsX = builder.CreateAlloca(NumGroupsX->getType()->getElementType(),
-					     0, "num_groups_x");
-    if (NumGroupsX->hasInitializer()) {
-      Constant *initializer = NumGroupsX->getInitializer();
-      builder.CreateStore(initializer, PrivateNumGroupsX);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    gv[i] = M.getGlobalVariable(s);
+    if (gv[i] != NULL) {
+      ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
+				   0, s);
+      if(gv[i]->hasInitializer()) {
+	Constant *c = gv[i]->getInitializer();
+	builder.CreateStore(c, ai[i]);
+      }
     }
   }
-  GlobalVariable *NumGroupsY = M.getGlobalVariable("_num_groups_y");
-  AllocaInst *PrivateNumGroupsY;
-  if (NumGroupsY != NULL) {
-    PrivateNumGroupsY = builder.CreateAlloca(NumGroupsY->getType()->getElementType(),
-					     0, "num_groups_y");
-    if (NumGroupsY->hasInitializer()) {
-      Constant *initializer = NumGroupsY->getInitializer();
-      builder.CreateStore(initializer, PrivateNumGroupsY);
-    }
-  }
-  GlobalVariable *NumGroupsZ = M.getGlobalVariable("_num_groups_z");
-  AllocaInst *PrivateNumGroupsZ;
-  if (NumGroupsZ != NULL) {
-    PrivateNumGroupsZ= builder.CreateAlloca(NumGroupsZ->getType()->getElementType(),
-					    0, "num_groups_z");
-    if (NumGroupsZ->hasInitializer()) {
-      Constant *initializer = NumGroupsZ->getInitializer();
-      builder.CreateStore(initializer, PrivateNumGroupsZ);
-    }
-  }
-
-  // Replace uses with private variables.
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     for (BasicBlock::iterator ii = i->begin(), ee = i->end();
 	 ii != ee; ++ii) {
-      ii->replaceUsesOfWith(LocalIDX, PrivateLocalIDX);
-      ii->replaceUsesOfWith(LocalIDY, PrivateLocalIDY);
-      ii->replaceUsesOfWith(LocalIDZ, PrivateLocalIDZ);
-
-      ii->replaceUsesOfWith(LocalSizeX, PrivateLocalSizeX);
-      ii->replaceUsesOfWith(LocalSizeY, PrivateLocalSizeY);
-      ii->replaceUsesOfWith(LocalSizeZ, PrivateLocalSizeZ);
-
-      ii->replaceUsesOfWith(GroupIDX, PrivateGroupIDX);
-      ii->replaceUsesOfWith(GroupIDY, PrivateGroupIDY);
-      ii->replaceUsesOfWith(GroupIDZ, PrivateGroupIDZ);
-
-      ii->replaceUsesOfWith(NumGroupsX, PrivateNumGroupsX);
-      ii->replaceUsesOfWith(NumGroupsY, PrivateNumGroupsY);
-      ii->replaceUsesOfWith(NumGroupsZ, PrivateNumGroupsZ);
+      for (int j = 0; j < 3; ++j)
+	ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
 }

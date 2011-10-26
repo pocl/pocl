@@ -49,33 +49,14 @@ char WorkitemReplication::ID = 0;
 static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
 
 bool
-WorkitemReplication::doInitialization(Module &M)
-{
-  GlobalVariable *x = M.getGlobalVariable("_local_size_x");
-  if (x != NULL)
-    x->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[0]));
-  
-  GlobalVariable *y = M.getGlobalVariable("_local_size_y");
-  if (y != NULL)
-    y->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[1]));
-  
-  GlobalVariable *z = M.getGlobalVariable("_local_size_z");
-  if (z != NULL)
-    z->setInitializer(ConstantInt::get(IntegerType::get(M.getContext(), 32),
-				       LocalSize[2]));
-
-  LocalX = M.getGlobalVariable("_local_id_x");
-  LocalY = M.getGlobalVariable("_local_id_y");
-  LocalZ = M.getGlobalVariable("_local_id_z");
-
-  return false;
-}
-
-bool
 WorkitemReplication::runOnFunction(Function &F)
 {
+  Module *M = F.getParent();
+
+  LocalX = M->getGlobalVariable("_local_id_x");
+  LocalY = M->getGlobalVariable("_local_id_y");
+  LocalZ = M->getGlobalVariable("_local_id_z");
+
   // Allocate space for workitem reference maps. Workitem 0 does
   // not need it.
   int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
@@ -96,6 +77,28 @@ WorkitemReplication::runOnFunction(Function &F)
     replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
 
   delete []ReferenceMap;
+
+  // Initialize local size (done at the end to avoid unnecessary
+  // replication).
+  IRBuilder<> builder(F.getEntryBlock().getFirstNonPHI());
+
+  GlobalVariable *gv;
+
+  gv = M->getGlobalVariable("_local_size_x");
+  if (gv != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
+					 LocalSize[0]),
+			gv);
+  gv = M->getGlobalVariable("_local_size_y");
+  if (gv != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
+					 LocalSize[1]),
+			gv);
+  gv = M->getGlobalVariable("_local_size_z");
+  if (gv != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
+					 LocalSize[2]),
+			gv);
 
   return true;
 }

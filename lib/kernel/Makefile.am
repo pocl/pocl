@@ -24,13 +24,15 @@
 
 LEX=
 
+SUBDIRS = dummy
+
 pkglib_LIBRARIES = libkernel.a
 
 libkernel_a_SOURCES = get_global_size.c		\
                       get_global_id.c		\
-                      get_local_id.cl		\
-                      get_num_groups.cl		\
-                      get_group_id.cl		\
+                      get_local_id.c		\
+                      get_num_groups.c		\
+                      get_group_id.c		\
                       as_type.cl		\
                       convert_type.cl		\
                       acos.cl			\
