@@ -1,4 +1,4 @@
-/* OpenCL built-in library: clamp()
+/* OpenCL built-in library: mul24()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_G_GGG(clamp, min(max(a, b), c))
+DEFINE_EXPR_J_JJ(mul24, a*b)

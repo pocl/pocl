@@ -864,3 +864,98 @@
   IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )  \
   IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )  \
   IMPLEMENT_EXPR_UG_GG(NAME, EXPR, ulong16 , ulong , ulong16 , ulong )
+
+#define IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, LGTYPE) \
+  LGTYPE __attribute__ ((overloadable))                                 \
+  NAME(GTYPE a, UGTYPE b)                                               \
+  {                                                                     \
+    typedef GTYPE gtype;                                                \
+    typedef SGTYPE sgtype;                                              \
+    typedef UGTYPE ugtype;                                              \
+    typedef LGTYPE lgtype;                                              \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_LG_GUG(NAME, EXPR)                                  \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, char    , char  , uchar   , short   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, char2   , char  , uchar2  , short2  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, char3   , char  , uchar3  , short3  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, char4   , char  , uchar4  , short4  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, char8   , char  , uchar8  , short8  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, char16  , char  , uchar16 , short16 ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, short   , short , ushort  , int     ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, short2  , short , ushort2 , int2    ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, short3  , short , ushort3 , int3    ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, short4  , short , ushort4 , int4    ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, short8  , short , ushort8 , int8    ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, short16 , short , ushort16, int16   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, int     , int   , uint    , long    ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, int2    , int   , uint2   , long2   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, int3    , int   , uint3   , long3   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, int4    , int   , uint4   , long4   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, int8    , int   , uint8   , long8   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, int16   , int   , uint16  , long16  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uchar   , uchar , uchar   , ushort  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uchar2  , uchar , uchar2  , ushort2 ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uchar3  , uchar , uchar3  , ushort3 ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uchar4  , uchar , uchar4  , ushort4 ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uchar8  , uchar , uchar8  , ushort8 ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uchar16 , uchar , uchar16 , ushort16) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, ushort  , ushort, ushort  , uint    ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, ushort2 , ushort, ushort2 , uint2   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, ushort3 , ushort, ushort3 , uint3   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, ushort4 , ushort, ushort4 , uint4   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, ushort8 , ushort, ushort8 , uint8   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, ushort16, ushort, ushort16, uint16  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uint    , uint  , uint    , ulong   ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uint2   , uint  , uint2   , ulong2  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uint3   , uint  , uint3   , ulong3  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uint4   , uint  , uint4   , ulong4  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uint8   , uint  , uint8   , ulong8  ) \
+  IMPLEMENT_EXPR_LG_GUG(NAME, EXPR, uint16  , uint  , uint16  , ulong16 )
+
+#define IMPLEMENT_EXPR_J_JJ(NAME, EXPR, JTYPE, SJTYPE, UJTYPE, SUJTYPE) \
+  JTYPE __attribute__ ((overloadable))                                  \
+  NAME(JTYPE a, JTYPE b)                                                \
+  {                                                                     \
+    typedef JTYPE gtype;                                                \
+    typedef SJTYPE sgtype;                                              \
+    typedef UJTYPE ugtype;                                              \
+    typedef SUJTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_J_JJ(NAME, EXPR)                                    \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, int     , int   , uint    , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, int2    , int   , uint2   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, int3    , int   , uint3   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, int4    , int   , uint4   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, int8    , int   , uint8   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, int16   , int   , uint16  , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, uint    , uint  , uint    , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, uint2   , uint  , uint2   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, uint3   , uint  , uint3   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, uint4   , uint  , uint4   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, uint8   , uint  , uint8   , uint  )   \
+  IMPLEMENT_EXPR_J_JJ(NAME, EXPR, uint16  , uint  , uint16  , uint  )
+#define IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, JTYPE, SJTYPE, UJTYPE, SUJTYPE) \
+  JTYPE __attribute__ ((overloadable))                                  \
+  NAME(JTYPE a, JTYPE b, JTYPE c)                                       \
+  {                                                                     \
+    typedef JTYPE gtype;                                                \
+    typedef SJTYPE sgtype;                                              \
+    typedef UJTYPE ugtype;                                              \
+    typedef SUJTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_J_JJJ(NAME, EXPR)                                   \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, int     , int   , uint    , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, int2    , int   , uint2   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, int3    , int   , uint3   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, int4    , int   , uint4   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, int8    , int   , uint8   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, int16   , int   , uint16  , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint    , uint  , uint    , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint2   , uint  , uint2   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint3   , uint  , uint3   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint4   , uint  , uint4   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint8   , uint  , uint8   , uint  )  \
+  IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint16  , uint  , uint16  , uint  )

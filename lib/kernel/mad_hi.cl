@@ -1,4 +1,4 @@
-/* OpenCL built-in library: clamp()
+/* OpenCL built-in library: mad_hi()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,4 +23,8 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_G_GGG(clamp, min(max(a, b), c))
+// TODO:
+// The standard says this is mul_hi(a, b) + c.
+// Shouldn't this be the high part of a*b+c instead?
+
+DEFINE_EXPR_G_GGG(mad_hi, mul_hi(a, b) + c)

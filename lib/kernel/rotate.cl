@@ -1,4 +1,4 @@
-/* OpenCL built-in library: add_sat()
+/* OpenCL built-in library: rotate()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,33 +23,9 @@
 
 #include "templates.h"
 
-// Available SSE2 builtins:
-//    char     __builtin_ia32_paddsb128
-//    short    __builtin_ia32_paddsw128
-//    uchar    __builtin_ia32_paddusb128
-//    ushort   __builtin_ia32_paddusw128
-// Other types don't seem to be supported.
-
-// This could do with some testing
-// This could probably also be optimised (i.e. the ?: operators eliminated)
-DEFINE_EXPR_G_GG(add_sat,
-                 (sgtype)-1 < (sgtype)0 ?
-                 /* signed */
+DEFINE_EXPR_G_GG(rotate,
                  ({
                    int bits = CHAR_BIT * sizeof(sgtype);
-                   gtype min = (sgtype)1 << (sgtype)(bits-1);
-                   gtype max = min + (sgtype)1;
-                   (a^b) < (gtype)0 ?
-                     /* different signs: no overflow/underflow */
-                     a+b :
-                     a >= (gtype)0 ?
-                     /* a and b positive: can overflow */
-                     (a > max+b ? max : a-b) :
-                     /* a and b negative: can underflow */
-                     (a < min+b ? min : a-b);
-                 }) :
-                 /* unsigned */
-                 ({
-                   gtype max = (sgtype)-1;
-                   a > max-b ? max : a+b;
+                   gtype mask = ((gtype)1 << (gtype)bits) - (gtype)1;
+                   (a << b) | (mask & (a >> - b));
                  }))

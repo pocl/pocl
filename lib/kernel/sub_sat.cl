@@ -1,4 +1,4 @@
-/* OpenCL built-in library: add_sat()
+/* OpenCL built-in library: sub_sat()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -24,32 +24,32 @@
 #include "templates.h"
 
 // Available SSE2 builtins:
-//    char     __builtin_ia32_paddsb128
-//    short    __builtin_ia32_paddsw128
-//    uchar    __builtin_ia32_paddusb128
-//    ushort   __builtin_ia32_paddusw128
+//    char     __builtin_ia32_psubsb128
+//    short    __builtin_ia32_psubsw128
+//    uchar    __builtin_ia32_psubusb128
+//    ushort   __builtin_ia32_psubusw128
 // Other types don't seem to be supported.
 
 // This could do with some testing
 // This could probably also be optimised (i.e. the ?: operators eliminated)
-DEFINE_EXPR_G_GG(add_sat,
+DEFINE_EXPR_G_GG(sub_sat,
                  (sgtype)-1 < (sgtype)0 ?
                  /* signed */
                  ({
                    int bits = CHAR_BIT * sizeof(sgtype);
                    gtype min = (sgtype)1 << (sgtype)(bits-1);
                    gtype max = min + (sgtype)1;
-                   (a^b) < (gtype)0 ?
-                     /* different signs: no overflow/underflow */
-                     a+b :
+                   (a^b) >= (gtype)0 ?
+                     /* same sign: no overflow/underflow */
+                     a-b :
                      a >= (gtype)0 ?
-                     /* a and b positive: can overflow */
+                     /* a positive, b negative: can overflow */
                      (a > max+b ? max : a-b) :
-                     /* a and b negative: can underflow */
+                     /* a negative, b positive: can underflow */
                      (a < min+b ? min : a-b);
                  }) :
                  /* unsigned */
                  ({
-                   gtype max = (sgtype)-1;
-                   a > max-b ? max : a+b;
+                   gtype min = (sgtype)0;
+                   a < min+b ? min : a-b;
                  }))

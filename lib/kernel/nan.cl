@@ -23,9 +23,8 @@
 
 #include "templates.h"
 
-#define FLT_MANT_MASK ((1U << FLT_MANT_DIG) - 1)
-
-#define DBL_MANT_MASK ((1UL << DBL_MANT_DIG) - 1)
+#define FLT_MANT_MASK ((1U  << (uint) FLT_MANT_DIG) - 1U )
+#define DBL_MANT_MASK ((1UL << (ulong)DBL_MANT_DIG) - 1UL)
 
 /* Fall-back implementation which ignores the nancode */
 // DEFINE_EXPR_V_U(nan, (vtype)(0.0/0.0))
@@ -41,6 +40,10 @@
 
 /* This is faster than the above because it is vectorised */
 DEFINE_EXPR_V_U(nan,
-                sizeof(stype)==4 /* float  */ ? (vtype)((utype)(~FLT_MANT_MASK & as_uint (        NAN)) | ((utype)FLT_MANT_MASK & a)) :
-                sizeof(stype)==8 /* double */ ? (vtype)((utype)(~DBL_MANT_MASK & as_ulong((double)NAN)) | ((utype)DBL_MANT_MASK & a)) :
-                (vtype)NAN)
+                ({
+                  utype nanbits =
+                    sizeof(stype)==4 /* float  */ ? ((utype)(~FLT_MANT_MASK & as_uint ((float) NAN)) | ((utype)FLT_MANT_MASK & a)) :
+                    sizeof(stype)==8 /* double */ ? ((utype)(~DBL_MANT_MASK & as_ulong((double)NAN)) | ((utype)DBL_MANT_MASK & a)) :
+                    (utype)0;
+                  *(vtype*)&nanbits;
+                }))

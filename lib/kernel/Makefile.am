@@ -32,6 +32,7 @@ libkernel_a_SOURCES = get_global_size.c		\
                       get_num_groups.cl		\
                       get_group_id.cl		\
                       as_type.cl		\
+                      convert_type.cl		\
                       acos.cl			\
                       acosh.cl			\
                       acospi.cl			\
@@ -101,9 +102,17 @@ libkernel_a_SOURCES = get_global_size.c		\
                       hadd.cl			\
                       rhadd.cl			\
                       clamp.cl			\
+                      clz.cl			\
+                      mad_hi.cl			\
+                      mad_sat.cl		\
                       max.cl			\
                       min.cl			\
-                      mad24.cl
+                      mul_hi.cl			\
+                      rotate.cl			\
+                      sub_sat.cl		\
+                      upsample.cl		\
+                      mad24.cl			\
+                      mul24.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 
