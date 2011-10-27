@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define COMMAND_LENGTH 256
+#define COMMAND_LENGTH 1024
 #define ARGUMENT_STRING_LENGTH 32
 
 CL_API_ENTRY cl_int CL_API_CALL

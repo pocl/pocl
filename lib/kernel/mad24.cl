@@ -21,9 +21,6 @@
    THE SOFTWARE.
 */
 
-int
-mad24(int x, int y, int z)
-{
-  return x * y + z;
-}
+#include "templates.h"
 
+DEFINE_EXPR_J_JJJ(mul24, a*b+c)

@@ -226,7 +226,7 @@ pocl_native_run (void *data, const char *parallel_filename,
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
 	{
-	  for (x = 0; x < pc->num_groups[0]; +++x)
+	  for (x = 0; x < pc->num_groups[0]; ++x)
 	    {
 	      i = 0;
 	      p = kernel->arguments;

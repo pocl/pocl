@@ -26,7 +26,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define COMMAND_LENGTH 256
+#define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_int CL_API_CALL
 clBuildProgram(cl_program program,

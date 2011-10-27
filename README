@@ -58,6 +58,7 @@ and run the executable there (executable name matches subdirectory name).
     barriers      Simple barrier synchronization exampls
     forloops      Simple example wth for loops inside the kernel
     standalone    Non-executable standalone example (see STANDALONE section)
+    trig          Example using various trigonometric functions
 
 
 LINKING YOUR PROGRAM WITH POCL

@@ -1,4 +1,4 @@
-/* example2 - Matric transpose example from OpenCL specification.
+/* example2 - Matrix transpose example from OpenCL specification.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -57,10 +57,11 @@ main (void)
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
 
-  source = (char *) malloc (source_size);
+  source = (char *) malloc (source_size + 1);
   assert (source != NULL);
 
   fread (source, source_size, 1, source_file);
+  source[source_size] = '\0';
 
   fclose (source_file);
 
