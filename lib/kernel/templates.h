@@ -233,27 +233,28 @@
   IMPLEMENT_EXPR_V_V(NAME, EXPR, double8 , double)      \
   IMPLEMENT_EXPR_V_V(NAME, EXPR, double16, double)
 
-#define IMPLEMENT_EXPR_V_VV(NAME, EXPR, VTYPE, STYPE)   \
-  VTYPE __attribute__ ((overloadable))                  \
-  NAME(VTYPE a, VTYPE b)                                \
-  {                                                     \
-    typedef VTYPE vtype;                                \
-    typedef STYPE stype;                                \
-    return EXPR;                                        \
+#define IMPLEMENT_EXPR_V_VV(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, VTYPE b)                                        \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
   }
-#define DEFINE_EXPR_V_VV(NAME, EXPR)                    \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float   , float )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float2  , float )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float3  , float )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float4  , float )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float8  , float )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float16 , float )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double  , double)     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double2 , double)     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double3 , double)     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double4 , double)     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double8 , double)     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double)
+#define DEFINE_EXPR_V_VV(NAME, EXPR)                            \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float   , float , int   )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float2  , float , int2  )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float3  , float , int3  )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float4  , float , int4  )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float8  , float , int8  )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, float16 , float , int16 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double  , double, long  )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double2 , double, long2 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double3 , double, long3 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double4 , double, long4 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double8 , double, long8 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16)
 
 #define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE)  \
   VTYPE __attribute__ ((overloadable))                  \
@@ -276,6 +277,29 @@
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double4 , double)    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double8 , double)    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_S_VV(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
+  STYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, VTYPE b)                                        \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
+  }
+#define DEFINE_EXPR_S_VV(NAME, EXPR)                            \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, float   , float , int   )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, float2  , float , int2  )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, float3  , float , int3  )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, float4  , float , int4  )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, float8  , float , int8  )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, float16 , float , int16 )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double  , double, long  )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double2 , double, long2 )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double3 , double, long3 )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double4 , double, long4 )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double8 , double, long8 )     \
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double16, double, long16)
 
 #define IMPLEMENT_EXPR_V_VVS(NAME, EXPR, VTYPE, STYPE)  \
   VTYPE __attribute__ ((overloadable))                  \
@@ -316,6 +340,26 @@
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double4 , double)    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double8 , double)    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_SSV(NAME, EXPR, VTYPE, STYPE)  \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(STYPE a, STYPE b, VTYPE c)                       \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_V_SSV(NAME, EXPR)                   \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, float2  , float )    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, float3  , float )    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, float4  , float )    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, float8  , float )    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, float16 , float )    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double2 , double)    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double3 , double)    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double4 , double)    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double8 , double)    \
+  IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double16, double)
 
 #define IMPLEMENT_EXPR_V_U(NAME, EXPR, VTYPE, STYPE, UTYPE)     \
   VTYPE __attribute__ ((overloadable))                          \
@@ -464,6 +508,94 @@
 
 
 
+#define IMPLEMENT_BUILTIN_G_G(NAME, GTYPE, UGTYPE, LO, HI)      \
+  GTYPE __attribute__ ((overloadable))                          \
+  NAME(GTYPE a)                                                 \
+  {                                                             \
+    return (GTYPE)(NAME(a.LO), NAME(a.HI));                     \
+  }
+#define DEFINE_BUILTIN_G_G(NAME)                                \
+  char __attribute__ ((overloadable))                           \
+  NAME(char a)                                                  \
+  {                                                             \
+    return __builtin_##NAME##hh(a);                             \
+  }                                                             \
+  short __attribute__ ((overloadable))                          \
+  NAME(short a)                                                 \
+  {                                                             \
+    return __builtin_##NAME##h(a);                              \
+  }                                                             \
+  int __attribute__ ((overloadable))                            \
+  NAME(int a)                                                   \
+  {                                                             \
+    return __builtin_##NAME(a);                                 \
+  }                                                             \
+  long __attribute__ ((overloadable))                           \
+  NAME(long a)                                                  \
+  {                                                             \
+    return __builtin_##NAME##l(a);                              \
+  }                                                             \
+  uchar __attribute__ ((overloadable))                          \
+  NAME(uchar a)                                                 \
+  {                                                             \
+    return __builtin_##NAME##uhh(a);                            \
+  }                                                             \
+  ushort __attribute__ ((overloadable))                         \
+  NAME(ushort a)                                                \
+  {                                                             \
+    return __builtin_##NAME##uh(a);                             \
+  }                                                             \
+  uint __attribute__ ((overloadable))                           \
+  NAME(uint a)                                                  \
+  {                                                             \
+    return __builtin_##NAME##u(a);                              \
+  }                                                             \
+  ulong __attribute__ ((overloadable))                          \
+  NAME(ulong a)                                                 \
+  {                                                             \
+    return __builtin_##NAME##ul(a);                             \
+  }                                                             \
+  IMPLEMENT_BUILTIN_G_G(NAME, char2   , uchar2  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, char3   , uchar3  , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, char4   , uchar4  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, char8   , uchar8  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, char16  , uchar16 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, short2  , ushort2 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, short3  , ushort3 , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, short4  , ushort4 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, short8  , ushort8 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, short16 , ushort16, lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, int2    , uint2   , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, int3    , uint3   , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, int4    , uint4   , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, int8    , uint8   , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, int16   , uint16  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, long2   , ulong2  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, long3   , ulong3  , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, long4   , ulong4  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, long8   , ulong8  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, long16  , ulong16 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uchar2  , uchar2  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uchar3  , uchar3  , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uchar4  , uchar4  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uchar8  , uchar8  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uchar16 , uchar16 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ushort2 , ushort2 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ushort3 , ushort3 , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ushort4 , ushort4 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ushort8 , ushort8 , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ushort16, ushort16, lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uint2   , uint2   , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uint3   , uint3   , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uint4   , uint4   , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uint8   , uint8   , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, uint16  , uint16  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ulong2  , ulong2  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ulong3  , ulong3  , lo, s2)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ulong4  , ulong4  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ulong8  , ulong8  , lo, hi)       \
+  IMPLEMENT_BUILTIN_G_G(NAME, ulong16 , ulong16 , lo, hi)
+
 #define IMPLEMENT_BUILTIN_UG_G(NAME, GTYPE, UGTYPE, LO, HI)     \
   UGTYPE __attribute__ ((overloadable))                         \
   NAME(GTYPE a)                                                 \
@@ -474,12 +606,12 @@
   uchar __attribute__ ((overloadable))                          \
   NAME(char a)                                                  \
   {                                                             \
-    return __builtin_hh##NAME(a);                               \
+    return __builtin_##NAME##h(a);                              \
   }                                                             \
   ushort __attribute__ ((overloadable))                         \
   NAME(short a)                                                 \
   {                                                             \
-    return __builtin_h##NAME(a);                                \
+    return __builtin_##NAME##h(a);                              \
   }                                                             \
   uint __attribute__ ((overloadable))                           \
   NAME(int a)                                                   \
@@ -489,27 +621,27 @@
   ulong __attribute__ ((overloadable))                          \
   NAME(long a)                                                  \
   {                                                             \
-    return __builtin_l##NAME(a);                                \
+    return __builtin_##NAME##l(a);                              \
   }                                                             \
   uchar __attribute__ ((overloadable))                          \
   NAME(uchar a)                                                 \
   {                                                             \
-    return __builtin_uhh##NAME(a);                              \
+    return __builtin_##NAME##uhh(a);                            \
   }                                                             \
   ushort __attribute__ ((overloadable))                         \
   NAME(ushort a)                                                \
   {                                                             \
-    return __builtin_uh##NAME(a);                               \
+    return __builtin_##NAME##uh(a);                             \
   }                                                             \
   uint __attribute__ ((overloadable))                           \
   NAME(uint a)                                                  \
   {                                                             \
-    return __builtin_u##NAME(a);                                \
+    return __builtin_##NAME##u(a);                              \
   }                                                             \
   ulong __attribute__ ((overloadable))                          \
   NAME(ulong a)                                                 \
   {                                                             \
-    return __builtin_ul##NAME(a);                               \
+    return __builtin_##NAME##ul(a);                             \
   }                                                             \
   IMPLEMENT_BUILTIN_UG_G(NAME, char2   , uchar2  , lo, hi)      \
   IMPLEMENT_BUILTIN_UG_G(NAME, char3   , uchar3  , lo, s2)      \

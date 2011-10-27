@@ -1,4 +1,4 @@
-/* OpenCL built-in library: step()
+/* OpenCL built-in library: cross()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,18 +21,14 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+float4 __attribute__ ((overloadable)) cross(float4 a, float4 b)
+{
+  return (float4)(cross(a.xyz, b.xyz), 0.0f);
+}
 
-// This segfaults Clang 3.0, so we work around
-// DEFINE_EXPR_V_VV(step, b < a ? (vtype)0.0 : (vtype)1.0)
-DEFINE_EXPR_V_VV(step,
-                 ({
-                   vtype zero = 0.0;
-                   vtype one  = 1.0;
-                   jtype result = b < a ? *(jtype*)&zero : *(jtype*)&one;
-                   *(vtype*)&result;
-                 }))
-
-// DEFINE_EXPR_V_VV(step, (vtype)0.5 + copysign((vtype)0.5, b - a))
-
-DEFINE_EXPR_V_SV(step, step((vtype)a, b))
+float3 __attribute__ ((overloadable)) cross(float3 a, float3 b)
+{
+  return (float3)(a.y * b.z - a.z * b.y,
+                  a.z * b.x - a.x * b.z,
+                  a.x * b.y - a.y * b.x);
+}

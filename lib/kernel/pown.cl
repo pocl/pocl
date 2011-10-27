@@ -25,7 +25,7 @@
 
 // Map to the right builtin
 #define __builtin_pownf __builtin_powif
-#define __builtin_pown __builtin_powi
+#define __builtin_pown  __builtin_powi
 
 DEFINE_BUILTIN_V_VJ(pown)
 DEFINE_BUILTIN_V_VI(pown)

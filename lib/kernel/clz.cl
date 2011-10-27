@@ -25,6 +25,17 @@
 
 // Intel: LZCNT (and POPCNT)
 
+#define __builtin_clzhh  __builtin_clz
+#define __builtin_clzh   __builtin_clz
+#define __builtin_clzuhh __builtin_clz
+#define __builtin_clzuh  __builtin_clz
+#define __builtin_clzu   __builtin_clz
+#define __builtin_clzul  __builtin_clzl
+
+DEFINE_BUILTIN_G_G(clz)
+
+#if 0
+
 /* Count ones */
 #define CO(b)                                                           \
   ({                                                                    \
@@ -60,3 +71,5 @@ DEFINE_EXPR_G_G(clz,
                   ugtype lz = CLZ(*(ugtype*)&a);
                   *(gtype*)&lz;
                 }))
+
+#endif

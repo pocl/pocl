@@ -1,4 +1,4 @@
-/* OpenCL built-in library: step()
+/* OpenCL built-in library: fast_normalize()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,16 +23,7 @@
 
 #include "templates.h"
 
-// This segfaults Clang 3.0, so we work around
-// DEFINE_EXPR_V_VV(step, b < a ? (vtype)0.0 : (vtype)1.0)
-DEFINE_EXPR_V_VV(step,
-                 ({
-                   vtype zero = 0.0;
-                   vtype one  = 1.0;
-                   jtype result = b < a ? *(jtype*)&zero : *(jtype*)&one;
-                   *(vtype*)&result;
-                 }))
+// half_rsqrt is not supported yet
+// DEFINE_EXPR_V_V(fast_normalize, ({ stype li = half_rsqrt(dot(a, a)); li * a; }))
 
-// DEFINE_EXPR_V_VV(step, (vtype)0.5 + copysign((vtype)0.5, b - a))
-
-DEFINE_EXPR_V_SV(step, step((vtype)a, b))
+DEFINE_EXPR_V_V(fast_normalize, normalize(a))

@@ -21,8 +21,6 @@
    THE SOFTWARE.
 */
 
-#undef dot
-
 float __attribute__ ((overloadable))
 cl_dot(float a, float b)
 {

@@ -52,7 +52,6 @@ libkernel_a_SOURCES = get_global_size.c		\
                       cos.cl			\
                       cosh.cl			\
                       cospi.cl			\
-                      dot.cl			\
                       erfc.cl			\
                       erf.cl			\
                       exp.cl			\
@@ -118,7 +117,17 @@ libkernel_a_SOURCES = get_global_size.c		\
                       degrees.cl		\
                       mix.cl			\
                       radians.cl		\
-                      step.cl
+                      step.cl			\
+                      smoothstep.cl		\
+                      sign.cl			\
+                      cross.cl			\
+                      dot.cl			\
+                      distance.cl		\
+                      length.cl			\
+                      normalize.cl		\
+                      fast_distance.cl		\
+                      fast_length.cl		\
+                      fast_normalize.cl
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: step()
+/* OpenCL built-in library: smoothstep()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,16 +23,9 @@
 
 #include "templates.h"
 
-// This segfaults Clang 3.0, so we work around
-// DEFINE_EXPR_V_VV(step, b < a ? (vtype)0.0 : (vtype)1.0)
-DEFINE_EXPR_V_VV(step,
-                 ({
-                   vtype zero = 0.0;
-                   vtype one  = 1.0;
-                   jtype result = b < a ? *(jtype*)&zero : *(jtype*)&one;
-                   *(vtype*)&result;
-                 }))
-
-// DEFINE_EXPR_V_VV(step, (vtype)0.5 + copysign((vtype)0.5, b - a))
-
-DEFINE_EXPR_V_SV(step, step((vtype)a, b))
+DEFINE_EXPR_V_VVV(smoothstep,
+                  ({
+                    vtype t = clamp((c - a) / (b - a), (stype)0.0, (stype)1.0);
+                    t * t * mad((vtype)-2.0, t, (vtype)3.0);
+                  }))
+DEFINE_EXPR_V_SSV(smoothstep, smoothstep((vtype)a, (vtype)b, c))

@@ -28,8 +28,8 @@
 // DEFINE_EXPR_V_VI(rootn, pow(a, (vtype)((stype)1.0 / (stype)b)))
 
 // Define pseudo builtins
-#define __builtin_rootnf(a,b) pow(a, 1.0f / (float)b)
-#define __builtin_rootn(a,b) pow(a, 1.0 / (double)b)
+#define __builtin_rootnf(a,b) pow(a, 1.0f / (float) b)
+#define __builtin_rootn(a,b)  pow(a, 1.0  / (double)b)
 
 DEFINE_BUILTIN_V_VJ(rootn)
 DEFINE_BUILTIN_V_VI(rootn)
