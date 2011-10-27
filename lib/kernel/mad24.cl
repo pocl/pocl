@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_J_JJJ(mul24, a*b+c)
+DEFINE_EXPR_J_JJJ(mad24, a*b+c)
