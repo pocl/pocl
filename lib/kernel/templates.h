@@ -135,33 +135,45 @@
   IMPLEMENT_BUILTIN_V_U(NAME, double8 , ulong8 , lo, hi) \
   IMPLEMENT_BUILTIN_V_U(NAME, double16, ulong16, lo, hi)
 
-#define IMPLEMENT_BUILTIN_J_VV(NAME, VTYPE, JTYPE, LO, HI)      \
-  JTYPE __attribute__ ((overloadable))                          \
-  NAME(VTYPE a, VTYPE b)                                        \
-  {                                                             \
-    return (JTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));         \
+#define IMPLEMENT_BUILTIN_J_VV(NAME, VTYPE, STYPE, JTYPE, LO, HI)       \
+  JTYPE __attribute__ ((overloadable))                                  \
+  NAME(VTYPE a, VTYPE b)                                                \
+  {                                                                     \
+    if (sizeof(a.LO) == sizeof(STYPE)) {                                \
+      if (sizeof(a.HI) == sizeof(STYPE)) {                              \
+        return (JTYPE)(-NAME(a.LO, b.LO), -NAME(a.HI, b.HI));           \
+      } else {                                                          \
+        return (JTYPE)(-NAME(a.LO, b.LO),  NAME(a.HI, b.HI));           \
+      }                                                                 \
+    } else {                                                            \
+      if (sizeof(a.HI) == sizeof(STYPE)) {                              \
+        return (JTYPE)( NAME(a.LO, b.LO), -NAME(a.HI, b.HI));           \
+      } else {                                                          \
+        return (JTYPE)( NAME(a.LO, b.LO),  NAME(a.HI, b.HI));           \
+      }                                                                 \
+    }                                                                   \
   }
-#define DEFINE_BUILTIN_J_VV(NAME)                               \
-  int __attribute__ ((overloadable))                            \
-  NAME(float a, float b)                                        \
-  {                                                             \
-    return __builtin_##NAME##f(a, b);                           \
-  }                                                             \
-  int __attribute__ ((overloadable))                            \
-  NAME(double a, double b)                                      \
-  {                                                             \
-    return __builtin_##NAME(a, b);                              \
-  }                                                             \
-  IMPLEMENT_BUILTIN_J_VV(NAME, float2  , int2  , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, float3  , int3  , lo, s2)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, float4  , int4  , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, float8  , int8  , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, float16 , int16 , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, double2 , long2 , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, double3 , long3 , lo, s2)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, double4 , long4 , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, double8 , long8 , lo, hi)        \
-  IMPLEMENT_BUILTIN_J_VV(NAME, double16, long16, lo, hi)
+#define DEFINE_BUILTIN_J_VV(NAME)                                       \
+  int __attribute__ ((overloadable))                                    \
+  NAME(float a, float b)                                                \
+  {                                                                     \
+    return __builtin_##NAME##f(a, b);                                   \
+  }                                                                     \
+  int __attribute__ ((overloadable))                                    \
+  NAME(double a, double b)                                              \
+  {                                                                     \
+    return __builtin_##NAME(a, b);                                      \
+  }                                                                     \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float2  , float , int2  , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float3  , float , int3  , lo, s2)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float4  , float , int4  , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float8  , float , int8  , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float16 , float , int16 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double2 , double, long2 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double3 , double, long3 , lo, s2)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double4 , double, long4 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double8 , double, long8 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double16, double, long16, lo, hi)
 
 #define IMPLEMENT_BUILTIN_V_VJ(NAME, VTYPE, JTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                          \

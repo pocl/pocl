@@ -24,19 +24,19 @@
 #include "templates.h"
 
 #define DEFINE_CONVERT_TYPE(SRC, DST)                           \
-  DST __attribute__ ((overloadable)) convert_##DST(SRC a)       \
+  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)       \
   {                                                             \
     return (DST)a;                                              \
   }
 
 #define DEFINE_CONVERT_TYPE_HALF(SRC, DST, HALFDST)                     \
-  DST __attribute__ ((overloadable)) convert_##DST(SRC a)               \
+  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)               \
   {                                                                     \
     return (DST)(convert_##HALFDST(a.lo), convert_##HALFDST(a.hi));     \
   }
 
 #define DEFINE_CONVERT_TYPE_012(SRC, DST, DST01, DST2)          \
-  DST __attribute__ ((overloadable)) convert_##DST(SRC a)       \
+  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)       \
   {                                                             \
     return (DST)(convert_##DST01(a.s01), convert_##DST2(a.s2)); \
   }

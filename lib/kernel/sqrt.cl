@@ -21,13 +21,13 @@
    THE SOFTWARE.
 */
 
-float __attribute__ ((overloadable))
+float __attribute__ ((__overloadable__))
 sqrt(float a)
 {
   return __builtin_sqrtf(a);
 }
 
-float2 __attribute__ ((overloadable))
+float2 __attribute__ ((__overloadable__))
 sqrt(float2 a)
 {
 #ifdef __SSE__
@@ -37,7 +37,7 @@ sqrt(float2 a)
 #endif
 }
 
-float3 __attribute__ ((overloadable))
+float3 __attribute__ ((__overloadable__))
 sqrt(float3 a)
 {
 #ifdef __SSE__
@@ -47,7 +47,7 @@ sqrt(float3 a)
 #endif
 }
 
-float4 __attribute__ ((overloadable))
+float4 __attribute__ ((__overloadable__))
 sqrt(float4 a)
 {
 #ifdef __SSE__
@@ -57,7 +57,7 @@ sqrt(float4 a)
 #endif
 }
 
-float8 __attribute__ ((overloadable))
+float8 __attribute__ ((__overloadable__))
 sqrt(float8 a)
 {
 #ifdef __AVX__
@@ -67,19 +67,19 @@ sqrt(float8 a)
 #endif
 }
 
-float16 __attribute__ ((overloadable))
+float16 __attribute__ ((__overloadable__))
 sqrt(float16 a)
 {
   return (float16)(sqrt(a.lo), sqrt(a.hi));
 }
 
-double __attribute__ ((overloadable))
+double __attribute__ ((__overloadable__))
 sqrt(double a)
 {
   return __builtin_sqrt(a);
 }
 
-double2 __attribute__ ((overloadable))
+double2 __attribute__ ((__overloadable__))
 sqrt(double2 a)
 {
 #ifdef __SSE2__
@@ -89,7 +89,7 @@ sqrt(double2 a)
 #endif
 }
 
-double3 __attribute__ ((overloadable))
+double3 __attribute__ ((__overloadable__))
 sqrt(double3 a)
 {
 #ifdef __AVX__
@@ -99,7 +99,7 @@ sqrt(double3 a)
 #endif
 }
 
-double4 __attribute__ ((overloadable))
+double4 __attribute__ ((__overloadable__))
 sqrt(double4 a)
 {
 #ifdef __AVX__
@@ -109,13 +109,13 @@ sqrt(double4 a)
 #endif
 }
 
-double8 __attribute__ ((overloadable))
+double8 __attribute__ ((__overloadable__))
 sqrt(double8 a)
 {
   return (double8)(sqrt(a.lo), sqrt(a.hi));
 }
 
-double16 __attribute__ ((overloadable))
+double16 __attribute__ ((__overloadable__))
 sqrt(double16 a)
 {
   return (double16)(sqrt(a.lo), sqrt(a.hi));

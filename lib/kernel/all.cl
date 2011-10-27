@@ -21,122 +21,122 @@
    THE SOFTWARE.
 */
 
-int __attribute__((overloadable)) all(char a)
+int __attribute__((__overloadable__)) all(char a)
 {
   return a < (char)0;
 }
 
-int __attribute__((overloadable)) all(char2 a)
+int __attribute__((__overloadable__)) all(char2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(char3 a)
+int __attribute__((__overloadable__)) all(char3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int __attribute__((overloadable)) all(char4 a)
+int __attribute__((__overloadable__)) all(char4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(char8 a)
+int __attribute__((__overloadable__)) all(char8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(char16 a)
+int __attribute__((__overloadable__)) all(char16 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(short a)
+int __attribute__((__overloadable__)) all(short a)
 {
   return a < (short)0;
 }
 
-int __attribute__((overloadable)) all(short2 a)
+int __attribute__((__overloadable__)) all(short2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(short3 a)
+int __attribute__((__overloadable__)) all(short3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int __attribute__((overloadable)) all(short4 a)
+int __attribute__((__overloadable__)) all(short4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(short8 a)
+int __attribute__((__overloadable__)) all(short8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(short16 a)
+int __attribute__((__overloadable__)) all(short16 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(int a)
+int __attribute__((__overloadable__)) all(int a)
 {
   return a < 0;
 }
 
-int __attribute__((overloadable)) all(int2 a)
+int __attribute__((__overloadable__)) all(int2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(int3 a)
+int __attribute__((__overloadable__)) all(int3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int __attribute__((overloadable)) all(int4 a)
+int __attribute__((__overloadable__)) all(int4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(int8 a)
+int __attribute__((__overloadable__)) all(int8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(int16 a)
+int __attribute__((__overloadable__)) all(int16 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(long a)
+int __attribute__((__overloadable__)) all(long a)
 {
   return a < 0L;
 }
 
-int __attribute__((overloadable)) all(long2 a)
+int __attribute__((__overloadable__)) all(long2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(long3 a)
+int __attribute__((__overloadable__)) all(long3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int __attribute__((overloadable)) all(long4 a)
+int __attribute__((__overloadable__)) all(long4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(long8 a)
+int __attribute__((__overloadable__)) all(long8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int __attribute__((overloadable)) all(long16 a)
+int __attribute__((__overloadable__)) all(long16 a)
 {
   return all(a.lo) && all(a.hi);
 }

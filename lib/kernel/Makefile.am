@@ -145,7 +145,9 @@ libkernel_a_SOURCES = get_global_size.c		\
                       any.cl			\
                       all.cl			\
                       bitselect.cl		\
-                      select.cl
+                      select.cl			\
+                      vload.cl			\
+                      vstore.cl
 
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll

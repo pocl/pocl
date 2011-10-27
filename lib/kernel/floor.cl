@@ -39,7 +39,7 @@
 
 
 
-float __attribute__ ((overloadable))
+float __attribute__ ((__overloadable__))
 floor(float a)
 {
 #ifdef __SSE4_1__
@@ -51,7 +51,7 @@ floor(float a)
 #endif
 }
 
-float2 __attribute__ ((overloadable))
+float2 __attribute__ ((__overloadable__))
 floor(float2 a)
 {
 #ifdef __SSE4_1__
@@ -61,7 +61,7 @@ floor(float2 a)
 #endif
 }
 
-float3 __attribute__ ((overloadable))
+float3 __attribute__ ((__overloadable__))
 floor(float3 a)
 {
 #ifdef __SSE4_1__
@@ -71,7 +71,7 @@ floor(float3 a)
 #endif
 }
 
-float4 __attribute__ ((overloadable))
+float4 __attribute__ ((__overloadable__))
 floor(float4 a)
 {
 #ifdef __SSE4_1__
@@ -81,7 +81,7 @@ floor(float4 a)
 #endif
 }
 
-float8 __attribute__ ((overloadable))
+float8 __attribute__ ((__overloadable__))
 floor(float8 a)
 {
 #ifdef __AVX__
@@ -91,13 +91,13 @@ floor(float8 a)
 #endif
 }
 
-float16 __attribute__ ((overloadable))
+float16 __attribute__ ((__overloadable__))
 floor(float16 a)
 {
   return (float16)(floor(a.lo), floor(a.hi));
 }
 
-double __attribute__ ((overloadable))
+double __attribute__ ((__overloadable__))
 floor(double a)
 {
 #ifdef __SSE4_1__
@@ -109,7 +109,7 @@ floor(double a)
 #endif
 }
 
-double2 __attribute__ ((overloadable))
+double2 __attribute__ ((__overloadable__))
 floor(double2 a)
 {
 #ifdef __SSE4_1__
@@ -119,7 +119,7 @@ floor(double2 a)
 #endif
 }
 
-double3 __attribute__ ((overloadable))
+double3 __attribute__ ((__overloadable__))
 floor(double3 a)
 {
 #ifdef __AVX__
@@ -129,7 +129,7 @@ floor(double3 a)
 #endif
 }
 
-double4 __attribute__ ((overloadable))
+double4 __attribute__ ((__overloadable__))
 floor(double4 a)
 {
 #ifdef __AVX__
@@ -139,13 +139,13 @@ floor(double4 a)
 #endif
 }
 
-double8 __attribute__ ((overloadable))
+double8 __attribute__ ((__overloadable__))
 floor(double8 a)
 {
   return (double8)(floor(a.lo), floor(a.hi));
 }
 
-double16 __attribute__ ((overloadable))
+double16 __attribute__ ((__overloadable__))
 floor(double16 a)
 {
   return (double16)(floor(a.lo), floor(a.hi));

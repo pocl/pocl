@@ -22,7 +22,7 @@
 */
 
 #define DEFINE_AS_TYPE(SRC, DST)                \
-  DST __attribute__ ((overloadable))            \
+  DST __attribute__ ((__overloadable__))            \
   as_##DST(SRC a)                               \
   {                                             \
     return *(DST*)&a;                           \

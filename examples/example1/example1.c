@@ -46,7 +46,7 @@ main (void)
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
 
-  source = (char *) malloc (source_size+1);
+  source = (char *) malloc (source_size +1 );
   assert (source != NULL);
 
   fread (source, source_size, 1, source_file);

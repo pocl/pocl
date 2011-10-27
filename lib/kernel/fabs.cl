@@ -21,13 +21,13 @@
    THE SOFTWARE.
 */
 
-float __attribute__ ((overloadable))
+float __attribute__ ((__overloadable__))
 fabs(float a)
 {
   return __builtin_fabsf(a);
 }
 
-float2 __attribute__ ((overloadable))
+float2 __attribute__ ((__overloadable__))
 fabs(float2 a)
 {
 #ifdef __SSE__
@@ -38,7 +38,7 @@ fabs(float2 a)
 #endif
 }
 
-float3 __attribute__ ((overloadable))
+float3 __attribute__ ((__overloadable__))
 fabs(float3 a)
 {
 #ifdef __SSE__
@@ -48,7 +48,7 @@ fabs(float3 a)
 #endif
 }
 
-float4 __attribute__ ((overloadable))
+float4 __attribute__ ((__overloadable__))
 fabs(float4 a)
 {
 #ifdef __SSE__
@@ -59,7 +59,7 @@ fabs(float4 a)
 #endif
 }
 
-float8 __attribute__ ((overloadable))
+float8 __attribute__ ((__overloadable__))
 fabs(float8 a)
 {
 #ifdef __AVX__
@@ -72,19 +72,19 @@ fabs(float8 a)
 #endif
 }
 
-float16 __attribute__ ((overloadable))
+float16 __attribute__ ((__overloadable__))
 fabs(float16 a)
 {
   return (float16)(fabs(a.lo), fabs(a.hi));
 }
 
-double __attribute__ ((overloadable))
+double __attribute__ ((__overloadable__))
 fabs(double a)
 {
   return __builtin_fabs(a);
 }
 
-double2 __attribute__ ((overloadable))
+double2 __attribute__ ((__overloadable__))
 fabs(double2 a)
 {
 #ifdef __SSE2__
@@ -95,7 +95,7 @@ fabs(double2 a)
 #endif
 }
 
-double3 __attribute__ ((overloadable))
+double3 __attribute__ ((__overloadable__))
 fabs(double3 a)
 {
 #ifdef __AVX__
@@ -105,7 +105,7 @@ fabs(double3 a)
 #endif
 }
 
-double4 __attribute__ ((overloadable))
+double4 __attribute__ ((__overloadable__))
 fabs(double4 a)
 {
 #ifdef __AVX__
@@ -118,13 +118,13 @@ fabs(double4 a)
 #endif
 }
 
-double8 __attribute__ ((overloadable))
+double8 __attribute__ ((__overloadable__))
 fabs(double8 a)
 {
   return (double8)(fabs(a.lo), fabs(a.hi));
 }
 
-double16 __attribute__ ((overloadable))
+double16 __attribute__ ((__overloadable__))
 fabs(double16 a)
 {
   return (double16)(fabs(a.lo), fabs(a.hi));

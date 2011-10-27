@@ -21,13 +21,13 @@
    THE SOFTWARE.
 */
 
-float __attribute__ ((overloadable))
+float __attribute__ ((__overloadable__))
 copysign(float a, float b)
 {
   return __builtin_copysignf(a, b);
 }
 
-float2 __attribute__ ((overloadable))
+float2 __attribute__ ((__overloadable__))
 copysign(float2 a, float2 b)
 {
 #ifdef __SSE__
@@ -37,7 +37,7 @@ copysign(float2 a, float2 b)
 #endif
 }
 
-float3 __attribute__ ((overloadable))
+float3 __attribute__ ((__overloadable__))
 copysign(float3 a, float3 b)
 {
 #ifdef __SSE__
@@ -47,7 +47,7 @@ copysign(float3 a, float3 b)
 #endif
 }
 
-float4 __attribute__ ((overloadable))
+float4 __attribute__ ((__overloadable__))
 copysign(float4 a, float4 b)
 {
 #ifdef __SSE__
@@ -58,7 +58,7 @@ copysign(float4 a, float4 b)
 #endif
 }
 
-float8 __attribute__ ((overloadable))
+float8 __attribute__ ((__overloadable__))
 copysign(float8 a, float8 b)
 {
 #ifdef __AVX__
@@ -71,19 +71,19 @@ copysign(float8 a, float8 b)
 #endif
 }
 
-float16 __attribute__ ((overloadable))
+float16 __attribute__ ((__overloadable__))
 copysign(float16 a, float16 b)
 {
   return (float16)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 }
 
-double __attribute__ ((overloadable))
+double __attribute__ ((__overloadable__))
 copysign(double a, double b)
 {
   return __builtin_copysign(a, b);
 }
 
-double2 __attribute__ ((overloadable))
+double2 __attribute__ ((__overloadable__))
 copysign(double2 a, double2 b)
 {
 #ifdef __SSE2__
@@ -94,7 +94,7 @@ copysign(double2 a, double2 b)
 #endif
 }
 
-double3 __attribute__ ((overloadable))
+double3 __attribute__ ((__overloadable__))
 copysign(double3 a, double3 b)
 {
 #ifdef __AVX__
@@ -104,7 +104,7 @@ copysign(double3 a, double3 b)
 #endif
 }
 
-double4 __attribute__ ((overloadable))
+double4 __attribute__ ((__overloadable__))
 copysign(double4 a, double4 b)
 {
 #ifdef __AVX__
@@ -117,13 +117,13 @@ copysign(double4 a, double4 b)
 #endif
 }
 
-double8 __attribute__ ((overloadable))
+double8 __attribute__ ((__overloadable__))
 copysign(double8 a, double8 b)
 {
   return (double8)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));
 }
 
-double16 __attribute__ ((overloadable))
+double16 __attribute__ ((__overloadable__))
 copysign(double16 a, double16 b)
 {
   return (double16)(copysign(a.lo, b.lo), copysign(a.hi, b.hi));

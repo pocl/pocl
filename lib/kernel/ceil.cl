@@ -41,7 +41,7 @@
 
 
 
-float __attribute__ ((overloadable))
+float __attribute__ ((__overloadable__))
 cl_ceil(float a)
 {
 #ifdef __SSE4_1__
@@ -53,7 +53,7 @@ cl_ceil(float a)
 #endif
 }
 
-float2 __attribute__ ((overloadable))
+float2 __attribute__ ((__overloadable__))
 cl_ceil(float2 a)
 {
 #ifdef __SSE4_1__
@@ -63,7 +63,7 @@ cl_ceil(float2 a)
 #endif
 }
 
-float3 __attribute__ ((overloadable))
+float3 __attribute__ ((__overloadable__))
 cl_ceil(float3 a)
 {
 #ifdef __SSE4_1__
@@ -73,7 +73,7 @@ cl_ceil(float3 a)
 #endif
 }
 
-float4 __attribute__ ((overloadable))
+float4 __attribute__ ((__overloadable__))
 cl_ceil(float4 a)
 {
 #ifdef __SSE4_1__
@@ -83,7 +83,7 @@ cl_ceil(float4 a)
 #endif
 }
 
-float8 __attribute__ ((overloadable))
+float8 __attribute__ ((__overloadable__))
 cl_ceil(float8 a)
 {
 #ifdef __AVX__
@@ -93,13 +93,13 @@ cl_ceil(float8 a)
 #endif
 }
 
-float16 __attribute__ ((overloadable))
+float16 __attribute__ ((__overloadable__))
 cl_ceil(float16 a)
 {
   return (float16)(cl_ceil(a.lo), cl_ceil(a.hi));
 }
 
-double __attribute__ ((overloadable))
+double __attribute__ ((__overloadable__))
 cl_ceil(double a)
 {
 #ifdef __SSE4_1__
@@ -111,7 +111,7 @@ cl_ceil(double a)
 #endif
 }
 
-double2 __attribute__ ((overloadable))
+double2 __attribute__ ((__overloadable__))
 cl_ceil(double2 a)
 {
 #ifdef __SSE4_1__
@@ -121,7 +121,7 @@ cl_ceil(double2 a)
 #endif
 }
 
-double3 __attribute__ ((overloadable))
+double3 __attribute__ ((__overloadable__))
 cl_ceil(double3 a)
 {
 #ifdef __AVX__
@@ -131,7 +131,7 @@ cl_ceil(double3 a)
 #endif
 }
 
-double4 __attribute__ ((overloadable))
+double4 __attribute__ ((__overloadable__))
 cl_ceil(double4 a)
 {
 #ifdef __AVX__
@@ -141,13 +141,13 @@ cl_ceil(double4 a)
 #endif
 }
 
-double8 __attribute__ ((overloadable))
+double8 __attribute__ ((__overloadable__))
 cl_ceil(double8 a)
 {
   return (double8)(cl_ceil(a.lo), cl_ceil(a.hi));
 }
 
-double16 __attribute__ ((overloadable))
+double16 __attribute__ ((__overloadable__))
 cl_ceil(double16 a)
 {
   return (double16)(cl_ceil(a.lo), cl_ceil(a.hi));
