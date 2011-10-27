@@ -1,4 +1,4 @@
-/* OpenCL built-in library: cross()
+/* OpenCL built-in library: isinf()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,26 +21,8 @@
    THE SOFTWARE.
 */
 
-float4 __attribute__ ((overloadable)) cross(float4 a, float4 b)
-{
-  return (float4)(cross(a.xyz, b.xyz), 0.0f);
-}
+#include "templates.h"
 
-float3 __attribute__ ((overloadable)) cross(float3 a, float3 b)
-{
-  return (float3)(a.y * b.z - a.z * b.y,
-                  a.z * b.x - a.x * b.z,
-                  a.x * b.y - a.y * b.x);
-}
+#define __builtin_isinff __builtin_isinf
 
-double4 __attribute__ ((overloadable)) cross(double4 a, double4 b)
-{
-  return (double4)(cross(a.xyz, b.xyz), 0.0f);
-}
-
-double3 __attribute__ ((overloadable)) cross(double3 a, double3 b)
-{
-  return (double3)(a.y * b.z - a.z * b.y,
-                   a.z * b.x - a.x * b.z,
-                   a.x * b.y - a.y * b.x);
-}
+DEFINE_BUILTIN_J_V(isinf)

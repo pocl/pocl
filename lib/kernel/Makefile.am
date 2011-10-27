@@ -127,7 +127,26 @@ libkernel_a_SOURCES = get_global_size.c		\
                       normalize.cl		\
                       fast_distance.cl		\
                       fast_length.cl		\
-                      fast_normalize.cl
+                      fast_normalize.cl		\
+                      isequal.cl		\
+                      isnotequal.cl		\
+                      isgreater.cl		\
+                      isgreaterequal.cl		\
+                      isless.cl			\
+                      islessequal.cl		\
+                      islessgreater.cl		\
+                      isfinite.cl		\
+                      isinf.cl			\
+                      isnan.cl			\
+                      isnormal.cl		\
+                      isordered.cl		\
+                      isunordered.cl		\
+                      signbit.cl		\
+                      any.cl			\
+                      all.cl			\
+                      bitselect.cl		\
+                      select.cl
+
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
 

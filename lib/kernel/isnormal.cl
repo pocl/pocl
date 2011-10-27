@@ -1,4 +1,4 @@
-/* OpenCL built-in library: cross()
+/* OpenCL built-in library: isnormal()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -14,33 +14,15 @@
    
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   FITNESS FOR A PARTICULAR PURPOSE AND NONNORMALRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
 
-float4 __attribute__ ((overloadable)) cross(float4 a, float4 b)
-{
-  return (float4)(cross(a.xyz, b.xyz), 0.0f);
-}
+#include "templates.h"
 
-float3 __attribute__ ((overloadable)) cross(float3 a, float3 b)
-{
-  return (float3)(a.y * b.z - a.z * b.y,
-                  a.z * b.x - a.x * b.z,
-                  a.x * b.y - a.y * b.x);
-}
+#define __builtin_isnormalf __builtin_isnormal
 
-double4 __attribute__ ((overloadable)) cross(double4 a, double4 b)
-{
-  return (double4)(cross(a.xyz, b.xyz), 0.0f);
-}
-
-double3 __attribute__ ((overloadable)) cross(double3 a, double3 b)
-{
-  return (double3)(a.y * b.z - a.z * b.y,
-                   a.z * b.x - a.x * b.z,
-                   a.x * b.y - a.y * b.x);
-}
+DEFINE_BUILTIN_J_V(isnormal)

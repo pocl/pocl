@@ -23,9 +23,9 @@
 
 #include "templates.h"
 
-#define __builtin_signf(a)                                      \
-  (a == a ? copysign(a == 0.0f ? 0.0f : 1.0f, a) : 0.0f)
-#define __builtin_sign(a)                                       \
-  (a == a ? copysign(a == 0.0  ? 0.0  : 1.0 , a) : 0.0 )
+#define __builtin_signf(a)                                              \
+  (__builtin_isnan(a) ? 0.0f : copysign(a == 0.0f ? 0.0f : 1.0f, a))
+#define __builtin_sign(a)                                               \
+  (__builtin_isnan(a) ? 0.0  : copysign(a == 0.0  ? 0.0  : 1.0 , a))
 
 DEFINE_BUILTIN_V_V(sign)

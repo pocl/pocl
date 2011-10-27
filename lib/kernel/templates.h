@@ -135,6 +135,34 @@
   IMPLEMENT_BUILTIN_V_U(NAME, double8 , ulong8 , lo, hi) \
   IMPLEMENT_BUILTIN_V_U(NAME, double16, ulong16, lo, hi)
 
+#define IMPLEMENT_BUILTIN_J_VV(NAME, VTYPE, JTYPE, LO, HI)      \
+  JTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, VTYPE b)                                        \
+  {                                                             \
+    return (JTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));         \
+  }
+#define DEFINE_BUILTIN_J_VV(NAME)                               \
+  int __attribute__ ((overloadable))                            \
+  NAME(float a, float b)                                        \
+  {                                                             \
+    return __builtin_##NAME##f(a, b);                           \
+  }                                                             \
+  int __attribute__ ((overloadable))                            \
+  NAME(double a, double b)                                      \
+  {                                                             \
+    return __builtin_##NAME(a, b);                              \
+  }                                                             \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float2  , int2  , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float3  , int3  , lo, s2)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float4  , int4  , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float8  , int8  , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, float16 , int16 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double2 , long2 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double3 , long3 , lo, s2)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double4 , long4 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double8 , long8 , lo, hi)        \
+  IMPLEMENT_BUILTIN_J_VV(NAME, double16, long16, lo, hi)
+
 #define IMPLEMENT_BUILTIN_V_VJ(NAME, VTYPE, JTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                          \
   NAME(VTYPE a, JTYPE b)                                        \
@@ -256,27 +284,28 @@
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double8 , double, long8 )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16)
 
-#define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE)  \
-  VTYPE __attribute__ ((overloadable))                  \
-  NAME(VTYPE a, VTYPE b, VTYPE c)                       \
-  {                                                     \
-    typedef VTYPE vtype;                                \
-    typedef STYPE stype;                                \
-    return EXPR;                                        \
+#define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE, JTYPE)   \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, VTYPE b, VTYPE c)                               \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
   }
-#define DEFINE_EXPR_V_VVV(NAME, EXPR)                   \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float   , float )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float2  , float )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float3  , float )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float4  , float )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float8  , float )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float16 , float )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double  , double)    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double2 , double)    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double3 , double)    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double4 , double)    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double8 , double)    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double)
+#define DEFINE_EXPR_V_VVV(NAME, EXPR)                           \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float   , float , int   )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float2  , float , int2  )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float3  , float , int3  )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float4  , float , int4  )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float8  , float , int8  )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float16 , float , int16 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double  , double, long  )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double2 , double, long2 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double3 , double, long3 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double4 , double, long4 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double8 , double, long8 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double, long16)
 
 #define IMPLEMENT_EXPR_S_VV(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
   STYPE __attribute__ ((overloadable))                          \
@@ -360,6 +389,29 @@
   IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double4 , double)    \
   IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double8 , double)    \
   IMPLEMENT_EXPR_V_SSV(NAME, EXPR, double16, double)
+
+#define IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, VTYPE, STYPE, JTYPE)   \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, VTYPE b, JTYPE c)                               \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
+  }
+#define DEFINE_EXPR_V_VVJ(NAME, EXPR)                           \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, float   , float , int   )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, float2  , float , int2  )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, float3  , float , int3  )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, float4  , float , int4  )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, float8  , float , int8  )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, float16 , float , int16 )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double  , double, long  )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double2 , double, long2 )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double3 , double, long3 )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double4 , double, long4 )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double8 , double, long8 )    \
+  IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double16, double, long16)
 
 #define IMPLEMENT_EXPR_V_U(NAME, EXPR, VTYPE, STYPE, UTYPE)     \
   VTYPE __attribute__ ((overloadable))                          \

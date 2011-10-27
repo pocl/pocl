@@ -21,74 +21,62 @@
    THE SOFTWARE.
 */
 
-float __attribute__ ((overloadable))
-cl_dot(float a, float b)
+float __attribute__ ((overloadable)) dot(float a, float b)
 {
   return a * b;
 }
 
-float __attribute__ ((overloadable))
-cl_dot(float2 a, float2 b)
+float __attribute__ ((overloadable)) dot(float2 a, float2 b)
 {
   return a.lo * b.lo + a.hi * b.hi;
 }
 
-float __attribute__ ((overloadable))
-cl_dot(float3 a, float3 b)
+float __attribute__ ((overloadable)) dot(float3 a, float3 b)
 {
-  return cl_dot(a.s01, b.s01) + a.s2 * b.s2;
+  return dot(a.s01, b.s01) + a.s2 * b.s2;
 }
 
-float __attribute__ ((overloadable))
-cl_dot(float4 a, float4 b)
+float __attribute__ ((overloadable)) dot(float4 a, float4 b)
 {
-  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-float __attribute__ ((overloadable))
-cl_dot(float8 a, float8 b)
+float __attribute__ ((overloadable)) dot(float8 a, float8 b)
 {
-  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-float __attribute__ ((overloadable))
-cl_dot(float16 a, float16 b)
+float __attribute__ ((overloadable)) dot(float16 a, float16 b)
 {
-  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-double __attribute__ ((overloadable))
-cl_dot(double a, double b)
+double __attribute__ ((overloadable)) dot(double a, double b)
 {
   return a * b;
 }
 
-double __attribute__ ((overloadable))
-cl_dot(double2 a, double2 b)
+double __attribute__ ((overloadable)) dot(double2 a, double2 b)
 {
   return a.lo * b.lo + a.hi * b.hi;
 }
 
-double __attribute__ ((overloadable))
-cl_dot(double3 a, double3 b)
+double __attribute__ ((overloadable)) dot(double3 a, double3 b)
 {
-  return cl_dot(a.s01, b.s01) + a.s2 * b.s2;
+  return dot(a.s01, b.s01) + a.s2 * b.s2;
 }
 
-double __attribute__ ((overloadable))
-cl_dot(double4 a, double4 b)
+double __attribute__ ((overloadable)) dot(double4 a, double4 b)
 {
-  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-double __attribute__ ((overloadable))
-cl_dot(double8 a, double8 b)
+double __attribute__ ((overloadable)) dot(double8 a, double8 b)
 {
-  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-double __attribute__ ((overloadable))
-cl_dot(double16 a, double16 b)
+double __attribute__ ((overloadable)) dot(double16 a, double16 b)
 {
-  return cl_dot(a.lo, b.lo) + cl_dot(a.hi, b.hi);
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }

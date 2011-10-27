@@ -565,6 +565,19 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   double4  __attribute__ ((overloadable)) NAME(double, double, double4 ); \
   double8  __attribute__ ((overloadable)) NAME(double, double, double8 ); \
   double16 __attribute__ ((overloadable)) NAME(double, double, double16);
+#define _CL_DECLARE_FUNC_V_VVJ(NAME)                                    \
+  float    __attribute__ ((overloadable)) NAME(float   , float   , int   ); \
+  float2   __attribute__ ((overloadable)) NAME(float2  , float2  , int2  ); \
+  float3   __attribute__ ((overloadable)) NAME(float3  , float3  , int3  ); \
+  float4   __attribute__ ((overloadable)) NAME(float4  , float4  , int4  ); \
+  float8   __attribute__ ((overloadable)) NAME(float8  , float8  , int8  ); \
+  float16  __attribute__ ((overloadable)) NAME(float16 , float16 , int16 ); \
+  double   __attribute__ ((overloadable)) NAME(double  , double  , long  ); \
+  double2  __attribute__ ((overloadable)) NAME(double2 , double2 , long2 ); \
+  double3  __attribute__ ((overloadable)) NAME(double3 , double3 , long3 ); \
+  double4  __attribute__ ((overloadable)) NAME(double4 , double4 , long4 ); \
+  double8  __attribute__ ((overloadable)) NAME(double8 , double8 , long8 ); \
+  double16 __attribute__ ((overloadable)) NAME(double16, double16, long16);
 #define _CL_DECLARE_FUNC_V_U(NAME)                              \
   float    __attribute__ ((overloadable)) NAME(uint   );        \
   float2   __attribute__ ((overloadable)) NAME(uint2  );        \
@@ -602,6 +615,19 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   double4  __attribute__ ((overloadable)) NAME(double4 , int4 );        \
   double8  __attribute__ ((overloadable)) NAME(double8 , int8 );        \
   double16 __attribute__ ((overloadable)) NAME(double16, int16);
+#define _CL_DECLARE_FUNC_J_VV(NAME)                                     \
+  int    __attribute__ ((overloadable)) NAME(float   , float   );       \
+  int2   __attribute__ ((overloadable)) NAME(float2  , float2  );       \
+  int3   __attribute__ ((overloadable)) NAME(float3  , float3  );       \
+  int4   __attribute__ ((overloadable)) NAME(float4  , float4  );       \
+  int8   __attribute__ ((overloadable)) NAME(float8  , float8  );       \
+  int16  __attribute__ ((overloadable)) NAME(float16 , float16 );       \
+  int    __attribute__ ((overloadable)) NAME(double  , double  );       \
+  long2  __attribute__ ((overloadable)) NAME(double2 , double2 );       \
+  long3  __attribute__ ((overloadable)) NAME(double3 , double3 );       \
+  long4  __attribute__ ((overloadable)) NAME(double4 , double4 );       \
+  long8  __attribute__ ((overloadable)) NAME(double8 , double8 );       \
+  long16 __attribute__ ((overloadable)) NAME(double16, double16);
 #define _CL_DECLARE_FUNC_V_VI(NAME)                             \
   float2   __attribute__ ((overloadable)) NAME(float2  , int);  \
   float3   __attribute__ ((overloadable)) NAME(float3  , int);  \
@@ -1134,6 +1160,31 @@ _CL_DECLARE_FUNC_V_V(trunc)
   ulong4   __attribute__ ((overloadable)) NAME(uint4   , uint4   );     \
   ulong8   __attribute__ ((overloadable)) NAME(uint8   , uint8   );     \
   ulong16  __attribute__ ((overloadable)) NAME(uint16  , uint16  );
+#define _CL_DECLARE_FUNC_I_IG(NAME)                     \
+  int __attribute__ ((overloadable)) NAME(char   );     \
+  int __attribute__ ((overloadable)) NAME(char2  );     \
+  int __attribute__ ((overloadable)) NAME(char3  );     \
+  int __attribute__ ((overloadable)) NAME(char4  );     \
+  int __attribute__ ((overloadable)) NAME(char8  );     \
+  int __attribute__ ((overloadable)) NAME(char16 );     \
+  int __attribute__ ((overloadable)) NAME(short  );     \
+  int __attribute__ ((overloadable)) NAME(short2 );     \
+  int __attribute__ ((overloadable)) NAME(short3 );     \
+  int __attribute__ ((overloadable)) NAME(short4 );     \
+  int __attribute__ ((overloadable)) NAME(short8 );     \
+  int __attribute__ ((overloadable)) NAME(short16);     \
+  int __attribute__ ((overloadable)) NAME(int    );     \
+  int __attribute__ ((overloadable)) NAME(int2   );     \
+  int __attribute__ ((overloadable)) NAME(int3   );     \
+  int __attribute__ ((overloadable)) NAME(int4   );     \
+  int __attribute__ ((overloadable)) NAME(int8   );     \
+  int __attribute__ ((overloadable)) NAME(int16  );     \
+  int __attribute__ ((overloadable)) NAME(long   );     \
+  int __attribute__ ((overloadable)) NAME(long2  );     \
+  int __attribute__ ((overloadable)) NAME(long3  );     \
+  int __attribute__ ((overloadable)) NAME(long4  );     \
+  int __attribute__ ((overloadable)) NAME(long8  );     \
+  int __attribute__ ((overloadable)) NAME(long16 );
 #define _CL_DECLARE_FUNC_J_JJ(NAME)                                     \
   int      __attribute__ ((overloadable)) NAME(int   , int     );       \
   int2     __attribute__ ((overloadable)) NAME(int2    , int2    );     \
@@ -1207,10 +1258,38 @@ _CL_DECLARE_FUNC_V_V(sign)
 
 float4 __attribute__ ((overloadable)) cross(float4, float4);
 float3 __attribute__ ((overloadable)) cross(float3, float3);
+double4 __attribute__ ((overloadable)) cross(double4, double4);
+double3 __attribute__ ((overloadable)) cross(double3, double3);
 _CL_DECLARE_FUNC_S_VV(dot)
 _CL_DECLARE_FUNC_S_VV(distance)
 _CL_DECLARE_FUNC_S_V(length)
 _CL_DECLARE_FUNC_V_V(normalize)
+// TODO: no double version of these
 _CL_DECLARE_FUNC_S_VV(fast_distance)
 _CL_DECLARE_FUNC_S_V(fast_length)
 _CL_DECLARE_FUNC_V_V(fast_normalize)
+
+
+
+/* Relational Functions */
+
+_CL_DECLARE_FUNC_J_VV(isequal)
+_CL_DECLARE_FUNC_J_VV(isnotequal)
+_CL_DECLARE_FUNC_J_VV(isgreater)
+_CL_DECLARE_FUNC_J_VV(isgreaterequal)
+_CL_DECLARE_FUNC_J_VV(isless)
+_CL_DECLARE_FUNC_J_VV(islessequal)
+_CL_DECLARE_FUNC_J_VV(islessgreater)
+_CL_DECLARE_FUNC_J_VV(isfinite)
+_CL_DECLARE_FUNC_J_VV(isinf)
+_CL_DECLARE_FUNC_J_VV(isnan)
+_CL_DECLARE_FUNC_J_VV(isnormal)
+_CL_DECLARE_FUNC_J_VV(isordered)
+_CL_DECLARE_FUNC_J_VV(isunordered)
+_CL_DECLARE_FUNC_J_V(signbit)
+_CL_DECLARE_FUNC_I_IG(any)
+_CL_DECLARE_FUNC_I_IG(all)
+_CL_DECLARE_FUNC_G_GGG(bitselect)
+_CL_DECLARE_FUNC_V_VVV(bitselect)
+_CL_DECLARE_FUNC_G_GGG(select)
+_CL_DECLARE_FUNC_V_VVJ(select)
