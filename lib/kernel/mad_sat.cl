@@ -49,6 +49,7 @@ DEFINE_EXPR_G_GGG(mad_sat,
                   ({
                     int bits = CHAR_BIT * sizeof(sgtype);
                     gtype min = (sgtype)1 << (sgtype)(bits-1);
+                    gtype max = min + (sgtype)1;
                     gtype ah = SHI(a);
                     gtype al = SLO(a);
                     gtype bh = SHI(b);
@@ -66,7 +67,7 @@ DEFINE_EXPR_G_GGG(mad_sat,
                       /* no overflow */
                       SCOMBINE(abclh, abcll) :
                       /* overflow */
-                      min + (gtype)(abch>=(gtype)0);
+                      abch>=(gtype)0 ? max : min;
                   }) :
                   /* unsigned */
                   ({

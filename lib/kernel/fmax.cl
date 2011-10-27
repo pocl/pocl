@@ -27,15 +27,26 @@ DEFINE_EXPR_V_VS(fmax, fmax(a, (vtype)b))
 
 
 
+float4 _cl_fmax_ensure_float4(float4 a)
+{
+  return a;
+}
+
+double2 _cl_fmax_ensure_double2(double2 a)
+{
+  return a;
+}
+
+
+
 float __attribute__ ((overloadable))
 fmax(float a, float b)
 {
 #ifdef __SSE__
   // LLVM does not optimise this on its own
-  // Can't convert to float4 (why?) -- need a temporary
+  // Can't convert to float4 (why?)
   // return ((float4)__builtin_ia32_maxss(*(float4*)&a, *(float4*)&b)).s0;
-  float4 result = __builtin_ia32_maxss(*(float4*)&a, *(float4*)&b);
-  return result.s0;
+  return _cl_fmax_ensure_float4(__builtin_ia32_maxss(*(float4*)&a, *(float4*)&b)).s0;
 #else
   return __builtin_fmaxf(a, b);
 #endif
@@ -92,10 +103,9 @@ fmax(double a, double b)
 {
 #ifdef __SSE2__
   // LLVM does not optimise this on its own
-  // Can't convert to double2 (why?) -- need a temporary
+  // Can't convert to double2 (why?)
   // return ((double2)__builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b)).s0;
-  double2 result = __builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b);
-  return result.s0;
+  return _cl_fmax_ensure_double2(__builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b)).s0;
 #else
   return __builtin_fmax(a, b);
 #endif
