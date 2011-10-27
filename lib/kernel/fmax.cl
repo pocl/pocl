@@ -32,7 +32,10 @@ fmax(float a, float b)
 {
 #ifdef __SSE__
   // LLVM does not optimise this on its own
-  return ((float4)__builtin_ia32_maxss(*(float4*)&a, *(float4*)&b)).s0;
+  // Can't convert to float4 (why?) -- need a temporary
+  // return ((float4)__builtin_ia32_maxss(*(float4*)&a, *(float4*)&b)).s0;
+  float4 result = __builtin_ia32_maxss(*(float4*)&a, *(float4*)&b);
+  return result.s0;
 #else
   return __builtin_fmaxf(a, b);
 #endif
@@ -89,7 +92,10 @@ fmax(double a, double b)
 {
 #ifdef __SSE2__
   // LLVM does not optimise this on its own
-  return ((double2)__builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b)).s0;
+  // Can't convert to double2 (why?) -- need a temporary
+  // return ((double2)__builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b)).s0;
+  double2 result = __builtin_ia32_maxsd(*(double2*)&a, *(double2*)&b);
+  return result.s0;
 #else
   return __builtin_fmax(a, b);
 #endif
