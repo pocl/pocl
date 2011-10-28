@@ -156,8 +156,11 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .cl.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-.c.o: %.c $(top_srcdir)/include/_kernel.h
+.c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
+
+$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
+$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h
