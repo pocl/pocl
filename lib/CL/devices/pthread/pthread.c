@@ -27,6 +27,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128
 
@@ -40,6 +42,7 @@ struct thread_arguments {
   cl_kernel kernel;
   unsigned device;
   struct pocl_context pc;
+  int last_gid_x; 
   workgroup workgroup;
 };
 
@@ -139,6 +142,82 @@ pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
   memcpy (host_ptr, device_ptr, cb);
 }
 
+//#define DEBUG_MAX_THREAD_COUNT
+/**
+ * Return an estimate for the maximum thread count that should produce
+ * the maximum parallelism without extra threading overheads.
+ */
+int 
+get_max_thread_count() {
+  /* query from /proc/cpuinfo how many hardware threads there are, if available */
+  const char* cpuinfo = "/proc/cpuinfo";
+  /* eight is a good round number ;) */
+  const int FALLBACK_MAX_THREAD_COUNT = 8;
+  if (access (cpuinfo, R_OK) == 0) 
+    {
+      FILE *f = fopen (cpuinfo, "r");
+#     define MAX_CPUINFO_SIZE 4096
+      char contents[MAX_CPUINFO_SIZE];
+      int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
+      fclose (f);
+      contents[num_read] = '\0';
+
+      /* Count the number of times 'processor' keyword is found which
+         should give the number of cores overall in a multiprocessor
+         system. */
+      int cores = 0;
+      char* p = contents;
+      while ((p = strstr (p, "processor")) != NULL) 
+        {
+          cores++;
+          ++p;
+        }     
+#ifdef DEBUG_MAX_THREAD_COUNT 
+      printf("total cores %d\n", cores);
+#endif
+      if (cores == 0)
+        return FALLBACK_MAX_THREAD_COUNT;
+
+      int cores_per_cpu = 1;
+      p = contents;
+      if ((p = strstr (p, "cpu cores")) != NULL)
+        {
+          if (sscanf (p, ": %d\n", cores_per_cpu) != 1)
+            cores_per_cpu = 1;
+#ifdef DEBUG_MAX_THREAD_COUNT 
+          printf ("cores per cpu %d\n", cores_per_cpu);
+#endif
+        }
+
+      int siblings = 1;
+      p = contents;
+      if ((p = strstr (p, "siblings")) != NULL)
+        {
+          if (sscanf (p, ": %d\n", siblings) != 1)
+            siblings = cores_per_cpu;
+#ifdef DEBUG_MAX_THREAD_COUNT 
+          printf ("siblings %d\n", siblings);
+#endif
+        }
+      if (siblings > cores_per_cpu) {
+#ifdef DEBUG_MAX_THREAD_COUNT 
+        printf ("max threads %d\n", cores*(siblings/cores_per_cpu));
+#endif
+        return cores*(siblings/cores_per_cpu); /* hardware threading is on */
+      } else {
+#ifdef DEBUG_MAX_THREAD_COUNT 
+        printf ("max threads %d\n", cores);
+#endif
+        return cores; /* only multicore, if not unicore*/
+      }      
+    } 
+#ifdef DEBUG_MAX_THREAD_COUNT 
+  printf ("could not open /proc/cpuinfo, falling back to max threads %d\n", 
+          FALLBACK_MAX_THREAD_COUNT);
+#endif
+  return FALLBACK_MAX_THREAD_COUNT;
+}
+
 void
 pocl_pthread_run (void *data, const char *parallel_filename,
 		 cl_kernel kernel,
@@ -229,44 +308,101 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   
   w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
+  int num_groups_x = pc->num_groups[0];
+  /* TODO: distributing the work groups in the x dimension is not always the
+     best option. This assumes x dimension has enough work groups to utilize
+     all the threads. */
+  int max_threads = get_max_thread_count();
+  int num_threads = min(max_threads, num_groups_x);
+  pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
+  struct thread_arguments *arguments = 
+    (struct thread_arguments*) malloc (sizeof (struct thread_arguments)*num_threads);
 
-  struct thread_arguments
-    arguments[pc->num_groups[0]][pc->num_groups[1]][pc->num_groups[2]];
-  pthread_t
-    thread[pc->num_groups[0]][pc->num_groups[1]][pc->num_groups[2]];
+  int wgs_per_thread = num_groups_x / num_threads;
+  /* In case the work group count is not divisible by the
+     number of threads, we have to execute the remaining
+     workgroups in one of the threads. */
+  int leftover_wgs = num_groups_x - (num_threads*wgs_per_thread);
 
+#ifdef DEBUG_MT    
+  printf("### global_work_size[0]==%%d local_work_size[0]==%%d\\n", 
+         global_work_size[0], local_work_size[0]);
+  printf("### creating %%d work group threads\\n", num_threads);
+  printf("### wgs per thread==%%d leftover wgs==%%d\\n", wgs_per_thread, leftover_wgs);
+#endif
+  
+  int first_gid_x = 0;
+  int last_gid_x = wgs_per_thread - 1;
+  for (i = 0; i < num_threads; 
+       ++i, first_gid_x += wgs_per_thread, last_gid_x += wgs_per_thread) {
+
+    if (i + 1 == num_threads) last_gid_x += leftover_wgs;
+
+#ifdef DEBUG_MT       
+    printf("### creating wg thread: first_gid_x==%%d, last_gid_x==%%d\\n",
+           first_gid_x, last_gid_x);
+#endif
+
+    pc->group_id[0] = x;
+    pc->group_id[1] = y;
+    pc->group_id[2] = z;
+
+    arguments[i].data = data;
+    arguments[i].kernel = kernel;
+    arguments[i].device = device;
+    arguments[i].pc = *pc;
+    arguments[i].workgroup = w;
+    arguments[i].last_gid_x = last_gid_x;
+
+    pthread_create (&threads[i],
+                    NULL,
+                    workgroup_thread,
+                    &arguments[i]);
+  }
+
+  for (i = 0; i < num_threads; ++i) {
+    pthread_join(threads[i], NULL);
+#ifdef DEBUG_MT       
+    printf("### thread %%x finished\\n", (unsigned)threads[i]);
+#endif
+  }
+
+#if 0
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
-	{
-	  for (x = 0; x < pc->num_groups[0]; ++x)
-	    {
-	      pc->group_id[0] = x;
-	      pc->group_id[1] = y;
-	      pc->group_id[2] = z;
+        {
+          for (x = 0; x < pc->num_groups[0]; ++x)
+            {
+              pc->group_id[0] = x;
+              pc->group_id[1] = y;
+              pc->group_id[2] = z;
 
-	      arguments[x][y][z].data = data;
-	      arguments[x][y][z].kernel = kernel;
-	      arguments[x][y][z].device = device;
-	      arguments[x][y][z].pc = *pc;
-	      arguments[x][y][z].workgroup = w;
+              arguments[x][y][z].data = data;
+              arguments[x][y][z].kernel = kernel;
+              arguments[x][y][z].device = device;
+              arguments[x][y][z].pc = *pc;
+              arguments[x][y][z].workgroup = w;
 
-	      pthread_create (&thread[x][y][z],
-			      NULL,
-			      workgroup_thread,
-			      &arguments[x][y][z]);
-	    }
-	}
+              pthread_create (&thread[x][y][z],
+                              NULL,
+                              workgroup_thread,
+                              &arguments[x][y][z]);
+            }
+        }
     }
 
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
-	{
-	  for (x = 0; x < pc->num_groups[0]; ++x)
-	    pthread_join(thread[x][y][z], NULL);
-	}
+        {
+          for (x = 0; x < pc->num_groups[0]; ++x)
+            pthread_join(thread[x][y][z], NULL);
+        }
     }
+#endif
+  free(threads);
+  free(arguments);
 }
 
 void *
@@ -275,43 +411,51 @@ workgroup_thread (void *p)
   struct thread_arguments *ta = (struct thread_arguments *) p;
   void *arguments[ta->kernel->num_args];
   struct pocl_argument_list *al;  
-  unsigned i;
-
-  i = 0;
+  unsigned i = 0;
   al = ta->kernel->arguments;
   while (al != NULL)
     {
       if (ta->kernel->arg_is_local[i])
-	{
-	  arguments[i] = malloc (sizeof (void *));
-	  *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
-	}
-      else if (ta->kernel->arg_is_pointer[i])
-	arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+        {
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
+        } else if (ta->kernel->arg_is_pointer[i])
+        arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
       else
-	arguments[i] = al->value;
+        arguments[i] = al->value;
       
       ++i;
       al = al->next;
     }
 
-  ta->workgroup (arguments, &(ta->pc));
-
+  int first_gid_x = ta->pc.group_id[0];
+  unsigned gid_z, gid_y, gid_x;
+  for (gid_z = 0; gid_z < ta->pc.num_groups[2]; ++gid_z)
+    {
+      for (gid_y = 0; gid_y < ta->pc.num_groups[1]; ++gid_y)
+        {
+          for (gid_x = first_gid_x; gid_x <= ta->last_gid_x; ++gid_x)
+            {
+              ta->pc.group_id[0] = gid_x;
+              ta->pc.group_id[1] = gid_y;
+              ta->pc.group_id[2] = gid_z;
+              ta->workgroup (arguments, &(ta->pc));              
+            }
+        }
+    }
+  
   i = 0;
   al = ta->kernel->arguments;
   while (al != NULL)
     {
       if (ta->kernel->arg_is_local[i])
-	{
-	  pocl_pthread_free(ta->data, *(void **)(arguments[i]));
-	  free (arguments[i]);
-	}
+        {
+          pocl_pthread_free(ta->data, *(void **)(arguments[i]));
+          free (arguments[i]);
+        }
 
       ++i;
       al = al->next;
     }
-
   return NULL;
 }
-  
-  
