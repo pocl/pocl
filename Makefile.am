@@ -22,6 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = include lib scripts examples
+SUBDIRS = include lib scripts examples tests
 
 ACLOCAL_AMFLAGS = -I m4
