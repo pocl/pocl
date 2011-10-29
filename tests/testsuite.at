@@ -1,0 +1,60 @@
+# Testsuite for Portable OpenCL.
+#
+# Makefile.am for pocl/lib/kernel.
+# 
+# Copyright (c) 2011 Universidad Rey Juan Carlos
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+AT_INIT()
+
+AT_SETUP([OpenCL specification tests])
+AT_DATA([expout],
+[(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
+(1.000000, 1.000000, 1.000000, 1.000000) . (1.000000, 1.000000, 1.000000, 1.000000) = 4.000000
+(2.000000, 2.000000, 2.000000, 2.000000) . (2.000000, 2.000000, 2.000000, 2.000000) = 16.000000
+(3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
+OK
+])
+AT_CHECK([$abs_top_builddir/examples/example1/example1], 0, expout)
+
+AT_CHECK([$abs_top_builddir/examples/example2/example2], 0, [OK
+])
+AT_CLEANUP
+
+AT_SETUP([Workgroup creation])
+AT_CHECK([$abs_top_builddir/examples/barriers/barriers], 0, ignore)
+
+AT_CHECK([$abs_top_builddir/examples/forloops/forloops], 0, ignore)
+AT_CLEANUP
+
+AT_SETUP([Kernel runtime library])
+AT_DATA([expout],
+[f(0.000000, 0.000000, 0.000000, 0.000000) = (1.000000, 1.000000, 1.000000, 1.000000)
+f(1.000000, 1.000000, 1.000000, 1.000000) = (1.000000, 1.000000, 1.000000, 1.000000)
+f(2.000000, 2.000000, 2.000000, 2.000000) = (0.909297, 0.909297, 0.909297, 0.909297)
+f(3.000000, 3.000000, 3.000000, 3.000000) = (1.732051, 1.732051, 1.732051, 1.732051)
+f(4.000000, 4.000000, 4.000000, 4.000000) = (1.157821, 1.157821, 1.157821, 1.157821)
+f(5.000000, 5.000000, 5.000000, 5.000000) = (0.283662, 0.283662, 0.283662, 0.283662)
+f(6.000000, 6.000000, 6.000000, 6.000000) = (6.000000, 6.000000, 6.000000, 6.000000)
+f(7.000000, 7.000000, 7.000000, 7.000000) = (0.656987, 0.656987, 0.656987, 0.656987)
+OK
+])
+AT_CHECK([$abs_top_builddir/examples/trig/trig], 0, expout)
+AT_CLEANUP

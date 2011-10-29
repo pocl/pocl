@@ -27,6 +27,7 @@ AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_TESTDIR([tests])
 AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 
@@ -120,6 +121,8 @@ AC_CONFIG_FILES([Makefile
 		 examples/forloops/Makefile
 		 examples/standalone/Makefile
 		 examples/trig/Makefile
-                 scripts/Makefile])
+                 scripts/Makefile
+                 tests/Makefile
+                 tests/atlocal])
 
 AC_OUTPUT

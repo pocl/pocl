@@ -1,4 +1,4 @@
-/* OpenCL built-in library: fabs()
+/* OpenCL built-in library: copysign()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,6 +21,13 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#include "../templates.h"
 
-DEFINE_BUILTIN_V_V(fabs)
+DEFINE_EXPR_V_VV(copysign,
+                 ({
+                   int bits = CHAR_BIT * sizeof(stype);
+                   jtype sign_mask = (jtype)1 << (jtype)(bits - 1);
+                   jtype result = ((~sign_mask & *(jtype*)&a) |
+                                   ( sign_mask & *(jtype*)&b));
+                   *(vtype*)&result;
+                 }))

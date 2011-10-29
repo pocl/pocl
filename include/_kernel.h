@@ -35,7 +35,7 @@
 #define __SSE4_1__
 
 
-
+#ifndef __TCE__
 //#define __kernel __attribute__ ((noinline))
 #define __global __attribute__ ((address_space(3)))
 #define __local __attribute__ ((address_space(4)))
@@ -44,7 +44,7 @@
 #define global __attribute__ ((address_space(3)))
 #define local __attribute__ ((address_space(4)))
 #define constant __attribute__ ((address_space(5)))
-
+#endif
 
 
 typedef enum {
