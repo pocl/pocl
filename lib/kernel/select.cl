@@ -26,9 +26,9 @@
 DEFINE_EXPR_G_GGG(select, c>=(gtype)0 ? a : b)
 
 // This segfaults Clang 3.0, so we work around
-// DEFINE_EXPR_V_VVJ(select, c>=(jtype)0 ? a : b)
+// DEFINE_EXPR_V_VVJ(select, c ? b : a)
 DEFINE_EXPR_V_VVJ(select,
                   ({
-                    jtype result = c>=(jtype)0 ? *(jtype*)&a : *(jtype*)&b;
+                    jtype result = c ? *(jtype*)&b : *(jtype*)&a;
                     *(vtype*)&result;
                   }))

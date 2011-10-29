@@ -23,4 +23,18 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_VV(maxmag, fmax(fabs(a), fabs(b)))
+float __builtin_maxmagf(float x, float y)
+{
+  if (fabs(x) > fabs(y)) return x;
+  if (fabs(y) > fabs(x)) return y;
+  return fmax(x, y);
+}
+
+double __builtin_maxmag(double x, double y)
+{
+  if (fabs(x) > fabs(y)) return x;
+  if (fabs(y) > fabs(x)) return y;
+  return fmax(x, y);
+}
+
+DEFINE_BUILTIN_V_VV(maxmag)

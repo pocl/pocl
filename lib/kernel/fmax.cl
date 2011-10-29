@@ -21,8 +21,12 @@
    THE SOFTWARE.
 */
 
+#undef fmax
+
 #include "templates.h"
 
-DEFINE_BUILTIN_V_VV(fmax)
+#define __builtin__cl_std_fmaxf __builtin_fmaxf
+#define __builtin__cl_std_fmax  __builtin_fmax
+DEFINE_BUILTIN_V_VV(_cl_std_fmax)
 
-DEFINE_EXPR_V_VS(fmax, fmax(a, (vtype)b))
+DEFINE_EXPR_V_VS(_cl_std_fmax, _cl_std_fmax(a, (vtype)b))

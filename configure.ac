@@ -112,6 +112,7 @@ AC_CONFIG_FILES([Makefile
 		 lib/llvmopencl/Makefile
 		 lib/kernel/Makefile
 		 lib/kernel/dummy/Makefile
+		 lib/kernel/x86/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
 		 examples/example2/Makefile

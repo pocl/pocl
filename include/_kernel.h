@@ -32,6 +32,8 @@
 */
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 
+#define __SSE4_1__
+
 
 
 //#define __kernel __attribute__ ((noinline))
@@ -834,11 +836,26 @@ _CL_DECLARE_FUNC_V_V(expm1)
 _CL_DECLARE_FUNC_V_V(fabs)
 _CL_DECLARE_FUNC_V_VV(fdim)
 _CL_DECLARE_FUNC_V_V(floor)
-_CL_DECLARE_FUNC_V_VVV(fma)
-_CL_DECLARE_FUNC_V_VV(fmax)
-_CL_DECLARE_FUNC_V_VS(fmax)
-_CL_DECLARE_FUNC_V_VV(fmin)
-_CL_DECLARE_FUNC_V_VS(fmin)
+#if __FAST__RELAXED__MATH__
+#  define _cl_fma _cl_fast_fma
+#else
+#  define _cl_fma _cl_std_fma
+#endif
+#define _cl_fast_fma mad
+_CL_DECLARE_FUNC_V_VVV(_cl_std_fma)
+#if __FAST__RELAXED__MATH__
+#  define fmax _cl_fast_fmax
+#  define fmin _cl_fast_fmin
+#else
+#  define fmax _cl_std_fmax
+#  define fmin _cl_std_fmin
+#endif
+#define _cl_fast_fmax max
+#define _cl_fast_fmin min
+_CL_DECLARE_FUNC_V_VV(_cl_std_fmax)
+_CL_DECLARE_FUNC_V_VS(_cl_std_fmax)
+_CL_DECLARE_FUNC_V_VV(_cl_std_fmin)
+_CL_DECLARE_FUNC_V_VS(_cl_std_fmin)
 _CL_DECLARE_FUNC_V_VV(fmod)
 _CL_DECLARE_FUNC_V_VPV(fract)
 // frexp
@@ -1470,5 +1487,119 @@ _CL_DECLARE_FUNC_I_IG(_cl_scalar)
 _CL_DECLARE_FUNC_S_V(_cl_scalar)
 #define vec_step(a) (sizeof(a) / sizeof(_cl_scalar(a)))
 
-// shuffle
+
+
+// This code leads to an ICE in Clang
+
+// #define _CL_DECLARE_SHUFFLE_2(GTYPE, UGTYPE, STYPE, M)                  \
+//   GTYPE##2 _cl_overloadable shuffle(GTYPE##M x, UGTYPE##2 mask)         \
+//   {                                                                     \
+//     UGTYPE bits = (UGTYPE)1 << (UGTYPE)M;                               \
+//     UGTYPE bmask = bits - (UGTYPE)1;                                    \
+//     return __builtin_shufflevector(x, x,                                \
+//                                    mask.s0 & bmask, mask.s1 & bmask);   \
+//   }
+// #define _CL_DECLARE_SHUFFLE_3(GTYPE, UGTYPE, STYPE, M)                  \
+//   GTYPE##3 _cl_overloadable shuffle(GTYPE##M x, UGTYPE##3 mask)         \
+//   {                                                                     \
+//     UGTYPE bits = (UGTYPE)1 << (UGTYPE)M;                               \
+//     UGTYPE bmask = bits - (UGTYPE)1;                                    \
+//     return __builtin_shufflevector(x, x,                                \
+//                                    mask.s0 & bmask, mask.s1 & bmask,    \
+//                                    mask.s2 & bmask);                    \
+//   }
+// #define _CL_DECLARE_SHUFFLE_4(GTYPE, UGTYPE, STYPE, M)                  \
+//   GTYPE##4 _cl_overloadable shuffle(GTYPE##M x, UGTYPE##4 mask)         \
+//   {                                                                     \
+//     UGTYPE bits = (UGTYPE)1 << (UGTYPE)M;                               \
+//     UGTYPE bmask = bits - (UGTYPE)1;                                    \
+//     return __builtin_shufflevector(x, x,                                \
+//                                    mask.s0 & bmask, mask.s1 & bmask,    \
+//                                    mask.s2 & bmask, mask.s3 & bmask);   \
+//   }
+// #define _CL_DECLARE_SHUFFLE_8(GTYPE, UGTYPE, STYPE, M)                  \
+//   GTYPE##8 _cl_overloadable shuffle(GTYPE##M x, UGTYPE##8 mask)         \
+//   {                                                                     \
+//     UGTYPE bits = (UGTYPE)1 << (UGTYPE)M;                               \
+//     UGTYPE bmask = bits - (UGTYPE)1;                                    \
+//     return __builtin_shufflevector(x, x,                                \
+//                                    mask.s0 & bmask, mask.s1 & bmask,    \
+//                                    mask.s2 & bmask, mask.s3 & bmask,    \
+//                                    mask.s4 & bmask, mask.s5 & bmask,    \
+//                                    mask.s6 & bmask, mask.s7 & bmask);   \
+//   }
+// #define _CL_DECLARE_SHUFFLE_16(GTYPE, UGTYPE, STYPE, M)                 \
+//   GTYPE##16 _cl_overloadable shuffle(GTYPE##M x, UGTYPE##16 mask)       \
+//   {                                                                     \
+//     UGTYPE bits = (UGTYPE)1 << (UGTYPE)M;                               \
+//     UGTYPE bmask = bits - (UGTYPE)1;                                    \
+//     return __builtin_shufflevector(x, x,                                \
+//                                    mask.s0 & bmask, mask.s1 & bmask,    \
+//                                    mask.s2 & bmask, mask.s3 & bmask,    \
+//                                    mask.s4 & bmask, mask.s5 & bmask,    \
+//                                    mask.s6 & bmask, mask.s7 & bmask,    \
+//                                    mask.s8 & bmask, mask.s9 & bmask,    \
+//                                    mask.sa & bmask, mask.sb & bmask,    \
+//                                    mask.sc & bmask, mask.sd & bmask,    \
+//                                    mask.se & bmask, mask.sf & bmask);   \
+//   }
+// 
+// #define _CL_DECLARE_SHUFFLE(GTYPE, UGTYPE, STYPE, M)    \
+//   _CL_DECLARE_SHUFFLE_2 (GTYPE, UGTYPE, STYPE, M)       \
+//   _CL_DECLARE_SHUFFLE_3 (GTYPE, UGTYPE, STYPE, M)       \
+//   _CL_DECLARE_SHUFFLE_4 (GTYPE, UGTYPE, STYPE, M)       \
+//   _CL_DECLARE_SHUFFLE_8 (GTYPE, UGTYPE, STYPE, M)       \
+//   _CL_DECLARE_SHUFFLE_16(GTYPE, UGTYPE, STYPE, M)
+// 
+// _CL_DECLARE_SHUFFLE(char  , uchar , char  , 2 )
+// _CL_DECLARE_SHUFFLE(char  , uchar , char  , 3 )
+// _CL_DECLARE_SHUFFLE(char  , uchar , char  , 4 )
+// _CL_DECLARE_SHUFFLE(char  , uchar , char  , 8 )
+// _CL_DECLARE_SHUFFLE(char  , uchar , char  , 16)
+// _CL_DECLARE_SHUFFLE(uchar , uchar , char  , 2 )
+// _CL_DECLARE_SHUFFLE(uchar , uchar , char  , 3 )
+// _CL_DECLARE_SHUFFLE(uchar , uchar , char  , 4 )
+// _CL_DECLARE_SHUFFLE(uchar , uchar , char  , 8 )
+// _CL_DECLARE_SHUFFLE(uchar , uchar , char  , 16)
+// _CL_DECLARE_SHUFFLE(short , ushort, short , 2 )
+// _CL_DECLARE_SHUFFLE(short , ushort, short , 3 )
+// _CL_DECLARE_SHUFFLE(short , ushort, short , 4 )
+// _CL_DECLARE_SHUFFLE(short , ushort, short , 8 )
+// _CL_DECLARE_SHUFFLE(short , ushort, short , 16)
+// _CL_DECLARE_SHUFFLE(ushort, ushort, short , 2 )
+// _CL_DECLARE_SHUFFLE(ushort, ushort, short , 3 )
+// _CL_DECLARE_SHUFFLE(ushort, ushort, short , 4 )
+// _CL_DECLARE_SHUFFLE(ushort, ushort, short , 8 )
+// _CL_DECLARE_SHUFFLE(ushort, ushort, short , 16)
+// _CL_DECLARE_SHUFFLE(int   , uint  , int   , 2 )
+// _CL_DECLARE_SHUFFLE(int   , uint  , int   , 3 )
+// _CL_DECLARE_SHUFFLE(int   , uint  , int   , 4 )
+// _CL_DECLARE_SHUFFLE(int   , uint  , int   , 8 )
+// _CL_DECLARE_SHUFFLE(int   , uint  , int   , 16)
+// _CL_DECLARE_SHUFFLE(uint  , uint  , int   , 2 )
+// _CL_DECLARE_SHUFFLE(uint  , uint  , int   , 3 )
+// _CL_DECLARE_SHUFFLE(uint  , uint  , int   , 4 )
+// _CL_DECLARE_SHUFFLE(uint  , uint  , int   , 8 )
+// _CL_DECLARE_SHUFFLE(uint  , uint  , int   , 16)
+// _CL_DECLARE_SHUFFLE(long  , ulong , long  , 2 )
+// _CL_DECLARE_SHUFFLE(long  , ulong , long  , 3 )
+// _CL_DECLARE_SHUFFLE(long  , ulong , long  , 4 )
+// _CL_DECLARE_SHUFFLE(long  , ulong , long  , 8 )
+// _CL_DECLARE_SHUFFLE(long  , ulong , long  , 16)
+// _CL_DECLARE_SHUFFLE(ulong , ulong , long  , 2 )
+// _CL_DECLARE_SHUFFLE(ulong , ulong , long  , 3 )
+// _CL_DECLARE_SHUFFLE(ulong , ulong , long  , 4 )
+// _CL_DECLARE_SHUFFLE(ulong , ulong , long  , 8 )
+// _CL_DECLARE_SHUFFLE(ulong , ulong , long  , 16)
+// _CL_DECLARE_SHUFFLE(float , uint  , float , 2 )
+// _CL_DECLARE_SHUFFLE(float , uint  , float , 3 )
+// _CL_DECLARE_SHUFFLE(float , uint  , float , 4 )
+// _CL_DECLARE_SHUFFLE(float , uint  , float , 8 )
+// _CL_DECLARE_SHUFFLE(float , uint  , float , 16)
+// _CL_DECLARE_SHUFFLE(double, ulong , double, 2 )
+// _CL_DECLARE_SHUFFLE(double, ulong , double, 3 )
+// _CL_DECLARE_SHUFFLE(double, ulong , double, 4 )
+// _CL_DECLARE_SHUFFLE(double, ulong , double, 8 )
+// _CL_DECLARE_SHUFFLE(double, ulong , double, 16)
+
 // shuffle2
