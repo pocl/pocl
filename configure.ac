@@ -124,5 +124,7 @@ AC_CONFIG_FILES([Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal])
+# lib/kernel/bgp/Makefile
+# lib/kernel/ppc/Makefile
 
 AC_OUTPUT

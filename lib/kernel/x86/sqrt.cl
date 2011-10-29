@@ -21,146 +21,58 @@
    THE SOFTWARE.
 */
 
+#define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
+  TYPE _cl_overloadable NAME(TYPE a)            \
+  {                                             \
+    return EXPR;                                \
+  }
+
+#define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
+  TYPE _cl_overloadable NAME(TYPE a)                    \
+  {                                                     \
+    return NAME(*(UPTYPE*)&a).LO;                       \
+  }
+
+#define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)     \
+  TYPE _cl_overloadable NAME(TYPE a)            \
+  {                                             \
+    return (TYPE)(NAME(a.LO), NAME(a.HI));      \
+  }
+
+
+
 #ifdef __SSE__
-float4 _cl_sqrt_ensure_float4(float4 a)
+float4 _cl_max_ensure_float4(float4 a)
 {
   return a;
 }
-
-float __attribute__ ((__overloadable__))
-sqrt(float a)
-{
-  return _cl_sqrt_ensure_float4(__builtin_ia32_sqrtss(*(float4*)&a)).s0;
-}
-
-float2 __attribute__ ((__overloadable__))
-sqrt(float2 a)
-{
-  return ((float4)sqrt(*(float4*)&a)).s01;
-}
-
-float3 __attribute__ ((__overloadable__))
-sqrt(float3 a)
-{
-  return ((float4)sqrt(*(float4*)&a)).s012;
-}
-
-float4 __attribute__ ((__overloadable__))
-sqrt(float4 a)
-{
-  return __builtin_ia32_sqrtps(a);
-}
+IMPLEMENT_DIRECT(sqrt, float  , _cl_sqrt_ensure_float4(__builtin_ia32_sqrtss(*(float4*)&a)).s0)
+IMPLEMENT_UPCAST(sqrt, float2 , float4, lo  )
+IMPLEMENT_UPCAST(sqrt, float3 , float4, s012)
+IMPLEMENT_DIRECT(sqrt, float4 , __builtin_ia32_sqrtps(a))
 #else
-float __attribute__ ((__overloadable__))
-sqrt(float a)
-{
-  return __builtin_fsqrt(a);
-}
-
-float2 __attribute__ ((__overloadable__))
-sqrt(float2 a)
-{
-  return (float2)(sqrt(a.lo), sqrt(a.hi));
-}
-
-float3 __attribute__ ((__overloadable__))
-sqrt(float3 a)
-{
-  return (float3)(sqrt(a.lo), sqrt(a.s2));
-}
-
-float4 __attribute__ ((__overloadable__))
-sqrt(float4 a)
-{
-  return (float4)(sqrt(a.lo), sqrt(a.hi));
-}
+IMPLEMENT_DIRECT(sqrt, float  , __builtin_sqrtf(a))
+IMPLEMENT_SPLIT (sqrt, float2 , lo, hi)
+IMPLEMENT_SPLIT (sqrt, float3 , lo, s2)
+IMPLEMENT_SPLIT (sqrt, float4 , lo, hi)
 #endif
+IMPLEMENT_SPLIT (sqrt, float8 , lo, hi)
+IMPLEMENT_SPLIT (sqrt, float16, lo, hi)
 
-#ifdef __AVX__
-float8 __attribute__ ((__overloadable__))
-sqrt(float8 a)
-{
-  return __builtin_ia32_sqrtps256(a);
-}
-#else
-float8 __attribute__ ((__overloadable__))
-sqrt(float8 a)
-{
-  return (float8)(sqrt(a.lo), sqrt(a.hi));
-}
-#endif
-
-float16 __attribute__ ((__overloadable__))
-sqrt(float16 a)
-{
-  return (float16)(sqrt(a.lo), sqrt(a.hi));
-}
-
-#ifdef __SSE2_
+#ifdef __SSE2__
 double2 _cl_sqrt_ensure_double2(double2 a)
 {
   return a;
 }
-
-double __attribute__ ((__overloadable__))
-sqrt(double a)
-{
-  return _cl_sqrt_ensure_float4(__builtin_ia32_sqrtss(*(double2*)&a)).s0;
-}
-
-double2 __attribute__ ((__overloadable__))
-sqrt(double2 a)
-{
-  return __builtin_ia32_sqrtpd(a);
-}
+IMPLEMENT_DIRECT(sqrt, double  , _cl_sqrt_ensure_double2(__builtin_ia32_sqrtsd(*(double2*)&a)).s0)
+IMPLEMENT_DIRECT(sqrt, double2 , __builtin_ia32_sqrtpd(a))
+IMPLEMENT_SPLIT (sqrt, double3 , lo, s2)
+IMPLEMENT_SPLIT (sqrt, double4 , lo, hi)
 #else
-double __attribute__ ((__overloadable__))
-sqrt(double a)
-{
-  return __builtin_sqrt(a);
-}
-
-double2 __attribute__ ((__overloadable__))
-sqrt(double2 a)
-{
-  return (double2)(sqrt(a.lo), sqrt(a.hi));
-}
+IMPLEMENT_DIRECT(sqrt, double  , __builtin_sqrt(a))
+IMPLEMENT_SPLIT (sqrt, double2 , lo, hi)
+IMPLEMENT_SPLIT (sqrt, double3 , lo, s2)
+IMPLEMENT_SPLIT (sqrt, double4 , lo, hi)
 #endif
-
-#ifdef __AVX__
-double3 __attribute__ ((__overloadable__))
-sqrt(double3 a)
-{
-  return ((double4)sqrt(*(double4*)&a)).s012;
-}
-
-double4 __attribute__ ((__overloadable__))
-sqrt(double4 a)
-{
-  return __builtin_ia32_pd256(a);
-}
-#else
-double3 __attribute__ ((__overloadable__))
-sqrt(double3 a)
-{
-  return (double3)(sqrt(a.lo), sqrt(a.s2));
-}
-
-double4 __attribute__ ((__overloadable__))
-sqrt(double4 a)
-{
-  return (double4)(sqrt(a.lo), sqrt(a.hi));
-}
-#endif
-
-double8 __attribute__ ((__overloadable__))
-sqrt(double8 a)
-{
-  return (double8)(sqrt(a.lo), sqrt(a.hi));
-}
-
-double16 __attribute__ ((__overloadable__))
-sqrt(double16 a)
-{
-  return (double16)(sqrt(a.lo), sqrt(a.hi));
-}
+IMPLEMENT_SPLIT (sqrt, double8 , lo, hi)
+IMPLEMENT_SPLIT (sqrt, double16, lo, hi)

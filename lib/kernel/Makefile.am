@@ -24,7 +24,7 @@
 
 LEX =
 
-SUBDIRS = dummy x86
+SUBDIRS = dummy x86 # ppc
 
 pkglib_LIBRARIES = libkernel.a
 
