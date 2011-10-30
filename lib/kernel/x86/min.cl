@@ -60,11 +60,15 @@ IMPLEMENT_DIRECT(min, char16, (char16)(a<=b) ? a : b)
 
 IMPLEMENT_DIRECT(min, uchar  , a<=b ? a : b)
 #ifdef __SSE__
+uchar16 _cl_min_convert_uchar16(char16 a)
+{
+  return as_uchar16(a);
+}
 IMPLEMENT_UPCAST(min, uchar2 , uchar4 , lo  )
 IMPLEMENT_UPCAST(min, uchar3 , uchar4 , s012)
 IMPLEMENT_UPCAST(min, uchar4 , uchar8 , lo  )
 IMPLEMENT_UPCAST(min, uchar8 , uchar16, lo  )
-IMPLEMENT_DIRECT(min, uchar16, as_uchar16(__builtin_ia32_pminub128(as_char16(a), as_char16(b))))
+IMPLEMENT_DIRECT(min, uchar16, _cl_min_convert_uchar16(__builtin_ia32_pminub128(as_char16(a), as_char16(b))))
 #else
 IMPLEMENT_DIRECT(min, uchar2 , (char2 )(a<=b) ? a : b)
 IMPLEMENT_DIRECT(min, uchar3 , (char3 )(a<=b) ? a : b)
@@ -90,10 +94,14 @@ IMPLEMENT_DIRECT(min, short16, (short16)(a<=b) ? a : b)
 
 IMPLEMENT_DIRECT(min, ushort  , a<=b ? a : b)
 #ifdef __SSE4_1__
+ushort8 _cl_min_convert_ushort8(short8 a)
+{
+  return as_ushort8(a);
+}
 IMPLEMENT_UPCAST(min, ushort2 , ushort4, lo  )
 IMPLEMENT_UPCAST(min, ushort3 , ushort4, s012)
 IMPLEMENT_UPCAST(min, ushort4 , ushort8, lo  )
-IMPLEMENT_DIRECT(min, ushort8 , as_ushort8(__builtin_ia32_pminuw128(as_short8(a), as_short8(b))))
+IMPLEMENT_DIRECT(min, ushort8 , _cl_min_convert_ushort8(__builtin_ia32_pminuw128(as_short8(a), as_short8(b))))
 IMPLEMENT_SPLIT (min, ushort16, lo, hi)
 #else
 IMPLEMENT_DIRECT(min, ushort2 , (short2 )(a<=b) ? a : b)
@@ -120,9 +128,13 @@ IMPLEMENT_DIRECT(min, int16, (int16)(a<=b) ? a : b)
 
 IMPLEMENT_DIRECT(min, uint    , a<=b ? a : b)
 #ifdef __SSE4_1__
+uint4 _cl_min_convert_uint4(int4 a)
+{
+  return as_uint4(a);
+}
 IMPLEMENT_UPCAST(min, uint2 , uint4, lo  )
 IMPLEMENT_UPCAST(min, uint3 , uint4, s012)
-IMPLEMENT_DIRECT(min, uint4 , as_uint4(__builtin_ia32_pminud128(as_int4(a), as_int4(b))))
+IMPLEMENT_DIRECT(min, uint4 , _cl_min_convert_uint4(__builtin_ia32_pminud128(as_int4(a), as_int4(b))))
 IMPLEMENT_SPLIT (min, uint8 , lo, hi)
 IMPLEMENT_SPLIT (min, uint16, lo, hi)
 #else

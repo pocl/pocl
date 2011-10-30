@@ -30,3 +30,29 @@ DEFINE_EXPR_V_V(fabs,
                   jtype result = ~sign_mask & *(jtype*)&a;
                   *(vtype*)&result;
                 }))
+
+// TODO: Use these explicitly, until llvm generates efficient code
+// 
+// float fabs_ff(float a, float b)
+// {
+//   __asm__ ("andss %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
+//   return a;
+// }
+// 
+// float4 fabs_f4f4(float4 a, float4 b)
+// {
+//   __asm__ ("andps %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
+//   return a;
+// }
+// 
+// double fabs_dd(double a, double b)
+// {
+//   __asm__ ("andsd %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
+//   return a;
+// }
+// 
+// double2 fabs_d2d2(double2 a, double2 b)
+// {
+//   __asm__ ("andpd %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
+//   return a;
+// }

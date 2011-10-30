@@ -60,11 +60,15 @@ IMPLEMENT_DIRECT(max, char16, (char16)(a>=b) ? a : b)
 
 IMPLEMENT_DIRECT(max, uchar  , a>=b ? a : b)
 #ifdef __SSE__
+uchar16 _cl_max_convert_uchar16(char16 a)
+{
+  return as_uchar16(a);
+}
 IMPLEMENT_UPCAST(max, uchar2 , uchar4 , lo  )
 IMPLEMENT_UPCAST(max, uchar3 , uchar4 , s012)
 IMPLEMENT_UPCAST(max, uchar4 , uchar8 , lo  )
 IMPLEMENT_UPCAST(max, uchar8 , uchar16, lo  )
-IMPLEMENT_DIRECT(max, uchar16, as_uchar16(__builtin_ia32_pmaxub128(as_char16(a), as_char16(b))))
+IMPLEMENT_DIRECT(max, uchar16, _cl_max_convert_uchar16(__builtin_ia32_pmaxub128(as_char16(a), as_char16(b))))
 #else
 IMPLEMENT_DIRECT(max, uchar2 , (char2 )(a>=b) ? a : b)
 IMPLEMENT_DIRECT(max, uchar3 , (char3 )(a>=b) ? a : b)
@@ -90,10 +94,14 @@ IMPLEMENT_DIRECT(max, short16, (short16)(a>=b) ? a : b)
 
 IMPLEMENT_DIRECT(max, ushort  , a>=b ? a : b)
 #ifdef __SSE4_1__
+ushort8 _cl_max_convert_ushort8(short8 a)
+{
+  return as_ushort8(a);
+}
 IMPLEMENT_UPCAST(max, ushort2 , ushort4, lo  )
 IMPLEMENT_UPCAST(max, ushort3 , ushort4, s012)
 IMPLEMENT_UPCAST(max, ushort4 , ushort8, lo  )
-IMPLEMENT_DIRECT(max, ushort8 , as_ushort8(__builtin_ia32_pmaxuw128(as_short8(a), as_short8(b))))
+IMPLEMENT_DIRECT(max, ushort8 , _cl_max_convert_ushort8(__builtin_ia32_pmaxuw128(as_short8(a), as_short8(b))))
 IMPLEMENT_SPLIT (max, ushort16, lo, hi)
 #else
 IMPLEMENT_DIRECT(max, ushort2 , (short2 )(a>=b) ? a : b)
@@ -120,9 +128,13 @@ IMPLEMENT_DIRECT(max, int16, (int16)(a>=b) ? a : b)
 
 IMPLEMENT_DIRECT(max, uint    , a>=b ? a : b)
 #ifdef __SSE4_1__
+uint4 _cl_max_convert_uint4(int4 a)
+{
+  return as_uint4(a);
+}
 IMPLEMENT_UPCAST(max, uint2 , uint4, lo  )
 IMPLEMENT_UPCAST(max, uint3 , uint4, s012)
-IMPLEMENT_DIRECT(max, uint4 , as_uint4(__builtin_ia32_pmaxud128(as_int4(a), as_int4(b))))
+IMPLEMENT_DIRECT(max, uint4 , _cl_max_convert_uint4(__builtin_ia32_pmaxud128(as_int4(a), as_int4(b))))
 IMPLEMENT_SPLIT (max, uint8 , lo, hi)
 IMPLEMENT_SPLIT (max, uint16, lo, hi)
 #else

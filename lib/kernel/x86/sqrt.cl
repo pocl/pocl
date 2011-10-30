@@ -42,7 +42,7 @@
 
 
 #ifdef __SSE__
-float4 _cl_max_ensure_float4(float4 a)
+float4 _cl_sqrt_ensure_float4(float4 a)
 {
   return a;
 }
