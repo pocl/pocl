@@ -772,6 +772,19 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   int4  _cl_overloadable NAME(double4 );        \
   int8  _cl_overloadable NAME(double8 );        \
   int16 _cl_overloadable NAME(double16);
+#define _CL_DECLARE_FUNC_K_V(NAME)              \
+  int    _cl_overloadable NAME(float   );       \
+  int2   _cl_overloadable NAME(float2  );       \
+  int3   _cl_overloadable NAME(float3  );       \
+  int4   _cl_overloadable NAME(float4  );       \
+  int8   _cl_overloadable NAME(float8  );       \
+  int16  _cl_overloadable NAME(float16 );       \
+  int    _cl_overloadable NAME(double  );       \
+  long2  _cl_overloadable NAME(double2 );       \
+  long3  _cl_overloadable NAME(double3 );       \
+  long4  _cl_overloadable NAME(double4 );       \
+  long8  _cl_overloadable NAME(double8 );       \
+  long16 _cl_overloadable NAME(double16);
 #define _CL_DECLARE_FUNC_S_V(NAME)              \
   float  _cl_overloadable NAME(float   );       \
   float  _cl_overloadable NAME(float2  );       \
@@ -1371,7 +1384,7 @@ _CL_DECLARE_FUNC_J_VV(isnan)
 _CL_DECLARE_FUNC_J_VV(isnormal)
 _CL_DECLARE_FUNC_J_VV(isordered)
 _CL_DECLARE_FUNC_J_VV(isunordered)
-_CL_DECLARE_FUNC_J_V(signbit)
+_CL_DECLARE_FUNC_K_V(signbit)
 _CL_DECLARE_FUNC_I_IG(any)
 _CL_DECLARE_FUNC_I_IG(all)
 _CL_DECLARE_FUNC_G_GGG(bitselect)
