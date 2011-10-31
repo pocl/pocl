@@ -68,42 +68,42 @@ DEFINE_EXPR_V_V(fabs,
 #define IMPLEMENT_FABS_SSE_FLOAT4                                       \
   ({                                                                    \
     uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U}; \
-    __asm__ ("andnps %[src], %[dst]" :                                  \
+    __asm__ ("andps %[src], %[dst]" :                                   \
              [dst] "+x" (a) :                                           \
-             [src] "x" (sign_mask));                                    \
+             [src] "x" (~sign_mask));                                   \
     a;                                                                  \
   })
 #define IMPLEMENT_FABS_AVX_FLOAT8                                       \
   ({                                                                    \
     uint8 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U, \
                        0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U}; \
-    __asm__ ("andnps256 %[src], %[dst]" :                               \
+    __asm__ ("andps256 %[src], %[dst]" :                                \
              [dst] "=x" (a) :                                           \
-             "[dst]" (a), [src] "x" (sign_mask));                       \
+             "[dst]" (a), [src] "x" (~sign_mask));                      \
     a;                                                                  \
   })
 #define IMPLEMENT_FABS_SSE2_DOUBLE2                                     \
   ({                                                                    \
     ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};    \
-    __asm__ ("andnpd %[src], %[dst]" :                                  \
+    __asm__ ("andpd %[src], %[dst]" :                                   \
              [dst] "=x" (a) :                                           \
-             "[dst]" (a), [src] "x" (sign_mask));                       \
+             "[dst]" (a), [src] "x" (~sign_mask));                      \
     a;                                                                  \
   })
 #define IMPLEMENT_FABS_AVX_DOUBLE4                                      \
   ({                                                                    \
     ulong4 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL,     \
                         0x8000000000000000UL, 0x8000000000000000UL};    \
-    __asm__ ("andnpd256 %[src], %[dst]" :                               \
+    __asm__ ("andpd256 %[src], %[dst]" :                                \
              [dst] "=x" (a) :                                           \
-             "[dst]" (a), [src] "x" (sign_mask));                       \
+             "[dst]" (a), [src] "x" (~sign_mask));                      \
     a;                                                                  \
   })
 
 
 
 #ifdef __SSE__
-IMPLEMENT_DIRECT(fabs, float  , IMPLEMENT_FABS_SSE_FLOAT4)
+IMPLEMENT_UPCAST(fabs, float  , float2, lo)
 IMPLEMENT_UPCAST(fabs, float2 , float4, lo)
 IMPLEMENT_UPCAST(fabs, float3 , float4, s012)
 IMPLEMENT_DIRECT(fabs, float4 , IMPLEMENT_FABS_SSE_FLOAT4)
@@ -123,7 +123,7 @@ IMPLEMENT_DIRECT(fabs, float16, IMPLEMENT_FABS_DIRECT)
 #endif
 
 #ifdef __SSE2__
-IMPLEMENT_DIRECT(fabs, double  , IMPLEMENT_FABS_SSE2_DOUBLE2)
+IMPLEMENT_UPCAST(fabs, double  , double2, lo)
 IMPLEMENT_DIRECT(fabs, double2 , IMPLEMENT_FABS_SSE2_DOUBLE2)
 #  ifdef __AVX__
 IMPLEMENT_UPCAST(fabs, double3 , double4, s012)

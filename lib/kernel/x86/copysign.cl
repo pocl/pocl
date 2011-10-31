@@ -69,59 +69,59 @@ DEFINE_EXPR_V_VV(copysign,
 #define IMPLEMENT_COPYSIGN_SSE_FLOAT4                                   \
   ({                                                                    \
     uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U}; \
-    __asm__ ("andnps %[src], %[dst]" :                                  \
+    __asm__ ("andps %[src], %[dst]" :                                   \
              [dst] "+x" (a) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (~sign_mask));                                   \
     __asm__ ("andps %[src], %[dst]" :                                   \
              [dst] "+x" (b) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (sign_mask));                                    \
     __asm__ ("orps %[src], %[dst]" :                                    \
              [dst] "+x" (a) :                                           \
-             [src] "x" (b));                                          \
+             [src] "x" (b));                                            \
     a;                                                                  \
   })
 #define IMPLEMENT_COPYSIGN_AVX_FLOAT8                                   \
   ({                                                                    \
     uint8 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U, \
                        0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U}; \
-    __asm__ ("andnps256 %[src], %[dst]" :                               \
+    __asm__ ("andps256 %[src], %[dst]" :                                \
              [dst] "+x" (a) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (~sign_mask));                                   \
     __asm__ ("andps256 %[src], %[dst]" :                                \
              [dst] "+x" (b) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (sign_mask));                                    \
     __asm__ ("orps256 %[src], %[dst]" :                                 \
              [dst] "+x" (a) :                                           \
-             [b] "x" (b));                                            \
+             [b] "x" (b));                                              \
     a;                                                                  \
   })
 #define IMPLEMENT_COPYSIGN_SSE2_DOUBLE2                                 \
   ({                                                                    \
     ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};    \
-    __asm__ ("andnpd %[src], %[dst]" :                                  \
+    __asm__ ("andpd %[src], %[dst]" :                                   \
              [dst] "+x" (a) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (~sign_mask));                                   \
     __asm__ ("andpd %[src], %[dst]" :                                   \
              [dst] "+x" (b) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (sign_mask));                                    \
     __asm__ ("orpd %[src], %[dst]" :                                    \
              [dst] "+x" (a) :                                           \
-             [src] "x" (b));                                          \
+             [src] "x" (b));                                            \
     a;                                                                  \
   })
 #define IMPLEMENT_COPYSIGN_AVX_DOUBLE4                                  \
   ({                                                                    \
     ulong4 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL,     \
                         0x8000000000000000UL, 0x8000000000000000UL};    \
-    __asm__ ("andnpd256 %[src], %[dst]" :                               \
+    __asm__ ("andpd256 %[src], %[dst]" :                                \
              [dst] "+x" (a) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (~sign_mask));                                   \
     __asm__ ("andpd256 %[src], %[dst]" :                                \
              [dst] "+x" (b) :                                           \
-             [src] "x" (sign_mask));                                  \
+             [src] "x" (sign_mask));                                    \
     __asm__ ("orpd256 %[src], %[dst]" :                                 \
              [dst] "+x" (a) :                                           \
-             [src] "x" (b));                                          \
+             [src] "x" (b));                                            \
     a;                                                                  \
   })
 
