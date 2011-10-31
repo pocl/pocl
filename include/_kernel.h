@@ -22,7 +22,21 @@
    THE SOFTWARE.
 */
 
+#ifdef __TCE__
+/* TCE supports only the embedded profile for now. 
+   For example, it does not support 64-bit integers nor 
+   double precision floats yet. */
+#define __EMBEDDED_PROFILE__ 1
+#undef cl_khr_fp64
+#undef cl_khr_int64
 
+#else
+
+#undef __EMBEDDED_PROFILE__
+#define cl_khr_fp64
+#define cl_khr_int64
+
+#endif
 
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
@@ -32,9 +46,6 @@
 */
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 
-
-#ifndef __TCE__
-//#define __kernel __attribute__ ((noinline))
 #define __global __attribute__ ((address_space(3)))
 #define __local __attribute__ ((address_space(4)))
 #define __constant __attribute__ ((address_space(5)))
@@ -42,8 +53,6 @@
 #define global __attribute__ ((address_space(3)))
 #define local __attribute__ ((address_space(4)))
 #define constant __attribute__ ((address_space(5)))
-#endif
-
 
 typedef enum {
   CLK_LOCAL_MEM_FENCE = 0x1,
@@ -67,10 +76,14 @@ _cl_static_assert(short , sizeof(short ) == 2);
 _cl_static_assert(ushort, sizeof(ushort) == 2);
 _cl_static_assert(int   , sizeof(int   ) == 4);
 _cl_static_assert(uint  , sizeof(uint  ) == 4);
+#ifdef cl_khr_int64 
 _cl_static_assert(long  , sizeof(long  ) == 8);
 _cl_static_assert(ulong , sizeof(ulong ) == 8);
+#endif
 _cl_static_assert(float , sizeof(float ) == 4);
+#ifdef cl_khr_fp64
 _cl_static_assert(double, sizeof(double) == 8);
+#endif
 
 typedef char char2  __attribute__((ext_vector_type(2)));
 typedef char char3  __attribute__((ext_vector_type(3)));

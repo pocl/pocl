@@ -112,7 +112,7 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/Makefile
 		 lib/llvmopencl/Makefile
 		 lib/kernel/Makefile
-		 lib/kernel/dummy/Makefile
+		 lib/kernel/tce/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
 		 examples/example2/Makefile
