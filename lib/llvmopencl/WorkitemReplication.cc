@@ -148,7 +148,8 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
       BasicBlockSet post_subgraph;
       bb = t->getSuccessor(0);
       BasicBlock *exit = findBarriersDFS(bb, bb, post_subgraph);
-      replicateWorkitemSubgraph(post_subgraph, bb, exit);
+      if (exit != NULL)
+        replicateWorkitemSubgraph(post_subgraph, bb, exit);
 
       return NULL;
     }

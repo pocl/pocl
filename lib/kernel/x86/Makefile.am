@@ -25,7 +25,9 @@
 targetpkglibdir = $(pkglibdir)/x86
 targetpkglib_LIBRARIES = libkernel.a
 
-VPATH = @srcdir@:@srcdir@/..
+vpath %.cl @srcdir@/..
+vpath %.c @srcdir@/..
+vpath %.ll @srcdir@/..
 
 libkernel_a_SOURCES = get_global_size.c		\
                       get_global_id.c		\
