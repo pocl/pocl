@@ -25,7 +25,9 @@
 targetpkglibdir = $(pkglibdir)/dummy
 targetpkglib_LIBRARIES = libkernel.a
 
-VPATH = @srcdir@:@srcdir@/..
+vpath %.cl @srcdir@/..
+vpath %.c @srcdir@/..
+vpath %.ll @srcdir@/..
 
 libkernel_a_SOURCES = get_global_size.c		\
                       get_global_id.c		\
@@ -35,7 +37,6 @@ libkernel_a_SOURCES = get_global_size.c		\
                       mad24.cl			\
                       dot.cl
 libkernel_a_LIBADD = barrier.o
-EXTRA_DIST = barrier.ll
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
