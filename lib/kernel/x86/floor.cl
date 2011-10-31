@@ -24,6 +24,7 @@
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
   TYPE _cl_overloadable NAME(TYPE a)            \
   {                                             \
+    typedef TYPE type;                          \
     return EXPR;                                \
   }
 
@@ -59,36 +60,90 @@
 
 
 
+#define IMPLEMENT_FLOOR_DIRECT_FLOAT  __builtin_floorf(a)
+#define IMPLEMENT_FLOOR_DIRECT_DOUBLE __builtin_floor(a)
+// Using only a single asm operand leads to better code, since LLVM
+// doesn't seem to allocate input and output operands to the same
+// register
+#define IMPLEMENT_FLOOR_SSE41_FLOAT                      \
+  ({                                                    \
+    __asm__ ("roundss %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_FLOOR));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_FLOOR_SSE41_FLOAT4                     \
+  ({                                                    \
+    __asm__ ("roundps %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_FLOOR));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_FLOOR_AVX_FLOAT8                       \
+  ({                                                    \
+    __asm__ ("roundps256 %[dst], %[dst], %[mode]" :     \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_FLOOR));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_FLOOR_SSE41_DOUBLE                     \
+  ({                                                    \
+    __asm__ ("roundsd %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_FLOOR));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_FLOOR_SSE41_DOUBLE2                    \
+  ({                                                    \
+    __asm__ ("roundpd %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_FLOOR));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_FLOOR_AVX_DOUBLE4                      \
+  ({                                                    \
+    __asm__ ("roundpd256 %[dst], %[dst], %[mode]" :     \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_FLOOR));             \
+    a;                                                  \
+  })
+
+
+
 #ifdef __SSE4_1__
-float4 _cl_floor_ensure_float4(float4 a)
-{
-  return a;
-}
-IMPLEMENT_DIRECT(floor, float  , _cl_floor_ensure_float4(__builtin_ia32_roundss(*(float4*)&a, *(float4*)&a, _MM_FROUND_FLOOR)).s0)
-IMPLEMENT_UPCAST(floor, float2 , float4, lo  )
+IMPLEMENT_DIRECT(floor, float  , IMPLEMENT_FLOOR_SSE41_FLOAT)
+IMPLEMENT_UPCAST(floor, float2 , float4, lo)
 IMPLEMENT_UPCAST(floor, float3 , float4, s012)
-IMPLEMENT_DIRECT(floor, float4 , __builtin_ia32_roundps(a, _MM_FROUND_FLOOR))
+IMPLEMENT_DIRECT(floor, float4 , IMPLEMENT_FLOOR_SSE41_FLOAT4)
+#  ifdef __AVX__
+IMPLEMENT_DIRECT(floor, float8 , IMPLEMENT_FLOOR_AVX_FLOAT8)
+#  else
+IMPLEMENT_SPLIT (floor, float8 , lo, hi)
+#  endif
 #else
-IMPLEMENT_DIRECT(floor, float  , __builtin_floorf(a))
+IMPLEMENT_DIRECT(floor, float  , IMPLEMENT_FLOOR_DIRECT_FLOAT)
 IMPLEMENT_SPLIT (floor, float2 , lo, hi)
 IMPLEMENT_SPLIT (floor, float3 , lo, s2)
 IMPLEMENT_SPLIT (floor, float4 , lo, hi)
-#endif
 IMPLEMENT_SPLIT (floor, float8 , lo, hi)
+#endif
 IMPLEMENT_SPLIT (floor, float16, lo, hi)
 
 #ifdef __SSE4_1__
-double2 _cl_floor_ensure_double2(double2 a)
-{
-  return a;
-}
-IMPLEMENT_DIRECT(floor, double  , _cl_floor_ensure_double2(__builtin_ia32_roundsd(*(double2*)&a, *(double2*)&a, _MM_FROUND_FLOOR)).s0)
-IMPLEMENT_DIRECT(floor, double2 , __builtin_ia32_roundpd(a, _MM_FROUND_FLOOR))
-#else
-IMPLEMENT_DIRECT(floor, double  , __builtin_floor(a))
-IMPLEMENT_SPLIT (floor, double2 , lo, hi)
-#endif
+IMPLEMENT_DIRECT(floor, double  , IMPLEMENT_FLOOR_SSE41_DOUBLE)
+IMPLEMENT_DIRECT(floor, double2 , IMPLEMENT_FLOOR_SSE41_DOUBLE2)
+#  ifdef __AVX__
+IMPLEMENT_UPCAST(floor, double3 , double4, s012)
+IMPLEMENT_DIRECT(floor, double4 , IMPLEMENT_FLOOR_AVX_DOUBLE4)
+#  else
 IMPLEMENT_SPLIT (floor, double3 , lo, s2)
 IMPLEMENT_SPLIT (floor, double4 , lo, hi)
+#  endif
+#else
+IMPLEMENT_DIRECT(floor, double  , IMPLEMENT_FLOOR_DIRECT_DOUBLE)
+IMPLEMENT_SPLIT (floor, double2 , lo, hi)
+IMPLEMENT_SPLIT (floor, double3 , lo, s2)
+IMPLEMENT_SPLIT (floor, double4 , lo, hi)
+#endif
 IMPLEMENT_SPLIT (floor, double8 , lo, hi)
 IMPLEMENT_SPLIT (floor, double16, lo, hi)

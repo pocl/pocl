@@ -24,6 +24,7 @@
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
   TYPE _cl_overloadable NAME(TYPE a)            \
   {                                             \
+    typedef TYPE type;                          \
     return EXPR;                                \
   }
 
@@ -41,35 +42,78 @@
 
 
 
+#define IMPLEMENT_SQRT_DIRECT_FLOAT  __builtin_sqrtf(a)
+#define IMPLEMENT_SQRT_DIRECT_DOUBLE __builtin_sqrt(a)
+#define IMPLEMENT_SQRT_SSE_FLOAT                \
+  ({                                            \
+    __asm__ ("sqrtss %[dst], %[dst]" :          \
+             [dst] "+x" (a));                   \
+    a;                                          \
+  })
+#define IMPLEMENT_SQRT_SSE_FLOAT4               \
+  ({                                            \
+    __asm__ ("sqrtps %[dst], %[dst]" :          \
+             [dst] "+x" (a));                   \
+    a;                                          \
+  })
+#define IMPLEMENT_SQRT_AVX_FLOAT8               \
+  ({                                            \
+    __asm__ ("sqrtps256 %[dst], %[dst]" :       \
+             [dst] "+x" (a));                   \
+    a;                                          \
+  })
+#define IMPLEMENT_SQRT_SSE2_DOUBLE              \
+  ({                                            \
+    __asm__ ("sqrtsd %[dst], %[dst]" :          \
+             [dst] "+x" (a));                   \
+    a;                                          \
+  })
+#define IMPLEMENT_SQRT_SSE2_DOUBLE2             \
+  ({                                            \
+    __asm__ ("sqrtpd %[dst], %[dst]" :          \
+             [dst] "+x" (a));                   \
+    a;                                          \
+  })
+#define IMPLEMENT_SQRT_AVX_DOUBLE4              \
+  ({                                            \
+    __asm__ ("sqrtpd256 %[dst], %[dst]" :       \
+             [dst] "+x" (a));                   \
+    a;                                          \
+  })
+
+
+
 #ifdef __SSE__
-float4 _cl_sqrt_ensure_float4(float4 a)
-{
-  return a;
-}
-IMPLEMENT_DIRECT(sqrt, float  , _cl_sqrt_ensure_float4(__builtin_ia32_sqrtss(*(float4*)&a)).s0)
-IMPLEMENT_UPCAST(sqrt, float2 , float4, lo  )
+IMPLEMENT_DIRECT(sqrt, float  , IMPLEMENT_SQRT_SSE_FLOAT)
+IMPLEMENT_UPCAST(sqrt, float2 , float4, lo)
 IMPLEMENT_UPCAST(sqrt, float3 , float4, s012)
-IMPLEMENT_DIRECT(sqrt, float4 , __builtin_ia32_sqrtps(a))
+IMPLEMENT_DIRECT(sqrt, float4 , IMPLEMENT_SQRT_SSE_FLOAT4)
+#  ifdef __AVX__
+IMPLEMENT_DIRECT(sqrt, float8 , IMPLEMENT_SQRT_AVX_FLOAT8)
+#  else
+IMPLEMENT_SPLIT (sqrt, float8 , lo, hi)
+#  endif
 #else
-IMPLEMENT_DIRECT(sqrt, float  , __builtin_sqrtf(a))
+IMPLEMENT_DIRECT(sqrt, float  , IMPLEMENT_SQRT_DIRECT_FLOAT)
 IMPLEMENT_SPLIT (sqrt, float2 , lo, hi)
 IMPLEMENT_SPLIT (sqrt, float3 , lo, s2)
 IMPLEMENT_SPLIT (sqrt, float4 , lo, hi)
-#endif
 IMPLEMENT_SPLIT (sqrt, float8 , lo, hi)
+#endif
 IMPLEMENT_SPLIT (sqrt, float16, lo, hi)
 
 #ifdef __SSE2__
-double2 _cl_sqrt_ensure_double2(double2 a)
-{
-  return a;
-}
-IMPLEMENT_DIRECT(sqrt, double  , _cl_sqrt_ensure_double2(__builtin_ia32_sqrtsd(*(double2*)&a)).s0)
-IMPLEMENT_DIRECT(sqrt, double2 , __builtin_ia32_sqrtpd(a))
+IMPLEMENT_DIRECT(sqrt, double  , IMPLEMENT_SQRT_SSE2_DOUBLE)
+IMPLEMENT_DIRECT(sqrt, double2 , IMPLEMENT_SQRT_SSE2_DOUBLE2)
+#  ifdef __AVX__
+IMPLEMENT_UPCAST(sqrt, double3 , double4, s012)
+IMPLEMENT_DIRECT(sqrt, double4 , IMPLEMENT_SQRT_AVX_DOUBLE4)
+#  else
 IMPLEMENT_SPLIT (sqrt, double3 , lo, s2)
 IMPLEMENT_SPLIT (sqrt, double4 , lo, hi)
+#  endif
 #else
-IMPLEMENT_DIRECT(sqrt, double  , __builtin_sqrt(a))
+IMPLEMENT_DIRECT(sqrt, double  , IMPLEMENT_SQRT_DIRECT_DOUBLE)
 IMPLEMENT_SPLIT (sqrt, double2 , lo, hi)
 IMPLEMENT_SPLIT (sqrt, double3 , lo, s2)
 IMPLEMENT_SPLIT (sqrt, double4 , lo, hi)

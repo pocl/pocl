@@ -21,8 +21,11 @@
    THE SOFTWARE.
 */
 
+#if 0
+
 #include "../templates.h"
 
+// LLVM generates non-optimal code for this implementation
 DEFINE_EXPR_V_V(fabs,
                 ({
                   int bits = CHAR_BIT * sizeof(stype);
@@ -31,28 +34,111 @@ DEFINE_EXPR_V_V(fabs,
                   *(vtype*)&result;
                 }))
 
-// TODO: Use these explicitly, until llvm generates efficient code
-// 
-// float fabs_ff(float a, float b)
-// {
-//   __asm__ ("andss %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
-//   return a;
-// }
-// 
-// float4 fabs_f4f4(float4 a, float4 b)
-// {
-//   __asm__ ("andps %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
-//   return a;
-// }
-// 
-// double fabs_dd(double a, double b)
-// {
-//   __asm__ ("andsd %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
-//   return a;
-// }
-// 
-// double2 fabs_d2d2(double2 a, double2 b)
-// {
-//   __asm__ ("andpd %[b], %[a]" : [a] "=x" (a) : "[a]" (a), [b] "x" (b));
-//   return a;
-// }
+#endif
+
+
+
+#define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
+  TYPE _cl_overloadable NAME(TYPE a)            \
+  {                                             \
+    return EXPR;                                \
+  }
+
+#define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
+  TYPE _cl_overloadable NAME(TYPE a)                    \
+  {                                                     \
+    return NAME(*(UPTYPE*)&a).LO;                       \
+  }
+
+#define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)     \
+  TYPE _cl_overloadable NAME(TYPE a)            \
+  {                                             \
+    return (TYPE)(NAME(a.LO), NAME(a.HI));      \
+  }
+
+
+
+#define IMPLEMENT_FABS_DIRECT                           \
+  ({                                                    \
+    int bits = CHAR_BIT * sizeof(stype);                \
+    jtype sign_mask = (jtype)1 << (jtype)(bits - 1);    \
+    jtype result = ~sign_mask & *(jtype*)&a;            \
+    *(vtype*)&result;                                   \
+  })
+#define IMPLEMENT_FABS_SSE_FLOAT4                                       \
+  ({                                                                    \
+    uint4 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U}; \
+    __asm__ ("andnps %[src], %[dst]" :                                  \
+             [dst] "+x" (a) :                                           \
+             [src] "x" (sign_mask));                                    \
+    a;                                                                  \
+  })
+#define IMPLEMENT_FABS_AVX_FLOAT8                                       \
+  ({                                                                    \
+    uint8 sign_mask = {0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U, \
+                       0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U}; \
+    __asm__ ("andnps256 %[src], %[dst]" :                               \
+             [dst] "=x" (a) :                                           \
+             "[dst]" (a), [src] "x" (sign_mask));                       \
+    a;                                                                  \
+  })
+#define IMPLEMENT_FABS_SSE2_DOUBLE2                                     \
+  ({                                                                    \
+    ulong2 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL};    \
+    __asm__ ("andnpd %[src], %[dst]" :                                  \
+             [dst] "=x" (a) :                                           \
+             "[dst]" (a), [src] "x" (sign_mask));                       \
+    a;                                                                  \
+  })
+#define IMPLEMENT_FABS_AVX_DOUBLE4                                      \
+  ({                                                                    \
+    ulong4 sign_mask = {0x8000000000000000UL, 0x8000000000000000UL,     \
+                        0x8000000000000000UL, 0x8000000000000000UL};    \
+    __asm__ ("andnpd256 %[src], %[dst]" :                               \
+             [dst] "=x" (a) :                                           \
+             "[dst]" (a), [src] "x" (sign_mask));                       \
+    a;                                                                  \
+  })
+
+
+
+#ifdef __SSE__
+IMPLEMENT_DIRECT(fabs, float  , IMPLEMENT_FABS_SSE_FLOAT4)
+IMPLEMENT_UPCAST(fabs, float2 , float4, lo)
+IMPLEMENT_UPCAST(fabs, float3 , float4, s012)
+IMPLEMENT_DIRECT(fabs, float4 , IMPLEMENT_FABS_SSE_FLOAT4)
+#  ifdef __AVX__
+IMPLEMENT_DIRECT(fabs, float8 , IMPLEMENT_FABS_AVX_FLOAT8)
+#  else
+IMPLEMENT_SPLIT (fabs, float8 , lo, hi)
+#  endif
+IMPLEMENT_SPLIT (fabs, float16, lo, hi)
+#else
+IMPLEMENT_DIRECT(fabs, float  , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, float2 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, float3 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, float4 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, float8 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, float16, IMPLEMENT_FABS_DIRECT)
+#endif
+
+#ifdef __SSE2__
+IMPLEMENT_DIRECT(fabs, double  , IMPLEMENT_FABS_SSE2_DOUBLE2)
+IMPLEMENT_DIRECT(fabs, double2 , IMPLEMENT_FABS_SSE2_DOUBLE2)
+#  ifdef __AVX__
+IMPLEMENT_UPCAST(fabs, double3 , double4, s012)
+IMPLEMENT_DIRECT(fabs, double4 , IMPLEMENT_FABS_AVX_DOUBLE4)
+#  else
+IMPLEMENT_SPLIT (fabs, double3 , lo, s2)
+IMPLEMENT_SPLIT (fabs, double4 , lo, hi)
+#  endif
+IMPLEMENT_SPLIT (fabs, double8 , lo, hi)
+IMPLEMENT_SPLIT (fabs, double16, lo, hi)
+#else
+IMPLEMENT_DIRECT(fabs, double  , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, double2 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, double3 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, double4 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, double8 , IMPLEMENT_FABS_DIRECT)
+IMPLEMENT_DIRECT(fabs, double16, IMPLEMENT_FABS_DIRECT)
+#endif

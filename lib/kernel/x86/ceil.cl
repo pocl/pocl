@@ -24,6 +24,7 @@
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
   TYPE _cl_overloadable NAME(TYPE a)            \
   {                                             \
+    typedef TYPE type;                          \
     return EXPR;                                \
   }
 
@@ -59,36 +60,90 @@
 
 
 
+#define IMPLEMENT_CEIL_DIRECT_FLOAT  __builtin_ceilf(a)
+#define IMPLEMENT_CEIL_DIRECT_DOUBLE __builtin_ceil(a)
+// Using only a single asm operand leads to better code, since LLVM
+// doesn't seem to allocate input and output operands to the same
+// register
+#define IMPLEMENT_CEIL_SSE41_FLOAT                      \
+  ({                                                    \
+    __asm__ ("roundss %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_CEIL));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_CEIL_SSE41_FLOAT4                     \
+  ({                                                    \
+    __asm__ ("roundps %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_CEIL));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_CEIL_AVX_FLOAT8                       \
+  ({                                                    \
+    __asm__ ("roundps256 %[dst], %[dst], %[mode]" :     \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_CEIL));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_CEIL_SSE41_DOUBLE                     \
+  ({                                                    \
+    __asm__ ("roundsd %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_CEIL));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_CEIL_SSE41_DOUBLE2                    \
+  ({                                                    \
+    __asm__ ("roundpd %[dst], %[dst], %[mode]" :        \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_CEIL));             \
+    a;                                                  \
+  })
+#define IMPLEMENT_CEIL_AVX_DOUBLE4                      \
+  ({                                                    \
+    __asm__ ("roundpd256 %[dst], %[dst], %[mode]" :     \
+             [dst] "+x" (a) :                           \
+             [mode] "n" (_MM_FROUND_CEIL));             \
+    a;                                                  \
+  })
+
+
+
 #ifdef __SSE4_1__
-float4 _cl_ceil_ensure_float4(float4 a)
-{
-  return a;
-}
-IMPLEMENT_DIRECT(ceil, float  , _cl_ceil_ensure_float4(__builtin_ia32_roundss(*(float4*)&a, *(float4*)&a, _MM_FROUND_CEIL)).s0)
-IMPLEMENT_UPCAST(ceil, float2 , float4, lo  )
+IMPLEMENT_DIRECT(ceil, float  , IMPLEMENT_CEIL_SSE41_FLOAT)
+IMPLEMENT_UPCAST(ceil, float2 , float4, lo)
 IMPLEMENT_UPCAST(ceil, float3 , float4, s012)
-IMPLEMENT_DIRECT(ceil, float4 , __builtin_ia32_roundps(a, _MM_FROUND_CEIL))
+IMPLEMENT_DIRECT(ceil, float4 , IMPLEMENT_CEIL_SSE41_FLOAT4)
+#  ifdef __AVX__
+IMPLEMENT_DIRECT(ceil, float8 , IMPLEMENT_CEIL_AVX_FLOAT8)
+#  else
+IMPLEMENT_SPLIT (ceil, float8 , lo, hi)
+#  endif
 #else
-IMPLEMENT_DIRECT(ceil, float  , __builtin_ceilf(a))
+IMPLEMENT_DIRECT(ceil, float  , IMPLEMENT_CEIL_DIRECT_FLOAT)
 IMPLEMENT_SPLIT (ceil, float2 , lo, hi)
 IMPLEMENT_SPLIT (ceil, float3 , lo, s2)
 IMPLEMENT_SPLIT (ceil, float4 , lo, hi)
-#endif
 IMPLEMENT_SPLIT (ceil, float8 , lo, hi)
+#endif
 IMPLEMENT_SPLIT (ceil, float16, lo, hi)
 
 #ifdef __SSE4_1__
-double2 _cl_ceil_ensure_double2(double2 a)
-{
-  return a;
-}
-IMPLEMENT_DIRECT(ceil, double  , _cl_ceil_ensure_double2(__builtin_ia32_roundsd(*(double2*)&a, *(double2*)&a, _MM_FROUND_CEIL)).s0)
-IMPLEMENT_DIRECT(ceil, double2 , __builtin_ia32_roundpd(a, _MM_FROUND_CEIL))
-#else
-IMPLEMENT_DIRECT(ceil, double  , __builtin_ceil(a))
-IMPLEMENT_SPLIT (ceil, double2 , lo, hi)
-#endif
+IMPLEMENT_DIRECT(ceil, double  , IMPLEMENT_CEIL_SSE41_DOUBLE)
+IMPLEMENT_DIRECT(ceil, double2 , IMPLEMENT_CEIL_SSE41_DOUBLE2)
+#  ifdef __AVX__
+IMPLEMENT_UPCAST(ceil, double3 , double4, s012)
+IMPLEMENT_DIRECT(ceil, double4 , IMPLEMENT_CEIL_AVX_DOUBLE4)
+#  else
 IMPLEMENT_SPLIT (ceil, double3 , lo, s2)
 IMPLEMENT_SPLIT (ceil, double4 , lo, hi)
+#  endif
+#else
+IMPLEMENT_DIRECT(ceil, double  , IMPLEMENT_CEIL_DIRECT_DOUBLE)
+IMPLEMENT_SPLIT (ceil, double2 , lo, hi)
+IMPLEMENT_SPLIT (ceil, double3 , lo, s2)
+IMPLEMENT_SPLIT (ceil, double4 , lo, hi)
+#endif
 IMPLEMENT_SPLIT (ceil, double8 , lo, hi)
 IMPLEMENT_SPLIT (ceil, double16, lo, hi)
