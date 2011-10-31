@@ -95,11 +95,11 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
   if (host_ptr != NULL)
     {
       if (d->host_buffers == NULL)
-	d->host_buffers = malloc (sizeof (struct pointer_list));
+        d->host_buffers = malloc (sizeof (struct pointer_list));
       
       p = d->host_buffers;
       while (p->next != NULL)
-	p = p->next;
+        p = p->next;
 
       p->next = malloc (sizeof (struct pointer_list));
       p = p->next;
@@ -125,7 +125,7 @@ pocl_pthread_free (void *data, void *ptr)
   while (p != NULL)
     {
       if (p->pointer == ptr)
-	return;
+        return;
 
       p = p->next;
     }
@@ -142,6 +142,7 @@ pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
   memcpy (host_ptr, device_ptr, cb);
 }
 
+//#define DEBUG_MT
 //#define DEBUG_MAX_THREAD_COUNT
 /**
  * Return an estimate for the maximum thread count that should produce
@@ -182,7 +183,7 @@ get_max_thread_count() {
       p = contents;
       if ((p = strstr (p, "cpu cores")) != NULL)
         {
-          if (sscanf (p, ": %d\n", cores_per_cpu) != 1)
+          if (sscanf (p, ": %d\n", &cores_per_cpu) != 1)
             cores_per_cpu = 1;
 #ifdef DEBUG_MAX_THREAD_COUNT 
           printf ("cores per cpu %d\n", cores_per_cpu);
@@ -193,7 +194,7 @@ get_max_thread_count() {
       p = contents;
       if ((p = strstr (p, "siblings")) != NULL)
         {
-          if (sscanf (p, ": %d\n", siblings) != 1)
+          if (sscanf (p, ": %d\n", &siblings) != 1)
             siblings = cores_per_cpu;
 #ifdef DEBUG_MAX_THREAD_COUNT 
           printf ("siblings %d\n", siblings);
@@ -325,10 +326,8 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   int leftover_wgs = num_groups_x - (num_threads*wgs_per_thread);
 
 #ifdef DEBUG_MT    
-  printf("### global_work_size[0]==%%d local_work_size[0]==%%d\\n", 
-         global_work_size[0], local_work_size[0]);
-  printf("### creating %%d work group threads\\n", num_threads);
-  printf("### wgs per thread==%%d leftover wgs==%%d\\n", wgs_per_thread, leftover_wgs);
+  printf("### creating %d work group threads\n", num_threads);
+  printf("### wgs per thread==%d leftover wgs==%d\n", wgs_per_thread, leftover_wgs);
 #endif
   
   int first_gid_x = 0;
@@ -339,13 +338,11 @@ pocl_pthread_run (void *data, const char *parallel_filename,
     if (i + 1 == num_threads) last_gid_x += leftover_wgs;
 
 #ifdef DEBUG_MT       
-    printf("### creating wg thread: first_gid_x==%%d, last_gid_x==%%d\\n",
+    printf("### creating wg thread: first_gid_x==%d, last_gid_x==%d\n",
            first_gid_x, last_gid_x);
 #endif
 
-    pc->group_id[0] = x;
-    pc->group_id[1] = y;
-    pc->group_id[2] = z;
+    pc->group_id[0] = first_gid_x;
 
     arguments[i].data = data;
     arguments[i].kernel = kernel;
@@ -363,44 +360,10 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   for (i = 0; i < num_threads; ++i) {
     pthread_join(threads[i], NULL);
 #ifdef DEBUG_MT       
-    printf("### thread %%x finished\\n", (unsigned)threads[i]);
+    printf("### thread %x finished\n", (unsigned)threads[i]);
 #endif
   }
 
-#if 0
-  for (z = 0; z < pc->num_groups[2]; ++z)
-    {
-      for (y = 0; y < pc->num_groups[1]; ++y)
-        {
-          for (x = 0; x < pc->num_groups[0]; ++x)
-            {
-              pc->group_id[0] = x;
-              pc->group_id[1] = y;
-              pc->group_id[2] = z;
-
-              arguments[x][y][z].data = data;
-              arguments[x][y][z].kernel = kernel;
-              arguments[x][y][z].device = device;
-              arguments[x][y][z].pc = *pc;
-              arguments[x][y][z].workgroup = w;
-
-              pthread_create (&thread[x][y][z],
-                              NULL,
-                              workgroup_thread,
-                              &arguments[x][y][z]);
-            }
-        }
-    }
-
-  for (z = 0; z < pc->num_groups[2]; ++z)
-    {
-      for (y = 0; y < pc->num_groups[1]; ++y)
-        {
-          for (x = 0; x < pc->num_groups[0]; ++x)
-            pthread_join(thread[x][y][z], NULL);
-        }
-    }
-#endif
   free(threads);
   free(arguments);
 }
