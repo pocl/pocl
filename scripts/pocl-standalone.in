@@ -23,10 +23,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-while getopts h:o: o
+kernel_lib_dir=""
+while getopts h:t:o: o
 do
     case "$o" in
 	h)   header="${OPTARG}";;
+	t)   kernel_lib_dir="${OPTARG}/";;
 	o)   output_file="${OPTARG}";;
 	[?]) echo >&2 "Usage: $0 -o <output_file> <input_file>" && exit 1;;
     esac
@@ -35,12 +37,12 @@ shift $((${OPTIND}-1))
 
 if [ "x$header" = x ]
 then
-    echo >&2 "Usage: $0 -header <header> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 [-t target] -header <header> -o <output_file> <input_file>" && exit 1
 fi
 
 if [ "x$output_file" = x ]
 then
-    echo >&2 "Usage: $0 -header <header> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 [-t target] -header <header> -o <output_file> <input_file>" && exit 1
 fi
 
 if test -z "$CLANGFLAGS"
@@ -71,11 +73,11 @@ fi
 
 linked_bc="${tempdir}/linked.bc"
 
-if [ -f @abs_top_builddir@/lib/kernel/libkernel.a ]
+if [ -f @abs_top_builddir@/lib/kernel/${kernel_lib_dir}libkernel.a ]
 then
-    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel -lkernel
+    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${kernel_lib_dir} -lkernel
 else
-    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@pkglibdir@ -lkernel
+    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@pkglibdir@${kernel_lib_dir} -lkernel
 fi
 rm a.out
 
