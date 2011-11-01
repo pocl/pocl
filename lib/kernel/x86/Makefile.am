@@ -1,8 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel/tce. 
-#
-# The TCE (http://tce.cs.tut.fi) target.
+# Makefile.am for pocl/lib/kernel/dummy.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -24,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-targetpkglibdir = $(pkglibdir)/tce
+targetpkglibdir = $(pkglibdir)/x86
 targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@/..
@@ -148,7 +146,9 @@ libkernel_a_SOURCES = get_global_size.c		\
                       any.cl			\
                       all.cl			\
                       bitselect.cl		\
-                      select.cl
+                      select.cl			\
+                      vload.cl			\
+                      vstore.cl
 
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
@@ -157,12 +157,12 @@ RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple tce-tut-llvm -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple tce-tut-llvm -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-barrier.o: barrier.ll
+.ll.o:
 	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h ../templates.h

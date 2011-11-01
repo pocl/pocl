@@ -23,5 +23,7 @@
 
 #include "templates.h"
 
+#define __builtin__cl_std_fmaf __builtin_fmaf
+#define __builtin__cl_std_fma  __builtin_fma
+
 DEFINE_BUILTIN_V_VVV(fma)
-// DEFINE_EXPR_V_VVV(fma, a*b+c)

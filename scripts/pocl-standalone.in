@@ -28,7 +28,7 @@ while getopts h:t:o: o
 do
     case "$o" in
 	h)   header="${OPTARG}";;
-	t)   kernel_lib_dir="${OPTARG}/";;
+	t)   kernel_lib_dir="/${OPTARG}";;
 	o)   output_file="${OPTARG}";;
 	[?]) echo >&2 "Usage: $0 -o <output_file> <input_file>" && exit 1;;
     esac
@@ -75,7 +75,7 @@ linked_bc="${tempdir}/linked.bc"
 
 if [ -f @abs_top_builddir@/lib/kernel/${kernel_lib_dir}libkernel.a ]
 then
-    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${kernel_lib_dir} -lkernel
+    @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel${kernel_lib_dir} -lkernel
 else
     @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@pkglibdir@${kernel_lib_dir} -lkernel
 fi

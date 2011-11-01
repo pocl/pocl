@@ -22,13 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX=
+LEX =
 
-SUBDIRS = tce
+SUBDIRS = tce x86 # ppc
 
 pkglib_LIBRARIES = libkernel.a
 
-libkernel_a_SOURCES = get_global_size.c		\
+libkernel_a_SOURCES = templates.h		\
+                      get_global_size.c		\
                       get_global_id.c		\
                       get_local_id.c		\
                       get_num_groups.c		\
@@ -145,7 +146,9 @@ libkernel_a_SOURCES = get_global_size.c		\
                       any.cl			\
                       all.cl			\
                       bitselect.cl		\
-                      select.cl
+                      select.cl			\
+                      vload.cl			\
+                      vstore.cl
 
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
@@ -159,8 +162,8 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-barrier.o: barrier.ll
+.ll.o:
 	$(LLVM_AS) -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
-$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h
+$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h templates.h
+$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h templates.h

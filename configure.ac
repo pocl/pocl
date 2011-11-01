@@ -113,6 +113,7 @@ AC_CONFIG_FILES([Makefile
 		 lib/llvmopencl/Makefile
 		 lib/kernel/Makefile
 		 lib/kernel/tce/Makefile
+		 lib/kernel/x86/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
 		 examples/example2/Makefile
@@ -123,5 +124,7 @@ AC_CONFIG_FILES([Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal])
+# lib/kernel/bgp/Makefile
+# lib/kernel/ppc/Makefile
 
 AC_OUTPUT
