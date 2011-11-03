@@ -31,6 +31,13 @@
 #undef cl_khr_fp64
 #undef cl_khr_int64
 
+#elif defined(__arm__)
+
+#define __EMBEDDED_PROFILE__ 1
+#define __ADDRESS_BITS__ 32
+#undef cl_khr_fp64
+#undef cl_khr_int64
+
 #else
 
 #undef __EMBEDDED_PROFILE__

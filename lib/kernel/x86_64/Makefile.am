@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel.
+# Makefile.am for pocl/lib/kernel/dummy.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,13 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
+targetpkglibdir = $(pkglibdir)/x86
+targetpkglib_LIBRARIES = libkernel.a
 
-SUBDIRS = tce x86_64 arm # ppc
+vpath %.cl @srcdir@/..
+vpath %.c @srcdir@/..
+vpath %.ll @srcdir@/..
 
-pkglib_LIBRARIES = libkernel.a
-
-include sources.mk
+include ../sources.mk
 
 libkernel_a_LIBADD = barrier.o
 EXTRA_DIST = barrier.ll
@@ -37,13 +38,13 @@ RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple x86_64-unknown-linux-gnu -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple x86_64-unknown-linux-gnu -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .ll.o:
 	$(LLVM_AS) -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h templates.h
-$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h templates.h
+$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
+$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
