@@ -23,4 +23,8 @@
 
 #include "templates.h"
 
+#ifdef cl_khr_fp64
 DEFINE_EXPR_V_V(exp10, exp((stype)M_LN10*a))
+#else
+DEFINE_EXPR_V_V(exp10, exp(M_LN10_F*a))
+#endif

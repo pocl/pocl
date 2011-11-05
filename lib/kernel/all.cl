@@ -111,6 +111,7 @@ int __attribute__((__overloadable__)) all(int16 a)
   return all(a.lo) && all(a.hi);
 }
 
+#ifdef cl_khr_int64
 int __attribute__((__overloadable__)) all(long a)
 {
   return a < 0L;
@@ -140,3 +141,4 @@ int __attribute__((__overloadable__)) all(long16 a)
 {
   return all(a.lo) && all(a.hi);
 }
+#endif

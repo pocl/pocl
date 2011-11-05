@@ -51,6 +51,7 @@ float __attribute__ ((__overloadable__)) dot(float16 a, float16 b)
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
+#ifdef cl_khr_fp64
 double __attribute__ ((__overloadable__)) dot(double a, double b)
 {
   return a * b;
@@ -80,3 +81,4 @@ double __attribute__ ((__overloadable__)) dot(double16 a, double16 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
+#endif

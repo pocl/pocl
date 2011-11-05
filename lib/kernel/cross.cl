@@ -33,6 +33,7 @@ float3 __attribute__ ((__overloadable__)) cross(float3 a, float3 b)
                   a.x * b.y - a.y * b.x);
 }
 
+#ifdef cl_khr_fp64
 double4 __attribute__ ((__overloadable__)) cross(double4 a, double4 b)
 {
   return (double4)(cross(a.xyz, b.xyz), 0.0f);
@@ -44,3 +45,4 @@ double3 __attribute__ ((__overloadable__)) cross(double3 a, double3 b)
                    a.z * b.x - a.x * b.z,
                    a.x * b.y - a.y * b.x);
 }
+#endif

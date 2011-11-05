@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_V(rsqrt, (stype)1.0/sqrt(a))
+DEFINE_EXPR_V_V(rsqrt, (stype)1/sqrt(a))

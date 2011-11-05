@@ -75,7 +75,7 @@ ACX_PTHREAD()
 
 # Checks for libraries.
 old_LDFLAGS="$LDFLAGS"
-LDFLAGS+=`$LLVM_CONFIG --ldflags`
+LDFLAGS="$LDFLAGS `$LLVM_CONFIG --ldflags`"
 old_LIBS="$LIBS"
 LIBS=
 AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
@@ -112,8 +112,9 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/Makefile
 		 lib/llvmopencl/Makefile
 		 lib/kernel/Makefile
-		 lib/kernel/dummy/Makefile
-		 lib/kernel/x86/Makefile
+		 lib/kernel/tce/Makefile
+		 lib/kernel/x86_64/Makefile
+		 lib/kernel/arm/Makefile
 		 examples/Makefile
 		 examples/example1/Makefile
 		 examples/example2/Makefile

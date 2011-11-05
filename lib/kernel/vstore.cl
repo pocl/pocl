@@ -67,24 +67,32 @@
 IMPLEMENT_VSTORE(char  , __global)
 IMPLEMENT_VSTORE(short , __global)
 IMPLEMENT_VSTORE(int   , __global)
+#if defined(cl_khr_int64)
 IMPLEMENT_VSTORE(long  , __global)
+IMPLEMENT_VSTORE(ulong , __global)
+#endif
 IMPLEMENT_VSTORE(uchar , __global)
 IMPLEMENT_VSTORE(ushort, __global)
 IMPLEMENT_VSTORE(uint  , __global)
-IMPLEMENT_VSTORE(ulong , __global)
 IMPLEMENT_VSTORE(float , __global)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VSTORE(double, __global)
+#endif
 
 IMPLEMENT_VSTORE(char  , __local)
 IMPLEMENT_VSTORE(short , __local)
 IMPLEMENT_VSTORE(int   , __local)
+#if defined(cl_khr_int64)
 IMPLEMENT_VSTORE(long  , __local)
+IMPLEMENT_VSTORE(ulong , __local)
+#endif
 IMPLEMENT_VSTORE(uchar , __local)
 IMPLEMENT_VSTORE(ushort, __local)
 IMPLEMENT_VSTORE(uint  , __local)
-IMPLEMENT_VSTORE(ulong , __local)
 IMPLEMENT_VSTORE(float , __local)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VSTORE(double, __local)
+#endif
 
 /* __private is not supported yet
 IMPLEMENT_VSTORE(char  , __private)

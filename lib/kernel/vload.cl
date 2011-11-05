@@ -62,35 +62,47 @@
 IMPLEMENT_VLOAD(char  , __global)
 IMPLEMENT_VLOAD(short , __global)
 IMPLEMENT_VLOAD(int   , __global)
+#if defined(cl_khr_int64)
 IMPLEMENT_VLOAD(long  , __global)
+IMPLEMENT_VLOAD(ulong , __global)
+#endif
 IMPLEMENT_VLOAD(uchar , __global)
 IMPLEMENT_VLOAD(ushort, __global)
 IMPLEMENT_VLOAD(uint  , __global)
-IMPLEMENT_VLOAD(ulong , __global)
 IMPLEMENT_VLOAD(float , __global)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __global)
+#endif
 
 IMPLEMENT_VLOAD(char  , __local)
 IMPLEMENT_VLOAD(short , __local)
 IMPLEMENT_VLOAD(int   , __local)
+#if defined(cl_khr_int64)
 IMPLEMENT_VLOAD(long  , __local)
+IMPLEMENT_VLOAD(ulong , __local)
+#endif
 IMPLEMENT_VLOAD(uchar , __local)
 IMPLEMENT_VLOAD(ushort, __local)
 IMPLEMENT_VLOAD(uint  , __local)
-IMPLEMENT_VLOAD(ulong , __local)
 IMPLEMENT_VLOAD(float , __local)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __local)
+#endif
 
 IMPLEMENT_VLOAD(char  , __constant)
 IMPLEMENT_VLOAD(short , __constant)
 IMPLEMENT_VLOAD(int   , __constant)
+#if defined(cl_khr_int64)
 IMPLEMENT_VLOAD(long  , __constant)
+IMPLEMENT_VLOAD(ulong , __constant)
+#endif
 IMPLEMENT_VLOAD(uchar , __constant)
 IMPLEMENT_VLOAD(ushort, __constant)
 IMPLEMENT_VLOAD(uint  , __constant)
-IMPLEMENT_VLOAD(ulong , __constant)
 IMPLEMENT_VLOAD(float , __constant)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __constant)
+#endif
 
 /* __private is not supported yet
 IMPLEMENT_VLOAD(char  , __private)

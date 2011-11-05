@@ -23,5 +23,8 @@
 
 #include "templates.h"
 
-#undef cospi
+#ifdef cl_khr_fp64
 DEFINE_EXPR_V_V(cospi, cos((stype)M_PI*a))
+#else
+DEFINE_EXPR_V_V(cospi, cos(M_PI_F*a))
+#endif
