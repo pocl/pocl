@@ -23,4 +23,8 @@
 
 #include "templates.h"
 
+#ifdef cl_khr_fp64
 DEFINE_EXPR_V_V(tanpi, tan((stype)M_PI*a))
+#else
+DEFINE_EXPR_V_V(tanpi, tan(M_PI_F*a))
+#endif

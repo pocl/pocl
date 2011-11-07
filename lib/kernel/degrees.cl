@@ -23,4 +23,8 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_V(degrees, (stype)(180.0 / M_PI) * a)
+#ifdef cl_khr_fp64
+DEFINE_EXPR_V_V(degrees, (stype)(180 / M_PI) * a)
+#else
+DEFINE_EXPR_V_V(degrees, (180 / M_PI_F) * a)
+#endif

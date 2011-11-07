@@ -359,6 +359,48 @@
   IMPLEMENT_BUILTIN_J_V(NAME, int16, float16 , lo, hi)
 #endif
 
+#define IMPLEMENT_BUILTIN_K_V(NAME, JTYPE, VTYPE, LO, HI)       \
+  JTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a)                                                 \
+  {                                                             \
+    return (JTYPE)(NAME(a.LO), NAME(a.HI));                     \
+  }
+#ifdef cl_khr_fp64
+#define DEFINE_BUILTIN_K_V(NAME)                        \
+  int __attribute__ ((overloadable))                    \
+  NAME(float a)                                         \
+  {                                                     \
+    return __builtin_##NAME##f(a);                      \
+  }                                                     \
+  int __attribute__ ((overloadable))                    \
+  NAME(double a)                                        \
+  {                                                     \
+    return __builtin_##NAME(a);                         \
+  }                                                     \
+  IMPLEMENT_BUILTIN_K_V(NAME, int2  , float2  , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, int3  , float3  , lo, s2) \
+  IMPLEMENT_BUILTIN_K_V(NAME, int4  , float4  , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, int8  , float8  , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, int16 , float16 , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, long2 , double2 , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, long3 , double3 , lo, s2) \
+  IMPLEMENT_BUILTIN_K_V(NAME, long4 , double4 , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, long8 , double8 , lo, hi) \
+  IMPLEMENT_BUILTIN_K_V(NAME, long16, double16, lo, hi)
+#else
+#define DEFINE_BUILTIN_K_V(NAME)                        \
+  int __attribute__ ((overloadable))                    \
+  NAME(float a)                                         \
+  {                                                     \
+    return __builtin_##NAME##f(a);                      \
+  }                                                     \
+  IMPLEMENT_BUILTIN_K_V(NAME, int2 , float2  , lo, hi)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int3 , float3  , lo, s2)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int4 , float4  , lo, hi)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int8 , float8  , lo, hi)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int16, float16 , lo, hi)
+#endif
+
 #define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE)    \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a, VTYPE b)                                \

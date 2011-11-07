@@ -23,4 +23,9 @@
 
 #include "templates.h"
 
+
+#ifdef cl_khr_fp64
 DEFINE_EXPR_V_VPV(fract, fmin(a - floor(a), (vtype)(stype)(sizeof(stype)==4 ? 0x1.fffffep-1f : 0x1.fffffffffffffp-1)))
+#else
+DEFINE_EXPR_V_VPV(fract, fmin(a - floor(a), (vtype)(stype)0x1.fffffep-1f))
+#endif
