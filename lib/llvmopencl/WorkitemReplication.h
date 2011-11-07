@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include <set>
@@ -33,6 +35,9 @@ namespace pocl {
 
   public:
     static char ID;
+    llvm::DominatorTree *DT;
+    llvm::LoopInfo *LI;
+
     WorkitemReplication(): FunctionPass(ID) {}
 
     virtual bool runOnFunction(llvm::Function &F);

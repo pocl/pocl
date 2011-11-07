@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 
-#define N 4
+#define N 2
 
 int
 main (void)

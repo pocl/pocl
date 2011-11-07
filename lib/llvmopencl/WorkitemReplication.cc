@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "WorkitemReplication.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
@@ -38,7 +39,7 @@ static bool find_subgraph(std::set<BasicBlock *> &subgraph,
 static void purge_subgraph(std::set<BasicBlock *> &new_subgraph,
 			   const std::set<BasicBlock *> &original_subgraph,
 			   const BasicBlock *exit);
-static void split_barriers(Function &F);
+static void canonicalize_barriers(Function &F, LoopInfo *LI);
 
 cl::list<int>
 LocalSize("local-size",
@@ -64,10 +65,7 @@ WorkitemReplication::runOnFunction(Function &F)
 
   BasicBlockSet subgraph;
 
-  // Split basicblock at barriers. Barrier blocks must have a single
-  // predecessor, single sucessor, and just the barrier call and
-  // the terminator as body.
-  split_barriers(F);
+  canonicalize_barriers(F, LI);
 
   BasicBlock *exit = findBarriersDFS(&(F.getEntryBlock()),
 				     &(F.getEntryBlock()),
@@ -162,7 +160,11 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
   // Find barriers in the successors (depth first).
   BasicBlock *r = NULL;
   BasicBlock *s;
+  Loop *l = LI->getLoopFor(bb);
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
+    BasicBlock *successor = t->getSuccessor(i);
+    if ((l != NULL) && (l->getHeader() == successor))
+      continue;
     s = findBarriersDFS(t->getSuccessor(i), entry, subgraph);
     if (s != NULL) {
       assert((r == NULL || r == s) &&
@@ -198,6 +200,12 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 						 get(entry->getContext(),
 						     32), x), LocalX);
 	  }
+
+          // No need to update LoopInfo here, replicated code
+          // is never replicated again (FALSE, fails without it).
+          DT->runOnFunction(*(entry->getParent()));
+          LI->releaseMemory();
+          LI->getBase().Calculate(DT->getBase());
 	  return;
 	}
 
@@ -244,6 +252,9 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
       }
     }
   }
+
+  // We should never exit through here.
+  assert (0);
 }
 
 static void
@@ -334,7 +345,7 @@ WorkitemReplication::replicateBasicblocks(BasicBlockSet &new_graph,
 	 i2 != e2; ++i2) {
       if (isReplicable(i2)) {
 	Instruction *i = i2->clone();
-	reference_map.insert(std::make_pair(i2, i));
+	reference_map[i2] = i;//.insert(std::make_pair(i2, i));
 	new_b->getInstList().push_back(i);
       }
     }
@@ -383,10 +394,22 @@ WorkitemReplication::isReplicable(const Instruction *i)
   return true;
 }
 
+// Canonizalizing barriers performs two tasks: (1) it splits
+// basicblock at barriers, ensuring barriers blocks have a single
+// predecessor, single sucessor, and just the barrier call and
+// the terminator as body; and (2) adds a barrier to all
+// loop headers and tails which have a barrier in the body.
+// These loop headers
+// might break the "just the barrier and terminator" rule.
+// It requires that loops have been canonicalized (tries to
+// check for this and assert otherwise).
 static void
-split_barriers(Function &F)
+canonicalize_barriers(Function &F, LoopInfo *LI)
 {
   std::set<Instruction *> SplitPoints;
+  std::set<Instruction *> BarriersToAdd;
+
+  CallInst *barrier = NULL;
 
   for (Function::iterator i = F.begin(), e = F.end();
        i != e; ++i) {
@@ -396,13 +419,43 @@ split_barriers(Function &F)
       if (CallInst *c = dyn_cast<CallInst>(i)) {
 	if (Function *f = c->getCalledFunction()) {
 	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
+            barrier = c;
+            
+            // We found a barrier, add the split points.
 	    BasicBlock::iterator j = i;
 	    SplitPoints.insert(j);
 	    SplitPoints.insert(++j);
-	  }
+            
+            // Is this barrier inside of a loop?
+            Loop *loop = LI->getLoopFor(b);
+            if (loop != NULL) {
+              BasicBlock *preheader = loop->getLoopPreheader();
+              assert(preheader != NULL);
+              Instruction *new_barrier = barrier->clone();
+              new_barrier->insertBefore(preheader->getFirstNonPHI());
+              // No split point after preheader barriers, so we ensure
+              // WI 0,0,0 starts at the loop header.
+              SplitPoints.insert(new_barrier);
+
+              BasicBlock *latch = loop->getLoopLatch();
+              assert(latch != NULL);
+              BarriersToAdd.insert(latch->getTerminator());
+            }
+          }
 	}
       }
     }
+  }
+
+  for (std::set<Instruction *>::iterator i = BarriersToAdd.begin(),
+         e = BarriersToAdd.end();
+       i != e; ++i) {
+    assert(barrier != NULL);
+    Instruction *new_barrier = barrier->clone();
+    new_barrier->insertBefore(*i);
+    BasicBlock::iterator j = new_barrier;
+    SplitPoints.insert(j);
+    SplitPoints.insert(++j);
   }
 
   for (std::set<Instruction *>::iterator i = SplitPoints.begin(),

@@ -5,7 +5,7 @@ loopbarriers (void)
 {
   int gid = get_global_id (0);
 
-  for (int i = 0; i < 2; ++i)
+  for (volatile int i = 0; i < 3; ++i)
     {
       printf ("%d: iteration %d, before barrier()\n", gid, i);
       

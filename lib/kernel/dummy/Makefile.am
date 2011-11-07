@@ -36,7 +36,7 @@ libkernel_a_SOURCES = get_global_size.c		\
                       get_group_id.c		\
                       mad24.cl			\
                       dot.cl
-libkernel_a_LIBADD = barrier.o
+#libkernel_a_LIBADD = barrier.o
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
@@ -47,8 +47,8 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<
+#barrier.o: barrier.ll
+#	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h

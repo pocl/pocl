@@ -28,7 +28,8 @@ SUBDIRS = dummy
 
 pkglib_LIBRARIES = libkernel.a
 
-libkernel_a_SOURCES = get_global_size.c		\
+libkernel_a_SOURCES = barrier.c                 \
+                      get_global_size.c		\
                       get_global_id.c		\
                       get_local_id.c		\
                       get_num_groups.c		\
@@ -147,8 +148,8 @@ libkernel_a_SOURCES = get_global_size.c		\
                       bitselect.cl		\
                       select.cl
 
-libkernel_a_LIBADD = barrier.o
-EXTRA_DIST = barrier.ll
+# libkernel_a_LIBADD = barrier.o
+# EXTRA_DIST = barrier.ll
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
@@ -159,8 +160,8 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<
+#barrier.o: barrier.ll
+#	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h

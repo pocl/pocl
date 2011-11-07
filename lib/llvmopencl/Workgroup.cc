@@ -63,6 +63,8 @@ namespace {
     Workgroup() : ModulePass(ID) {}
 
     virtual bool runOnModule(Module &M);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   };
 }
 
@@ -126,8 +128,10 @@ Workgroup::runOnModule(Module &M)
     out << "#define _" << K->getName() << "_NUM_LOCALS 0\n";
     out << "#define _" << K->getName() << "_LOCAL_SIZE {}\n";
 
+    BTR.DT = &getAnalysis<DominatorTree>(*K);
+    BTR.LI = &getAnalysis<LoopInfo>(*K);
     BTR.runOnFunction(*K);
-
+    
     int OldLocalSize[3];
     for (int i = 0; i < 3; ++i)
       OldLocalSize[i] = LocalSize[i];;
@@ -142,6 +146,9 @@ Workgroup::runOnModule(Module &M)
 	}
       }
     }
+
+    WR.DT = &getAnalysis<DominatorTree>(*K);
+    WR.LI = &getAnalysis<LoopInfo>(*K);
     WR.runOnFunction(*K);
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
@@ -157,6 +164,13 @@ Workgroup::runOnModule(Module &M)
   }
 
   return true;
+}
+
+void
+Workgroup::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<DominatorTree>();
+  AU.addRequired<LoopInfo>();
 }
 
 static void

@@ -32,12 +32,16 @@ using namespace pocl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
-static void find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs);
+static void find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs,
+                              LoopInfo *LI, DominatorTree *DT);
 static bool block_has_barrier(const BasicBlock *bb);
 static BasicBlock *replicate_subgraph(BasicBlock *entry,
-				      Function *f);
+				      Function *f, 
+                                      LoopInfo *LI,
+                                      DominatorTree *DT);
 static void find_subgraph(std::set<BasicBlock *> &subgraph,
-			  BasicBlock *entry);
+			  BasicBlock *entry, 
+                          LoopInfo *LI);
 static void replicate_basicblocks(std::set<BasicBlock *> &new_graph,
 				  std::map<Value *, Value *> &reference_map,
 				  const std::set<BasicBlock *> &graph,
@@ -59,13 +63,14 @@ BarrierTailReplication::runOnFunction(Function &F)
 {
   std::set<BasicBlock *> processed_bbs;
 
-  find_barriers_dfs(&(F.getEntryBlock()), processed_bbs);
+  find_barriers_dfs(&(F.getEntryBlock()), processed_bbs, LI, DT);
 
   return true;
 }
 
 static void
-find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs)
+find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs,
+                  LoopInfo *LI, DominatorTree *DT)
 {
   if (processed_bbs.count(bb) != 0)
     return;
@@ -77,17 +82,20 @@ find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs)
 
   if (block_has_barrier(bb)) {
     // Replicate all successors.
+    Loop *l = LI->getLoopFor(bb);
     for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
       BasicBlock *subgraph_entry = t->getSuccessor(i);
+      if ((l != NULL)  && (l->getHeader() == subgraph_entry))
+        continue;
       BasicBlock *replicated_subgraph_entry =
-	replicate_subgraph(subgraph_entry, f);
+	replicate_subgraph(subgraph_entry, f, LI, DT);
       t->setSuccessor(i, replicated_subgraph_entry);
     }
   }
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    find_barriers_dfs(t->getSuccessor(i), processed_bbs);
+    find_barriers_dfs(t->getSuccessor(i), processed_bbs, LI, DT);
 }
 
 static bool
@@ -106,11 +114,11 @@ block_has_barrier(const BasicBlock *bb)
 }
 
 static BasicBlock *
-replicate_subgraph(BasicBlock *entry, Function *f)
+replicate_subgraph(BasicBlock *entry, Function *f, LoopInfo *LI, DominatorTree *DT)
 {
   // Find all basic blocks to replicate.
   std::set<BasicBlock *> subgraph;
-  find_subgraph(subgraph, entry);
+  find_subgraph(subgraph, entry, LI);
 
   // Replicate subgraph maintaining control flow.
   std::set<BasicBlock *> v;
@@ -118,22 +126,36 @@ replicate_subgraph(BasicBlock *entry, Function *f)
   replicate_basicblocks(v, m, subgraph, f);
   update_references(v, m);
 
+  // We have modified the function. Possibly created new loops.
+  // Update analysis passes.
+  DT->runOnFunction(*f);
+  LI->releaseMemory();
+  LI->getBase().Calculate(DT->getBase());
+
   // Return entry block of replicated subgraph.
   return cast<BasicBlock>(m[entry]);
 }
 
 static void
 find_subgraph(std::set<BasicBlock *> &subgraph,
-	      BasicBlock *entry)
+	      BasicBlock *entry,
+              LoopInfo *LI)
 {
-  if (subgraph.count(entry) != 0)
-    return;
+  // This check is not enough when we have loops inside barriers.
+  // Use LoopInfo.
+  // if (subgraph.count(entry) != 0)
+  //   return;
 
   subgraph.insert(entry);
 
   const TerminatorInst *t = entry->getTerminator();
-  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    find_subgraph(subgraph, t->getSuccessor(i));
+  Loop *l = LI->getLoopFor(entry);
+  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
+    BasicBlock *successor = t->getSuccessor(i);
+    if ((l != NULL)  && (l->getHeader() == successor))
+      continue;
+    find_subgraph(subgraph, successor, LI);
+  }
 }
 
 static void
