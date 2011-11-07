@@ -30,8 +30,8 @@ pkglib_LIBRARIES = libkernel.a
 
 include sources.mk
 
-libkernel_a_LIBADD = barrier.o
-EXTRA_DIST = barrier.ll
+#libkernel_a_LIBADD = barrier.o
+#EXTRA_DIST = barrier.ll
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
