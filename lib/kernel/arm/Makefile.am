@@ -35,9 +35,6 @@ vpath %.ll @srcdir@/..
 
 include ../sources.mk
 
-libkernel_a_LIBADD = barrier.o
-EXTRA_DIST = barrier.ll
-
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
@@ -49,9 +46,6 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple armv4t-unknown-linux-gnueabihf -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
