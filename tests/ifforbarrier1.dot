@@ -1,0 +1,13 @@
+digraph "CFG for 'ifforbarrier1' function" {
+	label="CFG for 'ifforbarrier1' function";
+
+	Node0x24fc860 [shape=record,label="{a|{<s0>T|<s1>F}}"];
+	Node0x24fc860:s0 -> Node0x24fa070;
+	Node0x24fc860:s1 -> Node0x24fc420;
+	Node0x24fa070 [shape=record,label="{b}"];
+	Node0x24fa070 -> Node0x24fb340;
+	Node0x24fc420 [shape=record,label="{barrier|{<s0>T|<s1>F}}"];
+	Node0x24fc420:s0 -> Node0x24fc420;
+	Node0x24fc420:s1 -> Node0x24fb340;
+	Node0x24fb340 [shape=record,label="{c}"];
+}
