@@ -27,8 +27,8 @@
 // DEFINE_EXPR_V_VV(step, b < a ? (vtype)0.0 : (vtype)1.0)
 DEFINE_EXPR_V_VV(step,
                  ({
-                   vtype zero = 0.0;
-                   vtype one  = 1.0;
+                   vtype zero = 0;
+                   vtype one  = 1;
                    jtype result = b < a ? *(jtype*)&zero : *(jtype*)&one;
                    *(vtype*)&result;
                  }))

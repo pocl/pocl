@@ -22,33 +22,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-targetpkglibdir = $(pkglibdir)/dummy
+targetpkglibdir = $(pkglibdir)/x86
 targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@/..
 vpath %.c @srcdir@/..
 vpath %.ll @srcdir@/..
 
-libkernel_a_SOURCES = get_global_size.c		\
-                      get_global_id.c		\
-                      get_local_id.c		\
-                      get_num_groups.c		\
-                      get_group_id.c		\
-                      mad24.cl			\
-                      dot.cl
-#libkernel_a_LIBADD = barrier.o
+include ../sources.mk
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple x86_64-unknown-linux-gnu -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple x86_64-unknown-linux-gnu -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-#barrier.o: barrier.ll
-#	$(LLVM_AS) -o $@ $<
+.ll.o:
+	$(LLVM_AS) -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
-$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h
+$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
+$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h

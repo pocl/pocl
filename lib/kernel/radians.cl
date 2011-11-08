@@ -23,4 +23,8 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_V(radians, (stype)(M_PI / 180.0) * a)
+#ifdef cl_khr_fp64
+DEFINE_EXPR_V_V(radians, (stype)(M_PI / 180) * a)
+#else
+DEFINE_EXPR_V_V(radians, (M_PI_F / 180) * a)
+#endif

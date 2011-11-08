@@ -39,6 +39,7 @@
 // DEFINE_BUILTIN_V_U(nan)
 
 /* This is faster than the above because it is vectorised */
+#ifdef cl_khr_fp64
 DEFINE_EXPR_V_U(nan,
                 ({
                   utype nanbits =
@@ -47,3 +48,12 @@ DEFINE_EXPR_V_U(nan,
                     (utype)0;
                   *(vtype*)&nanbits;
                 }))
+#else
+DEFINE_EXPR_V_U(nan,
+                ({
+                  utype nanbits =
+                    sizeof(stype)==4 /* float  */ ? ((utype)(~FLT_MANT_MASK & as_uint ((float) NAN)) | ((utype)FLT_MANT_MASK & a)) :
+                    (utype)0;
+                  *(vtype*)&nanbits;
+                }))
+#endif

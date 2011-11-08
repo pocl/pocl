@@ -23,4 +23,20 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_VV(minmag, fmin(fabs(a), fabs(b)))
+float __builtin_minmagf(float x, float y)
+{
+  if (fabs(x) < fabs(y)) return x;
+  if (fabs(y) < fabs(x)) return y;
+  return fmin(x, y);
+}
+
+#ifdef cl_khr_int64
+double __builtin_minmag(double x, double y)
+{
+  if (fabs(x) < fabs(y)) return x;
+  if (fabs(y) < fabs(x)) return y;
+  return fmin(x, y);
+}
+#endif
+
+DEFINE_BUILTIN_V_VV(minmag)

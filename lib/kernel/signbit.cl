@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_J_V(signbit)
+DEFINE_BUILTIN_K_V(signbit)

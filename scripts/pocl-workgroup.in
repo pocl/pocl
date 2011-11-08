@@ -63,9 +63,9 @@ linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
 
 if [ -f @abs_top_builddir@/lib/kernel/libkernel.a ]
 then
-    @LLVM_LD@ -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel -lkernel
+    @LLVM_LD@ -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/x86_64 -lkernel
 else
-    @LLVM_LD@ -b ${linked_bc} $1 -L@pkglibdir@ -lkernel
+    @LLVM_LD@ -b ${linked_bc} $1 -L@pkglibdir@/x86_64 -lkernel
 fi
 rm a.out
 

@@ -25,7 +25,7 @@
 
 DEFINE_EXPR_V_VVV(smoothstep,
                   ({
-                    vtype t = clamp((c - a) / (b - a), (stype)0.0, (stype)1.0);
-                    t * t * mad((vtype)-2.0, t, (vtype)3.0);
+                    vtype t = clamp((c - a) / (b - a), (stype)0, (stype)1);
+                    t * t * mad((vtype)-2, t, (vtype)3);
                   }))
 DEFINE_EXPR_V_SSV(smoothstep, smoothstep((vtype)a, (vtype)b, c))
