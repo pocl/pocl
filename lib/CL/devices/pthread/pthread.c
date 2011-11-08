@@ -279,11 +279,20 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"clang " SHARED " -o %s %s",
+			"clang -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
       
+      error = system (command);
+      assert (error == 0);
+
+      error = snprintf (command, COMMAND_LENGTH,
+                       "ld -fPIC -X -shared -o %s %s.o",
+                       module,
+                       module);
+      assert (error >= 0);
+
       error = system (command);
       assert (error == 0);
       

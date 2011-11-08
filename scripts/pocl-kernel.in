@@ -53,10 +53,12 @@ else
     @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
 fi
 
-gcc @SHARED@ -o ${output_file} -x c - <<EOF
+clang -c -o ${output_file}.o -x c - <<EOF
 #include "${header}"
 
 unsigned _num_args = _${kernel}_NUM_ARGS;
 int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
 int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
 EOF
+
+ld -fPIC ${output_file}.o -shared -o ${output_file}

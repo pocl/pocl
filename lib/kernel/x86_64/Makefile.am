@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-targetpkglibdir = $(pkglibdir)/x86
+targetpkglibdir = $(pkglibdir)/x86_64
 targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@/..
