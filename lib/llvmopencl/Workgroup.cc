@@ -55,7 +55,7 @@ extern cl::opt<string> Kernel;
 extern cl::opt<string> Header;
 extern cl::list<int> LocalSize;
 
-namespace {
+namespace pocl {
   class Workgroup : public ModulePass {
   
   public:
@@ -130,7 +130,7 @@ Workgroup::runOnModule(Module &M)
 
     BTR.DT = &getAnalysis<DominatorTree>(*K);
     BTR.LI = &getAnalysis<LoopInfo>(*K);
-    BTR.runOnFunction(*K);
+    BTR.ProcessFunction(*K);
     
     int OldLocalSize[3];
     for (int i = 0; i < 3; ++i)

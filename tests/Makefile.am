@@ -59,3 +59,14 @@ AUTOTEST = $(AUTOM4TE) --language=autotest
 $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
+
+GRAPH_TEST_DOTS = ifbarrier1_btr.dot ifbarrier2_btr.dot
+
+dots: $(GRAPH_TEST_DOTS) $(subst _btr,, $(GRAPH_TEST_DOTS))
+
+%_btr.ll: %.ll
+	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -o $@ $<
+
+%.dot: %.ll
+	@OPT@ -dot-cfg-only $<
+	mv cfg.*.dot $@

@@ -21,33 +21,15 @@
 // THE SOFTWARE.
 
 #include "BarrierTailReplication.h"
-#include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
-#include <map>
-#include <set>
 
 using namespace llvm;
 using namespace pocl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
-static void find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs,
-                              LoopInfo *LI, DominatorTree *DT);
 static bool block_has_barrier(const BasicBlock *bb);
-static BasicBlock *replicate_subgraph(BasicBlock *entry,
-				      Function *f, 
-                                      LoopInfo *LI,
-                                      DominatorTree *DT);
-static void find_subgraph(std::set<BasicBlock *> &subgraph,
-			  BasicBlock *entry, 
-                          LoopInfo *LI);
-static void replicate_basicblocks(std::set<BasicBlock *> &new_graph,
-				  std::map<Value *, Value *> &reference_map,
-				  const std::set<BasicBlock *> &graph,
-				  Function *f);
-static void update_references(const std::set<BasicBlock *>&graph,
-			      const std::map<Value *, Value *> &reference_map);
   
 namespace {
   static
@@ -58,19 +40,36 @@ namespace {
 
 char BarrierTailReplication::ID = 0;
 
+void
+BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<DominatorTree>();
+  AU.addRequired<LoopInfo>();
+}
+
 bool
 BarrierTailReplication::runOnFunction(Function &F)
 {
-  std::set<BasicBlock *> processed_bbs;
+  DT = &getAnalysis<DominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
 
-  find_barriers_dfs(&(F.getEntryBlock()), processed_bbs, LI, DT);
-
-  return true;
+  return ProcessFunction(F);
 }
 
-static void
-find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs,
-                  LoopInfo *LI, DominatorTree *DT)
+bool
+BarrierTailReplication::ProcessFunction(Function &F)
+{
+  BasicBlockSet processed_bbs;
+
+  FindBarriersDFS(&F.getEntryBlock(), processed_bbs);
+
+  return true;
+}  
+
+
+void
+BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
+                                        BasicBlockSet &processed_bbs)
 {
   if (processed_bbs.count(bb) != 0)
     return;
@@ -88,43 +87,30 @@ find_barriers_dfs(BasicBlock *bb, std::set<BasicBlock *> &processed_bbs,
       if ((l != NULL)  && (l->getHeader() == subgraph_entry))
         continue;
       BasicBlock *replicated_subgraph_entry =
-	replicate_subgraph(subgraph_entry, f, LI, DT);
+	ReplicateSubgraph(subgraph_entry, f);
       t->setSuccessor(i, replicated_subgraph_entry);
     }
   }
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    find_barriers_dfs(t->getSuccessor(i), processed_bbs, LI, DT);
+    FindBarriersDFS(t->getSuccessor(i), processed_bbs);
 }
 
-static bool
-block_has_barrier(const BasicBlock *bb)
-{
-  for (BasicBlock::const_iterator i = bb->begin(), e = bb->end();
-       i != e; ++i) {
-    if (const CallInst *c = dyn_cast<CallInst>(i)) {
-      const Value *v = c->getCalledValue();
-      if (v->getName().equals(BARRIER_FUNCTION_NAME))
-	return true;
-    }
-  }
-
-  return false;
-}
-
-static BasicBlock *
-replicate_subgraph(BasicBlock *entry, Function *f, LoopInfo *LI, DominatorTree *DT)
+
+BasicBlock *
+BarrierTailReplication::ReplicateSubgraph(BasicBlock *entry,
+                                          Function *f)
 {
   // Find all basic blocks to replicate.
   std::set<BasicBlock *> subgraph;
-  find_subgraph(subgraph, entry, LI);
+  FindSubgraph(subgraph, entry);
 
   // Replicate subgraph maintaining control flow.
   std::set<BasicBlock *> v;
   std::map<Value *, Value *> m;
-  replicate_basicblocks(v, m, subgraph, f);
-  update_references(v, m);
+  ReplicateBasicBlocks(v, m, subgraph, f);
+  UpdateReferences(v, m);
 
   // We have modified the function. Possibly created new loops.
   // Update analysis passes.
@@ -136,10 +122,10 @@ replicate_subgraph(BasicBlock *entry, Function *f, LoopInfo *LI, DominatorTree *
   return cast<BasicBlock>(m[entry]);
 }
 
-static void
-find_subgraph(std::set<BasicBlock *> &subgraph,
-	      BasicBlock *entry,
-              LoopInfo *LI)
+
+void
+BarrierTailReplication::FindSubgraph(BasicBlockSet &subgraph,
+                                     BasicBlock *entry)
 {
   // This check is not enough when we have loops inside barriers.
   // Use LoopInfo.
@@ -154,15 +140,16 @@ find_subgraph(std::set<BasicBlock *> &subgraph,
     BasicBlock *successor = t->getSuccessor(i);
     if ((l != NULL)  && (l->getHeader() == successor))
       continue;
-    find_subgraph(subgraph, successor, LI);
+    FindSubgraph(subgraph, successor);
   }
 }
 
-static void
-replicate_basicblocks(std::set<BasicBlock *> &new_graph,
-		      std::map<Value *, Value *> &reference_map,
-		      const std::set<BasicBlock *> &graph,
-		      Function *f)
+
+void
+BarrierTailReplication::ReplicateBasicBlocks(BasicBlockSet &new_graph,
+                                             ValueValueMap &reference_map,
+                                             BasicBlockSet &graph,
+                                             Function *f)
 {
   for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
 	 e = graph.end();
@@ -183,9 +170,10 @@ replicate_basicblocks(std::set<BasicBlock *> &new_graph,
   }
 }
 
-static void
-update_references(const std::set<BasicBlock *>&graph,
-		  const std::map<Value *, Value *> &reference_map)
+
+void
+BarrierTailReplication::UpdateReferences(const BasicBlockSet &graph,
+                                         const ValueValueMap &reference_map)
 {
   for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
 	 e = graph.end();
@@ -202,4 +190,23 @@ update_references(const std::set<BasicBlock *>&graph,
     }
   }
 }
+
+
+static bool
+block_has_barrier(const BasicBlock *bb)
+{
+  for (BasicBlock::const_iterator i = bb->begin(), e = bb->end();
+       i != e; ++i) {
+    if (const CallInst *c = dyn_cast<CallInst>(i)) {
+      const Value *v = c->getCalledValue();
+      if (v->getName().equals(BARRIER_FUNCTION_NAME))
+	return true;
+    }
+  }
+
+  return false;
+}
+
+
+
 
