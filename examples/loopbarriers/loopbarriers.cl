@@ -3,14 +3,17 @@ int printf(const char *restrict format, ...);
 __kernel void
 loopbarriers (void)
 {
-  int gid = get_global_id (0);
+  unsigned group_id = get_group_id (0);
+  unsigned local_id = get_local_id (0);
 
   for (volatile int i = 0; i < 3; ++i)
     {
-      printf ("%d: iteration %d, before barrier()\n", gid, i);
+      printf ("[GROUP_ID=%d] iteration=%d, A_before_barrier, local_id=%d\n",
+              group_id, i, local_id);
       
       barrier(CLK_LOCAL_MEM_FENCE);
-      
-      printf ("%d: iteration %d, after barrier()\n", gid, i);
+
+      printf ("[GROUP_ID=%d] iteration=%d, B_before_barrier, local_id=%d\n",
+              group_id, i, local_id);
     }
 }
