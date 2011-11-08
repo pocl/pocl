@@ -61,4 +61,4 @@ int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
 int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
 EOF
 
-ld ${output_file}.o -shared -o ${output_file}
+ld ${output_file}.o @SHARED@ -o ${output_file}
