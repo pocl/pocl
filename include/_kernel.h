@@ -76,11 +76,6 @@
 #  define __IF_FP64(x)
 #endif
 
-#if defined(cl_khr_fp64) && !defined(cl_khr_int64)
-/* We often reinterpret a double as ulong for bit manipulation */
-#  error "Using type double without type long is not supported by the run-time library implementation"
-#endif
-
 #define __global __attribute__ ((address_space(3)))
 #define __local __attribute__ ((address_space(4)))
 #define __constant __attribute__ ((address_space(5)))
@@ -154,7 +149,8 @@ typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
 #else
 /* Disable datatype */
-#define long error_undefined_type_long
+struct error_undefined_type_long;
+#define long struct error_undefined_type_long
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
@@ -171,7 +167,8 @@ typedef double double8  __attribute__((__ext_vector_type__(8)));
 typedef double double16 __attribute__((__ext_vector_type__(16)));
 #else
 /* Disable datatype */
-#define double error_undefined_type_double
+struct error_undefined_type_double;
+#define double struct error_undefined_type_double
 #endif
 
 #if (__ADDRESS_BITS__ == 32)

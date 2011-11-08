@@ -274,6 +274,8 @@
   IMPLEMENT_BUILTIN_K_V(NAME, long8 , double8 , lo, hi) \
   IMPLEMENT_BUILTIN_K_V(NAME, long16, double16, lo, hi)))
 
+/******************************************************************************/
+
 #define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE)    \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a, VTYPE b)                                \
@@ -313,13 +315,13 @@
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, float4  , float , int4  )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, float8  , float , int8  )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, float16 , float , int16 )     \
-  __IF_INT64(__IF_FP64(                                         \
+  __IF_FP64(                                                    \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double  , double, long  )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double2 , double, long2 )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double3 , double, long3 )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double4 , double, long4 )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double8 , double, long8 )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16)))
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16))
 
 #define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE, JTYPE)   \
   VTYPE __attribute__ ((overloadable))                          \
@@ -337,13 +339,13 @@
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float4  , float , int4  )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float8  , float , int8  )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float16 , float , int16 )    \
-  __IF_INT64(__IF_FP64(                                         \
+  __IF_FP64(                                                    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double  , double, long  )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double2 , double, long2 )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double3 , double, long3 )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double4 , double, long4 )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double8 , double, long8 )    \
-  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double, long16)))
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double16, double, long16))
 
 #define IMPLEMENT_EXPR_S_VV(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
   STYPE __attribute__ ((overloadable))                          \
@@ -361,13 +363,13 @@
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, float4  , float , int4  )     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, float8  , float , int8  )     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, float16 , float , int16 )     \
-  __IF_INT64(__IF_FP64(                                         \
+  __IF_FP64(                                                    \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, double  , double, long  )     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, double2 , double, long2 )     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, double3 , double, long3 )     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, double4 , double, long4 )     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, double8 , double, long8 )     \
-  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double16, double, long16)))
+  IMPLEMENT_EXPR_S_VV(NAME, EXPR, double16, double, long16))
 
 #define IMPLEMENT_EXPR_V_VVS(NAME, EXPR, VTYPE, STYPE)  \
   VTYPE __attribute__ ((overloadable))                  \
