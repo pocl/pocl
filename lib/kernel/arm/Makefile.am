@@ -47,5 +47,5 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple armv4t-unknown-linux-gnueabihf -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
+$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
