@@ -105,6 +105,31 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
+# The HOST_ARCH variable is used to choose an optimized
+# kernel library for the "default target" which is assumed
+# to be the same as the one where the OpenCL host code runs
+# in.
+HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
+
+case $HOST_ARCH in
+     arm)
+     AC_MSG_NOTICE([using arm optimized kernel lib for the native device])
+     ;;
+
+     x86_64)
+     AC_MSG_NOTICE([using x86_64 optimized kernel lib for the native device])
+     ;;
+
+     *)
+     AC_MSG_NOTICE([unknown host, using the generic kernel lib])
+     HOST_ARCH=""
+     ;;
+esac
+
+AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"], 
+["The native arch (for selecting the default kernel library version)."])
+AC_SUBST([HOST_ARCH])
+
 AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/CL/Makefile
