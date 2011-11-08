@@ -43,7 +43,12 @@ main (void)
   cl_float *dstS;
   int i;
 
-  source_file = fopen (SRCDIR "/trig.cl", "r");
+  source_file = fopen("trig.cl", "r");
+  if (source_file == NULL) 
+    source_file = fopen (SRCDIR "/trig.cl", "r");
+
+  assert(source_file != NULL && "trig.cl not found!");
+
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
