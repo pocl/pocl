@@ -298,7 +298,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error == 0);
 
       error = snprintf (command, COMMAND_LENGTH,
-                       "ld -X " SHARED " -o %s %s.o",
+                       "ld " SHARED_LD_FLAGS " -o %s %s.o",
                        module,
                        module);
       assert (error >= 0);

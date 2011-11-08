@@ -53,6 +53,8 @@ test -z "$LLVM_LD" || \
 test -z "$LLC" || \
 test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH])
 
+LT_LIB_M
+
 old_LDFLAGS="$LDFLAGS"
 LDFLAGS=-bundle
 AC_LINK_IFELSE([AC_LANG_SOURCE([[
@@ -61,11 +63,13 @@ test(int a, int b)
 {
   return a + b;
 }
-]])],[SHARED=-bundle], [SHARED=-shared])
+]])],[SHARED_LD_FLAGS=-bundle], [SHARED_LD_FLAGS=-shared])
 LDFLAGS="$old_LDFLAGS"
-AC_SUBST([SHARED])
 
-AC_DEFINE_UNQUOTED([SHARED], ["$SHARED"], [Parameter to compiler to generate loadable module.])
+SHARED_LD_FLAGS="$SHARED_LD_FLAGS $LIBM"
+AC_SUBST([SHARED_LD_FLAGS])
+
+AC_DEFINE_UNQUOTED([SHARED_LD_FLAGS], ["$SHARED_LD_FLAGS"], [Parameter to compiler to generate loadable module.])
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
