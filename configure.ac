@@ -53,8 +53,6 @@ test -z "$LLVM_LD" || \
 test -z "$LLC" || \
 test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH])
 
-LT_LIB_M
-
 old_LDFLAGS="$LDFLAGS"
 LDFLAGS=-bundle
 AC_LINK_IFELSE([AC_LANG_SOURCE([[
@@ -66,10 +64,6 @@ test(int a, int b)
 ]])],[SHARED_LD_FLAGS=-bundle], [SHARED_LD_FLAGS=-shared])
 LDFLAGS="$old_LDFLAGS"
 
-SHARED_LD_FLAGS="$SHARED_LD_FLAGS $LIBM"
-AC_SUBST([SHARED_LD_FLAGS])
-
-AC_DEFINE_UNQUOTED([SHARED_LD_FLAGS], ["$SHARED_LD_FLAGS"], [Parameter to compiler to generate loadable module.])
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
@@ -118,14 +112,19 @@ HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
 case $HOST_ARCH in
      arm)
      AC_MSG_NOTICE([using arm optimized kernel lib for the native device])
+     # Assume -lm should not be used. TODO: add an embedded math lib
+     # for compiling kernels for ARM envs without usable math libs.
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS"
      ;;
 
      x86_64)
      AC_MSG_NOTICE([using x86_64 optimized kernel lib for the native device])
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
      ;;
 
      *)
      AC_MSG_NOTICE([unknown host, using the generic kernel lib])
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
      HOST_ARCH=""
      ;;
 esac
@@ -133,6 +132,9 @@ esac
 AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"], 
 ["The native arch (for selecting the default kernel library version)."])
 AC_SUBST([HOST_ARCH])
+
+AC_SUBST([SHARED_LD_FLAGS])
+AC_DEFINE_UNQUOTED([SHARED_LD_FLAGS], ["$SHARED_LD_FLAGS"], [Parameter to compiler to generate loadable module.])
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
