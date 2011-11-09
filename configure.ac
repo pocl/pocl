@@ -139,6 +139,25 @@ AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"],
 ["The native arch (for selecting the default kernel library version)."])
 AC_SUBST([HOST_ARCH])
 
+AC_CANONICAL_HOST
+# Check for which host we are on and setup a few things
+# specifically based on the host
+AM_CONDITIONAL([DARWIN_HOST_OS], false)
+case $host_os in
+  darwin* )
+    AM_CONDITIONAL([DARWIN_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+    # MacOS ld outputs useless warnings like
+    # ld: warning: -macosx_version_min not specificed, assuming 10.7
+    # suppress them with -w.
+    SHARED_LD_FLAGS="$SHARED_LD_FLAGS -w"  
+         ;;
+  *)
+    #Default Case
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
+         ;;
+esac
+
 AC_SUBST([SHARED_LD_FLAGS])
 AC_DEFINE_UNQUOTED([SHARED_LD_FLAGS], ["$SHARED_LD_FLAGS"], [Parameter to compiler to generate loadable module.])
 
