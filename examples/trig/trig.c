@@ -80,7 +80,7 @@ main (void)
       }
     }
 
-  exec_trig_kernel (source, N, srcA, dst);
+  assert(exec_trig_kernel (source, N, srcA, dst) != -1);
 
   for (i = 0; i < N; ++i)
     {

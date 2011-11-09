@@ -109,17 +109,23 @@ AC_TYPE_UINT8_T
 # in.
 HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
 
+ARM_CLANG_FLAGS="-ccc-host-triple armv4t-unknown-linux-gnueabihf"
+X86_64_CLANG_FLAGS="-ccc-host-triple x86_64-unknown-linux-gnu"
+
 case $HOST_ARCH in
      arm)
      AC_MSG_NOTICE([using arm optimized kernel lib for the native device])
      # Assume -lm should not be used. TODO: add an embedded math lib
      # for compiling kernels for ARM envs without usable math libs.
      SHARED_LD_FLAGS="$SHARED_LD_FLAGS"
+     # Use the default clang flags
+     ARM_CLANG_FLAGS=""
      ;;
 
      x86_64)
      AC_MSG_NOTICE([using x86_64 optimized kernel lib for the native device])
      SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
+     X86_64_CLANG_FLAGS=""
      ;;
 
      *)
