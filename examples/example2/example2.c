@@ -52,7 +52,12 @@ main (void)
   size_t global_work_size[2];
   size_t local_work_size[2];
 
-  source_file = fopen (SRCDIR "/example2.cl", "r");
+  source_file = fopen("example2.cl", "r");
+  if (source_file == NULL) 
+    source_file = fopen (SRCDIR "/example2.cl", "r");
+
+  assert(source_file != NULL && "example2.cl not found!");
+
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
