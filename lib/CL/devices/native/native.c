@@ -198,7 +198,7 @@ pocl_native_run (void *data, const char *parallel_filename,
       assert (error == 0);
 
       error = snprintf (command, COMMAND_LENGTH,
-                       "ld -fPIC -shared -o %s %s.o",
+                       "ld " SHARED_LD_FLAGS " -o %s %s.o",
                        module,
                        module);
       assert (error >= 0);
