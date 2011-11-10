@@ -44,7 +44,9 @@ void
 BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
+  AU.addPreserved<DominatorTree>();
   AU.addRequired<LoopInfo>();
+  AU.addPreserved<LoopInfo>();
 }
 
 bool
@@ -62,6 +64,9 @@ BarrierTailReplication::ProcessFunction(Function &F)
   BasicBlockSet processed_bbs;
 
   FindBarriersDFS(&F.getEntryBlock(), processed_bbs);
+
+  DT->verifyAnalysis();
+  LI->verifyAnalysis();
 
   return true;
 }  
@@ -95,18 +100,16 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
     // Loop check should not be needed here anymore, barriers
     // have been canonicalized so they have exactly one succesor.
     assert((t->getNumSuccessors() == 1) && "Not canonicalized barrier found!");
-    for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
-      BasicBlock *subgraph_entry = t->getSuccessor(i);
-      BasicBlock *replicated_subgraph_entry =
-	ReplicateSubgraph(subgraph_entry, f);
-      t->setSuccessor(i, replicated_subgraph_entry);
-
-      // We have modified the function. Possibly created new loops.
-      // Update analysis passes.
-      DT->runOnFunction(*f);
-      LI->releaseMemory();
-      LI->getBase().Calculate(DT->getBase());
-    }
+    BasicBlock *subgraph_entry = t->getSuccessor(0);
+    BasicBlock *replicated_subgraph_entry =
+      ReplicateSubgraph(subgraph_entry, f);
+    t->setSuccessor(0, replicated_subgraph_entry);
+    
+    // We have modified the function. Possibly created new loops.
+    // Update analysis passes.
+    DT->runOnFunction(*f);
+    LI->releaseMemory();
+    LI->getBase().Calculate(DT->getBase());
   }
 
   // Find barriers in the successors (depth first).
@@ -120,12 +123,12 @@ BarrierTailReplication::ReplicateSubgraph(BasicBlock *entry,
                                           Function *f)
 {
   // Find all basic blocks to replicate.
-  std::set<BasicBlock *> subgraph;
+  BasicBlockSet subgraph;
   FindSubgraph(subgraph, entry);
 
   // Replicate subgraph maintaining control flow.
-  std::set<BasicBlock *> v;
-  std::map<Value *, Value *> m;
+  BasicBlockSet v;
+  ValueValueMap m;
   ReplicateBasicBlocks(v, m, subgraph, f);
   UpdateReferences(v, m);
 
@@ -160,7 +163,7 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockSet &new_graph,
                                              BasicBlockSet &graph,
                                              Function *f)
 {
-  for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
+  for (BasicBlockSet::const_iterator i = graph.begin(),
 	 e = graph.end();
        i != e; ++i) {
     BasicBlock *b = *i;
@@ -184,14 +187,14 @@ void
 BarrierTailReplication::UpdateReferences(const BasicBlockSet &graph,
                                          const ValueValueMap &reference_map)
 {
-  for (std::set<BasicBlock *>::const_iterator i = graph.begin(),
+  for (BasicBlockSet::const_iterator i = graph.begin(),
 	 e = graph.end();
        i != e; ++i) {
     BasicBlock *b = *i;
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
 	 i2 != e2; ++i2) {
       Instruction *i = i2;
-      for (std::map<Value *, Value *>::const_iterator i3 =
+      for (ValueValueMap::const_iterator i3 =
 	     reference_map.begin(), e3 = reference_map.end();
 	   i3 != e3; ++i3) {
 	i->replaceUsesOfWith(i3->first, i3->second);

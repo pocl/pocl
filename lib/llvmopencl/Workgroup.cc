@@ -111,9 +111,7 @@ Workgroup::runOnModule(Module &M)
   BI.inlineFunctions();
 
   CanonicalizeBarriers CB;
-
   BarrierTailReplication BTR;
-
   WorkitemReplication WR;
 
   string ErrorInfo;
@@ -125,17 +123,17 @@ Workgroup::runOnModule(Module &M)
   for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
     Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
 
+    BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
+    CB.LI = BTR.LI = WR.LI = &getAnalysis<LoopInfo>(*K);
+
     if ((Kernel != "") && (K->getName() != Kernel))
       continue;
 
     out << "#define _" << K->getName() << "_NUM_LOCALS 0\n";
     out << "#define _" << K->getName() << "_LOCAL_SIZE {}\n";
 
-    CB.LI = &getAnalysis<LoopInfo>(*K);
     CB.ProcessFunction(*K);
 
-    BTR.DT = &getAnalysis<DominatorTree>(*K);
-    BTR.LI = &getAnalysis<LoopInfo>(*K);
     BTR.ProcessFunction(*K);
     
     int OldLocalSize[3];
@@ -153,8 +151,6 @@ Workgroup::runOnModule(Module &M)
       }
     }
 
-    WR.DT = &getAnalysis<DominatorTree>(*K);
-    WR.LI = &getAnalysis<LoopInfo>(*K);
     WR.runOnFunction(*K);
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;

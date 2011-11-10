@@ -73,7 +73,7 @@ header="`dirname $1`/`basename $1 .bc`_header.h"
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-loop-info -loop-simplify -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
 else
     @OPT@ -load=@pkglibdir@/llvmopencl.so -loop-simplify -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
 fi

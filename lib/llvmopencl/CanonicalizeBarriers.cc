@@ -150,9 +150,6 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     changed = true;
   }
 
-  // Temporary check to ensure we keep LoopInfo in
-  // a correct state. This might be commented out
-  // once we are sure it works.
   LI->verifyAnalysis();
   
   return changed;
