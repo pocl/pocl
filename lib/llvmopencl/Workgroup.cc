@@ -151,7 +151,7 @@ Workgroup::runOnModule(Module &M)
       }
     }
 
-    WR.runOnFunction(*K);
+    WR.ProcessFunction(*K);
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
 

@@ -33,13 +33,14 @@ using namespace pocl;
 #define BARRIER_FUNCTION_NAME "barrier"
 
 static bool block_has_barrier(const BasicBlock *bb);
-static bool find_subgraph(std::set<BasicBlock *> &subgraph,
-			  BasicBlock *entry,
-			  BasicBlock *exit);
 static void purge_subgraph(std::set<BasicBlock *> &new_subgraph,
 			   const std::set<BasicBlock *> &original_subgraph,
 			   const BasicBlock *exit);
-static void canonicalize_barriers(Function &F, LoopInfo *LI);
+
+namespace {
+  static
+  RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
+}
 
 cl::list<int>
 LocalSize("local-size",
@@ -47,10 +48,25 @@ LocalSize("local-size",
 	  cl::multi_val(3));
 
 char WorkitemReplication::ID = 0;
-static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
+
+void
+WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<DominatorTree>();
+  AU.addRequired<LoopInfo>();
+}
 
 bool
 WorkitemReplication::runOnFunction(Function &F)
+{
+  DT = &getAnalysis<DominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
+
+  return ProcessFunction(F);
+}
+
+bool
+WorkitemReplication::ProcessFunction(Function &F)
 {
   Module *M = F.getParent();
 
@@ -65,14 +81,15 @@ WorkitemReplication::runOnFunction(Function &F)
 
   BasicBlockSet subgraph;
 
-  //canonicalize_barriers(F, LI);
-
-  BasicBlock *exit = findBarriersDFS(&(F.getEntryBlock()),
+  BasicBlock *exit = FindBarriersDFS(&(F.getEntryBlock()),
 				     &(F.getEntryBlock()),
 				     subgraph);
 
-  if (exit != NULL)
+  if (exit != NULL) {
+    // There is a path from entry to exit that does not cross
+    // any barrier, we need to replicate it now.
     replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
+  }
 
   delete []ReferenceMap;
 
@@ -106,7 +123,7 @@ WorkitemReplication::runOnFunction(Function &F)
 // recursive calls, so on return only subgraph needs still to be
 // replicated. Return value is last basicblock (exit) of original graph.
 BasicBlock*
-WorkitemReplication::findBarriersDFS(BasicBlock *bb,
+WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
 				     BasicBlock *entry,
 				     BasicBlockSet &subgraph)
 {
@@ -121,7 +138,8 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
       (ProcessedBarriers.count(bb) == 0))
     {      
       BasicBlockSet pre_subgraph;
-      find_subgraph(pre_subgraph, entry, bb);
+      bool found = FindSubgraph(pre_subgraph, entry, bb);
+      assert(found && "Subgraph to a barrier does not reach the barrier!");
       pre_subgraph.erase(bb); // Remove barrier basicblock from subgraph.
       for (std::set<BasicBlock *>::const_iterator i = pre_subgraph.begin(),
 	     e = pre_subgraph.end();
@@ -145,7 +163,7 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
       // Continue processing after the barrier.
       BasicBlockSet post_subgraph;
       bb = t->getSuccessor(0);
-      BasicBlock *exit = findBarriersDFS(bb, bb, post_subgraph);
+      BasicBlock *exit = FindBarriersDFS(bb, bb, post_subgraph);
       if (exit != NULL)
         replicateWorkitemSubgraph(post_subgraph, bb, exit);
 
@@ -165,7 +183,7 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
     BasicBlock *successor = t->getSuccessor(i);
     if ((l != NULL) && (l->getHeader() == successor))
       continue;
-    s = findBarriersDFS(t->getSuccessor(i), entry, subgraph);
+    s = FindBarriersDFS(t->getSuccessor(i), entry, subgraph);
     if (s != NULL) {
       assert((r == NULL || r == s) &&
 	     "More than one function tail within same barrier path!\n");
@@ -174,6 +192,28 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
   }
 
   return r;
+}
+
+// Find subgraph between entry and exit basicblocks.
+bool
+WorkitemReplication::FindSubgraph(BasicBlockSet &subgraph,
+                                  BasicBlock *entry,
+                                  BasicBlock *exit)
+{
+  if (entry == exit) {
+    subgraph.insert(entry);
+    return true;
+  }
+
+  bool found = false;
+  const TerminatorInst *t = entry->getTerminator();
+  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
+    found |= FindSubgraph(subgraph, t->getSuccessor(i), exit);
+
+  if (found)
+    subgraph.insert(entry);
+
+  return found;
 }
 
 void
@@ -303,28 +343,6 @@ block_has_barrier(const BasicBlock *bb)
   return false;
 }
 
-// Find subgraph between entry and exit basicblocks.
-static bool
-find_subgraph(BasicBlockSet &subgraph,
-	      BasicBlock *entry,
-	      BasicBlock *exit)
-{
-  if (entry == exit) {
-    subgraph.insert(entry);
-    return true;
-  }
-
-  bool found = false;
-  const TerminatorInst *t = entry->getTerminator();
-  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    found |= find_subgraph(subgraph, t->getSuccessor(i), exit);
-
-  if (found)
-    subgraph.insert(entry);
-
-  return found;
-}
-
 void
 WorkitemReplication::replicateBasicblocks(BasicBlockSet &new_graph,
 					  ValueValueMap &reference_map,
@@ -393,76 +411,3 @@ WorkitemReplication::isReplicable(const Instruction *i)
 
   return true;
 }
-
-
-// // Canonizalizing barriers performs two tasks: (1) it splits
-// // basicblock at barriers, ensuring barriers blocks have a single
-// // predecessor, single sucessor, and just the barrier call and
-// // the terminator as body; and (2) adds a barrier to all
-// // loop headers and tails which have a barrier in the body.
-// // These loop headers
-// // might break the "just the barrier and terminator" rule.
-// // It requires that loops have been canonicalized (tries to
-// // check for this and assert otherwise).
-// static void
-// canonicalize_barriers(Function &F, LoopInfo *LI)
-// {
-//   std::set<Instruction *> SplitPoints;
-//   std::set<Instruction *> BarriersToAdd;
-
-//   CallInst *barrier = NULL;
-
-//   for (Function::iterator i = F.begin(), e = F.end();
-//        i != e; ++i) {
-//     BasicBlock *b = i;
-//     for (BasicBlock::iterator i = b->begin(), e = b->end();
-// 	 i != e; ++i) {
-//       if (CallInst *c = dyn_cast<CallInst>(i)) {
-// 	if (Function *f = c->getCalledFunction()) {
-// 	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
-//             barrier = c;
-            
-//             // We found a barrier, add the split points.
-// 	    BasicBlock::iterator j = i;
-// 	    SplitPoints.insert(j);
-// 	    SplitPoints.insert(++j);
-            
-//             // Is this barrier inside of a loop?
-//             Loop *loop = LI->getLoopFor(b);
-//             if (loop != NULL) {
-//               BasicBlock *preheader = loop->getLoopPreheader();
-//               assert(preheader != NULL);
-//               Instruction *new_barrier = barrier->clone();
-//               new_barrier->insertBefore(preheader->getFirstNonPHI());
-//               // No split point after preheader barriers, so we ensure
-//               // WI 0,0,0 starts at the loop header.
-//               SplitPoints.insert(new_barrier);
-
-//               BasicBlock *latch = loop->getLoopLatch();
-//               assert(latch != NULL);
-//               BarriersToAdd.insert(latch->getTerminator());
-//             }
-//           }
-// 	}
-//       }
-//     }
-//   }
-
-//   for (std::set<Instruction *>::iterator i = BarriersToAdd.begin(),
-//          e = BarriersToAdd.end();
-//        i != e; ++i) {
-//     assert(barrier != NULL);
-//     Instruction *new_barrier = barrier->clone();
-//     new_barrier->insertBefore(*i);
-//     BasicBlock::iterator j = new_barrier;
-//     SplitPoints.insert(j);
-//     SplitPoints.insert(++j);
-//   }
-
-//   for (std::set<Instruction *>::iterator i = SplitPoints.begin(),
-// 	 e = SplitPoints.end();
-//        i != e; ++i) {
-//     BasicBlock *b = (*i)->getParent();
-//     b->splitBasicBlock(*i);
-//   }
-// }

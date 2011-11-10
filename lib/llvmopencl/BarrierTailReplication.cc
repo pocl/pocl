@@ -34,8 +34,7 @@ static bool block_has_barrier(const BasicBlock *bb);
 namespace {
   static
   RegisterPass<BarrierTailReplication> X("barriertails",
-					 "Barrier tail replication pass",
-					 false, false);
+					 "Barrier tail replication pass");
 }
 
 char BarrierTailReplication::ID = 0;
@@ -168,7 +167,7 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockSet &new_graph,
        i != e; ++i) {
     BasicBlock *b = *i;
     BasicBlock *new_b = BasicBlock::Create(b->getContext(),
-					   b->getName(),
+					   b->getName() + ".btr",
 					   f);
     reference_map.insert(std::make_pair(b, new_b));
     new_graph.insert(new_b);
