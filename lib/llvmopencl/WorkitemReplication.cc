@@ -394,74 +394,75 @@ WorkitemReplication::isReplicable(const Instruction *i)
   return true;
 }
 
-// Canonizalizing barriers performs two tasks: (1) it splits
-// basicblock at barriers, ensuring barriers blocks have a single
-// predecessor, single sucessor, and just the barrier call and
-// the terminator as body; and (2) adds a barrier to all
-// loop headers and tails which have a barrier in the body.
-// These loop headers
-// might break the "just the barrier and terminator" rule.
-// It requires that loops have been canonicalized (tries to
-// check for this and assert otherwise).
-static void
-canonicalize_barriers(Function &F, LoopInfo *LI)
-{
-  std::set<Instruction *> SplitPoints;
-  std::set<Instruction *> BarriersToAdd;
 
-  CallInst *barrier = NULL;
+// // Canonizalizing barriers performs two tasks: (1) it splits
+// // basicblock at barriers, ensuring barriers blocks have a single
+// // predecessor, single sucessor, and just the barrier call and
+// // the terminator as body; and (2) adds a barrier to all
+// // loop headers and tails which have a barrier in the body.
+// // These loop headers
+// // might break the "just the barrier and terminator" rule.
+// // It requires that loops have been canonicalized (tries to
+// // check for this and assert otherwise).
+// static void
+// canonicalize_barriers(Function &F, LoopInfo *LI)
+// {
+//   std::set<Instruction *> SplitPoints;
+//   std::set<Instruction *> BarriersToAdd;
 
-  for (Function::iterator i = F.begin(), e = F.end();
-       i != e; ++i) {
-    BasicBlock *b = i;
-    for (BasicBlock::iterator i = b->begin(), e = b->end();
-	 i != e; ++i) {
-      if (CallInst *c = dyn_cast<CallInst>(i)) {
-	if (Function *f = c->getCalledFunction()) {
-	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
-            barrier = c;
+//   CallInst *barrier = NULL;
+
+//   for (Function::iterator i = F.begin(), e = F.end();
+//        i != e; ++i) {
+//     BasicBlock *b = i;
+//     for (BasicBlock::iterator i = b->begin(), e = b->end();
+// 	 i != e; ++i) {
+//       if (CallInst *c = dyn_cast<CallInst>(i)) {
+// 	if (Function *f = c->getCalledFunction()) {
+// 	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
+//             barrier = c;
             
-            // We found a barrier, add the split points.
-	    BasicBlock::iterator j = i;
-	    SplitPoints.insert(j);
-	    SplitPoints.insert(++j);
+//             // We found a barrier, add the split points.
+// 	    BasicBlock::iterator j = i;
+// 	    SplitPoints.insert(j);
+// 	    SplitPoints.insert(++j);
             
-            // Is this barrier inside of a loop?
-            Loop *loop = LI->getLoopFor(b);
-            if (loop != NULL) {
-              BasicBlock *preheader = loop->getLoopPreheader();
-              assert(preheader != NULL);
-              Instruction *new_barrier = barrier->clone();
-              new_barrier->insertBefore(preheader->getFirstNonPHI());
-              // No split point after preheader barriers, so we ensure
-              // WI 0,0,0 starts at the loop header.
-              SplitPoints.insert(new_barrier);
+//             // Is this barrier inside of a loop?
+//             Loop *loop = LI->getLoopFor(b);
+//             if (loop != NULL) {
+//               BasicBlock *preheader = loop->getLoopPreheader();
+//               assert(preheader != NULL);
+//               Instruction *new_barrier = barrier->clone();
+//               new_barrier->insertBefore(preheader->getFirstNonPHI());
+//               // No split point after preheader barriers, so we ensure
+//               // WI 0,0,0 starts at the loop header.
+//               SplitPoints.insert(new_barrier);
 
-              BasicBlock *latch = loop->getLoopLatch();
-              assert(latch != NULL);
-              BarriersToAdd.insert(latch->getTerminator());
-            }
-          }
-	}
-      }
-    }
-  }
+//               BasicBlock *latch = loop->getLoopLatch();
+//               assert(latch != NULL);
+//               BarriersToAdd.insert(latch->getTerminator());
+//             }
+//           }
+// 	}
+//       }
+//     }
+//   }
 
-  for (std::set<Instruction *>::iterator i = BarriersToAdd.begin(),
-         e = BarriersToAdd.end();
-       i != e; ++i) {
-    assert(barrier != NULL);
-    Instruction *new_barrier = barrier->clone();
-    new_barrier->insertBefore(*i);
-    BasicBlock::iterator j = new_barrier;
-    SplitPoints.insert(j);
-    SplitPoints.insert(++j);
-  }
+//   for (std::set<Instruction *>::iterator i = BarriersToAdd.begin(),
+//          e = BarriersToAdd.end();
+//        i != e; ++i) {
+//     assert(barrier != NULL);
+//     Instruction *new_barrier = barrier->clone();
+//     new_barrier->insertBefore(*i);
+//     BasicBlock::iterator j = new_barrier;
+//     SplitPoints.insert(j);
+//     SplitPoints.insert(++j);
+//   }
 
-  for (std::set<Instruction *>::iterator i = SplitPoints.begin(),
-	 e = SplitPoints.end();
-       i != e; ++i) {
-    BasicBlock *b = (*i)->getParent();
-    b->splitBasicBlock(*i);
-  }
-}
+//   for (std::set<Instruction *>::iterator i = SplitPoints.begin(),
+// 	 e = SplitPoints.end();
+//        i != e; ++i) {
+//     BasicBlock *b = (*i)->getParent();
+//     b->splitBasicBlock(*i);
+//   }
+// }
