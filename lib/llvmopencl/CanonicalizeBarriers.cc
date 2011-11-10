@@ -41,6 +41,7 @@ void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<LoopInfo>();
+  AU.addPreserved<LoopInfo>();
 }
 
 bool
@@ -133,7 +134,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     BasicBlock *b = (*i)->getParent();
     BasicBlock *new_b = b->splitBasicBlock(*i);
     new_b->takeName(b);
-    b->setName(new_b->getName() + "_pre_barrier");
+    b->setName(new_b->getName() + ".prebarrier");
     Loop *l = LI->getLoopFor(b);
     if (l)
       l->addBasicBlockToLoop(new_b, LI->getBase());
@@ -142,7 +143,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   for (InstructionSet::iterator i = PostSplitPoints.begin(), e = PostSplitPoints.end();
        i != e; ++i) {
     BasicBlock *b = (*i)->getParent();
-    BasicBlock *new_b = b->splitBasicBlock(*i, b->getName() + "_post_barrier");
+    BasicBlock *new_b = b->splitBasicBlock(*i, b->getName() + ".postbarrier");
     Loop *l = LI->getLoopFor(b);
     if (l)
       l->addBasicBlockToLoop(new_b, LI->getBase());
@@ -150,7 +151,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   }
 
   // Temporary check to ensure we keep LoopInfo in
-  // a correct state. This should be commented out
+  // a correct state. This might be commented out
   // once we are sure it works.
   LI->verifyAnalysis();
   

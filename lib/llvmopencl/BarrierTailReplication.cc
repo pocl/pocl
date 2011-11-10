@@ -94,15 +94,9 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
 
     // Loop check should not be needed here anymore, barriers
     // have been canonicalized so they have exactly one succesor.
-    //Loop *l = LI->getLoopFor(bb);
     assert((t->getNumSuccessors() == 1) && "Not canonicalized barrier found!");
     for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
       BasicBlock *subgraph_entry = t->getSuccessor(i);
-      // if ((l != NULL)  && (l->getHeader() == subgraph_entry)) {
-      //   // Do not replicate the path leading to the loop header,
-      //   // as would lead to infinite unrolling.
-      //   continue;
-      // }
       BasicBlock *replicated_subgraph_entry =
 	ReplicateSubgraph(subgraph_entry, f);
       t->setSuccessor(i, replicated_subgraph_entry);
@@ -144,11 +138,6 @@ void
 BarrierTailReplication::FindSubgraph(BasicBlockSet &subgraph,
                                      BasicBlock *entry)
 {
-  // This check is not enough when we have loops inside barriers.
-  // Use LoopInfo.
-  // if (subgraph.count(entry) != 0)
-  //   return;
-
   subgraph.insert(entry);
 
   const TerminatorInst *t = entry->getTerminator();
@@ -226,7 +215,3 @@ block_has_barrier(const BasicBlock *bb)
 
   return false;
 }
-
-
-
-
