@@ -67,25 +67,38 @@ BarrierTailReplication::ProcessFunction(Function &F)
 }  
 
 
+// Recursively (depht-first) look for barriers in all possible
+// execution paths starting on entry, replicating the barrier
+// successors to ensure there is a separate function exit BB
+// for each combination of traversed barriers. The set
+// processed_bbs stores the 
 void
 BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
                                         BasicBlockSet &processed_bbs)
 {
+  // Check if we already visited this BB (to avoid
+  // infinite recursion in case of unbarriered loops).
   if (processed_bbs.count(bb) != 0)
     return;
 
   processed_bbs.insert(bb);
 
-  Function *f = bb->getParent();
   TerminatorInst *t = bb->getTerminator();
+  Function *f = bb->getParent();
 
   if (block_has_barrier(bb)) {
-    // Replicate all successors.
+    // This block has a barrier, replicate all successors.
+    // Even the path starting in an unique successor is replicated,
+    // as it the path might be joined by another path in a
+    // sucessor BB (see ifbarrier4.ll in tests).
     Loop *l = LI->getLoopFor(bb);
     for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
       BasicBlock *subgraph_entry = t->getSuccessor(i);
-      if ((l != NULL)  && (l->getHeader() == subgraph_entry))
+      if ((l != NULL)  && (l->getHeader() == subgraph_entry)) {
+        // Do not replicate the path leading to the loop header,
+        // as would lead to infinite unrolling.
         continue;
+      }
       BasicBlock *replicated_subgraph_entry =
 	ReplicateSubgraph(subgraph_entry, f);
       t->setSuccessor(i, replicated_subgraph_entry);
