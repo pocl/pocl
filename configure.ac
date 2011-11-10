@@ -138,6 +138,8 @@ esac
 AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"], 
 ["The native arch (for selecting the default kernel library version)."])
 AC_SUBST([HOST_ARCH])
+AC_SUBST([X86_64_CLANG_FLAGS])
+AC_SUBST([ARM_CLANG_FLAGS])
 
 AC_CANONICAL_HOST
 # Check for which host we are on and setup a few things
