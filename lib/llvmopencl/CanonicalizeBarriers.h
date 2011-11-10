@@ -26,6 +26,8 @@
 #include <set>
 
 namespace pocl {
+  class Workgroup;
+
   class CanonicalizeBarriers : public llvm::FunctionPass {
     
   public:
@@ -42,5 +44,7 @@ namespace pocl {
     llvm::LoopInfo *LI;
 
     bool ProcessFunction(llvm::Function &F);
+
+    friend class pocl::Workgroup;
   };
 }

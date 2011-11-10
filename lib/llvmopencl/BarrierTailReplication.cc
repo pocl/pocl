@@ -102,6 +102,12 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
       BasicBlock *replicated_subgraph_entry =
 	ReplicateSubgraph(subgraph_entry, f);
       t->setSuccessor(i, replicated_subgraph_entry);
+
+      // We have modified the function. Possibly created new loops.
+      // Update analysis passes.
+      DT->runOnFunction(*f);
+      LI->releaseMemory();
+      LI->getBase().Calculate(DT->getBase());
     }
   }
 
@@ -124,12 +130,6 @@ BarrierTailReplication::ReplicateSubgraph(BasicBlock *entry,
   std::map<Value *, Value *> m;
   ReplicateBasicBlocks(v, m, subgraph, f);
   UpdateReferences(v, m);
-
-  // We have modified the function. Possibly created new loops.
-  // Update analysis passes.
-  DT->runOnFunction(*f);
-  LI->releaseMemory();
-  LI->getBase().Calculate(DT->getBase());
 
   // Return entry block of replicated subgraph.
   return cast<BasicBlock>(m[entry]);

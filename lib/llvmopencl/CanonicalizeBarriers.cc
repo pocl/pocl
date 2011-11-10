@@ -53,7 +53,8 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 
 // Canonicalize barriers: ensure all barriers are in a separate BB
 // containint only the barrier and the terminator, with just one
-// predecessor and one successor.
+// predecessor and one successor. This allows us to use
+// those BBs as markers only, they will not be replicated.
 bool
 CanonicalizeBarriers::ProcessFunction(Function &F)
 {
@@ -133,14 +134,25 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     BasicBlock *new_b = b->splitBasicBlock(*i);
     new_b->takeName(b);
     b->setName(new_b->getName() + "_pre_barrier");
+    Loop *l = LI->getLoopFor(b);
+    if (l)
+      l->addBasicBlockToLoop(new_b, LI->getBase());
     changed = true;
   }
   for (InstructionSet::iterator i = PostSplitPoints.begin(), e = PostSplitPoints.end();
        i != e; ++i) {
     BasicBlock *b = (*i)->getParent();
-    b->splitBasicBlock(*i, b->getName() + "_post_barrier");
+    BasicBlock *new_b = b->splitBasicBlock(*i, b->getName() + "_post_barrier");
+    Loop *l = LI->getLoopFor(b);
+    if (l)
+      l->addBasicBlockToLoop(new_b, LI->getBase());
     changed = true;
   }
+
+  // Temporary check to ensure we keep LoopInfo in
+  // a correct state. This should be commented out
+  // once we are sure it works.
+  LI->verifyAnalysis();
   
   return changed;
 }

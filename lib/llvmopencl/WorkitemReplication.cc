@@ -65,7 +65,7 @@ WorkitemReplication::runOnFunction(Function &F)
 
   BasicBlockSet subgraph;
 
-  canonicalize_barriers(F, LI);
+  //canonicalize_barriers(F, LI);
 
   BasicBlock *exit = findBarriersDFS(&(F.getEntryBlock()),
 				     &(F.getEntryBlock()),

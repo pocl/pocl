@@ -13,7 +13,7 @@ loopbarriers (void)
       
       barrier(CLK_LOCAL_MEM_FENCE);
 
-      printf ("[GROUP_ID=%d] iteration=%d, B_before_barrier, local_id=%d\n",
+      printf ("[GROUP_ID=%d] iteration=%d, B_after_barrier, local_id=%d\n",
               group_id, i, local_id);
     }
 }

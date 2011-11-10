@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CanonicalizeBarriers.h"
 #include "BarrierTailReplication.h"
 #include "WorkitemReplication.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -109,6 +110,8 @@ Workgroup::runOnModule(Module &M)
 
   BI.inlineFunctions();
 
+  CanonicalizeBarriers CB;
+
   BarrierTailReplication BTR;
 
   WorkitemReplication WR;
@@ -127,6 +130,9 @@ Workgroup::runOnModule(Module &M)
 
     out << "#define _" << K->getName() << "_NUM_LOCALS 0\n";
     out << "#define _" << K->getName() << "_LOCAL_SIZE {}\n";
+
+    CB.LI = &getAnalysis<LoopInfo>(*K);
+    CB.ProcessFunction(*K);
 
     BTR.DT = &getAnalysis<DominatorTree>(*K);
     BTR.LI = &getAnalysis<LoopInfo>(*K);
