@@ -1,0 +1,22 @@
+digraph "CFG for 'ifbarrier2' function" {
+	label="CFG for 'ifbarrier2' function";
+
+	Node0x20ac2c0 [shape=record,label="{a|{<s0>T|<s1>F}}"];
+	Node0x20ac2c0:s0 -> Node0x20ac320;
+	Node0x20ac2c0:s1 -> Node0x20ac380;
+	Node0x20ac320 [shape=record,label="{b}"];
+	Node0x20ac320 -> Node0x20ab4a0;
+	Node0x20ac380 [shape=record,label="{c|{<s0>T|<s1>F}}"];
+	Node0x20ac380:s0 -> Node0x20ac3e0;
+	Node0x20ac380:s1 -> Node0x20ac440;
+	Node0x20ac3e0 [shape=record,label="{d}"];
+	Node0x20ac3e0 -> Node0x20ac4a0;
+	Node0x20ac440 [shape=record,label="{barrier}"];
+	Node0x20ac440 -> Node0x20aedb0;
+	Node0x20ac4a0 [shape=record,label="{e}"];
+	Node0x20ac4a0 -> Node0x20ab4a0;
+	Node0x20ab4a0 [shape=record,label="{f}"];
+	Node0x20aed50 [shape=record,label="{f.btr}"];
+	Node0x20aedb0 [shape=record,label="{e.btr}"];
+	Node0x20aedb0 -> Node0x20aed50;
+}

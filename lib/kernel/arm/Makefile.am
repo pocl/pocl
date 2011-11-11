@@ -42,10 +42,10 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 # the ScratchBox cross-compiler env. TODO: Figure out what is the optimal
 # tripe and switches, e.g., for ARMv7/NEON.
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple armv4t-unknown-linux-gnueabihf -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) $(ARM_CLANG_FLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -ccc-host-triple armv4t-unknown-linux-gnueabihf -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) $(ARM_CLANG_FLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h

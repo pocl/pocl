@@ -165,12 +165,19 @@ get_max_thread_count() {
 
       /* Count the number of times 'processor' keyword is found which
          should give the number of cores overall in a multiprocessor
-         system. */
+         system. In Meego Harmattan on ARM it prints Processor instead of
+         processor */
       int cores = 0;
       char* p = contents;
-      while ((p = strstr (p, "processor")) != NULL) 
+      while ((p = strstr (p, "rocessor")) != NULL) 
         {
           cores++;
+          /* Skip to the end of the line. Otherwise causes two cores
+             to be detected in case of, for example:
+             Processor       : ARMv7 Processor rev 2 (v7l) */
+          char* eol = strstr (p, "\n");
+          if (eol != NULL)
+              p = eol;
           ++p;
         }     
 #ifdef DEBUG_MAX_THREAD_COUNT 
@@ -264,8 +271,11 @@ pocl_pthread_run (void *data, const char *parallel_filename,
 			tmpdir);
       assert (error >= 0);
       
+      // "-relocation-model=dynamic-no-pic" is a magic string,
+      // I do not know why it has to be there to produce valid
+      // sos on x86_64
       error = snprintf (command, COMMAND_LENGTH,
-			LLC " -relocation-model=dynamic-no-pic -mcpu=i386 -o %s %s",
+			LLC " " NATIVE_LLC_FLAGS " -o %s %s",
 			assembly,
 			bytecode);
       assert (error >= 0);
@@ -279,11 +289,20 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"clang " SHARED " -o %s %s",
+			"clang " CLANGFLAGS " -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
       
+      error = system (command);
+      assert (error == 0);
+
+      error = snprintf (command, COMMAND_LENGTH,
+                       "ld " SHARED_LD_FLAGS " -o %s %s.o",
+                       module,
+                       module);
+      assert (error >= 0);
+
       error = system (command);
       assert (error == 0);
       

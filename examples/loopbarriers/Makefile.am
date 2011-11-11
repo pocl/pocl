@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/llvmopencl.
+# Makefile.am for pocl/examples/loopsbarriers.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,13 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkglib_LTLIBRARIES = llvmopencl.la
+noinst_PROGRAMS = loopbarriers
 
-AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
-AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
+loopbarriers_SOURCES = loopbarriers.c loopbarriers.cl
+loopbarriers_LDADD = ../../lib/CL/libCL.la @PTHREAD_LIBS@
+loopbarriers_CFLAGS = @PTHREAD_CFLAGS@
 
-llvmopencl_la_SOURCES = CanonicalizeBarriers.h CanonicalizeBarriers.cc          \
-                        GenerateHeader.cc Workgroup.cc				\
-			BarrierTailReplication.h BarrierTailReplication.cc	\
-			WorkitemReplication.h WorkitemReplication.cc
-llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

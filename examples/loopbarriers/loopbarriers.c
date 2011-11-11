@@ -1,4 +1,4 @@
-/* forloops - OpenCL example with for loops in the kernel.
+/* loopbarriers - OpenCL example with barriers inside loops.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 
-#define N 4
+#define N 2
 
 int
 main (void)
@@ -44,12 +44,7 @@ main (void)
   size_t global_work_size[1];
   size_t local_work_size[1];
 
-  source_file = fopen("forloops.cl", "r");
-  if (source_file == NULL) 
-    source_file = fopen (SRCDIR "/forloops.cl", "r");
-
-  assert(source_file != NULL && "forloops.cl not found!");
-
+  source_file = fopen (SRCDIR "/loopbarriers.cl", "r");
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
@@ -98,7 +93,7 @@ main (void)
       return -1; 
     } 
  
-  kernel = clCreateKernel(program, "forloops", NULL); 
+  kernel = clCreateKernel(program, "loopbarriers", NULL); 
   if (kernel == (cl_kernel)0) 
     { 
       clReleaseProgram(program); 

@@ -175,7 +175,7 @@ pocl_native_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			LLC " -relocation-model=dynamic-no-pic -mcpu=i386 -o %s %s",
+			LLC " -o %s %s",
 			assembly,
 			bytecode);
       assert (error >= 0);
@@ -189,14 +189,23 @@ pocl_native_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"clang " SHARED " -o %s %s",
+			"clang -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
       
       error = system (command);
       assert (error == 0);
-      
+
+      error = snprintf (command, COMMAND_LENGTH,
+                       "ld " SHARED_LD_FLAGS " -o %s %s.o",
+                       module,
+                       module);
+      assert (error >= 0);
+
+      error = system (command);
+      assert (error == 0);
+    
       d->current_dlhandle = lt_dlopen (module);
       assert (d->current_dlhandle != NULL);
 

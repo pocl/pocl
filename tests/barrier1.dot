@@ -1,0 +1,5 @@
+digraph "CFG for 'barrier1' function" {
+	label="CFG for 'barrier1' function";
+
+	Node0x158e700 [shape=record,label="{a}"];
+}

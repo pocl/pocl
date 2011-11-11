@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-kernel_lib_dir=""
+kernel_lib_dir="/@HOST_ARCH@"
 while getopts h:t:o: o
 do
     case "$o" in
@@ -73,7 +73,7 @@ fi
 
 linked_bc="${tempdir}/linked.bc"
 
-if [ -f @abs_top_builddir@/lib/kernel/${kernel_lib_dir}libkernel.a ]
+if [ -f @abs_top_builddir@/lib/kernel${kernel_lib_dir}/libkernel.a ]
 then
     @LLVM_LD@ -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel${kernel_lib_dir} -lkernel
 else

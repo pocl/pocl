@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "WorkitemReplication.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
@@ -32,13 +33,14 @@ using namespace pocl;
 #define BARRIER_FUNCTION_NAME "barrier"
 
 static bool block_has_barrier(const BasicBlock *bb);
-static bool find_subgraph(std::set<BasicBlock *> &subgraph,
-			  BasicBlock *entry,
-			  BasicBlock *exit);
 static void purge_subgraph(std::set<BasicBlock *> &new_subgraph,
 			   const std::set<BasicBlock *> &original_subgraph,
 			   const BasicBlock *exit);
-static void split_barriers(Function &F);
+
+namespace {
+  static
+  RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
+}
 
 cl::list<int>
 LocalSize("local-size",
@@ -46,10 +48,25 @@ LocalSize("local-size",
 	  cl::multi_val(3));
 
 char WorkitemReplication::ID = 0;
-static RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
+
+void
+WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<DominatorTree>();
+  AU.addRequired<LoopInfo>();
+}
 
 bool
 WorkitemReplication::runOnFunction(Function &F)
+{
+  DT = &getAnalysis<DominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
+
+  return ProcessFunction(F);
+}
+
+bool
+WorkitemReplication::ProcessFunction(Function &F)
 {
   Module *M = F.getParent();
 
@@ -64,17 +81,15 @@ WorkitemReplication::runOnFunction(Function &F)
 
   BasicBlockSet subgraph;
 
-  // Split basicblock at barriers. Barrier blocks must have a single
-  // predecessor, single sucessor, and just the barrier call and
-  // the terminator as body.
-  split_barriers(F);
-
-  BasicBlock *exit = findBarriersDFS(&(F.getEntryBlock()),
+  BasicBlock *exit = FindBarriersDFS(&(F.getEntryBlock()),
 				     &(F.getEntryBlock()),
 				     subgraph);
 
-  if (exit != NULL)
+  if (exit != NULL) {
+    // There is a path from entry to exit that does not cross
+    // any barrier, we need to replicate it now.
     replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
+  }
 
   delete []ReferenceMap;
 
@@ -108,7 +123,7 @@ WorkitemReplication::runOnFunction(Function &F)
 // recursive calls, so on return only subgraph needs still to be
 // replicated. Return value is last basicblock (exit) of original graph.
 BasicBlock*
-WorkitemReplication::findBarriersDFS(BasicBlock *bb,
+WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
 				     BasicBlock *entry,
 				     BasicBlockSet &subgraph)
 {
@@ -123,7 +138,8 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
       (ProcessedBarriers.count(bb) == 0))
     {      
       BasicBlockSet pre_subgraph;
-      find_subgraph(pre_subgraph, entry, bb);
+      bool found = FindSubgraph(pre_subgraph, entry, bb);
+      assert(found && "Subgraph to a barrier does not reach the barrier!");
       pre_subgraph.erase(bb); // Remove barrier basicblock from subgraph.
       for (std::set<BasicBlock *>::const_iterator i = pre_subgraph.begin(),
 	     e = pre_subgraph.end();
@@ -147,7 +163,7 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
       // Continue processing after the barrier.
       BasicBlockSet post_subgraph;
       bb = t->getSuccessor(0);
-      BasicBlock *exit = findBarriersDFS(bb, bb, post_subgraph);
+      BasicBlock *exit = FindBarriersDFS(bb, bb, post_subgraph);
       if (exit != NULL)
         replicateWorkitemSubgraph(post_subgraph, bb, exit);
 
@@ -162,8 +178,12 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
   // Find barriers in the successors (depth first).
   BasicBlock *r = NULL;
   BasicBlock *s;
+  Loop *l = LI->getLoopFor(bb);
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
-    s = findBarriersDFS(t->getSuccessor(i), entry, subgraph);
+    BasicBlock *successor = t->getSuccessor(i);
+    if ((l != NULL) && (l->getHeader() == successor))
+      continue;
+    s = FindBarriersDFS(t->getSuccessor(i), entry, subgraph);
     if (s != NULL) {
       assert((r == NULL || r == s) &&
 	     "More than one function tail within same barrier path!\n");
@@ -174,11 +194,63 @@ WorkitemReplication::findBarriersDFS(BasicBlock *bb,
   return r;
 }
 
+// Find subgraph between entry and exit basicblocks.
+bool
+WorkitemReplication::FindSubgraph(BasicBlockSet &subgraph,
+                                  BasicBlock *entry,
+                                  BasicBlock *exit)
+{
+  if (entry == exit) {
+    subgraph.insert(entry);
+    return true;
+  }
+
+  bool found = false;
+  const TerminatorInst *t = entry->getTerminator();
+  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
+    found |= FindSubgraph(subgraph, t->getSuccessor(i), exit);
+
+  if (found)
+    subgraph.insert(entry);
+
+  return found;
+}
+
+void
+WorkitemReplication::SetBasicBlockNames(const BasicBlockSet &subgraph)
+{
+  for (BasicBlockSet::iterator i = subgraph.begin(), e = subgraph.end();
+       i != e; ++i) {
+    BasicBlock *bb = *i;
+    StringRef s = bb->getName();
+    for (int z = 0; z < LocalSize[2]; ++z) {
+      for (int y = 0; y < LocalSize[1]; ++y) {
+        for (int x = 0; x < LocalSize[0] ; ++x) {
+          
+          if ((z == 0) && (y == 0) && (x == 0))
+            continue;
+
+          int index = (LocalSize[1] * LocalSize[0] * z +
+                       LocalSize[0] * y +
+                       x) - 1;
+          
+          bb = cast<BasicBlock> (ReferenceMap[index][bb]);
+          bb->setName(s + ".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z));
+        }
+      }
+    }
+
+    (*i)->setName(s + ".wi_0_0_0");
+  }
+}
+
 void
 WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 					       BasicBlock *entry,
 					       BasicBlock *exit)
 {
+  BasicBlockSet original_subgraph = subgraph;
+
   BasicBlockSet s;
 
   assert (entry != NULL && exit != NULL);
@@ -198,10 +270,20 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 						 get(entry->getContext(),
 						     32), x), LocalX);
 	  }
+
+          SetBasicBlockNames(original_subgraph);
+
+          // No need to update LoopInfo here, replicated code
+          // is never replicated again (FALSE, fails without it).
+          DT->runOnFunction(*(entry->getParent()));
+          LI->releaseMemory();
+          LI->getBase().Calculate(DT->getBase());
 	  return;
 	}
 
-	int i = (z + 1) * (y + 1) * (x + 1) - 1;
+	int i = (LocalSize[1] * LocalSize[0] * z +
+                 LocalSize[0] * y +
+                 x);
 
 	replicateBasicblocks(s, ReferenceMap[i], subgraph);
 	purge_subgraph(s, subgraph,
@@ -244,6 +326,9 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
       }
     }
   }
+
+  // We should never exit through here.
+  assert (0);
 }
 
 static void
@@ -292,28 +377,6 @@ block_has_barrier(const BasicBlock *bb)
   return false;
 }
 
-// Find subgraph between entry and exit basicblocks.
-static bool
-find_subgraph(BasicBlockSet &subgraph,
-	      BasicBlock *entry,
-	      BasicBlock *exit)
-{
-  if (entry == exit) {
-    subgraph.insert(entry);
-    return true;
-  }
-
-  bool found = false;
-  const TerminatorInst *t = entry->getTerminator();
-  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    found |= find_subgraph(subgraph, t->getSuccessor(i), exit);
-
-  if (found)
-    subgraph.insert(entry);
-
-  return found;
-}
-
 void
 WorkitemReplication::replicateBasicblocks(BasicBlockSet &new_graph,
 					  ValueValueMap &reference_map,
@@ -334,7 +397,7 @@ WorkitemReplication::replicateBasicblocks(BasicBlockSet &new_graph,
 	 i2 != e2; ++i2) {
       if (isReplicable(i2)) {
 	Instruction *i = i2->clone();
-	reference_map.insert(std::make_pair(i2, i));
+	reference_map[i2] = i;//.insert(std::make_pair(i2, i));
 	new_b->getInstList().push_back(i);
       }
     }
@@ -381,34 +444,4 @@ WorkitemReplication::isReplicable(const Instruction *i)
   }
 
   return true;
-}
-
-static void
-split_barriers(Function &F)
-{
-  std::set<Instruction *> SplitPoints;
-
-  for (Function::iterator i = F.begin(), e = F.end();
-       i != e; ++i) {
-    BasicBlock *b = i;
-    for (BasicBlock::iterator i = b->begin(), e = b->end();
-	 i != e; ++i) {
-      if (CallInst *c = dyn_cast<CallInst>(i)) {
-	if (Function *f = c->getCalledFunction()) {
-	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
-	    BasicBlock::iterator j = i;
-	    SplitPoints.insert(j);
-	    SplitPoints.insert(++j);
-	  }
-	}
-      }
-    }
-  }
-
-  for (std::set<Instruction *>::iterator i = SplitPoints.begin(),
-	 e = SplitPoints.end();
-       i != e; ++i) {
-    BasicBlock *b = (*i)->getParent();
-    b->splitBasicBlock(*i);
-  }
 }
