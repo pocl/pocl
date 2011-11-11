@@ -21,7 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-while getopts k:x:y:z:o: o
+kernel_lib_dir=/@HOST_ARCH@
+while getopts k:x:y:z:o:t: o
 do
     case "$o" in
 	k)   kernel="${OPTARG}";;
@@ -29,6 +30,7 @@ do
 	y)   size_y="${OPTARG}";;
 	z)   size_z="${OPTARG}";;
 	o)   output_file="${OPTARG}";;
+	t)   kernel_lib_dir="/${OPTARG}";;
 	[?]) echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1;;
     esac
 done
@@ -61,11 +63,11 @@ fi
 
 linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
 
-if [ -f @abs_top_builddir@/lib/kernel/libkernel.a ]
+if [ -f @abs_top_builddir@/lib/kernel/${kernel_lib_dir}/libkernel.a ]
 then
-    @LLVM_LD@ -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/x86_64 -lkernel
+    @LLVM_LD@ -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel${kernel_lib_dir} -lkernel
 else
-    @LLVM_LD@ -b ${linked_bc} $1 -L@pkglibdir@/x86_64 -lkernel
+    @LLVM_LD@ -b ${linked_bc} $1 -L@pkglibdir@${kernel_lib_dir} -lkernel
 fi
 rm a.out
 

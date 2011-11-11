@@ -61,11 +61,9 @@ test(int a, int b)
 {
   return a + b;
 }
-]])],[SHARED=-bundle], [SHARED=-shared])
+]])],[SHARED_LD_FLAGS=-bundle], [SHARED_LD_FLAGS=-shared])
 LDFLAGS="$old_LDFLAGS"
-AC_SUBST([SHARED])
 
-AC_DEFINE_UNQUOTED([SHARED], ["$SHARED"], [Parameter to compiler to generate loadable module.])
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
@@ -104,6 +102,66 @@ AC_TYPE_UINT8_T
 
 # Checks for library functions.
 #AC_FUNC_MALLOC
+
+# The HOST_ARCH variable is used to choose an optimized
+# kernel library for the "default target" which is assumed
+# to be the same as the one where the OpenCL host code runs
+# in.
+HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
+
+ARM_CLANG_FLAGS="-ccc-host-triple armv4t-unknown-linux-gnueabihf"
+X86_64_CLANG_FLAGS="-ccc-host-triple x86_64-unknown-linux-gnu"
+
+case $HOST_ARCH in
+     arm)
+     AC_MSG_NOTICE([using arm optimized kernel lib for the native device])
+     # Assume -lm should not be used. TODO: add an embedded math lib
+     # for compiling kernels for ARM envs without usable math libs.
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS"
+     # Use the default clang flags
+     ARM_CLANG_FLAGS=""
+     ;;
+
+     x86_64)
+     AC_MSG_NOTICE([using x86_64 optimized kernel lib for the native device])
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
+     X86_64_CLANG_FLAGS=""
+     ;;
+
+     *)
+     AC_MSG_NOTICE([unknown host, using the generic kernel lib])
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
+     HOST_ARCH=""
+     ;;
+esac
+
+AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"], 
+["The native arch (for selecting the default kernel library version)."])
+AC_SUBST([HOST_ARCH])
+AC_SUBST([X86_64_CLANG_FLAGS])
+AC_SUBST([ARM_CLANG_FLAGS])
+
+AC_CANONICAL_HOST
+# Check for which host we are on and setup a few things
+# specifically based on the host
+AM_CONDITIONAL([DARWIN_HOST_OS], false)
+case $host_os in
+  darwin* )
+    AM_CONDITIONAL([DARWIN_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+    # MacOS ld outputs useless warnings like
+    # ld: warning: -macosx_version_min not specificed, assuming 10.7
+    # suppress them with -w.
+    SHARED_LD_FLAGS="$SHARED_LD_FLAGS -w"  
+         ;;
+  *)
+    #Default Case
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
+         ;;
+esac
+
+AC_SUBST([SHARED_LD_FLAGS])
+AC_DEFINE_UNQUOTED([SHARED_LD_FLAGS], ["$SHARED_LD_FLAGS"], [Parameter to compiler to generate loadable module.])
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile

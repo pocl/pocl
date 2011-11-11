@@ -44,7 +44,12 @@ main (void)
   size_t global_work_size[1];
   size_t local_work_size[1];
 
-  source_file = fopen (SRCDIR "/barriers.cl", "r");
+  source_file = fopen("barriers.cl", "r");
+  if (source_file == NULL) 
+    source_file = fopen (SRCDIR "/barriers.cl", "r");
+
+  assert(source_file != NULL && "barriers.cl not found!");
+
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
