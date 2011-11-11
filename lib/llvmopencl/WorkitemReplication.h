@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
@@ -66,6 +67,7 @@ namespace pocl {
     bool FindSubgraph(BasicBlockSet &subgraph,
                       llvm::BasicBlock *entry,
                       llvm::BasicBlock *exit);
+    void SetBasicBlockNames(const BasicBlockSet &subgraph);
     void replicateWorkitemSubgraph(BasicBlockSet subgraph,
 				   llvm::BasicBlock *entry,
 				   llvm::BasicBlock *exit);

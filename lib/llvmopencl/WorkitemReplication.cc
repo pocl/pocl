@@ -217,10 +217,40 @@ WorkitemReplication::FindSubgraph(BasicBlockSet &subgraph,
 }
 
 void
+WorkitemReplication::SetBasicBlockNames(const BasicBlockSet &subgraph)
+{
+  for (BasicBlockSet::iterator i = subgraph.begin(), e = subgraph.end();
+       i != e; ++i) {
+    BasicBlock *bb = *i;
+    StringRef s = bb->getName();
+    for (int z = 0; z < LocalSize[2]; ++z) {
+      for (int y = 0; y < LocalSize[1]; ++y) {
+        for (int x = 0; x < LocalSize[0] ; ++x) {
+          
+          if ((z == 0) && (y == 0) && (x == 0))
+            continue;
+
+          int index = (LocalSize[1] * LocalSize[0] * z +
+                       LocalSize[0] * y +
+                       x) - 1;
+          
+          bb = cast<BasicBlock> (ReferenceMap[index][bb]);
+          bb->setName(s + ".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z));
+        }
+      }
+    }
+
+    (*i)->setName(s + ".wi_0_0_0");
+  }
+}
+
+void
 WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 					       BasicBlock *entry,
 					       BasicBlock *exit)
 {
+  BasicBlockSet original_subgraph = subgraph;
+
   BasicBlockSet s;
 
   assert (entry != NULL && exit != NULL);
@@ -241,6 +271,8 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 						     32), x), LocalX);
 	  }
 
+          SetBasicBlockNames(original_subgraph);
+
           // No need to update LoopInfo here, replicated code
           // is never replicated again (FALSE, fails without it).
           DT->runOnFunction(*(entry->getParent()));
@@ -249,7 +281,9 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 	  return;
 	}
 
-	int i = (z + 1) * (y + 1) * (x + 1) - 1;
+	int i = (LocalSize[1] * LocalSize[0] * z +
+                 LocalSize[0] * y +
+                 x);
 
 	replicateBasicblocks(s, ReferenceMap[i], subgraph);
 	purge_subgraph(s, subgraph,

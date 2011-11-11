@@ -25,6 +25,15 @@
 AT_INIT()
 
 AT_SETUP([Graph-based llvmopencl tests])
+for i in $abs_top_srcdir/tests/*_workitem.dot
+do
+  rm cfg.*.dot
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -o test.ll `echo $i | sed s/_workitem.dot/.ll/`], 0, ignore, ignore)
+  opt -disable-output -dot-cfg-only test.ll
+  dot -Tpng -o test.png cfg.*.dot
+  dot -Tpng -o golden.png $i
+  AT_CHECK([cmp test.png golden.png])
+done
 for i in $abs_top_srcdir/tests/*_barriers.dot
 do
   rm cfg.*.dot

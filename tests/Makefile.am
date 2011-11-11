@@ -60,7 +60,8 @@ $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
 
-GRAPH_TEST_OUTPUTS = barrier1_barriers.dot      \
+GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot    \
+                     barrier1_barriers.dot      \
                      ifbarrier1_btr.dot		\
                      ifbarrier2_btr.dot		\
                      ifbarrier3_btr.dot         \
@@ -69,15 +70,19 @@ GRAPH_TEST_OUTPUTS = barrier1_barriers.dot      \
                      ifforbarrier1_btr.dot	\
                      forifbarrier1_btr.dot
 
-GRAPH_TEST_INPUTS = $(subst _btr,, 		\
+GRAPH_TEST_INPUTS = $(subst _workitem,,         \
+                    $(subst _btr,, 		\
                     $(subst _barriers,,		\
-                    $(GRAPH_TEST_OUTPUTS)))
+                    $(GRAPH_TEST_OUTPUTS))))
 
 GRAPH_TEST_SOURCES = $(GRAPH_TEST_INPUTS:.dot=.ll)
 
 EXTRA_DIST += $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES)
 
 dots: $(addprefix $(srcdir)/, $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS))
+
+%_workitem.ll: %.ll
+	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -o $@ $<
 
 %_barriers.ll: %.ll
 	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -o $@ $<
