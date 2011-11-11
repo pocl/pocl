@@ -80,8 +80,10 @@ WorkitemReplication::ProcessFunction(Function &F)
   ReferenceMap = new ValueValueMap[i];
 
   BasicBlockSet original_bbs;
-  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i)
-    original_bbs.insert(i);
+  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
+    if (!block_has_barrier(i))
+        original_bbs.insert(i);
+  }
 
   BasicBlockSet subgraph;
 
