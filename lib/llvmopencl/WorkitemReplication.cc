@@ -378,7 +378,7 @@ block_has_barrier(const BasicBlock *bb)
       const Value *v = c->getCalledValue();
       if (v->getName().equals(BARRIER_FUNCTION_NAME)) {
 	assert((bb->size() == 2) &&
-	       (bb->getSinglePredecessor() != NULL) &&
+	       ((bb->getSinglePredecessor() != NULL) || (bb->getNumUses() == 0)) &&
 	       (bb->getTerminator()->getNumSuccessors() == 1) &&
 	       ("Invalid barrier basicblock found!\n"));
 	return true;

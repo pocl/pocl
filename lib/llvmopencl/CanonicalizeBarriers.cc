@@ -78,9 +78,8 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
             barrier = c;
             
             // We found a barrier, add the split points.
-	    BasicBlock::iterator j = i;
-	    PreSplitPoints.insert(j);
-	    PostSplitPoints.insert(++j);
+	    PreSplitPoints.insert(i);
+	    PostSplitPoints.insert(i);
             
             // Is this barrier inside of a loop?
             Loop *loop = LI->getLoopFor(b);
@@ -90,7 +89,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
               BasicBlock *preheader = loop->getLoopPreheader();
               assert(preheader != NULL);
               Instruction *new_barrier = barrier->clone();
-              new_barrier->insertBefore(preheader->getFirstNonPHI());
+              new_barrier->insertBefore(preheader->getTerminator());
               changed = true;
               // No split point after preheader barriers, so we ensure
               // WI 0,0,0 starts at the loop header.  But still we need
@@ -107,7 +106,10 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
               // them to be added later. 
               BasicBlock *latch = loop->getLoopLatch();
               assert(latch != NULL);
-              BarriersToAdd.insert(latch->getTerminator());
+              // If this barrier happens to be before the latch terminator,
+              // there is no need to add an additional barrier.
+              if (latch->getTerminator()->getPrevNode() != c)
+                BarriersToAdd.insert(latch->getTerminator());
             }
           }
 	}
@@ -122,9 +124,8 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     Instruction *new_barrier = barrier->clone();
     new_barrier->insertBefore(*i);
     changed = true;
-    BasicBlock::iterator j = new_barrier;
-    PreSplitPoints.insert(j);
-    PostSplitPoints.insert(++j);
+    PreSplitPoints.insert(new_barrier);
+    PostSplitPoints.insert(new_barrier);
   }
 
   // Finally add all the split points, now that we are done with the
@@ -143,7 +144,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   for (InstructionSet::iterator i = PostSplitPoints.begin(), e = PostSplitPoints.end();
        i != e; ++i) {
     BasicBlock *b = (*i)->getParent();
-    BasicBlock *new_b = b->splitBasicBlock(*i, b->getName() + ".postbarrier");
+    BasicBlock *new_b = b->splitBasicBlock((*i)->getNextNode(), b->getName() + ".postbarrier");
     Loop *l = LI->getLoopFor(b);
     if (l)
       l->addBasicBlockToLoop(new_b, LI->getBase());
