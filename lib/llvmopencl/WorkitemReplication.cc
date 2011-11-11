@@ -303,6 +303,8 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 	ReferenceMap[i].erase(exit->getTerminator());
 	BranchInst::Create(cast<BasicBlock>(ReferenceMap[i][entry]),
 			   exit->getTerminator());
+        assert((exit->getTerminator()->getNumSuccessors() <= 1) &&
+               "Multiple succesors of parallel section (uncanonicalized barriers?)!");
 	exit->getTerminator()->eraseFromParent();
 
 	builder.SetInsertPoint(entry, entry->front());
