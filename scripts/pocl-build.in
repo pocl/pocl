@@ -37,7 +37,10 @@ fi
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
+    # Use NATIVE_CLANG_FLAGS always for now. It must be converted to 
+    # a command line switch when pocl supports compiling kernels for
+    # non-native devices.
+    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
 else
-    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
+    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
 fi

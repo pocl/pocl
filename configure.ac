@@ -37,7 +37,7 @@ AC_PROG_CXX
 AC_PROG_LIBTOOL
 
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
-AC_ARG_VAR([CLANGFLAGS], [Flags to be passed to CLANG])
+AC_ARG_VAR([CLANGFLAGS], [Flags to be passed to CLANG regardless of the target])
 
 AC_CHECK_TOOL([CLANG], [clang])
 test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
@@ -100,8 +100,14 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 
+# Flags always passed to the code generation of the 
+# compiled OpenCL kernel module in the native device.
+NATIVE_LLC_FLAGS="-relocation-model=pic"
 # Checks for library functions.
 #AC_FUNC_MALLOC
+
+# Use the Scratchbox default Clang ARM target by default.
+ARM_CLANG_FLAGS="-ccc-host-triple armv4t-unknown-linux-gnueabihf"
 
 # The HOST_ARCH variable is used to choose an optimized
 # kernel library for the "default target" which is assumed
@@ -109,21 +115,22 @@ AC_TYPE_UINT8_T
 # in.
 HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
 
-ARM_CLANG_FLAGS="-ccc-host-triple armv4t-unknown-linux-gnueabihf"
 X86_64_CLANG_FLAGS="-ccc-host-triple x86_64-unknown-linux-gnu"
 
+# Use the default Clang target flags for the "native device" library.
+# Detect the optimized kernel library to use and to compile with the
+# default flags.
 case $HOST_ARCH in
      arm)
-     AC_MSG_NOTICE([using arm optimized kernel lib for the native device])
+     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
      # Assume -lm should not be used. TODO: add an embedded math lib
      # for compiling kernels for ARM envs without usable math libs.
      SHARED_LD_FLAGS="$SHARED_LD_FLAGS"
-     # Use the default clang flags
      ARM_CLANG_FLAGS=""
      ;;
 
      x86_64)
-     AC_MSG_NOTICE([using x86_64 optimized kernel lib for the native device])
+     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
      SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
      X86_64_CLANG_FLAGS=""
      ;;
@@ -135,11 +142,36 @@ case $HOST_ARCH in
      ;;
 esac
 
+AC_ARG_ENABLE([arm-cortex-a8],
+        [AS_HELP_STRING([--enable-arm-cortex-a8],
+         [Optimize the ARM OpenCL kernel library for the Cortex A8 instruction set.])],
+        [
+         ARM_CLANG_FLAGS="$ARM_CLANG_FLAGS -mcpu=cortex-a8"
+         NATIVE_LLC_FLAGS="$NATIVE_LLC_FLAGS -mcpu=cortex-a8 -mattr=+neon"
+         NATIVE_CLANG_FLAGS="$NATIVE_CLANG_FLAGS -mcpu=cortex-a8"
+         AC_MSG_NOTICE([optimizing the ARM kernel library for the Cortex A8 instruction set.])
+        ],
+        []
+)
+
 AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"], 
 ["The native arch (for selecting the default kernel library version)."])
 AC_SUBST([HOST_ARCH])
+
 AC_SUBST([X86_64_CLANG_FLAGS])
 AC_SUBST([ARM_CLANG_FLAGS])
+
+AC_DEFINE_UNQUOTED([NATIVE_LLC_FLAGS], ["$NATIVE_LLC_FLAGS"], 
+["Additional flags to pass to the llc call of the code generation of the 'native device'."])
+AC_SUBST([NATIVE_LLC_FLAGS])
+
+AC_DEFINE_UNQUOTED([NATIVE_CLANG_FLAGS], ["$NATIVE_CLANG_FLAGS"], 
+["Additional flags to pass to the Clang when compiling code for the 'native device'."])
+AC_SUBST([NATIVE_CLANG_FLAGS])
+
+AC_DEFINE_UNQUOTED([CLANGFLAGS], ["$CLANGFLAGS"], 
+["The default flags to pass to the clang call of the OpenCL compilation."])
+AC_SUBST([CLANGFLAGS])
 
 AC_CANONICAL_HOST
 # Check for which host we are on and setup a few things
