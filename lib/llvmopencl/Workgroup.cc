@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CanonicalizeBarriers.h"
 #include "BarrierTailReplication.h"
 #include "WorkitemReplication.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -55,7 +56,7 @@ extern cl::opt<string> Kernel;
 extern cl::opt<string> Header;
 extern cl::list<int> LocalSize;
 
-namespace {
+namespace pocl {
   class Workgroup : public ModulePass {
   
   public:
@@ -63,6 +64,8 @@ namespace {
     Workgroup() : ModulePass(ID) {}
 
     virtual bool runOnModule(Module &M);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   };
 }
 
@@ -107,8 +110,8 @@ Workgroup::runOnModule(Module &M)
 
   BI.inlineFunctions();
 
+  CanonicalizeBarriers CB;
   BarrierTailReplication BTR;
-
   WorkitemReplication WR;
 
   string ErrorInfo;
@@ -120,14 +123,19 @@ Workgroup::runOnModule(Module &M)
   for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
     Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
 
+    BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
+    CB.LI = BTR.LI = WR.LI = &getAnalysis<LoopInfo>(*K);
+
     if ((Kernel != "") && (K->getName() != Kernel))
       continue;
 
     out << "#define _" << K->getName() << "_NUM_LOCALS 0\n";
     out << "#define _" << K->getName() << "_LOCAL_SIZE {}\n";
 
-    BTR.runOnFunction(*K);
+    CB.ProcessFunction(*K);
 
+    BTR.ProcessFunction(*K);
+    
     int OldLocalSize[3];
     for (int i = 0; i < 3; ++i)
       OldLocalSize[i] = LocalSize[i];;
@@ -142,7 +150,8 @@ Workgroup::runOnModule(Module &M)
 	}
       }
     }
-    WR.runOnFunction(*K);
+
+    WR.ProcessFunction(*K);
     for (int i = 0; i < 3; ++i)
       LocalSize[i] = OldLocalSize[i];;
 
@@ -157,6 +166,13 @@ Workgroup::runOnModule(Module &M)
   }
 
   return true;
+}
+
+void
+Workgroup::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<DominatorTree>();
+  AU.addRequired<LoopInfo>();
 }
 
 static void

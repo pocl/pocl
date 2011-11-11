@@ -20,24 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
-#include <set>
 #include <map>
+#include <set>
 
 namespace pocl {
-  typedef std::set<llvm::BasicBlock *> BasicBlockSet;
-  typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
+  class Workgroup;
 
   class WorkitemReplication : public llvm::FunctionPass {
 
   public:
     static char ID;
-    WorkitemReplication(): FunctionPass(ID) {}
 
+  WorkitemReplication(): FunctionPass(ID) {}
+
+    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnFunction(llvm::Function &F);
 
   private:
+    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
+
+    llvm::DominatorTree *DT;
+    llvm::LoopInfo *LI;
+
     BasicBlockSet ProcessedBarriers;
 
     // This stores the reference substitution map for each workitem.
@@ -50,9 +60,14 @@ namespace pocl {
 
     llvm::GlobalVariable *LocalX, *LocalY, *LocalZ;
 
-    llvm::BasicBlock *findBarriersDFS(llvm::BasicBlock *bb,
+    bool ProcessFunction(llvm::Function &F);
+    llvm::BasicBlock *FindBarriersDFS(llvm::BasicBlock *bb,
 				      llvm::BasicBlock *entry,
 				      BasicBlockSet &bbs_to_replicate);
+    bool FindSubgraph(BasicBlockSet &subgraph,
+                      llvm::BasicBlock *entry,
+                      llvm::BasicBlock *exit);
+    void SetBasicBlockNames(const BasicBlockSet &subgraph);
     void replicateWorkitemSubgraph(BasicBlockSet subgraph,
 				   llvm::BasicBlock *entry,
 				   llvm::BasicBlock *exit);
@@ -62,5 +77,7 @@ namespace pocl {
     void updateReferences(const BasicBlockSet &graph,
 			  const ValueValueMap &reference_map);
     bool isReplicable(const llvm::Instruction *i);
+
+    friend class pocl::Workgroup;
   };
 }

@@ -24,6 +24,36 @@
 
 AT_INIT()
 
+AT_SETUP([Graph-based llvmopencl tests])
+for i in $abs_top_srcdir/tests/*_workitem.dot
+do
+  rm cfg.*.dot
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -o test.ll `echo $i | sed s/_workitem.dot/.ll/`], 0, ignore, ignore)
+  opt -disable-output -dot-cfg-only test.ll
+  dot -Tpng -o test.png cfg.*.dot
+  dot -Tpng -o golden.png $i
+  AT_CHECK([cmp test.png golden.png])
+done
+for i in $abs_top_srcdir/tests/*_barriers.dot
+do
+  rm cfg.*.dot
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriers -o test.ll `echo $i | sed s/_barriers.dot/.ll/`], 0, ignore, ignore)
+  opt -disable-output -dot-cfg-only test.ll
+  dot -Tpng -o test.png cfg.*.dot
+  dot -Tpng -o golden.png $i
+  AT_CHECK([cmp test.png golden.png])
+done
+for i in $abs_top_srcdir/tests/*_btr.dot
+do
+  rm cfg.*.dot
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriertails -o test.ll `echo $i | sed s/_btr.dot/.ll/`], 0, ignore, ignore)
+  opt -disable-output -dot-cfg-only test.ll
+  dot -Tpng -o test.png cfg.*.dot
+  dot -Tpng -o golden.png $i
+  AT_CHECK([cmp test.png golden.png])
+done
+AT_CLEANUP
+
 AT_SETUP([OpenCL specification tests])
 AT_DATA([expout],
 [(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
@@ -46,8 +76,11 @@ AT_CHECK([cat stdout | wc -l], 0, [12
 AT_CHECK([$abs_top_builddir/examples/forloops/forloops], 0, stdout)
 AT_CHECK([cat stdout | wc -l], 0, [4
 ])
-AT_CLEANUP
 
+AT_CHECK([$abs_top_builddir/examples/loopbarriers/loopbarriers], 0, stdout)
+AT_CHECK([sort -c stdout])
+AT_CLEANUP
+          
 AT_SETUP([Kernel runtime library])
 AT_DATA([expout],
 [f(0.000000, 0.000000, 0.000000, 0.000000) = (1.000000, 1.000000, 1.000000, 1.000000)
