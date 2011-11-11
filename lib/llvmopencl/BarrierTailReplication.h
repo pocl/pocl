@@ -50,6 +50,8 @@ namespace pocl {
     bool ProcessFunction(llvm::Function &F);
     void FindBarriersDFS(llvm::BasicBlock *bb,
                          BasicBlockSet &processed_bbs);
+    void ReplicateJoinedSubgraphs(llvm::BasicBlock *dominator,
+                                  llvm::BasicBlock *subgraph_entry);
     llvm::BasicBlock* ReplicateSubgraph(llvm::BasicBlock *entry,
                                         llvm::Function *f);
     void FindSubgraph(BasicBlockSet &subgraph,

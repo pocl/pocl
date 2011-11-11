@@ -14,17 +14,14 @@ barrier.prebarrier:                               ; preds = %a
 
 barrier:                                          ; preds = %barrier.prebarrier
   call void @barrier(i32 0)
-  br label %barrier.postbarrier.btr
+  br label %barrier.postbarrier
 
-barrier.postbarrier:                              ; No predecessors!
-  br label %c
-
-c:                                                ; preds = %barrier.postbarrier, %b
-  ret void
-
-barrier.postbarrier.btr:                          ; preds = %barrier
+barrier.postbarrier:                              ; preds = %barrier
   br label %c.btr
 
-c.btr:                                            ; preds = %barrier.postbarrier.btr
+c:                                                ; preds = %b
+  ret void
+
+c.btr:                                            ; preds = %barrier.postbarrier
   ret void
 }

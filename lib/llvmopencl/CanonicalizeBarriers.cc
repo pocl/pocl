@@ -40,6 +40,7 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
+  AU.addPreserved<DominatorTree>();
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
 }
@@ -47,6 +48,7 @@ CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 CanonicalizeBarriers::runOnFunction(Function &F)
 {
+  DT = getAnalysisIfAvailable<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
   return ProcessFunction(F);
@@ -136,21 +138,33 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     BasicBlock *new_b = b->splitBasicBlock(*i);
     new_b->takeName(b);
     b->setName(new_b->getName() + ".prebarrier");
+
+    // Update analysis
+    if (DT)
+      DT->runOnFunction(F);
     Loop *l = LI->getLoopFor(b);
     if (l)
       l->addBasicBlockToLoop(new_b, LI->getBase());
+
     changed = true;
   }
   for (InstructionSet::iterator i = PostSplitPoints.begin(), e = PostSplitPoints.end();
        i != e; ++i) {
     BasicBlock *b = (*i)->getParent();
     BasicBlock *new_b = b->splitBasicBlock((*i)->getNextNode(), b->getName() + ".postbarrier");
+
+    // Update analysis
+    if (DT)
+      DT->runOnFunction(F);
     Loop *l = LI->getLoopFor(b);
     if (l)
       l->addBasicBlockToLoop(new_b, LI->getBase());
+
     changed = true;
   }
 
+  if (DT)
+    DT->verifyAnalysis();
   LI->verifyAnalysis();
   
   return changed;

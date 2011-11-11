@@ -123,7 +123,7 @@ Workgroup::runOnModule(Module &M)
   for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
     Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
 
-    BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
+    CB.DT = BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
     CB.LI = BTR.LI = WR.LI = &getAnalysis<LoopInfo>(*K);
 
     if ((Kernel != "") && (K->getName() != Kernel))

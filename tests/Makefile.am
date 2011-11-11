@@ -83,6 +83,8 @@ GRAPH_TEST_SOURCES = $(GRAPH_TEST_INPUTS:.dot=.ll)
 
 EXTRA_DIST += $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES)
 
+sources: $(addprefix $(srcdir)/, $(GRAPH_TEST_SOURCES))
+
 dots: $(addprefix $(srcdir)/, $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES))
 
 %_workitem.ll: %.ll

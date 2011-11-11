@@ -42,6 +42,7 @@ namespace pocl {
     typedef std::set<llvm::Instruction *> InstructionSet;
     
     llvm::LoopInfo *LI;
+    llvm::DominatorTree *DT;
 
     bool ProcessFunction(llvm::Function &F);
 

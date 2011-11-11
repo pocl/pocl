@@ -88,27 +88,9 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
   processed_bbs.insert(bb);
 
   TerminatorInst *t = bb->getTerminator();
-  Function *f = bb->getParent();
 
   if (block_has_barrier(bb)) {
-    // This block has a barrier, replicate all successors.
-    // Even the path starting in an unique successor is replicated,
-    // as it the path might be joined by another path in a
-    // sucessor BB (see ifbarrier4.ll in tests).
-
-    // Loop check should not be needed here anymore, barriers
-    // have been canonicalized so they have exactly one succesor.
-    assert((t->getNumSuccessors() == 1) && "Not canonicalized barrier found!");
-    BasicBlock *subgraph_entry = t->getSuccessor(0);
-    BasicBlock *replicated_subgraph_entry =
-      ReplicateSubgraph(subgraph_entry, f);
-    t->setSuccessor(0, replicated_subgraph_entry);
-    
-    // We have modified the function. Possibly created new loops.
-    // Update analysis passes.
-    DT->runOnFunction(*f);
-    LI->releaseMemory();
-    LI->getBase().Calculate(DT->getBase());
+    ReplicateJoinedSubgraphs(bb, bb);
   }
 
   // Find barriers in the successors (depth first).
@@ -117,6 +99,42 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
 }
 
 
+// Only replicate those parts of the subgraph that are not
+// dominated by a (barrier) basic block, to avoid excesive
+// (and confusing) code replication.
+void
+BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
+                                                 BasicBlock *subgraph_entry)
+{
+  assert(DT->dominates(dominator, subgraph_entry));
+
+  Function *f = dominator->getParent();
+
+  TerminatorInst *t = subgraph_entry->getTerminator();
+  Loop *l = LI->getLoopFor(subgraph_entry);
+  for (int i = 0, e = t->getNumSuccessors(); i != e; ++i) {
+    BasicBlock *b = t->getSuccessor(i);
+    if ((l != NULL) && (l->getHeader() == b)) {
+      // This is a loop backedge. Do not find subgraphs across
+      // those.
+      continue;
+    }
+    if (DT->dominates(dominator, b))
+      ReplicateJoinedSubgraphs(dominator, b);
+    else {
+      BasicBlock *replicated_subgraph_entry =
+        ReplicateSubgraph(b, f);
+      t->setSuccessor(i, replicated_subgraph_entry);
+    
+      // We have modified the function. Possibly created new loops.
+      // Update analysis passes.
+      DT->runOnFunction(*f);
+      LI->releaseMemory();
+      LI->getBase().Calculate(DT->getBase());
+    }
+  }
+}
+
 BasicBlock *
 BarrierTailReplication::ReplicateSubgraph(BasicBlock *entry,
                                           Function *f)
