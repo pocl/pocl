@@ -1,0 +1,37 @@
+digraph "CFG for 'barrier1' function" {
+	label="CFG for 'barrier1' function";
+
+	Node0x2b262f0 [shape=record,label="{a.prebarrier.wi_0_0_0}"];
+	Node0x2b262f0 -> Node0x2b26410;
+	Node0x2b26350 [shape=record,label="{a}"];
+	Node0x2b26350 -> Node0x2b263b0;
+	Node0x2b263b0 [shape=record,label="{a.postbarrier.wi_0_0_0}"];
+	Node0x2b263b0 -> Node0x2b28fb0;
+	Node0x2b26410 [shape=record,label="{a.prebarrier.wi_1_0_0}"];
+	Node0x2b26410 -> Node0x2b26470;
+	Node0x2b26470 [shape=record,label="{a.prebarrier.wi_0_1_0}"];
+	Node0x2b26470 -> Node0x2b254a0;
+	Node0x2b254a0 [shape=record,label="{a.prebarrier.wi_1_1_0}"];
+	Node0x2b254a0 -> Node0x2b264d0;
+	Node0x2b264d0 [shape=record,label="{a.prebarrier.wi_0_0_1}"];
+	Node0x2b264d0 -> Node0x2b28e90;
+	Node0x2b28e90 [shape=record,label="{a.prebarrier.wi_1_0_1}"];
+	Node0x2b28e90 -> Node0x2b28ef0;
+	Node0x2b28ef0 [shape=record,label="{a.prebarrier.wi_0_1_1}"];
+	Node0x2b28ef0 -> Node0x2b28f50;
+	Node0x2b28f50 [shape=record,label="{a.prebarrier.wi_1_1_1}"];
+	Node0x2b28f50 -> Node0x2b26350;
+	Node0x2b28fb0 [shape=record,label="{a.postbarrier.wi_1_0_0}"];
+	Node0x2b28fb0 -> Node0x2b29010;
+	Node0x2b29010 [shape=record,label="{a.postbarrier.wi_0_1_0}"];
+	Node0x2b29010 -> Node0x2b29070;
+	Node0x2b29070 [shape=record,label="{a.postbarrier.wi_1_1_0}"];
+	Node0x2b29070 -> Node0x2b290d0;
+	Node0x2b290d0 [shape=record,label="{a.postbarrier.wi_0_0_1}"];
+	Node0x2b290d0 -> Node0x2b29130;
+	Node0x2b29130 [shape=record,label="{a.postbarrier.wi_1_0_1}"];
+	Node0x2b29130 -> Node0x2b29190;
+	Node0x2b29190 [shape=record,label="{a.postbarrier.wi_0_1_1}"];
+	Node0x2b29190 -> Node0x2b291f0;
+	Node0x2b291f0 [shape=record,label="{a.postbarrier.wi_1_1_1}"];
+}

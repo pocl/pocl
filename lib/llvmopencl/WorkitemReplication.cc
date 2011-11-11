@@ -79,6 +79,10 @@ WorkitemReplication::ProcessFunction(Function &F)
   int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
   ReferenceMap = new ValueValueMap[i];
 
+  BasicBlockSet original_bbs;
+  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i)
+    original_bbs.insert(i);
+
   BasicBlockSet subgraph;
 
   BasicBlock *exit = FindBarriersDFS(&(F.getEntryBlock()),
@@ -90,6 +94,12 @@ WorkitemReplication::ProcessFunction(Function &F)
     // any barrier, we need to replicate it now.
     replicateWorkitemSubgraph(subgraph, &(F.getEntryBlock()), exit);
   }
+
+  // Add the suffixes to original (wi_0_0_0) basic blocks.
+  for (BasicBlockSet::iterator i = original_bbs.begin(),
+         e = original_bbs.end();
+       i != e; ++i)
+    (*i)->setName((*i)->getName() + ".wi_0_0_0");
 
   delete []ReferenceMap;
 
@@ -239,8 +249,6 @@ WorkitemReplication::SetBasicBlockNames(const BasicBlockSet &subgraph)
         }
       }
     }
-
-    (*i)->setName(s + ".wi_0_0_0");
   }
 }
 
