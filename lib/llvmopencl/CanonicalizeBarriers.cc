@@ -92,6 +92,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
               assert(preheader != NULL);
               Instruction *new_barrier = barrier->clone();
               new_barrier->insertBefore(preheader->getTerminator());
+              preheader->setName(preheader->getName() + ".loopbarrier");
               changed = true;
               // No split point after preheader barriers, so we ensure
               // WI 0,0,0 starts at the loop header.  But still we need
@@ -125,6 +126,8 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     assert(barrier != NULL);
     Instruction *new_barrier = barrier->clone();
     new_barrier->insertBefore(*i);
+    BasicBlock *b = (*i)->getParent();
+    b->setName(b->getName() + ".latchbarrier");
     changed = true;
     PreSplitPoints.insert(new_barrier);
     PostSplitPoints.insert(new_barrier);

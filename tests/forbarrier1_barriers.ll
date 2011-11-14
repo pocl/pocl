@@ -1,16 +1,16 @@
-; ModuleID = '../../../src/pocl.loopbarriers/tests/forbarrier1.ll'
+; ModuleID = '/home/csanchez/prj/ttagpu/bld/pocl.loopbarriers/../../src/pocl.loopbarriers/tests/forbarrier1.ll'
 
 declare void @barrier(i32)
 
 define void @forbarrier1() {
-a.prebarrier:
-  br label %a
+a.loopbarrier.prebarrier:
+  br label %a.loopbarrier
 
-a:                                                ; preds = %a.prebarrier
+a.loopbarrier:                                    ; preds = %a.loopbarrier.prebarrier
   call void @barrier(i32 0)
   br label %barrier.prebarrier
 
-barrier.prebarrier:                               ; preds = %barrier.postbarrier, %a
+barrier.prebarrier:                               ; preds = %barrier.postbarrier, %a.loopbarrier
   br label %barrier
 
 barrier:                                          ; preds = %barrier.prebarrier

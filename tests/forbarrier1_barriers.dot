@@ -1,16 +1,16 @@
 digraph "CFG for 'forbarrier1' function" {
 	label="CFG for 'forbarrier1' function";
 
-	Node0x1f9e7a0 [shape=record,label="{a.prebarrier}"];
-	Node0x1f9e7a0 -> Node0x1f9f110;
-	Node0x1f9f110 [shape=record,label="{a}"];
-	Node0x1f9f110 -> Node0x1f9e190;
-	Node0x1f9e190 [shape=record,label="{barrier.prebarrier}"];
-	Node0x1f9e190 -> Node0x1f9e2b0;
-	Node0x1f9e2b0 [shape=record,label="{barrier}"];
-	Node0x1f9e2b0 -> Node0x1f9e450;
-	Node0x1f9e450 [shape=record,label="{barrier.postbarrier|{<s0>T|<s1>F}}"];
-	Node0x1f9e450:s0 -> Node0x1f9e190;
-	Node0x1f9e450:s1 -> Node0x1f9d230;
-	Node0x1f9d230 [shape=record,label="{b}"];
+	Node0x206c1a0 [shape=record,label="{a.loopbarrier.prebarrier}"];
+	Node0x206c1a0 -> Node0x206c200;
+	Node0x206c200 [shape=record,label="{a.loopbarrier}"];
+	Node0x206c200 -> Node0x206b890;
+	Node0x206b890 [shape=record,label="{barrier.prebarrier}"];
+	Node0x206b890 -> Node0x206b320;
+	Node0x206b320 [shape=record,label="{barrier}"];
+	Node0x206b320 -> Node0x206a170;
+	Node0x206a170 [shape=record,label="{barrier.postbarrier|{<s0>T|<s1>F}}"];
+	Node0x206a170:s0 -> Node0x206b890;
+	Node0x206a170:s1 -> Node0x206a2a0;
+	Node0x206a2a0 [shape=record,label="{b}"];
 }

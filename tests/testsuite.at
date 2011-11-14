@@ -25,32 +25,29 @@
 AT_INIT()
 
 AT_SETUP([Graph-based llvmopencl tests])
-for i in $abs_top_srcdir/tests/*_workitem.dot
+for type in barriers btr workitem
 do
-  rm cfg.*.dot
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o test.ll `echo $i | sed s/_workitem.dot/.ll/`], 0, ignore, ignore)
-  opt -disable-output -dot-cfg-only test.ll
-  dot -Tpng -o test.png cfg.*.dot
-  dot -Tpng -o golden.png $i
-  AT_CHECK([cmp test.png golden.png])
-done
-for i in $abs_top_srcdir/tests/*_barriers.dot
-do
-  rm cfg.*.dot
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriers -S -o test.ll `echo $i | sed s/_barriers.dot/.ll/`], 0, ignore, ignore)
-  opt -disable-output -dot-cfg-only test.ll
-  dot -Tpng -o test.png cfg.*.dot
-  dot -Tpng -o golden.png $i
-  AT_CHECK([cmp test.png golden.png])
-done
-for i in $abs_top_srcdir/tests/*_btr.dot
-do
-  rm cfg.*.dot
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o test.ll `echo $i | sed s/_btr.dot/.ll/`], 0, ignore, ignore)
-  opt -disable-output -dot-cfg-only test.ll
-  dot -Tpng -o test.png cfg.*.dot
-  dot -Tpng -o golden.png $i
-  AT_CHECK([cmp test.png golden.png])
+  for i in $abs_top_srcdir/tests/*_$type.dot
+  do
+    input=`echo $i | sed s/_$type.dot/.ll/`
+    output=`echo $i | sed 's/.*\///' | sed s/.dot/_test.ll/`
+    graph=`echo $output | sed s/.ll/.png/`
+    golden=`echo $graph | sed s/_test/_golden/`
+    rm cfg.*.dot
+    echo "input=$input"
+    echo "output=$output"
+    echo "graph=$graph"
+    echo "golden=$golden"
+    case $type in
+      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriers -S -o $output $input], 0, ignore, ignore) ;;
+      btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $output $input], 0, ignore, ignore) ;;
+      workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
+    esac
+    opt -disable-output -dot-cfg-only $output
+    dot -Tpng -o $graph cfg.*.dot
+    dot -Tpng -o $golden $i
+    AT_CHECK([cmp $graph $golden])
+  done
 done
 AT_CLEANUP
 
