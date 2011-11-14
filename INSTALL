@@ -9,6 +9,26 @@ are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.  This file is offered as-is,
 without warranty of any kind.
 
+Requirements
+============
+
+   In order to build pocl, you need the following support libraries and
+tools:
+
+  LLVM 3.0+ and 
+  Clang 3.0+ installed in PATH (and library path)
+  gcc or a compatible compiler
+  GNU make
+  autotools (autoconf, automake, libtool)
+  libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
+  pthread (should be installed by default)
+
+After all the requirements are installed. The installation procedure
+follows the usual autotools build+install. If you are using a development
+source tree, you need to generate the autotool build files with 
+
+  "./autogen.sh".
+
 Basic Installation
 ==================
 
