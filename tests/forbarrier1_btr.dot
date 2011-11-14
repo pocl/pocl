@@ -1,0 +1,10 @@
+digraph "CFG for 'forbarrier1' function" {
+	label="CFG for 'forbarrier1' function";
+
+	Node0x27556d0 [shape=record,label="{a}"];
+	Node0x27556d0 -> Node0x2754170;
+	Node0x2754170 [shape=record,label="{barrier|{<s0>T|<s1>F}}"];
+	Node0x2754170:s0 -> Node0x2754170;
+	Node0x2754170:s1 -> Node0x27543f0;
+	Node0x27543f0 [shape=record,label="{b}"];
+}
