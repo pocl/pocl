@@ -69,9 +69,9 @@ GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
                      ifbarrier2_btr.dot					\
                      ifbarrier3_btr.dot					\
                      ifbarrier4_btr.dot					\
-                     forbarrier1_barriers.dot				\
-                     forbarrier1_barriers_btr.dot			\
-                     forbarrier1_barriers_btr_workitem.dot		\
+                     forbarrier1_btr.dot				\
+                     forbarrier1_btr_barriers.dot			\
+                     forbarrier1_btr_barriers_workitem.dot		\
                      ifforbarrier1_loops_barriers.dot			\
                      ifforbarrier1_loops_barriers_btr.dot		\
                      ifforbarrier1_loops_barriers_btr_workitem.dot	\
