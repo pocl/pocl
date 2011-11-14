@@ -60,22 +60,24 @@ $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
 
-GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot					\
-                     barrier1_barriers.dot					\
-                     barrier1_barriers_workitem.dot				\
-                     ifbarrier1_barriers.dot					\
-                     ifbarrier1_barriers_btr.dot				\
-                     ifbarrier1_barriers_btr_workitem.dot			\
-                     ifbarrier2_btr.dot						\
-                     ifbarrier3_btr.dot						\
-                     ifbarrier4_btr.dot						\
-                     forbarrier1_barriers.dot					\
-                     forbarrier1_barriers_btr.dot				\
-                     forbarrier1_barriers_btr_workitem.dot			\
-                     ifforbarrier1_loops_barriers.dot                           \
-                     ifforbarrier1_loops_barriers_btr.dot                       \
-                     ifforbarrier1_loops_barriers_btr_workitem.dot		\
-                     forifbarrier1_btr.dot
+GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
+                     barrier1_barriers.dot				\
+                     barrier1_barriers_workitem.dot			\
+                     ifbarrier1_barriers.dot				\
+                     ifbarrier1_barriers_btr.dot			\
+                     ifbarrier1_barriers_btr_workitem.dot		\
+                     ifbarrier2_btr.dot					\
+                     ifbarrier3_btr.dot					\
+                     ifbarrier4_btr.dot					\
+                     forbarrier1_barriers.dot				\
+                     forbarrier1_barriers_btr.dot			\
+                     forbarrier1_barriers_btr_workitem.dot		\
+                     ifforbarrier1_loops_barriers.dot			\
+                     ifforbarrier1_loops_barriers_btr.dot		\
+                     ifforbarrier1_loops_barriers_btr_workitem.dot	\
+                     forifbarrier1_barriers.dot				\
+                     forifbarrier1_barriers_btr.dot			\
+                     forifbarrier1_barriers_btr_workitem.dot
 
 GRAPH_TEST_INPUTS = $(addsuffix .dot,					\
                     $(subst .,_, $(basename				\

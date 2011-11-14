@@ -219,9 +219,17 @@ WorkitemReplication::FindSubgraph(BasicBlockSet &subgraph,
 
   bool found = false;
   const TerminatorInst *t = entry->getTerminator();
-  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
+  Loop *l = LI->getLoopFor(entry);
+  for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
+    BasicBlock *b = t->getSuccessor(i);
+    if ((l != NULL) && (l->getHeader() == b)) {
+      // This is a loop backedge. Do not find subgraphs across
+      // those.
+      continue;
+    }
     found |= FindSubgraph(subgraph, t->getSuccessor(i), exit);
-
+  }
+    
   if (found)
     subgraph.insert(entry);
 
