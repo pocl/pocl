@@ -72,7 +72,9 @@ GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot					\
                      forbarrier1_barriers.dot					\
                      forbarrier1_barriers_btr.dot				\
                      forbarrier1_barriers_btr_workitem.dot			\
-                     ifforbarrier1_btr.dot					\
+                     ifforbarrier1_loops_barriers.dot                           \
+                     ifforbarrier1_loops_barriers_btr.dot                       \
+                     ifforbarrier1_loops_barriers_btr_workitem.dot		\
                      forifbarrier1_btr.dot
 
 GRAPH_TEST_INPUTS = $(addsuffix .dot,					\

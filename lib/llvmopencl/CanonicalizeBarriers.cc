@@ -111,7 +111,8 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
               assert(latch != NULL);
               // If this barrier happens to be before the latch terminator,
               // there is no need to add an additional barrier.
-              if (latch->getTerminator()->getPrevNode() != c)
+              if ((latch->size() == 1) ||
+                  (latch->getTerminator()->getPrevNode() != c))
                 BarriersToAdd.insert(latch->getTerminator());
             }
           }
