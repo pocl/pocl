@@ -150,8 +150,7 @@ AC_ARG_ENABLE([arm-cortex-a8],
          NATIVE_LLC_FLAGS="$NATIVE_LLC_FLAGS -mcpu=cortex-a8 -mattr=+neon"
          NATIVE_CLANG_FLAGS="$NATIVE_CLANG_FLAGS -mcpu=cortex-a8"
          AC_MSG_NOTICE([optimizing the ARM kernel library for the Cortex A8 instruction set.])
-        ],
-        []
+        ]
 )
 
 AC_DEFINE_UNQUOTED([HOST_ARCH], ["$HOST_ARCH"], 
