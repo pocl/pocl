@@ -72,6 +72,9 @@ GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
                      forbarrier1_btr.dot				\
                      forbarrier1_btr_barriers.dot			\
                      forbarrier1_btr_barriers_workitem.dot		\
+                     forbarrier2_btr.dot				\
+                     forbarrier2_btr_barriers.dot			\
+                     forbarrier2_btr_barriers_workitem.dot		\
                      ifforbarrier1_loops_btr.dot			\
                      ifforbarrier1_loops_btr_barriers.dot		\
                      ifforbarrier1_loops_btr_barriers_workitem.dot	\
@@ -101,7 +104,7 @@ dots: $(addprefix $(srcdir)/, $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH
 	@OPT@ -loop-simplify -S -o $@ $<
 
 %_barriers.ll: %.ll
-	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -S -o $@ $<
+	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -loop-barriers -S -o $@ $<
 
 %_btr.ll: %.ll
 	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $@ $<

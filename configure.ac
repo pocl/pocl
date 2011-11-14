@@ -72,19 +72,27 @@ AC_LANG([C++])
 ACX_PTHREAD()
 
 # Checks for libraries.
-old_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS `$LLVM_CONFIG --ldflags`"
-old_LIBS="$LIBS"
-LIBS=
-AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
-               [LLVM-3.0 LLVMTransformUtils],
-	       , ,
-               [`$LLVM_CONFIG --libs transformutils`])
-AC_SUBST([LIBS_LLVMTRANSFORMUTILS], ["$LIBS"])
-test "$ac_cv_search_LLVMInitializeTransformUtils" = "no" && \
-  AC_MSG_FAILURE([Unable to link with LLVM libraries])
-LIBS="$old_LIBS"
-LDFLAGS="$old_LDFLAGS"
+#old_LDFLAGS="$LDFLAGS"
+#LDFLAGS="$LDFLAGS `$LLVM_CONFIG --ldflags`"
+#old_LIBS="$LIBS"
+#LIBS=
+#AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
+#               [LLVM-3.0 LLVMTransformUtils],
+#	       , ,
+#               [`$LLVM_CONFIG --libs transformutils`])
+#AC_SUBST([LIBS_LLVMTRANSFORMUTILS], ["$LIBS"])
+#test "$ac_cv_search_LLVMInitializeTransformUtils" = "no" && \
+#  AC_MSG_FAILURE([Unable to link with LLVM libraries])
+#LIBS=
+#AC_SEARCH_LIBS([LLVMInitializeAnalysis],
+#               [LLVM-3.0 LLVMAnalysis],
+#	       , ,
+#               [`$LLVM_CONFIG --libs analysis`])
+#AC_SUBST([LIBS_LLVMANALYSIS], ["$LIBS"])
+#test "$ac_cv_search_LLVMInitializeAnalysis" = "no" && \
+#  AC_MSG_FAILURE([Unable to link with LLVM libraries])
+#LIBS="$old_LIBS"
+#LDFLAGS="$old_LDFLAGS"
 
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h unistd.h])

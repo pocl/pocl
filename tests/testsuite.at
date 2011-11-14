@@ -39,7 +39,7 @@ do
     echo "graph=$graph"
     echo "golden=$golden"
     case $type in
-      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriers -S -o $output $input], 0, ignore, ignore) ;;
+      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriers -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
       btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $output $input], 0, ignore, ignore) ;;
       workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
     esac

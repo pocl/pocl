@@ -67,7 +67,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
 
   InstructionSet PreSplitPoints;
   InstructionSet PostSplitPoints;
-  InstructionSet BarriersToAdd;
+  // InstructionSet BarriersToAdd;
 
   CallInst *barrier = NULL;
 
@@ -85,50 +85,50 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
 	    PreSplitPoints.insert(i);
 	    PostSplitPoints.insert(i);
             
-            // Is this barrier inside of a loop?
-            Loop *loop = LI->getLoopFor(b);
-            if (loop != NULL) {
-              // We need loops to be canonicalized.  If the barrier
-              // is in a loop, add a barrier in the preheader.
-              BasicBlock *preheader = loop->getLoopPreheader();
-              assert(preheader != NULL);
-              Instruction *new_barrier = barrier->clone();
-              new_barrier->insertBefore(preheader->getTerminator());
-              preheader->setName(preheader->getName() + ".loopbarrier");
-              changed = true;
-              // No split point after preheader barriers, so we ensure
-              // WI 0,0,0 starts at the loop header.  But still we need
-              // a split before.
-              PreSplitPoints.insert(new_barrier);
+            // // Is this barrier inside of a loop?
+            // Loop *loop = LI->getLoopFor(b);
+            // if (loop != NULL) {
+            //   // We need loops to be canonicalized.  If the barrier
+            //   // is in a loop, add a barrier in the preheader.
+            //   BasicBlock *preheader = loop->getLoopPreheader();
+            //   assert(preheader != NULL);
+            //   Instruction *new_barrier = barrier->clone();
+            //   new_barrier->insertBefore(preheader->getTerminator());
+            //   preheader->setName(preheader->getName() + ".loopbarrier");
+            //   changed = true;
+            //   // No split point after preheader barriers, so we ensure
+            //   // WI 0,0,0 starts at the loop header.  But still we need
+            //   // a split before.
+            //   PreSplitPoints.insert(new_barrier);
 
-              // Add barriers before any loop backedge.  This
-              // is to ensure all workitems run to the end of the loop
-              // (because otherwise first WI will jump back to the
-              // header and other WIs will skip portion of the
-              // loop body).
-              // We cannot add the barriers directly here to avoid
-              // processing them when going on trough the loop, schedule
-              // them to be added later. 
-              AddLatchBarriers(BarriersToAdd, loop, b);
-            }
+            //   // Add barriers before any loop backedge.  This
+            //   // is to ensure all workitems run to the end of the loop
+            //   // (because otherwise first WI will jump back to the
+            //   // header and other WIs will skip portion of the
+            //   // loop body).
+            //   // We cannot add the barriers directly here to avoid
+            //   // processing them when going on trough the loop, schedule
+            //   // them to be added later. 
+            //   AddLatchBarriers(BarriersToAdd, loop, b);
+            // }
           }
 	}
       }
     }
   }
 
-  // Add scheduled barriers.
-  for (InstructionSet::iterator i = BarriersToAdd.begin(), e = BarriersToAdd.end();
-       i != e; ++i) {
-    assert(barrier != NULL);
-    Instruction *new_barrier = barrier->clone();
-    new_barrier->insertBefore(*i);
-    BasicBlock *b = (*i)->getParent();
-    b->setName(b->getName() + ".latchbarrier");
-    changed = true;
-    PreSplitPoints.insert(new_barrier);
-    PostSplitPoints.insert(new_barrier);
-  }
+  // // Add scheduled barriers.
+  // for (InstructionSet::iterator i = BarriersToAdd.begin(), e = BarriersToAdd.end();
+  //      i != e; ++i) {
+  //   assert(barrier != NULL);
+  //   Instruction *new_barrier = barrier->clone();
+  //   new_barrier->insertBefore(*i);
+  //   BasicBlock *b = (*i)->getParent();
+  //   b->setName(b->getName() + ".latchbarrier");
+  //   changed = true;
+  //   PreSplitPoints.insert(new_barrier);
+  //   PostSplitPoints.insert(new_barrier);
+  // }
 
   // Finally add all the split points, now that we are done with the
   // iterators.
@@ -172,42 +172,42 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
 
 
 // Modified from llvm::LoopBase::getLoopLatch().
-void
-CanonicalizeBarriers::AddLatchBarriers(InstructionSet &barriers_to_add,
-                                       Loop *loop, BasicBlock *barrier_bb)
-{
-  if (BasicBlock *latch = loop->getLoopLatch()) {
-    // This loop has only one latch. Do not check for dominance, we
-    // are probably running before BTR.
-    if ((latch->size() == 1) ||
-        (!is_barrier(latch->getTerminator()->getPrevNode())))
-      barriers_to_add.insert(latch->getTerminator());
+// void
+// CanonicalizeBarriers::AddLatchBarriers(InstructionSet &barriers_to_add,
+//                                        Loop *loop, BasicBlock *barrier_bb)
+// {
+//   if (BasicBlock *latch = loop->getLoopLatch()) {
+//     // This loop has only one latch. Do not check for dominance, we
+//     // are probably running before BTR.
+//     if ((latch->size() == 1) ||
+//         (!is_barrier(latch->getTerminator()->getPrevNode())))
+//       barriers_to_add.insert(latch->getTerminator());
     
-    return;
-  }
+//     return;
+//   }
 
-  BasicBlock *Header = loop->getHeader();
-  typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
-  InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(Header);
-  InvBlockTraits::ChildIteratorType PE = InvBlockTraits::child_end(Header);
-  BasicBlock *Latch = NULL;
-  for (; PI != PE; ++PI) {
-    InvBlockTraits::NodeType *N = *PI;
-    if (loop->contains(N)) {
-      Latch = N;
-      // Latch found in the loop, see if the barrier dominates it
-      // (otherwise if might no even belong to this "tail", see
-      // forifbarrier1 graph test).
-      if (DT->dominates(barrier_bb, Latch)) {
-        // If there is a barrier happens before the latch terminator,
-        // there is no need to add an additional barrier.
-        if ((Latch->size() == 1) ||
-            (!is_barrier(Latch->getTerminator()->getPrevNode())))
-          barriers_to_add.insert(Latch->getTerminator());
-      }
-    }
-  }
-}
+//   BasicBlock *Header = loop->getHeader();
+//   typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
+//   InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(Header);
+//   InvBlockTraits::ChildIteratorType PE = InvBlockTraits::child_end(Header);
+//   BasicBlock *Latch = NULL;
+//   for (; PI != PE; ++PI) {
+//     InvBlockTraits::NodeType *N = *PI;
+//     if (loop->contains(N)) {
+//       Latch = N;
+//       // Latch found in the loop, see if the barrier dominates it
+//       // (otherwise if might no even belong to this "tail", see
+//       // forifbarrier1 graph test).
+//       if (DT->dominates(barrier_bb, Latch)) {
+//         // If there is a barrier happens before the latch terminator,
+//         // there is no need to add an additional barrier.
+//         if ((Latch->size() == 1) ||
+//             (!is_barrier(Latch->getTerminator()->getPrevNode())))
+//           barriers_to_add.insert(Latch->getTerminator());
+//       }
+//     }
+//   }
+// }
 
 static bool
 is_barrier(Instruction *i)
