@@ -1,4 +1,4 @@
-; ModuleID = '../../../src/pocl.loopbarriers/tests/ifforbarrier1_loops.ll'
+; ModuleID = '../../../src/pocl.loopbarriers/tests/ifforbarrier1_loops_btr.ll'
 
 declare void @barrier(i32)
 
@@ -37,8 +37,11 @@ c.latchbarrier.postbarrier:                       ; preds = %c.latchbarrier
   br i1 true, label %barrier.prebarrier, label %d.loopexit
 
 d.loopexit:                                       ; preds = %c.latchbarrier.postbarrier
-  br label %d
+  br label %d.btr
 
-d:                                                ; preds = %d.loopexit, %b
+d:                                                ; preds = %b
+  ret void
+
+d.btr:                                            ; preds = %d.loopexit
   ret void
 }
