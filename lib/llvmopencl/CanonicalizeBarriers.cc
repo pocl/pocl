@@ -29,6 +29,8 @@ using namespace pocl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
 
+static bool is_barrier(Instruction *i);
+
 namespace {
   static
   RegisterPass<CanonicalizeBarriers> X("barriers",
@@ -107,13 +109,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
               // We cannot add the barriers directly here to avoid
               // processing them when going on trough the loop, schedule
               // them to be added later. 
-              BasicBlock *latch = loop->getLoopLatch();
-              assert(latch != NULL);
-              // If this barrier happens to be before the latch terminator,
-              // there is no need to add an additional barrier.
-              if ((latch->size() == 1) ||
-                  (latch->getTerminator()->getPrevNode() != c))
-                BarriersToAdd.insert(latch->getTerminator());
+              AddLatchBarriers(BarriersToAdd, loop, b);
             }
           }
 	}
@@ -172,4 +168,56 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   LI->verifyAnalysis();
   
   return changed;
+}
+
+
+// Modified from llvm::LoopBase::getLoopLatch().
+void
+CanonicalizeBarriers::AddLatchBarriers(InstructionSet &barriers_to_add,
+                                       Loop *loop, BasicBlock *barrier_bb)
+{
+  if (BasicBlock *latch = loop->getLoopLatch()) {
+    // This loop has only one latch. Do not check for dominance, we
+    // are probably running before BTR.
+    if ((latch->size() == 1) ||
+        (!is_barrier(latch->getTerminator()->getPrevNode())))
+      barriers_to_add.insert(latch->getTerminator());
+    
+    return;
+  }
+
+  BasicBlock *Header = loop->getHeader();
+  typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
+  InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(Header);
+  InvBlockTraits::ChildIteratorType PE = InvBlockTraits::child_end(Header);
+  BasicBlock *Latch = NULL;
+  for (; PI != PE; ++PI) {
+    InvBlockTraits::NodeType *N = *PI;
+    if (loop->contains(N)) {
+      Latch = N;
+      // Latch found in the loop, see if the barrier dominates it
+      // (otherwise if might no even belong to this "tail", see
+      // forifbarrier1 graph test).
+      if (DT->dominates(barrier_bb, Latch)) {
+        // If there is a barrier happens before the latch terminator,
+        // there is no need to add an additional barrier.
+        if ((Latch->size() == 1) ||
+            (!is_barrier(Latch->getTerminator()->getPrevNode())))
+          barriers_to_add.insert(Latch->getTerminator());
+      }
+    }
+  }
+}
+
+static bool
+is_barrier(Instruction *i)
+{
+  if (CallInst *c = dyn_cast<CallInst>(i)) {
+    if (Function *f = c->getCalledFunction()) {
+      if (f->getName().equals(BARRIER_FUNCTION_NAME))
+        return true;
+    }
+  }
+
+  return false;
 }

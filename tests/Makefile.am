@@ -65,7 +65,7 @@ GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
                      barrier1_barriers_workitem.dot			\
                      ifbarrier1_btr.dot					\
                      ifbarrier1_btr_barriers.dot			\
-                     ifbarrier1_btr_barriers_workitem.dot           	\
+                     ifbarrier1_btr_barriers_workitem.dot		\
                      ifbarrier2_btr.dot					\
                      ifbarrier3_btr.dot					\
                      ifbarrier4_btr.dot					\
@@ -77,7 +77,10 @@ GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
                      ifforbarrier1_loops_btr_barriers_workitem.dot	\
                      forifbarrier1_barriers.dot				\
                      forifbarrier1_barriers_btr.dot			\
-                     forifbarrier1_barriers_btr_workitem.dot
+                     forifbarrier1_barriers_btr_workitem.dot		\
+                     forifbarrier1_btr.dot				\
+                     forifbarrier1_btr_barriers.dot			\
+                     forifbarrier1_btr_barriers_workitem.dot
 
 GRAPH_TEST_INPUTS = $(addsuffix .dot,					\
                     $(subst .,_, $(basename				\

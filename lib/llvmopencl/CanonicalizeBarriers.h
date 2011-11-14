@@ -45,6 +45,8 @@ namespace pocl {
     llvm::DominatorTree *DT;
 
     bool ProcessFunction(llvm::Function &F);
+    void AddLatchBarriers(InstructionSet &barriers_to_add,
+                          llvm::Loop *loop, llvm::BasicBlock *barrier_bb);
 
     friend class pocl::Workgroup;
   };
