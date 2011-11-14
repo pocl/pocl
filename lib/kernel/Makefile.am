@@ -42,5 +42,5 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .ll.o:
 	$(LLVM_AS) -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h templates.h
+$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h templates.h

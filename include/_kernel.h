@@ -61,7 +61,19 @@
    define the macro and the pragma is conditionally enabled.
 */
 #ifdef cl_khr_fp64
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#  pragma OPENCL EXTENSION cl_khr_fp64: enable
+#endif
+
+/* Define some feature macros to help write generic code */
+#ifdef cl_khr_int64
+#  define __IF_INT64(x) x
+#else
+#  define __IF_INT64(x)
+#endif
+#ifdef cl_khr_fp64
+#  define __IF_FP64(x) x
+#else
+#  define __IF_FP64(x)
 #endif
 
 #define __global __attribute__ ((address_space(3)))
@@ -135,6 +147,10 @@ typedef ulong ulong3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
 typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
+#else
+/* Disable datatype */
+struct error_undefined_type_long;
+#define long struct error_undefined_type_long
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
@@ -149,6 +165,10 @@ typedef double double3  __attribute__((__ext_vector_type__(3), __aligned__(32)))
 typedef double double4  __attribute__((__ext_vector_type__(4)));
 typedef double double8  __attribute__((__ext_vector_type__(8)));
 typedef double double16 __attribute__((__ext_vector_type__(16)));
+#else
+/* Disable datatype */
+struct error_undefined_type_double;
+#define double struct error_undefined_type_double
 #endif
 
 #if (__ADDRESS_BITS__ == 32)
@@ -294,7 +314,6 @@ _CL_DECLARE_AS_TYPE_4(uint)
 _CL_DECLARE_AS_TYPE_4(float)
 
 /* 8 bytes */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 #define _CL_DECLARE_AS_TYPE_8(SRC)              \
   _CL_DECLARE_AS_TYPE(SRC, char8)               \
   _CL_DECLARE_AS_TYPE(SRC, uchar8)              \
@@ -302,58 +321,22 @@ _CL_DECLARE_AS_TYPE_4(float)
   _CL_DECLARE_AS_TYPE(SRC, ushort4)             \
   _CL_DECLARE_AS_TYPE(SRC, int2)                \
   _CL_DECLARE_AS_TYPE(SRC, uint2)               \
-  _CL_DECLARE_AS_TYPE(SRC, long)                \
-  _CL_DECLARE_AS_TYPE(SRC, ulong)               \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long))    \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong))   \
   _CL_DECLARE_AS_TYPE(SRC, float2)              \
-  _CL_DECLARE_AS_TYPE(SRC, double)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_AS_TYPE_8(SRC)              \
-  _CL_DECLARE_AS_TYPE(SRC, char8)               \
-  _CL_DECLARE_AS_TYPE(SRC, uchar8)              \
-  _CL_DECLARE_AS_TYPE(SRC, short4)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort4)             \
-  _CL_DECLARE_AS_TYPE(SRC, int2)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint2)               \
-  _CL_DECLARE_AS_TYPE(SRC, long)                \
-  _CL_DECLARE_AS_TYPE(SRC, ulong)               \
-  _CL_DECLARE_AS_TYPE(SRC, float2)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_AS_TYPE_8(SRC)              \
-  _CL_DECLARE_AS_TYPE(SRC, char8)               \
-  _CL_DECLARE_AS_TYPE(SRC, uchar8)              \
-  _CL_DECLARE_AS_TYPE(SRC, short4)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort4)             \
-  _CL_DECLARE_AS_TYPE(SRC, int2)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint2)               \
-  _CL_DECLARE_AS_TYPE(SRC, float2)              \
-  _CL_DECLARE_AS_TYPE(SRC, double)
-#else
-#define _CL_DECLARE_AS_TYPE_8(SRC)              \
-  _CL_DECLARE_AS_TYPE(SRC, char8)               \
-  _CL_DECLARE_AS_TYPE(SRC, uchar8)              \
-  _CL_DECLARE_AS_TYPE(SRC, short4)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort4)             \
-  _CL_DECLARE_AS_TYPE(SRC, int2)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint2)               \
-  _CL_DECLARE_AS_TYPE(SRC, float2)
-#endif
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double))
 _CL_DECLARE_AS_TYPE_8(char8)
 _CL_DECLARE_AS_TYPE_8(uchar8)
 _CL_DECLARE_AS_TYPE_8(short4)
 _CL_DECLARE_AS_TYPE_8(ushort4)
 _CL_DECLARE_AS_TYPE_8(int2)
 _CL_DECLARE_AS_TYPE_8(uint2)
-#ifdef cl_khr_int64
-_CL_DECLARE_AS_TYPE_8(long)
-_CL_DECLARE_AS_TYPE_8(ulong)
-#endif
+__IF_INT64(_CL_DECLARE_AS_TYPE_8(long))
+__IF_INT64(_CL_DECLARE_AS_TYPE_8(ulong))
 _CL_DECLARE_AS_TYPE_8(float2)
-#ifdef cl_khr_fp64
-_CL_DECLARE_AS_TYPE_8(double)
-#endif
+__IF_FP64(_CL_DECLARE_AS_TYPE_8(double))
 
 /* 16 bytes */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 #define _CL_DECLARE_AS_TYPE_16(SRC)             \
   _CL_DECLARE_AS_TYPE(SRC, char16)              \
   _CL_DECLARE_AS_TYPE(SRC, uchar16)             \
@@ -361,522 +344,204 @@ _CL_DECLARE_AS_TYPE_8(double)
   _CL_DECLARE_AS_TYPE(SRC, ushort8)             \
   _CL_DECLARE_AS_TYPE(SRC, int4)                \
   _CL_DECLARE_AS_TYPE(SRC, uint4)               \
-  _CL_DECLARE_AS_TYPE(SRC, long2)               \
-  _CL_DECLARE_AS_TYPE(SRC, ulong2)              \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long2))   \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong2))  \
   _CL_DECLARE_AS_TYPE(SRC, float4)              \
-  _CL_DECLARE_AS_TYPE(SRC, double2)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_AS_TYPE_16(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, char16)              \
-  _CL_DECLARE_AS_TYPE(SRC, uchar16)             \
-  _CL_DECLARE_AS_TYPE(SRC, short8)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort8)             \
-  _CL_DECLARE_AS_TYPE(SRC, int4)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint4)               \
-  _CL_DECLARE_AS_TYPE(SRC, long2)               \
-  _CL_DECLARE_AS_TYPE(SRC, ulong2)              \
-  _CL_DECLARE_AS_TYPE(SRC, float4)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_AS_TYPE_16(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, char16)              \
-  _CL_DECLARE_AS_TYPE(SRC, uchar16)             \
-  _CL_DECLARE_AS_TYPE(SRC, short8)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort8)             \
-  _CL_DECLARE_AS_TYPE(SRC, int4)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint4)               \
-  _CL_DECLARE_AS_TYPE(SRC, float4)              \
-  _CL_DECLARE_AS_TYPE(SRC, double2)
-#else
-#define _CL_DECLARE_AS_TYPE_16(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, char16)              \
-  _CL_DECLARE_AS_TYPE(SRC, uchar16)             \
-  _CL_DECLARE_AS_TYPE(SRC, short8)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort8)             \
-  _CL_DECLARE_AS_TYPE(SRC, int4)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint4)               \
-  _CL_DECLARE_AS_TYPE(SRC, float4)
-#endif
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double2))
 _CL_DECLARE_AS_TYPE_16(char16)
 _CL_DECLARE_AS_TYPE_16(uchar16)
 _CL_DECLARE_AS_TYPE_16(short8)
 _CL_DECLARE_AS_TYPE_16(ushort8)
 _CL_DECLARE_AS_TYPE_16(int4)
 _CL_DECLARE_AS_TYPE_16(uint4)
-#ifdef cl_khr_int64
-_CL_DECLARE_AS_TYPE_16(long2)
-_CL_DECLARE_AS_TYPE_16(ulong2)
-#endif
+__IF_INT64(_CL_DECLARE_AS_TYPE_16(long2))
+__IF_INT64(_CL_DECLARE_AS_TYPE_16(ulong2))
 _CL_DECLARE_AS_TYPE_16(float4)
-#ifdef cl_khr_fp64
-_CL_DECLARE_AS_TYPE_16(double2)
-#endif
+__IF_FP64(_CL_DECLARE_AS_TYPE_16(double2))
 
 /* 32 bytes */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 #define _CL_DECLARE_AS_TYPE_32(SRC)             \
   _CL_DECLARE_AS_TYPE(SRC, short16)             \
   _CL_DECLARE_AS_TYPE(SRC, ushort16)            \
   _CL_DECLARE_AS_TYPE(SRC, int8)                \
   _CL_DECLARE_AS_TYPE(SRC, uint8)               \
-  _CL_DECLARE_AS_TYPE(SRC, long4)               \
-  _CL_DECLARE_AS_TYPE(SRC, ulong4)              \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long4))   \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong4))  \
   _CL_DECLARE_AS_TYPE(SRC, float8)              \
-  _CL_DECLARE_AS_TYPE(SRC, double4)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_AS_TYPE_32(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, short16)             \
-  _CL_DECLARE_AS_TYPE(SRC, ushort16)            \
-  _CL_DECLARE_AS_TYPE(SRC, int8)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint8)               \
-  _CL_DECLARE_AS_TYPE(SRC, long4)               \
-  _CL_DECLARE_AS_TYPE(SRC, ulong4)              \
-  _CL_DECLARE_AS_TYPE(SRC, float8)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_AS_TYPE_32(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, short16)             \
-  _CL_DECLARE_AS_TYPE(SRC, ushort16)            \
-  _CL_DECLARE_AS_TYPE(SRC, int8)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint8)               \
-  _CL_DECLARE_AS_TYPE(SRC, float8)              \
-  _CL_DECLARE_AS_TYPE(SRC, double4)
-#else
-#define _CL_DECLARE_AS_TYPE_32(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, short16)             \
-  _CL_DECLARE_AS_TYPE(SRC, ushort16)            \
-  _CL_DECLARE_AS_TYPE(SRC, int8)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint8)               \
-  _CL_DECLARE_AS_TYPE(SRC, float8)
-#endif
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double4))
 _CL_DECLARE_AS_TYPE_32(short16)
 _CL_DECLARE_AS_TYPE_32(ushort16)
 _CL_DECLARE_AS_TYPE_32(int8)
 _CL_DECLARE_AS_TYPE_32(uint8)
-#ifdef cl_khr_int64
-_CL_DECLARE_AS_TYPE_32(long4)
-_CL_DECLARE_AS_TYPE_32(ulong4)
-#endif
+__IF_INT64(_CL_DECLARE_AS_TYPE_32(long4))
+__IF_INT64(_CL_DECLARE_AS_TYPE_32(ulong4))
 _CL_DECLARE_AS_TYPE_32(float8)
-#ifdef cl_khr_fp64
-_CL_DECLARE_AS_TYPE_32(double4)
-#endif
+__IF_FP64(_CL_DECLARE_AS_TYPE_32(double4))
 
 /* 64 bytes */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 #define _CL_DECLARE_AS_TYPE_64(SRC)             \
   _CL_DECLARE_AS_TYPE(SRC, int16)               \
   _CL_DECLARE_AS_TYPE(SRC, uint16)              \
-  _CL_DECLARE_AS_TYPE(SRC, long8)               \
-  _CL_DECLARE_AS_TYPE(SRC, ulong8)              \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long8))   \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong8))  \
   _CL_DECLARE_AS_TYPE(SRC, float16)             \
-  _CL_DECLARE_AS_TYPE(SRC, double8)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_AS_TYPE_64(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, int16)               \
-  _CL_DECLARE_AS_TYPE(SRC, uint16)              \
-  _CL_DECLARE_AS_TYPE(SRC, long8)               \
-  _CL_DECLARE_AS_TYPE(SRC, ulong8)              \
-  _CL_DECLARE_AS_TYPE(SRC, float16)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_AS_TYPE_64(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, int16)               \
-  _CL_DECLARE_AS_TYPE(SRC, uint16)              \
-  _CL_DECLARE_AS_TYPE(SRC, float16)             \
-  _CL_DECLARE_AS_TYPE(SRC, double8)
-#else
-#define _CL_DECLARE_AS_TYPE_64(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, int16)               \
-  _CL_DECLARE_AS_TYPE(SRC, uint16)              \
-  _CL_DECLARE_AS_TYPE(SRC, float16)
-#endif
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double8))
 _CL_DECLARE_AS_TYPE_64(int16)
 _CL_DECLARE_AS_TYPE_64(uint16)
-#ifdef cl_khr_int64
-_CL_DECLARE_AS_TYPE_64(long8)
-_CL_DECLARE_AS_TYPE_64(ulong8)
-#endif
+__IF_INT64(_CL_DECLARE_AS_TYPE_64(long8))
+__IF_INT64(_CL_DECLARE_AS_TYPE_64(ulong8))
 _CL_DECLARE_AS_TYPE_64(float16)
-#ifdef cl_khr_fp64
-_CL_DECLARE_AS_TYPE_64(double8)
-#endif
+__IF_FP64(_CL_DECLARE_AS_TYPE_64(double8))
 
 /* 128 bytes */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 #define _CL_DECLARE_AS_TYPE_128(SRC)            \
-  _CL_DECLARE_AS_TYPE(SRC, long16)              \
-  _CL_DECLARE_AS_TYPE(SRC, ulong16)             \
-  _CL_DECLARE_AS_TYPE(SRC, double16)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_AS_TYPE_128(SRC)            \
-  _CL_DECLARE_AS_TYPE(SRC, long16)              \
-  _CL_DECLARE_AS_TYPE(SRC, ulong16)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_AS_TYPE_128(SRC)            \
-  _CL_DECLARE_AS_TYPE(SRC, double16)
-#endif
-#ifdef cl_khr_int64
-_CL_DECLARE_AS_TYPE_128(long16)
-_CL_DECLARE_AS_TYPE_128(ulong16)
-#endif
-#ifdef cl_khr_fp64
-_CL_DECLARE_AS_TYPE_128(double16)
-#endif
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long16))  \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong16)) \
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double16))
+__IF_INT64(_CL_DECLARE_AS_TYPE_128(long16))
+__IF_INT64(_CL_DECLARE_AS_TYPE_128(ulong16))
+__IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
 
 #define _CL_DECLARE_CONVERT_TYPE(SRC, DST)      \
   DST _cl_overloadable convert_##DST(SRC a);
 
 /* 1 element */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_1(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int)            \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_CONVERT_TYPE_1(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int)            \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_1(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int)            \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double)
-#else
-#define _CL_DECLARE_CONVERT_TYPE_1(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int)            \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float)
-#endif
+#define _CL_DECLARE_CONVERT_TYPE_1(SRC)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char)                   \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int)                    \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint)                   \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long))       \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong))      \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float)                  \
+  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double))
 _CL_DECLARE_CONVERT_TYPE_1(char)
 _CL_DECLARE_CONVERT_TYPE_1(uchar)
 _CL_DECLARE_CONVERT_TYPE_1(short)
 _CL_DECLARE_CONVERT_TYPE_1(ushort)
 _CL_DECLARE_CONVERT_TYPE_1(int)
 _CL_DECLARE_CONVERT_TYPE_1(uint)
-#ifdef cl_khr_int64
-_CL_DECLARE_CONVERT_TYPE_1(long)
-_CL_DECLARE_CONVERT_TYPE_1(ulong)
-#endif
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_1(long))
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_1(ulong))
 _CL_DECLARE_CONVERT_TYPE_1(float)
-#ifdef cl_khr_fp64
-_CL_DECLARE_CONVERT_TYPE_1(double)
-#endif
+__IF_FP64(_CL_DECLARE_CONVERT_TYPE_1(double))
 
 /* 2 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_2(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort2)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int2)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double2)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_CONVERT_TYPE_2(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort2)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int2)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float2)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_2(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort2)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int2)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double2)
-#else
-#define _CL_DECLARE_CONVERT_TYPE_2(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short2)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort2)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int2)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint2)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float2)
-#endif
+#define _CL_DECLARE_CONVERT_TYPE_2(SRC)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char2)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar2)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short2)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort2)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int2)                   \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint2)                  \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long2))      \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong2))     \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float2)                 \
+  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double2))
 _CL_DECLARE_CONVERT_TYPE_2(char2)
 _CL_DECLARE_CONVERT_TYPE_2(uchar2)
 _CL_DECLARE_CONVERT_TYPE_2(short2)
 _CL_DECLARE_CONVERT_TYPE_2(ushort2)
 _CL_DECLARE_CONVERT_TYPE_2(int2)
 _CL_DECLARE_CONVERT_TYPE_2(uint2)
-#ifdef cl_khr_int64
-_CL_DECLARE_CONVERT_TYPE_2(long2)
-_CL_DECLARE_CONVERT_TYPE_2(ulong2)
-#endif
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_2(long2))
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_2(ulong2))
 _CL_DECLARE_CONVERT_TYPE_2(float2)
-#ifdef cl_khr_fp64
-_CL_DECLARE_CONVERT_TYPE_2(double2)
-#endif
+__IF_FP64(_CL_DECLARE_CONVERT_TYPE_2(double2))
 
 /* 3 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_3(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort3)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int3)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double3)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_CONVERT_TYPE_3(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort3)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int3)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float3)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_3(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort3)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int3)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double3)
-#else
-#define _CL_DECLARE_CONVERT_TYPE_3(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short3)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort3)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int3)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint3)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float3)
-#endif
+#define _CL_DECLARE_CONVERT_TYPE_3(SRC)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char3)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar3)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short3)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort3)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int3)                   \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint3)                  \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long3))      \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong3))     \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float3)                 \
+  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double3))
 _CL_DECLARE_CONVERT_TYPE_3(char3)
 _CL_DECLARE_CONVERT_TYPE_3(uchar3)
 _CL_DECLARE_CONVERT_TYPE_3(short3)
 _CL_DECLARE_CONVERT_TYPE_3(ushort3)
 _CL_DECLARE_CONVERT_TYPE_3(int3)
 _CL_DECLARE_CONVERT_TYPE_3(uint3)
-#ifdef cl_khr_int64
-_CL_DECLARE_CONVERT_TYPE_3(long3)
-_CL_DECLARE_CONVERT_TYPE_3(ulong3)
-#endif
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_3(long3))
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_3(ulong3))
 _CL_DECLARE_CONVERT_TYPE_3(float3)
-#ifdef cl_khr_fp64
-_CL_DECLARE_CONVERT_TYPE_3(double3)
-#endif
+__IF_FP64(_CL_DECLARE_CONVERT_TYPE_3(double3))
 
 /* 4 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_4(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort4)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int4)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double4)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_CONVERT_TYPE_4(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort4)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int4)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float4)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_4(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort4)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int4)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double4)
-#else
-#define _CL_DECLARE_CONVERT_TYPE_4(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short4)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort4)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int4)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint4)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float4)
-#endif
+#define _CL_DECLARE_CONVERT_TYPE_4(SRC)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char4)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar4)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short4)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort4)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int4)                   \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint4)                  \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long4))      \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong4))     \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float4)                 \
+  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double4))
 _CL_DECLARE_CONVERT_TYPE_4(char4)
 _CL_DECLARE_CONVERT_TYPE_4(uchar4)
 _CL_DECLARE_CONVERT_TYPE_4(short4)
 _CL_DECLARE_CONVERT_TYPE_4(ushort4)
 _CL_DECLARE_CONVERT_TYPE_4(int4)
 _CL_DECLARE_CONVERT_TYPE_4(uint4)
-#ifdef cl_khr_int64
-_CL_DECLARE_CONVERT_TYPE_4(long4)
-_CL_DECLARE_CONVERT_TYPE_4(ulong4)
-#endif
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_4(long4))
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_4(ulong4))
 _CL_DECLARE_CONVERT_TYPE_4(float4)
-#ifdef cl_khr_fp64
-_CL_DECLARE_CONVERT_TYPE_4(double4)
-#endif
+__IF_FP64(_CL_DECLARE_CONVERT_TYPE_4(double4))
 
 /* 8 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_8(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort8)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int8)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double8)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_CONVERT_TYPE_8(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort8)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int8)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float8)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_8(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort8)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int8)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double8)
-#else
-#define _CL_DECLARE_CONVERT_TYPE_8(SRC)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short8)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort8)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int8)           \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint8)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float8)
-#endif
+#define _CL_DECLARE_CONVERT_TYPE_8(SRC)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char8)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar8)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short8)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort8)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int8)                   \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint8)                  \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long8))      \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong8))     \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float8)                 \
+  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double8))
 _CL_DECLARE_CONVERT_TYPE_8(char8)
 _CL_DECLARE_CONVERT_TYPE_8(uchar8)
 _CL_DECLARE_CONVERT_TYPE_8(short8)
 _CL_DECLARE_CONVERT_TYPE_8(ushort8)
 _CL_DECLARE_CONVERT_TYPE_8(int8)
 _CL_DECLARE_CONVERT_TYPE_8(uint8)
-#ifdef cl_khr_int64
-_CL_DECLARE_CONVERT_TYPE_8(long8)
-_CL_DECLARE_CONVERT_TYPE_8(ulong8)
-#endif
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_8(long8))
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_8(ulong8))
 _CL_DECLARE_CONVERT_TYPE_8(float8)
-#ifdef cl_khr_fp64
-_CL_DECLARE_CONVERT_TYPE_8(double8)
-#endif
+__IF_FP64(_CL_DECLARE_CONVERT_TYPE_8(double8))
 
 /* 16 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_16(SRC)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort16)       \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int16)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double16)
-#elif defined(cl_khr_int64)
-#define _CL_DECLARE_CONVERT_TYPE_16(SRC)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort16)       \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int16)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, long16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ulong16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float16)
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_CONVERT_TYPE_16(SRC)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort16)       \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int16)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double16)
-#else
-#define _CL_DECLARE_CONVERT_TYPE_16(SRC)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short16)        \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort16)       \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int16)          \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint16)         \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float16)
-#endif
+#define _CL_DECLARE_CONVERT_TYPE_16(SRC)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char16)                 \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar16)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short16)                \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort16)               \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int16)                  \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint16)                 \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long16))     \
+  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong16))    \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float16)                \
+  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double16))
 _CL_DECLARE_CONVERT_TYPE_16(char16)
 _CL_DECLARE_CONVERT_TYPE_16(uchar16)
 _CL_DECLARE_CONVERT_TYPE_16(short16)
 _CL_DECLARE_CONVERT_TYPE_16(ushort16)
 _CL_DECLARE_CONVERT_TYPE_16(int16)
 _CL_DECLARE_CONVERT_TYPE_16(uint16)
-#ifdef cl_khr_int64
-_CL_DECLARE_CONVERT_TYPE_16(long16)
-_CL_DECLARE_CONVERT_TYPE_16(ulong16)
-#endif
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_16(long16))
+__IF_INT64(_CL_DECLARE_CONVERT_TYPE_16(ulong16))
 _CL_DECLARE_CONVERT_TYPE_16(float16)
-#ifdef cl_khr_fp64
-_CL_DECLARE_CONVERT_TYPE_16(double16)
-#endif
+__IF_FP64(_CL_DECLARE_CONVERT_TYPE_16(double16))
 
 
 /* Work-Item Functions */
@@ -966,7 +631,6 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
  *    V: vector of float or double
  */
 
-#ifdef cl_khr_fp64
 #define _CL_DECLARE_FUNC_V_V(NAME)              \
   float    _cl_overloadable NAME(float   );     \
   float2   _cl_overloadable NAME(float2  );     \
@@ -974,22 +638,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  );     \
   float8   _cl_overloadable NAME(float8  );     \
   float16  _cl_overloadable NAME(float16 );     \
+  __IF_FP64(                                    \
   double   _cl_overloadable NAME(double  );     \
   double2  _cl_overloadable NAME(double2 );     \
   double3  _cl_overloadable NAME(double3 );     \
   double4  _cl_overloadable NAME(double4 );     \
   double8  _cl_overloadable NAME(double8 );     \
-  double16 _cl_overloadable NAME(double16);
-#else
-#define _CL_DECLARE_FUNC_V_V(NAME)              \
-  float    _cl_overloadable NAME(float   );     \
-  float2   _cl_overloadable NAME(float2  );     \
-  float3   _cl_overloadable NAME(float3  );     \
-  float4   _cl_overloadable NAME(float4  );     \
-  float8   _cl_overloadable NAME(float8  );     \
-  float16  _cl_overloadable NAME(float16 );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double16);)
 #define _CL_DECLARE_FUNC_V_VV(NAME)                     \
   float    _cl_overloadable NAME(float   , float   );   \
   float2   _cl_overloadable NAME(float2  , float2  );   \
@@ -997,105 +652,63 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  , float4  );   \
   float8   _cl_overloadable NAME(float8  , float8  );   \
   float16  _cl_overloadable NAME(float16 , float16 );   \
+  __IF_FP64(                                            \
   double   _cl_overloadable NAME(double  , double  );   \
   double2  _cl_overloadable NAME(double2 , double2 );   \
   double3  _cl_overloadable NAME(double3 , double3 );   \
   double4  _cl_overloadable NAME(double4 , double4 );   \
   double8  _cl_overloadable NAME(double8 , double8 );   \
-  double16 _cl_overloadable NAME(double16, double16);
-#else
-#define _CL_DECLARE_FUNC_V_VV(NAME)                     \
-  float    _cl_overloadable NAME(float   , float   );   \
-  float2   _cl_overloadable NAME(float2  , float2  );   \
-  float3   _cl_overloadable NAME(float3  , float3  );   \
-  float4   _cl_overloadable NAME(float4  , float4  );   \
-  float8   _cl_overloadable NAME(float8  , float8  );   \
-  float16  _cl_overloadable NAME(float16 , float16 );
-#endif
-#ifdef cl_khr_fp64
-#define _CL_DECLARE_FUNC_V_VVV(NAME)                            \
-  float    _cl_overloadable NAME(float   , float   , float   ); \
-  float2   _cl_overloadable NAME(float2  , float2  , float2  ); \
-  float3   _cl_overloadable NAME(float3  , float3  , float3  ); \
-  float4   _cl_overloadable NAME(float4  , float4  , float4  ); \
-  float8   _cl_overloadable NAME(float8  , float8  , float8  ); \
-  float16  _cl_overloadable NAME(float16 , float16 , float16 ); \
-  double   _cl_overloadable NAME(double  , double  , double  ); \
-  double2  _cl_overloadable NAME(double2 , double2 , double2 ); \
-  double3  _cl_overloadable NAME(double3 , double3 , double3 ); \
-  double4  _cl_overloadable NAME(double4 , double4 , double4 ); \
-  double8  _cl_overloadable NAME(double8 , double8 , double8 ); \
-  double16 _cl_overloadable NAME(double16, double16, double16);
-#else
-#define _CL_DECLARE_FUNC_V_VVV(NAME)                            \
-  float    _cl_overloadable NAME(float   , float   , float   ); \
-  float2   _cl_overloadable NAME(float2  , float2  , float2  ); \
-  float3   _cl_overloadable NAME(float3  , float3  , float3  ); \
-  float4   _cl_overloadable NAME(float4  , float4  , float4  ); \
-  float8   _cl_overloadable NAME(float8  , float8  , float8  ); \
-  float16  _cl_overloadable NAME(float16 , float16 , float16 );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double16, double16);)
+#define _CL_DECLARE_FUNC_V_VVV(NAME)                                    \
+  float    _cl_overloadable NAME(float   , float   , float   );         \
+  float2   _cl_overloadable NAME(float2  , float2  , float2  );         \
+  float3   _cl_overloadable NAME(float3  , float3  , float3  );         \
+  float4   _cl_overloadable NAME(float4  , float4  , float4  );         \
+  float8   _cl_overloadable NAME(float8  , float8  , float8  );         \
+  float16  _cl_overloadable NAME(float16 , float16 , float16 );         \
+  __IF_FP64(                                                            \
+  double   _cl_overloadable NAME(double  , double  , double  );         \
+  double2  _cl_overloadable NAME(double2 , double2 , double2 );         \
+  double3  _cl_overloadable NAME(double3 , double3 , double3 );         \
+  double4  _cl_overloadable NAME(double4 , double4 , double4 );         \
+  double8  _cl_overloadable NAME(double8 , double8 , double8 );         \
+  double16 _cl_overloadable NAME(double16, double16, double16);)
 #define _CL_DECLARE_FUNC_V_VVS(NAME)                            \
   float2   _cl_overloadable NAME(float2  , float2  , float );   \
   float3   _cl_overloadable NAME(float3  , float3  , float );   \
   float4   _cl_overloadable NAME(float4  , float4  , float );   \
   float8   _cl_overloadable NAME(float8  , float8  , float );   \
   float16  _cl_overloadable NAME(float16 , float16 , float );   \
+  __IF_FP64(                                                    \
   double2  _cl_overloadable NAME(double2 , double2 , double);   \
   double3  _cl_overloadable NAME(double3 , double3 , double);   \
   double4  _cl_overloadable NAME(double4 , double4 , double);   \
   double8  _cl_overloadable NAME(double8 , double8 , double);   \
-  double16 _cl_overloadable NAME(double16, double16, double);
-#else
-#define _CL_DECLARE_FUNC_V_VVS(NAME)                            \
-  float2   _cl_overloadable NAME(float2  , float2  , float );   \
-  float3   _cl_overloadable NAME(float3  , float3  , float );   \
-  float4   _cl_overloadable NAME(float4  , float4  , float );   \
-  float8   _cl_overloadable NAME(float8  , float8  , float );   \
-  float16  _cl_overloadable NAME(float16 , float16 , float );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double16, double16, double);)
 #define _CL_DECLARE_FUNC_V_VSS(NAME)                            \
   float2   _cl_overloadable NAME(float2  , float , float );     \
   float3   _cl_overloadable NAME(float3  , float , float );     \
   float4   _cl_overloadable NAME(float4  , float , float );     \
   float8   _cl_overloadable NAME(float8  , float , float );     \
   float16  _cl_overloadable NAME(float16 , float , float );     \
+  __IF_FP64(                                                    \
   double2  _cl_overloadable NAME(double2 , double, double);     \
   double3  _cl_overloadable NAME(double3 , double, double);     \
   double4  _cl_overloadable NAME(double4 , double, double);     \
   double8  _cl_overloadable NAME(double8 , double, double);     \
-  double16 _cl_overloadable NAME(double16, double, double);
-#else
-#define _CL_DECLARE_FUNC_V_VSS(NAME)                            \
-  float2   _cl_overloadable NAME(float2  , float , float );     \
-  float3   _cl_overloadable NAME(float3  , float , float );     \
-  float4   _cl_overloadable NAME(float4  , float , float );     \
-  float8   _cl_overloadable NAME(float8  , float , float );     \
-  float16  _cl_overloadable NAME(float16 , float , float );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double16, double, double);)
 #define _CL_DECLARE_FUNC_V_SSV(NAME)                            \
   float2   _cl_overloadable NAME(float , float , float2  );     \
   float3   _cl_overloadable NAME(float , float , float3  );     \
   float4   _cl_overloadable NAME(float , float , float4  );     \
   float8   _cl_overloadable NAME(float , float , float8  );     \
   float16  _cl_overloadable NAME(float , float , float16 );     \
+  __IF_FP64(                                                    \
   double2  _cl_overloadable NAME(double, double, double2 );     \
   double3  _cl_overloadable NAME(double, double, double3 );     \
   double4  _cl_overloadable NAME(double, double, double4 );     \
   double8  _cl_overloadable NAME(double, double, double8 );     \
-  double16 _cl_overloadable NAME(double, double, double16);
-#else
-#define _CL_DECLARE_FUNC_V_SSV(NAME)                            \
-  float2   _cl_overloadable NAME(float , float , float2  );     \
-  float3   _cl_overloadable NAME(float , float , float3  );     \
-  float4   _cl_overloadable NAME(float , float , float4  );     \
-  float8   _cl_overloadable NAME(float , float , float8  );     \
-  float16  _cl_overloadable NAME(float , float , float16 );
-#endif
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+  double16 _cl_overloadable NAME(double, double, double16);)
 #define _CL_DECLARE_FUNC_V_VVJ(NAME)                            \
   float    _cl_overloadable NAME(float   , float   , int   );   \
   float2   _cl_overloadable NAME(float2  , float2  , int2  );   \
@@ -1103,22 +716,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  , float4  , int4  );   \
   float8   _cl_overloadable NAME(float8  , float8  , int8  );   \
   float16  _cl_overloadable NAME(float16 , float16 , int16 );   \
+  __IF_INT64(__IF_FP64(                                         \
   double   _cl_overloadable NAME(double  , double  , long  );   \
   double2  _cl_overloadable NAME(double2 , double2 , long2 );   \
   double3  _cl_overloadable NAME(double3 , double3 , long3 );   \
   double4  _cl_overloadable NAME(double4 , double4 , long4 );   \
   double8  _cl_overloadable NAME(double8 , double8 , long8 );   \
-  double16 _cl_overloadable NAME(double16, double16, long16);
-#else
-#define _CL_DECLARE_FUNC_V_VVJ(NAME)                            \
-  float    _cl_overloadable NAME(float   , float   , int   );   \
-  float2   _cl_overloadable NAME(float2  , float2  , int2  );   \
-  float3   _cl_overloadable NAME(float3  , float3  , int3  );   \
-  float4   _cl_overloadable NAME(float4  , float4  , int4  );   \
-  float8   _cl_overloadable NAME(float8  , float8  , int8  );   \
-  float16  _cl_overloadable NAME(float16 , float16 , int16 );
-#endif
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+  double16 _cl_overloadable NAME(double16, double16, long16);))
 #define _CL_DECLARE_FUNC_V_U(NAME)              \
   float    _cl_overloadable NAME(uint   );      \
   float2   _cl_overloadable NAME(uint2  );      \
@@ -1126,42 +730,25 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(uint4  );      \
   float8   _cl_overloadable NAME(uint8  );      \
   float16  _cl_overloadable NAME(uint16 );      \
+  __IF_INT64(__IF_FP64(                         \
   double   _cl_overloadable NAME(ulong  );      \
   double2  _cl_overloadable NAME(ulong2 );      \
   double3  _cl_overloadable NAME(ulong3 );      \
   double4  _cl_overloadable NAME(ulong4 );      \
   double8  _cl_overloadable NAME(ulong8 );      \
-  double16 _cl_overloadable NAME(ulong16);
-#else
-#define _CL_DECLARE_FUNC_V_U(NAME)              \
-  float    _cl_overloadable NAME(uint   );      \
-  float2   _cl_overloadable NAME(uint2  );      \
-  float3   _cl_overloadable NAME(uint3  );      \
-  float4   _cl_overloadable NAME(uint4  );      \
-  float8   _cl_overloadable NAME(uint8  );      \
-  float16  _cl_overloadable NAME(uint16 );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(ulong16);))
 #define _CL_DECLARE_FUNC_V_VS(NAME)                     \
   float2   _cl_overloadable NAME(float2  , float );     \
   float3   _cl_overloadable NAME(float3  , float );     \
   float4   _cl_overloadable NAME(float4  , float );     \
   float8   _cl_overloadable NAME(float8  , float );     \
   float16  _cl_overloadable NAME(float16 , float );     \
+  __IF_FP64(                                            \
   double2  _cl_overloadable NAME(double2 , double);     \
   double3  _cl_overloadable NAME(double3 , double);     \
   double4  _cl_overloadable NAME(double4 , double);     \
   double8  _cl_overloadable NAME(double8 , double);     \
-  double16 _cl_overloadable NAME(double16, double);
-#else
-#define _CL_DECLARE_FUNC_V_VS(NAME)                     \
-  float2   _cl_overloadable NAME(float2  , float );     \
-  float3   _cl_overloadable NAME(float3  , float );     \
-  float4   _cl_overloadable NAME(float4  , float );     \
-  float8   _cl_overloadable NAME(float8  , float );     \
-  float16  _cl_overloadable NAME(float16 , float );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double16, double);)
 #define _CL_DECLARE_FUNC_V_VJ(NAME)                     \
   float    _cl_overloadable NAME(float   , int  );      \
   float2   _cl_overloadable NAME(float2  , int2 );      \
@@ -1169,22 +756,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  , int4 );      \
   float8   _cl_overloadable NAME(float8  , int8 );      \
   float16  _cl_overloadable NAME(float16 , int16);      \
+  __IF_FP64(                                            \
   double   _cl_overloadable NAME(double  , int  );      \
   double2  _cl_overloadable NAME(double2 , int2 );      \
   double3  _cl_overloadable NAME(double3 , int3 );      \
   double4  _cl_overloadable NAME(double4 , int4 );      \
   double8  _cl_overloadable NAME(double8 , int8 );      \
-  double16 _cl_overloadable NAME(double16, int16);
-#else
-#define _CL_DECLARE_FUNC_V_VJ(NAME)                     \
-  float    _cl_overloadable NAME(float   , int  );      \
-  float2   _cl_overloadable NAME(float2  , int2 );      \
-  float3   _cl_overloadable NAME(float3  , int3 );      \
-  float4   _cl_overloadable NAME(float4  , int4 );      \
-  float8   _cl_overloadable NAME(float8  , int8 );      \
-  float16  _cl_overloadable NAME(float16 , int16);
-#endif
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+  double16 _cl_overloadable NAME(double16, int16);)
 #define _CL_DECLARE_FUNC_J_VV(NAME)                     \
   int    _cl_overloadable NAME(float   , float   );     \
   int2   _cl_overloadable NAME(float2  , float2  );     \
@@ -1192,51 +770,26 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   int4   _cl_overloadable NAME(float4  , float4  );     \
   int8   _cl_overloadable NAME(float8  , float8  );     \
   int16  _cl_overloadable NAME(float16 , float16 );     \
+  __IF_FP64(                                            \
   int    _cl_overloadable NAME(double  , double  );     \
+  __IF_INT64(                                           \
   long2  _cl_overloadable NAME(double2 , double2 );     \
   long3  _cl_overloadable NAME(double3 , double3 );     \
   long4  _cl_overloadable NAME(double4 , double4 );     \
   long8  _cl_overloadable NAME(double8 , double8 );     \
-  long16 _cl_overloadable NAME(double16, double16);
-#elif defined(cl_khr_fp64)
-#define _CL_DECLARE_FUNC_J_VV(NAME)                     \
-  int    _cl_overloadable NAME(float   , float   );     \
-  int2   _cl_overloadable NAME(float2  , float2  );     \
-  int3   _cl_overloadable NAME(float3  , float3  );     \
-  int4   _cl_overloadable NAME(float4  , float4  );     \
-  int8   _cl_overloadable NAME(float8  , float8  );     \
-  int16  _cl_overloadable NAME(float16 , float16 );     \
-  int    _cl_overloadable NAME(double  , double  );
-#else
-#define _CL_DECLARE_FUNC_J_VV(NAME)                     \
-  int    _cl_overloadable NAME(float   , float   );     \
-  int2   _cl_overloadable NAME(float2  , float2  );     \
-  int3   _cl_overloadable NAME(float3  , float3  );     \
-  int4   _cl_overloadable NAME(float4  , float4  );     \
-  int8   _cl_overloadable NAME(float8  , float8  );     \
-  int16  _cl_overloadable NAME(float16 , float16 );
-#endif
-#ifdef cl_khr_fp64
+  long16 _cl_overloadable NAME(double16, double16);))
 #define _CL_DECLARE_FUNC_V_VI(NAME)                     \
   float2   _cl_overloadable NAME(float2  , int);        \
   float3   _cl_overloadable NAME(float3  , int);        \
   float4   _cl_overloadable NAME(float4  , int);        \
   float8   _cl_overloadable NAME(float8  , int);        \
   float16  _cl_overloadable NAME(float16 , int);        \
+  __IF_FP64(                                            \
   double2  _cl_overloadable NAME(double2 , int);        \
   double3  _cl_overloadable NAME(double3 , int);        \
   double4  _cl_overloadable NAME(double4 , int);        \
   double8  _cl_overloadable NAME(double8 , int);        \
-  double16 _cl_overloadable NAME(double16, int);
-#else
-#define _CL_DECLARE_FUNC_V_VI(NAME)                     \
-  float2   _cl_overloadable NAME(float2  , int);        \
-  float3   _cl_overloadable NAME(float3  , int);        \
-  float4   _cl_overloadable NAME(float4  , int);        \
-  float8   _cl_overloadable NAME(float8  , int);        \
-  float16  _cl_overloadable NAME(float16 , int);
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double16, int);)
 #define _CL_DECLARE_FUNC_V_VPV(NAME)                                    \
   float    _cl_overloadable NAME(float   , __global  float   *);        \
   float2   _cl_overloadable NAME(float2  , __global  float2  *);        \
@@ -1244,24 +797,26 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  , __global  float4  *);        \
   float8   _cl_overloadable NAME(float8  , __global  float8  *);        \
   float16  _cl_overloadable NAME(float16 , __global  float16 *);        \
+  __IF_FP64(                                                            \
   double   _cl_overloadable NAME(double  , __global  double  *);        \
   double2  _cl_overloadable NAME(double2 , __global  double2 *);        \
   double3  _cl_overloadable NAME(double3 , __global  double3 *);        \
   double4  _cl_overloadable NAME(double4 , __global  double4 *);        \
   double8  _cl_overloadable NAME(double8 , __global  double8 *);        \
-  double16 _cl_overloadable NAME(double16, __global  double16*);        \
+  double16 _cl_overloadable NAME(double16, __global  double16*);)       \
   float    _cl_overloadable NAME(float   , __local   float   *);        \
   float2   _cl_overloadable NAME(float2  , __local   float2  *);        \
   float3   _cl_overloadable NAME(float3  , __local   float3  *);        \
   float4   _cl_overloadable NAME(float4  , __local   float4  *);        \
   float8   _cl_overloadable NAME(float8  , __local   float8  *);        \
   float16  _cl_overloadable NAME(float16 , __local   float16 *);        \
+  __IF_FP64(                                                            \
   double   _cl_overloadable NAME(double  , __local   double  *);        \
   double2  _cl_overloadable NAME(double2 , __local   double2 *);        \
   double3  _cl_overloadable NAME(double3 , __local   double3 *);        \
   double4  _cl_overloadable NAME(double4 , __local   double4 *);        \
   double8  _cl_overloadable NAME(double8 , __local   double8 *);        \
-  double16 _cl_overloadable NAME(double16, __local   double16*);        \
+  double16 _cl_overloadable NAME(double16, __local   double16*);)       \
   /* __private is not supported yet                                     \
   float    _cl_overloadable NAME(float   , __private float   *);        \
   float2   _cl_overloadable NAME(float2  , __private float2  *);        \
@@ -1269,57 +824,26 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  , __private float4  *);        \
   float8   _cl_overloadable NAME(float8  , __private float8  *);        \
   float16  _cl_overloadable NAME(float16 , __private float16 *);        \
+  __IF_FP64(                                                            \
   double   _cl_overloadable NAME(double  , __private double  *);        \
   double2  _cl_overloadable NAME(double2 , __private double2 *);        \
   double3  _cl_overloadable NAME(double3 , __private double3 *);        \
   double4  _cl_overloadable NAME(double4 , __private double4 *);        \
   double8  _cl_overloadable NAME(double8 , __private double8 *);        \
-  double16 _cl_overloadable NAME(double16, __private double16*);        \
+  double16 _cl_overloadable NAME(double16, __private double16*);)       \
   */
-#else
-#define _CL_DECLARE_FUNC_V_VPV(NAME)                                    \
-  float    _cl_overloadable NAME(float   , __global  float   *);        \
-  float2   _cl_overloadable NAME(float2  , __global  float2  *);        \
-  float3   _cl_overloadable NAME(float3  , __global  float3  *);        \
-  float4   _cl_overloadable NAME(float4  , __global  float4  *);        \
-  float8   _cl_overloadable NAME(float8  , __global  float8  *);        \
-  float16  _cl_overloadable NAME(float16 , __global  float16 *);        \
-  float    _cl_overloadable NAME(float   , __local   float   *);        \
-  float2   _cl_overloadable NAME(float2  , __local   float2  *);        \
-  float3   _cl_overloadable NAME(float3  , __local   float3  *);        \
-  float4   _cl_overloadable NAME(float4  , __local   float4  *);        \
-  float8   _cl_overloadable NAME(float8  , __local   float8  *);        \
-  float16  _cl_overloadable NAME(float16 , __local   float16 *);        \
-  /* __private is not supported yet                                     \
-  float    _cl_overloadable NAME(float   , __private float   *);        \
-  float2   _cl_overloadable NAME(float2  , __private float2  *);        \
-  float3   _cl_overloadable NAME(float3  , __private float3  *);        \
-  float4   _cl_overloadable NAME(float4  , __private float4  *);        \
-  float8   _cl_overloadable NAME(float8  , __private float8  *);        \
-  float16  _cl_overloadable NAME(float16 , __private float16 *);        \
-  */
-#endif
-#ifdef cl_khr_fp64
 #define _CL_DECLARE_FUNC_V_SV(NAME)                     \
   float2   _cl_overloadable NAME(float , float2  );     \
   float3   _cl_overloadable NAME(float , float3  );     \
   float4   _cl_overloadable NAME(float , float4  );     \
   float8   _cl_overloadable NAME(float , float8  );     \
   float16  _cl_overloadable NAME(float , float16 );     \
+  __IF_FP64(                                            \
   double2  _cl_overloadable NAME(double, double2 );     \
   double3  _cl_overloadable NAME(double, double3 );     \
   double4  _cl_overloadable NAME(double, double4 );     \
   double8  _cl_overloadable NAME(double, double8 );     \
-  double16 _cl_overloadable NAME(double, double16);
-#else
-#define _CL_DECLARE_FUNC_V_SV(NAME)                     \
-  float2   _cl_overloadable NAME(float , float2  );     \
-  float3   _cl_overloadable NAME(float , float3  );     \
-  float4   _cl_overloadable NAME(float , float4  );     \
-  float8   _cl_overloadable NAME(float , float8  );     \
-  float16  _cl_overloadable NAME(float , float16 );
-#endif
-#ifdef cl_khr_fp64
+  double16 _cl_overloadable NAME(double, double16);)
 #define _CL_DECLARE_FUNC_J_V(NAME)              \
   int   _cl_overloadable NAME(float   );        \
   int2  _cl_overloadable NAME(float2  );        \
@@ -1327,22 +851,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   int4  _cl_overloadable NAME(float4  );        \
   int8  _cl_overloadable NAME(float8  );        \
   int16 _cl_overloadable NAME(float16 );        \
+  __IF_FP64(                                    \
   int   _cl_overloadable NAME(double  );        \
   int2  _cl_overloadable NAME(double2 );        \
   int3  _cl_overloadable NAME(double3 );        \
   int4  _cl_overloadable NAME(double4 );        \
   int8  _cl_overloadable NAME(double8 );        \
-  int16 _cl_overloadable NAME(double16);
-#else
-#define _CL_DECLARE_FUNC_J_V(NAME)              \
-  int   _cl_overloadable NAME(float   );        \
-  int2  _cl_overloadable NAME(float2  );        \
-  int3  _cl_overloadable NAME(float3  );        \
-  int4  _cl_overloadable NAME(float4  );        \
-  int8  _cl_overloadable NAME(float8  );        \
-  int16 _cl_overloadable NAME(float16 );
-#endif
-#ifdef cl_khr_fp64
+  int16 _cl_overloadable NAME(double16);)
 #define _CL_DECLARE_FUNC_K_V(NAME)              \
   int    _cl_overloadable NAME(float   );       \
   int2   _cl_overloadable NAME(float2  );       \
@@ -1350,22 +865,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   int4   _cl_overloadable NAME(float4  );       \
   int8   _cl_overloadable NAME(float8  );       \
   int16  _cl_overloadable NAME(float16 );       \
+  __IF_FP64(                                    \
   int    _cl_overloadable NAME(double  );       \
   long2  _cl_overloadable NAME(double2 );       \
   long3  _cl_overloadable NAME(double3 );       \
   long4  _cl_overloadable NAME(double4 );       \
   long8  _cl_overloadable NAME(double8 );       \
-  long16 _cl_overloadable NAME(double16);
-#else
-#define _CL_DECLARE_FUNC_K_V(NAME)              \
-  int   _cl_overloadable NAME(float   );        \
-  int2  _cl_overloadable NAME(float2  );        \
-  int3  _cl_overloadable NAME(float3  );        \
-  int4  _cl_overloadable NAME(float4  );        \
-  int8  _cl_overloadable NAME(float8  );        \
-  int16 _cl_overloadable NAME(float16 );
-#endif
-#ifdef cl_khr_fp64
+  long16 _cl_overloadable NAME(double16);)
 #define _CL_DECLARE_FUNC_S_V(NAME)              \
   float  _cl_overloadable NAME(float   );       \
   float  _cl_overloadable NAME(float2  );       \
@@ -1373,22 +879,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float  _cl_overloadable NAME(float4  );       \
   float  _cl_overloadable NAME(float8  );       \
   float  _cl_overloadable NAME(float16 );       \
+  __IF_FP64(                                    \
   double _cl_overloadable NAME(double  );       \
   double _cl_overloadable NAME(double2 );       \
   double _cl_overloadable NAME(double3 );       \
   double _cl_overloadable NAME(double4 );       \
   double _cl_overloadable NAME(double8 );       \
-  double _cl_overloadable NAME(double16);
-#else
-#define _CL_DECLARE_FUNC_S_V(NAME)              \
-  float  _cl_overloadable NAME(float   );       \
-  float  _cl_overloadable NAME(float2  );       \
-  float  _cl_overloadable NAME(float3  );       \
-  float  _cl_overloadable NAME(float4  );       \
-  float  _cl_overloadable NAME(float8  );       \
-  float  _cl_overloadable NAME(float16 );
-#endif
-#ifdef cl_khr_fp64
+  double _cl_overloadable NAME(double16);)
 #define _CL_DECLARE_FUNC_S_VV(NAME)                     \
   float  _cl_overloadable NAME(float   , float   );     \
   float  _cl_overloadable NAME(float2  , float2  );     \
@@ -1396,21 +893,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float  _cl_overloadable NAME(float4  , float4  );     \
   float  _cl_overloadable NAME(float8  , float8  );     \
   float  _cl_overloadable NAME(float16 , float16 );     \
+  __IF_FP64(                                            \
   double _cl_overloadable NAME(double  , double  );     \
   double _cl_overloadable NAME(double2 , double2 );     \
   double _cl_overloadable NAME(double3 , double3 );     \
   double _cl_overloadable NAME(double4 , double4 );     \
   double _cl_overloadable NAME(double8 , double8 );     \
-  double _cl_overloadable NAME(double16, double16);
-#else
-#define _CL_DECLARE_FUNC_S_VV(NAME)                     \
-  float  _cl_overloadable NAME(float   , float   );     \
-  float  _cl_overloadable NAME(float2  , float2  );     \
-  float  _cl_overloadable NAME(float3  , float3  );     \
-  float  _cl_overloadable NAME(float4  , float4  );     \
-  float  _cl_overloadable NAME(float8  , float8  );     \
-  float  _cl_overloadable NAME(float16 , float16 );
-#endif
+  double _cl_overloadable NAME(double16, double16);)
 
 /* Move built-in declarations out of the way. (There should be a
    better way of doing so.) These five functions are built-in math
@@ -1519,8 +1008,10 @@ _CL_DECLARE_FUNC_V_V(trunc)
 #define CHAR_MIN  SCHAR_MIN
 #define INT_MAX   2147483647
 #define INT_MIN   (-2147483647 - 1)
+#ifdef cl_khr_int64
 #define LONG_MAX  0x7fffffffffffffffL
 #define LONG_MIN  (-0x7fffffffffffffffL - 1)
+#endif
 #define SCHAR_MAX 127
 #define SCHAR_MIN (-127 - 1)
 #define SHRT_MAX  32767
@@ -1528,11 +1019,12 @@ _CL_DECLARE_FUNC_V_V(trunc)
 #define UCHAR_MAX 255
 #define USHRT_MAX 65535
 #define UINT_MAX  0xffffffff
+#ifdef cl_khr_int64
 #define ULONG_MAX 0xffffffffffffffffUL
+#endif
 
 
 /* Integer Functions */
-#ifdef cl_khr_int64
 #define _CL_DECLARE_FUNC_G_G(NAME)              \
   char     _cl_overloadable NAME(char    );     \
   char2    _cl_overloadable NAME(char2   );     \
@@ -1570,6 +1062,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(uint4   );     \
   uint8    _cl_overloadable NAME(uint8   );     \
   uint16   _cl_overloadable NAME(uint16  );     \
+  __IF_INT64(                                   \
   long     _cl_overloadable NAME(long    );     \
   long2    _cl_overloadable NAME(long2   );     \
   long3    _cl_overloadable NAME(long3   );     \
@@ -1581,47 +1074,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   ulong3   _cl_overloadable NAME(ulong3  );     \
   ulong4   _cl_overloadable NAME(ulong4  );     \
   ulong8   _cl_overloadable NAME(ulong8  );     \
-  ulong16  _cl_overloadable NAME(ulong16 );
-#else
-#define _CL_DECLARE_FUNC_G_G(NAME)              \
-  char     _cl_overloadable NAME(char    );     \
-  char2    _cl_overloadable NAME(char2   );     \
-  char3    _cl_overloadable NAME(char3   );     \
-  char4    _cl_overloadable NAME(char4   );     \
-  char8    _cl_overloadable NAME(char8   );     \
-  char16   _cl_overloadable NAME(char16  );     \
-  uchar    _cl_overloadable NAME(uchar   );     \
-  uchar2   _cl_overloadable NAME(uchar2  );     \
-  uchar3   _cl_overloadable NAME(uchar3  );     \
-  uchar4   _cl_overloadable NAME(uchar4  );     \
-  uchar8   _cl_overloadable NAME(uchar8  );     \
-  uchar16  _cl_overloadable NAME(uchar16 );     \
-  short    _cl_overloadable NAME(short   );     \
-  short2   _cl_overloadable NAME(short2  );     \
-  short3   _cl_overloadable NAME(short3  );     \
-  short4   _cl_overloadable NAME(short4  );     \
-  short8   _cl_overloadable NAME(short8  );     \
-  short16  _cl_overloadable NAME(short16 );     \
-  ushort   _cl_overloadable NAME(ushort  );     \
-  ushort2  _cl_overloadable NAME(ushort2 );     \
-  ushort3  _cl_overloadable NAME(ushort3 );     \
-  ushort4  _cl_overloadable NAME(ushort4 );     \
-  ushort8  _cl_overloadable NAME(ushort8 );     \
-  ushort16 _cl_overloadable NAME(ushort16);     \
-  int      _cl_overloadable NAME(int     );     \
-  int2     _cl_overloadable NAME(int2    );     \
-  int3     _cl_overloadable NAME(int3    );     \
-  int4     _cl_overloadable NAME(int4    );     \
-  int8     _cl_overloadable NAME(int8    );     \
-  int16    _cl_overloadable NAME(int16   );     \
-  uint     _cl_overloadable NAME(uint    );     \
-  uint2    _cl_overloadable NAME(uint2   );     \
-  uint3    _cl_overloadable NAME(uint3   );     \
-  uint4    _cl_overloadable NAME(uint4   );     \
-  uint8    _cl_overloadable NAME(uint8   );     \
-  uint16   _cl_overloadable NAME(uint16  );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(ulong16 );)
 #define _CL_DECLARE_FUNC_G_GG(NAME)                     \
   char     _cl_overloadable NAME(char    , char    );   \
   char2    _cl_overloadable NAME(char2   , char2   );   \
@@ -1659,6 +1112,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(uint4   , uint4   );   \
   uint8    _cl_overloadable NAME(uint8   , uint8   );   \
   uint16   _cl_overloadable NAME(uint16  , uint16  );   \
+  __IF_INT64(                                           \
   long     _cl_overloadable NAME(long    , long    );   \
   long2    _cl_overloadable NAME(long2   , long2   );   \
   long3    _cl_overloadable NAME(long3   , long3   );   \
@@ -1670,47 +1124,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   ulong3   _cl_overloadable NAME(ulong3  , ulong3  );   \
   ulong4   _cl_overloadable NAME(ulong4  , ulong4  );   \
   ulong8   _cl_overloadable NAME(ulong8  , ulong8  );   \
-  ulong16  _cl_overloadable NAME(ulong16 , ulong16 );
-#else
-#define _CL_DECLARE_FUNC_G_GG(NAME)                     \
-  char     _cl_overloadable NAME(char    , char    );   \
-  char2    _cl_overloadable NAME(char2   , char2   );   \
-  char3    _cl_overloadable NAME(char3   , char3   );   \
-  char4    _cl_overloadable NAME(char4   , char4   );   \
-  char8    _cl_overloadable NAME(char8   , char8   );   \
-  char16   _cl_overloadable NAME(char16  , char16  );   \
-  uchar    _cl_overloadable NAME(uchar   , uchar   );   \
-  uchar2   _cl_overloadable NAME(uchar2  , uchar2  );   \
-  uchar3   _cl_overloadable NAME(uchar3  , uchar3  );   \
-  uchar4   _cl_overloadable NAME(uchar4  , uchar4  );   \
-  uchar8   _cl_overloadable NAME(uchar8  , uchar8  );   \
-  uchar16  _cl_overloadable NAME(uchar16 , uchar16 );   \
-  short    _cl_overloadable NAME(short   , short   );   \
-  short2   _cl_overloadable NAME(short2  , short2  );   \
-  short3   _cl_overloadable NAME(short3  , short3  );   \
-  short4   _cl_overloadable NAME(short4  , short4  );   \
-  short8   _cl_overloadable NAME(short8  , short8  );   \
-  short16  _cl_overloadable NAME(short16 , short16 );   \
-  ushort   _cl_overloadable NAME(ushort  , ushort  );   \
-  ushort2  _cl_overloadable NAME(ushort2 , ushort2 );   \
-  ushort3  _cl_overloadable NAME(ushort3 , ushort3 );   \
-  ushort4  _cl_overloadable NAME(ushort4 , ushort4 );   \
-  ushort8  _cl_overloadable NAME(ushort8 , ushort8 );   \
-  ushort16 _cl_overloadable NAME(ushort16, ushort16);   \
-  int      _cl_overloadable NAME(int     , int     );   \
-  int2     _cl_overloadable NAME(int2    , int2    );   \
-  int3     _cl_overloadable NAME(int3    , int3    );   \
-  int4     _cl_overloadable NAME(int4    , int4    );   \
-  int8     _cl_overloadable NAME(int8    , int8    );   \
-  int16    _cl_overloadable NAME(int16   , int16   );   \
-  uint     _cl_overloadable NAME(uint    , uint    );   \
-  uint2    _cl_overloadable NAME(uint2   , uint2   );   \
-  uint3    _cl_overloadable NAME(uint3   , uint3   );   \
-  uint4    _cl_overloadable NAME(uint4   , uint4   );   \
-  uint8    _cl_overloadable NAME(uint8   , uint8   );   \
-  uint16   _cl_overloadable NAME(uint16  , uint16  );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(ulong16 , ulong16 );)
 #define _CL_DECLARE_FUNC_G_GGG(NAME)                            \
   char     _cl_overloadable NAME(char    , char    , char    ); \
   char2    _cl_overloadable NAME(char2   , char2   , char2   ); \
@@ -1748,6 +1162,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(uint4   , uint4   , uint4   ); \
   uint8    _cl_overloadable NAME(uint8   , uint8   , uint8   ); \
   uint16   _cl_overloadable NAME(uint16  , uint16  , uint16  ); \
+  __IF_INT64(                                                   \
   long     _cl_overloadable NAME(long    , long    , long    ); \
   long2    _cl_overloadable NAME(long2   , long2   , long2   ); \
   long3    _cl_overloadable NAME(long3   , long3   , long3   ); \
@@ -1759,47 +1174,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   ulong3   _cl_overloadable NAME(ulong3  , ulong3  , ulong3  ); \
   ulong4   _cl_overloadable NAME(ulong4  , ulong4  , ulong4  ); \
   ulong8   _cl_overloadable NAME(ulong8  , ulong8  , ulong8  ); \
-  ulong16  _cl_overloadable NAME(ulong16 , ulong16 , ulong16 );
-#else
-#define _CL_DECLARE_FUNC_G_GGG(NAME)                            \
-  char     _cl_overloadable NAME(char    , char    , char    ); \
-  char2    _cl_overloadable NAME(char2   , char2   , char2   ); \
-  char3    _cl_overloadable NAME(char3   , char3   , char3   ); \
-  char4    _cl_overloadable NAME(char4   , char4   , char4   ); \
-  char8    _cl_overloadable NAME(char8   , char8   , char8   ); \
-  char16   _cl_overloadable NAME(char16  , char16  , char16  ); \
-  uchar    _cl_overloadable NAME(uchar   , uchar   , uchar   ); \
-  uchar2   _cl_overloadable NAME(uchar2  , uchar2  , uchar2  ); \
-  uchar3   _cl_overloadable NAME(uchar3  , uchar3  , uchar3  ); \
-  uchar4   _cl_overloadable NAME(uchar4  , uchar4  , uchar4  ); \
-  uchar8   _cl_overloadable NAME(uchar8  , uchar8  , uchar8  ); \
-  uchar16  _cl_overloadable NAME(uchar16 , uchar16 , uchar16 ); \
-  short    _cl_overloadable NAME(short   , short   , short   ); \
-  short2   _cl_overloadable NAME(short2  , short2  , short2  ); \
-  short3   _cl_overloadable NAME(short3  , short3  , short3  ); \
-  short4   _cl_overloadable NAME(short4  , short4  , short4  ); \
-  short8   _cl_overloadable NAME(short8  , short8  , short8  ); \
-  short16  _cl_overloadable NAME(short16 , short16 , short16 ); \
-  ushort   _cl_overloadable NAME(ushort  , ushort  , ushort  ); \
-  ushort2  _cl_overloadable NAME(ushort2 , ushort2 , ushort2 ); \
-  ushort3  _cl_overloadable NAME(ushort3 , ushort3 , ushort3 ); \
-  ushort4  _cl_overloadable NAME(ushort4 , ushort4 , ushort4 ); \
-  ushort8  _cl_overloadable NAME(ushort8 , ushort8 , ushort8 ); \
-  ushort16 _cl_overloadable NAME(ushort16, ushort16, ushort16); \
-  int      _cl_overloadable NAME(int     , int     , int     ); \
-  int2     _cl_overloadable NAME(int2    , int2    , int2    ); \
-  int3     _cl_overloadable NAME(int3    , int3    , int3    ); \
-  int4     _cl_overloadable NAME(int4    , int4    , int4    ); \
-  int8     _cl_overloadable NAME(int8    , int8    , int8    ); \
-  int16    _cl_overloadable NAME(int16   , int16   , int16   ); \
-  uint     _cl_overloadable NAME(uint    , uint    , uint    ); \
-  uint2    _cl_overloadable NAME(uint2   , uint2   , uint2   ); \
-  uint3    _cl_overloadable NAME(uint3   , uint3   , uint3   ); \
-  uint4    _cl_overloadable NAME(uint4   , uint4   , uint4   ); \
-  uint8    _cl_overloadable NAME(uint8   , uint8   , uint8   ); \
-  uint16   _cl_overloadable NAME(uint16  , uint16  , uint16  );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(ulong16 , ulong16 , ulong16 );)
 #define _CL_DECLARE_FUNC_G_GS(NAME)                     \
   char2    _cl_overloadable NAME(char2   , char  );     \
   char3    _cl_overloadable NAME(char3   , char  );     \
@@ -1831,6 +1206,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(uint4   , uint  );     \
   uint8    _cl_overloadable NAME(uint8   , uint  );     \
   uint16   _cl_overloadable NAME(uint16  , uint  );     \
+  __IF_INT64(                                           \
   long2    _cl_overloadable NAME(long2   , long  );     \
   long3    _cl_overloadable NAME(long3   , long  );     \
   long4    _cl_overloadable NAME(long4   , long  );     \
@@ -1840,41 +1216,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
   ulong3   _cl_overloadable NAME(ulong3  , ulong );     \
   ulong4   _cl_overloadable NAME(ulong4  , ulong );     \
   ulong8   _cl_overloadable NAME(ulong8  , ulong );     \
-  ulong16  _cl_overloadable NAME(ulong16 , ulong );
-#else
-#define _CL_DECLARE_FUNC_G_GS(NAME)                     \
-  char2    _cl_overloadable NAME(char2   , char  );     \
-  char3    _cl_overloadable NAME(char3   , char  );     \
-  char4    _cl_overloadable NAME(char4   , char  );     \
-  char8    _cl_overloadable NAME(char8   , char  );     \
-  char16   _cl_overloadable NAME(char16  , char  );     \
-  uchar2   _cl_overloadable NAME(uchar2  , uchar );     \
-  uchar3   _cl_overloadable NAME(uchar3  , uchar );     \
-  uchar4   _cl_overloadable NAME(uchar4  , uchar );     \
-  uchar8   _cl_overloadable NAME(uchar8  , uchar );     \
-  uchar16  _cl_overloadable NAME(uchar16 , uchar );     \
-  short2   _cl_overloadable NAME(short2  , short );     \
-  short3   _cl_overloadable NAME(short3  , short );     \
-  short4   _cl_overloadable NAME(short4  , short );     \
-  short8   _cl_overloadable NAME(short8  , short );     \
-  short16  _cl_overloadable NAME(short16 , short );     \
-  ushort2  _cl_overloadable NAME(ushort2 , ushort);     \
-  ushort3  _cl_overloadable NAME(ushort3 , ushort);     \
-  ushort4  _cl_overloadable NAME(ushort4 , ushort);     \
-  ushort8  _cl_overloadable NAME(ushort8 , ushort);     \
-  ushort16 _cl_overloadable NAME(ushort16, ushort);     \
-  int2     _cl_overloadable NAME(int2    , int   );     \
-  int3     _cl_overloadable NAME(int3    , int   );     \
-  int4     _cl_overloadable NAME(int4    , int   );     \
-  int8     _cl_overloadable NAME(int8    , int   );     \
-  int16    _cl_overloadable NAME(int16   , int   );     \
-  uint2    _cl_overloadable NAME(uint2   , uint  );     \
-  uint3    _cl_overloadable NAME(uint3   , uint  );     \
-  uint4    _cl_overloadable NAME(uint4   , uint  );     \
-  uint8    _cl_overloadable NAME(uint8   , uint  );     \
-  uint16   _cl_overloadable NAME(uint16  , uint  );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(ulong16 , ulong );)
 #define _CL_DECLARE_FUNC_UG_G(NAME)             \
   uchar    _cl_overloadable NAME(char    );     \
   uchar2   _cl_overloadable NAME(char2   );     \
@@ -1894,12 +1236,13 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(int4    );     \
   uint8    _cl_overloadable NAME(int8    );     \
   uint16   _cl_overloadable NAME(int16   );     \
+  __IF_INT64(                                   \
   ulong    _cl_overloadable NAME(long    );     \
   ulong2   _cl_overloadable NAME(long2   );     \
   ulong3   _cl_overloadable NAME(long3   );     \
   ulong4   _cl_overloadable NAME(long4   );     \
   ulong8   _cl_overloadable NAME(long8   );     \
-  ulong16  _cl_overloadable NAME(long16  );     \
+  ulong16  _cl_overloadable NAME(long16  );)    \
   uchar    _cl_overloadable NAME(uchar   );     \
   uchar2   _cl_overloadable NAME(uchar2  );     \
   uchar3   _cl_overloadable NAME(uchar3  );     \
@@ -1918,52 +1261,13 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(uint4   );     \
   uint8    _cl_overloadable NAME(uint8   );     \
   uint16   _cl_overloadable NAME(uint16  );     \
+  __IF_INT64(                                   \
   ulong    _cl_overloadable NAME(ulong   );     \
   ulong2   _cl_overloadable NAME(ulong2  );     \
   ulong3   _cl_overloadable NAME(ulong3  );     \
   ulong4   _cl_overloadable NAME(ulong4  );     \
   ulong8   _cl_overloadable NAME(ulong8  );     \
-  ulong16  _cl_overloadable NAME(ulong16 );
-#else
-#define _CL_DECLARE_FUNC_UG_G(NAME)             \
-  uchar    _cl_overloadable NAME(char    );     \
-  uchar2   _cl_overloadable NAME(char2   );     \
-  uchar3   _cl_overloadable NAME(char3   );     \
-  uchar4   _cl_overloadable NAME(char4   );     \
-  uchar8   _cl_overloadable NAME(char8   );     \
-  uchar16  _cl_overloadable NAME(char16  );     \
-  ushort   _cl_overloadable NAME(short   );     \
-  ushort2  _cl_overloadable NAME(short2  );     \
-  ushort3  _cl_overloadable NAME(short3  );     \
-  ushort4  _cl_overloadable NAME(short4  );     \
-  ushort8  _cl_overloadable NAME(short8  );     \
-  ushort16 _cl_overloadable NAME(short16 );     \
-  uint     _cl_overloadable NAME(int     );     \
-  uint2    _cl_overloadable NAME(int2    );     \
-  uint3    _cl_overloadable NAME(int3    );     \
-  uint4    _cl_overloadable NAME(int4    );     \
-  uint8    _cl_overloadable NAME(int8    );     \
-  uint16   _cl_overloadable NAME(int16   );     \
-  uchar    _cl_overloadable NAME(uchar   );     \
-  uchar2   _cl_overloadable NAME(uchar2  );     \
-  uchar3   _cl_overloadable NAME(uchar3  );     \
-  uchar4   _cl_overloadable NAME(uchar4  );     \
-  uchar8   _cl_overloadable NAME(uchar8  );     \
-  uchar16  _cl_overloadable NAME(uchar16 );     \
-  ushort   _cl_overloadable NAME(ushort  );     \
-  ushort2  _cl_overloadable NAME(ushort2 );     \
-  ushort3  _cl_overloadable NAME(ushort3 );     \
-  ushort4  _cl_overloadable NAME(ushort4 );     \
-  ushort8  _cl_overloadable NAME(ushort8 );     \
-  ushort16 _cl_overloadable NAME(ushort16);     \
-  uint     _cl_overloadable NAME(uint    );     \
-  uint2    _cl_overloadable NAME(uint2   );     \
-  uint3    _cl_overloadable NAME(uint3   );     \
-  uint4    _cl_overloadable NAME(uint4   );     \
-  uint8    _cl_overloadable NAME(uint8   );     \
-  uint16   _cl_overloadable NAME(uint16  );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(ulong16 );)
 #define _CL_DECLARE_FUNC_UG_GG(NAME)                    \
   uchar    _cl_overloadable NAME(char    , char    );   \
   uchar2   _cl_overloadable NAME(char2   , char2   );   \
@@ -1983,12 +1287,13 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(int4    , int4    );   \
   uint8    _cl_overloadable NAME(int8    , int8    );   \
   uint16   _cl_overloadable NAME(int16   , int16   );   \
+  __IF_INT64(                                           \
   ulong    _cl_overloadable NAME(long    , long    );   \
   ulong2   _cl_overloadable NAME(long2   , long2   );   \
   ulong3   _cl_overloadable NAME(long3   , long3   );   \
   ulong4   _cl_overloadable NAME(long4   , long4   );   \
   ulong8   _cl_overloadable NAME(long8   , long8   );   \
-  ulong16  _cl_overloadable NAME(long16  , long16  );   \
+  ulong16  _cl_overloadable NAME(long16  , long16  );)  \
   uchar    _cl_overloadable NAME(uchar   , uchar   );   \
   uchar2   _cl_overloadable NAME(uchar2  , uchar2  );   \
   uchar3   _cl_overloadable NAME(uchar3  , uchar3  );   \
@@ -2007,59 +1312,20 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(uint4   , uint4   );   \
   uint8    _cl_overloadable NAME(uint8   , uint8   );   \
   uint16   _cl_overloadable NAME(uint16  , uint16  );   \
+  __IF_INT64(                                           \
   ulong    _cl_overloadable NAME(ulong   , ulong   );   \
   ulong2   _cl_overloadable NAME(ulong2  , ulong2  );   \
   ulong3   _cl_overloadable NAME(ulong3  , ulong3  );   \
   ulong4   _cl_overloadable NAME(ulong4  , ulong4  );   \
   ulong8   _cl_overloadable NAME(ulong8  , ulong8  );   \
-  ulong16  _cl_overloadable NAME(ulong16 , ulong16 );
-#else
-#define _CL_DECLARE_FUNC_UG_GG(NAME)                    \
-  uchar    _cl_overloadable NAME(char    , char    );   \
-  uchar2   _cl_overloadable NAME(char2   , char2   );   \
-  uchar3   _cl_overloadable NAME(char3   , char3   );   \
-  uchar4   _cl_overloadable NAME(char4   , char4   );   \
-  uchar8   _cl_overloadable NAME(char8   , char8   );   \
-  uchar16  _cl_overloadable NAME(char16  , char16  );   \
-  ushort   _cl_overloadable NAME(short   , short   );   \
-  ushort2  _cl_overloadable NAME(short2  , short2  );   \
-  ushort3  _cl_overloadable NAME(short3  , short3  );   \
-  ushort4  _cl_overloadable NAME(short4  , short4  );   \
-  ushort8  _cl_overloadable NAME(short8  , short8  );   \
-  ushort16 _cl_overloadable NAME(short16 , short16 );   \
-  uint     _cl_overloadable NAME(int     , int     );   \
-  uint2    _cl_overloadable NAME(int2    , int2    );   \
-  uint3    _cl_overloadable NAME(int3    , int3    );   \
-  uint4    _cl_overloadable NAME(int4    , int4    );   \
-  uint8    _cl_overloadable NAME(int8    , int8    );   \
-  uint16   _cl_overloadable NAME(int16   , int16   );   \
-  uchar    _cl_overloadable NAME(uchar   , uchar   );   \
-  uchar2   _cl_overloadable NAME(uchar2  , uchar2  );   \
-  uchar3   _cl_overloadable NAME(uchar3  , uchar3  );   \
-  uchar4   _cl_overloadable NAME(uchar4  , uchar4  );   \
-  uchar8   _cl_overloadable NAME(uchar8  , uchar8  );   \
-  uchar16  _cl_overloadable NAME(uchar16 , uchar16 );   \
-  ushort   _cl_overloadable NAME(ushort  , ushort  );   \
-  ushort2  _cl_overloadable NAME(ushort2 , ushort2 );   \
-  ushort3  _cl_overloadable NAME(ushort3 , ushort3 );   \
-  ushort4  _cl_overloadable NAME(ushort4 , ushort4 );   \
-  ushort8  _cl_overloadable NAME(ushort8 , ushort8 );   \
-  ushort16 _cl_overloadable NAME(ushort16, ushort16);   \
-  uint     _cl_overloadable NAME(uint    , uint    );   \
-  uint2    _cl_overloadable NAME(uint2   , uint2   );   \
-  uint3    _cl_overloadable NAME(uint3   , uint3   );   \
-  uint4    _cl_overloadable NAME(uint4   , uint4   );   \
-  uint8    _cl_overloadable NAME(uint8   , uint8   );   \
-  uint16   _cl_overloadable NAME(uint16  , uint16  );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(ulong16 , ulong16 );)
 #define _CL_DECLARE_FUNC_LG_GUG(NAME)                   \
-  short    _cl_overloadable NAME(char    , uchar    );  \
-  short2   _cl_overloadable NAME(char2   , uchar2   );  \
-  short3   _cl_overloadable NAME(char3   , uchar3   );  \
-  short4   _cl_overloadable NAME(char4   , uchar4   );  \
-  short8   _cl_overloadable NAME(char8   , uchar8   );  \
-  short16  _cl_overloadable NAME(char16  , uchar16  );  \
+  short    _cl_overloadable NAME(char    , uchar   );   \
+  short2   _cl_overloadable NAME(char2   , uchar2  );   \
+  short3   _cl_overloadable NAME(char3   , uchar3  );   \
+  short4   _cl_overloadable NAME(char4   , uchar4  );   \
+  short8   _cl_overloadable NAME(char8   , uchar8  );   \
+  short16  _cl_overloadable NAME(char16  , uchar16 );   \
   ushort   _cl_overloadable NAME(uchar   , uchar   );   \
   ushort2  _cl_overloadable NAME(uchar2  , uchar2  );   \
   ushort3  _cl_overloadable NAME(uchar3  , uchar3  );   \
@@ -2072,52 +1338,25 @@ _CL_DECLARE_FUNC_V_V(trunc)
   uint4    _cl_overloadable NAME(ushort4 , ushort4 );   \
   uint8    _cl_overloadable NAME(ushort8 , ushort8 );   \
   uint16   _cl_overloadable NAME(ushort16, ushort16);   \
-  int      _cl_overloadable NAME(short   , ushort   );  \
-  int2     _cl_overloadable NAME(short2  , ushort2  );  \
-  int3     _cl_overloadable NAME(short3  , ushort3  );  \
-  int4     _cl_overloadable NAME(short4  , ushort4  );  \
-  int8     _cl_overloadable NAME(short8  , ushort8  );  \
-  int16    _cl_overloadable NAME(short16 , ushort16 );  \
-  long     _cl_overloadable NAME(int     , uint     );  \
-  long2    _cl_overloadable NAME(int2    , uint2    );  \
-  long3    _cl_overloadable NAME(int3    , uint3    );  \
-  long4    _cl_overloadable NAME(int4    , uint4    );  \
-  long8    _cl_overloadable NAME(int8    , uint8    );  \
-  long16   _cl_overloadable NAME(int16   , uint16   );  \
+  int      _cl_overloadable NAME(short   , ushort  );   \
+  int2     _cl_overloadable NAME(short2  , ushort2 );   \
+  int3     _cl_overloadable NAME(short3  , ushort3 );   \
+  int4     _cl_overloadable NAME(short4  , ushort4 );   \
+  int8     _cl_overloadable NAME(short8  , ushort8 );   \
+  int16    _cl_overloadable NAME(short16 , ushort16);   \
+  __IF_INT64(                                           \
+  long     _cl_overloadable NAME(int     , uint    );   \
+  long2    _cl_overloadable NAME(int2    , uint2   );   \
+  long3    _cl_overloadable NAME(int3    , uint3   );   \
+  long4    _cl_overloadable NAME(int4    , uint4   );   \
+  long8    _cl_overloadable NAME(int8    , uint8   );   \
+  long16   _cl_overloadable NAME(int16   , uint16  );   \
   ulong    _cl_overloadable NAME(uint    , uint    );   \
   ulong2   _cl_overloadable NAME(uint2   , uint2   );   \
   ulong3   _cl_overloadable NAME(uint3   , uint3   );   \
   ulong4   _cl_overloadable NAME(uint4   , uint4   );   \
   ulong8   _cl_overloadable NAME(uint8   , uint8   );   \
-  ulong16  _cl_overloadable NAME(uint16  , uint16  );
-#else
-#define _CL_DECLARE_FUNC_LG_GUG(NAME)                   \
-  short    _cl_overloadable NAME(char    , uchar    );  \
-  short2   _cl_overloadable NAME(char2   , uchar2   );  \
-  short3   _cl_overloadable NAME(char3   , uchar3   );  \
-  short4   _cl_overloadable NAME(char4   , uchar4   );  \
-  short8   _cl_overloadable NAME(char8   , uchar8   );  \
-  short16  _cl_overloadable NAME(char16  , uchar16  );  \
-  ushort   _cl_overloadable NAME(uchar   , uchar   );   \
-  ushort2  _cl_overloadable NAME(uchar2  , uchar2  );   \
-  ushort3  _cl_overloadable NAME(uchar3  , uchar3  );   \
-  ushort4  _cl_overloadable NAME(uchar4  , uchar4  );   \
-  ushort8  _cl_overloadable NAME(uchar8  , uchar8  );   \
-  ushort16 _cl_overloadable NAME(uchar16 , uchar16 );   \
-  uint     _cl_overloadable NAME(ushort  , ushort  );   \
-  uint2    _cl_overloadable NAME(ushort2 , ushort2 );   \
-  uint3    _cl_overloadable NAME(ushort3 , ushort3 );   \
-  uint4    _cl_overloadable NAME(ushort4 , ushort4 );   \
-  uint8    _cl_overloadable NAME(ushort8 , ushort8 );   \
-  uint16   _cl_overloadable NAME(ushort16, ushort16);   \
-  int      _cl_overloadable NAME(short   , ushort   );  \
-  int2     _cl_overloadable NAME(short2  , ushort2  );  \
-  int3     _cl_overloadable NAME(short3  , ushort3  );  \
-  int4     _cl_overloadable NAME(short4  , ushort4  );  \
-  int8     _cl_overloadable NAME(short8  , ushort8  );  \
-  int16    _cl_overloadable NAME(short16 , ushort16 );
-#endif
-#ifdef cl_khr_int64
+  ulong16  _cl_overloadable NAME(uint16  , uint16  );)
 #define _CL_DECLARE_FUNC_I_IG(NAME)             \
   int _cl_overloadable NAME(char   );           \
   int _cl_overloadable NAME(char2  );           \
@@ -2137,33 +1376,13 @@ _CL_DECLARE_FUNC_V_V(trunc)
   int _cl_overloadable NAME(int4   );           \
   int _cl_overloadable NAME(int8   );           \
   int _cl_overloadable NAME(int16  );           \
+  __IF_INT64(                                   \
   int _cl_overloadable NAME(long   );           \
   int _cl_overloadable NAME(long2  );           \
   int _cl_overloadable NAME(long3  );           \
   int _cl_overloadable NAME(long4  );           \
   int _cl_overloadable NAME(long8  );           \
-  int _cl_overloadable NAME(long16 );
-#else
-#define _CL_DECLARE_FUNC_I_IG(NAME)             \
-  int _cl_overloadable NAME(char   );           \
-  int _cl_overloadable NAME(char2  );           \
-  int _cl_overloadable NAME(char3  );           \
-  int _cl_overloadable NAME(char4  );           \
-  int _cl_overloadable NAME(char8  );           \
-  int _cl_overloadable NAME(char16 );           \
-  int _cl_overloadable NAME(short  );           \
-  int _cl_overloadable NAME(short2 );           \
-  int _cl_overloadable NAME(short3 );           \
-  int _cl_overloadable NAME(short4 );           \
-  int _cl_overloadable NAME(short8 );           \
-  int _cl_overloadable NAME(short16);           \
-  int _cl_overloadable NAME(int    );           \
-  int _cl_overloadable NAME(int2   );           \
-  int _cl_overloadable NAME(int3   );           \
-  int _cl_overloadable NAME(int4   );           \
-  int _cl_overloadable NAME(int8   );           \
-  int _cl_overloadable NAME(int16  );
-#endif
+  int _cl_overloadable NAME(long16 );)
 #define _CL_DECLARE_FUNC_J_JJ(NAME)                     \
   int      _cl_overloadable NAME(int     , int     );   \
   int2     _cl_overloadable NAME(int2    , int2    );   \
