@@ -29,6 +29,8 @@ source tree, you need to generate the autotool build files with
 
   "./autogen.sh".
 
+The standard build installations as provided by FSF are as follows:
+
 Basic Installation
 ==================
 
