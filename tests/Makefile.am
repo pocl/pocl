@@ -63,9 +63,9 @@ $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
                      barrier1_barriers.dot				\
                      barrier1_barriers_workitem.dot			\
-                     ifbarrier1_barriers.dot				\
-                     ifbarrier1_barriers_btr.dot			\
-                     ifbarrier1_barriers_btr_workitem.dot		\
+                     ifbarrier1_btr.dot					\
+                     ifbarrier1_btr_barriers.dot			\
+                     ifbarrier1_btr_barriers_workitem.dot           	\
                      ifbarrier2_btr.dot					\
                      ifbarrier3_btr.dot					\
                      ifbarrier4_btr.dot					\
