@@ -248,7 +248,7 @@ privatizeContext(Module &M, Function *F)
 {
   char s[STRING_LENGTH];
   GlobalVariable *gv[3];
-  AllocaInst *ai[3];
+  AllocaInst *ai[3] = {NULL, NULL, NULL};
 
   IRBuilder<> builder(F->getEntryBlock().getFirstNonPHI());
 
