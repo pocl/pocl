@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#ifdef __TCE__
+#ifdef __TCE_DEVICE__
 /* TCE supports only the embedded profile for now. 
    For example, it does not support 64-bit integers nor 
    double precision floats yet. */
@@ -31,7 +31,7 @@
 #undef cl_khr_fp64
 #undef cl_khr_int64
 
-#elif defined(__arm__)
+#elif defined(__ARM_DEVICE__)
 
 #define __EMBEDDED_PROFILE__ 1
 #define __ADDRESS_BITS__ 32
