@@ -110,14 +110,23 @@ NATIVE_LLC_FLAGS="-relocation-model=pic"
 ARM_CLANG_FLAGS="-ccc-host-triple armv4t-unknown-linux-gnueabihf"
 
 # The HOST_ARCH variable is used to choose an optimized
-# kernel library for the "default target" which is assumed
+# kernel library for the default device which is now assumed
 # to be the same as the one where the OpenCL host code runs
 # in.
-HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
+if test -z "$HOST_ARCH";
+then
+     HOST_ARCH=`llvm-config --host-target | cut -d '-' -f 1`
+fi
 
 X86_64_CLANG_FLAGS="-ccc-host-triple x86_64-unknown-linux-gnu"
 
-# Use the default Clang target flags for the "native device" library.
+# The __XX_DEVICE__ macro is used in _kernel.h to configure the
+# OpenCL device specifications and disable/enable features.
+ARM_CLANG_FLAGS="$ARM_CLANG_FLAGS -D__ARM_DEVICE__"
+TCE_CLANG_FLAGS="$TCE_CLANG_FLAGS -D__TCE_DEVICE__"
+X86_64_CLANG_FLAGS="$X86_64_CLANG_FLAGS -D__X86_64_DEVICE__"
+
+# Use the default Clang target flags for the "native device".
 # Detect the optimized kernel library to use and to compile with the
 # default flags.
 case $HOST_ARCH in
@@ -133,6 +142,15 @@ case $HOST_ARCH in
      AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
      SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
      X86_64_CLANG_FLAGS=""
+     ;;
+
+     tce)
+     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
+     SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
+     # TCE "standalone" mode is a special case. The kernels are compiled 
+     # offline and linked to the host program. The pocl host library is not
+     # used but a modified standalone version of TCE is instead.
+     NATIVE_CLANG_FLAGS="$TCE_CLANG_FLAGS -ccc-host-triple tce-tut-llvm"
      ;;
 
      *)
@@ -159,6 +177,7 @@ AC_SUBST([HOST_ARCH])
 
 AC_SUBST([X86_64_CLANG_FLAGS])
 AC_SUBST([ARM_CLANG_FLAGS])
+AC_SUBST([TCE_CLANG_FLAGS])
 
 AC_DEFINE_UNQUOTED([NATIVE_LLC_FLAGS], ["$NATIVE_LLC_FLAGS"], 
 ["Additional flags to pass to the llc call of the code generation of the 'native device'."])
