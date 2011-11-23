@@ -60,55 +60,85 @@ $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
 
-GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
-                     barrier1_barriers.dot				\
-                     barrier1_barriers_workitem.dot			\
-                     ifbarrier1_btr.dot					\
-                     ifbarrier1_btr_barriers.dot			\
-                     ifbarrier1_btr_barriers_workitem.dot		\
-                     ifbarrier2_btr.dot					\
-                     ifbarrier3_btr.dot					\
-                     ifbarrier4_btr.dot					\
-                     forbarrier1_btr.dot				\
-                     forbarrier1_btr_barriers.dot			\
-                     forbarrier1_btr_barriers_workitem.dot		\
-                     forbarrier2_btr.dot				\
-                     forbarrier2_btr_barriers.dot			\
-                     forbarrier2_btr_barriers_workitem.dot		\
-                     ifforbarrier1_loops_btr.dot			\
-                     ifforbarrier1_loops_btr_barriers.dot		\
-                     ifforbarrier1_loops_btr_barriers_workitem.dot	\
-                     forifbarrier1_barriers.dot				\
-                     forifbarrier1_barriers_btr.dot			\
-                     forifbarrier1_barriers_btr_workitem.dot		\
-                     forifbarrier1_btr.dot				\
-                     forifbarrier1_btr_barriers.dot			\
-                     forifbarrier1_btr_barriers_workitem.dot
+#GRAPH_TEST_OUTPUTS = nobarrier1_workitem.dot				\
+#                     barrier1_barriers.dot				\
+#                     barrier1_barriers_workitem.dot			\
+#                     ifbarrier1_btr.dot					\
+#                     ifbarrier1_btr_barriers.dot			\
+#                     ifbarrier1_btr_barriers_workitem.dot		\
+#                     ifbarrier2_btr.dot					\
+#                     ifbarrier3_btr.dot					\
+#                     ifbarrier4_btr.dot					\
+#                     forbarrier1_btr.dot				\
+#                     forbarrier1_btr_barriers.dot			\
+#                     forbarrier1_btr_barriers_workitem.dot		\
+#                     forbarrier2_btr.dot				\
+#                     forbarrier2_btr_barriers.dot			\
+#                     forbarrier2_btr_barriers_workitem.dot		\
+#                     ifforbarrier1_loops_btr.dot			\
+#                     ifforbarrier1_loops_btr_barriers.dot		\
+#                     ifforbarrier1_loops_btr_barriers_workitem.dot	\
+#                     forifbarrier1_barriers.dot				\
+#                     forifbarrier1_barriers_btr.dot			\
+#                     forifbarrier1_barriers_btr_workitem.dot		\
+#                     forifbarrier1_btr.dot				\
+#                     forifbarrier1_btr_barriers.dot			\
+#                     forifbarrier1_btr_barriers_workitem.dot
+#
+#GRAPH_TEST_INPUTS = $(addsuffix .dot,					\
+#                    $(subst .,_, $(basename				\
+#                    $(subst _,., $(basename $(GRAPH_TEST_OUTPUTS))))))
+#
+#GRAPH_TEST_SOURCES = $(GRAPH_TEST_INPUTS:.dot=.ll)
+#
+#EXTRA_DIST += $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES)
+#
+#sources: $(addprefix $(srcdir)/, $(GRAPH_TEST_SOURCES))
+#
+#dots: $(addprefix $(srcdir)/, $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES))
+#
+#%_workitem.ll: %.ll
+#	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $@ $<
+#
+#%_loops.ll: %.ll
+#	@OPT@ -loop-simplify -S -o $@ $<
+#
+#%_barriers.ll: %.ll
+#	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -loop-barriers -S -o $@ $<
+#
+#%_btr.ll: %.ll
+#	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $@ $<
+#
+#%.dot: %.ll
+#	@OPT@ -disable-output -dot-cfg-only $<
+#	mv cfg.*.dot $@
 
-GRAPH_TEST_INPUTS = $(addsuffix .dot,					\
-                    $(subst .,_, $(basename				\
-                    $(subst _,., $(basename $(GRAPH_TEST_OUTPUTS))))))
+LOOPBARRIERS_TESTS_INPUTS = loopbarriers1_input.ll	\
+                            loopbarriers2_input.ll
+LOOPBARRIERS_TESTS_GOLDEN = $(subst input,golden,		\
+                            $(LOOPBARRIERS_TESTS_INPUTS))
 
-GRAPH_TEST_SOURCES = $(GRAPH_TEST_INPUTS:.dot=.ll)
+loopbarriers_golden: $(addprefix $(srcdir)/, $(LOOPBARRIERS_TESTS_GOLDEN))
 
-EXTRA_DIST += $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES)
+loopbarriers%_golden.ll: loopbarriers%_input.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -loop-barriers -S -o $(notdir $@) $(notdir $<)
 
-sources: $(addprefix $(srcdir)/, $(GRAPH_TEST_SOURCES))
+BARRIERS_TESTS_INPUTS = barriers1_input.ll	\
+                        barriers2_input.ll
+BARRIERS_TESTS_GOLDEN = $(subst input,golden,		\
+                        $(BARRIERS_TESTS_INPUTS))
 
-dots: $(addprefix $(srcdir)/, $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES))
+barriers_golden: $(addprefix $(srcdir)/, $(BARRIERS_TESTS_GOLDEN))
 
-%_workitem.ll: %.ll
-	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $@ $<
+barriers%_golden.ll: barriers%_input.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -S -o $(notdir $@) $(notdir $<)
 
-%_loops.ll: %.ll
-	@OPT@ -loop-simplify -S -o $@ $<
+BARRIERTAILS_TESTS_INPUTS = barriertails1_input.ll	\
+                            barriertails2_input.ll
+BARRIERTAILS_TESTS_GOLDEN = $(subst input,golden,		\
+                            $(BARRIERTAILS_TESTS_INPUTS))
 
-%_barriers.ll: %.ll
-	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -loop-barriers -S -o $@ $<
+barriertails_golden: $(addprefix $(srcdir)/, $(BARRIERTAILS_TESTS_GOLDEN))
 
-%_btr.ll: %.ll
-	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $@ $<
-
-%.dot: %.ll
-	@OPT@ -disable-output -dot-cfg-only $<
-	mv cfg.*.dot $@
+barriertails%_golden.ll: barriertails%_input.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $(notdir $@) $(notdir $<)

@@ -24,10 +24,75 @@
 
 AT_INIT()
 
-AT_SETUP([Graph-based llvmopencl tests])
+AT_BANNER([Graph-based llvmopencl tests])
+
+AT_SETUP([LoopBarriers pass])
+for i in $abs_top_srcdir/tests/loopbarriers*_input.ll
+do
+  input=`echo $i | sed 's/.*\///'`
+  golden=`echo $input | sed s/_input.ll/_golden.ll/`
+  output=`echo $input | sed s/_input.ll/_output.ll/`
+  reapply=`echo $input | sed s/_input.ll/_reapply.ll/`
+  echo "input=$input"
+  echo "output=$output"
+  echo "golden=$golden"
+  echo "reapply=$reapply"
+  cp $abs_top_srcdir/tests/$input .
+  cp $abs_top_srcdir/tests/$golden .
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-barriers -S -o $output $input])
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-barriers -loop-barriers -S -o $reapply $input])
+  AT_CHECK([cmp $output $golden])
+  AT_CHECK([cmp $reapply $output])
+done
+AT_CLEANUP
+
+AT_SETUP([CanonicalizeBarriers pass])
+for i in $abs_top_srcdir/tests/barriers*_input.ll
+do
+  input=`echo $i | sed 's/.*\///'`
+  golden=`echo $input | sed s/_input.ll/_golden.ll/`
+  output=`echo $input | sed s/_input.ll/_output.ll/`
+  reapply=`echo $input | sed s/_input.ll/_reapply.ll/`
+  echo "input=$input"
+  echo "output=$output"
+  echo "golden=$golden"
+  echo "reapply=$reapply"
+  cp $abs_top_srcdir/tests/$input .
+  cp $abs_top_srcdir/tests/$golden .
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $output $input])
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -barriers -S -o $reapply $input])
+  AT_CHECK([cmp $output $golden])
+  AT_CHECK([cmp $reapply $output])
+done
+AT_CLEANUP
+
+AT_SETUP([BarrierTailReplication pass])
+for i in $abs_top_srcdir/tests/barriertails*_input.ll
+do
+  input=`echo $i | sed 's/.*\///'`
+  golden=`echo $input | sed s/_input.ll/_golden.ll/`
+  output=`echo $input | sed s/_input.ll/_output.ll/`
+  reapply=`echo $input | sed s/_input.ll/_reapply.ll/`
+  echo "input=$input"
+  echo "output=$output"
+  echo "golden=$golden"
+  echo "reapply=$reapply"
+  cp $abs_top_srcdir/tests/$input .
+  cp $abs_top_srcdir/tests/$golden .
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input])
+  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -barriertails -S -o $reapply $input])
+  AT_CHECK([cmp $output $golden])
+  AT_CHECK([cmp $reapply $output])
+done
+AT_CLEANUP
+
+AT_SETUP([Pass composition])
+tests=""
+AT_CHECK([true])
 for type in barriers btr workitem
 do
-  for i in $abs_top_srcdir/tests/*_$type.dot
+# for i in $abs_top_srcdir/tests/*_$type.dot
+  for i in $tests
   do
     input=`echo $i | sed s/_$type.dot/.ll/`
     output=`echo $i | sed 's/.*\///' | sed s/.dot/_test.ll/`
@@ -39,9 +104,9 @@ do
     echo "graph=$graph"
     echo "golden=$golden"
     case $type in
-      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriers -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
-      btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $output $input], 0, ignore, ignore) ;;
-      workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
+      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
+      btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input], 0, ignore, ignore) ;;
+      workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
     esac
     opt -disable-output -dot-cfg-only $output
     dot -Tpng -o $graph cfg.*.dot
@@ -51,7 +116,9 @@ do
 done
 AT_CLEANUP
 
-AT_SETUP([OpenCL specification tests])
+AT_BANNER([OpenCL specification tests])
+
+AT_SETUP([example1: dot product])
 AT_DATA([expout],
 [(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
 (1.000000, 1.000000, 1.000000, 1.000000) . (1.000000, 1.000000, 1.000000, 1.000000) = 4.000000
@@ -60,25 +127,35 @@ AT_DATA([expout],
 OK
 ])
 AT_CHECK([$abs_top_builddir/examples/example1/example1], 0, expout)
+AT_CLEANUP
 
+AT_SETUP([example2: matrix transpose])
 AT_CHECK([$abs_top_builddir/examples/example2/example2], 0, [OK
 ])
 AT_CLEANUP
 
-AT_SETUP([Workgroup creation])
+AT_BANNER([Workgroup creation tests])
+
+AT_SETUP([Unconditional barriers])
 AT_CHECK([$abs_top_builddir/examples/barriers/barriers], 0, stdout)
 AT_CHECK([cat stdout | wc -l], 0, [12
 ])
+AT_CLEANUP
 
+AT_SETUP([Unbarriered for loops])
 AT_CHECK([$abs_top_builddir/examples/forloops/forloops], 0, stdout)
 AT_CHECK([cat stdout | wc -l], 0, [4
 ])
+AT_CLEANUP
 
+AT_SETUP([Barriered for loops])
 AT_CHECK([$abs_top_builddir/examples/loopbarriers/loopbarriers], 0, stdout)
 AT_CHECK([sort -c stdout])
 AT_CLEANUP
           
-AT_SETUP([Kernel runtime library])
+AT_BANNER([Kernel runtime library])
+
+AT_SETUP([Trigonometric functions])
 AT_DATA([expout],
 [f(0.000000, 0.000000, 0.000000, 0.000000) = (1.000000, 1.000000, 1.000000, 1.000000)
 f(1.000000, 1.000000, 1.000000, 1.000000) = (1.000000, 1.000000, 1.000000, 1.000000)

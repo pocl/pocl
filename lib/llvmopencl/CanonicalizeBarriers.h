@@ -36,6 +36,7 @@ namespace pocl {
   CanonicalizeBarriers() : FunctionPass(ID) {}
     
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
+    virtual bool doInitialization(llvm::Module &M);
     virtual bool runOnFunction(llvm::Function &F);
     
   private:
@@ -45,8 +46,6 @@ namespace pocl {
     llvm::DominatorTree *DT;
 
     bool ProcessFunction(llvm::Function &F);
-    void AddLatchBarriers(InstructionSet &barriers_to_add,
-                          llvm::Loop *loop, llvm::BasicBlock *barrier_bb);
 
     friend class pocl::Workgroup;
   };

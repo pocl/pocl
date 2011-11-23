@@ -21,6 +21,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "Workgroup.h"
+
 #include "CanonicalizeBarriers.h"
 #include "BarrierTailReplication.h"
 #include "WorkitemReplication.h"
@@ -52,22 +54,14 @@ static Function *createLauncher(Module &M, Function *F);
 static void privatizeContext(Module &M, Function *F);
 static void createWorkgroup(Module &M, Function *F);
 
-extern cl::opt<string> Kernel;
-extern cl::opt<string> Header;
-extern cl::list<int> LocalSize;
+// extern cl::opt<string> Header;
+// extern cl::list<int> LocalSize;
 
-namespace pocl {
-  class Workgroup : public ModulePass {
-  
-  public:
-    static char ID;
-    Workgroup() : ModulePass(ID) {}
-
-    virtual bool runOnModule(Module &M);
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  };
-}
+cl::opt<string>
+Kernel("kernel",
+       cl::desc("Kernel function name"),
+       cl::value_desc("kernel"),
+       cl::init(""));
 
 namespace llvm {
 
@@ -100,79 +94,106 @@ static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 bool
 Workgroup::runOnModule(Module &M)
 {
-  BasicInliner BI;
+  // BasicInliner BI;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
       i->setLinkage(Function::InternalLinkage);
-    BI.addFunction(i);
   }
+  //   BI.addFunction(i);
+  // }
 
-  BI.inlineFunctions();
+  // BI.inlineFunctions();
 
-  CanonicalizeBarriers CB;
-  BarrierTailReplication BTR;
-  WorkitemReplication WR;
+  // CanonicalizeBarriers CB;
+  // BarrierTailReplication BTR;
+  // WorkitemReplication WR;
 
-  string ErrorInfo;
-  raw_fd_ostream out(Header.c_str(), ErrorInfo);
+  // string ErrorInfo;
+  // raw_fd_ostream out(Header.c_str(), ErrorInfo);
 
-  NamedMDNode *SizeInfo = M.getNamedMetadata("opencl.kernel_wg_size_info");
+  // NamedMDNode *SizeInfo = M.getNamedMetadata("opencl.kernel_wg_size_info");
 
-  NamedMDNode *Kernels = M.getNamedMetadata("opencl.kernels");
-  for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
-    Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
+  // NamedMDNode *Kernels = M.getNamedMetadata("opencl.kernels");
+  // for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
+  //   Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
 
-    CB.DT = BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
-    CB.LI = BTR.LI = WR.LI = &getAnalysis<LoopInfo>(*K);
+  //   CB.DT = BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
+  //   CB.LI = BTR.LI = WR.LI = &getAnalysis<LoopInfo>(*K);
 
-    if ((Kernel != "") && (K->getName() != Kernel))
-      continue;
+  //   if ((Kernel != "") && (K->getName() != Kernel))
+  //     continue;
 
-    out << "#define _" << K->getName() << "_NUM_LOCALS 0\n";
-    out << "#define _" << K->getName() << "_LOCAL_SIZE {}\n";
 
-    CB.ProcessFunction(*K);
 
-    BTR.ProcessFunction(*K);
+  //   CB.ProcessFunction(*K);
+
+  //   BTR.ProcessFunction(*K);
     
-    int OldLocalSize[3];
-    for (int i = 0; i < 3; ++i)
-      OldLocalSize[i] = LocalSize[i];;
+  //   int OldLocalSize[3];
+  //   for (int i = 0; i < 3; ++i)
+  //     OldLocalSize[i] = LocalSize[i];;
 
-    if (SizeInfo) {
-      for (unsigned i = 0, e = SizeInfo->getNumOperands(); i != e; ++i) {
-	MDNode *KernelSizeInfo = SizeInfo->getOperand(i);
-	if (KernelSizeInfo->getOperand(0) == K) {
-	  LocalSize[0] = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-	  LocalSize[1] = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-	  LocalSize[2] = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-	}
-      }
+  //   if (SizeInfo) {
+  //     for (unsigned i = 0, e = SizeInfo->getNumOperands(); i != e; ++i) {
+  //       MDNode *KernelSizeInfo = SizeInfo->getOperand(i);
+  //       if (KernelSizeInfo->getOperand(0) == K) {
+  //         LocalSize[0] = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+  //         LocalSize[1] = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+  //         LocalSize[2] = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+  //       }
+  //     }
+  //   }
+
+  //   WR.ProcessFunction(*K);
+  //   for (int i = 0; i < 3; ++i)
+  //     LocalSize[i] = OldLocalSize[i];;
+
+  for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
+    if (isKernelToProcess(*i)) {
+      Function *L = createLauncher(M, i);
+      
+      L->addFnAttr(Attribute::NoInline);
+      noaliasArguments(L);
+
+      privatizeContext(M, L);
+
+      createWorkgroup(M, L);
     }
-
-    WR.ProcessFunction(*K);
-    for (int i = 0; i < 3; ++i)
-      LocalSize[i] = OldLocalSize[i];;
-
-    Function *L = createLauncher(M, K);
-
-    L->addFnAttr(Attribute::NoInline);
-    noaliasArguments(L);
-
-    privatizeContext(M, L);
-
-    createWorkgroup(M, L);
   }
-
+  
   return true;
 }
 
-void
-Workgroup::getAnalysisUsage(AnalysisUsage &AU) const
+// void
+// Workgroup::getAnalysisUsage(AnalysisUsage &AU) const
+// {
+//   AU.addRequired<DominatorTree>();
+//   AU.addRequired<LoopInfo>();
+// }
+
+bool
+Workgroup::isKernelToProcess(const Function &F)
 {
-  AU.addRequired<DominatorTree>();
-  AU.addRequired<LoopInfo>();
+  const Module *m = F.getParent();
+
+  NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
+  if (kernels == NULL) {
+    if (Kernel == "")
+      return true;
+    if (F.getName() == Kernel)
+      return true;
+
+    return false;
+  }
+
+  for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
+    Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
+    if (&F == k)
+      return true;
+  }
+
+  return false;
 }
 
 static void

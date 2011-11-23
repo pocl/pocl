@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "Workgroup.h"
 #include "BarrierTailReplication.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
@@ -51,10 +52,18 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 BarrierTailReplication::runOnFunction(Function &F)
 {
+  if (!Workgroup::isKernelToProcess(F))
+    return false;
+  
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
+  
+  bool changed = ProcessFunction(F);
 
-  return ProcessFunction(F);
+  DT->verifyAnalysis();
+  LI->verifyAnalysis();
+
+  return changed;
 }
 
 bool
@@ -62,12 +71,7 @@ BarrierTailReplication::ProcessFunction(Function &F)
 {
   BasicBlockSet processed_bbs;
 
-  FindBarriersDFS(&F.getEntryBlock(), processed_bbs);
-
-  DT->verifyAnalysis();
-  LI->verifyAnalysis();
-
-  return true;
+  return FindBarriersDFS(&F.getEntryBlock(), processed_bbs);
 }  
 
 
@@ -76,36 +80,42 @@ BarrierTailReplication::ProcessFunction(Function &F)
 // successors to ensure there is a separate function exit BB
 // for each combination of traversed barriers. The set
 // processed_bbs stores the 
-void
+bool
 BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
                                         BasicBlockSet &processed_bbs)
 {
+  bool changed = false;
+
   // Check if we already visited this BB (to avoid
   // infinite recursion in case of unbarriered loops).
   if (processed_bbs.count(bb) != 0)
-    return;
+    return changed;
 
   processed_bbs.insert(bb);
 
   TerminatorInst *t = bb->getTerminator();
 
   if (block_has_barrier(bb)) {
-    ReplicateJoinedSubgraphs(bb, bb);
+    changed = ReplicateJoinedSubgraphs(bb, bb);
   }
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
-    FindBarriersDFS(t->getSuccessor(i), processed_bbs);
+    changed |= FindBarriersDFS(t->getSuccessor(i), processed_bbs);
+
+  return changed;
 }
 
 
 // Only replicate those parts of the subgraph that are not
 // dominated by a (barrier) basic block, to avoid excesive
 // (and confusing) code replication.
-void
+bool
 BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
                                                  BasicBlock *subgraph_entry)
 {
+  bool changed = false;
+
   assert(DT->dominates(dominator, subgraph_entry));
 
   Function *f = dominator->getParent();
@@ -120,12 +130,13 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       continue;
     }
     if (DT->dominates(dominator, b))
-      ReplicateJoinedSubgraphs(dominator, b);
+      changed |= ReplicateJoinedSubgraphs(dominator, b);
     else {
       BasicBlock *replicated_subgraph_entry =
         ReplicateSubgraph(b, f);
       t->setSuccessor(i, replicated_subgraph_entry);
-    
+      changed = true;
+
       // We have modified the function. Possibly created new loops.
       // Update analysis passes.
       DT->runOnFunction(*f);
@@ -133,6 +144,8 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       LI->getBase().Calculate(DT->getBase());
     }
   }
+
+  return changed;
 }
 
 BasicBlock *

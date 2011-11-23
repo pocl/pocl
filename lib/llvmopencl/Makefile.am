@@ -33,3 +33,5 @@ llvmopencl_la_SOURCES = CanonicalizeBarriers.h CanonicalizeBarriers.cc          
                         GenerateHeader.cc Workgroup.cc				\
 			BarrierTailReplication.h BarrierTailReplication.cc	\
 			WorkitemReplication.h WorkitemReplication.cc
+
+#llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

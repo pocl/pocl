@@ -32,6 +32,7 @@ namespace pocl {
   LoopBarriers() : LoopPass(ID) {}
     
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
+    virtual bool doInitialization(llvm::Loop *L, llvm::LPPassManager &LPM);
     virtual bool runOnLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
 
   private:

@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "WorkitemReplication.h"
+#include "Workgroup.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -59,6 +60,9 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 WorkitemReplication::runOnFunction(Function &F)
 {
+  if (!Workgroup::isKernelToProcess(F))
+    return false;
+
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
@@ -201,6 +205,11 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
 	     "More than one function tail within same barrier path!\n");
       r = s;
     }
+    if (t != bb->getTerminator()) {
+      // Terminator changed, this BB was made part of a parallel region
+      // and replicated, do not look for more successors.
+      break;
+    }
   }
 
   return r;
@@ -311,8 +320,13 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockSet subgraph,
 	ReferenceMap[i].erase(exit->getTerminator());
 	BranchInst::Create(cast<BasicBlock>(ReferenceMap[i][entry]),
 			   exit->getTerminator());
-        assert((exit->getTerminator()->getNumSuccessors() <= 1) &&
-               "Multiple succesors of parallel section (uncanonicalized barriers?)!");
+        // This is not true, barriers must have one succesor (barrier BBs are
+        // not replicated so we do not want functionality ther) and one predecessor
+        // so that paralle regions have a definite exit edge), but the parallel region
+        // itself might have more than one successor (for example, one edge going
+        // to the barrier and another one elsewhere).
+        // assert((exit->getTerminator()->getNumSuccessors() <= 1) &&
+        //        "Multiple succesors of parallel section (uncanonicalized barriers?)!");
 	exit->getTerminator()->eraseFromParent();
 
 	builder.SetInsertPoint(entry, entry->front());

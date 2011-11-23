@@ -21,8 +21,10 @@
 // THE SOFTWARE.
 
 #include "LoopBarriers.h"
+#include "Workgroup.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Module.h"
 
 using namespace llvm;
 using namespace pocl;
@@ -30,6 +32,9 @@ using namespace pocl;
 #define BARRIER_FUNCTION_NAME "barrier"
 
 static bool is_barrier(Instruction *i);
+static CallInst *new_barrier();
+
+static Function *barrier = NULL;
 
 namespace {
   static
@@ -43,16 +48,34 @@ void
 LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
+  AU.addPreserved<DominatorTree>();
+}
+
+bool
+LoopBarriers::doInitialization(Loop *L, LPPassManager &LPM)
+{
+  Module *m = L->getHeader()->getParent()->getParent();
+  barrier = m->getFunction(BARRIER_FUNCTION_NAME);
+
+  return false;
 }
 
 bool
 LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
 {
+  if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
+    return false;
+
   DT = &getAnalysis<DominatorTree>();
 
-  return ProcessLoop(L, LPM);
+  bool changed = ProcessLoop(L, LPM);
+
+  DT->verifyAnalysis();
+
+  return changed;
 }
 
+
 bool
 LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
 {
@@ -61,8 +84,6 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
       if (is_barrier(j)) {
-        BasicBlock *b = *i;
-        Instruction *barrier = j;
         // Found a barrier on this loop, proceed:
         // 1) add a barrier on the loop preheader.
         // 2) add a barrier on the latches
@@ -71,11 +92,15 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         // the loop header with all the previous code already 
         // executed.
         BasicBlock *preheader = L->getLoopPreheader();
-        assert(preheader != NULL && "Non-canonicalized loop found!");
-        barrier = j->clone();
-        barrier->insertBefore(preheader->getTerminator());
-        SplitBlock(preheader, barrier, this)->setName(preheader->getName() +
-                                                      ".loopbarrier");
+        if (preheader == NULL)
+          report_fatal_error("Non-canonicalized loop found!\n");
+        if ((preheader->size() == 1) ||
+            (!is_barrier(preheader->getTerminator()->getPrevNode()))) {
+          // Avoid adding a barrier here if there is already a barrier
+          // just before the terminator.
+          new_barrier()->insertBefore(preheader->getTerminator());
+          preheader->setName(preheader->getName() + ".loopbarrier");
+        }
 
         // Now add the barriers on the latches.
         BasicBlock *latch = L->getLoopLatch();
@@ -86,14 +111,8 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           // barrier just before the terminator.
           if ((latch->size() == 1) ||
               (!is_barrier(latch->getTerminator()->getPrevNode()))) {
-            barrier = barrier->clone();
-            barrier->insertBefore(latch->getTerminator());
-            SplitBlock(latch, barrier, this)->setName(latch->getName() +
-                                                      ".latchbarrier");
-            SplitBlock(barrier->getParent(),
-                       barrier->getNextNode(),
-                       this)->setName(latch->getName() +
-                                      ".latch");
+            new_barrier()->insertBefore(latch->getTerminator());
+            latch->setName(latch->getName() + ".latchbarrier");
           }
 
           return true;
@@ -113,15 +132,13 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
             // Latch found in the loop, see if the barrier dominates it
             // (otherwise if might no even belong to this "tail", see
             // forifbarrier1 graph test).
-            if (DT->dominates(b, Latch)) {
+            if (DT->dominates(j->getParent(), Latch)) {
               // If there is a barrier happens before the latch terminator,
               // there is no need to add an additional barrier.
               if ((Latch->size() == 1) ||
                   (!is_barrier(Latch->getTerminator()->getPrevNode()))) {
-                barrier = barrier->clone();
-                barrier->insertBefore(Latch->getTerminator());
-                SplitBlock(Latch, barrier, this)->setName(Latch->getName() +
-                                                          ".lacchbarrier");
+                new_barrier()->insertBefore(Latch->getTerminator());
+                Latch->setName(Latch->getName() + ".latchbarrier");
               }
             }
           }
@@ -135,15 +152,26 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
   return false;
 }
 
+
 static bool
 is_barrier(Instruction *i)
 {
   if (CallInst *c = dyn_cast<CallInst>(i)) {
     if (Function *f = c->getCalledFunction()) {
-      if (f->getName().equals(BARRIER_FUNCTION_NAME))
+      if (f == barrier)
         return true;
     }
   }
 
   return false;
+}
+
+static CallInst *
+new_barrier()
+{
+  assert (barrier != NULL && "No barrier function!");
+  Constant *zero =
+    ConstantInt::get(barrier->getArgumentList().front().getType(), 0);
+  SmallVector<Value *, 1> sv(1, zero);
+  return CallInst::Create(barrier, ArrayRef<Value *>(sv));
 }

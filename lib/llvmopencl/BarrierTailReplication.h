@@ -48,9 +48,9 @@ namespace pocl {
     llvm::LoopInfo *LI;
 
     bool ProcessFunction(llvm::Function &F);
-    void FindBarriersDFS(llvm::BasicBlock *bb,
+    bool FindBarriersDFS(llvm::BasicBlock *bb,
                          BasicBlockSet &processed_bbs);
-    void ReplicateJoinedSubgraphs(llvm::BasicBlock *dominator,
+    bool ReplicateJoinedSubgraphs(llvm::BasicBlock *dominator,
                                   llvm::BasicBlock *subgraph_entry);
     llvm::BasicBlock* ReplicateSubgraph(llvm::BasicBlock *entry,
                                         llvm::Function *f);
