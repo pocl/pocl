@@ -138,7 +138,10 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
       (ProcessedBarriers.count(bb) == 0))
     {      
       BasicBlockSet pre_subgraph;
-      bool found = FindSubgraph(pre_subgraph, entry, bb);
+#ifndef NDEBUG
+      bool found = 
+#endif
+          FindSubgraph(pre_subgraph, entry, bb);
       assert(found && "Subgraph to a barrier does not reach the barrier!");
       pre_subgraph.erase(bb); // Remove barrier basicblock from subgraph.
       for (std::set<BasicBlock *>::const_iterator i = pre_subgraph.begin(),
