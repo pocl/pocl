@@ -25,9 +25,12 @@ barrier:                                          ; preds = %barrier.prebarrier
   br label %barrier.postbarrier
 
 barrier.postbarrier:                              ; preds = %barrier
-  br i1 true, label %barrier.prebarrier, label %c.latchbarrier
+  br i1 true, label %barrier.prebarrier, label %c.latchbarrier.prebarrier
 
-c.latchbarrier:                                   ; preds = %barrier.postbarrier
+c.latchbarrier.prebarrier:                        ; preds = %barrier.postbarrier
+  br label %c.latchbarrier
+
+c.latchbarrier:                                   ; preds = %c.latchbarrier.prebarrier
   call void @barrier(i32 0)
   br label %c.latchbarrier.postbarrier
 

@@ -108,21 +108,30 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // Split post barrier first cause it does not make the barrier
     // to belong to another basic block.
     TerminatorInst  *t = b->getTerminator();
-    if ((t->getNumSuccessors() > 1) ||
+    if ((t->getNumSuccessors() != 1) ||
         (t->getPrevNode() != *i)) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;
     }
 
-    if ((b->getSinglePredecessor() == NULL) ||
-        (&b->front() != (*i))) {
-      BasicBlock *new_b = SplitBlock(b, *i, this);
-      new_b->takeName(b);
-      b->setName(new_b->getName() + ".prebarrier");
-      changed = true;
+    BasicBlock *predecessor = b->getSinglePredecessor();
+    if (predecessor != NULL) {
+      TerminatorInst *pt = predecessor->getTerminator();
+      if ((pt->getNumSuccessors() == 1) &&
+          (&b->front() == (*i)))
+        {
+        // Barrier is at the beginning of the BB,
+        // which has a single predecessor with just
+        // one successor (the barrier itself), thus
+        // no need to split before barrier.
+        continue;
+      }
     }
-
+    BasicBlock *new_b = SplitBlock(b, *i, this);
+    new_b->takeName(b);
+    b->setName(new_b->getName() + ".prebarrier");
+    changed = true;
   }
 
   return changed;

@@ -24,9 +24,10 @@
 
 AT_INIT()
 
-AT_BANNER([Graph-based llvmopencl tests])
+AT_BANNER([llvmopencl passes tests])
 
 AT_SETUP([LoopBarriers pass])
+AT_KEYWORDS([llvmopencl])
 for i in $abs_top_srcdir/tests/loopbarriers*_input.ll
 do
   input=`echo $i | sed 's/.*\///'`
@@ -47,6 +48,7 @@ done
 AT_CLEANUP
 
 AT_SETUP([CanonicalizeBarriers pass])
+AT_KEYWORDS([llvmopencl])
 for i in $abs_top_srcdir/tests/barriers*_input.ll
 do
   input=`echo $i | sed 's/.*\///'`
@@ -67,6 +69,7 @@ done
 AT_CLEANUP
 
 AT_SETUP([BarrierTailReplication pass])
+AT_KEYWORDS([llvmopencl])
 for i in $abs_top_srcdir/tests/barriertails*_input.ll
 do
   input=`echo $i | sed 's/.*\///'`
@@ -87,31 +90,33 @@ done
 AT_CLEANUP
 
 AT_SETUP([Pass composition])
-tests=""
+AT_KEYWORDS([llvmopencl])
+tests="nobarrier1 barrier1 ifbarrier1"
 AT_CHECK([true])
-for type in barriers btr workitem
+for test in $tests
 do
-# for i in $abs_top_srcdir/tests/*_$type.dot
-  for i in $tests
+  for type in btr loops barriers workitem
   do
-    input=`echo $i | sed s/_$type.dot/.ll/`
-    output=`echo $i | sed 's/.*\///' | sed s/.dot/_test.ll/`
-    graph=`echo $output | sed s/.ll/.png/`
-    golden=`echo $graph | sed s/_test/_golden/`
-    rm cfg.*.dot
-    echo "input=$input"
-    echo "output=$output"
-    echo "graph=$graph"
-    echo "golden=$golden"
-    case $type in
-      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
-      btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input], 0, ignore, ignore) ;;
-      workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
-    esac
-    opt -disable-output -dot-cfg-only $output
-    dot -Tpng -o $graph cfg.*.dot
-    dot -Tpng -o $golden $i
-    AT_CHECK([cmp $graph $golden])
+#for i in $abs_top_srcdir/tests/*_$type.dot
+    i="$abs_top_srcdir/tests/$test*_$type.ll"
+    if [[ -f $i ]]
+    then
+      golden=`echo $i | sed 's/.*\///' | sed s/.ll/_golden.ll/`
+      input=`echo $golden | sed s/_${type}_golden.ll/.ll/`
+      output=`echo $golden | sed s/_golden.ll/_output.ll/`
+      echo "input=$input"
+      echo "output=$output"
+      echo "golden=$golden"
+      cp $i $golden
+      cp $abs_top_srcdir/tests/$input .
+      case $type in
+        btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input], 0, ignore, ignore) ;;
+        loops)    AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
+        barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $output $input], 0, ignore, ignore) ;;
+        workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
+      esac
+      AT_CHECK([cmp $output $golden])
+    fi
   done
 done
 AT_CLEANUP

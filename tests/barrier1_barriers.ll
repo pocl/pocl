@@ -1,15 +1,15 @@
-; ModuleID = '../../../src/pocl.loopbarriers/tests/barrier1.ll'
+; ModuleID = 'barrier1.ll'
 
 declare void @barrier(i32)
 
 define void @barrier1() {
-a.prebarrier:
-  br label %a
+barrier.prebarrier:
+  br label %barrier
 
-a:                                                ; preds = %a.prebarrier
+barrier:                                          ; preds = %barrier.prebarrier
   call void @barrier(i32 0)
-  br label %a.postbarrier
+  br label %barrier.postbarrier
 
-a.postbarrier:                                    ; preds = %a
+barrier.postbarrier:                              ; preds = %barrier
   ret void
 }

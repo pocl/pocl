@@ -1,7 +1,0 @@
-digraph "CFG for 'nobarrier1' function" {
-	label="CFG for 'nobarrier1' function";
-
-	Node0x2757710 [shape=record,label="{a}"];
-	Node0x2757710 -> Node0x2754fd0;
-	Node0x2754fd0 [shape=record,label="{b}"];
-}

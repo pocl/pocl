@@ -97,26 +97,13 @@ $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 #
 #dots: $(addprefix $(srcdir)/, $(GRAPH_TEST_OUTPUTS) $(GRAPH_TEST_INPUTS) $(GRAPH_TEST_SOURCES))
 #
-#%_workitem.ll: %.ll
-#	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $@ $<
-#
-#%_loops.ll: %.ll
-#	@OPT@ -loop-simplify -S -o $@ $<
-#
-#%_barriers.ll: %.ll
-#	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -loop-barriers -S -o $@ $<
-#
-#%_btr.ll: %.ll
-#	@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $@ $<
-#
-#%.dot: %.ll
-#	@OPT@ -disable-output -dot-cfg-only $<
-#	mv cfg.*.dot $@
 
 LOOPBARRIERS_TESTS_INPUTS = loopbarriers1_input.ll	\
                             loopbarriers2_input.ll
 LOOPBARRIERS_TESTS_GOLDEN = $(subst input,golden,		\
                             $(LOOPBARRIERS_TESTS_INPUTS))
+
+EXTRA_DIST += $(LOOPBARRIERS_TESTS_INPUTS) $(LOOPBARRIERS_TESTS_OUTPUTS)
 
 loopbarriers_golden: $(addprefix $(srcdir)/, $(LOOPBARRIERS_TESTS_GOLDEN))
 
@@ -128,6 +115,8 @@ BARRIERS_TESTS_INPUTS = barriers1_input.ll	\
 BARRIERS_TESTS_GOLDEN = $(subst input,golden,		\
                         $(BARRIERS_TESTS_INPUTS))
 
+EXTRA_DIST += $(BARRIERS_TESTS_INPUTS) $(BARRIERS_TESTS_OUTPUTS)
+
 barriers_golden: $(addprefix $(srcdir)/, $(BARRIERS_TESTS_GOLDEN))
 
 barriers%_golden.ll: barriers%_input.ll
@@ -138,7 +127,37 @@ BARRIERTAILS_TESTS_INPUTS = barriertails1_input.ll	\
 BARRIERTAILS_TESTS_GOLDEN = $(subst input,golden,		\
                             $(BARRIERTAILS_TESTS_INPUTS))
 
+EXTRA_DIST += $(BARRIERTAILS_TESTS_INPUTS) $(BARRIERTAILS_TESTS_OUTPUTS)
+
 barriertails_golden: $(addprefix $(srcdir)/, $(BARRIERTAILS_TESTS_GOLDEN))
 
 barriertails%_golden.ll: barriertails%_input.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $(notdir $@) $(notdir $<)
+
+COMPOSITE_TEST_GOLDEN = nobarrier1_workitem.ll			\
+                        barrier1_barriers.ll			\
+                        barrier1_barriers_workitem.ll		\
+                        ifbarrier1_btr.ll			\
+                        ifbarrier1_btr_barriers.ll		\
+                        ifbarrier1_btr_barriers_workitem.ll
+
+
+COMPOSITE_TEST_INPUTS = $(addsuffix .ll,					\
+                        $(subst .,_, $(basename					\
+                        $(subst _,., $(basename $(COMPOSITE_TEST_OUTPUTS))))))
+
+EXTRA_DIST += $(COMPOSITE_TEST_GOLDEN) $(COMPOSITE_TEST_INPUTS)
+
+composite_golden: $(addprefix $(srcdir)/, $(COMPOSITE_TEST_GOLDEN))
+
+%_workitem.ll: %.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -workitem -local-size=2 2 2 -S -o $(notdir $@) $(notdir $<)
+
+%_barriers.ll: %.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriers -S -o $(notdir $@) $(notdir $<)
+
+%_loops.ll: %.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -loop-simplify -loop-barriers -S -o $(notdir $@) $(notdir $<)
+
+%_btr.ll: %.ll
 	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -barriertails -S -o $(notdir $@) $(notdir $<)

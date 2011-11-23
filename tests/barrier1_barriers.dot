@@ -1,9 +1,0 @@
-digraph "CFG for 'barrier1' function" {
-	label="CFG for 'barrier1' function";
-
-	Node0x1d666d0 [shape=record,label="{a.prebarrier}"];
-	Node0x1d666d0 -> Node0x1d651a0;
-	Node0x1d651a0 [shape=record,label="{a}"];
-	Node0x1d651a0 -> Node0x1d653b0;
-	Node0x1d653b0 [shape=record,label="{a.postbarrier}"];
-}
