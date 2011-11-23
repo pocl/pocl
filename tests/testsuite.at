@@ -91,7 +91,7 @@ AT_CLEANUP
 
 AT_SETUP([Pass composition])
 AT_KEYWORDS([llvmopencl])
-tests="nobarrier1 barrier1 ifbarrier1"
+tests="nobarrier1 barrier1 ifbarrier1 ifbarrier2 ifbarrier3 ifbarrier4"
 AT_CHECK([true])
 for test in $tests
 do

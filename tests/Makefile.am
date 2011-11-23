@@ -139,8 +139,10 @@ COMPOSITE_TEST_GOLDEN = nobarrier1_workitem.ll			\
                         barrier1_barriers_workitem.ll		\
                         ifbarrier1_btr.ll			\
                         ifbarrier1_btr_barriers.ll		\
-                        ifbarrier1_btr_barriers_workitem.ll
-
+                        ifbarrier1_btr_barriers_workitem.ll     \
+                        ifbarrier2_btr.ll			\
+                        ifbarrier3_btr.ll			\
+                        ifbarrier4_btr.ll
 
 COMPOSITE_TEST_INPUTS = $(addsuffix .ll,					\
                         $(subst .,_, $(basename					\
