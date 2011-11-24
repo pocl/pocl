@@ -67,7 +67,7 @@
 IMPLEMENT_VSTORE(char  , __global)
 IMPLEMENT_VSTORE(short , __global)
 IMPLEMENT_VSTORE(int   , __global)
-#if defined(cl_khr_int64)
+#if defined(cles_khr_int64)
 IMPLEMENT_VSTORE(long  , __global)
 IMPLEMENT_VSTORE(ulong , __global)
 #endif
@@ -82,7 +82,7 @@ IMPLEMENT_VSTORE(double, __global)
 IMPLEMENT_VSTORE(char  , __local)
 IMPLEMENT_VSTORE(short , __local)
 IMPLEMENT_VSTORE(int   , __local)
-#if defined(cl_khr_int64)
+#if defined(cles_khr_int64)
 IMPLEMENT_VSTORE(long  , __local)
 IMPLEMENT_VSTORE(ulong , __local)
 #endif

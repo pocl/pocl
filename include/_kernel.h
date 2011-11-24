@@ -29,14 +29,14 @@
 #define __EMBEDDED_PROFILE__ 1
 #define __ADDRESS_BITS__ 32
 #undef cl_khr_fp64
-#undef cl_khr_int64
+#undef cles_khr_int64
 
 #elif defined(__ARM_DEVICE__)
 
 #define __EMBEDDED_PROFILE__ 1
 #define __ADDRESS_BITS__ 32
 #undef cl_khr_fp64
-#undef cl_khr_int64
+#undef cles_khr_int64
 
 #else
 
@@ -46,7 +46,7 @@
                                follow similar approach as with
                                OpenCL-defined __ENDIAN_LITTLE__. */
 #define cl_khr_fp64
-#define cl_khr_int64
+#define cles_khr_int64
 
 #endif
 
@@ -65,7 +65,7 @@
 #endif
 
 /* Define some feature macros to help write generic code */
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 #  define __IF_INT64(x) x
 #else
 #  define __IF_INT64(x)
@@ -134,7 +134,7 @@ typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 typedef long long2  __attribute__((__ext_vector_type__(2)));
 typedef long long3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
 typedef long long4  __attribute__((__ext_vector_type__(4)));
@@ -232,7 +232,7 @@ _cl_static_assert(uint4 , sizeof(uint4 ) == 4 *sizeof(uint));
 _cl_static_assert(uint8 , sizeof(uint8 ) == 8 *sizeof(uint));
 _cl_static_assert(uint16, sizeof(uint16) == 16*sizeof(uint));
 
-#ifdef cl_khr_int64 
+#ifdef cles_khr_int64 
 _cl_static_assert(long  , sizeof(long  ) == 8);
 _cl_static_assert(long2 , sizeof(long2 ) == 2 *sizeof(long));
 _cl_static_assert(long3 , sizeof(long3 ) == 4 *sizeof(long));
@@ -1008,7 +1008,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
 #define CHAR_MIN  SCHAR_MIN
 #define INT_MAX   2147483647
 #define INT_MIN   (-2147483647 - 1)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 #define LONG_MAX  0x7fffffffffffffffL
 #define LONG_MIN  (-0x7fffffffffffffffL - 1)
 #endif
@@ -1019,7 +1019,7 @@ _CL_DECLARE_FUNC_V_V(trunc)
 #define UCHAR_MAX 255
 #define USHRT_MAX 65535
 #define UINT_MAX  0xffffffff
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 #define ULONG_MAX 0xffffffffffffffffUL
 #endif
 
@@ -1507,7 +1507,7 @@ _CL_DECLARE_VLOAD(short , __global)
 _CL_DECLARE_VLOAD(ushort, __global)
 _CL_DECLARE_VLOAD(int   , __global)
 _CL_DECLARE_VLOAD(uint  , __global)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VLOAD(long  , __global)
 _CL_DECLARE_VLOAD(ulong , __global)
 #endif
@@ -1522,7 +1522,7 @@ _CL_DECLARE_VLOAD(short , __local)
 _CL_DECLARE_VLOAD(ushort, __local)
 _CL_DECLARE_VLOAD(int   , __local)
 _CL_DECLARE_VLOAD(uint  , __local)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VLOAD(long  , __local)
 _CL_DECLARE_VLOAD(ulong , __local)
 #endif
@@ -1537,7 +1537,7 @@ _CL_DECLARE_VLOAD(short , __constant)
 _CL_DECLARE_VLOAD(ushort, __constant)
 _CL_DECLARE_VLOAD(int   , __constant)
 _CL_DECLARE_VLOAD(uint  , __constant)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VLOAD(long  , __constant)
 _CL_DECLARE_VLOAD(ulong , __constant)
 #endif
@@ -1553,7 +1553,7 @@ _CL_DECLARE_VLOAD(short , __private)
 _CL_DECLARE_VLOAD(ushort, __private)
 _CL_DECLARE_VLOAD(int   , __private)
 _CL_DECLARE_VLOAD(uint  , __private)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VLOAD(long  , __private)
 _CL_DECLARE_VLOAD(ulong , __private)
 #endif
@@ -1576,7 +1576,7 @@ _CL_DECLARE_VSTORE(short , __global)
 _CL_DECLARE_VSTORE(ushort, __global)
 _CL_DECLARE_VSTORE(int   , __global)
 _CL_DECLARE_VSTORE(uint  , __global)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VSTORE(long  , __global)
 _CL_DECLARE_VSTORE(ulong , __global)
 #endif
@@ -1591,7 +1591,7 @@ _CL_DECLARE_VSTORE(short , __local)
 _CL_DECLARE_VSTORE(ushort, __local)
 _CL_DECLARE_VSTORE(int   , __local)
 _CL_DECLARE_VSTORE(uint  , __local)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VSTORE(long  , __local)
 _CL_DECLARE_VSTORE(ulong , __local)
 #endif
@@ -1607,7 +1607,7 @@ _CL_DECLARE_VSTORE(short , __private)
 _CL_DECLARE_VSTORE(ushort, __private)
 _CL_DECLARE_VSTORE(int   , __private)
 _CL_DECLARE_VSTORE(uint  , __private)
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 _CL_DECLARE_VSTORE(long  , __private)
 _CL_DECLARE_VSTORE(ulong , __private)
 #endif

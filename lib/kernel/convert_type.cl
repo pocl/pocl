@@ -42,7 +42,7 @@
   }
 
 /* 1 element */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_CONVERT_TYPE_1(SRC)              \
   DEFINE_CONVERT_TYPE(SRC, char  )              \
   DEFINE_CONVERT_TYPE(SRC, uchar )              \
@@ -54,7 +54,7 @@
   DEFINE_CONVERT_TYPE(SRC, ulong )              \
   DEFINE_CONVERT_TYPE(SRC, float )              \
   DEFINE_CONVERT_TYPE(SRC, double)
-#elif defined(cl_khr_int64)
+#elif defined(cles_khr_int64)
 #define DEFINE_CONVERT_TYPE_1(SRC)              \
   DEFINE_CONVERT_TYPE(SRC, char  )              \
   DEFINE_CONVERT_TYPE(SRC, uchar )              \
@@ -91,7 +91,7 @@ DEFINE_CONVERT_TYPE_1(short )
 DEFINE_CONVERT_TYPE_1(ushort)
 DEFINE_CONVERT_TYPE_1(int   )
 DEFINE_CONVERT_TYPE_1(uint  )
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 DEFINE_CONVERT_TYPE_1(long  )
 DEFINE_CONVERT_TYPE_1(ulong )
 #endif
@@ -101,7 +101,7 @@ DEFINE_CONVERT_TYPE_1(double)
 #endif
 
 /* 2 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_CONVERT_TYPE_2(SRC)                      \
   DEFINE_CONVERT_TYPE_HALF(SRC, char2  , char  )        \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar2 , uchar )        \
@@ -113,7 +113,7 @@ DEFINE_CONVERT_TYPE_1(double)
   DEFINE_CONVERT_TYPE_HALF(SRC, ulong2 , ulong )        \
   DEFINE_CONVERT_TYPE_HALF(SRC, float2 , float )        \
   DEFINE_CONVERT_TYPE_HALF(SRC, double2, double)
-#elif defined(cl_khr_int64)
+#elif defined(cles_khr_int64)
 #define DEFINE_CONVERT_TYPE_2(SRC)                      \
   DEFINE_CONVERT_TYPE_HALF(SRC, char2  , char  )        \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar2 , uchar )        \
@@ -160,7 +160,7 @@ DEFINE_CONVERT_TYPE_2(double2)
 #endif
 
 /* 3 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_CONVERT_TYPE_3(SRC)                              \
   DEFINE_CONVERT_TYPE_012(SRC, char3  , char2  , char  )        \
   DEFINE_CONVERT_TYPE_012(SRC, uchar3 , uchar2 , uchar )        \
@@ -172,7 +172,7 @@ DEFINE_CONVERT_TYPE_2(double2)
   DEFINE_CONVERT_TYPE_012(SRC, ulong3 , ulong2 , ulong )        \
   DEFINE_CONVERT_TYPE_012(SRC, float3 , float2 , float )        \
   DEFINE_CONVERT_TYPE_012(SRC, double3, double2, double)
-#elif defined(cl_khr_int64)
+#elif defined(cles_khr_int64)
 #define DEFINE_CONVERT_TYPE_3(SRC)                              \
   DEFINE_CONVERT_TYPE_012(SRC, char3  , char2  , char  )        \
   DEFINE_CONVERT_TYPE_012(SRC, uchar3 , uchar2 , uchar )        \
@@ -219,7 +219,7 @@ DEFINE_CONVERT_TYPE_3(double3)
 #endif
 
 /* 4 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_CONVERT_TYPE_4(SRC)                      \
   DEFINE_CONVERT_TYPE_HALF(SRC, char4  , char2  )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar4 , uchar2 )       \
@@ -231,7 +231,7 @@ DEFINE_CONVERT_TYPE_3(double3)
   DEFINE_CONVERT_TYPE_HALF(SRC, ulong4 , ulong2 )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, float4 , float2 )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, double4, double2)
-#elif defined(cl_khr_int64)
+#elif defined(cles_khr_int64)
 #define DEFINE_CONVERT_TYPE_4(SRC)                      \
   DEFINE_CONVERT_TYPE_HALF(SRC, char4  , char2  )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar4 , uchar2 )       \
@@ -278,7 +278,7 @@ DEFINE_CONVERT_TYPE_4(double4)
 #endif
 
 /* 8 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_CONVERT_TYPE_8(SRC)                      \
   DEFINE_CONVERT_TYPE_HALF(SRC, char8  , char4  )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar8 , uchar4 )       \
@@ -290,7 +290,7 @@ DEFINE_CONVERT_TYPE_4(double4)
   DEFINE_CONVERT_TYPE_HALF(SRC, ulong8 , ulong4 )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, float8 , float4 )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, double8, double4)
-#elif defined(cl_khr_int64)
+#elif defined(cles_khr_int64)
 #define DEFINE_CONVERT_TYPE_8(SRC)                      \
   DEFINE_CONVERT_TYPE_HALF(SRC, char8  , char4  )       \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar8 , uchar4 )       \
@@ -337,7 +337,7 @@ DEFINE_CONVERT_TYPE_8(double8)
 #endif
 
 /* 16 elements */
-#if defined(cl_khr_int64) && defined(cl_khr_fp64)
+#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_CONVERT_TYPE_16(SRC)                     \
   DEFINE_CONVERT_TYPE_HALF(SRC, char16  , char8  )      \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar16 , uchar8 )      \
@@ -349,7 +349,7 @@ DEFINE_CONVERT_TYPE_8(double8)
   DEFINE_CONVERT_TYPE_HALF(SRC, ulong16 , ulong8 )      \
   DEFINE_CONVERT_TYPE_HALF(SRC, float16 , float8 )      \
   DEFINE_CONVERT_TYPE_HALF(SRC, double16, double8)
-#elif defined(cl_khr_int64)
+#elif defined(cles_khr_int64)
 #define DEFINE_CONVERT_TYPE_16(SRC)                     \
   DEFINE_CONVERT_TYPE_HALF(SRC, char16  , char8  )      \
   DEFINE_CONVERT_TYPE_HALF(SRC, uchar16 , uchar8 )      \

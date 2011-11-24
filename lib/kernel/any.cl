@@ -111,7 +111,7 @@ int __attribute__((__overloadable__)) any(int16 a)
   return any(a.lo) || any(a.hi);
 }
 
-#ifdef cl_khr_int64
+#ifdef cles_khr_int64
 int __attribute__((__overloadable__)) any(long a)
 {
   return a < 0L;
