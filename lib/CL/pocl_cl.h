@@ -24,10 +24,9 @@
 #ifndef POCL_CL_H
 #define POCL_CL_H
 
-#include "config.h"
 #include <stdio.h>
 #include <ltdl.h>
-#include "CL/opencl.h"
+#include <CL/opencl.h>
 
 #define POCL_FILENAME_LENGTH 1024
 

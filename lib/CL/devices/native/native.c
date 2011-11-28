@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128

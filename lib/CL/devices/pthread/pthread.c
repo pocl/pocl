@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 

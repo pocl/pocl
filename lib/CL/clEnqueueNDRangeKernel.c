@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include "config.h"
 
 #define COMMAND_LENGTH 1024
 #define ARGUMENT_STRING_LENGTH 32
