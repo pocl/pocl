@@ -25,3 +25,6 @@
 SUBDIRS = include lib scripts examples tests
 
 ACLOCAL_AMFLAGS = -I m4
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = pocl.pc

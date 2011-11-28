@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Portable OpenCL
+Description: Portable OpenCL
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lcl
+Cflags: -I${includedir}
+
