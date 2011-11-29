@@ -44,7 +44,7 @@ struct thread_arguments {
   unsigned device;
   struct pocl_context pc;
   int last_gid_x; 
-  workgroup workgroup;
+  pocl_workgroup workgroup;
 };
 
 struct data {
@@ -250,7 +250,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   unsigned device;
   size_t x, y, z;
   unsigned i;
-  workgroup w;
+  pocl_workgroup w;
 
   d = (struct data *) data;
 
@@ -333,7 +333,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
 	    "_%s_workgroup", kernel->function_name);
   
-  w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
+  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
   int num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the

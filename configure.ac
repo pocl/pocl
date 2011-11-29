@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.61])
-AC_INIT([pocl], [20111014], [carlos.delalama@urjc.es])
+AC_INIT([pocl], [0.9], [carlos.delalama@urjc.es])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h clconfig.h])
 AC_CONFIG_AUX_DIR([config])
@@ -190,26 +190,28 @@ AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_
 CC="$old_CC"
 
 AC_CONFIG_FILES([Makefile
+                 pocl.pc
                  include/Makefile
                  include/CL/Makefile
                  lib/Makefile
                  lib/CL/Makefile
-		 lib/llvmopencl/Makefile
-		 lib/kernel/Makefile
-		 lib/kernel/tce/Makefile
-		 lib/kernel/x86_64/Makefile
-		 lib/kernel/arm/Makefile
-		 examples/Makefile
-		 examples/example1/Makefile
-		 examples/example2/Makefile
-		 examples/barriers/Makefile
-		 examples/forloops/Makefile
-		 examples/standalone/Makefile
-		 examples/trig/Makefile
-		 examples/loopbarriers/Makefile
+                 lib/llvmopencl/Makefile
+                 lib/kernel/Makefile
+                 lib/kernel/tce/Makefile
+                 lib/kernel/x86_64/Makefile
+                 lib/kernel/arm/Makefile
+                 examples/Makefile
+                 examples/example1/Makefile
+                 examples/example2/Makefile
+                 examples/barriers/Makefile
+                 examples/forloops/Makefile
+                 examples/standalone/Makefile
+                 examples/trig/Makefile
+                 examples/loopbarriers/Makefile
                  scripts/Makefile
                  tests/Makefile
-                 tests/atlocal])
+                 tests/atlocal
+                 ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile
 

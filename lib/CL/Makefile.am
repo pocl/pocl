@@ -49,3 +49,4 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
 
 libCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
 libCL_la_LDFLAGS = -lltdl
+

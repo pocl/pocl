@@ -22,8 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_HEADERS = pocl.h
-pkginclude_HEADERS = _kernel.h
-nobase_pkginclude_HEADERS = types.h
+pkginclude_HEADERS = pocl.h _kernel.h
+nobase_pkginclude_HEADERS = types.h		\
+                            arm/types.h		\
+                            tce/types.h		\
+                            x86_64/types.h
 
 SUBDIRS = CL
