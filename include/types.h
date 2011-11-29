@@ -1,3 +1,9 @@
+#ifdef __TCE_DEVICE__
+
+#include "tce/types.h"
+
+#else
+
 #include "clconfig.h"
 
 #define uchar unsigned char
@@ -30,3 +36,4 @@ typedef int intptr_t;
 typedef uint uintptr_t;
 #endif
 
+#endif
