@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
 
@@ -32,6 +33,10 @@
 
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128
+
+/* The name of the environment variable used to force a certain max thread count
+   for the thread execution. */
+#define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
 
 struct pointer_list {
   void *pointer;
@@ -159,6 +164,12 @@ get_max_thread_count() {
   static int cores = 0;
   if (cores != 0)
       return cores;
+
+  if (getenv(THREAD_COUNT_ENV) != NULL) 
+    {
+      cores = atoi(getenv(THREAD_COUNT_ENV));
+      return cores;
+    }
 
   if (access (cpuinfo, R_OK) == 0) 
     {
