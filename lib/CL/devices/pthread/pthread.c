@@ -158,7 +158,7 @@ get_max_thread_count() {
   if (access (cpuinfo, R_OK) == 0) 
     {
       FILE *f = fopen (cpuinfo, "r");
-#     define MAX_CPUINFO_SIZE 4096
+#     define MAX_CPUINFO_SIZE 16*1024
       char contents[MAX_CPUINFO_SIZE];
       int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
       fclose (f);
