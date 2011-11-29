@@ -296,7 +296,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"clang " NATIVE_CLANG_FLAGS " -c -o %s.o %s",
+			"clang -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
