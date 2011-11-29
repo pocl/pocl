@@ -155,6 +155,11 @@ get_max_thread_count() {
   const char* cpuinfo = "/proc/cpuinfo";
   /* eight is a good round number ;) */
   const int FALLBACK_MAX_THREAD_COUNT = 8;
+
+  static int cores = 0;
+  if (cores != 0)
+      return cores;
+
   if (access (cpuinfo, R_OK) == 0) 
     {
       FILE *f = fopen (cpuinfo, "r");
@@ -168,7 +173,7 @@ get_max_thread_count() {
          should give the number of cores overall in a multiprocessor
          system. In Meego Harmattan on ARM it prints Processor instead of
          processor */
-      int cores = 0;
+      cores = 0;
       char* p = contents;
       while ((p = strstr (p, "rocessor")) != NULL) 
         {
