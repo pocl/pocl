@@ -57,9 +57,9 @@ kernel_bc="${tempdir}/kernel.bc"
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ $EXTRA_CLANG_FLAGS -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
+    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
 else
-    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
+    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ $EXTRA_CLANG_FLAGS -c -emit-llvm  -include @pkgincludedir@/types.h -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 fi
 
 rm -f ${header}

@@ -22,23 +22,23 @@
 # THE SOFTWARE.
 
 kernel_lib_dir=/@HOST_ARCH@
-while getopts k:x:y:z:o:t: o
+while getopts k:x:y:z:t:o: o
 do
     case "$o" in
 	k)   kernel="${OPTARG}";;
 	x)   size_x="${OPTARG}";;
 	y)   size_y="${OPTARG}";;
 	z)   size_z="${OPTARG}";;
-	o)   output_file="${OPTARG}";;
 	t)   kernel_lib_dir="/${OPTARG}";;
-	[?]) echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1;;
+	o)   output_file="${OPTARG}";;
+	[?]) echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] [-t <target_arch>] -o <output_file> <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
 if [ "x$kernel" = x ]
 then
-    echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] [-t <target_arch>] -o <output_file> <input_file>" && exit 1
 fi
 
 if [ "x$size_x" = x ]

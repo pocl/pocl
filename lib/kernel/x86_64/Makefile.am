@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel/dummy.
+# Makefile.am for pocl/lib/kernel/x86_64.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -34,11 +34,28 @@ include ../sources.mk
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
+if NATIVE_X86_64
+
+CLANGFLAGS += @NATIVE_CLANG_FLAGS@
+
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) $(X86_64_CLANG_FLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) $(X86_64_CLANG_FLAGS) -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+else
+
+CLANGFLAGS += @X86_64_CLANG_FLAGS@
+
+.cl.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/x86_64/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+.c.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/x86_64/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+endif
+
 
 .ll.o:
 	$(LLVM_AS) -o $@ $<

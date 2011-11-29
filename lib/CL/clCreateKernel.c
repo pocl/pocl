@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "config.h"
 
 #define COMMAND_LENGTH 1024
 

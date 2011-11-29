@@ -25,7 +25,6 @@
 #include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "config.h"
 
 #define COMMAND_LENGTH 1024
 

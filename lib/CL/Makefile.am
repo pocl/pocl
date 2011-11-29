@@ -50,9 +50,3 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
 libCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
 libCL_la_LDFLAGS = -lltdl
 
-# TCE needs the prototype for the WG function as it generates the
-# launcher on-the-fly and uses the pocl-standalone script. Need to
-# therefore install it.
-includedir =  ${prefix}/include/pocl
-include_HEADERS = pocl_cl.h
-
