@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -86,12 +87,15 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      b = malloc (size);
-      memcpy (b, host_ptr, size);
+      if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+	{
+	  memcpy (b, host_ptr, size);
+	  return b;
+	}
       
-      return b;
+      return NULL;
     }
-
+  
   if (host_ptr != NULL)
     {
       if (d->host_buffers == NULL)
@@ -109,8 +113,11 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
       
       return host_ptr;
     }
-  else
-    return malloc (size);
+
+  if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+    return b;
+  
+  return NULL;
 }
 
 void
@@ -289,7 +296,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"clang " CLANGFLAGS " -c -o %s.o %s",
+			"clang " NATIVE_CLANG_FLAGS " -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);

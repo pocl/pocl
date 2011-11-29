@@ -24,5 +24,6 @@
 
 noinst_HEADERS = pocl.h
 pkginclude_HEADERS = _kernel.h
+nobase_pkginclude_HEADERS = types.h
 
 SUBDIRS = CL
