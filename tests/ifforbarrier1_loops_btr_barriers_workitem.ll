@@ -1,4 +1,4 @@
-; ModuleID = 'ifforbarrier1_btr_loops_barriers.ll'
+; ModuleID = 'ifforbarrier1_loops_btr_barriers.ll'
 
 declare void @barrier(i32)
 
@@ -28,12 +28,15 @@ c.latchbarrier:                                   ; preds = %barrier
   br label %c.latchbarrier.postbarrier.wi_0_0_0
 
 c.latchbarrier.postbarrier.wi_0_0_0:              ; preds = %c.latchbarrier
-  br i1 true, label %barrier.prebarrier.wi_0_0_0, label %d.btr.wi_0_0_0
+  br i1 true, label %barrier.prebarrier.wi_0_0_0, label %d.loopexit.wi_0_0_0
+
+d.loopexit.wi_0_0_0:                              ; preds = %c.latchbarrier.postbarrier.wi_0_0_0
+  br label %d.btr.wi_0_0_0
 
 d.wi_0_0_0:                                       ; preds = %b.wi_0_0_0
-  br label %a.wi_1_0_084
+  br label %a.wi_1_0_091
 
-d.btr.wi_0_0_0:                                   ; preds = %c.latchbarrier.postbarrier.wi_0_0_0
+d.btr.wi_0_0_0:                                   ; preds = %d.loopexit.wi_0_0_0
   br label %c.latchbarrier.postbarrier.wi_1_0_0
 
 barrier.preheader.loopbarrier.prebarrier.wi_1_0_0: ; preds = %a.wi_1_0_0
@@ -121,170 +124,191 @@ barrier.prebarrier.wi_1_1_1:                      ; preds = %barrier.prebarrier.
   br label %barrier
 
 c.latchbarrier.postbarrier.wi_1_0_0:              ; preds = %d.btr.wi_0_0_0
-  br i1 true, label %unreachable30, label %d.btr.wi_1_0_0
+  br i1 true, label %unreachable31, label %d.loopexit.wi_1_0_0
 
-d.btr.wi_1_0_0:                                   ; preds = %c.latchbarrier.postbarrier.wi_1_0_0
+d.loopexit.wi_1_0_0:                              ; preds = %c.latchbarrier.postbarrier.wi_1_0_0
+  br label %d.btr.wi_1_0_0
+
+d.btr.wi_1_0_0:                                   ; preds = %d.loopexit.wi_1_0_0
   br label %c.latchbarrier.postbarrier.wi_0_1_0
 
-unreachable30:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_0_0
+unreachable31:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_0_0
   unreachable
 
 c.latchbarrier.postbarrier.wi_0_1_0:              ; preds = %d.btr.wi_1_0_0
-  br i1 true, label %unreachable33, label %d.btr.wi_0_1_0
+  br i1 true, label %unreachable35, label %d.loopexit.wi_0_1_0
 
-d.btr.wi_0_1_0:                                   ; preds = %c.latchbarrier.postbarrier.wi_0_1_0
+d.loopexit.wi_0_1_0:                              ; preds = %c.latchbarrier.postbarrier.wi_0_1_0
+  br label %d.btr.wi_0_1_0
+
+d.btr.wi_0_1_0:                                   ; preds = %d.loopexit.wi_0_1_0
   br label %c.latchbarrier.postbarrier.wi_1_1_0
 
-unreachable33:                                    ; preds = %c.latchbarrier.postbarrier.wi_0_1_0
+unreachable35:                                    ; preds = %c.latchbarrier.postbarrier.wi_0_1_0
   unreachable
 
 c.latchbarrier.postbarrier.wi_1_1_0:              ; preds = %d.btr.wi_0_1_0
-  br i1 true, label %unreachable36, label %d.btr.wi_1_1_0
+  br i1 true, label %unreachable39, label %d.loopexit.wi_1_1_0
 
-d.btr.wi_1_1_0:                                   ; preds = %c.latchbarrier.postbarrier.wi_1_1_0
+d.loopexit.wi_1_1_0:                              ; preds = %c.latchbarrier.postbarrier.wi_1_1_0
+  br label %d.btr.wi_1_1_0
+
+d.btr.wi_1_1_0:                                   ; preds = %d.loopexit.wi_1_1_0
   br label %c.latchbarrier.postbarrier.wi_0_0_1
 
-unreachable36:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_1_0
+unreachable39:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_1_0
   unreachable
 
 c.latchbarrier.postbarrier.wi_0_0_1:              ; preds = %d.btr.wi_1_1_0
-  br i1 true, label %unreachable39, label %d.btr.wi_0_0_1
+  br i1 true, label %unreachable43, label %d.loopexit.wi_0_0_1
 
-d.btr.wi_0_0_1:                                   ; preds = %c.latchbarrier.postbarrier.wi_0_0_1
+d.loopexit.wi_0_0_1:                              ; preds = %c.latchbarrier.postbarrier.wi_0_0_1
+  br label %d.btr.wi_0_0_1
+
+d.btr.wi_0_0_1:                                   ; preds = %d.loopexit.wi_0_0_1
   br label %c.latchbarrier.postbarrier.wi_1_0_1
 
-unreachable39:                                    ; preds = %c.latchbarrier.postbarrier.wi_0_0_1
+unreachable43:                                    ; preds = %c.latchbarrier.postbarrier.wi_0_0_1
   unreachable
 
 c.latchbarrier.postbarrier.wi_1_0_1:              ; preds = %d.btr.wi_0_0_1
-  br i1 true, label %unreachable42, label %d.btr.wi_1_0_1
+  br i1 true, label %unreachable47, label %d.loopexit.wi_1_0_1
 
-d.btr.wi_1_0_1:                                   ; preds = %c.latchbarrier.postbarrier.wi_1_0_1
+d.loopexit.wi_1_0_1:                              ; preds = %c.latchbarrier.postbarrier.wi_1_0_1
+  br label %d.btr.wi_1_0_1
+
+d.btr.wi_1_0_1:                                   ; preds = %d.loopexit.wi_1_0_1
   br label %c.latchbarrier.postbarrier.wi_0_1_1
 
-unreachable42:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_0_1
+unreachable47:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_0_1
   unreachable
 
 c.latchbarrier.postbarrier.wi_0_1_1:              ; preds = %d.btr.wi_1_0_1
-  br i1 true, label %unreachable45, label %d.btr.wi_0_1_1
+  br i1 true, label %unreachable51, label %d.loopexit.wi_0_1_1
 
-d.btr.wi_0_1_1:                                   ; preds = %c.latchbarrier.postbarrier.wi_0_1_1
+d.loopexit.wi_0_1_1:                              ; preds = %c.latchbarrier.postbarrier.wi_0_1_1
+  br label %d.btr.wi_0_1_1
+
+d.btr.wi_0_1_1:                                   ; preds = %d.loopexit.wi_0_1_1
   br label %c.latchbarrier.postbarrier.wi_1_1_1
 
-unreachable45:                                    ; preds = %c.latchbarrier.postbarrier.wi_0_1_1
+unreachable51:                                    ; preds = %c.latchbarrier.postbarrier.wi_0_1_1
   unreachable
 
 c.latchbarrier.postbarrier.wi_1_1_1:              ; preds = %d.btr.wi_0_1_1
-  br i1 true, label %unreachable48, label %d.btr.wi_1_1_1
+  br i1 true, label %unreachable55, label %d.loopexit.wi_1_1_1
 
-d.btr.wi_1_1_1:                                   ; preds = %c.latchbarrier.postbarrier.wi_1_1_1
+d.loopexit.wi_1_1_1:                              ; preds = %c.latchbarrier.postbarrier.wi_1_1_1
+  br label %d.btr.wi_1_1_1
+
+d.btr.wi_1_1_1:                                   ; preds = %d.loopexit.wi_1_1_1
   ret void
 
-unreachable48:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_1_1
+unreachable55:                                    ; preds = %c.latchbarrier.postbarrier.wi_1_1_1
   unreachable
 
-a.wi_1_0_084:                                     ; preds = %d.wi_0_0_0
-  br i1 true, label %b.wi_1_0_0, label %barrier.preheader.loopbarrier.prebarrier.wi_1_0_091
+a.wi_1_0_091:                                     ; preds = %d.wi_0_0_0
+  br i1 true, label %b.wi_1_0_0, label %barrier.preheader.loopbarrier.prebarrier.wi_1_0_098
 
-b.wi_1_0_0:                                       ; preds = %a.wi_1_0_084
+b.wi_1_0_0:                                       ; preds = %a.wi_1_0_091
   br label %d.wi_1_0_0
 
 d.wi_1_0_0:                                       ; preds = %b.wi_1_0_0
-  br label %a.wi_0_1_085
+  br label %a.wi_0_1_092
 
-barrier.preheader.loopbarrier.prebarrier.wi_1_0_091: ; preds = %a.wi_1_0_084
-  br label %unreachable53
+barrier.preheader.loopbarrier.prebarrier.wi_1_0_098: ; preds = %a.wi_1_0_091
+  br label %unreachable60
 
-unreachable53:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_0_091
+unreachable60:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_0_098
   unreachable
 
-a.wi_0_1_085:                                     ; preds = %d.wi_1_0_0
-  br i1 true, label %b.wi_0_1_0, label %barrier.preheader.loopbarrier.prebarrier.wi_0_1_092
+a.wi_0_1_092:                                     ; preds = %d.wi_1_0_0
+  br i1 true, label %b.wi_0_1_0, label %barrier.preheader.loopbarrier.prebarrier.wi_0_1_099
 
-b.wi_0_1_0:                                       ; preds = %a.wi_0_1_085
+b.wi_0_1_0:                                       ; preds = %a.wi_0_1_092
   br label %d.wi_0_1_0
 
 d.wi_0_1_0:                                       ; preds = %b.wi_0_1_0
-  br label %a.wi_1_1_086
+  br label %a.wi_1_1_093
 
-barrier.preheader.loopbarrier.prebarrier.wi_0_1_092: ; preds = %a.wi_0_1_085
-  br label %unreachable58
+barrier.preheader.loopbarrier.prebarrier.wi_0_1_099: ; preds = %a.wi_0_1_092
+  br label %unreachable65
 
-unreachable58:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_0_1_092
+unreachable65:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_0_1_099
   unreachable
 
-a.wi_1_1_086:                                     ; preds = %d.wi_0_1_0
-  br i1 true, label %b.wi_1_1_0, label %barrier.preheader.loopbarrier.prebarrier.wi_1_1_093
+a.wi_1_1_093:                                     ; preds = %d.wi_0_1_0
+  br i1 true, label %b.wi_1_1_0, label %barrier.preheader.loopbarrier.prebarrier.wi_1_1_0100
 
-b.wi_1_1_0:                                       ; preds = %a.wi_1_1_086
+b.wi_1_1_0:                                       ; preds = %a.wi_1_1_093
   br label %d.wi_1_1_0
 
 d.wi_1_1_0:                                       ; preds = %b.wi_1_1_0
-  br label %a.wi_0_0_187
+  br label %a.wi_0_0_194
 
-barrier.preheader.loopbarrier.prebarrier.wi_1_1_093: ; preds = %a.wi_1_1_086
-  br label %unreachable63
+barrier.preheader.loopbarrier.prebarrier.wi_1_1_0100: ; preds = %a.wi_1_1_093
+  br label %unreachable70
 
-unreachable63:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_1_093
+unreachable70:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_1_0100
   unreachable
 
-a.wi_0_0_187:                                     ; preds = %d.wi_1_1_0
-  br i1 true, label %b.wi_0_0_1, label %barrier.preheader.loopbarrier.prebarrier.wi_0_0_194
+a.wi_0_0_194:                                     ; preds = %d.wi_1_1_0
+  br i1 true, label %b.wi_0_0_1, label %barrier.preheader.loopbarrier.prebarrier.wi_0_0_1101
 
-b.wi_0_0_1:                                       ; preds = %a.wi_0_0_187
+b.wi_0_0_1:                                       ; preds = %a.wi_0_0_194
   br label %d.wi_0_0_1
 
 d.wi_0_0_1:                                       ; preds = %b.wi_0_0_1
-  br label %a.wi_1_0_188
+  br label %a.wi_1_0_195
 
-barrier.preheader.loopbarrier.prebarrier.wi_0_0_194: ; preds = %a.wi_0_0_187
-  br label %unreachable68
+barrier.preheader.loopbarrier.prebarrier.wi_0_0_1101: ; preds = %a.wi_0_0_194
+  br label %unreachable75
 
-unreachable68:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_0_0_194
+unreachable75:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_0_0_1101
   unreachable
 
-a.wi_1_0_188:                                     ; preds = %d.wi_0_0_1
-  br i1 true, label %b.wi_1_0_1, label %barrier.preheader.loopbarrier.prebarrier.wi_1_0_195
+a.wi_1_0_195:                                     ; preds = %d.wi_0_0_1
+  br i1 true, label %b.wi_1_0_1, label %barrier.preheader.loopbarrier.prebarrier.wi_1_0_1102
 
-b.wi_1_0_1:                                       ; preds = %a.wi_1_0_188
+b.wi_1_0_1:                                       ; preds = %a.wi_1_0_195
   br label %d.wi_1_0_1
 
 d.wi_1_0_1:                                       ; preds = %b.wi_1_0_1
-  br label %a.wi_0_1_189
+  br label %a.wi_0_1_196
 
-barrier.preheader.loopbarrier.prebarrier.wi_1_0_195: ; preds = %a.wi_1_0_188
-  br label %unreachable73
+barrier.preheader.loopbarrier.prebarrier.wi_1_0_1102: ; preds = %a.wi_1_0_195
+  br label %unreachable80
 
-unreachable73:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_0_195
+unreachable80:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_0_1102
   unreachable
 
-a.wi_0_1_189:                                     ; preds = %d.wi_1_0_1
-  br i1 true, label %b.wi_0_1_1, label %barrier.preheader.loopbarrier.prebarrier.wi_0_1_196
+a.wi_0_1_196:                                     ; preds = %d.wi_1_0_1
+  br i1 true, label %b.wi_0_1_1, label %barrier.preheader.loopbarrier.prebarrier.wi_0_1_1103
 
-b.wi_0_1_1:                                       ; preds = %a.wi_0_1_189
+b.wi_0_1_1:                                       ; preds = %a.wi_0_1_196
   br label %d.wi_0_1_1
 
 d.wi_0_1_1:                                       ; preds = %b.wi_0_1_1
-  br label %a.wi_1_1_190
+  br label %a.wi_1_1_197
 
-barrier.preheader.loopbarrier.prebarrier.wi_0_1_196: ; preds = %a.wi_0_1_189
-  br label %unreachable78
+barrier.preheader.loopbarrier.prebarrier.wi_0_1_1103: ; preds = %a.wi_0_1_196
+  br label %unreachable85
 
-unreachable78:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_0_1_196
+unreachable85:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_0_1_1103
   unreachable
 
-a.wi_1_1_190:                                     ; preds = %d.wi_0_1_1
-  br i1 true, label %b.wi_1_1_1, label %barrier.preheader.loopbarrier.prebarrier.wi_1_1_197
+a.wi_1_1_197:                                     ; preds = %d.wi_0_1_1
+  br i1 true, label %b.wi_1_1_1, label %barrier.preheader.loopbarrier.prebarrier.wi_1_1_1104
 
-b.wi_1_1_1:                                       ; preds = %a.wi_1_1_190
+b.wi_1_1_1:                                       ; preds = %a.wi_1_1_197
   br label %d.wi_1_1_1
 
 d.wi_1_1_1:                                       ; preds = %b.wi_1_1_1
   ret void
 
-barrier.preheader.loopbarrier.prebarrier.wi_1_1_197: ; preds = %a.wi_1_1_190
-  br label %unreachable83
+barrier.preheader.loopbarrier.prebarrier.wi_1_1_1104: ; preds = %a.wi_1_1_197
+  br label %unreachable90
 
-unreachable83:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_1_197
+unreachable90:                                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_1_1104
   unreachable
 }

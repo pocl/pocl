@@ -1,4 +1,4 @@
-; ModuleID = 'ifforbarrier1_btr_loops.ll'
+; ModuleID = 'ifforbarrier1_loops_btr.ll'
 
 declare void @barrier(i32)
 
@@ -28,11 +28,14 @@ c.latchbarrier:                                   ; preds = %barrier
   br label %c.latchbarrier.postbarrier
 
 c.latchbarrier.postbarrier:                       ; preds = %c.latchbarrier
-  br i1 true, label %barrier.prebarrier, label %d.btr
+  br i1 true, label %barrier.prebarrier, label %d.loopexit
+
+d.loopexit:                                       ; preds = %c.latchbarrier.postbarrier
+  br label %d.btr
 
 d:                                                ; preds = %b
   ret void
 
-d.btr:                                            ; preds = %c.latchbarrier.postbarrier
+d.btr:                                            ; preds = %d.loopexit
   ret void
 }

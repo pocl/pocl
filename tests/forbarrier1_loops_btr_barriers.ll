@@ -1,4 +1,4 @@
-; ModuleID = 'forbarrier1_btr_loops.ll'
+; ModuleID = 'forbarrier1_loops_btr.ll'
 
 declare void @barrier(i32)
 

@@ -105,18 +105,18 @@ COMPOSITE_TEST_GOLDEN = nobarrier1_workitem.ll				\
                         ifbarrier2_btr.ll				\
                         ifbarrier3_btr.ll				\
                         ifbarrier4_btr.ll				\
-                        forbarrier1_btr.ll				\
-                        forbarrier1_btr_loops.ll			\
-                        forbarrier1_btr_loops_barriers.ll		\
-                        forbarrier1_btr_loops_barriers_workitem.ll	\
-                        forbarrier2_btr.ll				\
-                        forbarrier2_btr_loops.ll			\
-                        forbarrier2_btr_loops_barriers.ll		\
-                        forbarrier2_btr_loops_barriers_workitem.ll	\
-                        ifforbarrier1_btr.ll                            \
-                        ifforbarrier1_btr_loops.ll                      \
-                        ifforbarrier1_btr_loops_barriers.ll             \
-                        ifforbarrier1_btr_loops_barriers_workitem.ll    \
+                        forbarrier1_loops.ll				\
+                        forbarrier1_loops_btr.ll			\
+                        forbarrier1_loops_btr_barriers.ll		\
+                        forbarrier1_loops_btr_barriers_workitem.ll	\
+                        forbarrier2_loops.ll				\
+                        forbarrier2_loops_btr.ll			\
+                        forbarrier2_loops_btr_barriers.ll		\
+                        forbarrier2_loops_btr_barriers_workitem.ll	\
+                        ifforbarrier1_loops.ll                          \
+                        ifforbarrier1_loops_btr.ll                      \
+                        ifforbarrier1_loops_btr_barriers.ll             \
+                        ifforbarrier1_loops_btr_barriers_workitem.ll    \
                         forifbarrier1_loops.ll                          \
                         forifbarrier1_loops_btr.ll                      \
                         forifbarrier1_loops_btr_barriers.ll             \
