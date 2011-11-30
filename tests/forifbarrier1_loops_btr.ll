@@ -24,10 +24,10 @@ d.latchbarrier:                                   ; preds = %c
 e:                                                ; preds = %d.latchbarrier
   ret void
 
-e.btr:                                            ; preds = %d.latchbarrier.btr
-  ret void
-
 d.latchbarrier.btr:                               ; preds = %barrier
   call void @barrier(i32 0)
   br i1 true, label %b, label %e.btr
+
+e.btr:                                            ; preds = %d.latchbarrier.btr
+  ret void
 }

@@ -33,13 +33,13 @@ d.latchbarrier.postbarrier:                       ; preds = %d.latchbarrier
 e:                                                ; preds = %d.latchbarrier.postbarrier
   ret void
 
-e.btr:                                            ; preds = %d.latchbarrier.btr.postbarrier
-  ret void
-
 d.latchbarrier.btr:                               ; preds = %barrier
   call void @barrier(i32 0)
   br label %d.latchbarrier.btr.postbarrier
 
 d.latchbarrier.btr.postbarrier:                   ; preds = %d.latchbarrier.btr
   br i1 true, label %b, label %e.btr
+
+e.btr:                                            ; preds = %d.latchbarrier.btr.postbarrier
+  ret void
 }

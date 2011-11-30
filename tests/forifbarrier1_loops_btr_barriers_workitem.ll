@@ -33,15 +33,15 @@ d.latchbarrier.postbarrier.wi_0_0_0:              ; preds = %d.latchbarrier
 e.wi_0_0_0:                                       ; preds = %d.latchbarrier.postbarrier.wi_0_0_0
   br label %d.latchbarrier.postbarrier.wi_1_0_0
 
-e.btr.wi_0_0_0:                                   ; preds = %d.latchbarrier.btr.postbarrier.wi_0_0_0
-  br label %d.latchbarrier.btr.postbarrier.wi_1_0_0
-
 d.latchbarrier.btr:                               ; preds = %barrier
   call void @barrier(i32 0)
   br label %d.latchbarrier.btr.postbarrier.wi_0_0_0
 
 d.latchbarrier.btr.postbarrier.wi_0_0_0:          ; preds = %d.latchbarrier.btr
   br i1 true, label %b.wi_0_0_0, label %e.btr.wi_0_0_0
+
+e.btr.wi_0_0_0:                                   ; preds = %d.latchbarrier.btr.postbarrier.wi_0_0_0
+  br label %d.latchbarrier.btr.postbarrier.wi_1_0_0
 
 a.loopbarrier.prebarrier.wi_1_0_0:                ; preds = %a.loopbarrier.prebarrier.wi_0_0_0
   br label %a.loopbarrier.prebarrier.wi_0_1_0

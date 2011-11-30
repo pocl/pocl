@@ -91,32 +91,25 @@ AT_CLEANUP
 
 AT_SETUP([Pass composition])
 AT_KEYWORDS([llvmopencl])
-tests="nobarrier1 barrier1 ifbarrier1 ifbarrier2 ifbarrier3 ifbarrier4 forbarrier1 forbarrier2"
-AT_CHECK([true])
-for test in $tests
+for type in btr loops barriers workitem
 do
-  for type in btr loops barriers workitem
+  for i in $abs_top_srcdir/tests/*_$type.ll
   do
-#for i in $abs_top_srcdir/tests/*_$type.dot
-    i="$abs_top_srcdir/tests/$test*_$type.ll"
-    if [[ -f $i ]]
-    then
-      golden=`echo $i | sed 's/.*\///' | sed s/.ll/_golden.ll/`
-      input=`echo $golden | sed s/_${type}_golden.ll/.ll/`
-      output=`echo $golden | sed s/_golden.ll/_output.ll/`
-      echo "input=$input"
-      echo "output=$output"
-      echo "golden=$golden"
-      cp $i $golden
-      cp $abs_top_srcdir/tests/$input .
-      case $type in
-        btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input], 0, ignore, ignore) ;;
-        loops)    AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
-        barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $output $input], 0, ignore, ignore) ;;
-        workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
-      esac
-      AT_CHECK([cmp $output $golden])
-    fi
+    golden=`echo $i | sed 's/.*\///' | sed s/.ll/_golden.ll/`
+    input=`echo $golden | sed s/_${type}_golden.ll/.ll/`
+    output=`echo $golden | sed s/_golden.ll/_output.ll/`
+    echo "input=$input"
+    echo "output=$output"
+    echo "golden=$golden"
+    cp $i $golden
+    cp $abs_top_srcdir/tests/$input .
+    case $type in
+      btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input], 0, ignore, ignore) ;;
+      loops)    AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
+      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $output $input], 0, ignore, ignore) ;;
+      workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
+    esac
+    AT_CHECK([cmp $output $golden])
   done
 done
 AT_CLEANUP
