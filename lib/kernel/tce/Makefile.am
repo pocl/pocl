@@ -36,11 +36,28 @@ include ../sources.mk
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
+if NATIVE_TCE
+
+CLANGFLAGS += @NATIVE_CLANG_FLAGS@
+
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) $(TCE_CLANG_FLAGS) -ccc-host-triple tce-tut-llvm -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) $(TCE_CLANG_FLAGS) -ccc-host-triple tce-tut-llvm -c -emit-llvm -include $(top_srcdir)/include/_kernel.h -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+else
+
+CLANGFLAGS += @TCE_CLANG_FLAGS@
+
+.cl.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+.c.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+endif
+
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h

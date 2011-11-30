@@ -20,7 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+
 #include "pocl.h"
+#include "Workgroup.h"
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -35,12 +37,7 @@
 
 using namespace std;
 using namespace llvm;
-
-cl::opt<string>
-Kernel("kernel",
-       cl::desc("Kernel function name"),
-       cl::value_desc("kernel"),
-       cl::init(""));
+using namespace pocl;
 
 cl::opt<string>
 Header("header",
@@ -66,75 +63,69 @@ static RegisterPass<GenerateHeader> X("generate-header",
 bool
 GenerateHeader::runOnFunction(Function &F)
 {
-  NamedMDNode *Kernels = F.getParent()->getNamedMetadata("opencl.kernels");
-  for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
-    Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
+  if (!Workgroup::isKernelToProcess(F))
+    return false;
 
-    if (K == &F) {
-      if ((Kernel != "") && (F.getName() != Kernel))
-	return false;
-
-      string ErrorInfo;
-      raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
+  string ErrorInfo;
+  raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
       
-      int num_args = F.getFunctionType()->getNumParams();
+  int num_args = F.getFunctionType()->getNumParams();
       
-      out << "#define _" << F.getName() << "_NUM_ARGS " << num_args << '\n';
+  out << "#define _" << F.getName() << "_NUM_ARGS " << num_args << '\n';
       
-      bool is_pointer[num_args];
-      bool is_local[num_args];
-      
-      int i = 0;
-      for (Function::const_arg_iterator ii = F.arg_begin(),
-	     ee = F.arg_end();
-	   ii != ee; ++ii) {
-	Type *t = ii->getType();
-	
-	const PointerType *p = dyn_cast<PointerType> (t);
-	
-	if (p == NULL) {
-	  is_pointer[i] = false;
-	  is_local[i] = false;
-	  ++i;
-	  continue;
-	}
-	
-	is_pointer[i] = true;
-	
-	switch (p->getAddressSpace()) {
-	case POCL_ADDRESS_SPACE_GLOBAL:
-	case POCL_ADDRESS_SPACE_CONSTANT:
-	  is_local[i] = false;
-	  break;
-	case POCL_ADDRESS_SPACE_LOCAL:
-	  is_local[i] = true;
-	  break;
-	default:
-	  llvm_unreachable("Invalid address space qualifier on kernel argument!");
-	}
-	
-	++i;
-      }
-      
-      out << "#define _" << F.getName() << "_ARG_IS_POINTER {";
-      if (num_args != 0) {
-	out << is_pointer[0];
-	for (i = 1; i < num_args; ++i)
-	  out << ", " << is_pointer[i];
-      }
-      out << "}\n";
-      
-      out << "#define _" << F.getName() << "_ARG_IS_LOCAL {";
-      if (num_args != 0) {
-	out << is_local[0];
-	for (i = 1; i < num_args; ++i)
-	  out << ", " << is_local[i];
-      }
-      out << "}\n";
-      
-      return false;
+  bool is_pointer[num_args];
+  bool is_local[num_args];
+  
+  int i = 0;
+  for (Function::const_arg_iterator ii = F.arg_begin(),
+         ee = F.arg_end();
+       ii != ee; ++ii) {
+    Type *t = ii->getType();
+    
+    const PointerType *p = dyn_cast<PointerType> (t);
+    
+    if (p == NULL) {
+      is_pointer[i] = false;
+      is_local[i] = false;
+      ++i;
+      continue;
     }
+    
+    is_pointer[i] = true;
+    
+    switch (p->getAddressSpace()) {
+    case POCL_ADDRESS_SPACE_GLOBAL:
+    case POCL_ADDRESS_SPACE_CONSTANT:
+      is_local[i] = false;
+      break;
+    case POCL_ADDRESS_SPACE_LOCAL:
+      is_local[i] = true;
+      break;
+    default:
+      llvm_unreachable("Invalid address space qualifier on kernel argument!");
+    }
+    
+    ++i;
   }
+      
+  out << "#define _" << F.getName() << "_ARG_IS_POINTER {";
+  if (num_args != 0) {
+    out << is_pointer[0];
+    for (i = 1; i < num_args; ++i)
+      out << ", " << is_pointer[i];
+  }
+  out << "}\n";
+  
+  out << "#define _" << F.getName() << "_ARG_IS_LOCAL {";
+  if (num_args != 0) {
+    out << is_local[0];
+    for (i = 1; i < num_args; ++i)
+      out << ", " << is_local[i];
+  }
+  out << "}\n";
 
+  out << "#define _" << F.getName() << "_NUM_LOCALS 0\n";
+  out << "#define _" << F.getName() << "_LOCAL_SIZE {}\n";
+  
   return false;
 }

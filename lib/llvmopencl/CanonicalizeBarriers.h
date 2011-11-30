@@ -36,12 +36,14 @@ namespace pocl {
   CanonicalizeBarriers() : FunctionPass(ID) {}
     
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
+    virtual bool doInitialization(llvm::Module &M);
     virtual bool runOnFunction(llvm::Function &F);
     
   private:
     typedef std::set<llvm::Instruction *> InstructionSet;
     
     llvm::LoopInfo *LI;
+    llvm::DominatorTree *DT;
 
     bool ProcessFunction(llvm::Function &F);
 

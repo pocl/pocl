@@ -25,12 +25,17 @@
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128
+
+/* The name of the environment variable used to force a certain max thread count
+   for the thread execution. */
+#define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
 
 struct pointer_list {
   void *pointer;
@@ -43,7 +48,7 @@ struct thread_arguments {
   unsigned device;
   struct pocl_context pc;
   int last_gid_x; 
-  workgroup workgroup;
+  pocl_workgroup workgroup;
 };
 
 struct data {
@@ -86,12 +91,15 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      b = malloc (size);
-      memcpy (b, host_ptr, size);
+      if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+	{
+	  memcpy (b, host_ptr, size);
+	  return b;
+	}
       
-      return b;
+      return NULL;
     }
-
+  
   if (host_ptr != NULL)
     {
       if (d->host_buffers == NULL)
@@ -109,8 +117,11 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
       
       return host_ptr;
     }
-  else
-    return malloc (size);
+
+  if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+    return b;
+  
+  return NULL;
 }
 
 void
@@ -142,6 +153,14 @@ pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
   memcpy (host_ptr, device_ptr, cb);
 }
 
+void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
+{
+  if (host_ptr == device_ptr)
+    return;
+  
+  memcpy (device_ptr, host_ptr, cb);
+}
+
 //#define DEBUG_MT
 //#define DEBUG_MAX_THREAD_COUNT
 /**
@@ -149,15 +168,27 @@ pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
  * the maximum parallelism without extra threading overheads.
  */
 int 
-get_max_thread_count() {
+get_max_thread_count() 
+{
   /* query from /proc/cpuinfo how many hardware threads there are, if available */
   const char* cpuinfo = "/proc/cpuinfo";
   /* eight is a good round number ;) */
   const int FALLBACK_MAX_THREAD_COUNT = 8;
+
+  static int cores = 0;
+  if (cores != 0)
+      return cores;
+
+  if (getenv(THREAD_COUNT_ENV) != NULL) 
+    {
+      cores = atoi(getenv(THREAD_COUNT_ENV));
+      return cores;
+    }
+
   if (access (cpuinfo, R_OK) == 0) 
     {
       FILE *f = fopen (cpuinfo, "r");
-#     define MAX_CPUINFO_SIZE 4096
+#     define MAX_CPUINFO_SIZE 16*1024
       char contents[MAX_CPUINFO_SIZE];
       int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
       fclose (f);
@@ -167,7 +198,7 @@ get_max_thread_count() {
          should give the number of cores overall in a multiprocessor
          system. In Meego Harmattan on ARM it prints Processor instead of
          processor */
-      int cores = 0;
+      cores = 0;
       char* p = contents;
       while ((p = strstr (p, "rocessor")) != NULL) 
         {
@@ -243,7 +274,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   unsigned device;
   size_t x, y, z;
   unsigned i;
-  workgroup w;
+  pocl_workgroup w;
 
   d = (struct data *) data;
 
@@ -289,7 +320,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			"clang " CLANGFLAGS " -c -o %s.o %s",
+			"clang -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
@@ -326,7 +357,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
 	    "_%s_workgroup", kernel->function_name);
   
-  w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
+  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
   int num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the

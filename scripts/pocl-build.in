@@ -21,26 +21,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-while getopts o: o
+while getopts t:o: o
 do
     case "$o" in
+	t)   target_dir="/$OPTARG";;
 	o)   output_file="$OPTARG";;
-	[?]) echo >&2 "Usage: $0 -o output input" && exit 1;;
+	[?]) echo >&2 "Usage: $0 [-t <target_arch>] -o output input" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
 if [ "x$output_file" = x ]
 then
-    echo >&2 "Usage: $0 -o output input" && exit 1
+    echo >&2 "Usage: $0 [-t <target_arch>] -o output input" && exit 1
 fi
+
+case $target_dir in
+  "")      CLANGFLAGS="@CLANGFLAGS@ @NATIVE_CLANG_FLAGS@" ;;
+  /arm)    CLANGFLAGS="@CLANGFLAGS@ @ARM_CLANG_FLAGS@" ;;
+  /tce)    CLANGFLAGS="@CLANGFLAGS@ @TCE_CLANG_FLAGS@" ;;
+  /x86_64) CLANGFLAGS="@CLANGFLAGS@ @X86_64_CLANG_FLAGS@" ;;
+  *)       echo >&2 "Supported architectures: arm tce x86_64" && exit 1;;
+esac
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    # Use NATIVE_CLANG_FLAGS always for now. It must be converted to 
-    # a command line switch when pocl supports compiling kernels for
-    # non-native devices.
-    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ -c -emit-llvm -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
+    @CLANG@ @CLANGFLAGS@ -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${output_file} -x cl $1
 else
-    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
+    @CLANG@ @CLANGFLAGS@ @NATIVE_CLANG_FLAGS@ -c -emit-llvm -include @pkgincludedir@${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${output_file} -x cl $1
 fi

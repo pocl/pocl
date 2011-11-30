@@ -22,23 +22,23 @@
 # THE SOFTWARE.
 
 kernel_lib_dir=/@HOST_ARCH@
-while getopts k:x:y:z:o:t: o
+while getopts k:x:y:z:t:o: o
 do
     case "$o" in
 	k)   kernel="${OPTARG}";;
 	x)   size_x="${OPTARG}";;
 	y)   size_y="${OPTARG}";;
 	z)   size_z="${OPTARG}";;
-	o)   output_file="${OPTARG}";;
 	t)   kernel_lib_dir="/${OPTARG}";;
-	[?]) echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1;;
+	o)   output_file="${OPTARG}";;
+	[?]) echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] [-t <target_arch>] -o <output_file> <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
 if [ "x$kernel" = x ]
 then
-    echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] [-t <target_arch>] -o <output_file> <input_file>" && exit 1
 fi
 
 if [ "x$size_x" = x ]
@@ -75,7 +75,7 @@ header="`dirname $1`/`basename $1 .bc`_header.h"
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -loop-simplify -loop-barriers -barriertails -barriers -workitem -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -loop-simplify -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -loop-simplify -loop-barriers -barriertails -barriers -workitem -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
 fi

@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clEnqueueReadBuffer()
+/* OpenCL runtime library: clEnqueueWriteBuffer()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -55,7 +55,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
       if (command_queue->context->devices[i] == device_id)
-	break;
+        break;
     }
 
   assert(i < command_queue->context->num_devices);

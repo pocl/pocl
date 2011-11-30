@@ -24,6 +24,7 @@
 #include "native.h"
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define COMMAND_LENGTH 256
@@ -72,10 +73,13 @@ pocl_native_malloc (void *data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      b = malloc (size);
-      memcpy (b, host_ptr, size);
-      
-      return b;
+      if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+	{
+	  memcpy (b, host_ptr, size);
+	  return b;
+	}
+
+      return NULL;
     }
 
   if (host_ptr != NULL)
@@ -95,8 +99,11 @@ pocl_native_malloc (void *data, cl_mem_flags flags,
       
       return host_ptr;
     }
-  else
-    return malloc (size);
+
+  if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+    return b;
+
+  return NULL;
 }
 
 void
@@ -146,7 +153,7 @@ pocl_native_run (void *data, const char *parallel_filename,
   struct pocl_argument_list *p;
   size_t x, y, z;
   unsigned i;
-  workgroup w;
+  pocl_workgroup w;
 
   d = (struct data *) data;
 
@@ -175,7 +182,7 @@ pocl_native_run (void *data, const char *parallel_filename,
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			LLC " -o %s %s",
+			LLC " " NATIVE_LLC_FLAGS " -o %s %s",
 			assembly,
 			bytecode);
       assert (error >= 0);
@@ -226,7 +233,7 @@ pocl_native_run (void *data, const char *parallel_filename,
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
 	    "_%s_workgroup", kernel->function_name);
   
-  w = (workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
+  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
   assert (w != NULL);
 
   void *arguments[kernel->num_args];

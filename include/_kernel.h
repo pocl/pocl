@@ -22,38 +22,6 @@
    THE SOFTWARE.
 */
 
-#ifdef __TCE_DEVICE__
-/* TCE supports only the embedded profile for now. 
-   For example, it does not support 64-bit integers nor 
-   double precision floats yet. */
-#define __EMBEDDED_PROFILE__ 1
-#define __ADDRESS_BITS__ 32
-#undef cl_khr_fp64
-#undef cles_khr_int64
-
-#elif defined(__ARM_DEVICE__)
-
-#define __EMBEDDED_PROFILE__ 1
-#define __ADDRESS_BITS__ 32
-#undef cl_khr_fp64
-#undef cles_khr_int64
-
-#else
-
-#undef __EMBEDDED_PROFILE__
-#define __ADDRESS_BITS__ 64 /* Not defined in the specs, but
-                               we need a way to check so we
-                               follow similar approach as with
-                               OpenCL-defined __ENDIAN_LITTLE__. */
-#define cl_khr_fp64
-#define cles_khr_int64
-
-#endif
-
-#if defined(cl_khr_fp64) && ! defined(cles_khr_int64)
-#  error "Can't have cl_khr_fp64 without cles_khr_int64"
-#endif
-
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
@@ -105,7 +73,6 @@ typedef char char4  __attribute__((__ext_vector_type__(4)));
 typedef char char8  __attribute__((__ext_vector_type__(8)));
 typedef char char16 __attribute__((__ext_vector_type__(16)));
 
-typedef unsigned char uchar;
 typedef uchar uchar2  __attribute__((__ext_vector_type__(2)));
 typedef uchar uchar3  __attribute__((__ext_vector_type__(3), __aligned__(4)));
 typedef uchar uchar4  __attribute__((__ext_vector_type__(4)));
@@ -118,7 +85,6 @@ typedef short short4  __attribute__((__ext_vector_type__(4)));
 typedef short short8  __attribute__((__ext_vector_type__(8)));
 typedef short short16 __attribute__((__ext_vector_type__(16)));
 
-typedef unsigned short ushort;
 typedef ushort ushort2  __attribute__((__ext_vector_type__(2)));
 typedef ushort ushort3  __attribute__((__ext_vector_type__(3), __aligned__(8)));
 typedef ushort ushort4  __attribute__((__ext_vector_type__(4)));
@@ -131,7 +97,6 @@ typedef int int4  __attribute__((__ext_vector_type__(4)));
 typedef int int8  __attribute__((__ext_vector_type__(8)));
 typedef int int16 __attribute__((__ext_vector_type__(16)));
 
-typedef unsigned int uint;
 typedef uint uint2  __attribute__((__ext_vector_type__(2)));
 typedef uint uint3  __attribute__((__ext_vector_type__(3), __aligned__(16)));
 typedef uint uint4  __attribute__((__ext_vector_type__(4)));
@@ -145,7 +110,6 @@ typedef long long4  __attribute__((__ext_vector_type__(4)));
 typedef long long8  __attribute__((__ext_vector_type__(8)));
 typedef long long16 __attribute__((__ext_vector_type__(16)));
 
-typedef unsigned long ulong;
 typedef ulong ulong2  __attribute__((__ext_vector_type__(2)));
 typedef ulong ulong3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
@@ -173,22 +137,6 @@ typedef double double16 __attribute__((__ext_vector_type__(16)));
 /* Disable datatype */
 struct error_undefined_type_double;
 #define double struct error_undefined_type_double
-#endif
-
-#if (__ADDRESS_BITS__ == 32)
-/* 32 bit systems */
-typedef uint size_t;
-typedef int ptrdiff_t;
-typedef int intptr_t;
-typedef uint uintptr_t;
-#elif (__ADDRESS_BITS__ == 64)
-/* 64 bit systems */
-typedef ulong size_t;
-typedef long ptrdiff_t;
-typedef long intptr_t;
-typedef ulong uintptr_t;
-#else
-#error "__ADDRESS_BITS__ supported values are 32 or 64."
 #endif
 
 /* Ensure the data types have the right sizes */

@@ -26,7 +26,7 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include <map>
-#include <set>
+#include <vector>
 
 namespace pocl {
   class Workgroup;
@@ -43,6 +43,7 @@ namespace pocl {
 
   private:
     typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     llvm::DominatorTree *DT;
@@ -63,18 +64,18 @@ namespace pocl {
     bool ProcessFunction(llvm::Function &F);
     llvm::BasicBlock *FindBarriersDFS(llvm::BasicBlock *bb,
 				      llvm::BasicBlock *entry,
-				      BasicBlockSet &bbs_to_replicate);
-    bool FindSubgraph(BasicBlockSet &subgraph,
+				      BasicBlockVector &bbs_to_replicate);
+    bool FindSubgraph(BasicBlockVector &subgraph,
                       llvm::BasicBlock *entry,
                       llvm::BasicBlock *exit);
-    void SetBasicBlockNames(const BasicBlockSet &subgraph);
-    void replicateWorkitemSubgraph(BasicBlockSet subgraph,
+    void SetBasicBlockNames(BasicBlockVector &subgraph);
+    void replicateWorkitemSubgraph(BasicBlockVector subgraph,
 				   llvm::BasicBlock *entry,
 				   llvm::BasicBlock *exit);
-    void replicateBasicblocks(BasicBlockSet &new_graph,
+    void replicateBasicblocks(BasicBlockVector &new_graph,
 			      ValueValueMap &reference_map,
-			      const BasicBlockSet &graph);
-    void updateReferences(const BasicBlockSet &graph,
+			      const BasicBlockVector &graph);
+    void updateReferences(const BasicBlockVector &graph,
 			  const ValueValueMap &reference_map);
     bool isReplicable(const llvm::Instruction *i);
 

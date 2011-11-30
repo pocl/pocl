@@ -27,7 +27,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <ltdl.h>
-#include "CL/opencl.h"
+#include "pocl.h"
 
 #define POCL_FILENAME_LENGTH 1024
 
@@ -41,13 +41,6 @@ struct pocl_argument_list {
   size_t size;
   void *value;
   struct pocl_argument_list *next;
-};
-
-struct pocl_context {
-  cl_uint work_dim;
-  cl_uint num_groups[3];
-  cl_uint group_id[3];
-  cl_uint global_offset[3];
 };
 
 struct _cl_device_id {
@@ -108,11 +101,16 @@ struct _cl_device_id {
 		   size_t size, void *host_ptr);
   void (*free) (void *data, void *ptr);
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
+  void (*write) (void *data, const void *host_ptr, void *device_ptr, size_t cb);
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
 	       struct pocl_context *pc);
   void *data;
 };
+
+struct _cl_platform_id {
+  int magic;
+}; 
 
 struct _cl_context {
   /* queries */
@@ -172,7 +170,5 @@ struct _cl_kernel {
   struct pocl_argument_list *arguments;
   struct _cl_kernel *next;
 };
-
-typedef void (*workgroup) (void **, struct pocl_context *);
 
 #endif /* POCL_CL_H */
