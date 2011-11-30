@@ -178,7 +178,14 @@ WorkitemReplication::FindBarriersDFS(BasicBlock *bb,
 
       // Continue processing after the barrier.
       BasicBlockVector post_subgraph;
+      assert (t->getNumSuccessors() == 1);
+      Loop *l = LI->getLoopFor(bb);
       bb = t->getSuccessor(0);
+      // If this is a latch barrier there is nothing to
+      // process after the barrier.
+      if ((l != NULL) && (l->getHeader() == bb))
+        return NULL;
+      
       BasicBlock *exit = FindBarriersDFS(bb, bb, post_subgraph);
       if (exit != NULL)
         replicateWorkitemSubgraph(post_subgraph, bb, exit);
@@ -277,6 +284,10 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
 					       BasicBlock *entry,
 					       BasicBlock *exit)
 {
+  // This might happen if one barrier follow another. Do nothing.
+  if (subgraph.size() == 0)
+    return;
+
   BasicBlockVector original_subgraph = subgraph;
 
   BasicBlockVector s;
@@ -424,6 +435,9 @@ WorkitemReplication::replicateBasicblocks(BasicBlockVector &new_graph,
 	 e = graph.end();
        i != e; ++i) {
     BasicBlock *b = *i;
+
+    assert(!block_has_barrier(b) && "Barrier blocks should not be replicated!");
+
     BasicBlock *new_b = BasicBlock::Create(b->getContext(),
 					   b->getName(),
 					   b->getParent());

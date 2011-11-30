@@ -112,15 +112,15 @@ COMPOSITE_TEST_GOLDEN = nobarrier1_workitem.ll				\
                         forbarrier2_btr.ll				\
                         forbarrier2_btr_loops.ll			\
                         forbarrier2_btr_loops_barriers.ll		\
-                        forbarrier2_btr_loops_barriers_workitem.ll	
-#                        ifforbarrier1_btr.ll                            \
-#                        ifforbarrier1_btr_loops.ll                      \
-#                        ifforbarrier1_btr_loops_barriers.ll             \
-#                        ifforbarrier1_btr_loops_barriers_workitem.ll    \
-#                        forifbarrier1_btr.ll                            \
-#                        forifbarrier1_btr_loops.ll                      \
-#                        forifbarrier1_btr_loops_barriers.ll             \
-#                        forifbarrier1_btr_loops_barriers_workitem.ll
+                        forbarrier2_btr_loops_barriers_workitem.ll	\
+                        ifforbarrier1_btr.ll                            \
+                        ifforbarrier1_btr_loops.ll                      \
+                        ifforbarrier1_btr_loops_barriers.ll             \
+                        ifforbarrier1_btr_loops_barriers_workitem.ll    \
+                        forifbarrier1_loops.ll                          \
+                        forifbarrier1_loops_btr.ll                      \
+                        forifbarrier1_loops_btr_barriers.ll             \
+                        forifbarrier1_loops_btr_barriers_workitem.ll
 
 COMPOSITE_TEST_INPUTS = $(addsuffix .ll,					\
                         $(subst .,_, $(basename					\
@@ -136,8 +136,8 @@ composite_golden: $(addprefix $(srcdir)/, $(COMPOSITE_TEST_GOLDEN))
 %_barriers.ll: %.ll
 	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $(notdir $@) $(notdir $<)
 
-%_loops.ll: %.ll
-	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -loop-barriers -S -o $(notdir $@) $(notdir $<)
-
 %_btr.ll: %.ll
 	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $(notdir $@) $(notdir $<)
+
+%_loops.ll: %.ll
+	cd $(dir $@) && @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -loop-barriers -S -o $(notdir $@) $(notdir $<)
