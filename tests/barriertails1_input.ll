@@ -1,12 +1,12 @@
 declare void @barrier(i32 %flags)
 
-define void @ifbarrier3() {
+define void @ifbarrier2() {
 
 a:
   br i1 1, label %b, label %c
 
 b:
-  br i1 1, label %f, label %e
+  br label %f
 
 c:
   br i1 1, label %d, label %barrier

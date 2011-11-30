@@ -42,23 +42,26 @@ namespace pocl {
     
   private:
     typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
     bool ProcessFunction(llvm::Function &F);
-    void FindBarriersDFS(llvm::BasicBlock *bb,
+    bool FindBarriersDFS(llvm::BasicBlock *bb,
                          BasicBlockSet &processed_bbs);
+    bool ReplicateJoinedSubgraphs(llvm::BasicBlock *dominator,
+                                  llvm::BasicBlock *subgraph_entry);
     llvm::BasicBlock* ReplicateSubgraph(llvm::BasicBlock *entry,
                                         llvm::Function *f);
-    void FindSubgraph(BasicBlockSet &subgraph,
+    void FindSubgraph(BasicBlockVector &subgraph,
                       llvm::BasicBlock *entry);
-    void ReplicateBasicBlocks(BasicBlockSet &new_graph,
+    void ReplicateBasicBlocks(BasicBlockVector &new_graph,
                               ValueValueMap &reference_map,
-                              BasicBlockSet &graph,
+                              BasicBlockVector &graph,
                               llvm::Function *f);
-    void UpdateReferences(const BasicBlockSet &graph,
+    void UpdateReferences(const BasicBlockVector &graph,
                           const ValueValueMap &reference_map);
 
     friend class pocl::Workgroup;

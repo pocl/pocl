@@ -1,4 +1,4 @@
-// Header for CanonicalizeBarriers.cc function pass.
+// Header for Workgroup.cc module pass.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -20,33 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Function.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include <set>
 
 namespace pocl {
-  class Workgroup;
-
-  class CanonicalizeBarriers : public llvm::FunctionPass {
-    
+  class Workgroup : public llvm::ModulePass {
+  
   public:
     static char ID;
-    
-  CanonicalizeBarriers() : FunctionPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool doInitialization(llvm::Module &M);
-    virtual bool runOnFunction(llvm::Function &F);
-    
-  private:
-    typedef std::set<llvm::Instruction *> InstructionSet;
-    
-    llvm::LoopInfo *LI;
-    llvm::DominatorTree *DT;
 
-    bool ProcessFunction(llvm::Function &F);
+  Workgroup() : ModulePass(ID) {}
 
-    friend class pocl::Workgroup;
+    /* virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const; */
+    virtual bool runOnModule(llvm::Module &M);
+
+    static bool isKernelToProcess(const llvm::Function &F);
   };
 }

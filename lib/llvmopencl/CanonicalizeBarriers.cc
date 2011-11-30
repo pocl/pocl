@@ -21,13 +21,19 @@
 // THE SOFTWARE.
 
 #include "CanonicalizeBarriers.h"
-#include "llvm/ADT/SmallString.h"
+#include "Workgroup.h"
 #include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace pocl;
 
 #define BARRIER_FUNCTION_NAME "barrier"
+
+static bool is_barrier(Instruction *i);
+
+static Function *barrier = NULL;
 
 namespace {
   static
@@ -40,18 +46,38 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
+  AU.addPreserved<DominatorTree>();
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
 }
 
 bool
-CanonicalizeBarriers::runOnFunction(Function &F)
+CanonicalizeBarriers::doInitialization(Module &M)
 {
-  LI = &getAnalysis<LoopInfo>();
+  barrier = M.getFunction(BARRIER_FUNCTION_NAME);
 
-  return ProcessFunction(F);
+  return false;
 }
 
+bool
+CanonicalizeBarriers::runOnFunction(Function &F)
+{
+  if (!Workgroup::isKernelToProcess(F))
+    return false;
+
+  DT = getAnalysisIfAvailable<DominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
+
+  bool changed = ProcessFunction(F);
+
+  if (DT)
+    DT->verifyAnalysis();
+  LI->verifyAnalysis();
+
+  return changed;
+}
+
+
 // Canonicalize barriers: ensure all barriers are in a separate BB
 // containint only the barrier and the terminator, with just one
 // predecessor and one successor. This allows us to use
@@ -61,96 +87,66 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
 {
   bool changed = false;
 
-  InstructionSet PreSplitPoints;
-  InstructionSet PostSplitPoints;
-  InstructionSet BarriersToAdd;
-
-  CallInst *barrier = NULL;
+  InstructionSet Barriers;
 
   for (Function::iterator i = F.begin(), e = F.end();
        i != e; ++i) {
     BasicBlock *b = i;
     for (BasicBlock::iterator i = b->begin(), e = b->end();
 	 i != e; ++i) {
-      if (CallInst *c = dyn_cast<CallInst>(i)) {
-	if (Function *f = c->getCalledFunction()) {
-	  if (f->getName().equals(BARRIER_FUNCTION_NAME)) {
-            barrier = c;
-            
-            // We found a barrier, add the split points.
-	    BasicBlock::iterator j = i;
-	    PreSplitPoints.insert(j);
-	    PostSplitPoints.insert(++j);
-            
-            // Is this barrier inside of a loop?
-            Loop *loop = LI->getLoopFor(b);
-            if (loop != NULL) {
-              // We need loops to be canonicalized.  If the barrier
-              // is in a loop, add a barrier in the preheader.
-              BasicBlock *preheader = loop->getLoopPreheader();
-              assert(preheader != NULL);
-              Instruction *new_barrier = barrier->clone();
-              new_barrier->insertBefore(preheader->getFirstNonPHI());
-              changed = true;
-              // No split point after preheader barriers, so we ensure
-              // WI 0,0,0 starts at the loop header.  But still we need
-              // a split before.
-              PreSplitPoints.insert(new_barrier);
-
-              // Add barriers before any loop backedge.  This
-              // is to ensure all workitems run to the end of the loop
-              // (because otherwise first WI will jump back to the
-              // header and other WIs will skip portion of the
-              // loop body).
-              // We cannot add the barriers directly here to avoid
-              // processing them when going on trough the loop, schedule
-              // them to be added later. 
-              BasicBlock *latch = loop->getLoopLatch();
-              assert(latch != NULL);
-              BarriersToAdd.insert(latch->getTerminator());
-            }
-          }
-	}
-      }
+      if (is_barrier(i))
+        Barriers.insert(i);
     }
-  }
-
-  // Add scheduled barriers.
-  for (InstructionSet::iterator i = BarriersToAdd.begin(), e = BarriersToAdd.end();
-       i != e; ++i) {
-    assert(barrier != NULL);
-    Instruction *new_barrier = barrier->clone();
-    new_barrier->insertBefore(*i);
-    changed = true;
-    BasicBlock::iterator j = new_barrier;
-    PreSplitPoints.insert(j);
-    PostSplitPoints.insert(++j);
   }
 
   // Finally add all the split points, now that we are done with the
   // iterators.
-  for (InstructionSet::iterator i = PreSplitPoints.begin(), e = PreSplitPoints.end();
+  for (InstructionSet::iterator i = Barriers.begin(), e = Barriers.end();
        i != e; ++i) {
     BasicBlock *b = (*i)->getParent();
-    BasicBlock *new_b = b->splitBasicBlock(*i);
+
+    // Split post barrier first cause it does not make the barrier
+    // to belong to another basic block.
+    TerminatorInst  *t = b->getTerminator();
+    if ((t->getNumSuccessors() != 1) ||
+        (t->getPrevNode() != *i)) {
+      BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
+      new_b->setName(b->getName() + ".postbarrier");
+      changed = true;
+    }
+
+    BasicBlock *predecessor = b->getSinglePredecessor();
+    if (predecessor != NULL) {
+      TerminatorInst *pt = predecessor->getTerminator();
+      if ((pt->getNumSuccessors() == 1) &&
+          (&b->front() == (*i)))
+        {
+        // Barrier is at the beginning of the BB,
+        // which has a single predecessor with just
+        // one successor (the barrier itself), thus
+        // no need to split before barrier.
+        continue;
+      }
+    }
+    BasicBlock *new_b = SplitBlock(b, *i, this);
     new_b->takeName(b);
     b->setName(new_b->getName() + ".prebarrier");
-    Loop *l = LI->getLoopFor(b);
-    if (l)
-      l->addBasicBlockToLoop(new_b, LI->getBase());
-    changed = true;
-  }
-  for (InstructionSet::iterator i = PostSplitPoints.begin(), e = PostSplitPoints.end();
-       i != e; ++i) {
-    BasicBlock *b = (*i)->getParent();
-    BasicBlock *new_b = b->splitBasicBlock(*i, b->getName() + ".postbarrier");
-    Loop *l = LI->getLoopFor(b);
-    if (l)
-      l->addBasicBlockToLoop(new_b, LI->getBase());
     changed = true;
   }
 
-  LI->verifyAnalysis();
-  
   return changed;
+}
+
+
+static bool
+is_barrier(Instruction *i)
+{
+  if (CallInst *c = dyn_cast<CallInst>(i)) {
+    if (Function *f = c->getCalledFunction()) {
+      if (f == barrier)
+        return true;
+    }
+  }
+
+  return false;
 }
