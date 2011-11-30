@@ -1,4 +1,4 @@
-; ModuleID = '../../../src/pocl.loopbarriers/tests/forbarrier1_btr.ll'
+; ModuleID = 'forbarrier1_btr_loops.ll'
 
 declare void @barrier(i32)
 
