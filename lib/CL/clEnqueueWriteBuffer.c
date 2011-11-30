@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clEnqueueWriteBuffer()
+/* OpenCL runtime library: clEnqueueReadBuffer()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -25,15 +25,15 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueReadBuffer(cl_command_queue command_queue,
-                    cl_mem buffer,
-                    cl_bool blocking_read,
-                    size_t offset,
-                    size_t cb, 
-                    void *ptr,
-                    cl_uint num_events_in_wait_list,
-                    const cl_event *event_wait_list,
-                    cl_event *event) CL_API_SUFFIX__VERSION_1_0
+clEnqueueWriteBuffer(cl_command_queue command_queue,
+                     cl_mem buffer,
+                     cl_bool blocking_write,
+                     size_t offset,
+                     size_t cb, 
+                     const void *ptr,
+                     cl_uint num_events_in_wait_list,
+                     const cl_event *event_wait_list,
+                     cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;
@@ -55,12 +55,12 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
       if (command_queue->context->devices[i] == device_id)
-        break;
+	break;
     }
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->read(device_id->data, ptr, buffer->device_ptrs[i], cb);
+  device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
 
   return CL_SUCCESS;
 }

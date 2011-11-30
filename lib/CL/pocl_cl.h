@@ -101,11 +101,16 @@ struct _cl_device_id {
 		   size_t size, void *host_ptr);
   void (*free) (void *data, void *ptr);
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
+  void (*write) (void *data, const void *host_ptr, void *device_ptr, size_t cb);
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
 	       struct pocl_context *pc);
   void *data;
 };
+
+struct _cl_platform_id {
+  int magic;
+}; 
 
 struct _cl_context {
   /* queries */

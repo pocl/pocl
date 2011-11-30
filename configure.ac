@@ -68,6 +68,18 @@ LDFLAGS="$old_LDFLAGS"
 # and not for building the host code.
 AC_MSG_NOTICE([Starting OpenCL runtime build system checks])
 
+AC_ARG_ENABLE([debug],
+AS_HELP_STRING([--enable-debug], [enable debug build of pocl (default is no)]),
+[debug=$enableval],
+[debug=no])
+if test "x$debug" = "xno"
+then
+	CXXFLAGS="$CXXFLAGS"
+else
+	CFLAGS="-O0 -g"
+	CXXFLAGS="-O0 -g"
+fi
+
 # Checks for programs.
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
 AC_ARG_VAR([CLANGFLAGS], [Flags to be passed to CLANG regardless of the target])

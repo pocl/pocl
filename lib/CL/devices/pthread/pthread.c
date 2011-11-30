@@ -153,6 +153,14 @@ pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
   memcpy (host_ptr, device_ptr, cb);
 }
 
+void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
+{
+  if (host_ptr == device_ptr)
+    return;
+  
+  memcpy (device_ptr, host_ptr, cb);
+}
+
 //#define DEBUG_MT
 //#define DEBUG_MAX_THREAD_COUNT
 /**
@@ -160,7 +168,8 @@ pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
  * the maximum parallelism without extra threading overheads.
  */
 int 
-get_max_thread_count() {
+get_max_thread_count() 
+{
   /* query from /proc/cpuinfo how many hardware threads there are, if available */
   const char* cpuinfo = "/proc/cpuinfo";
   /* eight is a good round number ;) */

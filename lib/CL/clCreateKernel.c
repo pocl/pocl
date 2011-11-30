@@ -113,6 +113,7 @@ clCreateKernel(cl_program program,
   kernel->dlhandle = dlhandle;
   kernel->arg_is_pointer = lt_dlsym(dlhandle, "_arg_is_pointer");
   kernel->arg_is_local = lt_dlsym(dlhandle, "_arg_is_local");
+  kernel->arguments = NULL;
   kernel->next = NULL;
 
   if (program->kernels == NULL)

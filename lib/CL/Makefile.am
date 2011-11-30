@@ -39,6 +39,13 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
+                   clGetPlatformIDs.c		\
+                   clGetPlatformInfo.c		\
+                   clGetDeviceIDs.c		\
+                   clGetDeviceInfo.c		\
+                   clCreateContext.c		\
+                   clGetProgramBuildInfo.c	\
+                   clEnqueueWriteBuffer.c	\
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\
@@ -49,4 +56,3 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
 
 libCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
 libCL_la_LDFLAGS = -lltdl
-
