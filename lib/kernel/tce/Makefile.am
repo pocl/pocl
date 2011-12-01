@@ -43,9 +43,6 @@ CLANGFLAGS += @NATIVE_CLANG_FLAGS@
 .cl.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-.c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
 else
 
 CLANGFLAGS += @TCE_CLANG_FLAGS@
@@ -53,11 +50,10 @@ CLANGFLAGS += @TCE_CLANG_FLAGS@
 .cl.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-.c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
 endif
 
+.c.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h

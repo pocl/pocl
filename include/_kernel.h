@@ -48,13 +48,13 @@
 #  define __IF_FP64(x)
 #endif
 
-#define __global __attribute__ ((address_space(3)))
-#define __local __attribute__ ((address_space(4)))
-#define __constant __attribute__ ((address_space(5)))
+/* #define __global __attribute__ ((address_space(3))) */
+/* #define __local __attribute__ ((address_space(4))) */
+/* #define __constant __attribute__ ((address_space(5))) */
 
-#define global __attribute__ ((address_space(3)))
-#define local __attribute__ ((address_space(4)))
-#define constant __attribute__ ((address_space(5)))
+/* #define global __attribute__ ((address_space(3))) */
+/* #define local __attribute__ ((address_space(4))) */
+/* #define constant __attribute__ ((address_space(5))) */
 
 typedef enum {
   CLK_LOCAL_MEM_FENCE = 0x1,

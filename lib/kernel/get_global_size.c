@@ -21,16 +21,16 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size_x;
-extern uint _local_size_y;
-extern uint _local_size_z;
+extern unsigned int _local_size_x;
+extern unsigned int _local_size_y;
+extern unsigned int _local_size_z;
 
-extern uint _num_groups_x;
-extern uint _num_groups_y;
-extern uint _num_groups_z;
+extern unsigned int _num_groups_x;
+extern unsigned int _num_groups_y;
+extern unsigned int _num_groups_z;
 
-uint
-get_global_size(uint dimindx)
+unsigned int
+get_global_size(unsigned int dimindx)
 {
   switch(dimindx)
     {

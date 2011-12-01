@@ -25,15 +25,17 @@
 #include "Workgroup.h"
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
 
 using namespace std;
 using namespace llvm;
@@ -52,6 +54,7 @@ namespace {
     static char ID;
     GenerateHeader() : FunctionPass(ID) {}
     
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnFunction(Function &F);
   };
 }
@@ -59,6 +62,12 @@ namespace {
 char GenerateHeader::ID = 0;
 static RegisterPass<GenerateHeader> X("generate-header",
 				      "Kernel information header creation pass");
+
+void
+GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<TargetData>();
+}
 
 bool
 GenerateHeader::runOnFunction(Function &F)
@@ -82,29 +91,18 @@ GenerateHeader::runOnFunction(Function &F)
        ii != ee; ++ii) {
     Type *t = ii->getType();
     
-    const PointerType *p = dyn_cast<PointerType> (t);
-    
-    if (p == NULL) {
+    if (isa<PointerType> (t)) {
+      is_pointer[i] = true;
+      // index 0 is for function attributes, parameters start at 1.
+      if (F.paramHasAttr(i + 1, Attribute::NoCapture))
+        is_local[i] = false;
+      else
+        is_local[i] = true;
+    } else {
       is_pointer[i] = false;
       is_local[i] = false;
-      ++i;
-      continue;
     }
-    
-    is_pointer[i] = true;
-    
-    switch (p->getAddressSpace()) {
-    case POCL_ADDRESS_SPACE_GLOBAL:
-    case POCL_ADDRESS_SPACE_CONSTANT:
-      is_local[i] = false;
-      break;
-    case POCL_ADDRESS_SPACE_LOCAL:
-      is_local[i] = true;
-      break;
-    default:
-      llvm_unreachable("Invalid address space qualifier on kernel argument!");
-    }
-    
+
     ++i;
   }
       
@@ -124,8 +122,32 @@ GenerateHeader::runOnFunction(Function &F)
   }
   out << "}\n";
 
+  // TargetData &TD = getAnalysis<TargetData>();
+
+  // SmallVector<unsigned, 8> locals;
+  // for (Function::const_iterator ii = F.begin(), ee = F.end();
+  //      ii != ee; ++ii) {
+  //   if (const AllocaInst *alloca = dyn_cast<AllocaInst>(ii)) {
+  //     if (alloca->getType()->getAddressSpace() == POCL_ADDRESS_SPACE_LOCAL) {
+  //       Type *t = alloca->getAllocatedType();
+  //       const ConstantInt *c = cast<ConstantInt>(alloca->getArraySize());
+  //       unsigned size = TD.getTypeAllocSize(t) * c->getZExtValue();
+  //       locals.push_back(size);
+  //     }
+  //   }
+  // }
+        
+  // out << "#define _" << F.getName() << "_NUM_LOCALS "<< locals.size() << "\n";
+  // out << "#define _" << F.getName() << "_LOCAL_SIZE {";
+  // if (!locals.empty()) {
+  //   out << locals[0];
+  //   for (i = 1; i < locals.size(); ++i)
+  //     out << ", " << locals[i];
+  // }
+  // out << "}\n";
+
   out << "#define _" << F.getName() << "_NUM_LOCALS 0\n";
   out << "#define _" << F.getName() << "_LOCAL_SIZE {}\n";
-  
+
   return false;
 }

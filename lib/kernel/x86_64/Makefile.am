@@ -41,9 +41,6 @@ CLANGFLAGS += @NATIVE_CLANG_FLAGS@
 .cl.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-.c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
 else
 
 CLANGFLAGS += @X86_64_CLANG_FLAGS@
@@ -51,11 +48,10 @@ CLANGFLAGS += @X86_64_CLANG_FLAGS@
 .cl.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/x86_64/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
-.c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/x86_64/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
 endif
 
+.c.o:
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -o $@ $<
 
 .ll.o:
 	$(LLVM_AS) -o $@ $<

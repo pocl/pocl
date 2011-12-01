@@ -21,12 +21,12 @@
    THE SOFTWARE.
 */
 
-extern uint _group_id_x;
-extern uint _group_id_y;
-extern uint _group_id_z;
+extern unsigned int _group_id_x;
+extern unsigned int _group_id_y;
+extern unsigned int _group_id_z;
 
-uint
-get_group_id(uint dimindx)
+unsigned int
+get_group_id(unsigned int dimindx)
 {
   switch(dimindx)
     {

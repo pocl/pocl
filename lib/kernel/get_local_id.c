@@ -21,12 +21,12 @@
    THE SOFTWARE.
 */
 
-extern uint _local_id_x;
-extern uint _local_id_y;
-extern uint _local_id_z;
+extern unsigned int _local_id_x;
+extern unsigned int _local_id_y;
+extern unsigned int _local_id_z;
 
-uint
-get_local_id(uint dimindx)
+unsigned int
+get_local_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
