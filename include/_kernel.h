@@ -48,6 +48,9 @@
 #  define __IF_FP64(x)
 #endif
 
+/* A static assert statement to catch inconsistencies at build time */
+#define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
+
 #define __global __attribute__ ((address_space(3)))
 #define __local __attribute__ ((address_space(4)))
 #define __constant __attribute__ ((address_space(5)))
@@ -63,6 +66,18 @@ typedef enum {
 
 
 /* Data types */
+
+/* Disable undefined datatypes */
+#ifndef cles_khr_int64
+typedef struct error_undefined_type_long error_undefined_type_long;
+#  define long error_undefined_type_long
+typedef struct error_undefined_type_ulong error_undefined_type_ulong;
+#  define ulong error_undefined_type_ulong
+#endif
+#ifndef cl_khr_fp64
+typedef struct error_undefined_type_double error_undefined_type_double;
+#  define double error_undefined_type_double
+#endif
 
 // We align the 3-vectors, so that their sizeof is correct. Is there a
 // better way? Should we also align the other vectors?
@@ -115,10 +130,6 @@ typedef ulong ulong3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
 typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
-#else
-/* Disable datatype */
-struct error_undefined_type_long;
-#define long struct error_undefined_type_long
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
@@ -133,15 +144,9 @@ typedef double double3  __attribute__((__ext_vector_type__(3), __aligned__(32)))
 typedef double double4  __attribute__((__ext_vector_type__(4)));
 typedef double double8  __attribute__((__ext_vector_type__(8)));
 typedef double double16 __attribute__((__ext_vector_type__(16)));
-#else
-/* Disable datatype */
-struct error_undefined_type_double;
-#define double struct error_undefined_type_double
 #endif
 
 /* Ensure the data types have the right sizes */
-#define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
-
 _cl_static_assert(char  , sizeof(char  ) == 1);
 _cl_static_assert(char2 , sizeof(char2 ) == 2 *sizeof(char));
 _cl_static_assert(char3 , sizeof(char3 ) == 4 *sizeof(char));
@@ -379,7 +384,7 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE, _sat, FLOATSUFFIX))       \
   _CL_DECLARE_CONVERT_TYPE(SRC, float , SIZE,     , FLOATSUFFIX)        \
   __IF_FP64(                                                            \
-  _CL_DECLARE_CONVERT_TYPE(SRC, double, SIZE, _sat, FLOATSUFFIX))
+  _CL_DECLARE_CONVERT_TYPE(SRC, double, SIZE,     , FLOATSUFFIX))
 
 /* conversions from float may have a suffix: _rte _rtz _rtp _rtn */
 #define _CL_DECLARE_CONVERT_TYPE_SRC_DST(SIZE)          \

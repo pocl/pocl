@@ -1,12 +1,12 @@
-#define uchar unsigned char
-#define ushort unsigned short
-#define uint unsigned int
-#define ulong unsigned long
+typedef unsigned char uchar;
+typedef unsigned shor ushort;
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
 #define cles_khr_int64
 #define cl_khr_fp64
 
-#define size_t ulong
-#define ptrdiff_t long
-#define intptr_t long
-#define uintptr_t ulong
+typedef ulong size_t;
+typedef long ptrdiff_t;
+typedef long intptr_t;
+typedef ulong uintptr_t;
