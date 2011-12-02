@@ -36,6 +36,8 @@ clCreateContext(const cl_context_properties * properties,
   int i, j;
   cl_device_id device_ptr;
 
+  lt_dlinit();
+
   cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
