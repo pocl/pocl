@@ -1492,13 +1492,6 @@ _CL_DECLARE_VSTORE(double, __private)
 
 /* Miscellaneous Vector Functions */
 
-// convert a vector type to a scalar type
-_CL_DECLARE_FUNC_I_IG(_cl_scalar)
-_CL_DECLARE_FUNC_S_V(_cl_scalar)
-#define vec_step(a) (sizeof(a) / sizeof(_cl_scalar(a)))
-
-
-
 // This code leads to an ICE in Clang
 
 // #define _CL_DECLARE_SHUFFLE_2(GTYPE, UGTYPE, STYPE, M)                  \
