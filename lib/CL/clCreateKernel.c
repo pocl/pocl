@@ -102,8 +102,13 @@ clCreateKernel(cl_program program,
     POCL_ERROR(CL_INVALID_KERNEL_NAME);
 
   dlhandle = lt_dlopen(descriptor_filename);
-  if (dlhandle == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  if (dlhandle == NULL) 
+    {
+      fprintf(stderr, 
+              "Error loading the kernel descriptor from %s (lt_dlerror(): %s)\n", 
+              descriptor_filename, lt_dlerror());
+      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    }
 
   kernel->function_name = kernel_name;
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");

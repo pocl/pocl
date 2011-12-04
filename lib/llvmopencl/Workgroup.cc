@@ -105,50 +105,6 @@ Workgroup::runOnModule(Module &M)
 
   // BI.inlineFunctions();
 
-  // CanonicalizeBarriers CB;
-  // BarrierTailReplication BTR;
-  // WorkitemReplication WR;
-
-  // string ErrorInfo;
-  // raw_fd_ostream out(Header.c_str(), ErrorInfo);
-
-  // NamedMDNode *SizeInfo = M.getNamedMetadata("opencl.kernel_wg_size_info");
-
-  // NamedMDNode *Kernels = M.getNamedMetadata("opencl.kernels");
-  // for (unsigned i = 0, e = Kernels->getNumOperands(); i != e; ++i) {
-  //   Function *K = cast<Function>(Kernels->getOperand(i)->getOperand(0));
-
-  //   CB.DT = BTR.DT = WR.DT = &getAnalysis<DominatorTree>(*K);
-  //   CB.LI = BTR.LI = WR.LI = &getAnalysis<LoopInfo>(*K);
-
-  //   if ((Kernel != "") && (K->getName() != Kernel))
-  //     continue;
-
-
-
-  //   CB.ProcessFunction(*K);
-
-  //   BTR.ProcessFunction(*K);
-    
-  //   int OldLocalSize[3];
-  //   for (int i = 0; i < 3; ++i)
-  //     OldLocalSize[i] = LocalSize[i];;
-
-  //   if (SizeInfo) {
-  //     for (unsigned i = 0, e = SizeInfo->getNumOperands(); i != e; ++i) {
-  //       MDNode *KernelSizeInfo = SizeInfo->getOperand(i);
-  //       if (KernelSizeInfo->getOperand(0) == K) {
-  //         LocalSize[0] = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-  //         LocalSize[1] = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-  //         LocalSize[2] = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-  //       }
-  //     }
-  //   }
-
-  //   WR.ProcessFunction(*K);
-  //   for (int i = 0; i < 3; ++i)
-  //     LocalSize[i] = OldLocalSize[i];;
-
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (isKernelToProcess(*i)) {
       Function *L = createLauncher(M, i);
@@ -164,13 +120,6 @@ Workgroup::runOnModule(Module &M)
   
   return true;
 }
-
-// void
-// Workgroup::getAnalysisUsage(AnalysisUsage &AU) const
-// {
-//   AU.addRequired<DominatorTree>();
-//   AU.addRequired<LoopInfo>();
-// }
 
 bool
 Workgroup::isKernelToProcess(const Function &F)

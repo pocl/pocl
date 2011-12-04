@@ -35,6 +35,7 @@ clCreateContextFromType(const cl_context_properties *properties,
   int num_devices;
   int i, j;
 
+  /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
 
   cl_context context = (cl_context) malloc(sizeof(struct _cl_context));

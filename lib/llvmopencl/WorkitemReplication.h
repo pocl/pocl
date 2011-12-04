@@ -59,9 +59,11 @@ namespace pocl {
     // complex bookeeping.
     ValueValueMap *ReferenceMap;
 
+    int LocalSizeX, LocalSizeY, LocalSizeZ;
     llvm::GlobalVariable *LocalX, *LocalY, *LocalZ;
 
     bool ProcessFunction(llvm::Function &F);
+    void CheckLocalSize(llvm::Function *F);
     llvm::BasicBlock *FindBarriersDFS(llvm::BasicBlock *bb,
 				      llvm::BasicBlock *entry,
 				      BasicBlockVector &bbs_to_replicate);

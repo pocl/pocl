@@ -31,7 +31,6 @@ namespace pocl {
 
   Workgroup() : ModulePass(ID) {}
 
-    /* virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const; */
     virtual bool runOnModule(llvm::Module &M);
 
     static bool isKernelToProcess(const llvm::Function &F);

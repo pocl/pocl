@@ -74,13 +74,15 @@ WorkitemReplication::ProcessFunction(Function &F)
 {
   Module *M = F.getParent();
 
+  CheckLocalSize(&F);
+
   LocalX = M->getGlobalVariable("_local_id_x");
   LocalY = M->getGlobalVariable("_local_id_y");
   LocalZ = M->getGlobalVariable("_local_id_z");
 
   // Allocate space for workitem reference maps. Workitem 0 does
   // not need it.
-  int i = LocalSize[2] * LocalSize[1] * LocalSize[0] - 1;
+  int i = LocalSizeZ * LocalSizeY * LocalSizeX - 1;
   ReferenceMap = new ValueValueMap[i];
 
   BasicBlockVector original_bbs;
@@ -118,20 +120,42 @@ WorkitemReplication::ProcessFunction(Function &F)
   gv = M->getGlobalVariable("_local_size_x");
   if (gv != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
-					 LocalSize[0]),
+					 LocalSizeX),
 			gv);
   gv = M->getGlobalVariable("_local_size_y");
   if (gv != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
-					 LocalSize[1]),
+					 LocalSizeY),
 			gv);
   gv = M->getGlobalVariable("_local_size_z");
   if (gv != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
-					 LocalSize[2]),
+					 LocalSizeZ),
 			gv);
 
   return true;
+}
+
+void
+WorkitemReplication::CheckLocalSize(Function *F)
+{
+  Module *M = F->getParent();
+
+  LocalSizeX = LocalSize[0];
+  LocalSizeY = LocalSize[1];
+  LocalSizeZ = LocalSize[2];
+
+  NamedMDNode *size_info = M->getNamedMetadata("opencl.kernel_wg_size_info");
+  if (size_info) {
+    for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
+      MDNode *KernelSizeInfo = size_info->getOperand(i);
+      if (KernelSizeInfo->getOperand(0) == F) {
+        LocalSizeX = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+        LocalSizeY = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+        LocalSizeZ = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+      }
+    }
+  }
 }
 
 // Perform a deep first seach on the subgraph starting on bb. On the
@@ -263,15 +287,15 @@ WorkitemReplication::SetBasicBlockNames(BasicBlockVector &subgraph)
        i != e; ++i) {
     BasicBlock *bb = *i;
     StringRef s = bb->getName();
-    for (int z = 0; z < LocalSize[2]; ++z) {
-      for (int y = 0; y < LocalSize[1]; ++y) {
-        for (int x = 0; x < LocalSize[0] ; ++x) {
+    for (int z = 0; z < LocalSizeZ; ++z) {
+      for (int y = 0; y < LocalSizeY; ++y) {
+        for (int x = 0; x < LocalSizeX ; ++x) {
           
           if ((z == 0) && (y == 0) && (x == 0))
             continue;
 
-          int index = (LocalSize[1] * LocalSize[0] * z +
-                       LocalSize[0] * y +
+          int index = (LocalSizeY * LocalSizeX * z +
+                       LocalSizeX * y +
                        x) - 1;
           
           bb = cast<BasicBlock> (ReferenceMap[index][bb]);
@@ -299,13 +323,13 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
 
   IRBuilder<> builder(entry->getContext());
 
-  for (int z = 0; z < LocalSize[2]; ++z) {
-    for (int y = 0; y < LocalSize[1]; ++y) {
-      for (int x = 0; x < LocalSize[0]; ++x) {
+  for (int z = 0; z < LocalSizeZ; ++z) {
+    for (int y = 0; y < LocalSizeY; ++y) {
+      for (int x = 0; x < LocalSizeX; ++x) {
 	
-	if (x == (LocalSize[0] - 1) &&
-	    y == (LocalSize[1] - 1) &&
-	    z == (LocalSize[2] - 1)) {
+	if (x == (LocalSizeX - 1) &&
+	    y == (LocalSizeY - 1) &&
+	    z == (LocalSizeZ - 1)) {
 	  builder.SetInsertPoint(entry, entry->front());
 	  if (LocalX != NULL) {
 	    builder.CreateStore(ConstantInt::get(IntegerType::
@@ -323,8 +347,8 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
 	  return;
 	}
 
-	int i = (LocalSize[1] * LocalSize[0] * z +
-                 LocalSize[0] * y +
+	int i = (LocalSizeY * LocalSizeX * z +
+                 LocalSizeX * y +
                  x);
 
 	replicateBasicblocks(s, ReferenceMap[i], subgraph);
