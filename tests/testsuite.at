@@ -132,6 +132,11 @@ AT_CHECK([$abs_top_builddir/examples/example2/example2], 0, [OK
 ])
 AT_CLEANUP
 
+AT_SETUP([example2a: matrix transpose (automatic locals)])
+AT_CHECK([$abs_top_builddir/examples/example2a/example2a], 0, [OK
+])
+AT_CLEANUP
+
 AT_BANNER([Workgroup creation tests])
 
 AT_SETUP([Unconditional barriers])

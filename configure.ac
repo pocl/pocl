@@ -222,6 +222,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/example1/Makefile
                  examples/example2/Makefile
+                 examples/example2a/Makefile
                  examples/barriers/Makefile
                  examples/forloops/Makefile
                  examples/standalone/Makefile
