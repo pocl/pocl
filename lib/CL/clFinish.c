@@ -1,6 +1,6 @@
-/* OpenCL built-in library: get_global_id()
+/* OpenCL runtime library: clFinish()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Erik Schnetter
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,27 +21,11 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_size_x;
-extern unsigned int _local_size_y;
-extern unsigned int _local_size_z;
+#include "pocl_cl.h"
 
-extern unsigned int _group_id_x;
-extern unsigned int _group_id_y;
-extern unsigned int _group_id_z;
-
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
-
-size_t
-get_global_id(unsigned int dimindx)
+CL_API_ENTRY cl_int CL_API_CALL
+clFinish(cl_command_queue command_queue)
 {
-  switch(dimindx)
-    {
-    case 0: return _local_size_x * _group_id_x + _local_id_x;
-    case 1: return _local_size_y * _group_id_y + _local_id_y;
-    case 2: return _local_size_z * _group_id_z + _local_id_z;
-    default: return 0;
-    }
+  /* All operations are serialised, so we never have to wait */
+  return CL_SUCCESS;
 }
-

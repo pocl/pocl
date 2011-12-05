@@ -25,14 +25,14 @@ extern unsigned int _num_groups_x;
 extern unsigned int _num_groups_y;
 extern unsigned int _num_groups_z;
 
-unsigned int
+size_t
 get_num_groups(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return  _num_groups_x;
-    case 1: return  _num_groups_y;
-    case 2: return  _num_groups_z;
+    case 0: return _num_groups_x;
+    case 1: return _num_groups_y;
+    case 2: return _num_groups_z;
     default: return 0;
     }
 }

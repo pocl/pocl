@@ -424,14 +424,14 @@ _CL_DECLARE_CONVERT_TYPE_SRC_DST(16)
 
 /* Work-Item Functions */
 
-// uint get_work_dim();
-uint get_global_size(uint);     // should return size_t
-uint get_global_id(uint);       // should return size_t
-// size_t get_local_size(uint);
-uint get_local_id(uint);        // should return size_t
-uint get_num_groups(uint);      // should return size_t
-uint get_group_id(uint);        // should return size_t
-// size_t get_global_offset(uint);
+uint get_work_dim();
+size_t get_global_size(uint);
+size_t get_global_id(uint);
+size_t get_local_size(uint);
+size_t get_local_id(uint);
+size_t get_num_groups(uint);
+size_t get_group_id(uint);
+size_t get_global_offset(uint);
 
 __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
 

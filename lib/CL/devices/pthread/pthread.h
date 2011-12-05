@@ -30,7 +30,7 @@ void pocl_pthread_init (cl_device_id device);
 void *pocl_pthread_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
 void pocl_pthread_free (void *data, void *ptr);
-void pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
+void pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
 void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
 void pocl_pthread_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
@@ -39,7 +39,7 @@ void pocl_pthread_run (void *data, const char *bytecode,
 extern size_t pocl_pthread_max_work_item_sizes[];
 
 #define POCL_DEVICES_PTHREAD {						\
-  CL_DEVICE_TYPE_GPU, /* type */					\
+  CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   1, /* max_work_item_dimensions */					\

@@ -184,6 +184,18 @@ createLauncher(Module &M, Function *F)
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
+  // TODO: _num_groups_%c and friends should probably have type size_t
+  // instead of unsigned int, because this may avoid integer
+  // conversions when accessing these variables
+
+  // TODO: _num_groups_%c and friends should probably be stored as
+  // arrays instead of as 3 independent variables, because this may
+  // lead to better code when the respective get_* functions are
+  // called in a loop (array access instead of switch statement)
+
+  // TODO: there is no variable _work_dim; we currently assume it is
+  // always set to 3, which is wrong
+
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
   for (int i = 0; i < 3; ++i) {

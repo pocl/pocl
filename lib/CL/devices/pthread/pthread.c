@@ -148,7 +148,7 @@ pocl_pthread_free (void *data, void *ptr)
 }
 
 void
-pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
+pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;

@@ -52,7 +52,8 @@ exec_scalarwave_kernel (const char *program_source,
   // allocate the buffer memory objects 
   memobjs[0] = clCreateBuffer(context, 
                               0,
-                              sizeof(cl_double) * grid->ai*grid->aj*grid->ak, phi, NULL); 
+                              sizeof(cl_double) * grid->ai*grid->aj*grid->ak,
+                              phi, NULL); 
   if (memobjs[0] == (cl_mem)0) 
     { 
       delete_memobjs(memobjs, 0); 
@@ -98,7 +99,8 @@ exec_scalarwave_kernel (const char *program_source,
  
   // create the program 
   program = clCreateProgramWithSource(context, 
-				      1, (const char**)&program_source, NULL, NULL); 
+				      1, (const char**)&program_source,
+                                      NULL, NULL); 
   if (program == (cl_program)0) 
     { 
       delete_memobjs(memobjs, 4); 
@@ -138,7 +140,6 @@ exec_scalarwave_kernel (const char *program_source,
 			sizeof(cl_mem), (void *) &memobjs[2]); 
   err |= clSetKernelArg(kernel, 3,
 			sizeof(cl_mem), (void *) &memobjs[3]); 
- 
   if (err != CL_SUCCESS) 
     { 
       delete_memobjs(memobjs, 4); 
@@ -170,9 +171,24 @@ exec_scalarwave_kernel (const char *program_source,
       return -1; 
     } 
  
+  err = clFinish(cmd_queue);
+  if (err != CL_SUCCESS) 
+    { 
+      delete_memobjs(memobjs, 4); 
+      clReleaseKernel(kernel); 
+      clReleaseProgram(program); 
+      clReleaseCommandQueue(cmd_queue); 
+      clReleaseContext(context); 
+      return -1; 
+    } 
+
   // read output image 
+  for (size_t n=0; n<grid->ai*grid->aj*grid->ak; ++n) {
+    phi[n]=n;
+  }
   err = clEnqueueReadBuffer(cmd_queue, memobjs[0], CL_TRUE, 
-			    0, sizeof(cl_double) * grid->ai*grid->aj*grid->ak, phi, 
+			    0, sizeof(cl_double) * grid->ai*grid->aj*grid->ak,
+                            phi, 
 			    0, NULL, NULL); 
   if (err != CL_SUCCESS) 
     { 

@@ -29,7 +29,7 @@ extern unsigned int _num_groups_x;
 extern unsigned int _num_groups_y;
 extern unsigned int _num_groups_z;
 
-unsigned int
+size_t
 get_global_size(unsigned int dimindx)
 {
   switch(dimindx)

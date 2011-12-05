@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_global_id()
+/* OpenCL built-in library: get_global_offset()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -29,18 +29,14 @@ extern unsigned int _group_id_x;
 extern unsigned int _group_id_y;
 extern unsigned int _group_id_z;
 
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
-
 size_t
-get_global_id(unsigned int dimindx)
+get_global_offset(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _local_size_x * _group_id_x + _local_id_x;
-    case 1: return _local_size_y * _group_id_y + _local_id_y;
-    case 2: return _local_size_z * _group_id_z + _local_id_z;
+    case 0: return _local_size_x * _group_id_x;
+    case 1: return _local_size_y * _group_id_y;
+    case 2: return _local_size_z * _group_id_z;
     default: return 0;
     }
 }

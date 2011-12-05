@@ -46,6 +46,7 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateContext.c		\
                    clGetProgramBuildInfo.c	\
                    clEnqueueWriteBuffer.c	\
+                   clFinish.c			\
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\

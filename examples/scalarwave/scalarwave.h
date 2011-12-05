@@ -1,7 +1,7 @@
 #ifndef SCALARWAVE_H
 #define SCALARWAVE_H
 
-#define GRID_GRANULARITY 1
+#define GRID_GRANULARITY 1 // TODO 2
 
 typedef struct grid_t {
   cl_double dt;                 // time step

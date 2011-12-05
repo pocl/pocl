@@ -127,7 +127,7 @@ pocl_native_free (void *data, void *ptr)
 }
 
 void
-pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
+pocl_native_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;

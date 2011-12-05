@@ -28,8 +28,8 @@
 #include <CL/opencl.h>
 #include "scalarwave.h"
 
-#define NT 4                    // time steps
-#define NX 33                   // grid size
+#define NT 1 // 4                    // time steps
+#define NX 5 // 33                   // grid size
 // NX, rounded up
 #define AX ((NX + GRID_GRANULARITY-1) / GRID_GRANULARITY * GRID_GRANULARITY)
 
@@ -68,9 +68,10 @@ main (void)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi_p_p);
 
   // Set up initial data (TODO: do this on the device as well)
-  double const kx = 2*M_PI;
-  double const ky = 2*M_PI;
-  double const kz = 2*M_PI;
+  printf ("Initial condition: t=%g\n", 0.0);
+  double const kx = M_PI;
+  double const ky = M_PI;
+  double const kz = M_PI;
   double const omega = sqrt(pow(kx,2)+pow(ky,2)+pow(kz,2));
   for (int k = 0; k < NX; ++k) {
     for (int j = 0; j < NX; ++j) {
@@ -81,15 +82,15 @@ main (void)
         double const y  = j*grid.dy;
         double const z  = k*grid.dz;
         int const ind3d = i+grid.ai*(j+grid.aj*k);
-        phi  [ind3d] = cos(kx*x) * cos(ky*y) * cos(kz*z) * cos(omega*t0);
-        phi_p[ind3d] = cos(kx*x) * cos(ky*y) * cos(kz*z) * cos(omega*t1);
+        phi  [ind3d] = sin(kx*x) * sin(ky*y) * sin(kz*z) * cos(omega*t0);
+        phi_p[ind3d] = sin(kx*x) * sin(ky*y) * sin(kz*z) * cos(omega*t1);
       }
     }
   }
 
   // Take some time steps
   for (int n=0; n<NT; ++n) {
-    printf ("Time step %d: t=%g\n", n, n*grid.dt);
+    printf ("Time step %d: t=%g\n", n+1, (n+1)*grid.dt);
     
     // Cycle time levels
     {
@@ -99,6 +100,9 @@ main (void)
       phi = tmp;
     }
 
+    // TODO: We create the program and allocate the buffers each time,
+    // which is slow. But then, we only want to test correctness, not
+    // performance. (Yet?)
     int const ierr =
       exec_scalarwave_kernel (source, phi, phi_p, phi_p_p, &grid);
     assert(!ierr);
@@ -111,9 +115,9 @@ main (void)
     double const x = grid.dx*i;
     double const y = grid.dy*j;
     double const z = grid.dz*k;
-    int const ind3d = i*grid.ai*(j+grid.aj*k);
+    int const ind3d = i+grid.ai*(j+grid.aj*k);
     
-    printf ("phi[%g,%g,%g] = %g\n", x,y,z, phi[ind3d]);
+    printf ("phi[%-8g,%-8g,%-8g] = %g\n", x,y,z, phi[ind3d]);
   }
 
   printf ("OK\n");
