@@ -42,5 +42,7 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .ll.o:
 	$(LLVM_AS) -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
-$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h templates.h
+# TODO: This misses the dependency on the device-specific include files
+# TODO: Dependencies should be generated automatically
+$(patsubst %.c, %.o, $(filter %.c, $(libkernel_a_SOURCES))): $(top_srcdir)/include/_kernel.h
+$(patsubst %.cl, %.o, $(filter %.cl, $(libkernel_a_SOURCES))): $(top_srcdir)/include/types.h $(top_srcdir)/include/_kernel.h templates.h
