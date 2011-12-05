@@ -33,6 +33,7 @@ examples/forloops/forloops
 examples/standalone/standalone.bc
 examples/standalone/standalone.h
 examples/trig/trig
+examples/scalarwave/scalarwave
 scripts/pocl-build
 scripts/pocl-kernel
 scripts/pocl-standalone

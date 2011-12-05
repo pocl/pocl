@@ -59,6 +59,7 @@ and run the executable there (executable name matches subdirectory name).
     forloops      Simple example wth for loops inside the kernel
     standalone    Non-executable standalone example (see STANDALONE section)
     trig          Example using various trigonometric functions
+    scalarwave    Example evolving the scalar wave equation
 
 
 LINKING YOUR PROGRAM WITH POCL

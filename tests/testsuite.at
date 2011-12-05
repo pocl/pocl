@@ -172,3 +172,13 @@ OK
 ])
 AT_CHECK([$abs_top_builddir/examples/trig/trig], 0, expout)
 AT_CLEANUP
+          
+AT_BANNER([Full applications])
+
+AT_SETUP([Scalar wave equation])
+AT_DATA([expout],
+# TODO: add real output
+[OK
+])
+AT_CHECK([$abs_top_builddir/examples/scalarwave/scalarwave], 0, expout)
+AT_CLEANUP

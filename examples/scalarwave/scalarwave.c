@@ -28,9 +28,10 @@
 #include <CL/opencl.h>
 #include "scalarwave.h"
 
-#define N 33
-// N, rounded up
-#define A ((N + GRID_GRANULARITY-1) / GRID_GRANULARITY * GRID_GRANULARITY)
+#define NT 4                    // time steps
+#define NX 33                   // grid size
+// NX, rounded up
+#define AX ((NX + GRID_GRANULARITY-1) / GRID_GRANULARITY * GRID_GRANULARITY)
 
 int
 main (void)
@@ -54,10 +55,10 @@ main (void)
   fclose (source_file);
   
   grid_t grid;
-  grid.dt = 0.5/(N-1);
-  grid.dx = grid.dy = grid.dz = 1.0/(N-1);
-  grid.ai = grid.aj = grid.ak = A;
-  grid.ni = grid.nj = grid.nk = N;
+  grid.dt = 0.5/(NX-1);
+  grid.dx = grid.dy = grid.dz = 1.0/(NX-1);
+  grid.ai = grid.aj = grid.ak = AX;
+  grid.ni = grid.nj = grid.nk = NX;
 
   cl_double *restrict phi     =
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi    );
@@ -71,9 +72,9 @@ main (void)
   double const ky = 2*M_PI;
   double const kz = 2*M_PI;
   double const omega = sqrt(pow(kx,2)+pow(ky,2)+pow(kz,2));
-  for (int k = 0; k < N; ++k) {
-    for (int j = 0; j < N; ++j) {
-      for (int i = 0; i < N; ++i) {
+  for (int k = 0; k < NX; ++k) {
+    for (int j = 0; j < NX; ++j) {
+      for (int i = 0; i < NX; ++i) {
         double const t0 =   0.0;
         double const t1 =  -grid.dt;
         double const x  = i*grid.dx;
@@ -87,7 +88,7 @@ main (void)
   }
 
   // Take some time steps
-  for (int n=0; n<N; ++n) {
+  for (int n=0; n<NT; ++n) {
     printf ("Time step %d: t=%g\n", n, n*grid.dt);
     
     // Cycle time levels
@@ -103,44 +104,8 @@ main (void)
     assert(!ierr);
 
   }
-
-  double const expected_phi[N] = {
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-  };
-
-  for (int i=0; i<N; ++i) {
+  
+  for (int i=0; i<NX; ++i) {
     int const j = i;
     int const k = i;
     double const x = grid.dx*i;
@@ -149,10 +114,6 @@ main (void)
     int const ind3d = i*grid.ai*(j+grid.aj*k);
     
     printf ("phi[%g,%g,%g] = %g\n", x,y,z, phi[ind3d]);
-    if (fabs(phi[ind3d] - expected_phi[i]) > 1.0e-12) {
-      printf ("FAIL\n");
-      return -1;
-    }
   }
 
   printf ("OK\n");
