@@ -48,9 +48,9 @@ rm -f ${header}
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -disable-output -header=${header} $1
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 fi
 
 clang -c -o ${output_file}.o -x c - <<EOF
@@ -59,6 +59,10 @@ clang -c -o ${output_file}.o -x c - <<EOF
 unsigned _num_args = _${kernel}_NUM_ARGS;
 int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
 int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
+unsigned _num_locals = _${kernel}_NUM_LOCALS;
+#if _${kernel}_NUM_LOCALS != 0
+unsigned _local_size = _${kernel}_LOCAL_SIZE;
+#endif
 EOF
 
 ld ${output_file}.o @SHARED_LD_FLAGS@ -o ${output_file}

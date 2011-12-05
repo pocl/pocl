@@ -44,6 +44,7 @@ clCreateKernel(cl_program program,
   char command[COMMAND_LENGTH];
   int error;
   lt_dlhandle dlhandle;
+  int i;
 
   if (program == NULL)
     POCL_ERROR(CL_INVALID_PROGRAM);
@@ -118,8 +119,19 @@ clCreateKernel(cl_program program,
   kernel->dlhandle = dlhandle;
   kernel->arg_is_pointer = lt_dlsym(dlhandle, "_arg_is_pointer");
   kernel->arg_is_local = lt_dlsym(dlhandle, "_arg_is_local");
-  kernel->arguments = NULL;
+  kernel->num_locals = *(cl_uint *) lt_dlsym(dlhandle, "_num_locals");
+  kernel->arguments =
+    (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
+                                     sizeof (struct pocl_argument));
   kernel->next = NULL;
+
+  /* Fill up automatic local arguments. */
+  for (i = 0; i < kernel->num_locals; ++i)
+    {
+      kernel->arguments[kernel->num_args + i].value = NULL;
+      kernel->arguments[kernel->num_args + i].size =
+        ((size_t *) lt_dlsym(dlhandle, "_local_size"))[i];
+    }
 
   if (program->kernels == NULL)
     program->kernels = kernel;

@@ -136,6 +136,15 @@ pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
 }
 
 void
+pocl_native_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
+{
+  if (host_ptr == device_ptr)
+    return;
+
+  memcpy (device_ptr, host_ptr, cb);
+}
+
+void
 pocl_native_run (void *data, const char *parallel_filename,
 		 cl_kernel kernel,
 		 struct pocl_context *pc)
@@ -150,7 +159,7 @@ pocl_native_run (void *data, const char *parallel_filename,
   char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
-  struct pocl_argument_list *p;
+  struct pocl_argument *p;
   size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
@@ -244,10 +253,9 @@ pocl_native_run (void *data, const char *parallel_filename,
 	{
 	  for (x = 0; x < pc->num_groups[0]; ++x)
 	    {
-	      i = 0;
-	      p = kernel->arguments;
-	      while (p != NULL)
-		{
+              for (i = 0; i < kernel->num_args; ++i)
+                {
+                  p = &(kernel->arguments[i]);
 		  if (kernel->arg_is_local[i])
 		    {
 		      arguments[i] = malloc (sizeof (void *));
@@ -257,10 +265,15 @@ pocl_native_run (void *data, const char *parallel_filename,
 		    arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
 		  else
 		    arguments[i] = p->value;
-
-		  ++i;
-		  p = p->next;
-		}
+                }
+              for (i = kernel->num_args;
+                   i < kernel->num_args + kernel->num_locals;
+                   ++i)
+                {
+                  p = &(kernel->arguments[i]);
+                  arguments[i] = malloc (sizeof (void *));
+                  *(void **)(arguments[i]) = pocl_native_malloc(data, 0, p->size, NULL);
+                }
 
 	      pc->group_id[0] = x;
 	      pc->group_id[1] = y;
@@ -268,16 +281,15 @@ pocl_native_run (void *data, const char *parallel_filename,
 
 	      w (arguments, pc);
 
-	      i = 0;
-	      p = kernel->arguments;
-	      while (p != NULL)
-		{
+              for (i = 0; i < kernel->num_args; ++i)
+                {
 		  if (kernel->arg_is_local[i])
-		    pocl_native_free(data, *(void **)(arguments[i]));
-
-		  ++i;
-		  p = p->next;
-		}
+                    pocl_native_free(data, *(void **)(arguments[i]));
+                }
+              for (i = kernel->num_args;
+                   i < kernel->num_args + kernel->num_locals;
+                   ++i)
+                  pocl_native_free(data, *(void **)(arguments[i]));
 	    }
 	}
     }

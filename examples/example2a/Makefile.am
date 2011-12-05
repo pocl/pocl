@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel/x86_64.
+# Makefile.am for pocl/examples/example2a.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,39 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-targetpkglibdir = $(pkglibdir)/x86_64
-targetpkglib_LIBRARIES = libkernel.a
+noinst_PROGRAMS = example2a
 
-vpath %.cl @srcdir@/..
-vpath %.c @srcdir@/..
-vpath %.ll @srcdir@/..
+example2a_SOURCES = example2a.c example2a.cl
+example2a_LDADD = ../../lib/CL/libCL.la @PTHREAD_LIBS@
+example2a_CFLAGS = @PTHREAD_CFLAGS@
 
-include ../sources.mk
-
-RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
-AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
-
-if NATIVE_X86_64
-
-CLANGFLAGS += @NATIVE_CLANG_FLAGS@
-
-.cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-else
-
-CLANGFLAGS += @X86_64_CLANG_FLAGS@
-
-.cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/x86_64/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-endif
-
-.c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -o $@ $<
-
-.ll.o:
-	$(LLVM_AS) -o $@ $<
-
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
-$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

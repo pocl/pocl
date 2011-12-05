@@ -6,4 +6,7 @@
   threads for the system. Currently works only in Linux 
   using the /proc/cpuinfo interface.
 - Preliminary support for ARM architectures on Linux.
+- Barrier handling finished. Barriers inside for-loops etc.
+  now supported.
+- Support for automatic local variables.
 

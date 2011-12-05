@@ -22,4 +22,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 barriers forloops standalone trig loopbarriers
+SUBDIRS = example1 example2 example2a barriers forloops standalone trig loopbarriers
