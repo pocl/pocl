@@ -22,7 +22,7 @@
 */
 
 #define DEFINE_AS_TYPE(SRC, DST)                \
-  DST __attribute__ ((__overloadable__))            \
+  DST __attribute__ ((__overloadable__))        \
   as_##DST(SRC a)                               \
   {                                             \
     return *(DST*)&a;                           \
@@ -72,7 +72,6 @@ DEFINE_AS_TYPE_4(float)
 
 /* 8 bytes */
 
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_AS_TYPE_8(DST)                   \
   DEFINE_AS_TYPE(DST, char8)                    \
   DEFINE_AS_TYPE(DST, uchar8)                   \
@@ -80,41 +79,12 @@ DEFINE_AS_TYPE_4(float)
   DEFINE_AS_TYPE(DST, ushort4)                  \
   DEFINE_AS_TYPE(DST, int2)                     \
   DEFINE_AS_TYPE(DST, uint2)                    \
+  __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long)                     \
-  DEFINE_AS_TYPE(DST, ulong)                    \
+  DEFINE_AS_TYPE(DST, ulong))                   \
   DEFINE_AS_TYPE(DST, float2)                   \
-  DEFINE_AS_TYPE(DST, double)
-#elif defined(cles_khr_int64)
-#define DEFINE_AS_TYPE_8(DST)                   \
-  DEFINE_AS_TYPE(DST, char8)                    \
-  DEFINE_AS_TYPE(DST, uchar8)                   \
-  DEFINE_AS_TYPE(DST, short4)                   \
-  DEFINE_AS_TYPE(DST, ushort4)                  \
-  DEFINE_AS_TYPE(DST, int2)                     \
-  DEFINE_AS_TYPE(DST, uint2)                    \
-  DEFINE_AS_TYPE(DST, long)                     \
-  DEFINE_AS_TYPE(DST, ulong)                    \
-  DEFINE_AS_TYPE(DST, float2)
-#elif defined(cl_khr_fp64)
-#define DEFINE_AS_TYPE_8(DST)                   \
-  DEFINE_AS_TYPE(DST, char8)                    \
-  DEFINE_AS_TYPE(DST, uchar8)                   \
-  DEFINE_AS_TYPE(DST, short4)                   \
-  DEFINE_AS_TYPE(DST, ushort4)                  \
-  DEFINE_AS_TYPE(DST, int2)                     \
-  DEFINE_AS_TYPE(DST, uint2)                    \
-  DEFINE_AS_TYPE(DST, float2)                   \
-  DEFINE_AS_TYPE(DST, double)
-#else
-#define DEFINE_AS_TYPE_8(DST)                   \
-  DEFINE_AS_TYPE(DST, char8)                    \
-  DEFINE_AS_TYPE(DST, uchar8)                   \
-  DEFINE_AS_TYPE(DST, short4)                   \
-  DEFINE_AS_TYPE(DST, ushort4)                  \
-  DEFINE_AS_TYPE(DST, int2)                     \
-  DEFINE_AS_TYPE(DST, uint2)                    \
-  DEFINE_AS_TYPE(DST, float2)
-#endif
+  __IF_FP64(                                    \
+  DEFINE_AS_TYPE(DST, double))
 
 DEFINE_AS_TYPE_8(char8)
 DEFINE_AS_TYPE_8(uchar8)
@@ -122,18 +92,15 @@ DEFINE_AS_TYPE_8(short4)
 DEFINE_AS_TYPE_8(ushort4)
 DEFINE_AS_TYPE_8(int2)
 DEFINE_AS_TYPE_8(uint2)
-#ifdef cles_khr_int64
+__IF_INT64(
 DEFINE_AS_TYPE_8(long)
-DEFINE_AS_TYPE_8(ulong)
-#endif
+DEFINE_AS_TYPE_8(ulong))
 DEFINE_AS_TYPE_8(float2)
-#ifdef cl_khr_fp64
-DEFINE_AS_TYPE_8(double)
-#endif
+__IF_FP64(
+DEFINE_AS_TYPE_8(double))
 
 /* 16 bytes */
 
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_AS_TYPE_16(DST)                  \
   DEFINE_AS_TYPE(DST, char16)                   \
   DEFINE_AS_TYPE(DST, uchar16)                  \
@@ -141,41 +108,12 @@ DEFINE_AS_TYPE_8(double)
   DEFINE_AS_TYPE(DST, ushort8)                  \
   DEFINE_AS_TYPE(DST, int4)                     \
   DEFINE_AS_TYPE(DST, uint4)                    \
+  __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long2)                    \
-  DEFINE_AS_TYPE(DST, ulong2)                   \
+  DEFINE_AS_TYPE(DST, ulong2))                  \
   DEFINE_AS_TYPE(DST, float4)                   \
-  DEFINE_AS_TYPE(DST, double2)
-#elif defined(cles_khr_int64)
-#define DEFINE_AS_TYPE_16(DST)                  \
-  DEFINE_AS_TYPE(DST, char16)                   \
-  DEFINE_AS_TYPE(DST, uchar16)                  \
-  DEFINE_AS_TYPE(DST, short8)                   \
-  DEFINE_AS_TYPE(DST, ushort8)                  \
-  DEFINE_AS_TYPE(DST, int4)                     \
-  DEFINE_AS_TYPE(DST, uint4)                    \
-  DEFINE_AS_TYPE(DST, long2)                    \
-  DEFINE_AS_TYPE(DST, ulong2)                   \
-  DEFINE_AS_TYPE(DST, float4)
-#elif defined(cl_khr_fp64)
-#define DEFINE_AS_TYPE_16(DST)                  \
-  DEFINE_AS_TYPE(DST, char16)                   \
-  DEFINE_AS_TYPE(DST, uchar16)                  \
-  DEFINE_AS_TYPE(DST, short8)                   \
-  DEFINE_AS_TYPE(DST, ushort8)                  \
-  DEFINE_AS_TYPE(DST, int4)                     \
-  DEFINE_AS_TYPE(DST, uint4)                    \
-  DEFINE_AS_TYPE(DST, float4)                   \
-  DEFINE_AS_TYPE(DST, double2)
-#else
-#define DEFINE_AS_TYPE_16(DST)                  \
-  DEFINE_AS_TYPE(DST, char16)                   \
-  DEFINE_AS_TYPE(DST, uchar16)                  \
-  DEFINE_AS_TYPE(DST, short8)                   \
-  DEFINE_AS_TYPE(DST, ushort8)                  \
-  DEFINE_AS_TYPE(DST, int4)                     \
-  DEFINE_AS_TYPE(DST, uint4)                    \
-  DEFINE_AS_TYPE(DST, float4)
-#endif
+  __IF_FP64(                                    \
+  DEFINE_AS_TYPE(DST, double2))
 
 DEFINE_AS_TYPE_16(char16)
 DEFINE_AS_TYPE_16(uchar16)
@@ -183,127 +121,70 @@ DEFINE_AS_TYPE_16(short8)
 DEFINE_AS_TYPE_16(ushort8)
 DEFINE_AS_TYPE_16(int4)
 DEFINE_AS_TYPE_16(uint4)
-#ifdef cles_khr_int64
+__IF_INT64(
 DEFINE_AS_TYPE_16(long2)
-DEFINE_AS_TYPE_16(ulong2)
-#endif
+DEFINE_AS_TYPE_16(ulong2))
 DEFINE_AS_TYPE_16(float4)
-#ifdef cl_khr_fp64
-DEFINE_AS_TYPE_16(double2)
-#endif
+__IF_FP64(
+DEFINE_AS_TYPE_16(double2))
 
 /* 32 bytes */
 
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_AS_TYPE_32(DST)                  \
   DEFINE_AS_TYPE(DST, short16)                  \
   DEFINE_AS_TYPE(DST, ushort16)                 \
   DEFINE_AS_TYPE(DST, int8)                     \
   DEFINE_AS_TYPE(DST, uint8)                    \
+  __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long4)                    \
-  DEFINE_AS_TYPE(DST, ulong4)                   \
+  DEFINE_AS_TYPE(DST, ulong4))                  \
   DEFINE_AS_TYPE(DST, float8)                   \
-  DEFINE_AS_TYPE(DST, double4)
-#elif defined(cles_khr_int64)
-#define DEFINE_AS_TYPE_32(DST)                  \
-  DEFINE_AS_TYPE(DST, short16)                  \
-  DEFINE_AS_TYPE(DST, ushort16)                 \
-  DEFINE_AS_TYPE(DST, int8)                     \
-  DEFINE_AS_TYPE(DST, uint8)                    \
-  DEFINE_AS_TYPE(DST, long4)                    \
-  DEFINE_AS_TYPE(DST, ulong4)                   \
-  DEFINE_AS_TYPE(DST, float8)
-#elif defined(cl_khr_fp64)
-#define DEFINE_AS_TYPE_32(DST)                  \
-  DEFINE_AS_TYPE(DST, short16)                  \
-  DEFINE_AS_TYPE(DST, ushort16)                 \
-  DEFINE_AS_TYPE(DST, int8)                     \
-  DEFINE_AS_TYPE(DST, uint8)                    \
-  DEFINE_AS_TYPE(DST, float8)                   \
-  DEFINE_AS_TYPE(DST, double4)
-#else
-#define DEFINE_AS_TYPE_32(DST)                  \
-  DEFINE_AS_TYPE(DST, short16)                  \
-  DEFINE_AS_TYPE(DST, ushort16)                 \
-  DEFINE_AS_TYPE(DST, int8)                     \
-  DEFINE_AS_TYPE(DST, uint8)                    \
-  DEFINE_AS_TYPE(DST, float8)
-#endif
+  __IF_FP64(                                    \
+  DEFINE_AS_TYPE(DST, double4))
 
 DEFINE_AS_TYPE_32(short16)
 DEFINE_AS_TYPE_32(ushort16)
 DEFINE_AS_TYPE_32(int8)
 DEFINE_AS_TYPE_32(uint8)
-#ifdef cles_khr_int64
+__IF_INT64(
 DEFINE_AS_TYPE_32(long4)
-DEFINE_AS_TYPE_32(ulong4)
-#endif
+DEFINE_AS_TYPE_32(ulong4))
 DEFINE_AS_TYPE_32(float8)
-#ifdef cl_khr_fp64
-DEFINE_AS_TYPE_32(double4)
-#endif
+__IF_FP64(
+DEFINE_AS_TYPE_32(double4))
 
 /* 64 bytes */
 
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_AS_TYPE_64(DST)                  \
   DEFINE_AS_TYPE(DST, int16)                    \
   DEFINE_AS_TYPE(DST, uint16)                   \
+  __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long8)                    \
-  DEFINE_AS_TYPE(DST, ulong8)                   \
+  DEFINE_AS_TYPE(DST, ulong8))                  \
   DEFINE_AS_TYPE(DST, float16)                  \
-  DEFINE_AS_TYPE(DST, double8)
-#elif defined(cles_khr_int64)
-#define DEFINE_AS_TYPE_64(DST)                  \
-  DEFINE_AS_TYPE(DST, int16)                    \
-  DEFINE_AS_TYPE(DST, uint16)                   \
-  DEFINE_AS_TYPE(DST, long8)                    \
-  DEFINE_AS_TYPE(DST, ulong8)                   \
-  DEFINE_AS_TYPE(DST, float16)
-#elif defined(cl_khr_fp64)
-#define DEFINE_AS_TYPE_64(DST)                  \
-  DEFINE_AS_TYPE(DST, int16)                    \
-  DEFINE_AS_TYPE(DST, uint16)                   \
-  DEFINE_AS_TYPE(DST, float16)                  \
-  DEFINE_AS_TYPE(DST, double8)
-#else
-#define DEFINE_AS_TYPE_64(DST)                  \
-  DEFINE_AS_TYPE(DST, int16)                    \
-  DEFINE_AS_TYPE(DST, uint16)                   \
-  DEFINE_AS_TYPE(DST, float16)
-#endif
+  __IF_FP64(                                    \
+  DEFINE_AS_TYPE(DST, double8))
 
 DEFINE_AS_TYPE_64(int16)
 DEFINE_AS_TYPE_64(uint16)
-#ifdef cles_khr_int64
+__IF_INT64(
 DEFINE_AS_TYPE_64(long8)
-DEFINE_AS_TYPE_64(ulong8)
-#endif
+DEFINE_AS_TYPE_64(ulong8))
 DEFINE_AS_TYPE_64(float16)
-#ifdef cl_khr_fp64
-DEFINE_AS_TYPE_64(double8)
-#endif
+__IF_FP64(
+DEFINE_AS_TYPE_64(double8))
 
 /* 128 bytes */
 
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
 #define DEFINE_AS_TYPE_128(DST)                 \
+  __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long16)                   \
-  DEFINE_AS_TYPE(DST, ulong16)                  \
-  DEFINE_AS_TYPE(DST, double16)
-#elif defined(cles_khr_int64)
-#define DEFINE_AS_TYPE_128(DST)                 \
-  DEFINE_AS_TYPE(DST, long16)                   \
-  DEFINE_AS_TYPE(DST, ulong16)
-#elif defined(cl_khr_fp64)
-#define DEFINE_AS_TYPE_128(DST)                 \
-  DEFINE_AS_TYPE(DST, double16)
-#endif
+  DEFINE_AS_TYPE(DST, ulong16))                 \
+  __IF_FP64(                                    \
+  DEFINE_AS_TYPE(DST, double16))
 
-#ifdef cles_khr_int64
+__IF_INT64(
 DEFINE_AS_TYPE_128(long16)
-DEFINE_AS_TYPE_128(ulong16)
-#endif
-#ifdef cl_khr_fp64
-DEFINE_AS_TYPE_128(double16)
-#endif
+DEFINE_AS_TYPE_128(ulong16))
+__IF_FP64(
+DEFINE_AS_TYPE_128(double16))

@@ -6,23 +6,23 @@
 
 #include "clconfig.h"
 
-#define uchar unsigned char
-#define ushort unsigned short
-#define uint unsigned int
-#define ulong unsigned long
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
 #if SIZEOF_LONG == 8
-#define cles_khr_int64
-#if SIZEOF_DOUBLE == 8
-#define cl_khr_fp64
-#else
-#undef cl_khr_fp64
-#endif
-#else /* SIZEOF_LONG == 8 */
-#define __EMBEDDED_PROFILE__ 1
-#undef cles_khr_int64
-#undef cl_khr_fp64
-#endif /* SIZEOF_LONG == 8 */
+#  define cles_khr_int64
+#  if SIZEOF_DOUBLE == 8
+#    define cl_khr_fp64
+#  else
+#    undef cl_khr_fp64
+#  endif
+#else /* SIZEOF_LONG != 8 */
+#  define __EMBEDDED_PROFILE__ 1
+#  undef cles_khr_int64
+#  undef cl_khr_fp64
+#endif /* SIZEOF_LONG != 8 */
 
 #if SIZEOF_VOID_P == 8
 typedef ulong size_t;

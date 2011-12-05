@@ -98,11 +98,17 @@ IMPLEMENT_VSTORE(double, __local)
 IMPLEMENT_VSTORE(char  , __private)
 IMPLEMENT_VSTORE(short , __private)
 IMPLEMENT_VSTORE(int   , __private)
+#if defined(cles_khr_int64)
 IMPLEMENT_VSTORE(long  , __private)
+#endif
 IMPLEMENT_VSTORE(uchar , __private)
 IMPLEMENT_VSTORE(ushort, __private)
 IMPLEMENT_VSTORE(uint  , __private)
+#if defined(cles_khr_int64)
 IMPLEMENT_VSTORE(ulong , __private)
+#endif
 IMPLEMENT_VSTORE(float , __private)
+#if defined(cl_khr_fpt64)
 IMPLEMENT_VSTORE(double, __private)
+#endif
 */

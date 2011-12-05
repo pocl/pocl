@@ -23,374 +23,132 @@
 
 #include "templates.h"
 
+/* SRC and DST must be scalars */
 #define DEFINE_CONVERT_TYPE(SRC, DST)                           \
-  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)       \
+  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)   \
   {                                                             \
     return (DST)a;                                              \
   }
 
+/* implementing vector SRC and DST in terms of scalars */
 #define DEFINE_CONVERT_TYPE_HALF(SRC, DST, HALFDST)                     \
-  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)               \
+  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)           \
   {                                                                     \
     return (DST)(convert_##HALFDST(a.lo), convert_##HALFDST(a.hi));     \
   }
 
 #define DEFINE_CONVERT_TYPE_012(SRC, DST, DST01, DST2)          \
-  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)       \
+  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)   \
   {                                                             \
     return (DST)(convert_##DST01(a.s01), convert_##DST2(a.s2)); \
   }
 
-/* 1 element */
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_1(SRC)              \
-  DEFINE_CONVERT_TYPE(SRC, char  )              \
-  DEFINE_CONVERT_TYPE(SRC, uchar )              \
-  DEFINE_CONVERT_TYPE(SRC, short )              \
-  DEFINE_CONVERT_TYPE(SRC, ushort)              \
-  DEFINE_CONVERT_TYPE(SRC, int   )              \
-  DEFINE_CONVERT_TYPE(SRC, uint  )              \
-  DEFINE_CONVERT_TYPE(SRC, long  )              \
-  DEFINE_CONVERT_TYPE(SRC, ulong )              \
-  DEFINE_CONVERT_TYPE(SRC, float )              \
-  DEFINE_CONVERT_TYPE(SRC, double)
-#elif defined(cles_khr_int64)
-#define DEFINE_CONVERT_TYPE_1(SRC)              \
-  DEFINE_CONVERT_TYPE(SRC, char  )              \
-  DEFINE_CONVERT_TYPE(SRC, uchar )              \
-  DEFINE_CONVERT_TYPE(SRC, short )              \
-  DEFINE_CONVERT_TYPE(SRC, ushort)              \
-  DEFINE_CONVERT_TYPE(SRC, int   )              \
-  DEFINE_CONVERT_TYPE(SRC, uint  )              \
-  DEFINE_CONVERT_TYPE(SRC, long  )              \
-  DEFINE_CONVERT_TYPE(SRC, ulong )              \
-  DEFINE_CONVERT_TYPE(SRC, float )
-#elif defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_1(SRC)              \
-  DEFINE_CONVERT_TYPE(SRC, char  )              \
-  DEFINE_CONVERT_TYPE(SRC, uchar )              \
-  DEFINE_CONVERT_TYPE(SRC, short )              \
-  DEFINE_CONVERT_TYPE(SRC, ushort)              \
-  DEFINE_CONVERT_TYPE(SRC, int   )              \
-  DEFINE_CONVERT_TYPE(SRC, uint  )              \
-  DEFINE_CONVERT_TYPE(SRC, float )              \
-  DEFINE_CONVERT_TYPE(SRC, double)
-#else
-#define DEFINE_CONVERT_TYPE_1(SRC)              \
-  DEFINE_CONVERT_TYPE(SRC, char  )              \
-  DEFINE_CONVERT_TYPE(SRC, uchar )              \
-  DEFINE_CONVERT_TYPE(SRC, short )              \
-  DEFINE_CONVERT_TYPE(SRC, ushort)              \
-  DEFINE_CONVERT_TYPE(SRC, int   )              \
-  DEFINE_CONVERT_TYPE(SRC, uint  )              \
-  DEFINE_CONVERT_TYPE(SRC, float )
-#endif
-DEFINE_CONVERT_TYPE_1(char  )
-DEFINE_CONVERT_TYPE_1(uchar )
-DEFINE_CONVERT_TYPE_1(short )
-DEFINE_CONVERT_TYPE_1(ushort)
-DEFINE_CONVERT_TYPE_1(int   )
-DEFINE_CONVERT_TYPE_1(uint  )
-#ifdef cles_khr_int64
-DEFINE_CONVERT_TYPE_1(long  )
-DEFINE_CONVERT_TYPE_1(ulong )
-#endif
-DEFINE_CONVERT_TYPE_1(float )
-#ifdef cl_khr_fp64
-DEFINE_CONVERT_TYPE_1(double)
-#endif
+/* SRC and DST may be vectors */
+#define DEFINE_CONVERT_TYPE_SAT(SRC, DST, SIZE)                         \
+  DST##SIZE __attribute__ ((__overloadable__))                          \
+    convert_##DST##SIZE##_sat(SRC##SIZE a)                              \
+  {                                                                     \
+    int const src_float    = (SRC)0.1f > (SRC)0;                        \
+    int const src_unsigned = -(SRC)1 > (SRC)0;                          \
+    int const dst_unsigned = -(DST)1 > (DST)0;                          \
+    int const src_size = sizeof(SRC);                                   \
+    int const dst_size = sizeof(DST);                                   \
+    if (src_float) {                                                    \
+      if (dst_unsigned) {                                               \
+        DST const DST_MAX = (DST)0 - (DST)1;                            \
+        return (convert_##DST##SIZE(a > (SRC)DST_MAX) ? (DST##SIZE)DST_MAX : \
+                convert_##DST##SIZE(a));                                \
+      } else { /* dst is signed */                                      \
+        DST const DST_MIN = (DST)1 << (DST)(CHAR_BIT * dst_size - 1);   \
+        DST const DST_MAX = DST_MIN - (DST)1;                           \
+        return (convert_##DST##SIZE(a < (SRC)DST_MIN) ? (DST##SIZE)DST_MIN : \
+                convert_##DST##SIZE(a > (SRC)DST_MAX) ? (DST##SIZE)DST_MAX : \
+                convert_##DST##SIZE(a));                                \
+      }                                                                 \
+    } else if (src_unsigned) {                                          \
+      if (dst_unsigned) {                                               \
+        if (dst_size >= src_size) return convert_##DST##SIZE(a);        \
+        DST const DST_MAX = (DST)0 - (DST)1;                            \
+        return (convert_##DST##SIZE(a > (SRC)DST_MAX) ? (DST##SIZE)DST_MAX : \
+                convert_##DST##SIZE(a));                                \
+      } else { /* dst is signed */                                      \
+        if (dst_size > src_size) return convert_##DST##SIZE(a);         \
+        DST const DST_MAX = (DST)1 << (DST)(CHAR_BIT * dst_size);       \
+        return (convert_##DST##SIZE(a > (SRC)DST_MAX) ? (DST##SIZE)DST_MAX : \
+                convert_##DST##SIZE(a));                                \
+      }                                                                 \
+    } else { /* src is signed */                                        \
+      if (dst_unsigned) {                                               \
+        if (dst_size >= src_size) {                                     \
+          return (convert_##DST##SIZE(a < (SRC)0) ? (DST##SIZE)0 :      \
+                  convert_##DST##SIZE(a));                              \
+        }                                                               \
+        DST const DST_MAX = (DST)0 - (DST)1;                            \
+        return (convert_##DST##SIZE(a < (SRC)0      ) ? (DST##SIZE)0 :  \
+                convert_##DST##SIZE(a > (SRC)DST_MAX) ? (DST##SIZE)DST_MAX : \
+                convert_##DST##SIZE(a));                                \
+      } else { /* dst is signed */                                      \
+        if (dst_size >= src_size) return convert_##DST##SIZE(a);        \
+        DST const DST_MIN = (DST)1 << (DST)(CHAR_BIT * dst_size - 1);   \
+        DST const DST_MAX = DST_MIN - (DST)1;                           \
+        return (convert_##DST##SIZE(a < (SRC)DST_MIN) ? (DST##SIZE)DST_MIN : \
+                convert_##DST##SIZE(a > (SRC)DST_MAX) ? (DST##SIZE)DST_MAX : \
+                convert_##DST##SIZE(a));                                \
+      }                                                                 \
+    }                                                                   \
+  }
 
-/* 2 elements */
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_2(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char2  , char  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short2 , short )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int2   , int   )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long2  , long  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong2 , ulong )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float2 , float )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double2, double)
-#elif defined(cles_khr_int64)
-#define DEFINE_CONVERT_TYPE_2(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char2  , char  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short2 , short )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int2   , int   )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long2  , long  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong2 , ulong )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float2 , float )
-#elif defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_2(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char2  , char  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short2 , short )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int2   , int   )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float2 , float )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double2, double)
-#else
-#define DEFINE_CONVERT_TYPE_2(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char2  , char  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short2 , short )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int2   , int   )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float2 , float )
-#endif
-DEFINE_CONVERT_TYPE_2(char2  )
-DEFINE_CONVERT_TYPE_2(uchar2 )
-DEFINE_CONVERT_TYPE_2(short2 )
-DEFINE_CONVERT_TYPE_2(ushort2)
-DEFINE_CONVERT_TYPE_2(int2   )
-DEFINE_CONVERT_TYPE_2(uint2  )
-#ifdef cl_kht_int64
-DEFINE_CONVERT_TYPE_2(long2  )
-DEFINE_CONVERT_TYPE_2(ulong2 )
-#endif
-DEFINE_CONVERT_TYPE_2(float2 )
-#ifdef cl_khr_fp64
-DEFINE_CONVERT_TYPE_2(double2)
-#endif
 
-/* 3 elements */
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_3(SRC)                              \
-  DEFINE_CONVERT_TYPE_012(SRC, char3  , char2  , char  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uchar3 , uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_012(SRC, short3 , short2 , short )        \
-  DEFINE_CONVERT_TYPE_012(SRC, ushort3, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_012(SRC, int3   , int2   , int   )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uint3  , uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, long3  , long2  , long  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, ulong3 , ulong2 , ulong )        \
-  DEFINE_CONVERT_TYPE_012(SRC, float3 , float2 , float )        \
-  DEFINE_CONVERT_TYPE_012(SRC, double3, double2, double)
-#elif defined(cles_khr_int64)
-#define DEFINE_CONVERT_TYPE_3(SRC)                              \
-  DEFINE_CONVERT_TYPE_012(SRC, char3  , char2  , char  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uchar3 , uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_012(SRC, short3 , short2 , short )        \
-  DEFINE_CONVERT_TYPE_012(SRC, ushort3, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_012(SRC, int3   , int2   , int   )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uint3  , uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, long3  , long2  , long  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, ulong3 , ulong2 , ulong )        \
-  DEFINE_CONVERT_TYPE_012(SRC, float3 , float2 , float )
-#elif defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_3(SRC)                              \
-  DEFINE_CONVERT_TYPE_012(SRC, char3  , char2  , char  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uchar3 , uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_012(SRC, short3 , short2 , short )        \
-  DEFINE_CONVERT_TYPE_012(SRC, ushort3, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_012(SRC, int3   , int2   , int   )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uint3  , uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, float3 , float2 , float )        \
-  DEFINE_CONVERT_TYPE_012(SRC, double3, double2, double)
-#else
-#define DEFINE_CONVERT_TYPE_3(SRC)                              \
-  DEFINE_CONVERT_TYPE_012(SRC, char3  , char2  , char  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uchar3 , uchar2 , uchar )        \
-  DEFINE_CONVERT_TYPE_012(SRC, short3 , short2 , short )        \
-  DEFINE_CONVERT_TYPE_012(SRC, ushort3, ushort2, ushort)        \
-  DEFINE_CONVERT_TYPE_012(SRC, int3   , int2   , int   )        \
-  DEFINE_CONVERT_TYPE_012(SRC, uint3  , uint2  , uint  )        \
-  DEFINE_CONVERT_TYPE_012(SRC, float3 , float2 , float )
-#endif
-DEFINE_CONVERT_TYPE_3(char3  )
-DEFINE_CONVERT_TYPE_3(uchar3 )
-DEFINE_CONVERT_TYPE_3(short3 )
-DEFINE_CONVERT_TYPE_3(ushort3)
-DEFINE_CONVERT_TYPE_3(int3   )
-DEFINE_CONVERT_TYPE_3(uint3  )
-#ifdef cl_kht_int64
-DEFINE_CONVERT_TYPE_3(long3  )
-DEFINE_CONVERT_TYPE_3(ulong3 )
-#endif
-DEFINE_CONVERT_TYPE_3(float3 )
-#ifdef cl_khr_fp64
-DEFINE_CONVERT_TYPE_3(double3)
-#endif
 
-/* 4 elements */
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_4(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char4  , char2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar4 , uchar2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short4 , short2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort4, ushort2)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int4   , int2   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint4  , uint2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long4  , long2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong4 , ulong2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float4 , float2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double4, double2)
-#elif defined(cles_khr_int64)
-#define DEFINE_CONVERT_TYPE_4(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char4  , char2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar4 , uchar2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short4 , short2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort4, ushort2)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int4   , int2   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint4  , uint2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long4  , long2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong4 , ulong2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float4 , float2 )
-#elif defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_4(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char4  , char2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar4 , uchar2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short4 , short2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort4, ushort2)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int4   , int2   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint4  , uint2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float4 , float2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double4, double2)
-#else
-#define DEFINE_CONVERT_TYPE_4(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char4  , char2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar4 , uchar2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short4 , short2 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort4, ushort2)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int4   , int2   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint4  , uint2  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float4 , float2 )
-#endif
-DEFINE_CONVERT_TYPE_4(char4  )
-DEFINE_CONVERT_TYPE_4(uchar4 )
-DEFINE_CONVERT_TYPE_4(short4 )
-DEFINE_CONVERT_TYPE_4(ushort4)
-DEFINE_CONVERT_TYPE_4(int4   )
-DEFINE_CONVERT_TYPE_4(uint4  )
-#ifdef cl_kht_int64
-DEFINE_CONVERT_TYPE_4(long4  )
-DEFINE_CONVERT_TYPE_4(ulong4 )
-#endif
-DEFINE_CONVERT_TYPE_4(float4 )
-#ifdef cl_khr_fp64
-DEFINE_CONVERT_TYPE_4(double4)
-#endif
+#define DEFINE_CONVERT_TYPE_ALL(SRC, DST)                       \
+  DEFINE_CONVERT_TYPE     (SRC    , DST    )                    \
+  DEFINE_CONVERT_TYPE_HALF(SRC##2 , DST##2 , DST)               \
+  DEFINE_CONVERT_TYPE_012 (SRC##3 , DST##3 , DST##2, DST)       \
+  DEFINE_CONVERT_TYPE_HALF(SRC##4 , DST##4 , DST##2)            \
+  DEFINE_CONVERT_TYPE_HALF(SRC##8 , DST##8 , DST##4)            \
+  DEFINE_CONVERT_TYPE_HALF(SRC##16, DST##16, DST##8)
 
-/* 8 elements */
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_8(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char8  , char4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar8 , uchar4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short8 , short4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort8, ushort4)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int8   , int4   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint8  , uint4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long8  , long4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong8 , ulong4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float8 , float4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double8, double4)
-#elif defined(cles_khr_int64)
-#define DEFINE_CONVERT_TYPE_8(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char8  , char4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar8 , uchar4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short8 , short4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort8, ushort4)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int8   , int4   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint8  , uint4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long8  , long4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong8 , ulong4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float8 , float4 )
-#elif defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_8(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char8  , char4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar8 , uchar4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short8 , short4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort8, ushort4)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int8   , int4   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint8  , uint4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float8 , float4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double8, double4)
-#else
-#define DEFINE_CONVERT_TYPE_8(SRC)                      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char8  , char4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar8 , uchar4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short8 , short4 )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort8, ushort4)       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int8   , int4   )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint8  , uint4  )       \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float8 , float4 )
-#endif
-DEFINE_CONVERT_TYPE_8(char8  )
-DEFINE_CONVERT_TYPE_8(uchar8 )
-DEFINE_CONVERT_TYPE_8(short8 )
-DEFINE_CONVERT_TYPE_8(ushort8)
-DEFINE_CONVERT_TYPE_8(int8   )
-DEFINE_CONVERT_TYPE_8(uint8  )
-#ifdef cl_kht_int64
-DEFINE_CONVERT_TYPE_8(long8  )
-DEFINE_CONVERT_TYPE_8(ulong8 )
-#endif
-DEFINE_CONVERT_TYPE_8(float8 )
-#ifdef cl_khr_fp64
-DEFINE_CONVERT_TYPE_8(double8)
-#endif
+#define DEFINE_CONVERT_TYPE_SAT_ALL(SRC, DST)   \
+  DEFINE_CONVERT_TYPE_SAT(SRC, DST,   )         \
+  DEFINE_CONVERT_TYPE_SAT(SRC, DST,  2)         \
+  DEFINE_CONVERT_TYPE_SAT(SRC, DST,  3)         \
+  DEFINE_CONVERT_TYPE_SAT(SRC, DST,  4)         \
+  DEFINE_CONVERT_TYPE_SAT(SRC, DST,  8)         \
+  DEFINE_CONVERT_TYPE_SAT(SRC, DST, 16)
 
-/* 16 elements */
-#if defined(cles_khr_int64) && defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_16(SRC)                     \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char16  , char8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar16 , uchar8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short16 , short8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort16, ushort8)      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int16   , int8   )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint16  , uint8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long16  , long8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong16 , ulong8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float16 , float8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double16, double8)
-#elif defined(cles_khr_int64)
-#define DEFINE_CONVERT_TYPE_16(SRC)                     \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char16  , char8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar16 , uchar8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short16 , short8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort16, ushort8)      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int16   , int8   )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint16  , uint8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, long16  , long8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ulong16 , ulong8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float16 , float8 )
-#elif defined(cl_khr_fp64)
-#define DEFINE_CONVERT_TYPE_16(SRC)                     \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char16  , char8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar16 , uchar8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short16 , short8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort16, ushort8)      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int16   , int8   )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint16  , uint8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float16 , float8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, double16, double8)
-#else
-#define DEFINE_CONVERT_TYPE_16(SRC)                     \
-  DEFINE_CONVERT_TYPE_HALF(SRC, char16  , char8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uchar16 , uchar8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, short16 , short8 )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, ushort16, ushort8)      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, int16   , int8   )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, uint16  , uint8  )      \
-  DEFINE_CONVERT_TYPE_HALF(SRC, float16 , float8 )
-#endif
-DEFINE_CONVERT_TYPE_16(char16  )
-DEFINE_CONVERT_TYPE_16(uchar16 )
-DEFINE_CONVERT_TYPE_16(short16 )
-DEFINE_CONVERT_TYPE_16(ushort16)
-DEFINE_CONVERT_TYPE_16(int16   )
-DEFINE_CONVERT_TYPE_16(uint16  )
-#ifdef cl_kht_int64
-DEFINE_CONVERT_TYPE_16(long16  )
-DEFINE_CONVERT_TYPE_16(ulong16 )
-#endif
-DEFINE_CONVERT_TYPE_16(float16 )
-#ifdef cl_khr_fp64
-DEFINE_CONVERT_TYPE_16(double16)
-#endif
+
+
+#define DEFINE_CONVERT_TYPE_ALL_DST(SRC)        \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, uchar )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, uchar )      \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, char  )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, char  )      \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, ushort)      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, ushort)      \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, short )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, short )      \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, uint  )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, uint  )      \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, int   )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, int   )      \
+  __IF_INT64(                                   \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, ulong )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, ulong )      \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, long  )      \
+  DEFINE_CONVERT_TYPE_SAT_ALL(SRC, long  ))     \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, float )      \
+  __IF_FP64(                                    \
+  DEFINE_CONVERT_TYPE_ALL    (SRC, double))
+
+DEFINE_CONVERT_TYPE_ALL_DST(uchar )
+DEFINE_CONVERT_TYPE_ALL_DST(char  )
+DEFINE_CONVERT_TYPE_ALL_DST(ushort)
+DEFINE_CONVERT_TYPE_ALL_DST(short )
+DEFINE_CONVERT_TYPE_ALL_DST(uint  )
+DEFINE_CONVERT_TYPE_ALL_DST(int   )
+__IF_INT64(
+DEFINE_CONVERT_TYPE_ALL_DST(ulong )
+DEFINE_CONVERT_TYPE_ALL_DST(long  ))
+DEFINE_CONVERT_TYPE_ALL_DST(float )
+__IF_FP64(
+DEFINE_CONVERT_TYPE_ALL_DST(double))

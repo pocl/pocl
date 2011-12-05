@@ -108,11 +108,17 @@ IMPLEMENT_VLOAD(double, __constant)
 IMPLEMENT_VLOAD(char  , __private)
 IMPLEMENT_VLOAD(short , __private)
 IMPLEMENT_VLOAD(int   , __private)
+#if defined(cles_khr_int64)
 IMPLEMENT_VLOAD(long  , __private)
+#endif
 IMPLEMENT_VLOAD(uchar , __private)
 IMPLEMENT_VLOAD(ushort, __private)
 IMPLEMENT_VLOAD(uint  , __private)
+#if defined(cles_khr_int64)
 IMPLEMENT_VLOAD(ulong , __private)
+#endif
 IMPLEMENT_VLOAD(float , __private)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __private)
+#endif
 */

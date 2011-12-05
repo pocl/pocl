@@ -48,6 +48,9 @@
 #  define __IF_FP64(x)
 #endif
 
+/* A static assert statement to catch inconsistencies at build time */
+#define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
+
 #define __global __attribute__ ((address_space(3)))
 #define __local __attribute__ ((address_space(4)))
 #define __constant __attribute__ ((address_space(5)))
@@ -63,6 +66,18 @@ typedef enum {
 
 
 /* Data types */
+
+/* Disable undefined datatypes */
+#ifndef cles_khr_int64
+typedef struct error_undefined_type_long error_undefined_type_long;
+#  define long error_undefined_type_long
+typedef struct error_undefined_type_ulong error_undefined_type_ulong;
+#  define ulong error_undefined_type_ulong
+#endif
+#ifndef cl_khr_fp64
+typedef struct error_undefined_type_double error_undefined_type_double;
+#  define double error_undefined_type_double
+#endif
 
 // We align the 3-vectors, so that their sizeof is correct. Is there a
 // better way? Should we also align the other vectors?
@@ -115,10 +130,6 @@ typedef ulong ulong3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
 typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
-#else
-/* Disable datatype */
-struct error_undefined_type_long;
-#define long struct error_undefined_type_long
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
@@ -133,15 +144,9 @@ typedef double double3  __attribute__((__ext_vector_type__(3), __aligned__(32)))
 typedef double double4  __attribute__((__ext_vector_type__(4)));
 typedef double double8  __attribute__((__ext_vector_type__(8)));
 typedef double double16 __attribute__((__ext_vector_type__(16)));
-#else
-/* Disable datatype */
-struct error_undefined_type_double;
-#define double struct error_undefined_type_double
 #endif
 
 /* Ensure the data types have the right sizes */
-#define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
-
 _cl_static_assert(char  , sizeof(char  ) == 1);
 _cl_static_assert(char2 , sizeof(char2 ) == 2 *sizeof(char));
 _cl_static_assert(char3 , sizeof(char3 ) == 4 *sizeof(char));
@@ -354,146 +359,62 @@ __IF_INT64(_CL_DECLARE_AS_TYPE_128(long16))
 __IF_INT64(_CL_DECLARE_AS_TYPE_128(ulong16))
 __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
 
-#define _CL_DECLARE_CONVERT_TYPE(SRC, DST)      \
-  DST _cl_overloadable convert_##DST(SRC a);
+#define _CL_DECLARE_CONVERT_TYPE(SRC, DST, SIZE, INTSUFFIX, FLOATSUFFIX) \
+  DST##SIZE _cl_overloadable                                            \
+    convert_##DST##SIZE##INTSUFFIX##FLOATSUFFIX(SRC##SIZE a);
 
-/* 1 element */
-#define _CL_DECLARE_CONVERT_TYPE_1(SRC)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char)                   \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int)                    \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint)                   \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long))       \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong))      \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float)                  \
-  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double))
-_CL_DECLARE_CONVERT_TYPE_1(char)
-_CL_DECLARE_CONVERT_TYPE_1(uchar)
-_CL_DECLARE_CONVERT_TYPE_1(short)
-_CL_DECLARE_CONVERT_TYPE_1(ushort)
-_CL_DECLARE_CONVERT_TYPE_1(int)
-_CL_DECLARE_CONVERT_TYPE_1(uint)
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_1(long))
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_1(ulong))
-_CL_DECLARE_CONVERT_TYPE_1(float)
-__IF_FP64(_CL_DECLARE_CONVERT_TYPE_1(double))
+/* conversions to int may have a suffix: _sat */
+#define _CL_DECLARE_CONVERT_TYPE_DST(SRC, SIZE, FLOATSUFFIX)            \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char  , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, char  , SIZE, _sat, FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uchar , SIZE, _sat, FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, short , SIZE, _sat, FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort, SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ushort, SIZE, _sat, FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int   , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, int   , SIZE, _sat, FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint  , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, uint  , SIZE, _sat, FLOATSUFFIX)        \
+  __IF_INT64(                                                           \
+  _CL_DECLARE_CONVERT_TYPE(SRC, long  , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, long  , SIZE, _sat, FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE,     , FLOATSUFFIX)        \
+  _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE, _sat, FLOATSUFFIX))       \
+  _CL_DECLARE_CONVERT_TYPE(SRC, float , SIZE,     , FLOATSUFFIX)        \
+  __IF_FP64(                                                            \
+  _CL_DECLARE_CONVERT_TYPE(SRC, double, SIZE,     , FLOATSUFFIX))
 
-/* 2 elements */
-#define _CL_DECLARE_CONVERT_TYPE_2(SRC)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char2)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar2)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short2)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort2)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int2)                   \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint2)                  \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long2))      \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong2))     \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float2)                 \
-  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double2))
-_CL_DECLARE_CONVERT_TYPE_2(char2)
-_CL_DECLARE_CONVERT_TYPE_2(uchar2)
-_CL_DECLARE_CONVERT_TYPE_2(short2)
-_CL_DECLARE_CONVERT_TYPE_2(ushort2)
-_CL_DECLARE_CONVERT_TYPE_2(int2)
-_CL_DECLARE_CONVERT_TYPE_2(uint2)
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_2(long2))
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_2(ulong2))
-_CL_DECLARE_CONVERT_TYPE_2(float2)
-__IF_FP64(_CL_DECLARE_CONVERT_TYPE_2(double2))
+/* conversions from float may have a suffix: _rte _rtz _rtp _rtn */
+#define _CL_DECLARE_CONVERT_TYPE_SRC_DST(SIZE)          \
+  _CL_DECLARE_CONVERT_TYPE_DST(char  , SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(uchar , SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(short , SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(ushort, SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(int   , SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(uint  , SIZE,     )      \
+  __IF_INT64(                                           \
+  _CL_DECLARE_CONVERT_TYPE_DST(long  , SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(ulong , SIZE,     ))     \
+  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rte)      \
+  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rtz)      \
+  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rtp)      \
+  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rtn)      \
+  __IF_FP64(                                            \
+  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE,     )      \
+  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rte)      \
+  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rtz)      \
+  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rtp)      \
+  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rtn))
 
-/* 3 elements */
-#define _CL_DECLARE_CONVERT_TYPE_3(SRC)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char3)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar3)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short3)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort3)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int3)                   \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint3)                  \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long3))      \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong3))     \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float3)                 \
-  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double3))
-_CL_DECLARE_CONVERT_TYPE_3(char3)
-_CL_DECLARE_CONVERT_TYPE_3(uchar3)
-_CL_DECLARE_CONVERT_TYPE_3(short3)
-_CL_DECLARE_CONVERT_TYPE_3(ushort3)
-_CL_DECLARE_CONVERT_TYPE_3(int3)
-_CL_DECLARE_CONVERT_TYPE_3(uint3)
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_3(long3))
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_3(ulong3))
-_CL_DECLARE_CONVERT_TYPE_3(float3)
-__IF_FP64(_CL_DECLARE_CONVERT_TYPE_3(double3))
-
-/* 4 elements */
-#define _CL_DECLARE_CONVERT_TYPE_4(SRC)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char4)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar4)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short4)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort4)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int4)                   \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint4)                  \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long4))      \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong4))     \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float4)                 \
-  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double4))
-_CL_DECLARE_CONVERT_TYPE_4(char4)
-_CL_DECLARE_CONVERT_TYPE_4(uchar4)
-_CL_DECLARE_CONVERT_TYPE_4(short4)
-_CL_DECLARE_CONVERT_TYPE_4(ushort4)
-_CL_DECLARE_CONVERT_TYPE_4(int4)
-_CL_DECLARE_CONVERT_TYPE_4(uint4)
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_4(long4))
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_4(ulong4))
-_CL_DECLARE_CONVERT_TYPE_4(float4)
-__IF_FP64(_CL_DECLARE_CONVERT_TYPE_4(double4))
-
-/* 8 elements */
-#define _CL_DECLARE_CONVERT_TYPE_8(SRC)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char8)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar8)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short8)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort8)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int8)                   \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint8)                  \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long8))      \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong8))     \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float8)                 \
-  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double8))
-_CL_DECLARE_CONVERT_TYPE_8(char8)
-_CL_DECLARE_CONVERT_TYPE_8(uchar8)
-_CL_DECLARE_CONVERT_TYPE_8(short8)
-_CL_DECLARE_CONVERT_TYPE_8(ushort8)
-_CL_DECLARE_CONVERT_TYPE_8(int8)
-_CL_DECLARE_CONVERT_TYPE_8(uint8)
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_8(long8))
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_8(ulong8))
-_CL_DECLARE_CONVERT_TYPE_8(float8)
-__IF_FP64(_CL_DECLARE_CONVERT_TYPE_8(double8))
-
-/* 16 elements */
-#define _CL_DECLARE_CONVERT_TYPE_16(SRC)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, char16)                 \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uchar16)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, short16)                \
-  _CL_DECLARE_CONVERT_TYPE(SRC, ushort16)               \
-  _CL_DECLARE_CONVERT_TYPE(SRC, int16)                  \
-  _CL_DECLARE_CONVERT_TYPE(SRC, uint16)                 \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, long16))     \
-  __IF_INT64(_CL_DECLARE_CONVERT_TYPE(SRC, ulong16))    \
-  _CL_DECLARE_CONVERT_TYPE(SRC, float16)                \
-  __IF_FP64(_CL_DECLARE_CONVERT_TYPE(SRC, double16))
-_CL_DECLARE_CONVERT_TYPE_16(char16)
-_CL_DECLARE_CONVERT_TYPE_16(uchar16)
-_CL_DECLARE_CONVERT_TYPE_16(short16)
-_CL_DECLARE_CONVERT_TYPE_16(ushort16)
-_CL_DECLARE_CONVERT_TYPE_16(int16)
-_CL_DECLARE_CONVERT_TYPE_16(uint16)
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_16(long16))
-__IF_INT64(_CL_DECLARE_CONVERT_TYPE_16(ulong16))
-_CL_DECLARE_CONVERT_TYPE_16(float16)
-__IF_FP64(_CL_DECLARE_CONVERT_TYPE_16(double16))
+_CL_DECLARE_CONVERT_TYPE_SRC_DST(  )
+_CL_DECLARE_CONVERT_TYPE_SRC_DST( 2)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST( 3)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST( 4)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST( 8)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST(16)
 
 
 /* Work-Item Functions */
@@ -668,13 +589,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(float4  , float4  , int4  );   \
   float8   _cl_overloadable NAME(float8  , float8  , int8  );   \
   float16  _cl_overloadable NAME(float16 , float16 , int16 );   \
-  __IF_INT64(__IF_FP64(                                         \
+  __IF_FP64(                                                    \
   double   _cl_overloadable NAME(double  , double  , long  );   \
   double2  _cl_overloadable NAME(double2 , double2 , long2 );   \
   double3  _cl_overloadable NAME(double3 , double3 , long3 );   \
   double4  _cl_overloadable NAME(double4 , double4 , long4 );   \
   double8  _cl_overloadable NAME(double8 , double8 , long8 );   \
-  double16 _cl_overloadable NAME(double16, double16, long16);))
+  double16 _cl_overloadable NAME(double16, double16, long16);)
 #define _CL_DECLARE_FUNC_V_U(NAME)              \
   float    _cl_overloadable NAME(uint   );      \
   float2   _cl_overloadable NAME(uint2  );      \
@@ -682,13 +603,13 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   float4   _cl_overloadable NAME(uint4  );      \
   float8   _cl_overloadable NAME(uint8  );      \
   float16  _cl_overloadable NAME(uint16 );      \
-  __IF_INT64(__IF_FP64(                         \
+  __IF_FP64(                                    \
   double   _cl_overloadable NAME(ulong  );      \
   double2  _cl_overloadable NAME(ulong2 );      \
   double3  _cl_overloadable NAME(ulong3 );      \
   double4  _cl_overloadable NAME(ulong4 );      \
   double8  _cl_overloadable NAME(ulong8 );      \
-  double16 _cl_overloadable NAME(ulong16);))
+  double16 _cl_overloadable NAME(ulong16);)
 #define _CL_DECLARE_FUNC_V_VS(NAME)                     \
   float2   _cl_overloadable NAME(float2  , float );     \
   float3   _cl_overloadable NAME(float3  , float );     \
@@ -724,12 +645,11 @@ __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
   int16  _cl_overloadable NAME(float16 , float16 );     \
   __IF_FP64(                                            \
   int    _cl_overloadable NAME(double  , double  );     \
-  __IF_INT64(                                           \
   long2  _cl_overloadable NAME(double2 , double2 );     \
   long3  _cl_overloadable NAME(double3 , double3 );     \
   long4  _cl_overloadable NAME(double4 , double4 );     \
   long8  _cl_overloadable NAME(double8 , double8 );     \
-  long16 _cl_overloadable NAME(double16, double16);))
+  long16 _cl_overloadable NAME(double16, double16);)
 #define _CL_DECLARE_FUNC_V_VI(NAME)                     \
   float2   _cl_overloadable NAME(float2  , int);        \
   float3   _cl_overloadable NAME(float3  , int);        \
@@ -1572,13 +1492,6 @@ _CL_DECLARE_VSTORE(double, __private)
 
 /* Miscellaneous Vector Functions */
 
-// convert a vector type to a scalar type
-_CL_DECLARE_FUNC_I_IG(_cl_scalar)
-_CL_DECLARE_FUNC_S_V(_cl_scalar)
-#define vec_step(a) (sizeof(a) / sizeof(_cl_scalar(a)))
-
-
-
 // This code leads to an ICE in Clang
 
 // #define _CL_DECLARE_SHUFFLE_2(GTYPE, UGTYPE, STYPE, M)                  \
@@ -1693,3 +1606,7 @@ _CL_DECLARE_FUNC_S_V(_cl_scalar)
 // _CL_DECLARE_SHUFFLE(double, ulong , double, 16)
 
 // shuffle2
+
+
+/* printf */
+// int printf(constant char * restrict format, ...);

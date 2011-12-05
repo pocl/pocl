@@ -1,4 +1,5 @@
-libkernel_a_SOURCES = barrier.c                 \
+libkernel_a_SOURCES = templates.h		\
+                      barrier.c                 \
                       get_global_size.c		\
                       get_global_id.c		\
                       get_local_id.c		\
