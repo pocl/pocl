@@ -21,7 +21,12 @@
    THE SOFTWARE.
 */
 
-void
+typedef enum {
+  CLK_LOCAL_MEM_FENCE = 0x1,
+  CLK_GLOBAL_MEM_FENCE = 0x2
+} cl_mem_fence_flags;
+
+__attribute__ ((noinline)) void
 barrier (cl_mem_fence_flags flags)
 {
   asm("");

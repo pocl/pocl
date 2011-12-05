@@ -31,9 +31,8 @@ clSetKernelArg(cl_kernel kernel,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0
 {
-  struct pocl_argument_list *p;
+  struct pocl_argument *p;
   void *value;
-  unsigned i;
   
   if (kernel == NULL)
     return CL_INVALID_KERNEL;
@@ -42,24 +41,9 @@ clSetKernelArg(cl_kernel kernel,
     return CL_INVALID_ARG_INDEX;
   
   if (kernel->arguments == NULL)
-    {
-      kernel->arguments = malloc (sizeof (struct pocl_argument_list));
-      kernel->arguments->next = NULL;
-    }
+    return CL_INVALID_KERNEL;
 
-  i = 0;
-  p = kernel->arguments;
-  while (i < arg_index)
-    {
-      if (p->next == NULL)
-	{
-	  p->next = malloc (sizeof (struct pocl_argument_list));
-	  p->next->next = NULL;
-	}
-      
-      p = p->next;
-      ++i;
-    }
+  p = &(kernel->arguments[arg_index]);
   
   p->value = NULL;
   if (arg_value != NULL)

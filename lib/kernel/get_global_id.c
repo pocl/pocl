@@ -21,20 +21,20 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size_x;
-extern uint _local_size_y;
-extern uint _local_size_z;
+extern unsigned int _local_size_x;
+extern unsigned int _local_size_y;
+extern unsigned int _local_size_z;
 
-extern uint _group_id_x;
-extern uint _group_id_y;
-extern uint _group_id_z;
+extern unsigned int _group_id_x;
+extern unsigned int _group_id_y;
+extern unsigned int _group_id_z;
 
-extern uint _local_id_x;
-extern uint _local_id_y;
-extern uint _local_id_z;
+extern unsigned int _local_id_x;
+extern unsigned int _local_id_y;
+extern unsigned int _local_id_z;
 
-uint
-get_global_id(uint dimindx)
+unsigned int
+get_global_id(unsigned int dimindx)
 {
   switch(dimindx)
     {

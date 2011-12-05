@@ -31,6 +31,7 @@ void *pocl_native_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
 void pocl_native_free (void *data, void *ptr);
 void pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
+void pocl_native_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
 void pocl_native_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
 		      struct pocl_context *pc);
@@ -89,12 +90,13 @@ extern size_t pocl_native_max_work_item_sizes[];
   "OpenCL 1.0 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\
-    pocl_native_init, /* init */                                        \
+  pocl_native_init, /* init */                                          \
   pocl_native_malloc, /* malloc */					\
   pocl_native_free, /* free */						\
   pocl_native_read, /* read */						\
+  pocl_native_write, /* write */                                        \
   pocl_native_run, /* run */						\
-  NULL /* data */							\
+  NULL /* data */                                                       \
 }
 
 #endif /* POCL_NATIVE_H */

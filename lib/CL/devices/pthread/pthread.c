@@ -423,22 +423,30 @@ workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;
   void *arguments[ta->kernel->num_args];
-  struct pocl_argument_list *al;  
+  struct pocl_argument *al;  
   unsigned i = 0;
-  al = ta->kernel->arguments;
-  while (al != NULL)
+
+  cl_kernel kernel = ta->kernel;
+  for (i = 0; i < kernel->num_args; ++i)
     {
-      if (ta->kernel->arg_is_local[i])
+      al = &(kernel->arguments[i]);
+      if (kernel->arg_is_local[i])
         {
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
-        } else if (ta->kernel->arg_is_pointer[i])
+        }
+      else if (kernel->arg_is_pointer[i])
         arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
       else
         arguments[i] = al->value;
-      
-      ++i;
-      al = al->next;
+    }
+  for (i = kernel->num_args;
+       i < kernel->num_args + kernel->num_locals;
+       ++i)
+    {
+      al = &(kernel->arguments[i]);
+      arguments[i] = malloc (sizeof (void *));
+      *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
     }
 
   int first_gid_x = ta->pc.group_id[0];
@@ -456,19 +464,16 @@ workgroup_thread (void *p)
             }
         }
     }
-  
-  i = 0;
-  al = ta->kernel->arguments;
-  while (al != NULL)
-    {
-      if (ta->kernel->arg_is_local[i])
-        {
-          pocl_pthread_free(ta->data, *(void **)(arguments[i]));
-          free (arguments[i]);
-        }
 
-      ++i;
-      al = al->next;
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      if (kernel->arg_is_local[i])
+        pocl_native_free(ta->data, *(void **)(arguments[i]));
     }
+  for (i = kernel->num_args;
+       i < kernel->num_args + kernel->num_locals;
+       ++i)
+    pocl_native_free(ta->data, *(void **)(arguments[i]));
+  
   return NULL;
 }

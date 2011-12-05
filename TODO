@@ -6,13 +6,12 @@ High priority:
     * make AMD OpenCL SDK examples to work (1.0)        
     * create workgroups by looping instead of fully unrolling for
       flexible WG parallelization (1.0)
-    * handle barriers inside kernel for-loops (1.0)
-    * proper support for automatic local variables.
 
 Medium priority:
+    * device selection at runtime.
     * complete kernel runtime library.   
     * complete host runtime library.
-    * vectorize workgroups (1.0)
+    * vectorize workgroups.
     * ttasim target (heterogeneous TCE scenario).
     * device supporting ATI cards.
 

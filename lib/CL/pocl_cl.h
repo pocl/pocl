@@ -37,10 +37,9 @@
 
 #define POCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
 
-struct pocl_argument_list {
+struct pocl_argument {
   size_t size;
   void *value;
-  struct pocl_argument_list *next;
 };
 
 struct _cl_device_id {
@@ -167,7 +166,8 @@ struct _cl_kernel {
   lt_dlhandle dlhandle;
   int *arg_is_pointer;
   int *arg_is_local;
-  struct pocl_argument_list *arguments;
+  cl_uint num_locals;
+  struct pocl_argument *arguments;
   struct _cl_kernel *next;
 };
 
