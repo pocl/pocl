@@ -84,6 +84,7 @@ libkernel_a_SOURCES = templates.h		\
                       rotate.cl			\
                       sub_sat.cl		\
                       upsample.cl		\
+                      popcount.cl		\
                       mad24.cl			\
                       mul24.cl			\
                       degrees.cl		\

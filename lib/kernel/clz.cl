@@ -23,7 +23,7 @@
 
 #include "templates.h"
 
-// Intel: LZCNT (and POPCNT)
+// Intel: LZCNT
 
 #define __builtin_clzhh  __builtin_clz
 #define __builtin_clzh   __builtin_clz
