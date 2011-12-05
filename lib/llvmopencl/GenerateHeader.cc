@@ -129,13 +129,13 @@ GenerateHeader::ProcessPointers(Function *F,
        ii != ee; ++ii) {
     Type *t = ii->getType();
     
-    if (isa<PointerType> (t)) {
+    if (const PointerType *p = dyn_cast<PointerType> (t)) {
       is_pointer[i] = true;
       // index 0 is for function attributes, parameters start at 1.
-      if (F->paramHasAttr(i + 1, Attribute::NoCapture))
-        is_local[i] = false;
-      else
+      if (p->getAddressSpace() == POCL_ADDRESS_SPACE_LOCAL)
         is_local[i] = true;
+      else
+        is_local[i] = false;
     } else {
       is_pointer[i] = false;
       is_local[i] = false;

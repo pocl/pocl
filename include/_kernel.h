@@ -48,6 +48,10 @@
 #  define __IF_FP64(x)
 #endif
 
+/* Let's try to make things easier for post-preprocessing pass. */
+#define __kernel kernel
+#define __local local
+
 /* #define __global __attribute__ ((address_space(3))) */
 /* #define __local __attribute__ ((address_space(4))) */
 /* #define __constant __attribute__ ((address_space(5))) */
