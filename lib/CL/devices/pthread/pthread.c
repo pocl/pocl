@@ -103,7 +103,10 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
   if (host_ptr != NULL)
     {
       if (d->host_buffers == NULL)
-        d->host_buffers = malloc (sizeof (struct pointer_list));
+        {
+          d->host_buffers = malloc (sizeof (struct pointer_list));
+          d->host_buffers->next = NULL;
+        }
       
       p = d->host_buffers;
       while (p->next != NULL)
