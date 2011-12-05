@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples.
+# Makefile.am for pocl/examples/scalarwave.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,4 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a barriers forloops standalone trig scalarwave loopbarriers
+noinst_PROGRAMS = scalarwave
+
+scalarwave_SOURCES = scalarwave.c scalarwave_exec.c scalarwave.cl
+scalarwave_LDADD = ../../lib/CL/libCL.la -lm @PTHREAD_LIBS@
+scalarwave_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
+
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

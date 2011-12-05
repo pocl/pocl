@@ -227,6 +227,7 @@ AC_CONFIG_FILES([Makefile
                  examples/forloops/Makefile
                  examples/standalone/Makefile
                  examples/trig/Makefile
+                 examples/scalarwave/Makefile
                  examples/loopbarriers/Makefile
                  scripts/Makefile
                  tests/Makefile
