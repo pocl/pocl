@@ -25,10 +25,6 @@ extern unsigned int _local_size_x;
 extern unsigned int _local_size_y;
 extern unsigned int _local_size_z;
 
-extern unsigned int _num_groups_x;
-extern unsigned int _num_groups_y;
-extern unsigned int _num_groups_z;
-
 size_t
 get_local_size(unsigned int dimindx)
 {

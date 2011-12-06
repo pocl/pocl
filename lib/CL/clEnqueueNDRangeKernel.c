@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -62,8 +63,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (command_queue->context != kernel->context)
     return CL_INVALID_CONTEXT;
 
-  if (work_dim < 1 || work_dim > 3)
+  if (work_dim < 1 ||
+      work_dim > command_queue->device->max_work_item_dimensions)
     return CL_INVALID_WORK_DIMENSION;
+  assert(command_queue->device->max_work_item_dimensions <= 3);
 
   if (global_work_offset != NULL)
     {
@@ -82,13 +85,35 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   global_y = work_dim > 1 ? global_work_size[1] : 1;
   global_z = work_dim > 2 ? global_work_size[2] : 1;
 
+  if (global_x ==0 || global_y == 0 || global_z == 0)
+    return CL_INVALID_GLOBAL_WORK_SIZE;
+
   local_x = local_work_size[0];
   local_y = work_dim > 1 ? local_work_size[1] : 1;
   local_z = work_dim > 2 ? local_work_size[2] : 1;
 
+  if (local_x * local_y * local_z > command_queue->device->max_work_group_size)
+    return CL_INVALID_WORK_GROUP_SIZE;
+
+  if (local_x > command_queue->device->max_work_item_sizes[0] ||
+      (work_dim > 1 &&
+       local_y > command_queue->device->max_work_item_sizes[1]) ||
+      (work_dim > 2 &&
+       local_z > command_queue->device->max_work_item_sizes[2]))
+    return CL_INVALID_WORK_ITEM_SIZE;
+
+  if (global_x % local_x != 0 ||
+      global_y % local_y != 0 ||
+      global_z % local_z != 0)
+    return CL_INVALID_WORK_GROUP_SIZE;
+
   tmpdir = mkdtemp(template);
   if (tmpdir == NULL)
     return CL_OUT_OF_HOST_MEMORY;
+
+  if ((event_wait_list == NULL && num_events_in_wait_list > 0) ||
+      (event_wait_list != NULL && num_events_in_wait_list == 0))
+    return CL_INVALID_EVENT_WAIT_LIST;
 
   error = snprintf(kernel_filename, POCL_FILENAME_LENGTH,
 		   "%s/kernel.bc",

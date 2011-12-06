@@ -29,7 +29,7 @@ exec_scalarwave_kernel (const char *program_source,
   cl_int       err; 
  
   // create the OpenCL context on a GPU device 
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_GPU, 
+  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
 				    NULL, NULL, NULL); 
   if (context == (cl_context)0) 
     return -1; 
@@ -53,10 +53,9 @@ exec_scalarwave_kernel (const char *program_source,
   memobjs[0] = clCreateBuffer(context, 
                               0,
                               sizeof(cl_double) * grid->ai*grid->aj*grid->ak,
-                              phi, NULL); 
+                              NULL, NULL); 
   if (memobjs[0] == (cl_mem)0) 
     { 
-      delete_memobjs(memobjs, 0); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
       return -1; 
@@ -183,9 +182,6 @@ exec_scalarwave_kernel (const char *program_source,
     } 
 
   // read output image 
-  for (size_t n=0; n<grid->ai*grid->aj*grid->ak; ++n) {
-    phi[n]=n;
-  }
   err = clEnqueueReadBuffer(cmd_queue, memobjs[0], CL_TRUE, 
 			    0, sizeof(cl_double) * grid->ai*grid->aj*grid->ak,
                             phi, 

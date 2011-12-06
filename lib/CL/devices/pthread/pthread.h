@@ -42,11 +42,11 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
-  1, /* max_work_item_dimensions */					\
+  3, /* max_work_item_dimensions */					\
   pocl_pthread_max_work_item_sizes, /* max_work_item_sizes */		\
-  1, /*max_work_group_size */						\
+  CL_INT_MAX, /* max_work_group_size */					\
   0, /* preferred_vector_width_char */					\
-  0, /* preferred_vector_width_shortr */				\
+  0, /* preferred_vector_width_short */					\
   0, /* preferred_vector_width_int */					\
   0, /* preferred_vector_width_long */					\
   0, /* preferred_vector_width_float */					\
@@ -57,7 +57,7 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   CL_FALSE, /* image_support */						\
   0, /* max_read_image_args */						\
   0, /* max_write_image_args */						\
-  0, /*image2d_max_width */						\
+  0, /* image2d_max_width */						\
   0, /* image2d_max_height */						\
   0, /* image3d_max_width */						\
   0, /* image3d_max_height */						\

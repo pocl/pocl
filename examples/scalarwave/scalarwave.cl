@@ -17,8 +17,8 @@
 typedef struct grid_t {
   double dt;                    // time step
   double dx, dy, dz;            // resolution
-  size_t ai, aj, ak;            // allocated size
-  size_t ni, nj, nk;            // used size
+  int ai, aj, ak;               // allocated size
+  int ni, nj, nk;               // used size
 } grid_t;
 
 kernel void
@@ -70,9 +70,6 @@ scalarwave(global double       *restrict const phi,
   if (i>=ni || j>=nj || k>=nk) return;
   
   size_t const ind3d = di*i + dj*j + dk*k;
-  
-  // TODO:
-  phi[ind3d] = ind3d; return;
   
   if (i==0 || i==ni-1 || j==0 || j==nj-1 || k==0 || k==nk-1) {
     // Boundary condition

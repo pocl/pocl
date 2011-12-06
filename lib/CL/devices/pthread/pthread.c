@@ -63,7 +63,7 @@ struct data {
 
 static void * workgroup_thread (void *p);
 
-size_t pocl_pthread_max_work_item_sizes[] = {1};
+size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX,1,1};
 
 void
 pocl_pthread_init (cl_device_id device)
@@ -376,6 +376,8 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   /* In case the work group count is not divisible by the
      number of threads, we have to execute the remaining
      workgroups in one of the threads. */
+  /* TODO: This is inefficient; it is better to round up when
+     calculating wgs_per_thread */
   int leftover_wgs = num_groups_x - (num_threads*wgs_per_thread);
 
 #ifdef DEBUG_MT    

@@ -21,6 +21,8 @@
    THE SOFTWARE.
 */
 
+#undef _ANSI_SOURCE
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -29,7 +31,7 @@
 #include "scalarwave.h"
 
 #define NT 1 // 4                    // time steps
-#define NX 5 // 33                   // grid size
+#define NX 3 // 33                   // grid size
 // NX, rounded up
 #define AX ((NX + GRID_GRANULARITY-1) / GRID_GRANULARITY * GRID_GRANULARITY)
 
