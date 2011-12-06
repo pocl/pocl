@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#undef _ANSI_SOURCE
+#define _BSD_SOURCE             // define M_PI
 
 #include <assert.h>
 #include <math.h>
