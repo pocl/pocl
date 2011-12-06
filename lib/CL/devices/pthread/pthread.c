@@ -63,7 +63,10 @@ struct data {
 
 static void * workgroup_thread (void *p);
 
-size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX,1,1};
+/* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice,
+   and may avoid errors in user code that uses int instead of
+   size_t */
+size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX,CL_INT_MAX,CL_INT_MAX};
 
 void
 pocl_pthread_init (cl_device_id device)
