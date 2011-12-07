@@ -195,10 +195,9 @@ createLauncher(Module &M, Function *F)
 
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::WORK_DIM);
-  snprintf(s, STRING_LENGTH, "_work_dim");
-  gv = M.getGlobalVariable(s);
+  gv = M.getGlobalVariable("_work_dim");
   if (gv != NULL) {
-    v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 0));
+    v = builder.CreateLoad(builder.CreateConstGEP1_32(ptr, 0));
     builder.CreateStore(v, gv);
   }
 
@@ -295,9 +294,26 @@ privatizeContext(Module &M, Function *F)
     }
   }
 
-  // Privatize _group_id
+  // Privatize _work_dim
+  gv[0] = M.getGlobalVariable("_work_dim");
+  if (gv[0] != NULL) {
+    ai[0] = builder.CreateAlloca(gv[0]->getType()->getElementType(),
+                                 0, "_work_dim");
+    if(gv[0]->hasInitializer()) {
+      Constant *c = gv[0]->getInitializer();
+      builder.CreateStore(c, ai[0]);
+    }
+  }
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      ii->replaceUsesOfWith(gv[0], ai[0]);
+    }
+  }
+  
+  // Privatize _num_groups
   for (int i = 0; i < 3; ++i) {
-    snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
+    snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
@@ -315,10 +331,10 @@ privatizeContext(Module &M, Function *F)
 	ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
-  
-  // Privatize _num_groups
+
+  // Privatize _group_id
   for (int i = 0; i < 3; ++i) {
-    snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
