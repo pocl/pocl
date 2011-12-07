@@ -105,21 +105,10 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
   
   if (host_ptr != NULL)
     {
-      if (d->host_buffers == NULL)
-        {
-          d->host_buffers = malloc (sizeof (struct pointer_list));
-          d->host_buffers->next = NULL;
-        }
-      
       p = d->host_buffers;
-      while (p->next != NULL)
-        p = p->next;
-
-      p->next = malloc (sizeof (struct pointer_list));
-      p = p->next;
-
-      p->pointer = host_ptr;
-      p->next = NULL;
+      d->host_buffers = malloc (sizeof (struct pointer_list));
+      d->host_buffers->next = p;
+      d->host_buffers->pointer = host_ptr;
       
       return host_ptr;
     }
@@ -134,17 +123,20 @@ void
 pocl_pthread_free (void *data, void *ptr)
 {
   struct data *d;
+  struct pointer_list **pp;
   struct pointer_list *p;
 
   d = (struct data *) data;
 
-  p = d->host_buffers;
-  while (p != NULL)
+  for (pp = &d->host_buffers; *pp != NULL; pp = &(*pp)->next)
     {
-      if (p->pointer == ptr)
-        return;
-
-      p = p->next;
+      if ((*pp)->pointer == ptr)
+        {
+          p = *pp;
+          *pp = (*pp)->next;
+          free (p);
+          return;
+        }
     }
   
   free (ptr);
