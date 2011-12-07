@@ -125,6 +125,13 @@ clCreateKernel(cl_program program,
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
 
+  /* Initialize kernel arguments. */
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      kernel->arguments[i].value = NULL;
+      kernel->arguments[i].size = 0;
+    }
+
   /* Fill up automatic local arguments. */
   for (i = 0; i < kernel->num_locals; ++i)
     {

@@ -45,9 +45,10 @@ clSetKernelArg(cl_kernel kernel,
 
   p = &(kernel->arguments[arg_index]);
   
-  p->value = NULL;
   if (arg_value != NULL)
     {
+      free (p->value);
+
       value = malloc (arg_size);
       if (value == NULL)
 	return CL_OUT_OF_HOST_MEMORY;
@@ -55,9 +56,15 @@ clSetKernelArg(cl_kernel kernel,
       memcpy (value, arg_value, arg_size);
 
       p->value = value;
+      p->size = arg_size;
     }
-
-  p->size = arg_size;
+  else
+    {
+      free (p->value);
+      p->value = NULL;
+      /* TODO: check that arg_size is zero? */
+      p->size = 0;
+    }
 
   return CL_SUCCESS;
 }
