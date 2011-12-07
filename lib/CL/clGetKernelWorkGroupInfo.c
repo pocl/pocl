@@ -37,7 +37,7 @@ clGetKernelWorkGroupInfo (cl_kernel kernel,
 
   /* the wording of the specs is ambiguous - if param_value is NULL, do we need to check that param_name is valid? */
   if (param_value == NULL)
-    return CL_ switch (param_name)
+    switch (param_name)
       {
       case CL_KERNEL_WORK_GROUP_SIZE:
 	if (param_value_size >= sizeof (size_t))
