@@ -330,7 +330,7 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
 	if (x == (LocalSizeX - 1) &&
 	    y == (LocalSizeY - 1) &&
 	    z == (LocalSizeZ - 1)) {
-	  builder.SetInsertPoint(entry, entry->front());
+	  builder.SetInsertPoint(entry, entry->getFirstNonPHI());
 	  if (LocalX != NULL) {
 	    builder.CreateStore(ConstantInt::get(IntegerType::
 						 get(entry->getContext(),
@@ -384,7 +384,7 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
         //        "Multiple succesors of parallel section (uncanonicalized barriers?)!");
 	exit->getTerminator()->eraseFromParent();
 
-	builder.SetInsertPoint(entry, entry->front());
+	builder.SetInsertPoint(entry, entry->getFirstNonPHI());
 	if (LocalX != NULL) {
 	  builder.CreateStore(ConstantInt::get(IntegerType::
 					       get(entry->getContext(),
