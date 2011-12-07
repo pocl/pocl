@@ -161,6 +161,9 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   pc.num_groups[0] = global_x / local_x;
   pc.num_groups[1] = global_y / local_y;
   pc.num_groups[2] = global_z / local_z;
+  pc.global_offset[0] = offset_x;
+  pc.global_offset[1] = offset_y;
+  pc.global_offset[2] = offset_z;
 
   command_queue->device->run(command_queue->device->data,
 			     parallel_filename,

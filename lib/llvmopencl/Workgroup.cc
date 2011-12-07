@@ -193,8 +193,14 @@ createLauncher(Module &M, Function *F)
   // lead to better code when the respective get_* functions are
   // called in a loop (array access instead of switch statement)
 
-  // TODO: there is no variable _work_dim; we currently assume it is
-  // always set to 3, which is wrong
+  ptr = builder.CreateStructGEP(ai,
+				TypeBuilder<PoclContext, true>::WORK_DIM);
+  snprintf(s, STRING_LENGTH, "_work_dim");
+  gv = M.getGlobalVariable(s);
+  if (gv != NULL) {
+    v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, 0));
+    builder.CreateStore(v, gv);
+  }
 
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
@@ -207,8 +213,21 @@ createLauncher(Module &M, Function *F)
     }
   }
 
+  ptr = builder.CreateStructGEP(ai,
+				TypeBuilder<PoclContext, true>::NUM_GROUPS);
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    gv = M.getGlobalVariable(s);
+    if (gv != NULL) {
+      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      builder.CreateStore(v, gv);
+    }
+  }
+
+  ptr = builder.CreateStructGEP(ai,
+				TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_global_offset_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
     if (gv != NULL) {
       v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
@@ -300,6 +319,27 @@ privatizeContext(Module &M, Function *F)
   // Privatize _num_groups
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    gv[i] = M.getGlobalVariable(s);
+    if (gv[i] != NULL) {
+      ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
+				   0, s);
+      if(gv[i]->hasInitializer()) {
+	Constant *c = gv[i]->getInitializer();
+	builder.CreateStore(c, ai[i]);
+      }
+    }
+  }
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      for (int j = 0; j < 3; ++j)
+	ii->replaceUsesOfWith(gv[j], ai[j]);
+    }
+  }
+  
+  // Privatize _global_offset
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_global_offset_%c", 'x' + i);
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),

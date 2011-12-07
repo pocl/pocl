@@ -21,22 +21,18 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_size_x;
-extern unsigned int _local_size_y;
-extern unsigned int _local_size_z;
-
-extern unsigned int _group_id_x;
-extern unsigned int _group_id_y;
-extern unsigned int _group_id_z;
+extern unsigned int _global_offset_x;
+extern unsigned int _global_offset_y;
+extern unsigned int _global_offset_z;
 
 size_t
 get_global_offset(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _local_size_x * _group_id_x;
-    case 1: return _local_size_y * _group_id_y;
-    case 2: return _local_size_z * _group_id_z;
+    case 0: return _global_offset_x;
+    case 1: return _global_offset_y;
+    case 2: return _global_offset_z;
     default: return 0;
     }
 }

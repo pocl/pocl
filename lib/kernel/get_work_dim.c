@@ -21,11 +21,11 @@
    THE SOFTWARE.
 */
 
+extern unsigned int _work_dim;
+
 unsigned int
 get_work_dim()
 {
-  // TODO: work_dim is not stored, so we always return 3. This is
-  // wrong, but the best we can do.
-  return 3;
+  return _work_dim;
 }
 
