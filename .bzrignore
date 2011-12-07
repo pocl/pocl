@@ -29,7 +29,9 @@ Makefile
 examples/barriers/barriers
 examples/example1/example1
 examples/example2/example2
+examples/example2a/example2a
 examples/forloops/forloops
+examples/loopbarriers/loopbarriers
 examples/standalone/standalone.bc
 examples/standalone/standalone.h
 examples/trig/trig
