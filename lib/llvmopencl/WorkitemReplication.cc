@@ -336,6 +336,22 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
 						 get(entry->getContext(),
 						     32), x), LocalX);
 	  }
+          // Might need to write other dimensions also in the last case,
+          // as we can have a size of 1 in any x and or y dimension.
+          if (x == 0) {
+            if (LocalY != NULL) {
+              builder.CreateStore(ConstantInt::get(IntegerType::
+                                                   get(entry->getContext(),
+                                                       32), y), LocalY);
+            }
+            if (y == 0) {
+              if (LocalZ != NULL) {
+                builder.CreateStore(ConstantInt::get(IntegerType::
+                                                     get(entry->getContext(),
+                                                         32), z), LocalZ);
+              }
+            }
+          }
 
           SetBasicBlockNames(original_subgraph);
 
