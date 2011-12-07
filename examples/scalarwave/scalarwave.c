@@ -55,13 +55,13 @@ main (void)
   source[source_size] = '\0';
 
   fclose (source_file);
-  
+
   grid_t grid;
   grid.dt = 0.5/(NX-1);
   grid.dx = grid.dy = grid.dz = 1.0/(NX-1);
   grid.ai = grid.aj = grid.ak = AX;
   grid.ni = grid.nj = grid.nk = NX;
-
+  
   cl_double *restrict phi     =
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi    );
   cl_double *restrict phi_p   =

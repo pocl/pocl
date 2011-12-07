@@ -131,7 +131,7 @@ exec_scalarwave_kernel (const char *program_source,
     } 
  
   // set the args values 
-  err = clSetKernelArg(kernel,  0,  
+  err = clSetKernelArg(kernel, 0,  
 		       sizeof(cl_mem), (void *) &memobjs[0]); 
   err |= clSetKernelArg(kernel, 1,
 			sizeof(cl_mem), (void *) &memobjs[1]); 

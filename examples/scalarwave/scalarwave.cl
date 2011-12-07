@@ -66,18 +66,27 @@ scalarwave(global double       *restrict const phi,
   size_t const j = get_global_id(1);
   size_t const k = get_global_id(2);
   
+  printf("ijk=[%zu,%zu,%zu] A\n", i,j,k);
+  printf("nijk=[%zu,%zu,%zu] A\n", ni,nj,nk);
+  
   // If outside the domain, do nothing
   if (i>=ni || j>=nj || k>=nk) return;
+  
+  printf("ijk=[%zu,%zu,%zu] B\n", i,j,k);
   
   size_t const ind3d = di*i + dj*j + dk*k;
   
   if (i==0 || i==ni-1 || j==0 || j==nj-1 || k==0 || k==nk-1) {
     // Boundary condition
     
+    printf("ijk=[%zu,%zu,%zu] C\n", i,j,k);
+    
     phi[ind3d] = 0.0;
     
   } else {
     // Scalar wave equation
+    
+    printf("ijk=[%zu,%zu,%zu] D\n", i,j,k);
     
     phi[ind3d] =
       2.0 * phi_p[ind3d] - phi_p_p[ind3d] +
@@ -86,4 +95,6 @@ scalarwave(global double       *restrict const phi,
              (phi_p[ind3d-dk] - 2.0*phi_p[ind3d] + phi_p[ind3d+dk]) * idz2);
     
   }
+  
+  printf("ijk=[%zu,%zu,%zu] E\n", i,j,k);
 }
