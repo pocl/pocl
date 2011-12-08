@@ -42,8 +42,8 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static void regenerate_opencl_metadata(Module &M,
-                                       const SmallVectorImpl<Function *> &kernels);
+typedef SmallVector<std::pair<Function *, Function *>, 8> KernelPairVector;
+static void regenerate_kernel_metadata(Module &M, KernelPairVector &kernels);
 
 cl::opt<string>
 Header("header",
@@ -83,7 +83,10 @@ GenerateHeader::runOnModule(Module &M)
 {
   bool changed = false;
 
-  SmallVector<Function *, 8> kernels;
+  // store the new and old kernel pairs in order to regenerate
+  // all the metadata that used to point to the unmodified
+  // kernels
+  KernelPairVector kernels;
 
   string ErrorInfo;
   raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
@@ -95,18 +98,16 @@ GenerateHeader::runOnModule(Module &M)
     Function *F = mi;
 
     ProcessPointers(F, out);
-
-
     
     Function *new_kernel = ProcessAutomaticLocals(F, out);
     if (new_kernel != F)
       changed = true;
 
-    kernels.push_back(new_kernel);
+    kernels.push_back(std::make_pair(F, new_kernel));
   }
 
   if (changed)
-    regenerate_opencl_metadata(M, kernels);
+    regenerate_kernel_metadata(M, kernels);
  
   return changed;
 }
@@ -237,19 +238,57 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
 }
 
 
+/**
+ * Regenerates the metadata that points to the original kernel
+ * (of which finger print was modified) to point to the new
+ * kernel.
+ *
+ * Only checks if the first operand of the metadata is the kernel
+ * function.
+ */
 void
-regenerate_opencl_metadata(Module &M,
-                           const SmallVectorImpl<Function *> &kernels)
+regenerate_kernel_metadata(Module &M, KernelPairVector &kernels)
 {
+  // reproduce the opencl.kernel_wg_size_info metadata
+  NamedMDNode *wg_sizes = M.getNamedMetadata("opencl.kernel_wg_size_info");
+  if (wg_sizes != NULL && wg_sizes->getNumOperands() > 0) 
+    {
+      for (std::size_t mni = 0; mni < wg_sizes->getNumOperands(); ++mni)
+        {
+          MDNode *wgsizeMD = dyn_cast<MDNode>(wg_sizes->getOperand(mni));
+          for (KernelPairVector::const_iterator i = kernels.begin(),
+                 e = kernels.end(); i != e; ++i) 
+            {
+              Function *old_kernel = (*i).first;
+              Function *new_kernel = (*i).second;
+              if (old_kernel == new_kernel || wgsizeMD->getNumOperands() == 0 ||
+                  dyn_cast<Function>(wgsizeMD->getOperand(0)) != old_kernel) 
+                continue;
+              // found a wg size metadata that points to the old kernel, copy its
+              // operands except the first one to a new MDNode
+              SmallVector<Value*, 8> operands;
+              operands.push_back(new_kernel);
+              for (int opr = 1; opr < wgsizeMD->getNumOperands(); ++opr)
+                {
+                  operands.push_back(wgsizeMD->getOperand(opr));
+                }
+              MDNode *new_wg_md = MDNode::get(M.getContext(), operands);
+              wg_sizes->addOperand(new_wg_md);
+            } 
+        }
+    }
+
+  // reproduce the opencl.kernels metadata
   NamedMDNode *nmd = M.getNamedMetadata("opencl.kernels");
   if (nmd)
     M.eraseNamedMetadata(nmd);
 
   nmd = M.getOrInsertNamedMetadata("opencl.kernels");
-  for (SmallVectorImpl<Function *>::const_iterator i = kernels.begin(),
+  for (KernelPairVector::const_iterator i = kernels.begin(),
          e = kernels.end();
-       i != e; ++i) {
-    MDNode *md = MDNode::get(M.getContext(), ArrayRef<Value *>(*i));
-    nmd->addOperand(md);
-  }
+       i != e; ++i) 
+    {
+      MDNode *md = MDNode::get(M.getContext(), ArrayRef<Value *>((*i).second));
+      nmd->addOperand(md);
+    }
 }
