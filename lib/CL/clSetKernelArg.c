@@ -56,15 +56,14 @@ clSetKernelArg(cl_kernel kernel,
       memcpy (value, arg_value, arg_size);
 
       p->value = value;
-      p->size = arg_size;
     }
   else
     {
       free (p->value);
       p->value = NULL;
-      /* TODO: check that arg_size is zero? */
-      p->size = 0;
     }
+
+  p->size = arg_size;
 
   return CL_SUCCESS;
 }

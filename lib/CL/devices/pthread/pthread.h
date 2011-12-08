@@ -29,7 +29,7 @@
 void pocl_pthread_init (cl_device_id device);
 void *pocl_pthread_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
-void pocl_pthread_free (void *data, void *ptr);
+void pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr);
 void pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
 void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
 void pocl_pthread_run (void *data, const char *bytecode,

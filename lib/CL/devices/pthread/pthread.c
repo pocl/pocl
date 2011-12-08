@@ -37,11 +37,6 @@
    for the thread execution. */
 #define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
 
-struct pointer_list {
-  void *pointer;
-  struct pointer_list *next;
-};
-
 struct thread_arguments {
   void *data;
   cl_kernel kernel;
@@ -52,9 +47,6 @@ struct thread_arguments {
 };
 
 struct data {
-  /* Buffers where host pointer is used, and thus
-     should not be deallocated on free. */
-  struct pointer_list *host_buffers;
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
@@ -75,7 +67,6 @@ pocl_pthread_init (cl_device_id device)
   
   d = (struct data *) malloc (sizeof (struct data));
   
-  d->host_buffers = NULL;
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
 
@@ -83,14 +74,9 @@ pocl_pthread_init (cl_device_id device)
 }
 
 void *
-pocl_pthread_malloc (void *data, cl_mem_flags flags,
-		    size_t size, void *host_ptr)
+pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr)
 {
-  struct data *d;
   void *b;
-  struct pointer_list *p;
-
-  d = (struct data *) data;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
@@ -105,11 +91,6 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
   
   if (host_ptr != NULL)
     {
-      p = d->host_buffers;
-      d->host_buffers = malloc (sizeof (struct pointer_list));
-      d->host_buffers->next = p;
-      d->host_buffers->pointer = host_ptr;
-      
       return host_ptr;
     }
 
@@ -120,24 +101,10 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags,
 }
 
 void
-pocl_pthread_free (void *data, void *ptr)
+pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
 {
-  struct data *d;
-  struct pointer_list **pp;
-  struct pointer_list *p;
-
-  d = (struct data *) data;
-
-  for (pp = &d->host_buffers; *pp != NULL; pp = &(*pp)->next)
-    {
-      if ((*pp)->pointer == ptr)
-        {
-          p = *pp;
-          *pp = (*pp)->next;
-          free (p);
-          return;
-        }
-    }
+  if (flags & CL_MEM_COPY_HOST_PTR)
+    return;
   
   free (ptr);
 }
@@ -186,7 +153,7 @@ get_max_thread_count()
   if (access (cpuinfo, R_OK) == 0) 
     {
       FILE *f = fopen (cpuinfo, "r");
-#     define MAX_CPUINFO_SIZE 16*1024
+#     define MAX_CPUINFO_SIZE 64*1024
       char contents[MAX_CPUINFO_SIZE];
       int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
       fclose (f);
@@ -392,25 +359,25 @@ pocl_pthread_run (void *data, const char *parallel_filename,
            first_gid_x, last_gid_x);
 #endif
 
-    pc->group_id[0] = first_gid_x;
-
     arguments[i].data = data;
     arguments[i].kernel = kernel;
     arguments[i].device = device;
     arguments[i].pc = *pc;
+    arguments[i].pc.group_id[0] = first_gid_x;
     arguments[i].workgroup = w;
     arguments[i].last_gid_x = last_gid_x;
 
-    pthread_create (&threads[i],
-                    NULL,
-                    workgroup_thread,
-                    &arguments[i]);
+    error = pthread_create (&threads[i],
+                            NULL,
+                            workgroup_thread,
+                            &arguments[i]);
+    assert(!error);
   }
 
   for (i = 0; i < num_threads; ++i) {
     pthread_join(threads[i], NULL);
 #ifdef DEBUG_MT       
-    printf("### thread %x finished\n", (unsigned)threads[i]);
+    printf("### thread %u finished\n", (unsigned)threads[i]);
 #endif
   }
 
@@ -468,12 +435,18 @@ workgroup_thread (void *p)
   for (i = 0; i < kernel->num_args; ++i)
     {
       if (kernel->arg_is_local[i])
-        pocl_native_free(ta->data, *(void **)(arguments[i]));
+        {
+          pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
+          free(arguments[i]);
+        }
     }
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
-    pocl_native_free(ta->data, *(void **)(arguments[i]));
+    {
+      pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
+      free(arguments[i]);
+    }
   
   return NULL;
 }

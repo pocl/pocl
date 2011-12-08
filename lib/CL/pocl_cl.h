@@ -98,7 +98,7 @@ struct _cl_device_id {
   void (*init) (cl_device_id device);
   void *(*malloc) (void *data, cl_mem_flags flags,
 		   size_t size, void *host_ptr);
-  void (*free) (void *data, void *ptr);
+  void (*free) (void *data, cl_mem_flags flags, void *ptr);
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
   void (*write) (void *data, const void *host_ptr, void *device_ptr, size_t cb);
   void (*run) (void *data, const char *bytecode,
