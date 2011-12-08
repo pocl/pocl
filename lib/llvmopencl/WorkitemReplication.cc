@@ -31,7 +31,7 @@
 using namespace llvm;
 using namespace pocl;
 
-#define BARRIER_FUNCTION_NAME "barrier"
+#define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 static bool block_has_barrier(const BasicBlock *bb);
 static void purge_subgraph(std::vector<BasicBlock *> &new_subgraph,

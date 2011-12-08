@@ -28,8 +28,9 @@ AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
 AM_CXXFLAGS = `@LLVM_CONFIG@ --cxxflags`
 AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
 
-llvmopencl_la_SOURCES = CanonicalizeBarriers.h CanonicalizeBarriers.cc          \
-                        LoopBarriers.h LoopBarriers.cc                          \
+llvmopencl_la_SOURCES = ParallelRegion.h ParallelRegion.cc			\
+                        CanonicalizeBarriers.h CanonicalizeBarriers.cc		\
+                        LoopBarriers.h LoopBarriers.cc				\
                         GenerateHeader.cc Workgroup.cc				\
 			BarrierTailReplication.h BarrierTailReplication.cc	\
 			WorkitemReplication.h WorkitemReplication.cc

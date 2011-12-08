@@ -433,7 +433,7 @@ uint get_num_groups(uint);      // should return size_t
 uint get_group_id(uint);        // should return size_t
 // size_t get_global_offset(uint);
 
-__attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
+void barrier (cl_mem_fence_flags flags);
 
 
 /* Math Constants */

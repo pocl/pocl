@@ -29,7 +29,7 @@
 using namespace llvm;
 using namespace pocl;
 
-#define BARRIER_FUNCTION_NAME "barrier"
+#define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 static bool is_barrier(Instruction *i);
 

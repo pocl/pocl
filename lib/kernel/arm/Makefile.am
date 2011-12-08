@@ -26,6 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+LEX =
+
 targetpkglibdir = $(pkglibdir)/arm
 targetpkglib_LIBRARIES = libkernel.a
 
@@ -59,6 +61,9 @@ endif
 
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -o $@ $<
+
+.ll.o:
+	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
 $(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
