@@ -164,8 +164,8 @@ struct _cl_kernel {
   cl_program program;
   /* implementation */
   lt_dlhandle dlhandle;
-  int *arg_is_pointer;
-  int *arg_is_local;
+  cl_int *arg_is_pointer;
+  cl_int *arg_is_local;
   cl_uint num_locals;
   struct pocl_argument *arguments;
   struct _cl_kernel *next;
