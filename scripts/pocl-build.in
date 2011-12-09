@@ -48,16 +48,19 @@ preprocessed_file=${output_file}.i
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ ${CLANGFLAGS} -E -I@abs_top_builddir@ -include @abs_top_srcdir@/include${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${CLANGFLAGS} -E -D__kernel=__pocl_kernel -D__local=__pocl_local -I@abs_top_builddir@ -include @abs_top_srcdir@/include${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 else
-    @CLANG@ ${CLANGFLAGS} -E -include @pkgincludedir@${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl$1
+    @CLANG@ ${CLANGFLAGS} -E -D__kernel=__pocl_kernel -D__local=__pocl_local -include @pkgincludedir@${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl$1
 fi
 
 substituted_file=${preprocessed_file}.cl
 
-cat ${preprocessed_file} |                                                                                                                              \
-sed '/\([^0-9A-Za-z_]\|^\)kernel\([^0-9A-Za-z_]\|$\)/,/{/s/{/{\n/' |                                                                                    \
-sed '/\([^0-9A-Za-z_]\|^\)kernel\([^0-9A-Za-z_]\|$\)/,/{/s/\([^0-9A-Za-z]\|^\)local\([^0-9A-Za-z_]\|$\)/\1__attribute__ ((address_space(4)))\2/g'       \
+cat ${preprocessed_file} | \
+sed '/__pocl_kernel/,/{/s/{/{\
+/' | \
+sed '/__pocl_kernel/,/{/s/__pocl_local/__attribute__ ((address_space(4)))/g' |	\
+sed 's/__pocl_kernel/__kernel/g' |						\
+sed 's/__pocl_local/__local/g'							\
 > ${substituted_file}
 
 @CLANG@ ${CLANGFLAGS} -c -emit-llvm -o ${output_file} -x cl ${substituted_file}

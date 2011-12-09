@@ -53,8 +53,8 @@
 #define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
 
 /* Let's try to make things easier for post-preprocessing pass. */
-#define __kernel kernel
-#define __local local
+#define kernel __kernel
+#define local __local
 
 /* #define __global __attribute__ ((address_space(3))) */
 /* #define __local __attribute__ ((address_space(4))) */
