@@ -141,13 +141,13 @@ AT_BANNER([Workgroup creation tests])
 
 AT_SETUP([Unconditional barriers])
 AT_CHECK([$abs_top_builddir/examples/barriers/barriers], 0, stdout)
-AT_CHECK([cat stdout | wc -l], 0, [12
+AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
 ])
 AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops])
 AT_CHECK([$abs_top_builddir/examples/forloops/forloops], 0, stdout)
-AT_CHECK([cat stdout | wc -l], 0, [4
+AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
 ])
 AT_CLEANUP
 
