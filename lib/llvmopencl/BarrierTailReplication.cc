@@ -20,15 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Workgroup.h"
 #include "BarrierTailReplication.h"
+#include "Barrier.h"
+#include "Workgroup.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 
 using namespace llvm;
 using namespace pocl;
-
-#define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 static bool block_has_barrier(const BasicBlock *bb);
   
@@ -239,11 +238,8 @@ block_has_barrier(const BasicBlock *bb)
 {
   for (BasicBlock::const_iterator i = bb->begin(), e = bb->end();
        i != e; ++i) {
-    if (const CallInst *c = dyn_cast<CallInst>(i)) {
-      const Value *v = c->getCalledValue();
-      if (v->getName().equals(BARRIER_FUNCTION_NAME))
-	return true;
-    }
+    if (isa<Barrier>(i))
+      return true;
   }
 
   return false;

@@ -22,6 +22,7 @@
 
 #include "WorkitemReplication.h"
 #include "Workgroup.h"
+#include "Barrier.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -30,8 +31,6 @@
 
 using namespace llvm;
 using namespace pocl;
-
-#define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 static bool block_has_barrier(const BasicBlock *bb);
 static void purge_subgraph(std::vector<BasicBlock *> &new_subgraph,
@@ -454,16 +453,8 @@ block_has_barrier(const BasicBlock *bb)
 {
   for (BasicBlock::const_iterator i = bb->begin(), e = bb->end();
        i != e; ++i) {
-    if (const CallInst *c = dyn_cast<CallInst>(i)) {
-      const Value *v = c->getCalledValue();
-      if (v->getName().equals(BARRIER_FUNCTION_NAME)) {
-	assert((bb->size() == 2) &&
-	       (bb->getSinglePredecessor() != NULL) &&
-	       (bb->getTerminator()->getNumSuccessors() == 1) &&
-	       ("Invalid barrier basicblock found!\n"));
-	return true;
-      }
-    }
+    if (isa<Barrier>(i))
+      return true;
   }
 
   return false;

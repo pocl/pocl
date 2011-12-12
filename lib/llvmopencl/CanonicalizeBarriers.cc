@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "CanonicalizeBarriers.h"
+#include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -28,10 +29,6 @@
 
 using namespace llvm;
 using namespace pocl;
-
-#define BARRIER_FUNCTION_NAME "pocl.barrier"
-
-static bool is_barrier(Instruction *i);
 
 static Function *barrier = NULL;
 
@@ -49,14 +46,6 @@ CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addPreserved<DominatorTree>();
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
-}
-
-bool
-CanonicalizeBarriers::doInitialization(Module &M)
-{
-  barrier = M.getFunction(BARRIER_FUNCTION_NAME);
-
-  return false;
 }
 
 bool
@@ -94,7 +83,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     BasicBlock *b = i;
     for (BasicBlock::iterator i = b->begin(), e = b->end();
 	 i != e; ++i) {
-      if (is_barrier(i))
+      if (isa<Barrier>(i))
         Barriers.insert(i);
     }
   }
@@ -135,15 +124,4 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   }
 
   return changed;
-}
-
-
-static bool
-is_barrier(Instruction *i)
-{
-  if (CallInst *C = dyn_cast<CallInst>(i)) {
-    return C->getCalledFunction()->getName() == BARRIER_FUNCTION_NAME;
-  }
-
-  return false;
 }
