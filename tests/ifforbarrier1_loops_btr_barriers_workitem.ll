@@ -1,6 +1,6 @@
 ; ModuleID = 'ifforbarrier1_loops_btr_barriers.ll'
 
-declare void @barrier(i32)
+declare void @pocl.barrier()
 
 define void @ifforbarrier1() {
 a.wi_0_0_0:
@@ -10,7 +10,7 @@ barrier.preheader.loopbarrier.prebarrier.wi_0_0_0: ; preds = %a.wi_0_0_0
   br label %a.wi_1_0_0
 
 barrier.preheader.loopbarrier:                    ; preds = %barrier.preheader.loopbarrier.prebarrier.wi_1_1_1
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %barrier.prebarrier.wi_0_0_0
 
 b.wi_0_0_0:                                       ; preds = %a.wi_0_0_0
@@ -20,11 +20,11 @@ barrier.prebarrier.wi_0_0_0:                      ; preds = %c.latchbarrier.post
   br label %barrier.prebarrier.wi_1_0_0
 
 barrier:                                          ; preds = %barrier.prebarrier.wi_1_1_1
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %c.latchbarrier
 
 c.latchbarrier:                                   ; preds = %barrier
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %c.latchbarrier.postbarrier.wi_0_0_0
 
 c.latchbarrier.postbarrier.wi_0_0_0:              ; preds = %c.latchbarrier

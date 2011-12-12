@@ -1,4 +1,4 @@
-declare void @barrier(i32 %flags)
+declare void @pocl.barrier()
 
 define void @ifbarrier2() {
 
@@ -15,7 +15,7 @@ d:
   br label %e
 
 barrier:
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %e
 
 e:

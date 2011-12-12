@@ -141,11 +141,8 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
 static bool
 is_barrier(Instruction *i)
 {
-  if (CallInst *c = dyn_cast<CallInst>(i)) {
-    if (Function *f = c->getCalledFunction()) {
-      if (f == barrier)
-        return true;
-    }
+  if (CallInst *C = dyn_cast<CallInst>(i)) {
+    return C->getCalledFunction()->getName() == BARRIER_FUNCTION_NAME;
   }
 
   return false;

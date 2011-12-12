@@ -1,6 +1,6 @@
 ; ModuleID = 'ifbarrier1_btr.ll'
 
-declare void @barrier(i32)
+declare void @pocl.barrier()
 
 define void @ifbarrier1() {
 a:
@@ -13,7 +13,7 @@ barrier.prebarrier:                               ; preds = %a
   br label %barrier
 
 barrier:                                          ; preds = %barrier.prebarrier
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %c.btr
 
 c:                                                ; preds = %b

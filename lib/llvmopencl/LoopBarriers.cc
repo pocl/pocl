@@ -32,7 +32,7 @@ using namespace pocl;
 #define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 static bool is_barrier(Instruction *i);
-static CallInst *new_barrier();
+static CallInst *create_barrier(Instruction *InsertBefore);
 
 static Function *barrier = NULL;
 
@@ -98,7 +98,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
             (!is_barrier(preheader->getTerminator()->getPrevNode()))) {
           // Avoid adding a barrier here if there is already a barrier
           // just before the terminator.
-          new_barrier()->insertBefore(preheader->getTerminator());
+          create_barrier(preheader->getTerminator());
           preheader->setName(preheader->getName() + ".loopbarrier");
         }
 
@@ -111,7 +111,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           // barrier just before the terminator.
           if ((latch->size() == 1) ||
               (!is_barrier(latch->getTerminator()->getPrevNode()))) {
-            new_barrier()->insertBefore(latch->getTerminator());
+            create_barrier(latch->getTerminator());
             latch->setName(latch->getName() + ".latchbarrier");
           }
 
@@ -137,7 +137,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
               // there is no need to add an additional barrier.
               if ((Latch->size() == 1) ||
                   (!is_barrier(Latch->getTerminator()->getPrevNode()))) {
-                new_barrier()->insertBefore(Latch->getTerminator());
+                create_barrier(Latch->getTerminator());
                 Latch->setName(Latch->getName() + ".latchbarrier");
               }
             }
@@ -156,22 +156,20 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
 static bool
 is_barrier(Instruction *i)
 {
-  if (CallInst *c = dyn_cast<CallInst>(i)) {
-    if (Function *f = c->getCalledFunction()) {
-      if (f == barrier)
-        return true;
-    }
+  if (CallInst *C = dyn_cast<CallInst>(i)) {
+    return C->getCalledFunction()->getName() == BARRIER_FUNCTION_NAME;
   }
 
   return false;
 }
 
 static CallInst *
-new_barrier()
+create_barrier(Instruction *InsertBefore)
 {
-  assert (barrier != NULL && "No barrier function!");
-  Constant *zero =
-    ConstantInt::get(barrier->getArgumentList().front().getType(), 0);
-  SmallVector<Value *, 1> sv(1, zero);
-  return CallInst::Create(barrier, ArrayRef<Value *>(sv));
+  Module *M = InsertBefore->getParent()->getParent()->getParent();
+  Function *F =
+    cast<Function>(M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
+                                          Type::getVoidTy(M->getContext()),
+                                          NULL));
+  return CallInst::Create(F, "", InsertBefore);
 }

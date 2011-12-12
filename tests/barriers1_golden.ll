@@ -1,6 +1,6 @@
 ; ModuleID = 'barriers1_input.ll'
 
-declare void @barrier(i32)
+declare void @pocl.barrier()
 
 declare void @foo()
 
@@ -10,7 +10,7 @@ barrier.prebarrier:
   br label %barrier
 
 barrier:                                          ; preds = %barrier.prebarrier
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %barrier.postbarrier
 
 barrier.postbarrier:                              ; preds = %barrier
