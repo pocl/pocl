@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "CanonicalizeBarriers.h"
+#include "BarrierBlock.h"
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Instructions.h"
@@ -52,7 +53,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     return false;
 
   BasicBlock *entry = &F.getEntryBlock();
-  if (entry->size() != 2) {
+  if (!isa<BarrierBlock>(entry)) {
     BasicBlock *effective_entry = SplitBlock(entry, 
                                              &(entry->front()),
                                              this);
@@ -64,7 +65,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
     BasicBlock *b = i;
     TerminatorInst *t = b->getTerminator();
-    if ((t->getNumSuccessors() == 0) && (b->size() != 2)) {
+    if ((t->getNumSuccessors() == 0) && (!isa<BarrierBlock>(b))) {
       BasicBlock *exit = SplitBlock(b, t, this);
       exit->setName("exit.barrier");
       Barrier::Create(t);

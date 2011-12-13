@@ -47,42 +47,15 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 {
   ParallelRegion *new_region = new ParallelRegion();
 
-  for (iterator i = begin(), e = end(); i != e; ++i)
-    new_region->push_back(CloneBasicBlock((*i), map, suffix));
-
-  // Does it at BB to the map also?
-
-  return new_region;
-}
-
-void
-ParallelRegion::purge()
-{
   for (iterator i = begin(), e = end(); i != e; ++i) {
-
-    // Exit block has a successor out of the region.
-    if (*i == back())
-      continue;
-
-    TerminatorInst *t = (*i)->getTerminator();
-    for (unsigned ii = 0, ee = t->getNumSuccessors(); ii != ee; ++ii) {
-      BasicBlock *successor = t->getSuccessor(ii);
-      if (count(begin(), end(), successor) == 0) {
-        // This successor is not on the parallel region, purge.
-        iterator next_block = i;
-        ++next_block;
-        BasicBlock *unreachable =
-          BasicBlock::Create(successor->getContext(),
-                             successor->getName() + ".unreachable",
-                             successor->getParent(),
-                             *next_block);
-        new UnreachableInst(unreachable->getContext(),
-                            unreachable);
-        t->setSuccessor(ii, unreachable);
-        insert(next_block, unreachable);
-      }
-    }
+    BasicBlock *block = *i;
+    BasicBlock *new_block = CloneBasicBlock(block, map, suffix);
+    // Insert the block itself into the map.
+    map[block] = new_block;
+    new_region->push_back(new_block);
   }
+  
+  return new_region;
 }
 
 void
@@ -114,6 +87,43 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   t = back()->getTerminator();
   assert (t->getNumSuccessors() == 1);
   t->setSuccessor(0, successor);
+}
+
+void
+ParallelRegion::purge()
+{
+  SmallVector<BasicBlock *, 4> new_blocks;
+
+  for (iterator i = begin(), e = end(); i != e; ++i) {
+
+    // Exit block has a successor out of the region.
+    if (*i == back())
+      continue;
+
+    TerminatorInst *t = (*i)->getTerminator();
+    for (unsigned ii = 0, ee = t->getNumSuccessors(); ii != ee; ++ii) {
+      BasicBlock *successor = t->getSuccessor(ii);
+      if (count(begin(), end(), successor) == 0) {
+        // This successor is not on the parallel region, purge.
+        iterator next_block = i;
+        ++next_block;
+        BasicBlock *unreachable =
+          BasicBlock::Create((*i)->getContext(),
+                             (*i)->getName() + ".unreachable",
+                             (*i)->getParent(),
+                             *next_block);
+        new UnreachableInst(unreachable->getContext(),
+                            unreachable);
+        t->setSuccessor(ii, unreachable);
+        new_blocks.push_back(unreachable);
+      }
+    }
+  }
+
+  // Add the new "unreachable" blocks to the
+  // region. We cannot do in the loop as it
+  // corrupts iterators.
+  insert(end(), new_blocks.begin(), new_blocks.end());
 }
 
 void
@@ -158,10 +168,12 @@ basic_block_successor_dfs(std::set<const BasicBlock *> &set,
                           const BasicBlock *entry,
                           const BasicBlock *exit)
 {
-  if (entry == exit) {
-    set.insert(entry);
+  // Insert this block in the set first to avoid
+  // infinite recursion if they are loops.
+  set.insert(entry);
+
+  if (entry == exit)
     return true;
-  }
 
   bool found = false;
   
@@ -174,12 +186,12 @@ basic_block_successor_dfs(std::set<const BasicBlock *> &set,
     found |= basic_block_successor_dfs(set, *i, exit);
   }
   
-  if (found) {
-    set.insert(entry);
-    return true;
+  if (!found) {
+    set.erase(entry);
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 ParallelRegion *
@@ -207,7 +219,7 @@ ParallelRegion::Create(BasicBlock *entry,
 
   assert((entry == new_region->front()) && "entry must be first element!");
   assert((exit == new_region->back()) && "exit must be last element!");
-  // assert(new_region->Verify());
+  assert(new_region->Verify());
 
   return new_region;
 }

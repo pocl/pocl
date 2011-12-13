@@ -149,9 +149,9 @@ WorkitemReplication::ProcessFunction(Function &F)
         for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
           ParallelRegion *region = parallel_regions[index][i];
           if (index != 0) {
-            region->purge();
             region->remap(ReferenceMap[index - 1]);
             region->chainAfter(parallel_regions[index - 1][i]);
+            region->purge();
           }
           region->insertPrologue(x, y, z);
         }

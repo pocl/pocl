@@ -33,8 +33,8 @@ namespace pocl {
   public:    
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
                               const llvm::Twine &suffix);
-    void purge();
     void remap(llvm::ValueToValueMapTy &map);
+    void purge();
     void chainAfter(ParallelRegion *region);
     void insertPrologue(unsigned x, unsigned y, unsigned z);
     void dump();
