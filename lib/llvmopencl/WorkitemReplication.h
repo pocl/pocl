@@ -25,6 +25,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 #include <map>
 #include <vector>
 
@@ -57,7 +58,7 @@ namespace pocl {
     // always processed from dominator to function end, making last
     // added reference the correct one, thus no need for more
     // complex bookeeping.
-    ValueValueMap *ReferenceMap;
+    llvm::ValueToValueMapTy *ReferenceMap;
 
     int LocalSizeX, LocalSizeY, LocalSizeZ;
     llvm::GlobalVariable *LocalX, *LocalY, *LocalZ;

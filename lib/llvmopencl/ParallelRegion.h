@@ -30,15 +30,17 @@ namespace pocl {
   
   class ParallelRegion : public std::vector<llvm::BasicBlock *> {
     
-  public:
-    ParallelRegion();
-    ParallelRegion(llvm::BasicBlock *entry,
-                   llvm::BasicBlock *exit);
-    
-    ParallelRegion *replicate(llvm::ValueToValueMapTy &map);
+  public:    
+    ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
+                              const llvm::Twine &suffix);
     void purge();
     void remap(llvm::ValueToValueMapTy &map);
+    void chainAfter(ParallelRegion *region);
+    void insertPrologue(unsigned x, unsigned y, unsigned z);
     void dump();
+
+    static ParallelRegion *Create(llvm::BasicBlock *entry,
+                                  llvm::BasicBlock *exit);
     
   private:
     bool Verify();

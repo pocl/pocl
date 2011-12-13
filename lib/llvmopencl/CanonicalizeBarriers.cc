@@ -30,8 +30,6 @@
 using namespace llvm;
 using namespace pocl;
 
-static Function *barrier = NULL;
-
 namespace {
   static
   RegisterPass<CanonicalizeBarriers> X("barriers",
@@ -44,7 +42,6 @@ void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addPreserved<DominatorTree>();
-  AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
 }
 
@@ -54,14 +51,35 @@ CanonicalizeBarriers::runOnFunction(Function &F)
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
+  BasicBlock *entry = &F.getEntryBlock();
+  if (entry->size() != 2) {
+    BasicBlock *effective_entry = SplitBlock(entry, 
+                                             &(entry->front()),
+                                             this);
+    effective_entry->takeName(entry);
+    entry->setName("entry.barrier");
+    Barrier::Create(entry->getTerminator());
+  }
+
+  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
+    BasicBlock *b = i;
+    TerminatorInst *t = b->getTerminator();
+    if ((t->getNumSuccessors() == 0) && (b->size() != 2)) {
+      BasicBlock *exit = SplitBlock(b, t, this);
+      exit->setName("exit.barrier");
+      Barrier::Create(t);
+    }
+  }
+
   DT = getAnalysisIfAvailable<DominatorTree>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = getAnalysisIfAvailable<LoopInfo>();
 
   bool changed = ProcessFunction(F);
 
   if (DT)
     DT->verifyAnalysis();
-  LI->verifyAnalysis();
+  if (LI)
+    LI->verifyAnalysis();
 
   return changed;
 }
@@ -97,7 +115,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // Split post barrier first cause it does not make the barrier
     // to belong to another basic block.
     TerminatorInst  *t = b->getTerminator();
-    if ((t->getNumSuccessors() != 1) ||
+    if ((t->getNumSuccessors() > 1) ||
         (t->getPrevNode() != *i)) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
       new_b->setName(b->getName() + ".postbarrier");
@@ -108,8 +126,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     if (predecessor != NULL) {
       TerminatorInst *pt = predecessor->getTerminator();
       if ((pt->getNumSuccessors() == 1) &&
-          (&b->front() == (*i)))
-        {
+          (&b->front() == (*i))) {
         // Barrier is at the beginning of the BB,
         // which has a single predecessor with just
         // one successor (the barrier itself), thus
@@ -117,6 +134,9 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
         continue;
       }
     }
+    if ((b == &(b->getParent()->getEntryBlock())) &&
+        (&b->front() == (*i)))
+      continue;
     BasicBlock *new_b = SplitBlock(b, *i, this);
     new_b->takeName(b);
     b->setName(new_b->getName() + ".prebarrier");

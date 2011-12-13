@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#define BARRIER_FUNCTION_NAME "pocl.barrier"
-
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Casting.h"
+
+#define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 namespace pocl {
   

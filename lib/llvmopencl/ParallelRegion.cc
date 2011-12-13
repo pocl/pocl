@@ -23,9 +23,14 @@
 
 #include "ParallelRegion.h"
 #include "Barrier.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <set>
+
+#define LOCAL_ID_X "_local_id_x"
+#define LOCAL_ID_Y "_local_id_y"
+#define LOCAL_ID_Z "_local_id_z"
 
 using namespace std;
 using namespace llvm;
@@ -36,38 +41,16 @@ basic_block_successor_dfs(std::set<const BasicBlock *> &set,
                           const BasicBlock *entry,
                           const BasicBlock *exit);
 
-ParallelRegion::ParallelRegion(BasicBlock *entry,
-                               BasicBlock *exit)
-{
-  std::set<const BasicBlock *> basic_blocks_in_region;
-
-  if (!basic_block_successor_dfs(basic_blocks_in_region,
-                                 entry, exit)) {
-    // No path from entry to exit, empty region.
-    assert(basic_blocks_in_region.empty());
-    return;
-  }
-
-  // This is done in two steps so order of the vector
-  // is the same as original function order.
-  Function *F = entry->getParent();
-  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
-    if (basic_blocks_in_region.count(i) != 0)
-      push_back(i);
-  }
-
-  assert((entry == front()) && "entry must be first element!");
-  assert((exit == back()) && "exit must be last element!");
-  assert(Verify());
-}
-
 ParallelRegion *
-ParallelRegion::replicate(ValueToValueMapTy &map)
+ParallelRegion::replicate(ValueToValueMapTy &map,
+                          const Twine &suffix = "")
 {
   ParallelRegion *new_region = new ParallelRegion();
 
   for (iterator i = begin(), e = end(); i != e; ++i)
-    new_region->push_back(CloneBasicBlock((*i), map));
+    new_region->push_back(CloneBasicBlock((*i), map, suffix));
+
+  // Does it at BB to the map also?
 
   return new_region;
 }
@@ -108,8 +91,59 @@ ParallelRegion::remap(ValueToValueMapTy &map)
   for (iterator i = begin(), e = end(); i != e; ++i) {
     for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
          ii != ee; ++ii)
-      RemapInstruction(ii, map);
+      RemapInstruction(ii, map,
+                       RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
   }
+}
+
+void
+ParallelRegion::chainAfter(ParallelRegion *region)
+{
+  TerminatorInst *t = region->back()->getTerminator();
+  assert (t->getNumSuccessors() == 1);
+  
+  BasicBlock *successor = t->getSuccessor(0);
+  Function::BasicBlockListType &bb_list = 
+    successor->getParent()->getBasicBlockList();
+  
+  for (iterator i = begin(), e = end(); i != e; ++i)
+    bb_list.insertAfter(region->back(), *i);
+  
+  t->setSuccessor(0, front());
+
+  t = back()->getTerminator();
+  assert (t->getNumSuccessors() == 1);
+  t->setSuccessor(0, successor);
+}
+
+void
+ParallelRegion::insertPrologue(unsigned x,
+                               unsigned y,
+                               unsigned z)
+{
+  BasicBlock *entry = front();
+
+  IRBuilder<> builder(entry, entry->getFirstInsertionPt());
+
+  Module *M = entry->getParent()->getParent();
+
+  GlobalVariable *gvx = M->getGlobalVariable(LOCAL_ID_X);
+  if (gvx != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::
+                                         get(M->getContext(),
+                                             32), x), gvx);
+
+  GlobalVariable *gvy = M->getGlobalVariable(LOCAL_ID_Y);
+  if (gvy != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::
+                                         get(M->getContext(),
+                                             32), y), gvy);
+
+  GlobalVariable *gvz = M->getGlobalVariable(LOCAL_ID_Z);
+  if (gvz != NULL)
+    builder.CreateStore(ConstantInt::get(IntegerType::
+                                         get(M->getContext(),
+                                             32), z), gvz);
 }
 
 void
@@ -117,6 +151,65 @@ ParallelRegion::dump()
 {
   for (iterator i = begin(), e = end(); i != e; ++i)
     (*i)->dump();
+}
+
+static bool
+basic_block_successor_dfs(std::set<const BasicBlock *> &set,
+                          const BasicBlock *entry,
+                          const BasicBlock *exit)
+{
+  if (entry == exit) {
+    set.insert(entry);
+    return true;
+  }
+
+  bool found = false;
+  
+  for (succ_const_iterator i(entry->getTerminator()), e(entry->getTerminator(), true);
+         i != e; ++i) {
+    // Check if the successor is in the set already.
+    if (set.count(*i) != 0)
+      continue;
+
+    found |= basic_block_successor_dfs(set, *i, exit);
+  }
+  
+  if (found) {
+    set.insert(entry);
+    return true;
+  }
+
+  return false;
+}
+
+ParallelRegion *
+ParallelRegion::Create(BasicBlock *entry,
+                       BasicBlock *exit)
+{
+  ParallelRegion *new_region = new ParallelRegion();
+
+  std::set<const BasicBlock *> basic_blocks_in_region;
+
+  if (!basic_block_successor_dfs(basic_blocks_in_region,
+                                 entry, exit)) {
+    // No path from entry to exit, empty region.
+    assert(basic_blocks_in_region.empty());
+    return NULL;;
+  }
+
+  // This is done in two steps so order of the vector
+  // is the same as original function order.
+  Function *F = entry->getParent();
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    if (basic_blocks_in_region.count(i) != 0)
+      new_region->push_back(i);
+  }
+
+  assert((entry == new_region->front()) && "entry must be first element!");
+  assert((exit == new_region->back()) && "exit must be last element!");
+  // assert(new_region->Verify());
+
+  return new_region;
 }
 
 bool
@@ -161,33 +254,4 @@ ParallelRegion::Verify()
   }
 
   return true;
-}
-
-static bool
-basic_block_successor_dfs(std::set<const BasicBlock *> &set,
-                          const BasicBlock *entry,
-                          const BasicBlock *exit)
-{
-  if (entry == exit) {
-    set.insert(entry);
-    return true;
-  }
-
-  bool found = false;
-  
-  for (succ_const_iterator i(entry->getTerminator()), e(entry->getTerminator(), true);
-         i != e; ++i) {
-    // Check if the successor is in the set already.
-    if (set.count(*i) != 0)
-      continue;
-
-    found |= basic_block_successor_dfs(set, *i, exit);
-  }
-  
-  if (found) {
-    set.insert(entry);
-    return true;
-  }
-
-  return false;
 }
