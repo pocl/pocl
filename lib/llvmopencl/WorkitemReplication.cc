@@ -358,7 +358,9 @@ WorkitemReplication::replicateWorkitemSubgraph(BasicBlockVector subgraph,
           // No need to update LoopInfo here, replicated code
           // is never replicated again (FALSE, fails without it).
           DT->runOnFunction(*(entry->getParent()));
-          LI->releaseMemory();
+          // This caused a crash due to a reference to freed memory
+          // later when using LI again. 
+          // LI->releaseMemory();
           LI->getBase().Calculate(DT->getBase());
 	  return;
 	}
