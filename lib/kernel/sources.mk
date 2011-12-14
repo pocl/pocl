@@ -1,10 +1,13 @@
 libkernel_a_SOURCES = templates.h		\
                       barrier.c                 \
+                      get_work_dim.c		\
                       get_global_size.c		\
                       get_global_id.c		\
+                      get_local_size.c		\
                       get_local_id.c		\
                       get_num_groups.c		\
                       get_group_id.c		\
+                      get_global_offset.c	\
                       as_type.cl		\
                       convert_type.cl		\
                       acos.cl			\
@@ -84,6 +87,7 @@ libkernel_a_SOURCES = templates.h		\
                       rotate.cl			\
                       sub_sat.cl		\
                       upsample.cl		\
+                      popcount.cl		\
                       mad24.cl			\
                       mul24.cl			\
                       degrees.cl		\

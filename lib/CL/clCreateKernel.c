@@ -125,6 +125,13 @@ clCreateKernel(cl_program program,
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
 
+  /* Initialize kernel arguments (in case the user doesn't). */
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      kernel->arguments[i].value = NULL;
+      kernel->arguments[i].size = 0;
+    }
+
   /* Fill up automatic local arguments. */
   for (i = 0; i < kernel->num_locals; ++i)
     {
@@ -133,14 +140,9 @@ clCreateKernel(cl_program program,
         ((size_t *) lt_dlsym(dlhandle, "_local_size"))[i];
     }
 
-  if (program->kernels == NULL)
-    program->kernels = kernel;
-  else {
-    cl_kernel k = program->kernels;
-    while (k->next != NULL)
-      k = k->next;
-    k->next = kernel;
-  }
+  cl_kernel k = program->kernels;
+  program->kernels = kernel;
+  kernel->next = k;
 
   return kernel;
 }

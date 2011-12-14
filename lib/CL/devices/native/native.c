@@ -30,15 +30,7 @@
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128
 
-struct pointer_list {
-  void *pointer;
-  struct pointer_list *next;
-};
-
 struct data {
-  /* Buffers where host pointer is used, and thus
-     should not be deallocated on free. */
-  struct pointer_list *host_buffers;
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
@@ -54,7 +46,6 @@ pocl_native_init (cl_device_id device)
   
   d = (struct data *) malloc (sizeof (struct data));
   
-  d->host_buffers = NULL;
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
 
@@ -65,11 +56,7 @@ void *
 pocl_native_malloc (void *data, cl_mem_flags flags,
 		    size_t size, void *host_ptr)
 {
-  struct data *d;
   void *b;
-  struct pointer_list *p;
-
-  d = (struct data *) data;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
@@ -84,19 +71,6 @@ pocl_native_malloc (void *data, cl_mem_flags flags,
 
   if (host_ptr != NULL)
     {
-      if (d->host_buffers == NULL)
-	d->host_buffers = malloc (sizeof (struct pointer_list));
-      
-      p = d->host_buffers;
-      while (p->next != NULL)
-	p = p->next;
-
-      p->next = malloc (sizeof (struct pointer_list));
-      p = p->next;
-
-      p->pointer = host_ptr;
-      p->next = NULL;
-      
       return host_ptr;
     }
 
@@ -107,27 +81,16 @@ pocl_native_malloc (void *data, cl_mem_flags flags,
 }
 
 void
-pocl_native_free (void *data, void *ptr)
+pocl_native_free (void *data, cl_mem_flags flags, void *ptr)
 {
-  struct data *d;
-  struct pointer_list *p;
-
-  d = (struct data *) data;
-
-  p = d->host_buffers;
-  while (p != NULL)
-    {
-      if (p->pointer == ptr)
-	return;
-
-      p = p->next;
-    }
+  if (flags & CL_MEM_COPY_HOST_PTR)
+    return;
   
   free (ptr);
 }
 
 void
-pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb)
+pocl_native_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
@@ -284,12 +247,12 @@ pocl_native_run (void *data, const char *parallel_filename,
               for (i = 0; i < kernel->num_args; ++i)
                 {
 		  if (kernel->arg_is_local[i])
-                    pocl_native_free(data, *(void **)(arguments[i]));
+                    pocl_native_free(data, 0, *(void **)(arguments[i]));
                 }
               for (i = kernel->num_args;
                    i < kernel->num_args + kernel->num_locals;
                    ++i)
-                  pocl_native_free(data, *(void **)(arguments[i]));
+                pocl_native_free(data, 0, *(void **)(arguments[i]));
 	    }
 	}
     }

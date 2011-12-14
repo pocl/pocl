@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_local_id()
+/* OpenCL built-in library: get_work_dim()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,18 +21,11 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
+extern unsigned int _work_dim;
 
-size_t
-get_local_id(unsigned int dimindx)
+unsigned int
+get_work_dim()
 {
-  switch(dimindx)
-    {
-    case 0: return _local_id_x;
-    case 1: return _local_id_y;
-    case 2: return _local_id_z;
-    default: return 0;
-    }
- }
+  return _work_dim;
+}
+

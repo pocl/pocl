@@ -424,14 +424,14 @@ _CL_DECLARE_CONVERT_TYPE_SRC_DST(16)
 
 /* Work-Item Functions */
 
-// uint get_work_dim();
-uint get_global_size(uint);     // should return size_t
-uint get_global_id(uint);       // should return size_t
-// size_t get_local_size(uint);
-uint get_local_id(uint);        // should return size_t
-uint get_num_groups(uint);      // should return size_t
-uint get_group_id(uint);        // should return size_t
-// size_t get_global_offset(uint);
+uint get_work_dim();
+size_t get_global_size(uint);
+size_t get_global_id(uint);
+size_t get_local_size(uint);
+size_t get_local_id(uint);
+size_t get_num_groups(uint);
+size_t get_group_id(uint);
+size_t get_global_offset(uint);
 
 __attribute__ ((noinline)) void barrier (cl_mem_fence_flags flags);
 
@@ -1304,6 +1304,7 @@ _CL_DECLARE_FUNC_G_GG(mul_hi)
 _CL_DECLARE_FUNC_G_GG(rotate)
 _CL_DECLARE_FUNC_G_GG(sub_sat)
 _CL_DECLARE_FUNC_LG_GUG(upsample)
+_CL_DECLARE_FUNC_G_G(popcount)
 _CL_DECLARE_FUNC_J_JJJ(mad24)
 _CL_DECLARE_FUNC_J_JJ(mul24)
 
@@ -1613,5 +1614,5 @@ _CL_DECLARE_VSTORE(double, __private)
 // shuffle2
 
 
-/* printf */
-// int printf(constant char * restrict format, ...);
+int printf(const /*constant*/ char * restrict format, ...)
+  __attribute__((format(printf, 1, 2)));

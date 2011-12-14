@@ -21,6 +21,37 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#define IMPLEMENT_SIGNBIT_BUILTIN_FLOAT  __builtin_signbitf(a)
+#define IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE __builtin_signbit(a)
+#define IMPLEMENT_SIGNBIT_DIRECT                \
+  ({                                            \
+    int bits = CHAR_BIT * sizeof(stype);        \
+    *(jtype*)&a >> (jtype)(bits-1);             \
+  })
 
-DEFINE_BUILTIN_K_V(signbit)
+#define IMPLEMENT_DIRECT(NAME, VTYPE, STYPE, JTYPE, EXPR)       \
+  JTYPE _cl_overloadable NAME(VTYPE a)                          \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
+  }
+
+
+
+IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
+IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)
+
+#ifdef cl_khr_fp64
+IMPLEMENT_DIRECT(signbit, double  , double, int   , IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE)
+IMPLEMENT_DIRECT(signbit, double2 , double, long2 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, double3 , double, long3 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, double4 , double, long4 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, double8 , double, long8 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, double16, double, long16, IMPLEMENT_SIGNBIT_DIRECT)
+#endif

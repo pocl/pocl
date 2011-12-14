@@ -98,7 +98,7 @@ struct _cl_device_id {
   void (*init) (cl_device_id device);
   void *(*malloc) (void *data, cl_mem_flags flags,
 		   size_t size, void *host_ptr);
-  void (*free) (void *data, void *ptr);
+  void (*free) (void *data, cl_mem_flags flags, void *ptr);
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
   void (*write) (void *data, const void *host_ptr, void *device_ptr, size_t cb);
   void (*run) (void *data, const char *bytecode,
@@ -164,8 +164,8 @@ struct _cl_kernel {
   cl_program program;
   /* implementation */
   lt_dlhandle dlhandle;
-  int *arg_is_pointer;
-  int *arg_is_local;
+  cl_int *arg_is_pointer;
+  cl_int *arg_is_local;
   cl_uint num_locals;
   struct pocl_argument *arguments;
   struct _cl_kernel *next;

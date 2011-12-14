@@ -29,8 +29,8 @@
 void pocl_native_init (cl_device_id device);
 void *pocl_native_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
-void pocl_native_free (void *data, void *ptr);
-void pocl_native_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
+void pocl_native_free (void *data, cl_mem_flags flags, void *ptr);
+void pocl_native_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
 void pocl_native_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
 void pocl_native_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
@@ -39,7 +39,7 @@ void pocl_native_run (void *data, const char *bytecode,
 extern size_t pocl_native_max_work_item_sizes[];
 
 #define POCL_DEVICES_NATIVE {						\
-  CL_DEVICE_TYPE_GPU, /* type */					\
+  CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   1, /* max_work_item_dimensions */					\

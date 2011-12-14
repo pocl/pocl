@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_local_id()
+/* OpenCL built-in library: popcount()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -21,18 +21,15 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
+#include "templates.h"
 
-size_t
-get_local_id(unsigned int dimindx)
-{
-  switch(dimindx)
-    {
-    case 0: return _local_id_x;
-    case 1: return _local_id_y;
-    case 2: return _local_id_z;
-    default: return 0;
-    }
- }
+// Intel: POPCNT
+
+#define __builtin_popcounthh  __builtin_popcount
+#define __builtin_popcounth   __builtin_popcount
+#define __builtin_popcountuhh __builtin_popcount
+#define __builtin_popcountuh  __builtin_popcount
+#define __builtin_popcountu   __builtin_popcount
+#define __builtin_popcountul  __builtin_popcountl
+
+DEFINE_BUILTIN_G_G(popcount)

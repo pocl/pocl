@@ -1,6 +1,6 @@
-/* OpenCL built-in library: get_local_id()
+/* OpenCL runtime library: clFinish()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Erik Schnetter
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,18 +21,11 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
+#include "pocl_cl.h"
 
-size_t
-get_local_id(unsigned int dimindx)
+CL_API_ENTRY cl_int CL_API_CALL
+clFinish(cl_command_queue command_queue)
 {
-  switch(dimindx)
-    {
-    case 0: return _local_id_x;
-    case 1: return _local_id_y;
-    case 2: return _local_id_z;
-    default: return 0;
-    }
- }
+  /* All operations are serialised, so we never have to wait */
+  return CL_SUCCESS;
+}

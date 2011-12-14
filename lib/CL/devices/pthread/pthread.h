@@ -29,8 +29,8 @@
 void pocl_pthread_init (cl_device_id device);
 void *pocl_pthread_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
-void pocl_pthread_free (void *data, void *ptr);
-void pocl_pthread_read (void *data, void *host_ptr, void *device_ptr, size_t cb);
+void pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr);
+void pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
 void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
 void pocl_pthread_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
@@ -39,14 +39,14 @@ void pocl_pthread_run (void *data, const char *bytecode,
 extern size_t pocl_pthread_max_work_item_sizes[];
 
 #define POCL_DEVICES_PTHREAD {						\
-  CL_DEVICE_TYPE_GPU, /* type */					\
+  CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
-  1, /* max_work_item_dimensions */					\
+  3, /* max_work_item_dimensions */					\
   pocl_pthread_max_work_item_sizes, /* max_work_item_sizes */		\
-  1, /*max_work_group_size */						\
+  CL_INT_MAX, /* max_work_group_size */					\
   0, /* preferred_vector_width_char */					\
-  0, /* preferred_vector_width_shortr */				\
+  0, /* preferred_vector_width_short */					\
   0, /* preferred_vector_width_int */					\
   0, /* preferred_vector_width_long */					\
   0, /* preferred_vector_width_float */					\
@@ -57,7 +57,7 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   CL_FALSE, /* image_support */						\
   0, /* max_read_image_args */						\
   0, /* max_write_image_args */						\
-  0, /*image2d_max_width */						\
+  0, /* image2d_max_width */						\
   0, /* image2d_max_height */						\
   0, /* image3d_max_width */						\
   0, /* image3d_max_height */						\

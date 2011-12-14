@@ -26,6 +26,11 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
-  free(kernel);
+  /* TODO: Remove kernel from the program's linked list of kernels! */
+  /* TODO: Deallocate kernel arguments! */
+  /* In the mean time, we better don't free the kernel, but just make
+     it unusable... */
+  /*free(kernel);*/
+  memset(kernel, -1, sizeof *kernel);
   return CL_SUCCESS;
 }
