@@ -1,3 +1,5 @@
+// TESTING: bitselect
+
 #define IMPLEMENT_BODY_G(NAME, BODY, GTYPE, SGTYPE, UGTYPE, SUGTYPE)    \
   void NAME##_##GTYPE()                                                 \
   {                                                                     \
@@ -122,9 +124,13 @@ DEFINE_BODY_G
    _cl_static_assert(sgtype, !is_floating(sgtype));
    uint const randoms[] = {
      0x00000000,
+     0x00000001,
+     0x7fffffff,
+     0x80000000,
+     0xfffffffe,
+     0xffffffff,
      0x01010101,
      0x80808080,
-     0xffffffff,
      0x55555555,
      0xaaaaaaaa,
      116127149,

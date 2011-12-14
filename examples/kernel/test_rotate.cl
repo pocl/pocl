@@ -1,3 +1,7 @@
+// TESTING: <<
+// TESTING: >>
+// TESTING: rotate
+
 #define IMPLEMENT_BODY_G(NAME, BODY, GTYPE, SGTYPE, UGTYPE, SUGTYPE)    \
   void NAME##_##GTYPE()                                                 \
   {                                                                     \
