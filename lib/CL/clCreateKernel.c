@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -111,7 +112,7 @@ clCreateKernel(cl_program program,
       POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
     }
 
-  kernel->function_name = kernel_name;
+  kernel->function_name = strdup(kernel_name);
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
   kernel->reference_count = 1;
   kernel->context = program->context;

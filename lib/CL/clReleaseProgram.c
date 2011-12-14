@@ -26,6 +26,17 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
+  cl_kernel k;
+
+  /* Mark all kernels as having no program */
+  for (k=program->kernels; k!=NULL; k=k->next)
+    {
+      k->program = NULL;
+    }
+
+  free(program->source);
+  free(program->binary);
   free(program);
+
   return CL_SUCCESS;
 }
