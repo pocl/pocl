@@ -267,12 +267,11 @@
   {                                                     \
     return __builtin_##NAME(a);                         \
   }                                                     \
-  __IF_INT64(                                           \
   IMPLEMENT_BUILTIN_K_V(NAME, long2 , double2 , lo, hi) \
   IMPLEMENT_BUILTIN_K_V(NAME, long3 , double3 , lo, s2) \
   IMPLEMENT_BUILTIN_K_V(NAME, long4 , double4 , lo, hi) \
   IMPLEMENT_BUILTIN_K_V(NAME, long8 , double8 , lo, hi) \
-  IMPLEMENT_BUILTIN_K_V(NAME, long16, double16, lo, hi)))
+  IMPLEMENT_BUILTIN_K_V(NAME, long16, double16, lo, hi))
 
 /******************************************************************************/
 
