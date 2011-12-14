@@ -24,7 +24,7 @@
 
 noinst_PROGRAMS = scalarwave
 
-scalarwave_SOURCES = scalarwave.c scalarwave_exec.c scalarwave.cl
+scalarwave_SOURCES = scalarwave.c scalarwave.cl
 scalarwave_LDADD = ../../lib/CL/libCL.la -lm @PTHREAD_LIBS@
 scalarwave_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
 
