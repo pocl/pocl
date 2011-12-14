@@ -182,7 +182,13 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
   for (Module::global_iterator i = M->global_begin(),
          e = M->global_end();
        i != e; ++i) {
-    if (i->getName().startswith(F->getNameStr() + ".")) {
+    std::string funcName = "";
+#ifdef LLVM_3_0
+    funcName = F->getNameStr();
+#else
+    funcName = F->getName().str();
+#endif
+    if (i->getName().startswith(funcName + ".")) {
       // Additional checks might be needed here. For now
       // we assume any global starting with kernel name
       // is declaring a local variable.

@@ -38,6 +38,26 @@ AC_PROG_CXX
 AC_CHECK_PROGS([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
+LLVM_VERSION=`$LLVM_CONFIG --version`
+
+case "$LLVM_VERSION" in
+     3.0*)
+     AC_DEFINE([LLVM_3_0], [], "Using LLVM 3.0")
+   ;;
+     *svn)
+     AC_DEFINE([LLVM_3_1], [], "Using LLVM svn (upcoming 3.1)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.1)")     
+   ;;   
+     *)
+   AC_MSG_NOTICE(
+   [
+Unsupported LLVM version. 
+   ])
+   LLVM_VERSION=
+   ;;
+esac
+
+
 #AC_LANG([C++])
 ACX_PTHREAD()
 

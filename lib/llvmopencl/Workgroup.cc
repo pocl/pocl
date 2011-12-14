@@ -166,9 +166,17 @@ createLauncher(Module &M, Function *F)
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
 				       ArrayRef<Type *> (sv),
 				       false);
+
+  std::string funcName = "";
+#ifdef LLVM_3_0
+  funcName = F->getNameStr();
+#else
+  funcName = F->getName().str();
+#endif
+
   Function *L = Function::Create(ft,
 				 Function::ExternalLinkage,
-				 "_" + F->getNameStr(),
+				 "_" + funcName,
 				 &M);
 
   SmallVector<Value *, 8> arguments;
@@ -384,8 +392,14 @@ createWorkgroup(Module &M, Function *F)
     TypeBuilder<void(types::i<8>*[],
 		     PoclContext*), true>::get(M.getContext());
 
+  std::string funcName = "";
+#ifdef LLVM_3_0
+  funcName = F->getNameStr();
+#else
+  funcName = F->getName().str();
+#endif
   Function *workgroup =
-    dyn_cast<Function>(M.getOrInsertFunction(F->getNameStr() + "_workgroup", ft));
+    dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup", ft));
   assert(workgroup != NULL);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
