@@ -1614,5 +1614,5 @@ _CL_DECLARE_VSTORE(double, __private)
 // shuffle2
 
 
-/* printf */
-// int printf(constant char * restrict format, ...);
+int printf(const /*constant*/ char * restrict format, ...)
+  __attribute__((format(printf, 1, 2)));
