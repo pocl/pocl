@@ -1,4 +1,4 @@
-/* OpenCL built-in library: exp()
+/* OpenCL built-in library: divide()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,7 +23,5 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(exp)
-
-DEFINE_EXPR_F_F(half_exp, exp(a))
-DEFINE_EXPR_F_F(native_exp, exp(a))
+DEFINE_EXPR_F_FF(half_divide, a/b)
+DEFINE_EXPR_F_FF(native_divide, a/b)

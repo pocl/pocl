@@ -608,6 +608,39 @@
   IMPLEMENT_EXPR_V_SV(NAME, EXPR, double8 , double)     \
   IMPLEMENT_EXPR_V_SV(NAME, EXPR, double16, double))
 
+#define IMPLEMENT_EXPR_F_F(NAME, EXPR, VTYPE, STYPE)    \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b)                                \
+  {                                                     \
+    typedef VTYPE vtype;                                \
+    typedef STYPE stype;                                \
+    return EXPR;                                        \
+  }
+#define DEFINE_EXPR_F_F(NAME, EXPR)                     \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float   , float )      \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float2  , float )      \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float3  , float )      \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float4  , float )      \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float8  , float )      \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float16 , float )
+
+#define IMPLEMENT_EXPR_F_FF(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, VTYPE b)                                        \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef JTYPE jtype;                                        \
+    return EXPR;                                                \
+  }
+#define DEFINE_EXPR_F_FF(NAME, EXPR)                            \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float   , float , int   )     \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float2  , float , int2  )     \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float3  , float , int3  )     \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float4  , float , int4  )     \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float8  , float , int8  )     \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float16 , float , int16 )
+
 
 
 #define IMPLEMENT_BUILTIN_G_G(NAME, GTYPE, UGTYPE, LO, HI)      \

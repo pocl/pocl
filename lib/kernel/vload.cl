@@ -1,4 +1,4 @@
-/* OpenCL built-in library: vloa()
+/* OpenCL built-in library: vload()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    

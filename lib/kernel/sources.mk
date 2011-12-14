@@ -72,6 +72,8 @@ libkernel_a_SOURCES = templates.h		\
                       tanpi.cl			\
                       tgamma.cl			\
                       trunc.cl			\
+                      divide.cl			\
+                      recip.cl			\
                       abs.cl			\
                       abs_diff.cl		\
                       add_sat.cl		\
@@ -123,4 +125,6 @@ libkernel_a_SOURCES = templates.h		\
                       bitselect.cl		\
                       select.cl			\
                       vload.cl			\
-                      vstore.cl
+                      vstore.cl			\
+                      vload_half.cl		\
+                      vstore_half.cl

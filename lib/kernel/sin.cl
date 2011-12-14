@@ -24,3 +24,6 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_V_V(sin)
+
+DEFINE_EXPR_F_F(half_sin, sin(a))
+DEFINE_EXPR_F_F(native_sin, sin(a))
