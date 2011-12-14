@@ -1,5 +1,4 @@
-// Class definition for parallel regions, a group of BasicBlocks that
-// each kernel should run in parallel.
+// Class for a basic block that just contains a barrier.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -21,31 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include <vector>
 
 namespace pocl {
-  
-  class ParallelRegion : public std::vector<llvm::BasicBlock *> {
-    
-  public:    
-    ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
-                              const llvm::Twine &suffix);
-    void remap(llvm::ValueToValueMapTy &map);
-    void purge();
-    void chainAfter(ParallelRegion *region);
-    void insertPrologue(unsigned x, unsigned y, unsigned z);
-    void dump();
 
-    static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
-                                  llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
-    
-  private:
-    bool Verify();
+  class BarrierBlock : public llvm::BasicBlock {
+
+  public:
+    static bool classof(const BarrierBlock *) { return true; };
+    static bool classof(const llvm::BasicBlock *B);
   };
-    
+
 }
-                              

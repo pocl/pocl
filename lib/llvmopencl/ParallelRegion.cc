@@ -36,11 +36,6 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static bool
-basic_block_successor_dfs(std::set<const BasicBlock *> &set,
-                          const BasicBlock *entry,
-                          const BasicBlock *exit);
-
 ParallelRegion *
 ParallelRegion::replicate(ValueToValueMapTy &map,
                           const Twine &suffix = "")
@@ -163,62 +158,25 @@ ParallelRegion::dump()
     (*i)->dump();
 }
 
-static bool
-basic_block_successor_dfs(std::set<const BasicBlock *> &set,
-                          const BasicBlock *entry,
-                          const BasicBlock *exit)
-{
-  // Insert this block in the set first to avoid
-  // infinite recursion if they are loops.
-  set.insert(entry);
-
-  if (entry == exit)
-    return true;
-
-  bool found = false;
-  
-  for (succ_const_iterator i(entry->getTerminator()), e(entry->getTerminator(), true);
-         i != e; ++i) {
-    // Check if the successor is in the set already.
-    if (set.count(*i) != 0)
-      continue;
-
-    found |= basic_block_successor_dfs(set, *i, exit);
-  }
-  
-  if (!found) {
-    set.erase(entry);
-    return false;
-  }
-
-  return true;
-}
-
 ParallelRegion *
-ParallelRegion::Create(BasicBlock *entry,
-                       BasicBlock *exit)
+ParallelRegion::Create(SmallPtrSetIterator<BasicBlock *> entry,
+                       SmallPtrSetIterator<BasicBlock *> exit)
 {
   ParallelRegion *new_region = new ParallelRegion();
 
-  std::set<const BasicBlock *> basic_blocks_in_region;
-
-  if (!basic_block_successor_dfs(basic_blocks_in_region,
-                                 entry, exit)) {
-    // No path from entry to exit, empty region.
-    assert(basic_blocks_in_region.empty());
-    return NULL;;
-  }
-
   // This is done in two steps so order of the vector
   // is the same as original function order.
-  Function *F = entry->getParent();
+  Function *F = (*entry)->getParent();
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
-    if (basic_blocks_in_region.count(i) != 0)
-      new_region->push_back(i);
+    BasicBlock *b = i;
+    for (SmallPtrSetIterator<BasicBlock *> j = entry; j != exit; ++j) {
+      if (*j == b) {
+        new_region->push_back(i);
+        break;
+      }
+    }
   }
 
-  assert((entry == new_region->front()) && "entry must be first element!");
-  assert((exit == new_region->back()) && "exit must be last element!");
   assert(new_region->Verify());
 
   return new_region;

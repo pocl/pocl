@@ -32,6 +32,15 @@ namespace pocl {
   class Barrier : public llvm::CallInst {
 
   public:
+    static void GetBarriers(llvm::SmallVectorImpl<Barrier *> &B,
+                            llvm::Module &M) {
+      llvm::Function *F = M.getFunction(BARRIER_FUNCTION_NAME);
+      if (F != NULL) {
+        for (llvm::Function::use_iterator i = F->use_begin(), e = F->use_end();
+             i != e; ++i)
+          B.push_back(llvm::cast<Barrier>(*i));
+      }
+    }
     static Barrier *Create(llvm::Instruction *InsertBefore) {
       llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
       llvm::Function *F = llvm::cast<llvm::Function>
@@ -48,6 +57,10 @@ namespace pocl {
     static bool classof(const Instruction *I) {
       return (llvm::isa<llvm::CallInst>(I) &&
               classof(llvm::cast<llvm::CallInst>(I)));
+    }
+    static bool classof(const User *U) {
+      return (llvm::isa<Instruction>(U) &&
+              classof(llvm::cast<llvm::Instruction>(U)));
     }
   };
 

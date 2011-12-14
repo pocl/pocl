@@ -1,5 +1,4 @@
-// Class definition for parallel regions, a group of BasicBlocks that
-// each kernel should run in parallel.
+// Class for kernels, a special kind of function.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -21,31 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include <vector>
+#include "BarrierBlock.h"
+#include "ParallelRegion.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/Dominators.h"
 
 namespace pocl {
-  
-  class ParallelRegion : public std::vector<llvm::BasicBlock *> {
-    
-  public:    
-    ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
-                              const llvm::Twine &suffix);
-    void remap(llvm::ValueToValueMapTy &map);
-    void purge();
-    void chainAfter(ParallelRegion *region);
-    void insertPrologue(unsigned x, unsigned y, unsigned z);
-    void dump();
 
-    static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
-                                  llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
+  class Kernel : public llvm::Function {
+
+  public:
+    void getBarrierBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
+    void getParallelRegions(llvm::SmallVectorImpl<ParallelRegion *> &PR);
     
-  private:
-    bool Verify();
+    static bool classof(const Kernel *) { return true; }
+    // We assume any function can be a kernel. This could be used
+    // to check for metadata (but would need to be overrideable somehow
+    // to honor the forced kernel name(s) parameter in command line.
+    static bool classof(const llvm::Function *) { return true; }
   };
-    
+
 }
-                              

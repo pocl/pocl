@@ -106,7 +106,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   Kernel *K = cast<Kernel> (&F);
 
   SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
-  K->getParallelRegions(parallel_regions[0], *DT);
+  K->getParallelRegions(parallel_regions[0]);
 
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {

@@ -1,5 +1,4 @@
-// Class definition for parallel regions, a group of BasicBlocks that
-// each kernel should run in parallel.
+// Class for a basic block that just contains a barrier.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -21,31 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include <vector>
+#include "BarrierBlock.h"
+#include "Barrier.h"
+#include "llvm/Instructions.h"
+#include <cassert>
 
-namespace pocl {
-  
-  class ParallelRegion : public std::vector<llvm::BasicBlock *> {
-    
-  public:    
-    ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
-                              const llvm::Twine &suffix);
-    void remap(llvm::ValueToValueMapTy &map);
-    void purge();
-    void chainAfter(ParallelRegion *region);
-    void insertPrologue(unsigned x, unsigned y, unsigned z);
-    void dump();
+using namespace llvm;
+using namespace pocl;
 
-    static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
-                                  llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
-    
-  private:
-    bool Verify();
-  };
-    
+static bool
+verify(const BasicBlock *B);
+
+bool
+BarrierBlock::classof(const BasicBlock *B)
+{
+  if ((B->size() == 2) &&
+      isa<Barrier> (B->front())) {
+    assert(verify(B));
+    return true;
+  }
+
+  return false;
 }
-                              
+
+static bool
+verify(const BasicBlock *B)
+{
+  assert((B->size() == 2) && "Barriers blocks should have no functionality!");
+  assert(((B->getSinglePredecessor() != NULL) ||
+          (B == &(B->getParent()->front()))) &&
+         "Barrier blocks should have exactly one predecessor (except entry barrier)!");
+  assert((B->getTerminator()->getNumSuccessors() <= 1) &&
+         "Barrier blocks should have one successor, or zero for exit barriers!");
+  assert(isa<Barrier>(B->front()));
+
+  return true;
+}
+
