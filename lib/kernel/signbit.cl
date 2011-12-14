@@ -47,9 +47,11 @@ IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)
 
+#ifdef cl_khr_fp64
 IMPLEMENT_DIRECT(signbit, double  , double, int   , IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE)
 IMPLEMENT_DIRECT(signbit, double2 , double, long2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double3 , double, long3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double4 , double, long4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double8 , double, long8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double16, double, long16, IMPLEMENT_SIGNBIT_DIRECT)
+#endif
