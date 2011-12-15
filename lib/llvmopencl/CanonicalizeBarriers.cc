@@ -116,27 +116,36 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // Split post barrier first cause it does not make the barrier
     // to belong to another basic block.
     TerminatorInst  *t = b->getTerminator();
-    if ((t->getNumSuccessors() > 1) ||
-        (t->getPrevNode() != *i)) {
+    // if ((t->getNumSuccessors() > 1) ||
+    //     (t->getPrevNode() != *i)) {
+    // Change: barriers with several successors are all right
+    // they just start several parallel regions. Simplifies
+    // loop handling.
+    if (t->getPrevNode() != *i) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;
     }
 
-    BasicBlock *predecessor = b->getSinglePredecessor();
-    if (predecessor != NULL) {
-      TerminatorInst *pt = predecessor->getTerminator();
-      if ((pt->getNumSuccessors() == 1) &&
-          (&b->front() == (*i))) {
-        // Barrier is at the beginning of the BB,
-        // which has a single predecessor with just
-        // one successor (the barrier itself), thus
-        // no need to split before barrier.
-        continue;
-      }
-    }
-    if ((b == &(b->getParent()->getEntryBlock())) &&
-        (&b->front() == (*i)))
+    // BasicBlock *predecessor = b->getSinglePredecessor();
+    // if (predecessor != NULL) {
+    //   TerminatorInst *pt = predecessor->getTerminator();
+    //   if ((pt->getNumSuccessors() == 1) &&
+    //       (&b->front() == (*i))) {
+    //     // Barrier is at the beginning of the BB,
+    //     // which has a single predecessor with just
+    //     // one successor (the barrier itself), thus
+    //     // no need to split before barrier.
+    //     continue;
+    //   }
+    // }
+    // if ((b == &(b->getParent()->getEntryBlock())) &&
+    //     (&b->front() == (*i)))
+    //   continue;
+    
+    // If no instructions before barrier, do not split
+    // (allow multiple predecessors, eases loop handling).
+    if (&b->front() == (*i))
       continue;
     BasicBlock *new_b = SplitBlock(b, *i, this);
     new_b->takeName(b);

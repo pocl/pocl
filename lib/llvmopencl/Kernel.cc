@@ -31,6 +31,18 @@ static void add_predecessors(SmallVectorImpl<BasicBlock *> &v,
 static bool verify_no_barriers(const BasicBlock *B);
 
 void
+Kernel::getExitBlocks(SmallVectorImpl<BarrierBlock *> &B)
+{
+  for (iterator i = begin(), e = end(); i != e; ++i) {
+    TerminatorInst *t = i->getTerminator();
+    if (t->getNumSuccessors() == 0) {
+      // All exits must be barrier blocks.
+      B.push_back(cast<BarrierBlock>(i));
+    }
+  }
+}
+
+void
 Kernel::getBarrierBlocks(SmallVectorImpl<BarrierBlock *> &B)
 {
   Module *M = getParent();
@@ -76,18 +88,27 @@ Kernel::getParallelRegions(SmallVectorImpl<ParallelRegion *> &PR)
       // If we reach another barrier this must be the
       // parallel region entry.
       if (isa<BarrierBlock>(current)) {
+        TerminatorInst *t = current->getTerminator();
+        if (t->getNumSuccessors() != 1) {
+          // Do not check for multidominance in this case, this
+          // is probably a latch barrier. Proper would be to use
+          // dominators here, but this is only a safety check so
+          // better not to add such heavy stuff.
+          continue;
+        }
         if (region_entry_barrier == NULL)
           region_entry_barrier = cast<BarrierBlock>(current);
         else {
           assert((region_entry_barrier == current) &&
                  "Barrier is dominated by more than one barrier! (forgot BTR?)");
-          assert(verify_no_barriers(current) &&
-                 "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
         }
 
         continue;
       }
-
+      
+      assert(verify_no_barriers(current) &&
+             "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
+      
       // Non-barrier block, this must be on the region.
       blocks_in_region.insert(current);
 

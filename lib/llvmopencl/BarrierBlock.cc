@@ -47,11 +47,16 @@ static bool
 verify(const BasicBlock *B)
 {
   assert((B->size() == 2) && "Barriers blocks should have no functionality!");
+#if 0 // We want to allow barriers with more than one predecessors
+      // (for loop header barriers).
   assert(((B->getSinglePredecessor() != NULL) ||
           (B == &(B->getParent()->front()))) &&
          "Barrier blocks should have exactly one predecessor (except entry barrier)!");
+#endif
+#if 0  // We want to allow barriers with more than one successor (for latch barriers).
   assert((B->getTerminator()->getNumSuccessors() <= 1) &&
          "Barrier blocks should have one successor, or zero for exit barriers!");
+#endif
   assert(isa<Barrier>(B->front()));
 
   return true;

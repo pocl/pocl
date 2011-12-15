@@ -70,21 +70,18 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
          j != e; ++j) {
       if (isa<Barrier>(j)) {
         // Found a barrier on this loop, proceed:
-        // 1) add a barrier on the loop preheader.
+        // 1) add a barrier on the loop header.
         // 2) add a barrier on the latches
         
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
         // executed.
-        BasicBlock *preheader = L->getLoopPreheader();
-        if (preheader == NULL)
-          report_fatal_error("Non-canonicalized loop found!\n");
-        if ((preheader->size() == 1) ||
-            (!isa<Barrier>(preheader->getTerminator()->getPrevNode()))) {
-          // Avoid adding a barrier here if there is already a barrier
-          // just before the terminator.
-          Barrier::Create(preheader->getTerminator());
-          preheader->setName(preheader->getName() + ".loopbarrier");
+        BasicBlock *header = L->getHeader();
+        assert((header != NULL) && "Loop without a header!");
+        if (!isa<Barrier>(header->front())) {
+          // Avoid adding a barrier here if there is already one.
+          Barrier::Create(&(header->front()));
+          header->setName(header->getName() + ".loopbarrier");
         }
 
         // Now add the barriers on the latches.

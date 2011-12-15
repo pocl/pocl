@@ -30,6 +30,7 @@ namespace pocl {
   class Kernel : public llvm::Function {
 
   public:
+    void getExitBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
     void getBarrierBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
     void getParallelRegions(llvm::SmallVectorImpl<ParallelRegion *> &PR);
     
