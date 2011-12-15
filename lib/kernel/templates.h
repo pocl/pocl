@@ -275,28 +275,30 @@
 
 /******************************************************************************/
 
-#define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE)    \
-  VTYPE __attribute__ ((overloadable))                  \
-  NAME(VTYPE a, VTYPE b)                                \
-  {                                                     \
-    typedef VTYPE vtype;                                \
-    typedef STYPE stype;                                \
-    return EXPR;                                        \
+#define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE, JTYPE, SJTYPE)     \
+  VTYPE __attribute__ ((overloadable))                                  \
+  NAME(VTYPE a, VTYPE b)                                                \
+  {                                                                     \
+    typedef VTYPE vtype;                                                \
+    typedef STYPE stype;                                                \
+    typedef JTYPE jtype;                                                \
+    typedef SJTYPE sjtype;                                              \
+    return EXPR;                                                        \
   }
-#define DEFINE_EXPR_V_V(NAME, EXPR)                     \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, float   , float )      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, float2  , float )      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, float3  , float )      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, float4  , float )      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, float8  , float )      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, float16 , float )      \
-  __IF_FP64(                                            \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, double  , double)      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, double2 , double)      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, double3 , double)      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, double4 , double)      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, double8 , double)      \
-  IMPLEMENT_EXPR_V_V(NAME, EXPR, double16, double))
+#define DEFINE_EXPR_V_V(NAME, EXPR)                                     \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float   , float , int   , int )        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float2  , float , int2  , int )        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float3  , float , int3  , int )        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float4  , float , int4  , int )        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float8  , float , int8  , int )        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, float16 , float , int16 , int )        \
+  __IF_FP64(                                                            \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double  , double, long  , long)        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double2 , double, long2 , long)        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double3 , double, long3 , long)        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double4 , double, long4 , long)        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double8 , double, long8 , long)        \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double16, double, long16, long))
 
 #define IMPLEMENT_EXPR_V_VV(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
   VTYPE __attribute__ ((overloadable))                          \
