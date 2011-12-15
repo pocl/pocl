@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "BarrierBlock.h"
 #include "ParallelRegion.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/Dominators.h"
@@ -31,8 +30,7 @@ namespace pocl {
 
   public:
     void getExitBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
-    void getBarrierBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
-    void getParallelRegions(llvm::SmallVectorImpl<ParallelRegion *> &PR);
+    ParallelRegion *createParallelRegionBefore(BarrierBlock *B);
     
     static bool classof(const Kernel *) { return true; }
     // We assume any function can be a kernel. This could be used

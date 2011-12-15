@@ -42,93 +42,66 @@ Kernel::getExitBlocks(SmallVectorImpl<BarrierBlock *> &B)
   }
 }
 
-void
-Kernel::getBarrierBlocks(SmallVectorImpl<BarrierBlock *> &B)
+ParallelRegion *
+Kernel::createParallelRegionBefore(BarrierBlock *B)
 {
-  Module *M = getParent();
-
-  assert((M != NULL) && "Kernel function has to be in a module");
-
-  SmallVector<Barrier *, 4> barriers;
-  Barrier::GetBarriers(barriers, *getParent());
-  for (SmallVector<Barrier *, 4>::iterator i = barriers.begin(),
-         e = barriers.end();
-       i != e; ++i) {
-    BasicBlock *block = (*i)->getParent();
-    if (block->getParent() == this)
-      B.push_back(cast<BarrierBlock>(block));
-  }
-}
-
-void
-Kernel::getParallelRegions(SmallVectorImpl<ParallelRegion *> &PR)
-{
-  SmallVector<BarrierBlock *, 4> barriers;
-
-  getBarrierBlocks(barriers);
-
-  for (SmallVector<BarrierBlock *, 4>::iterator i = barriers.begin(),
-         e = barriers.end();
-       i != e; ++i) {
-    SmallVector<BasicBlock *, 4> pending_blocks;
-    SmallPtrSet<BasicBlock *, 8> blocks_in_region;
-    BarrierBlock *region_entry_barrier = NULL;
+  SmallVector<BasicBlock *, 4> pending_blocks;
+  SmallPtrSet<BasicBlock *, 8> blocks_in_region;
+  BarrierBlock *region_entry_barrier = NULL;
  
-    add_predecessors(pending_blocks, *i);
-
-    while (!pending_blocks.empty()) {
-      BasicBlock *current = pending_blocks.back();
-      pending_blocks.pop_back();
-
-      // If this block is already in the region, continue
-      // (avoid infinite recursion of loops).
-      if (blocks_in_region.count(current) != 0)
-        continue;
-
-      // If we reach another barrier this must be the
-      // parallel region entry.
-      if (isa<BarrierBlock>(current)) {
-        TerminatorInst *t = current->getTerminator();
-        if (t->getNumSuccessors() != 1) {
-          // Do not check for multidominance in this case, this
-          // is probably a latch barrier. Proper would be to use
-          // dominators here, but this is only a safety check so
-          // better not to add such heavy stuff.
-          continue;
-        }
-        if (region_entry_barrier == NULL)
-          region_entry_barrier = cast<BarrierBlock>(current);
-        else {
-          assert((region_entry_barrier == current) &&
-                 "Barrier is dominated by more than one barrier! (forgot BTR?)");
-        }
-
-        continue;
+  add_predecessors(pending_blocks, B);
+  
+  while (!pending_blocks.empty()) {
+    BasicBlock *current = pending_blocks.back();
+    pending_blocks.pop_back();
+    
+    // If this block is already in the region, continue
+    // (avoid infinite recursion of loops).
+    if (blocks_in_region.count(current) != 0)
+      continue;
+    
+    // If we reach another barrier this must be the
+    // parallel region entry.
+    if (isa<BarrierBlock>(current)) {
+      if (region_entry_barrier == NULL)
+	region_entry_barrier = cast<BarrierBlock>(current);
+      else {
+	assert((region_entry_barrier == current) &&
+	       "Barrier is dominated by more than one barrier! (forgot BTR?)");
       }
       
-      assert(verify_no_barriers(current) &&
-             "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
-      
-      // Non-barrier block, this must be on the region.
-      blocks_in_region.insert(current);
-
-      // Add predecessors to pending queue.
-      add_predecessors(pending_blocks, current);
+      continue;
     }
-
-    // We got all the blocks in a region, create it.
-    if (!blocks_in_region.empty())
-      PR.push_back(ParallelRegion::Create(blocks_in_region.begin(),
-                                          blocks_in_region.end()));
+    
+    assert(verify_no_barriers(current) &&
+	   "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
+    
+    // Non-barrier block, this must be on the region.
+    blocks_in_region.insert(current);
+    
+    // Add predecessors to pending queue.
+    add_predecessors(pending_blocks, current);
   }
+
+  if (blocks_in_region.empty())
+    return NULL;
+  
+  // We got all the blocks in a region, create it.
+  return ParallelRegion::Create(blocks_in_region.begin(),
+				blocks_in_region.end());
 }
 
 static void
 add_predecessors(SmallVectorImpl<BasicBlock *> &v, BasicBlock *b)
 {
   for (pred_iterator i = pred_begin(b), e = pred_end(b);
-       i != e; ++i)
+       i != e; ++i) {
+    if ((isa<BarrierBlock> (*i)) && isa<BarrierBlock> (b)) {
+      // Ignore barrier-to-barrier edges
+      continue;
+    }
     v.push_back(*i);
+  }
 }
 
 static bool

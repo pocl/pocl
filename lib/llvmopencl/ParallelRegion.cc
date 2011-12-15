@@ -36,6 +36,15 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
+BarrierBlock *
+ParallelRegion::getEntryBarrier()
+{
+  BasicBlock *entry = front();
+  BasicBlock *barrier = entry->getSinglePredecessor();
+
+  return cast<BarrierBlock> (barrier);
+}
+
 ParallelRegion *
 ParallelRegion::replicate(ValueToValueMapTy &map,
                           const Twine &suffix = "")

@@ -62,7 +62,7 @@ endif
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -o $@ $<
 
-.ll.o:
+barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h

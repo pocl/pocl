@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "BarrierBlock.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
@@ -32,6 +33,7 @@ namespace pocl {
   class ParallelRegion : public std::vector<llvm::BasicBlock *> {
     
   public:    
+    BarrierBlock *getEntryBarrier();
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
                               const llvm::Twine &suffix);
     void remap(llvm::ValueToValueMapTy &map);

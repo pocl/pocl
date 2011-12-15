@@ -39,7 +39,7 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -o $@ $<
 
-.ll.o:
+barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
 
 $(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
