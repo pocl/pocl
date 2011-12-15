@@ -39,6 +39,7 @@ main (void)
   int source_size;
   cl_float4 *srcA, *srcB;
   cl_float *dst;
+  int ierr;
   int i;
 
   source_file = fopen("example1.cl", "r");
@@ -75,7 +76,8 @@ main (void)
       srcB[i].w = i;
     }
 
-  exec_dot_product_kernel (source, N, srcA, srcB, dst);
+  ierr = exec_dot_product_kernel (source, N, srcA, srcB, dst);
+  if (ierr) printf ("ERROR\n");
 
   for (i = 0; i < N; ++i)
     {

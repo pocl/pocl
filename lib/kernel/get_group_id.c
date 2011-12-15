@@ -25,7 +25,7 @@ extern unsigned int _group_id_x;
 extern unsigned int _group_id_y;
 extern unsigned int _group_id_z;
 
-unsigned int
+size_t
 get_group_id(unsigned int dimindx)
 {
   switch(dimindx)

@@ -26,6 +26,29 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
+  cl_kernel *pk;
+
+  if (kernel->program != NULL)
+    {
+      /* Find the kernel in the program's linked list of kernels */
+      for (pk=&kernel->program->kernels; *pk != NULL; pk = &(*pk)->next)
+        {
+          if (*pk == kernel) break;
+        }
+      if (*pk == NULL)
+        {
+          /* The kernel is not on the kernel's program's linked list
+             of kernels -- something is wrong */
+          return CL_INVALID_VALUE;
+        }
+      
+      /* Remove the kernel from the program's linked list of
+         kernels */
+      *pk = (*pk)->next;
+    }
+
+  free((char*)kernel->function_name);
   free(kernel);
+
   return CL_SUCCESS;
 }

@@ -38,6 +38,26 @@ AC_PROG_CXX
 AC_CHECK_PROGS([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
+LLVM_VERSION=`$LLVM_CONFIG --version`
+
+case "$LLVM_VERSION" in
+     3.0*)
+     AC_DEFINE([LLVM_3_0], [], "Using LLVM 3.0")
+   ;;
+     *svn)
+     AC_DEFINE([LLVM_3_1], [], "Using LLVM svn (upcoming 3.1)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.1)")     
+   ;;   
+     *)
+   AC_MSG_NOTICE(
+   [
+Unsupported LLVM version. 
+   ])
+   LLVM_VERSION=
+   ;;
+esac
+
+
 #AC_LANG([C++])
 ACX_PTHREAD()
 
@@ -202,6 +222,7 @@ AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_SIZEOF([long])
+AC_CHECK_SIZEOF([__fp16])
 AC_CHECK_SIZEOF([double])
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
@@ -227,7 +248,9 @@ AC_CONFIG_FILES([Makefile
                  examples/forloops/Makefile
                  examples/standalone/Makefile
                  examples/trig/Makefile
+                 examples/scalarwave/Makefile
                  examples/loopbarriers/Makefile
+                 examples/kernel/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal

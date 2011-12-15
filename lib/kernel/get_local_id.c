@@ -25,14 +25,14 @@ extern unsigned int _local_id_x;
 extern unsigned int _local_id_y;
 extern unsigned int _local_id_z;
 
-unsigned int
+size_t
 get_local_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return  _local_id_x;
-    case 1: return  _local_id_y;
-    case 2: return  _local_id_z;
+    case 0: return _local_id_x;
+    case 1: return _local_id_y;
+    case 2: return _local_id_z;
     default: return 0;
     }
  }

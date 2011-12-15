@@ -34,11 +34,15 @@ in the root of the source tree. You will need a decent version of GNU
 autotools, usually installable from distribution packages 'automake', 
 'autoconf', and 'libtool'.
 
-Once that is done, the usual GNU build system
+Once that is done, the usual GNU build commands build pocl. Builds out
+of source directory are supported. We recommend using
 
-    ./configure && make
+    ./configure --enable-debug
+    make
 
-is enough to build pocl. Builds out of source directory are also supported.
+This will build pocl without optimization, which simplifies debugging.
+(This does not influence whether pocl will optimize the code that it
+generates from OpenCL source files.)
 
 The configure script will use the following special environment variables,
 if present or passed in the command line:
@@ -59,6 +63,7 @@ and run the executable there (executable name matches subdirectory name).
     forloops      Simple example wth for loops inside the kernel
     standalone    Non-executable standalone example (see STANDALONE section)
     trig          Example using various trigonometric functions
+    scalarwave    Example evolving the scalar wave equation
 
 
 LINKING YOUR PROGRAM WITH POCL

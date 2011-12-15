@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -111,7 +112,7 @@ clCreateKernel(cl_program program,
       POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
     }
 
-  kernel->function_name = kernel_name;
+  kernel->function_name = strdup(kernel_name);
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
   kernel->reference_count = 1;
   kernel->context = program->context;
@@ -125,6 +126,13 @@ clCreateKernel(cl_program program,
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
 
+  /* Initialize kernel arguments (in case the user doesn't). */
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      kernel->arguments[i].value = NULL;
+      kernel->arguments[i].size = 0;
+    }
+
   /* Fill up automatic local arguments. */
   for (i = 0; i < kernel->num_locals; ++i)
     {
@@ -133,14 +141,9 @@ clCreateKernel(cl_program program,
         ((size_t *) lt_dlsym(dlhandle, "_local_size"))[i];
     }
 
-  if (program->kernels == NULL)
-    program->kernels = kernel;
-  else {
-    cl_kernel k = program->kernels;
-    while (k->next != NULL)
-      k = k->next;
-    k->next = kernel;
-  }
+  cl_kernel k = program->kernels;
+  program->kernels = kernel;
+  kernel->next = k;
 
   return kernel;
 }

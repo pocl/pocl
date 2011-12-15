@@ -42,12 +42,11 @@ clGetDeviceIDs(cl_platform_id   platform,
     return CL_INVALID_PLATFORM;
 	
   // Currently - POCL supports only the host device - i.e. a CPU
-  if (device_type & CL_DEVICE_TYPE_CPU ||
-      device_type & CL_DEVICE_TYPE_DEFAULT ||
-      device_type & CL_DEVICE_TYPE_ALL)
+  if ((device_type & CL_DEVICE_TYPE_CPU) ||
+      (device_type & CL_DEVICE_TYPE_DEFAULT))
     num = 1;
-  else if (device_type == CL_DEVICE_TYPE_GPU ||
-           device_type == CL_DEVICE_TYPE_ACCELERATOR )
+  else if ((device_type | CL_DEVICE_TYPE_GPU) ||
+           (device_type | CL_DEVICE_TYPE_ACCELERATOR))
     num = 0;
   else
     return CL_INVALID_DEVICE_TYPE;

@@ -24,3 +24,6 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_V_V(tan)
+
+DEFINE_EXPR_F_F(half_tan, tan(a))
+DEFINE_EXPR_F_F(native_tan, tan(a))

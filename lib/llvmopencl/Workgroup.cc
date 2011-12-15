@@ -173,9 +173,17 @@ createLauncher(Module &M, Function *F)
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
 				       ArrayRef<Type *> (sv),
 				       false);
+
+  std::string funcName = "";
+#ifdef LLVM_3_0
+  funcName = F->getNameStr();
+#else
+  funcName = F->getName().str();
+#endif
+
   Function *L = Function::Create(ft,
 				 Function::ExternalLinkage,
-				 "_" + F->getNameStr(),
+				 "_" + funcName,
 				 &M);
 
   SmallVector<Value *, 8> arguments;
@@ -191,6 +199,23 @@ createLauncher(Module &M, Function *F)
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
+  // TODO: _num_groups_%c and friends should probably have type size_t
+  // instead of unsigned int, because this may avoid integer
+  // conversions when accessing these variables
+
+  // TODO: _num_groups_%c and friends should probably be stored as
+  // arrays instead of as 3 independent variables, because this may
+  // lead to better code when the respective get_* functions are
+  // called in a loop (array access instead of switch statement)
+
+  ptr = builder.CreateStructGEP(ai,
+				TypeBuilder<PoclContext, true>::WORK_DIM);
+  gv = M.getGlobalVariable("_work_dim");
+  if (gv != NULL) {
+    v = builder.CreateLoad(builder.CreateConstGEP1_32(ptr, 0));
+    builder.CreateStore(v, gv);
+  }
+
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
   for (int i = 0; i < 3; ++i) {
@@ -202,8 +227,21 @@ createLauncher(Module &M, Function *F)
     }
   }
 
+  ptr = builder.CreateStructGEP(ai,
+				TypeBuilder<PoclContext, true>::NUM_GROUPS);
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    gv = M.getGlobalVariable(s);
+    if (gv != NULL) {
+      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      builder.CreateStore(v, gv);
+    }
+  }
+
+  ptr = builder.CreateStructGEP(ai,
+				TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_global_offset_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
     if (gv != NULL) {
       v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
@@ -271,6 +309,44 @@ privatizeContext(Module &M, Function *F)
     }
   }
 
+  // Privatize _work_dim
+  gv[0] = M.getGlobalVariable("_work_dim");
+  if (gv[0] != NULL) {
+    ai[0] = builder.CreateAlloca(gv[0]->getType()->getElementType(),
+                                 0, "_work_dim");
+    if(gv[0]->hasInitializer()) {
+      Constant *c = gv[0]->getInitializer();
+      builder.CreateStore(c, ai[0]);
+    }
+  }
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      ii->replaceUsesOfWith(gv[0], ai[0]);
+    }
+  }
+  
+  // Privatize _num_groups
+  for (int i = 0; i < 3; ++i) {
+    snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    gv[i] = M.getGlobalVariable(s);
+    if (gv[i] != NULL) {
+      ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
+				   0, s);
+      if(gv[i]->hasInitializer()) {
+	Constant *c = gv[i]->getInitializer();
+	builder.CreateStore(c, ai[i]);
+      }
+    }
+  }
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end();
+	 ii != ee; ++ii) {
+      for (int j = 0; j < 3; ++j)
+	ii->replaceUsesOfWith(gv[j], ai[j]);
+    }
+  }
+
   // Privatize _group_id
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
@@ -292,9 +368,9 @@ privatizeContext(Module &M, Function *F)
     }
   }
   
-  // Privatize _num_groups
+  // Privatize _global_offset
   for (int i = 0; i < 3; ++i) {
-    snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
+    snprintf(s, STRING_LENGTH, "_global_offset_%c", 'x' + i);
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
@@ -323,8 +399,14 @@ createWorkgroup(Module &M, Function *F)
     TypeBuilder<void(types::i<8>*[],
 		     PoclContext*), true>::get(M.getContext());
 
+  std::string funcName = "";
+#ifdef LLVM_3_0
+  funcName = F->getNameStr();
+#else
+  funcName = F->getName().str();
+#endif
   Function *workgroup =
-    dyn_cast<Function>(M.getOrInsertFunction(F->getNameStr() + "_workgroup", ft));
+    dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup", ft));
   assert(workgroup != NULL);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));

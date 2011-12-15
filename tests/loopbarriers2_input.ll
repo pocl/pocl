@@ -1,6 +1,6 @@
 declare void @pocl.barrier()
 
-define void @forbarrier2() {
+define void @loopbarriers2() {
 a:
   br label %b
 

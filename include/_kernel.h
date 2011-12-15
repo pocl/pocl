@@ -42,19 +42,29 @@
 #else
 #  define __IF_INT64(x)
 #endif
+#ifdef cl_khr_fp16
+#  define __IF_FP16(x) x
+#else
+#  define __IF_FP16(x)
+#endif
 #ifdef cl_khr_fp64
 #  define __IF_FP64(x) x
 #else
 #  define __IF_FP64(x)
 #endif
 
+#if defined(cl_khr_fp64) && !defined(cles_khr_int64)
+#  error "cl_khr_fp64 requires cles_khr_int64"
+#endif
+
+
 
 /* A static assert statement to catch inconsistencies at build time */
 #define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
 
 /* Let's try to make things easier for post-preprocessing pass. */
-#define __kernel kernel
-#define __local local
+#define kernel __kernel
+#define local __local
 
 /* #define __global __attribute__ ((address_space(3))) */
 /* #define __local __attribute__ ((address_space(4))) */
@@ -78,6 +88,10 @@ typedef struct error_undefined_type_long error_undefined_type_long;
 #  define long error_undefined_type_long
 typedef struct error_undefined_type_ulong error_undefined_type_ulong;
 #  define ulong error_undefined_type_ulong
+#endif
+#ifndef cl_khr_fp16
+typedef struct error_undefined_type_half error_undefined_type_half;
+#  define half error_undefined_type_half
 #endif
 #ifndef cl_khr_fp64
 typedef struct error_undefined_type_double error_undefined_type_double;
@@ -208,6 +222,11 @@ _cl_static_assert(ulong3 , sizeof(ulong3 ) == 4 *sizeof(ulong));
 _cl_static_assert(ulong4 , sizeof(ulong4 ) == 4 *sizeof(ulong));
 _cl_static_assert(ulong8 , sizeof(ulong8 ) == 8 *sizeof(ulong));
 _cl_static_assert(ulong16, sizeof(ulong16) == 16*sizeof(ulong));
+#endif
+
+#ifdef cl_khr_fp16
+_cl_static_assert(half, sizeof(half) == 2);
+/* There are no vectors of type half */
 #endif
 
 _cl_static_assert(float , sizeof(float ) == 4);
@@ -424,14 +443,14 @@ _CL_DECLARE_CONVERT_TYPE_SRC_DST(16)
 
 /* Work-Item Functions */
 
-// uint get_work_dim();
-uint get_global_size(uint);     // should return size_t
-uint get_global_id(uint);       // should return size_t
-// size_t get_local_size(uint);
-uint get_local_id(uint);        // should return size_t
-uint get_num_groups(uint);      // should return size_t
-uint get_group_id(uint);        // should return size_t
-// size_t get_global_offset(uint);
+uint get_work_dim();
+size_t get_global_size(uint);
+size_t get_global_id(uint);
+size_t get_local_size(uint);
+size_t get_local_id(uint);
+size_t get_num_groups(uint);
+size_t get_group_id(uint);
+size_t get_global_offset(uint);
 
 void barrier (cl_mem_fence_flags flags);
 
@@ -506,6 +525,7 @@ void barrier (cl_mem_fence_flags flags);
  *    J: vector of int
  *    U: vector of uint or ulong
  *    S: scalar (float or double)
+ *    F: vector of float
  *    V: vector of float or double
  */
 
@@ -777,6 +797,20 @@ void barrier (cl_mem_fence_flags flags);
   double _cl_overloadable NAME(double4 , double4 );     \
   double _cl_overloadable NAME(double8 , double8 );     \
   double _cl_overloadable NAME(double16, double16);)
+#define _CL_DECLARE_FUNC_F_F(NAME)              \
+  float    _cl_overloadable NAME(float   );     \
+  float2   _cl_overloadable NAME(float2  );     \
+  float3   _cl_overloadable NAME(float3  );     \
+  float4   _cl_overloadable NAME(float4  );     \
+  float8   _cl_overloadable NAME(float8  );     \
+  float16  _cl_overloadable NAME(float16 );
+#define _CL_DECLARE_FUNC_F_FF(NAME)                     \
+  float    _cl_overloadable NAME(float   , float   );   \
+  float2   _cl_overloadable NAME(float2  , float2  );   \
+  float3   _cl_overloadable NAME(float3  , float3  );   \
+  float4   _cl_overloadable NAME(float4  , float4  );   \
+  float8   _cl_overloadable NAME(float8  , float8  );   \
+  float16  _cl_overloadable NAME(float16 , float16 );
 
 /* Move built-in declarations out of the way. (There should be a
    better way of doing so.) These five functions are built-in math
@@ -876,6 +910,35 @@ _CL_DECLARE_FUNC_V_V(tanh)
 _CL_DECLARE_FUNC_V_V(tanpi)
 _CL_DECLARE_FUNC_V_V(tgamma)
 _CL_DECLARE_FUNC_V_V(trunc)
+
+_CL_DECLARE_FUNC_F_F(half_cos)
+_CL_DECLARE_FUNC_F_FF(half_divide)
+_CL_DECLARE_FUNC_F_F(half_exp)
+_CL_DECLARE_FUNC_F_F(half_exp2)
+_CL_DECLARE_FUNC_F_F(half_exp10)
+_CL_DECLARE_FUNC_F_F(half_log)
+_CL_DECLARE_FUNC_F_F(half_log2)
+_CL_DECLARE_FUNC_F_F(half_log10)
+_CL_DECLARE_FUNC_F_FF(half_powr)
+_CL_DECLARE_FUNC_F_F(half_recip)
+_CL_DECLARE_FUNC_F_F(half_rsqrt)
+_CL_DECLARE_FUNC_F_F(half_sin)
+_CL_DECLARE_FUNC_F_F(half_sqrt)
+_CL_DECLARE_FUNC_F_F(half_tan)
+_CL_DECLARE_FUNC_F_F(native_cos)
+_CL_DECLARE_FUNC_F_FF(native_divide)
+_CL_DECLARE_FUNC_F_F(native_exp)
+_CL_DECLARE_FUNC_F_F(native_exp2)
+_CL_DECLARE_FUNC_F_F(native_exp10)
+_CL_DECLARE_FUNC_F_F(native_log)
+_CL_DECLARE_FUNC_F_F(native_log2)
+_CL_DECLARE_FUNC_F_F(native_log10)
+_CL_DECLARE_FUNC_F_FF(native_powr)
+_CL_DECLARE_FUNC_F_F(native_recip)
+_CL_DECLARE_FUNC_F_F(native_rsqrt)
+_CL_DECLARE_FUNC_F_F(native_sin)
+_CL_DECLARE_FUNC_F_F(native_sqrt)
+_CL_DECLARE_FUNC_F_F(native_tan)
 
 
 /* Integer Constants */
@@ -1304,6 +1367,7 @@ _CL_DECLARE_FUNC_G_GG(mul_hi)
 _CL_DECLARE_FUNC_G_GG(rotate)
 _CL_DECLARE_FUNC_G_GG(sub_sat)
 _CL_DECLARE_FUNC_LG_GUG(upsample)
+_CL_DECLARE_FUNC_G_G(popcount)
 _CL_DECLARE_FUNC_J_JJJ(mad24)
 _CL_DECLARE_FUNC_J_JJ(mul24)
 
@@ -1494,6 +1558,58 @@ _CL_DECLARE_VSTORE(double, __private)
 #endif
 */
 
+#ifdef cl_khr_fp16
+
+#define _CL_DECLARE_VLOAD_HALF(MOD)                                     \
+  float   _cl_overloadable vload_half   (size_t offset, const MOD half *p); \
+  float2  _cl_overloadable vload_half2  (size_t offset, const MOD half *p); \
+  float3  _cl_overloadable vload_half3  (size_t offset, const MOD half *p); \
+  float4  _cl_overloadable vload_half4  (size_t offset, const MOD half *p); \
+  float8  _cl_overloadable vload_half8  (size_t offset, const MOD half *p); \
+  float16 _cl_overloadable vload_half16 (size_t offset, const MOD half *p); \
+  float2  _cl_overloadable vloada_half2 (size_t offset, const MOD half *p); \
+  float3  _cl_overloadable vloada_half3 (size_t offset, const MOD half *p); \
+  float4  _cl_overloadable vloada_half4 (size_t offset, const MOD half *p); \
+  float8  _cl_overloadable vloada_half8 (size_t offset, const MOD half *p); \
+  float16 _cl_overloadable vloada_half16(size_t offset, const MOD half *p);
+
+_CL_DECLARE_VLOAD_HALF(__global)
+_CL_DECLARE_VLOAD_HALF(__local)
+_CL_DECLARE_VLOAD_HALF(__constant)
+/* _CL_DECLARE_VLOAD_HALF(__private) */
+
+/* stores to half may have a suffix: _rte _rtz _rtp _rtn */
+#define _CL_DECLARE_VSTORE_HALF(MOD, SUFFIX)                            \
+  void _cl_overloadable vstore_half##SUFFIX   (float   data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstore_half2##SUFFIX  (float2  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstore_half3##SUFFIX  (float3  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstore_half4##SUFFIX  (float4  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstore_half8##SUFFIX  (float8  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstore_half16##SUFFIX (float16 data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstorea_half2##SUFFIX (float2  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstorea_half3##SUFFIX (float3  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstorea_half4##SUFFIX (float4  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstorea_half8##SUFFIX (float8  data, size_t offset, MOD half *p); \
+  void _cl_overloadable vstorea_half16##SUFFIX(float16 data, size_t offset, MOD half *p);
+
+_CL_DECLARE_VSTORE_HALF(__global  ,     )
+_CL_DECLARE_VSTORE_HALF(__global  , _rte)
+_CL_DECLARE_VSTORE_HALF(__global  , _rtz)
+_CL_DECLARE_VSTORE_HALF(__global  , _rtp)
+_CL_DECLARE_VSTORE_HALF(__global  , _rtn)
+_CL_DECLARE_VSTORE_HALF(__local   ,     )
+_CL_DECLARE_VSTORE_HALF(__local   , _rte)
+_CL_DECLARE_VSTORE_HALF(__local   , _rtz)
+_CL_DECLARE_VSTORE_HALF(__local   , _rtp)
+_CL_DECLARE_VSTORE_HALF(__local   , _rtn)
+/* _CL_DECLARE_VSTORE_HALF(__private ,     ) */
+/* _CL_DECLARE_VSTORE_HALF(__private , _rte) */
+/* _CL_DECLARE_VSTORE_HALF(__private , _rtz) */
+/* _CL_DECLARE_VSTORE_HALF(__private , _rtp) */
+/* _CL_DECLARE_VSTORE_HALF(__private , _rtn) */
+
+#endif
+
 
 /* Miscellaneous Vector Functions */
 
@@ -1613,5 +1729,5 @@ _CL_DECLARE_VSTORE(double, __private)
 // shuffle2
 
 
-/* printf */
-// int printf(constant char * restrict format, ...);
+int printf(const /*constant*/ char * restrict format, ...)
+  __attribute__((format(printf, 1, 2)));

@@ -2,41 +2,30 @@
 
 declare void @pocl.barrier()
 
-define void @forbarrier2() {
-a.loopbarrier.prebarrier:
-  br label %a.loopbarrier
-
-a.loopbarrier:                                    ; preds = %a.loopbarrier.prebarrier
+define void @loopbarriers2() {
+entry.barrier:
   call void @pocl.barrier()
-  br label %b.loopbarrier.prebarrier
+  br label %a
 
-b.loopbarrier.prebarrier:                         ; preds = %c.latchbarrier.postbarrier, %a.loopbarrier
+a:                                                ; preds = %entry.barrier
   br label %b.loopbarrier
 
-b.loopbarrier:                                    ; preds = %b.loopbarrier.prebarrier
+b.loopbarrier:                                    ; preds = %c.latchbarrier, %a
   call void @pocl.barrier()
-  br label %barrier.prebarrier
-
-barrier.prebarrier:                               ; preds = %barrier.postbarrier, %b.loopbarrier
   br label %barrier
 
-barrier:                                          ; preds = %barrier.prebarrier
+barrier:                                          ; preds = %barrier, %b.loopbarrier
   call void @pocl.barrier()
-  br label %barrier.postbarrier
+  br i1 true, label %barrier, label %c.latchbarrier
 
-barrier.postbarrier:                              ; preds = %barrier
-  br i1 true, label %barrier.prebarrier, label %c.latchbarrier.prebarrier
-
-c.latchbarrier.prebarrier:                        ; preds = %barrier.postbarrier
-  br label %c.latchbarrier
-
-c.latchbarrier:                                   ; preds = %c.latchbarrier.prebarrier
+c.latchbarrier:                                   ; preds = %barrier
   call void @pocl.barrier()
-  br label %c.latchbarrier.postbarrier
+  br i1 true, label %b.loopbarrier, label %d
 
-c.latchbarrier.postbarrier:                       ; preds = %c.latchbarrier
-  br i1 true, label %b.loopbarrier.prebarrier, label %d
+d:                                                ; preds = %c.latchbarrier
+  br label %exit.barrier
 
-d:                                                ; preds = %c.latchbarrier.postbarrier
+exit.barrier:                                     ; preds = %d
+  call void @pocl.barrier()
   ret void
 }

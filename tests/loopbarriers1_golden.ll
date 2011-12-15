@@ -2,12 +2,11 @@
 
 declare void @pocl.barrier()
 
-define void @forbarrier1() {
-a.loopbarrier:
-  call void @pocl.barrier()
+define void @loopbarriers1() {
+a:
   br label %barrier
 
-barrier:                                          ; preds = %barrier, %a.loopbarrier
+barrier:                                          ; preds = %barrier, %a
   call void @pocl.barrier()
   br i1 true, label %barrier, label %b
 

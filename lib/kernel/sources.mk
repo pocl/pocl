@@ -1,10 +1,13 @@
 libkernel_a_SOURCES = templates.h		\
                       barrier.ll                \
+                      get_work_dim.c		\
                       get_global_size.c		\
                       get_global_id.c		\
+                      get_local_size.c		\
                       get_local_id.c		\
                       get_num_groups.c		\
                       get_group_id.c		\
+                      get_global_offset.c	\
                       as_type.cl		\
                       convert_type.cl		\
                       acos.cl			\
@@ -69,6 +72,8 @@ libkernel_a_SOURCES = templates.h		\
                       tanpi.cl			\
                       tgamma.cl			\
                       trunc.cl			\
+                      divide.cl			\
+                      recip.cl			\
                       abs.cl			\
                       abs_diff.cl		\
                       add_sat.cl		\
@@ -84,6 +89,7 @@ libkernel_a_SOURCES = templates.h		\
                       rotate.cl			\
                       sub_sat.cl		\
                       upsample.cl		\
+                      popcount.cl		\
                       mad24.cl			\
                       mul24.cl			\
                       degrees.cl		\
@@ -119,4 +125,6 @@ libkernel_a_SOURCES = templates.h		\
                       bitselect.cl		\
                       select.cl			\
                       vload.cl			\
-                      vstore.cl
+                      vstore.cl			\
+                      vload_half.cl		\
+                      vstore_half.cl

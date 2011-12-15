@@ -55,10 +55,12 @@ CLANGFLAGS += @TCE_CLANG_FLAGS@
 endif
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -o $@ $<
+	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -o $@ $<
 
 barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
 
-$(libkernel_a_SOURCES:.c=.o):  $(top_srcdir)/include/_kernel.h
-$(libkernel_a_SOURCES:.cl=.o):  $(top_srcdir)/include/_kernel.h ../templates.h
+# TODO: This misses the dependency on the device-specific include files
+# TODO: Dependencies should be generated automatically
+$(patsubst %.c, %.o, $(filter %.c, $(libkernel_a_SOURCES))): $(top_srcdir)/include/tce/types.h
+$(patsubst %.cl, %.o, $(filter %.cl, $(libkernel_a_SOURCES))): $(top_srcdir)/include/types.h $(top_srcdir)/include/tce/types.h $(top_srcdir)/include/_kernel.h ../templates.h
