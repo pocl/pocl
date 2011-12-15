@@ -1,4 +1,4 @@
-/* OpenCL built-in library: exp()
+/* OpenCL built-in library: recip()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -23,7 +23,5 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(exp)
-
-DEFINE_EXPR_F_F(half_exp, exp(a))
-DEFINE_EXPR_F_F(native_exp, exp(a))
+DEFINE_EXPR_F_F(half_recip, (stype)1/a)
+DEFINE_EXPR_F_F(native_recip, (stype)1/a)

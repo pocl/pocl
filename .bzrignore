@@ -14,6 +14,7 @@ tests/testsuite
 # builddir
 
 Makefile
+pocl.pc
 .deps
 .libs
 *.lo
@@ -21,6 +22,7 @@ Makefile
 *.la
 
 ./libtool
+./clconfig.h
 ./config.h
 ./config.log
 ./config.status

@@ -24,3 +24,6 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_V_V(exp2)
+
+DEFINE_EXPR_F_F(half_exp2, exp2(a))
+DEFINE_EXPR_F_F(native_exp2, exp2(a))

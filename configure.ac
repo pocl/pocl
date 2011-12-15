@@ -222,6 +222,7 @@ AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_SIZEOF([long])
+AC_CHECK_SIZEOF([__fp16])
 AC_CHECK_SIZEOF([double])
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])

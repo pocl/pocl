@@ -24,3 +24,6 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_V_V(log)
+
+DEFINE_EXPR_F_F(half_log, log(a))
+DEFINE_EXPR_F_F(native_log, log(a))

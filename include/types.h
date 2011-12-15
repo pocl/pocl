@@ -13,16 +13,22 @@ typedef unsigned long ulong;
 
 #if SIZEOF_LONG == 8
 #  define cles_khr_int64
-#  if SIZEOF_DOUBLE == 8
-#    define cl_khr_fp64
-#  else
-#    undef cl_khr_fp64
-#  endif
-#else /* SIZEOF_LONG != 8 */
+#else
 #  define __EMBEDDED_PROFILE__ 1
 #  undef cles_khr_int64
+#endif
+
+#if SIZEOF_HALF == 2
+#  define cl_khr_fp16
+#else
+#  undef cl_khr_fp16
+#endif
+
+#if SIZEOF_DOUBLE == 8
+#  define cl_khr_fp64
+#else
 #  undef cl_khr_fp64
-#endif /* SIZEOF_LONG != 8 */
+#endif
 
 #if SIZEOF_VOID_P == 8
 typedef ulong size_t;
