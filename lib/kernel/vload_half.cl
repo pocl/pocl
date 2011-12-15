@@ -30,7 +30,7 @@
   float    __attribute__ ((__overloadable__))           \
   vload_half(size_t offset, const MOD half *p)          \
   {                                                     \
-    return (float)p[offset];                            \
+    return p[offset];                                   \
   }                                                     \
                                                         \
   float2 __attribute__ ((__overloadable__))             \

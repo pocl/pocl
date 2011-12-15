@@ -18,7 +18,7 @@ typedef unsigned long ulong;
 #  undef cles_khr_int64
 #endif
 
-#if SIZEOF_HALF == 2
+#if SIZEOF_HALF == 2 && CONVERT_HALF_FLOAT
 #  define cl_khr_fp16
 #else
 #  undef cl_khr_fp16

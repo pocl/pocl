@@ -223,6 +223,18 @@ AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([__fp16])
+AC_MSG_CHECKING([whether __fp16 can be converted to float])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x; float y;]],
+                                   [[y=x]])],
+                  [
+                    AC_MSG_RESULT([yes])
+                    AC_DEFINE_UNQUOTED([CONVERT___FP16_FLOAT], 1, [Define to 1 if __fp16 can be converted to float.])
+                  ],
+                  [
+                    AC_MSG_RESULT([no])
+                    AC_DEFINE_UNQUOTED([CONVERT___FP16_FLOAT], 0, [Define to 1 if __fp16 can be converted to float.])
+                  ]
+                 )
 AC_CHECK_SIZEOF([double])
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
