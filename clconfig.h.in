@@ -1,8 +1,13 @@
-/* The size of `double', as computed by sizeof. */
-#undef SIZEOF_DOUBLE
-
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
+
+/* The size of `half', as computed by sizeof. */
+#undef SIZEOF___FP16
+/* The OpenCL type `half' is called `__fp16' in C */
+#define SIZEOF_HALF SIZEOF___FP16
+
+/* The size of `double', as computed by sizeof. */
+#undef SIZEOF_DOUBLE
 
 /* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
