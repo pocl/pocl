@@ -91,6 +91,8 @@ AT_CLEANUP
 
 AT_SETUP([Pass composition])
 AT_KEYWORDS([llvmopencl])
+# Skip this groun until pass ordering stabilizes.
+AT_CHECK([exit 77])
 for type in btr loops barriers workitem
 do
   for i in $abs_top_srcdir/tests/*_$type.ll
