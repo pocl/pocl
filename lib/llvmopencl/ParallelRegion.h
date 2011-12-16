@@ -33,7 +33,7 @@ namespace pocl {
   class ParallelRegion : public std::vector<llvm::BasicBlock *> {
     
   public:    
-    BarrierBlock *getEntryBarrier();
+    /* BarrierBlock *getEntryBarrier(); */
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
                               const llvm::Twine &suffix);
     void remap(llvm::ValueToValueMapTy &map);

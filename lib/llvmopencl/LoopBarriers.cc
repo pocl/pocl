@@ -26,6 +26,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace pocl;
@@ -76,12 +77,23 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
         // executed.
+        BasicBlock *preheader = L->getLoopPreheader();
+        assert((preheader != NULL) && "Non-canonicalized loop found!\n");
+        if ((preheader->size() == 1) ||
+            (!isa<Barrier>(preheader->getTerminator()->getPrevNode()))) {
+          // Avoid adding a barrier here if there is already a barrier
+          // just before the terminator.
+          Barrier::Create(preheader->getTerminator());
+          preheader->setName(preheader->getName() + ".loopbarrier");
+        }
+
+        // Add a barrier after the PHI nodes on the header (the replicated
+        // headers will be merged afterwards).
         BasicBlock *header = L->getHeader();
-        assert((header != NULL) && "Loop without a header!");
-        if (!isa<Barrier>(header->front())) {
-          // Avoid adding a barrier here if there is already one.
-          Barrier::Create(&(header->front()));
-          header->setName(header->getName() + ".loopbarrier");
+        if ((header->getFirstNonPHI() != &header->front()) &&
+            (!isa<Barrier>(header->getFirstNonPHI()))) {
+          Barrier::Create(header->getFirstNonPHI());
+          header->setName(header->getName() + ".phibarrier");
         }
 
         // Now add the barriers on the latches.

@@ -35,7 +35,7 @@ bool
 BarrierBlock::classof(const BasicBlock *B)
 {
   if ((B->size() == 2) &&
-      isa<Barrier> (B->front())) {
+      isa<Barrier> (&B->front())) {
     assert(verify(B));
     return true;
   }
@@ -47,7 +47,11 @@ static bool
 verify(const BasicBlock *B)
 {
   assert((B->size() == 2) && "Barriers blocks should have no functionality!");
-#if 0 // We want to allow barriers with more than one predecessors
+  // const Instruction *barrier = B->getFirstNonPHI();
+  // assert(isa<Barrier>(barrier) && "Barriers blocks should have no functionality!");
+  // assert(B->getTerminator()->getPrevNode() == barrier &&
+  //        "Barriers blocks should have no functionality!");
+#if 1 // We want to allow barriers with more than one predecessors (?)
       // (for loop header barriers).
   assert(((B->getSinglePredecessor() != NULL) ||
           (B == &(B->getParent()->front()))) &&

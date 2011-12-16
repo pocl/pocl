@@ -127,26 +127,26 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
       changed = true;
     }
 
-    // BasicBlock *predecessor = b->getSinglePredecessor();
-    // if (predecessor != NULL) {
-    //   TerminatorInst *pt = predecessor->getTerminator();
-    //   if ((pt->getNumSuccessors() == 1) &&
-    //       (&b->front() == (*i))) {
-    //     // Barrier is at the beginning of the BB,
-    //     // which has a single predecessor with just
-    //     // one successor (the barrier itself), thus
-    //     // no need to split before barrier.
-    //     continue;
-    //   }
-    // }
-    // if ((b == &(b->getParent()->getEntryBlock())) &&
-    //     (&b->front() == (*i)))
-    //   continue;
+    BasicBlock *predecessor = b->getSinglePredecessor();
+    if (predecessor != NULL) {
+      TerminatorInst *pt = predecessor->getTerminator();
+      if ((pt->getNumSuccessors() == 1) &&
+          (&b->front() == (*i))) {
+        // Barrier is at the beginning of the BB,
+        // which has a single predecessor with just
+        // one successor (the barrier itself), thus
+        // no need to split before barrier.
+        continue;
+      }
+    }
+    if ((b == &(b->getParent()->getEntryBlock())) &&
+        (&b->front() == (*i)))
+      continue;
     
     // If no instructions before barrier, do not split
     // (allow multiple predecessors, eases loop handling).
-    if (&b->front() == (*i))
-      continue;
+    // if (&b->front() == (*i))
+    //   continue;
     BasicBlock *new_b = SplitBlock(b, *i, this);
     new_b->takeName(b);
     b->setName(new_b->getName() + ".prebarrier");

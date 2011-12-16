@@ -29,6 +29,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace pocl;
@@ -89,19 +90,35 @@ WorkitemReplication::ProcessFunction(Function &F)
   K->getExitBlocks(exit_blocks);
 
   while(!exit_blocks.empty()) {
+    // We need to keep track of traversed barriers to detect back edges.
+    SmallPtrSet<BarrierBlock *, 8> found_barriers;
+    
     // We start on an exit block and process the parallel regions upwards
     // (finding an execution trace).
     BarrierBlock *exit = exit_blocks.back();
     exit_blocks.pop_back();
-
+    
     SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
     ValueToValueMapTy reference_map[workitem_count - 1];
 
     while(ParallelRegion *PR = K->createParallelRegionBefore(exit)) {
       assert(!PR->empty() && "Empty parallel region in kernel (contiguous barriers)!");
 
+      found_barriers.insert(exit);
+
       parallel_regions[0].push_back(PR);
-      exit = PR->getEntryBarrier();
+      BasicBlock *entry = PR->front();
+      int non_backedge_predecessors = 0;
+      for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
+           i != e; ++i) {
+        BarrierBlock *barrier = cast<BarrierBlock> (*i);
+        if (!found_barriers.count(barrier)) {
+          ++non_backedge_predecessors;
+          exit = barrier;
+        }
+      }
+      assert((non_backedge_predecessors == 1) &&
+             "Could not determine parallel region entry!");
       assert ((exit != NULL) && "Parallel region without entry barrier!");
     }
 
@@ -149,6 +166,28 @@ WorkitemReplication::ProcessFunction(Function &F)
 	    region->insertPrologue(x, y, z);
 	  }
 	}
+      }
+    }
+
+    // Try to merge all workitem first block of each region
+    // together (for PHI predecessor correctness).
+    for (int z = LocalSizeZ - 1; z >= 0; --z) {
+      for (int y = LocalSizeY - 1; y >= 0; --y) {
+        for (int x = LocalSizeX - 1; x >= 0; --x) {
+          
+          int index = (LocalSizeY * LocalSizeX * z +
+		       LocalSizeX * y +
+		       x);
+
+          if (index == 0)
+            continue;
+
+	  for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
+	    ParallelRegion *region = parallel_regions[index][i];
+            BasicBlock *entry = region->front();
+            MergeBlockIntoPredecessor(entry, this);
+          }
+        }
       }
     }
   }

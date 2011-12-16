@@ -47,7 +47,7 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
 {
   SmallVector<BasicBlock *, 4> pending_blocks;
   SmallPtrSet<BasicBlock *, 8> blocks_in_region;
-  BarrierBlock *region_entry_barrier = NULL;
+  // BarrierBlock *region_entry_barrier = NULL;
  
   add_predecessors(pending_blocks, B);
   
@@ -63,12 +63,12 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     // If we reach another barrier this must be the
     // parallel region entry.
     if (isa<BarrierBlock>(current)) {
-      if (region_entry_barrier == NULL)
-	region_entry_barrier = cast<BarrierBlock>(current);
-      else {
-	assert((region_entry_barrier == current) &&
-	       "Barrier is dominated by more than one barrier! (forgot BTR?)");
-      }
+      // if (region_entry_barrier == NULL)
+      //   region_entry_barrier = cast<BarrierBlock>(current);
+      // else {
+      //   assert((region_entry_barrier == current) &&
+      //          "Barrier is dominated by more than one barrier! (forgot BTR?)");
+      // }
       
       continue;
     }

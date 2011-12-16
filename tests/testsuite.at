@@ -28,6 +28,8 @@ AT_BANNER([llvmopencl passes tests])
 
 AT_SETUP([LoopBarriers pass])
 AT_KEYWORDS([llvmopencl])
+# Skip this group until pass ordering stabilizes.
+AT_CHECK([exit 77])
 for i in $abs_top_srcdir/tests/loopbarriers*_input.ll
 do
   input=`echo $i | sed 's/.*\///'`
@@ -49,6 +51,8 @@ AT_CLEANUP
 
 AT_SETUP([CanonicalizeBarriers pass])
 AT_KEYWORDS([llvmopencl])
+# Skip this group until pass ordering stabilizes.
+AT_CHECK([exit 77])
 for i in $abs_top_srcdir/tests/barriers*_input.ll
 do
   input=`echo $i | sed 's/.*\///'`
@@ -70,6 +74,8 @@ AT_CLEANUP
 
 AT_SETUP([BarrierTailReplication pass])
 AT_KEYWORDS([llvmopencl])
+# Skip this group until pass ordering stabilizes.
+AT_CHECK([exit 77])
 for i in $abs_top_srcdir/tests/barriertails*_input.ll
 do
   input=`echo $i | sed 's/.*\///'`
@@ -91,7 +97,7 @@ AT_CLEANUP
 
 AT_SETUP([Pass composition])
 AT_KEYWORDS([llvmopencl])
-# Skip this groun until pass ordering stabilizes.
+# Skip this group until pass ordering stabilizes.
 AT_CHECK([exit 77])
 for type in btr loops barriers workitem
 do

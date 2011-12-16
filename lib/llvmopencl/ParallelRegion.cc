@@ -36,14 +36,14 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-BarrierBlock *
-ParallelRegion::getEntryBarrier()
-{
-  BasicBlock *entry = front();
-  BasicBlock *barrier = entry->getSinglePredecessor();
+// BarrierBlock *
+// ParallelRegion::getEntryBarrier()
+// {
+//   BasicBlock *entry = front();
+//   BasicBlock *barrier = entry->getSinglePredecessor();
 
-  return cast<BarrierBlock> (barrier);
-}
+//   return cast<BarrierBlock> (barrier);
+// }
 
 ParallelRegion *
 ParallelRegion::replicate(ValueToValueMapTy &map,
@@ -209,14 +209,18 @@ ParallelRegion::Verify()
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         }
+        if (!isa<BarrierBlock>(*ii)) {
+          assert (0 && "Entry has edges from non-barrer blocks!");
+          return false;
+        }
         ++entry_edges;
       }
     }
     
-    if (entry_edges != 1) {
-      assert(0 && "Parallel regions must be single entry!");
-      return false;
-    }
+    // if (entry_edges != 1) {
+    //   assert(0 && "Parallel regions must be single entry!");
+    //   return false;
+    // }
 
     if (back()->getTerminator()->getNumSuccessors() != 1) {
       assert(0 && "Multiple outgoing edges from exit block!");
