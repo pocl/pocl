@@ -29,9 +29,12 @@
 #include <unistd.h>
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128
+
+#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */
@@ -80,7 +83,7 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+      if (posix_memalign (&b, ALIGNMENT, size) == 0)
 	{
 	  memcpy (b, host_ptr, size);
 	  return b;
@@ -94,7 +97,7 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr
       return host_ptr;
     }
 
-  if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+  if (posix_memalign (&b, ALIGNMENT, size) == 0)
     return b;
   
   return NULL;

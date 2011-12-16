@@ -238,6 +238,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x; float y;]],
 AC_CHECK_SIZEOF([double])
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
+AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
 
 CC="$old_CC"
 
