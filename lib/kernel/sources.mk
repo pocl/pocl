@@ -1,5 +1,5 @@
 libkernel_a_SOURCES = templates.h		\
-                      barrier.c                 \
+                      barrier.ll                \
                       get_work_dim.c		\
                       get_global_size.c		\
                       get_global_id.c		\

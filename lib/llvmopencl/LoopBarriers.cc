@@ -21,20 +21,15 @@
 // THE SOFTWARE.
 
 #include "LoopBarriers.h"
+#include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace pocl;
-
-#define BARRIER_FUNCTION_NAME "barrier"
-
-static bool is_barrier(Instruction *i);
-static CallInst *new_barrier();
-
-static Function *barrier = NULL;
 
 namespace {
   static
@@ -49,15 +44,6 @@ LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
-}
-
-bool
-LoopBarriers::doInitialization(Loop *L, LPPassManager &LPM)
-{
-  Module *m = L->getHeader()->getParent()->getParent();
-  barrier = m->getFunction(BARRIER_FUNCTION_NAME);
-
-  return false;
 }
 
 bool
@@ -83,23 +69,31 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
        i != e; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
-      if (is_barrier(j)) {
+      if (isa<Barrier>(j)) {
         // Found a barrier on this loop, proceed:
-        // 1) add a barrier on the loop preheader.
+        // 1) add a barrier on the loop header.
         // 2) add a barrier on the latches
         
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
         // executed.
         BasicBlock *preheader = L->getLoopPreheader();
-        if (preheader == NULL)
-          report_fatal_error("Non-canonicalized loop found!\n");
+        assert((preheader != NULL) && "Non-canonicalized loop found!\n");
         if ((preheader->size() == 1) ||
-            (!is_barrier(preheader->getTerminator()->getPrevNode()))) {
+            (!isa<Barrier>(preheader->getTerminator()->getPrevNode()))) {
           // Avoid adding a barrier here if there is already a barrier
           // just before the terminator.
-          new_barrier()->insertBefore(preheader->getTerminator());
+          Barrier::Create(preheader->getTerminator());
           preheader->setName(preheader->getName() + ".loopbarrier");
+        }
+
+        // Add a barrier after the PHI nodes on the header (the replicated
+        // headers will be merged afterwards).
+        BasicBlock *header = L->getHeader();
+        if ((header->getFirstNonPHI() != &header->front()) &&
+            (!isa<Barrier>(header->getFirstNonPHI()))) {
+          Barrier::Create(header->getFirstNonPHI());
+          header->setName(header->getName() + ".phibarrier");
         }
 
         // Now add the barriers on the latches.
@@ -110,8 +104,8 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           // Avoid adding a barrier here if the latch happens to have a
           // barrier just before the terminator.
           if ((latch->size() == 1) ||
-              (!is_barrier(latch->getTerminator()->getPrevNode()))) {
-            new_barrier()->insertBefore(latch->getTerminator());
+              (!isa<Barrier>(latch->getTerminator()->getPrevNode()))) {
+            Barrier::Create(latch->getTerminator());
             latch->setName(latch->getName() + ".latchbarrier");
           }
 
@@ -136,8 +130,8 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
               // If there is a barrier happens before the latch terminator,
               // there is no need to add an additional barrier.
               if ((Latch->size() == 1) ||
-                  (!is_barrier(Latch->getTerminator()->getPrevNode()))) {
-                new_barrier()->insertBefore(Latch->getTerminator());
+                  (!isa<Barrier>(Latch->getTerminator()->getPrevNode()))) {
+                Barrier::Create(Latch->getTerminator());
                 Latch->setName(Latch->getName() + ".latchbarrier");
               }
             }
@@ -150,28 +144,4 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
   }
 
   return false;
-}
-
-
-static bool
-is_barrier(Instruction *i)
-{
-  if (CallInst *c = dyn_cast<CallInst>(i)) {
-    if (Function *f = c->getCalledFunction()) {
-      if (f == barrier)
-        return true;
-    }
-  }
-
-  return false;
-}
-
-static CallInst *
-new_barrier()
-{
-  assert (barrier != NULL && "No barrier function!");
-  Constant *zero =
-    ConstantInt::get(barrier->getArgumentList().front().getType(), 0);
-  SmallVector<Value *, 1> sv(1, zero);
-  return CallInst::Create(barrier, ArrayRef<Value *>(sv));
 }

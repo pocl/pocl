@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+LEX =
+
 targetpkglibdir = $(pkglibdir)/x86_64
 targetpkglib_LIBRARIES = libkernel.a
 
@@ -53,7 +55,7 @@ endif
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/x86_64/types.h -o $@ $<
 
-.ll.o:
+barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
 
 # TODO: This misses the dependency on the device-specific include files

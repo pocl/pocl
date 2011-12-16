@@ -1,4 +1,4 @@
-// Header for CanonicalizeBarriers.cc function pass.
+// Class for kernels, a special kind of function.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -20,32 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
-#include <set>
+#include "ParallelRegion.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/Dominators.h"
 
 namespace pocl {
-  class Workgroup;
 
-  class CanonicalizeBarriers : public llvm::FunctionPass {
-    
+  class Kernel : public llvm::Function {
+
   public:
-    static char ID;
+    void getExitBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
+    ParallelRegion *createParallelRegionBefore(BarrierBlock *B);
     
-  CanonicalizeBarriers() : FunctionPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
-    
-  private:
-    typedef std::set<llvm::Instruction *> InstructionSet;
-    
-    llvm::LoopInfo *LI;
-    llvm::DominatorTree *DT;
-
-    bool ProcessFunction(llvm::Function &F);
-
-    friend class pocl::Workgroup;
+    static bool classof(const Kernel *) { return true; }
+    // We assume any function can be a kernel. This could be used
+    // to check for metadata (but would need to be overrideable somehow
+    // to honor the forced kernel name(s) parameter in command line.
+    static bool classof(const llvm::Function *) { return true; }
   };
+
 }

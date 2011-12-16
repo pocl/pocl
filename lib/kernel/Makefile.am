@@ -39,7 +39,7 @@ AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -o $@ $<
 
-.ll.o:
+barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
 
 # TODO: This misses the dependency on the device-specific include files
