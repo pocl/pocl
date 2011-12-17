@@ -92,5 +92,7 @@ clCreateProgramWithSource(cl_context context,
   program->binary = NULL;
   program->kernels = NULL;
   
+  if (errcode_ret != NULL)
+    *errcode_ret = CL_SUCCESS;
   return program;
 }
