@@ -24,13 +24,42 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetDeviceInfo(cl_device_id     device,
-                cl_device_info   param_name, 
-                size_t           param_value_size, 
-                void *           param_value,
-                size_t *         param_value_size_ret ) CL_API_SUFFIX__VERSION_1_0
+clGetDeviceInfo(cl_device_id   device,
+                cl_device_info param_name, 
+                size_t         param_value_size, 
+                void *         param_value,
+                size_t *       param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-	// TODO: dig up the info
-	return CL_INVALID_VALUE;
+  switch (param_name)
+  {
+  case CL_DEVICE_NAME:
+    {
+      size_t const value_size = strlen(device->name) + 1;
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, device->name, value_size);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
+    
+  case CL_DEVICE_TYPE:
+    {
+      size_t const value_size = sizeof(cl_device_type);
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        *(cl_device_type*)param_value = device->type;
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
+    
+    /* TODO: implement remaining queries */
+  }
+  
+  return CL_INVALID_VALUE;
 }
-
