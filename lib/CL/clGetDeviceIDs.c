@@ -56,7 +56,8 @@ clGetDeviceIDs(cl_platform_id   platform,
     if (num < num_entries)
       return CL_INVALID_VALUE;
     
-    memcpy(devices, pocl_devices, num*sizeof(cl_device_id));
+    if (num > 0)
+      devices[0] = &pocl_devices[0];
   }
   
   if (num_devices != NULL)

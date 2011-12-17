@@ -42,7 +42,7 @@ clGetPlatformIDs(cl_uint           num_entries,
     if (num_entries < num)
       return CL_INVALID_VALUE;
     
-    memcpy(platforms, _platforms, num*sizeof(cl_platform_id));
+    platforms[0] = &_platforms;
   }
   
   if (num_platforms != NULL)
