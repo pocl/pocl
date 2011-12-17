@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clEnqueueReadBuffer()
+/* OpenCL runtime library: clEnqueueWriteBuffer()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    

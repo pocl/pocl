@@ -94,7 +94,11 @@ extern size_t pocl_native_max_work_item_sizes[];
   pocl_native_malloc, /* malloc */					\
   pocl_native_free, /* free */						\
   pocl_native_read, /* read */						\
+  NULL, /* read_rect */                                                 \
   pocl_native_write, /* write */                                        \
+  NULL, /* write_rect */                                                \
+  NULL, /* copy */                                                      \
+  NULL, /* copy_rect */                                                 \
   pocl_native_run, /* run */						\
   NULL /* data */                                                       \
 }

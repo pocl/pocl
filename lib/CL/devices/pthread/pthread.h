@@ -31,7 +31,32 @@ void *pocl_pthread_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
 void pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr);
 void pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
+void pocl_pthread_read_rect (void *data, void *host_ptr, void *device_ptr,
+                             const size_t *buffer_origin,
+                             const size_t *host_origin, 
+                             const size_t *region,
+                             size_t buffer_row_pitch,
+                             size_t buffer_slice_pitch,
+                             size_t host_row_pitch,
+                             size_t host_slice_pitch);
 void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
+void pocl_pthread_write_rect (void *data, const void *host_ptr, void *device_ptr,
+                              const size_t *buffer_origin,
+                              const size_t *host_origin, 
+                              const size_t *region,
+                              size_t buffer_row_pitch,
+                              size_t buffer_slice_pitch,
+                              size_t host_row_pitch,
+                              size_t host_slice_pitch);
+void pocl_pthread_copy (void *data, const void *src_ptr, const void *dst_ptr, size_t cb);
+void pocl_pthread_copy_rect (void *data, const void *src_ptr, void *dst_ptr,
+                             const size_t *src_origin,
+                             const size_t *dst_origin, 
+                             const size_t *region,
+                             size_t src_row_pitch,
+                             size_t src_slice_pitch,
+                             size_t dst_row_pitch,
+                             size_t dst_slice_pitch);
 void pocl_pthread_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
 		      struct pocl_context *pc);
@@ -94,7 +119,11 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   pocl_pthread_malloc, /* malloc */					\
   pocl_pthread_free, /* free */						\
   pocl_pthread_read, /* read */						\
+  pocl_pthread_read_rect, /* read_rect */				\
   pocl_pthread_write, /* write */					\
+  pocl_pthread_write_rect, /* write_rect */				\
+  pocl_pthread_copy, /* copy */						\
+  pocl_pthread_copy_rect, /* copy_rect */				\
   pocl_pthread_run, /* run */						\
   NULL /* data */							\
 }

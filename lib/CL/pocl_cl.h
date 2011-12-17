@@ -100,7 +100,32 @@ struct _cl_device_id {
 		   size_t size, void *host_ptr);
   void (*free) (void *data, cl_mem_flags flags, void *ptr);
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
+  void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
+                     const size_t *buffer_origin,
+                     const size_t *host_origin, 
+                     const size_t *region,
+                     size_t buffer_row_pitch,
+                     size_t buffer_slice_pitch,
+                     size_t host_row_pitch,
+                     size_t host_slice_pitch);
   void (*write) (void *data, const void *host_ptr, void *device_ptr, size_t cb);
+  void (*write_rect) (void *data, const void *host_ptr, void *device_ptr,
+                      const size_t *buffer_origin,
+                      const size_t *host_origin, 
+                      const size_t *region,
+                      size_t buffer_row_pitch,
+                      size_t buffer_slice_pitch,
+                      size_t host_row_pitch,
+                      size_t host_slice_pitch);
+  void (*copy) (void *data, const void *src_ptr, const void *dst_ptr, size_t cb);
+  void (*copy_rect) (void *data, const void *src_ptr, void *dst_ptr,
+                     const size_t *src_origin,
+                     const size_t *dst_origin, 
+                     const size_t *region,
+                     size_t src_row_pitch,
+                     size_t src_slice_pitch,
+                     size_t dst_row_pitch,
+                     size_t dst_slice_pitch);
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
 	       struct pocl_context *pc);

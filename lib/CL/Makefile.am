@@ -31,6 +31,7 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseCommandQueue.c	\
                    clCreateBuffer.c		\
 	           clEnqueueReadBuffer.c	\
+	           clEnqueueReadBufferRect.c	\
                    clReleaseMemObject.c		\
                    clCreateProgramWithSource.c	\
                    clReleaseProgram.c		\
@@ -46,7 +47,11 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateContext.c		\
                    clGetProgramBuildInfo.c	\
                    clEnqueueWriteBuffer.c	\
+                   clEnqueueWriteBufferRect.c	\
+                   clEnqueueCopyBuffer.c	\
+                   clEnqueueCopyBufferRect.c	\
                    clFinish.c			\
+                   clEnqueueBarrier.c		\
                    clGetKernelWorkGroupInfo.c	\
                    pocl_cl.h			\
                    devices/devices.h		\
