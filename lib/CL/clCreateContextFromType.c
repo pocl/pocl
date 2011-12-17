@@ -68,5 +68,7 @@ clCreateContextFromType(const cl_context_properties *properties,
   context->properties = properties;
   context->reference_count = 1;
 
+  if (errcode_ret != NULL)
+    *errcode_ret = CL_SUCCESS;
   return context;
 }
