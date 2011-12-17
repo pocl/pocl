@@ -36,27 +36,17 @@ clGetPlatformIDs(cl_uint           num_entries,
                  cl_platform_id *  platforms,
                  cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
 {	
-
-	// user requests only number of platforms - not types
-	if (num_entries == 0 && num_platforms != NULL)
-      {
-		*num_platforms = 1;
-		return CL_SUCCESS;
-      }
-
-	// Bad request - no place to store response
-	if (num_entries > 0 && platforms == NULL)
+  int const num = 1;
+  
+  if (platforms != NULL) {
+    if (num_entries < num)
       return CL_INVALID_VALUE;
-	
-	// Check required by spec
-	if (platforms == NULL && num_platforms == NULL)
-      return CL_INVALID_VALUE;
-	
-	// platform is not used now - just mark this platform as 'valid'
-	platforms[0] = &(_platforms[0]);
-	
-	if (num_platforms != NULL)
-      *num_platforms = 1;
-
-	return CL_SUCCESS;
+    
+    memcpy(platforms, _platforms, num*sizeof(cl_platform_id));
+  }
+  
+  if (num_platforms != NULL)
+    *num_platforms = num;
+  
+  return CL_SUCCESS;
 }
