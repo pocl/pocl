@@ -69,7 +69,7 @@ clGetPlatformInfo(cl_platform_id   platform,
     if (param_value_size < retlen)
       return CL_INVALID_VALUE;
     
-    strncpy(param_value, ret, retlen); 
+    memcpy(param_value, ret, retlen); 
   }
 	
   if (param_value_size_ret != NULL)

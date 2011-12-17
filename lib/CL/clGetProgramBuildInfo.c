@@ -32,7 +32,7 @@ clGetProgramBuildInfo(cl_program            program,
                       void *                param_value,
                       size_t *              param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  char *retval = "";
+  const char *retval = "";
   int retlen;
 
   if (program == NULL)
@@ -44,19 +44,17 @@ clGetProgramBuildInfo(cl_program            program,
     return CL_INVALID_OPERATION;
 
   retlen = strlen(retval) + 1;
-	
-  if (param_value == NULL)
-    return CL_SUCCESS; 	
 
-  if (param_value_size < retlen)
-    return CL_INVALID_VALUE;
-	
-  strncpy(param_value, retval, retlen);
+  if (param_value != NULL)
+  {
+    if (param_value_size < retlen)
+      return CL_INVALID_VALUE;
+
+    memcpy(param_value, retval, retlen);
+  }
 	
   if (param_value_size_ret != NULL)
     *param_value_size_ret = retlen;
 
   return CL_SUCCESS;
 }
-
-
