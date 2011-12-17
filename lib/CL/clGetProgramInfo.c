@@ -48,8 +48,11 @@ clGetProgramInfo(cl_program program,
   case CL_PROGRAM_SOURCE:
     {
       size_t const value_size = strlen(program->source) + 1;
-      if (param_value && param_value_size >= value_size)
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
         memcpy(param_value, program->source, value_size);
+      }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
@@ -58,8 +61,11 @@ clGetProgramInfo(cl_program program,
   case CL_PROGRAM_BINARY_SIZES:
     {
       size_t const value_size = sizeof(size_t);
-      if (param_value && param_value_size >= value_size)
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
         *(size_t*)param_value = program->binary_size;
+      }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
@@ -68,8 +74,11 @@ clGetProgramInfo(cl_program program,
   case CL_PROGRAM_BINARIES:
     {
       size_t const value_size = sizeof(unsigned char *);
-      if (param_value && param_value_size >= value_size)
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
         *(unsigned char **)param_value = program->binary;
+      }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
       return CL_SUCCESS;

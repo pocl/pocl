@@ -54,6 +54,7 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueBarrier.c		\
                    clGetKernelWorkGroupInfo.c	\
                    clGetProgramInfo.c		\
+                   clGetEventProfilingInfo.c	\
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\
