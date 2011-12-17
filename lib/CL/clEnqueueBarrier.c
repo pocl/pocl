@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clFinish()
+/* OpenCL runtime library: clEnqueueBarrier()
 
    Copyright (c) 2011 Erik Schnetter
    
@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+clEnqueueBarrier(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
   /* All operations are serialised, so we never have to wait */
   return CL_SUCCESS;
