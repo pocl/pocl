@@ -36,6 +36,7 @@ clGetDeviceIDs(cl_platform_id   platform,
                cl_uint *        num_devices) CL_API_SUFFIX__VERSION_1_0
 {
   int num;
+  int i;
 
   /* TODO: OpenCL API specification allows implementation dependent
      behaviour if platform == NULL. Should we just allow it? */
@@ -56,8 +57,8 @@ clGetDeviceIDs(cl_platform_id   platform,
     if (num < num_entries)
       return CL_INVALID_VALUE;
     
-    if (num > 0)
-      devices[0] = &pocl_devices[0];
+    for (i=0; i<num; ++i)
+      devices[i] = &pocl_devices[i];
   }
   
   if (num_devices != NULL)

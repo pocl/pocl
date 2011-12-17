@@ -37,12 +37,14 @@ clGetPlatformIDs(cl_uint           num_entries,
                  cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
 {	
   int const num = 1;
+  int i;
   
   if (platforms != NULL) {
     if (num_entries < num)
       return CL_INVALID_VALUE;
     
-    platforms[0] = &_platforms;
+    for (i=0; i<num; ++i)
+      platforms[i] = &_platforms[i];
   }
   
   if (num_platforms != NULL)
