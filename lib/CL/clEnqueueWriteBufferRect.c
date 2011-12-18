@@ -55,10 +55,29 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
   if ((ptr == NULL) ||
       (buffer_origin == NULL) ||
       (host_origin == NULL) ||
-      (region == NULL) ||
-      (buffer_origin[0] + region[0] + buffer_row_pitch * ((buffer_origin[1] + region[1]) + buffer_slice_pitch * (buffer_origin[2] + region[2])) > buffer->size) ||
-      (host_origin[0] + region[0] + host_row_pitch * ((host_origin[1] + region[1]) + host_slice_pitch * (host_origin[2] + region[2])) > buffer->size))
+      (region == NULL))
     return CL_INVALID_VALUE;
+  
+  if ((region[0]*region[1]*region[2] > 0) &&
+      (buffer_origin[0] + region[0]-1 +
+       buffer_row_pitch * (buffer_origin[1] + region[1]-1) +
+       buffer_slice_pitch * (buffer_origin[2] + region[2]-1) >= buffer->size))
+  {
+#warning "TODO"
+    printf("bo=[%d,%d,%d]\n"
+           "ho=[%d,%d,%d]\n"
+           "re=[%d,%d,%d]\n"
+           "bp=[,%d,%d]\n"
+           "hp=[,%d,%d]\n"
+           "bs=[%d]\n",
+           (int)buffer_origin[0], (int)buffer_origin[1], (int)buffer_origin[2],
+           (int)host_origin[0], (int)host_origin[1], (int)host_origin[2],
+           (int)region[0], (int)region[1], (int)region[2],
+           (int)buffer_row_pitch, (int)buffer_slice_pitch,
+           (int)host_row_pitch, (int)host_slice_pitch,
+           (int)buffer->size);
+    return CL_INVALID_VALUE;
+  }
 
   device_id = command_queue->device;
   for (i = 0; i < command_queue->context->num_devices; ++i)

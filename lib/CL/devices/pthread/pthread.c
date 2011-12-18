@@ -146,8 +146,8 @@ pocl_pthread_read_rect (void *data,
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_host_ptr + host_row_pitch * (j + host_slice_pitch * k),
-              adjusted_device_ptr + buffer_row_pitch * (j + buffer_slice_pitch * k),
+      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
               region[0]);
 }
 
@@ -185,8 +185,8 @@ pocl_pthread_write_rect (void *data,
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * (j + buffer_slice_pitch * k),
-              adjusted_host_ptr + host_row_pitch * (j + host_slice_pitch * k),
+      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
               region[0]);
 }
 
@@ -224,8 +224,8 @@ pocl_pthread_copy_rect (void *data,
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_dst_ptr + dst_row_pitch * (j + dst_slice_pitch * k),
-              adjusted_src_ptr + src_row_pitch * (j + src_slice_pitch * k),
+      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
+              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
               region[0]);
 }
 

@@ -32,29 +32,48 @@ clGetProgramBuildInfo(cl_program            program,
                       void *                param_value,
                       size_t *              param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  const char *retval = "";
-  int retlen;
-
-  if (program == NULL)
-    return CL_INVALID_PROGRAM;
-
-  // currently - just stub-implmement this.
-  // there doesn't seem to exist an "CL_INTERNAL_ERROR" return code :(
-  if (param_name != CL_PROGRAM_BUILD_LOG)
-    return CL_INVALID_OPERATION;
-
-  retlen = strlen(retval) + 1;
-
-  if (param_value != NULL)
-  {
-    if (param_value_size < retlen)
-      return CL_INVALID_VALUE;
-
-    memcpy(param_value, retval, retlen);
+  const char *retval = "";      /* dummy return value */
+  
+  switch (param_name) {
+  case CL_PROGRAM_BUILD_STATUS:
+    {
+      size_t const value_size = strlen(retval) + 1;
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, retval, value_size);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
+    
+  case CL_PROGRAM_BUILD_OPTIONS:
+    {
+      size_t const value_size = strlen(retval) + 1;
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, retval, value_size);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
+    
+  case CL_PROGRAM_BUILD_LOG:
+    {
+      size_t const value_size = strlen(retval) + 1;
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, retval, value_size);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
   }
-	
-  if (param_value_size_ret != NULL)
-    *param_value_size_ret = retlen;
-
-  return CL_SUCCESS;
+  
+  return CL_INVALID_VALUE;
 }

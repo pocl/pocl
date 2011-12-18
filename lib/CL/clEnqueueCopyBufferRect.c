@@ -54,9 +54,18 @@ clEnqueueCopyBufferRect(cl_command_queue command_queue,
 
   if ((src_origin == NULL) ||
       (dst_origin == NULL) ||
-      (region == NULL) ||
-      (src_origin[0] + region[0] + src_row_pitch * ((src_origin[1] + region[1]) + src_slice_pitch * (src_origin[2] + region[2])) > src_buffer->size) ||
-      (dst_origin[0] + region[0] + dst_row_pitch * ((dst_origin[1] + region[1]) + dst_slice_pitch * (dst_origin[2] + region[2])) > dst_buffer->size))
+      (region == NULL))
+    return CL_INVALID_VALUE;
+
+  if ((region[0]*region[1]*region[2] > 0) &&
+      (src_origin[0] + region[0]-1 +
+       src_row_pitch * (src_origin[1] + region[1]-1) +
+       src_slice_pitch * (src_origin[2] + region[2]-1) >= src_buffer->size))
+    return CL_INVALID_VALUE;
+  if ((region[0]*region[1]*region[2] > 0) &&
+      (dst_origin[0] + region[0]-1 +
+       dst_row_pitch * (dst_origin[1] + region[1]-1) +
+       dst_slice_pitch * (dst_origin[2] + region[2]-1) >= dst_buffer->size))
     return CL_INVALID_VALUE;
 
   device_id = command_queue->device;
