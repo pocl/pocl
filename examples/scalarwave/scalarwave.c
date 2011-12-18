@@ -11,7 +11,7 @@
 
 
 
-#define GRID_GRANULARITY 1 // TODO 2
+#define GRID_GRANULARITY 2
 
 typedef struct grid_t {
   cl_double dt;                 // time step
@@ -96,7 +96,7 @@ exec_scalarwave_kernel(char      const *const program_source,
   if (ierr) return -1;
   
   size_t const global_work_size[3] =
-    {grid->ni, grid->nj, grid->nk};
+    {grid->ai, grid->aj, grid->ak};
   size_t const local_work_size[3] =
     {GRID_GRANULARITY, GRID_GRANULARITY, GRID_GRANULARITY};
   
@@ -207,9 +207,8 @@ main(void)
       phi = tmp;
     }
     
-    // TODO: We create the program and allocate the buffers each time,
-    // which is slow. But then, we only want to test correctness, not
-    // performance. (Yet?)
+    // TODO: We allocate the buffers each time, which is slow. But
+    // then, we only want to test correctness, not performance. (Yet?)
     int const ierr =
       exec_scalarwave_kernel (source, phi, phi_p, phi_p_p, &grid);
     assert(!ierr);

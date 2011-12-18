@@ -29,9 +29,12 @@
 #include <unistd.h>
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 256
 #define WORKGROUP_STRING_LENGTH 128
+
+#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */
@@ -80,7 +83,7 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+      if (posix_memalign (&b, ALIGNMENT, size) == 0)
 	{
 	  memcpy (b, host_ptr, size);
 	  return b;
@@ -94,7 +97,7 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr
       return host_ptr;
     }
 
-  if (posix_memalign (&b, ALIGNOF_FLOAT16, size) == 0)
+  if (posix_memalign (&b, ALIGNMENT, size) == 0)
     return b;
   
   return NULL;
@@ -118,12 +121,112 @@ pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
   memcpy (host_ptr, device_ptr, cb);
 }
 
-void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
+void
+pocl_pthread_read_rect (void *data,
+                        void *__restrict__ const host_ptr,
+                        void *__restrict__ const device_ptr,
+                        const size_t *__restrict__ const buffer_origin,
+                        const size_t *__restrict__ const host_origin, 
+                        const size_t *__restrict__ const region,
+                        size_t const buffer_row_pitch,
+                        size_t const buffer_slice_pitch,
+                        size_t const host_row_pitch,
+                        size_t const host_slice_pitch)
+{
+  char const *__restrict const adjusted_device_ptr = 
+    (char const*)device_ptr +
+    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
+  char *__restrict__ const adjusted_host_ptr = 
+    (char*)host_ptr +
+    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
+  
+  size_t j, k;
+  
+  /* TODO: handle overlaping regions */
+  
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+              region[0]);
+}
+
+void
+pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
   
   memcpy (device_ptr, host_ptr, cb);
+}
+
+void
+pocl_pthread_write_rect (void *data,
+                         const void *__restrict__ const host_ptr,
+                         void *__restrict__ const device_ptr,
+                         const size_t *__restrict__ const buffer_origin,
+                         const size_t *__restrict__ const host_origin, 
+                         const size_t *__restrict__ const region,
+                         size_t const buffer_row_pitch,
+                         size_t const buffer_slice_pitch,
+                         size_t const host_row_pitch,
+                         size_t const host_slice_pitch)
+{
+  char *__restrict const adjusted_device_ptr = 
+    (char*)device_ptr +
+    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
+  char const *__restrict__ const adjusted_host_ptr = 
+    (char const*)host_ptr +
+    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
+  
+  size_t j, k;
+
+  /* TODO: handle overlaping regions */
+  
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+              region[0]);
+}
+
+void
+pocl_pthread_copy (void *data, const void *src_ptr, const void *dst_ptr, size_t cb)
+{
+  if (src_ptr == dst_ptr)
+    return;
+  
+  memcpy (dst_ptr, src_ptr, cb);
+}
+
+void
+pocl_pthread_copy_rect (void *data,
+                        const void *__restrict const src_ptr,
+                        void *__restrict__ const dst_ptr,
+                        const size_t *__restrict__ const src_origin,
+                        const size_t *__restrict__ const dst_origin, 
+                        const size_t *__restrict__ const region,
+                        size_t const src_row_pitch,
+                        size_t const src_slice_pitch,
+                        size_t const dst_row_pitch,
+                        size_t const dst_slice_pitch)
+{
+  char const *__restrict const adjusted_src_ptr = 
+    (char const*)src_ptr +
+    src_origin[0] + src_row_pitch * (src_origin[1] + src_slice_pitch * src_origin[2]);
+  char *__restrict__ const adjusted_dst_ptr = 
+    (char*)dst_ptr +
+    dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
+  
+  size_t j, k;
+
+  /* TODO: handle overlaping regions */
+  
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
+              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
+              region[0]);
 }
 
 //#define DEBUG_MT

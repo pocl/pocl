@@ -69,6 +69,8 @@ clCreateBuffer(cl_context context,
   mem->mem_host_ptr = host_ptr;
   mem->reference_count = 1;
   mem->context = context;
-      
+  
+  if (errcode_ret != NULL)
+    *errcode_ret = CL_SUCCESS;
   return mem;
 }

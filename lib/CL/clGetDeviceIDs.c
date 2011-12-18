@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "devices/devices.h"
+#include <string.h>
 
 /* Note: this is a kludge. This will require a thorough re-write when pocl
  * supports multiple devices
@@ -34,41 +35,35 @@ clGetDeviceIDs(cl_platform_id   platform,
                cl_device_id *   devices, 
                cl_uint *        num_devices) CL_API_SUFFIX__VERSION_1_0
 {
-  int num = 0;
+  int num;
+  int i;
 
-  // TODO: OpenCL API specification allows implementation dependant behaviour
-  // if platform == NULL. Should we just allow for it?	
+  /* TODO: OpenCL API specification allows implementation dependent
+     behaviour if platform == NULL. Should we just allow it? */
   if (platform == NULL || ( platform->magic != 42 ))
     return CL_INVALID_PLATFORM;
-	
-  // Currently - POCL supports only the host device - i.e. a CPU
+  
+  /* Currently POCL supports only the host device, i.e. a CPU */
   if ((device_type & CL_DEVICE_TYPE_CPU) ||
       (device_type & CL_DEVICE_TYPE_DEFAULT))
     num = 1;
-  else if ((device_type | CL_DEVICE_TYPE_GPU) ||
-           (device_type | CL_DEVICE_TYPE_ACCELERATOR))
+  else if ((device_type & CL_DEVICE_TYPE_GPU) ||
+           (device_type & CL_DEVICE_TYPE_ACCELERATOR))
     num = 0;
   else
     return CL_INVALID_DEVICE_TYPE;
-
-	// no room for any response
-  if (devices == NULL && num_devices == NULL)
-    return CL_INVALID_VALUE;
-
-  // user forgot to allocate space for response
-  if (num_entries > 0 && devices == NULL )
-    return CL_INVALID_VALUE;
-
-	
+  
+  if (devices != NULL) {
+    if (num < num_entries)
+      return CL_INVALID_VALUE;
+    
+    for (i=0; i<num; ++i)
+      devices[i] = &pocl_devices[i];
+  }
+  
   if (num_devices != NULL)
     *num_devices = num;
-	
-  if (num_entries > 0 && devices!= NULL)
-	{
-      if (num)
-        devices[0] = &pocl_devices[0];
-	}
-
+  
   if (num > 0)
     return CL_SUCCESS;
   else

@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clEnqueueWriteBuffer()
+/* OpenCL runtime library: clEnqueueReadBufferRect()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    
@@ -25,15 +25,20 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueWriteBuffer(cl_command_queue command_queue,
-                     cl_mem buffer,
-                     cl_bool blocking_write,
-                     size_t offset,
-                     size_t cb, 
-                     const void *ptr,
-                     cl_uint num_events_in_wait_list,
-                     const cl_event *event_wait_list,
-                     cl_event *event) CL_API_SUFFIX__VERSION_1_0
+clEnqueueReadBufferRect(cl_command_queue command_queue,
+                        cl_mem buffer,
+                        cl_bool blocking_read,
+                        const size_t *buffer_origin,
+                        const size_t *host_origin,
+                        const size_t *region,
+                        size_t buffer_row_pitch,
+                        size_t buffer_slice_pitch,
+                        size_t host_row_pitch,
+                        size_t host_slice_pitch,
+                        void *ptr,
+                        cl_uint num_events_in_wait_list,
+                        const cl_event *event_wait_list,
+                        cl_event *event) CL_API_SUFFIX__VERSION_1_1
 {
   cl_device_id device_id;
   unsigned i;
@@ -48,19 +53,30 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     return CL_INVALID_CONTEXT;
 
   if ((ptr == NULL) ||
-      (offset + cb > buffer->size))
+      (buffer_origin == NULL) ||
+      (host_origin == NULL) ||
+      (region == NULL))
+    return CL_INVALID_VALUE;
+  
+  if ((region[0]*region[1]*region[2] > 0) &&
+      (buffer_origin[0] + region[0]-1 +
+       buffer_row_pitch * (buffer_origin[1] + region[1]-1) +
+       buffer_slice_pitch * (buffer_origin[2] + region[2]-1) >= buffer->size))
     return CL_INVALID_VALUE;
 
   device_id = command_queue->device;
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
       if (command_queue->context->devices[i] == device_id)
-	break;
+        break;
     }
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
+  device_id->read_rect(device_id->data, ptr, buffer->device_ptrs[i],
+                       buffer_origin, host_origin, region,
+                       buffer_row_pitch, buffer_slice_pitch,
+                       host_row_pitch, host_slice_pitch);
 
   return CL_SUCCESS;
 }

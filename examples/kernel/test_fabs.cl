@@ -172,7 +172,7 @@ DEFINE_BODY_V
  })
  )
 
-void test_fabs()
+kernel void test_fabs()
 {
   CALL_FUNC_V(test_fabs)
 }

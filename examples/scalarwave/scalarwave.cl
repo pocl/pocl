@@ -21,7 +21,7 @@ typedef struct grid_t {
   int ni, nj, nk;               // used size
 } grid_t;
 
-void
+kernel void
 scalarwave(global double       *restrict const phi,
            global double const *restrict const phi_p,
            global double const *restrict const phi_p_p,
@@ -72,11 +72,13 @@ scalarwave(global double       *restrict const phi,
   size_t const k = get_global_id(2);
   
   // If outside the domain, do nothing
-  if (i>=ni || j>=nj || k>=nk) return;
+  if (__builtin_expect(i>=ni || j>=nj || k>=nk, false)) return;
   
   size_t const ind3d = di*i + dj*j + dk*k;
   
-  if (i==0 || i==ni-1 || j==0 || j==nj-1 || k==0 || k==nk-1) {
+  if (__builtin_expect(i==0 || j==0 || k==0 || i==ni-1 || j==nj-1 || k==nk-1,
+                       false))
+  {
     // Boundary condition
     
     phi[ind3d] = 0.0;

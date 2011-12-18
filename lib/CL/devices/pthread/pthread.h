@@ -31,12 +31,81 @@ void *pocl_pthread_malloc (void *data, cl_mem_flags flags,
 			  size_t size, void *host_ptr);
 void pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr);
 void pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
+void pocl_pthread_read_rect (void *data, void *host_ptr, void *device_ptr,
+                             const size_t *buffer_origin,
+                             const size_t *host_origin, 
+                             const size_t *region,
+                             size_t buffer_row_pitch,
+                             size_t buffer_slice_pitch,
+                             size_t host_row_pitch,
+                             size_t host_slice_pitch);
 void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
+void pocl_pthread_write_rect (void *data, const void *host_ptr, void *device_ptr,
+                              const size_t *buffer_origin,
+                              const size_t *host_origin, 
+                              const size_t *region,
+                              size_t buffer_row_pitch,
+                              size_t buffer_slice_pitch,
+                              size_t host_row_pitch,
+                              size_t host_slice_pitch);
+void pocl_pthread_copy (void *data, const void *src_ptr, const void *dst_ptr, size_t cb);
+void pocl_pthread_copy_rect (void *data, const void *src_ptr, void *dst_ptr,
+                             const size_t *src_origin,
+                             const size_t *dst_origin, 
+                             const size_t *region,
+                             size_t src_row_pitch,
+                             size_t src_slice_pitch,
+                             size_t dst_row_pitch,
+                             size_t dst_slice_pitch);
 void pocl_pthread_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
 		      struct pocl_context *pc);
 
 extern size_t pocl_pthread_max_work_item_sizes[];
+
+/* Determine preferred vector sizes */
+#if defined(__AVX__)
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR   16
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT   8
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT     4
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG    2
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT   4
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE  2
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_CHAR      16
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_SHORT      8
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_INT        4
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_LONG       2
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_FLOAT      8
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_DOUBLE     4
+#elif defined(__SSE2__)
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR   16
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT   8
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT     4
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG    2
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT   4
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE  2
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_CHAR      16
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_SHORT      8
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_INT        4
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_LONG       2
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_FLOAT      4
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_DOUBLE     2
+#else
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR    1
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT   1
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT     1
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG    1
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT   1
+#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE  1
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_CHAR       1
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_SHORT      1
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_INT        1
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_LONG       1
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_FLOAT      1
+#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_DOUBLE     1
+#endif
+/* Half is internally represented as short */
+#define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_HALF POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT
 
 #define POCL_DEVICES_PTHREAD {						\
   CL_DEVICE_TYPE_CPU, /* type */					\
@@ -45,12 +114,12 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   3, /* max_work_item_dimensions */					\
   pocl_pthread_max_work_item_sizes, /* max_work_item_sizes */		\
   CL_INT_MAX, /* max_work_group_size */					\
-  0, /* preferred_vector_width_char */					\
-  0, /* preferred_vector_width_short */					\
-  0, /* preferred_vector_width_int */					\
-  0, /* preferred_vector_width_long */					\
-  0, /* preferred_vector_width_float */					\
-  0, /* preferred_vector_width_double */				\
+  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
+  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
+  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT   , /* preferred_vector_width_int */ \
+  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG  , /* preferred_vector_width_long */ \
+  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT , /* preferred_vector_width_float */ \
+  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
   0, /* max_clock_frequency */						\
   0, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
@@ -94,7 +163,11 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   pocl_pthread_malloc, /* malloc */					\
   pocl_pthread_free, /* free */						\
   pocl_pthread_read, /* read */						\
+  pocl_pthread_read_rect, /* read_rect */				\
   pocl_pthread_write, /* write */					\
+  pocl_pthread_write_rect, /* write_rect */				\
+  pocl_pthread_copy, /* copy */						\
+  pocl_pthread_copy_rect, /* copy_rect */				\
   pocl_pthread_run, /* run */						\
   NULL /* data */							\
 }

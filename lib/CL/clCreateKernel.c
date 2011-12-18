@@ -145,5 +145,7 @@ clCreateKernel(cl_program program,
   program->kernels = kernel;
   kernel->next = k;
 
+  if (errcode_ret != NULL)
+    *errcode_ret = CL_SUCCESS;
   return kernel;
 }

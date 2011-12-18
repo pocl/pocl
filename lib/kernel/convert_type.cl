@@ -24,28 +24,28 @@
 #include "templates.h"
 
 /* SRC and DST must be scalars */
-#define DEFINE_CONVERT_TYPE(SRC, DST)                           \
-  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)   \
-  {                                                             \
-    return (DST)a;                                              \
+#define DEFINE_CONVERT_TYPE(SRC, DST)           \
+  DST _cl_overloadable convert_##DST(SRC a)     \
+  {                                             \
+    return (DST)a;                              \
   }
 
 /* implementing vector SRC and DST in terms of scalars */
 #define DEFINE_CONVERT_TYPE_HALF(SRC, DST, HALFDST)                     \
-  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)           \
+  DST _cl_overloadable convert_##DST(SRC a)                             \
   {                                                                     \
     return (DST)(convert_##HALFDST(a.lo), convert_##HALFDST(a.hi));     \
   }
 
 #define DEFINE_CONVERT_TYPE_012(SRC, DST, DST01, DST2)          \
-  DST __attribute__ ((__overloadable__)) convert_##DST(SRC a)   \
+  DST _cl_overloadable convert_##DST(SRC a)                     \
   {                                                             \
     return (DST)(convert_##DST01(a.s01), convert_##DST2(a.s2)); \
   }
 
 /* SRC and DST may be vectors */
 #define DEFINE_CONVERT_TYPE_SAT(SRC, DST, SIZE)                         \
-  DST##SIZE __attribute__ ((__overloadable__))                          \
+  DST##SIZE _cl_overloadable                                            \
     convert_##DST##SIZE##_sat(SRC##SIZE a)                              \
   {                                                                     \
     int const src_float    = (SRC)0.1f > (SRC)0;                        \

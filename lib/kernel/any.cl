@@ -21,123 +21,123 @@
    THE SOFTWARE.
 */
 
-int __attribute__((__overloadable__)) any(char a)
+int _cl_overloadable any(char a)
 {
   return a < (char)0;
 }
 
-int __attribute__((__overloadable__)) any(char2 a)
+int _cl_overloadable any(char2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(char3 a)
+int _cl_overloadable any(char3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int __attribute__((__overloadable__)) any(char4 a)
+int _cl_overloadable any(char4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(char8 a)
+int _cl_overloadable any(char8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(char16 a)
+int _cl_overloadable any(char16 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(short a)
+int _cl_overloadable any(short a)
 {
   return a < (short)0;
 }
 
-int __attribute__((__overloadable__)) any(short2 a)
+int _cl_overloadable any(short2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(short3 a)
+int _cl_overloadable any(short3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int __attribute__((__overloadable__)) any(short4 a)
+int _cl_overloadable any(short4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(short8 a)
+int _cl_overloadable any(short8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(short16 a)
+int _cl_overloadable any(short16 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(int a)
+int _cl_overloadable any(int a)
 {
   return a < 0;
 }
 
-int __attribute__((__overloadable__)) any(int2 a)
+int _cl_overloadable any(int2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(int3 a)
+int _cl_overloadable any(int3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int __attribute__((__overloadable__)) any(int4 a)
+int _cl_overloadable any(int4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(int8 a)
+int _cl_overloadable any(int8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(int16 a)
+int _cl_overloadable any(int16 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
 #ifdef cles_khr_int64
-int __attribute__((__overloadable__)) any(long a)
+int _cl_overloadable any(long a)
 {
   return a < 0L;
 }
 
-int __attribute__((__overloadable__)) any(long2 a)
+int _cl_overloadable any(long2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(long3 a)
+int _cl_overloadable any(long3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int __attribute__((__overloadable__)) any(long4 a)
+int _cl_overloadable any(long4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(long8 a)
+int _cl_overloadable any(long8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int __attribute__((__overloadable__)) any(long16 a)
+int _cl_overloadable any(long16 a)
 {
   return any(a.lo) || any(a.hi);
 }

@@ -32,6 +32,9 @@
    only. Seems the pragma does not add the macro, so we have the target
    define the macro and the pragma is conditionally enabled.
 */
+#ifdef cl_khr_fp16
+#  pragma OPENCL EXTENSION cl_khr_fp16: enable
+#endif
 #ifdef cl_khr_fp64
 #  pragma OPENCL EXTENSION cl_khr_fp64: enable
 #endif

@@ -33,28 +33,20 @@ clGetContextInfo(cl_context context,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   size_t value_size;
-
+  
   switch (param_name) {
-  default:
-    assert(0);
+    
   case CL_CONTEXT_DEVICES:
-    value_size = context->num_devices * sizeof(cl_device_id);
-  }
-
-  if (param_value_size_ret != NULL)
-    *param_value_size_ret = value_size;
-
-  if (param_value != NULL) {
-    if (value_size > param_value_size)
-      return CL_INVALID_VALUE;
-
-    switch (param_name) {
-    default:
-      assert(0);
-    case CL_CONTEXT_DEVICES:
-      memcpy(param_value, context->devices, value_size);
+    {
+      value_size = context->num_devices * sizeof(cl_device_id);
+      if (param_value != NULL) {
+        if (param_value_size < value_size)
+          return CL_INVALID_VALUE;
+        memcpy(param_value, context->devices, value_size);
+      }
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
     }
   }
-  
-  return CL_SUCCESS;
 }

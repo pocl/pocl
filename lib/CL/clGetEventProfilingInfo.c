@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clEnqueueWriteBuffer()
+/* OpenCL runtime library: clGetEventProfilingInfo()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Erik Schnetter
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,41 @@
 */
 
 #include "pocl_cl.h"
-#include <assert.h>
+#include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueWriteBuffer(cl_command_queue command_queue,
-                     cl_mem buffer,
-                     cl_bool blocking_write,
-                     size_t offset,
-                     size_t cb, 
-                     const void *ptr,
-                     cl_uint num_events_in_wait_list,
-                     const cl_event *event_wait_list,
-                     cl_event *event) CL_API_SUFFIX__VERSION_1_0
+clGetEventProfilingInfo(cl_event event,
+                        cl_profiling_info param_name,
+                        size_t param_value_size,
+                        void *param_value,
+                        size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  cl_device_id device_id;
-  unsigned i;
-
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
-
-  if (buffer == NULL)
-    return CL_INVALID_MEM_OBJECT;
-
-  if (command_queue->context != buffer->context)
-    return CL_INVALID_CONTEXT;
-
-  if ((ptr == NULL) ||
-      (offset + cb > buffer->size))
-    return CL_INVALID_VALUE;
-
-  device_id = command_queue->device;
-  for (i = 0; i < command_queue->context->num_devices; ++i)
+  size_t const value_size = sizeof(cl_ulong);
+  if (param_value)
+  {
+    if (param_value_size < value_size) return CL_INVALID_VALUE;
+    
+    switch (param_name)
     {
-      if (command_queue->context->devices[i] == device_id)
-	break;
+    case CL_PROFILING_COMMAND_QUEUED:
+      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      break;
+    case CL_PROFILING_COMMAND_SUBMIT:
+      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      break;
+    case CL_PROFILING_COMMAND_START:
+      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      break;
+    case CL_PROFILING_COMMAND_END:
+      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      break;
+    default:
+      return CL_INVALID_VALUE;
     }
-
-  assert(i < command_queue->context->num_devices);
-
-  device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
-
+  }
+  
+  if (param_value_size_ret)
+    *param_value_size_ret = value_size;
+  
   return CL_SUCCESS;
 }

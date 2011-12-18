@@ -1170,7 +1170,7 @@ DEFINE_BODY_G
  })
  )
 
-void test_bitselect()
+kernel void test_bitselect()
 {
   CALL_FUNC_G(test_bitselect)
 }

@@ -1,6 +1,6 @@
-/* OpenCL built-in library: cross()
+/* OpenCL runtime library: clEnqueueBarrier()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Erik Schnetter
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,28 +21,11 @@
    THE SOFTWARE.
 */
 
-float4 _cl_overloadable cross(float4 a, float4 b)
-{
-  return (float4)(cross(a.xyz, b.xyz), 0.0f);
-}
+#include "pocl_cl.h"
 
-float3 _cl_overloadable cross(float3 a, float3 b)
+CL_API_ENTRY cl_int CL_API_CALL
+clEnqueueBarrier(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  return (float3)(a.y * b.z - a.z * b.y,
-                  a.z * b.x - a.x * b.z,
-                  a.x * b.y - a.y * b.x);
+  /* All operations are serialised, so we never have to wait */
+  return CL_SUCCESS;
 }
-
-#ifdef cl_khr_fp64
-double4 _cl_overloadable cross(double4 a, double4 b)
-{
-  return (double4)(cross(a.xyz, b.xyz), 0.0f);
-}
-
-double3 _cl_overloadable cross(double3 a, double3 b)
-{
-  return (double3)(a.y * b.z - a.z * b.y,
-                   a.z * b.x - a.x * b.z,
-                   a.x * b.y - a.y * b.x);
-}
-#endif

@@ -31,14 +31,14 @@ clGetPlatformInfo(cl_platform_id   platform,
                   void *           param_value,
                   size_t *         param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  char *ret=0;
-  int retlen;	
+  const char *ret;
+  int retlen;
 
   if (platform == NULL || (platform->magic != 42))
     return CL_INVALID_PLATFORM;
 	
   switch (param_name)
-	{
+  {
     case CL_PLATFORM_PROFILE:
       // TODO: figure this out depending on the native execution host.
       // assume FULL_PROFILE for now.
@@ -59,23 +59,21 @@ clGetPlatformInfo(cl_platform_id   platform,
       break;
     default: 
       return CL_INVALID_VALUE;
-	}
+  }
 
-  // Specs say (section 4.1) to "ignore param_value" should it be NULL
-  if (param_value == NULL)
-    return CL_SUCCESS;	
-	
   // the OpenCL API docs *seem* to count the trailing NULL
   retlen = strlen(ret) + 1;
 	
-  if (param_value_size < retlen)
-    return CL_INVALID_VALUE;
-
-  strncpy(param_value, ret, retlen); 
+  if (param_value != NULL)
+  {
+    if (param_value_size < retlen)
+      return CL_INVALID_VALUE;
+    
+    memcpy(param_value, ret, retlen); 
+  }
 	
   if (param_value_size_ret != NULL)
-    *param_value_size_ret=retlen;
+    *param_value_size_ret = retlen;
 	
   return CL_SUCCESS;
-
 }

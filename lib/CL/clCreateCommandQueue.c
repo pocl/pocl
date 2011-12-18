@@ -38,5 +38,7 @@ clCreateCommandQueue(cl_context context,
   command_queue->reference_count = 1;
   command_queue->properties = properties;
 
+  if (errcode_ret != NULL)
+    *errcode_ret = CL_SUCCESS;
   return command_queue;
 }
