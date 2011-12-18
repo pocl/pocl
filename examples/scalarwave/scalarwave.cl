@@ -21,7 +21,7 @@ typedef struct grid_t {
   int ni, nj, nk;               // used size
 } grid_t;
 
-void
+kernel void
 scalarwave(global double       *restrict const phi,
            global double const *restrict const phi_p,
            global double const *restrict const phi_p_p,

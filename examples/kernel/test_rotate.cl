@@ -198,7 +198,7 @@ DEFINE_BODY_G
  })
  )
 
-void test_rotate()
+kernel void test_rotate()
 {
   CALL_FUNC_G(test_rotate)
 }
