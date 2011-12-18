@@ -1,4 +1,4 @@
-// Header for CanonicalizeBarriers.cc function pass.
+// Class for a basic block that just contains a barrier.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -20,32 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
-#include <set>
+#include "llvm/BasicBlock.h"
 
 namespace pocl {
-  class Workgroup;
 
-  class CanonicalizeBarriers : public llvm::FunctionPass {
-    
+  class BarrierBlock : public llvm::BasicBlock {
+
   public:
-    static char ID;
-    
-  CanonicalizeBarriers() : FunctionPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
-    
-  private:
-    typedef std::set<llvm::Instruction *> InstructionSet;
-    
-    llvm::LoopInfo *LI;
-    llvm::DominatorTree *DT;
-
-    bool ProcessFunction(llvm::Function &F);
-
-    friend class pocl::Workgroup;
+    static bool classof(const BarrierBlock *) { return true; };
+    static bool classof(const llvm::BasicBlock *B);
   };
+
 }

@@ -1,14 +1,13 @@
 ; ModuleID = 'loopbarriers1_input.ll'
 
-declare void @barrier(i32)
+declare void @pocl.barrier()
 
-define void @forbarrier1() {
-a.loopbarrier:
-  call void @barrier(i32 0)
+define void @loopbarriers1() {
+a:
   br label %barrier
 
-barrier:                                          ; preds = %barrier, %a.loopbarrier
-  call void @barrier(i32 0)
+barrier:                                          ; preds = %barrier, %a
+  call void @pocl.barrier()
   br i1 true, label %barrier, label %b
 
 b:                                                ; preds = %barrier

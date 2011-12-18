@@ -1,4 +1,5 @@
-// Header for CanonicalizeBarriers.cc function pass.
+// Class definition for parallel regions, a group of BasicBlocks that
+// each kernel should run in parallel.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 // 
@@ -20,32 +21,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
-#include <set>
+#include "BarrierBlock.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
+#include <vector>
 
 namespace pocl {
-  class Workgroup;
+  
+  class ParallelRegion : public std::vector<llvm::BasicBlock *> {
+    
+  public:    
+    /* BarrierBlock *getEntryBarrier(); */
+    ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
+                              const llvm::Twine &suffix);
+    void remap(llvm::ValueToValueMapTy &map);
+    void purge();
+    void chainAfter(ParallelRegion *region);
+    void insertPrologue(unsigned x, unsigned y, unsigned z);
+    void dump();
 
-  class CanonicalizeBarriers : public llvm::FunctionPass {
-    
-  public:
-    static char ID;
-    
-  CanonicalizeBarriers() : FunctionPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
+    static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
+                                  llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
     
   private:
-    typedef std::set<llvm::Instruction *> InstructionSet;
-    
-    llvm::LoopInfo *LI;
-    llvm::DominatorTree *DT;
-
-    bool ProcessFunction(llvm::Function &F);
-
-    friend class pocl::Workgroup;
+    bool Verify();
   };
+    
 }
+                              

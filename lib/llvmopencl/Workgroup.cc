@@ -117,6 +117,13 @@ Workgroup::runOnModule(Module &M)
       createWorkgroup(M, L);
     }
   }
+
+  Function *barrier = cast<Function> 
+    (M.getOrInsertFunction("pocl.barrier",
+                           Type::getVoidTy(M.getContext()),
+                           NULL));
+  BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);
+  ReturnInst::Create(M.getContext(), 0, bb);
   
   return true;
 }

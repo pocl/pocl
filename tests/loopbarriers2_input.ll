@@ -1,6 +1,6 @@
-declare void @barrier(i32 %flags)
+declare void @pocl.barrier()
 
-define void @forbarrier2() {
+define void @loopbarriers2() {
 a:
   br label %b
 
@@ -8,7 +8,7 @@ b:
   br label %barrier
 
 barrier:
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br i1 1, label %barrier, label %c
 
 c:

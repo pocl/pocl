@@ -1,27 +1,27 @@
 ; ModuleID = 'forbarrier2_loops_btr_barriers.ll'
 
-declare void @barrier(i32)
+declare void @pocl.barrier()
 
 define void @forbarrier2() {
 a.loopbarrier.prebarrier.wi_0_0_0:
   br label %a.loopbarrier.prebarrier.wi_1_0_0
 
 a.loopbarrier:                                    ; preds = %a.loopbarrier.prebarrier.wi_1_1_1
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %b.loopbarrier.prebarrier.wi_0_0_0
 
 b.loopbarrier.prebarrier.wi_0_0_0:                ; preds = %c.latchbarrier.postbarrier.wi_0_0_0, %a.loopbarrier
   br label %b.loopbarrier.prebarrier.wi_1_0_0
 
 b.loopbarrier:                                    ; preds = %b.loopbarrier.prebarrier.wi_1_1_1
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %barrier.prebarrier.wi_0_0_0
 
 barrier.prebarrier.wi_0_0_0:                      ; preds = %barrier.postbarrier.wi_0_0_0, %b.loopbarrier
   br label %barrier.prebarrier.wi_1_0_0
 
 barrier:                                          ; preds = %barrier.prebarrier.wi_1_1_1
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %barrier.postbarrier.wi_0_0_0
 
 barrier.postbarrier.wi_0_0_0:                     ; preds = %barrier
@@ -31,7 +31,7 @@ c.latchbarrier.prebarrier.wi_0_0_0:               ; preds = %barrier.postbarrier
   br label %barrier.postbarrier.wi_1_0_0
 
 c.latchbarrier:                                   ; preds = %c.latchbarrier.prebarrier.wi_1_1_1
-  call void @barrier(i32 0)
+  call void @pocl.barrier()
   br label %c.latchbarrier.postbarrier.wi_0_0_0
 
 c.latchbarrier.postbarrier.wi_0_0_0:              ; preds = %c.latchbarrier

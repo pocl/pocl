@@ -26,6 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+LEX =
+
 targetpkglibdir = $(pkglibdir)/arm
 targetpkglib_LIBRARIES = libkernel.a
 
@@ -59,6 +61,9 @@ endif
 
 .c.o:
 	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/arm/types.h -o $@ $<
+
+barrier.o: barrier.ll
+	$(LLVM_AS) -o $@ $<
 
 # TODO: This misses the dependency on the device-specific include files
 # TODO: Dependencies should be generated automatically

@@ -21,6 +21,8 @@
 // THE SOFTWARE.
 
 #include "CanonicalizeBarriers.h"
+#include "BarrierBlock.h"
+#include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -28,12 +30,6 @@
 
 using namespace llvm;
 using namespace pocl;
-
-#define BARRIER_FUNCTION_NAME "barrier"
-
-static bool is_barrier(Instruction *i);
-
-static Function *barrier = NULL;
 
 namespace {
   static
@@ -47,16 +43,7 @@ void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addPreserved<DominatorTree>();
-  AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
-}
-
-bool
-CanonicalizeBarriers::doInitialization(Module &M)
-{
-  barrier = M.getFunction(BARRIER_FUNCTION_NAME);
-
-  return false;
 }
 
 bool
@@ -65,14 +52,35 @@ CanonicalizeBarriers::runOnFunction(Function &F)
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
+  BasicBlock *entry = &F.getEntryBlock();
+  if (!isa<BarrierBlock>(entry)) {
+    BasicBlock *effective_entry = SplitBlock(entry, 
+                                             &(entry->front()),
+                                             this);
+    effective_entry->takeName(entry);
+    entry->setName("entry.barrier");
+    Barrier::Create(entry->getTerminator());
+  }
+
+  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
+    BasicBlock *b = i;
+    TerminatorInst *t = b->getTerminator();
+    if ((t->getNumSuccessors() == 0) && (!isa<BarrierBlock>(b))) {
+      BasicBlock *exit = SplitBlock(b, t, this);
+      exit->setName("exit.barrier");
+      Barrier::Create(t);
+    }
+  }
+
   DT = getAnalysisIfAvailable<DominatorTree>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = getAnalysisIfAvailable<LoopInfo>();
 
   bool changed = ProcessFunction(F);
 
   if (DT)
     DT->verifyAnalysis();
-  LI->verifyAnalysis();
+  if (LI)
+    LI->verifyAnalysis();
 
   return changed;
 }
@@ -94,7 +102,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     BasicBlock *b = i;
     for (BasicBlock::iterator i = b->begin(), e = b->end();
 	 i != e; ++i) {
-      if (is_barrier(i))
+      if (isa<Barrier>(i))
         Barriers.insert(i);
     }
   }
@@ -108,8 +116,12 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // Split post barrier first cause it does not make the barrier
     // to belong to another basic block.
     TerminatorInst  *t = b->getTerminator();
-    if ((t->getNumSuccessors() != 1) ||
-        (t->getPrevNode() != *i)) {
+    // if ((t->getNumSuccessors() > 1) ||
+    //     (t->getPrevNode() != *i)) {
+    // Change: barriers with several successors are all right
+    // they just start several parallel regions. Simplifies
+    // loop handling.
+    if (t->getPrevNode() != *i) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;
@@ -119,8 +131,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     if (predecessor != NULL) {
       TerminatorInst *pt = predecessor->getTerminator();
       if ((pt->getNumSuccessors() == 1) &&
-          (&b->front() == (*i)))
-        {
+          (&b->front() == (*i))) {
         // Barrier is at the beginning of the BB,
         // which has a single predecessor with just
         // one successor (the barrier itself), thus
@@ -128,6 +139,14 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
         continue;
       }
     }
+    if ((b == &(b->getParent()->getEntryBlock())) &&
+        (&b->front() == (*i)))
+      continue;
+    
+    // If no instructions before barrier, do not split
+    // (allow multiple predecessors, eases loop handling).
+    // if (&b->front() == (*i))
+    //   continue;
     BasicBlock *new_b = SplitBlock(b, *i, this);
     new_b->takeName(b);
     b->setName(new_b->getName() + ".prebarrier");
@@ -135,18 +154,4 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   }
 
   return changed;
-}
-
-
-static bool
-is_barrier(Instruction *i)
-{
-  if (CallInst *c = dyn_cast<CallInst>(i)) {
-    if (Function *f = c->getCalledFunction()) {
-      if (f == barrier)
-        return true;
-    }
-  }
-
-  return false;
 }
