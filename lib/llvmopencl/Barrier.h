@@ -52,7 +52,8 @@ namespace pocl {
     }
     static bool classof(const Barrier *) { return true; };
     static bool classof(const llvm::CallInst *C) {
-      return C->getCalledFunction()->getName() == BARRIER_FUNCTION_NAME;
+      return C->getCalledFunction() != NULL &&
+        C->getCalledFunction()->getName() == BARRIER_FUNCTION_NAME;
     }
     static bool classof(const Instruction *I) {
       return (llvm::isa<llvm::CallInst>(I) &&
