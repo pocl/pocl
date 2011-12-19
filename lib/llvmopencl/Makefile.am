@@ -36,6 +36,7 @@ llvmopencl_la_SOURCES = Barrier.h						\
                         LoopBarriers.h LoopBarriers.cc				\
                         GenerateHeader.cc Workgroup.cc				\
 			BarrierTailReplication.h BarrierTailReplication.cc	\
+                        Flatten.cc                                              \
 			WorkitemReplication.h WorkitemReplication.cc
 
 #llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

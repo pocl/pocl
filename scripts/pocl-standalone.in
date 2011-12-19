@@ -83,8 +83,8 @@ rm a.out
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -loop-simplify -loop-barriers -barriertails -barriers -workitem -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -loop-simplify -loop-barriers -barriertails -barriers -flatten -always-inline -workitem -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -loop-simplify -generate-header -loop-barriers -barriertails -barriers -workitem -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -loop-simplify -generate-header -loop-barriers -barriertails -barriers -flatten -always-inline -workitem -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
 fi
 rm -fr ${tempdir}
