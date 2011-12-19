@@ -21,5 +21,6 @@ Low priority:
     * standalone target (and standalone-mt).
     * ICD support.
     * device supporting IBM Cell BE.
+    * better workgroup (replicated) function caching.
 
 (1.0) == requirement for the pocl 1.0 release
