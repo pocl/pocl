@@ -166,6 +166,16 @@ AT_CLEANUP
           
 AT_BANNER([Kernel runtime library])
 
+AT_SETUP([Kernel functions])
+AT_DATA([expout],
+[Running test #0 test_bitselect...
+Running test #1 test_fabs...
+Running test #2 test_hadd...
+DONE
+])
+AT_CHECK([$abs_top_builddir/examples/kernel/kernel], 0, expout)
+AT_CLEANUP
+
 AT_SETUP([Trigonometric functions])
 AT_DATA([expout],
 [f(0.000000, 0.000000, 0.000000, 0.000000) = (1.000000, 1.000000, 1.000000, 1.000000)
