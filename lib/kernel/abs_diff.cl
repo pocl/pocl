@@ -23,4 +23,23 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_UG_GG(abs_diff, abs(a-b))
+// DEFINE_EXPR_UG_GG(abs_diff, abs(a-b))
+
+// This could probably also be optimised
+DEFINE_EXPR_UG_GG(abs_diff,
+                  (sgtype)-1 < (sgtype)0 ?
+                  /* signed */
+                  ({
+                    (a^b) >= (gtype)0 ?
+                      /* same sign: no overflow/underflow */
+                      abs(a-b) :
+                      /* different signs */
+                      abs(a) + abs(b);
+                  }) :
+                  /* unsigned */
+                  ({
+                    /* This abs prevents a type error; it is not
+                       exectued for signed types, and is a no-op for
+                       unsigned types */
+                    abs(a > b ? a-b : b-a);
+                  }))
