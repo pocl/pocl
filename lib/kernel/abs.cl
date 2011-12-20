@@ -23,14 +23,9 @@
 
 #include "templates.h"
 
-/* Can't use the builtin because it has the wrong signature (or could
-   we?) */
-#define __builtin_abs __builtin__cl_abs
-
-#define __builtin_abshh(a)   ((uchar )(a>=(char )0 ? a : (char )-a))
-#define __builtin_absh(a)    ((ushort)(a>=(short)0 ? a : (short)-a))
-#define __builtin__cl_abs(a) ((uint  )(a>=(int  )0 ? a : (int  )-a))
-#define __builtin_absl(a)    ((ulong )(a>=(long )0 ? a : (long )-a))
+#define __builtin_abshh(a)   ((uchar )(a>=(char )0 ? a : -a))
+#define __builtin_absh(a)    ((ushort)(a>=(short)0 ? a : -a))
+#define __builtin_absl(a)    ((ulong )(a>=(long )0 ? a : -a))
 #define __builtin_absuhh(a)  a
 #define __builtin_absuh(a)   a
 #define __builtin_absu(a)    a
