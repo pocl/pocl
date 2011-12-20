@@ -70,18 +70,21 @@ Flatten::runOnModule(Module &M)
     Value *v = pending.back();
     pending.pop_back();
 
-    if (Function *f = dyn_cast<Function>(v)) {
-      // Prevent infinite looping on recursive functions
-      // (though OpenCL does not allow this?)
-      if (functions_to_inline.count(f))
-	continue;
-
-      functions_to_inline.insert(f);
-    }
-
     for (Value::use_iterator i = v->use_begin(), e = v->use_end();
-	 i != e; ++i)
-      pending.push_back(*i);
+	 i != e; ++i) {
+      if (Instruction *ci = dyn_cast<Instruction>(*i)) {
+        // Prevent infinite looping on recursive functions
+        // (though OpenCL does not allow this?)
+        Function *f = ci->getParent()->getParent();;
+        assert((f != NULL) &&
+               "Per-workgroup global variable used on function with no parent!");
+        if (functions_to_inline.count(f))
+          continue;
+        
+        functions_to_inline.insert(f);
+        pending.push_back(f);
+      }
+    }
   }
 
   for (SmallPtrSet<Function *, 8>::iterator i = functions_to_inline.begin(),

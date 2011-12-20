@@ -29,9 +29,9 @@ LEX =
 targetpkglibdir = $(pkglibdir)/tce
 targetpkglib_LIBRARIES = libkernel.a
 
-vpath %.cl @srcdir@/..
-vpath %.c @srcdir@/..
-vpath %.ll @srcdir@/..
+vpath %.cl @srcdir@:@srcdir@/..
+vpath %.c @@srcdir@:@srcdir@/..
+vpath %.ll @srcdir:@srcdir@/..
 
 include ../sources.mk
 
