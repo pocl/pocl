@@ -24,7 +24,7 @@
 
 noinst_PROGRAMS = kernel
 
-kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_rotate.cl
+kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_hadd.cl test_rotate.cl
 kernel_LDADD = ../../lib/CL/libCL.la -lm @PTHREAD_LIBS@
 kernel_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
 

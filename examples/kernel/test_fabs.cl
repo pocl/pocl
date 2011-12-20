@@ -137,6 +137,7 @@ DEFINE_BODY_V
          if (!equal) {
            printf("FAIL: fabs type=%s val=%.17g res=%.17g\n",
                   typename, val.s[0], res.s[0]);
+           return;
          }
          /* signbit */
          Jvec ires;
@@ -148,6 +149,7 @@ DEFINE_BODY_V
          if (!equal) {
            printf("FAIL: signbit type=%s val=%.17g res=%d\n",
                   typename, val.s[0], (int)ires.s[0]);
+           return;
          }
          /* copysign */
          for (int sign2=-1; sign2<=+1; sign2+=2) {
@@ -163,6 +165,7 @@ DEFINE_BODY_V
              for (int n=0; n<vecsize; ++n) {
                printf("FAIL: copysign type=%s val=%.17g sign=%.17g res=%.17g\n",
                       typename, val.s[n], sign2*val2.s[n], res.s[n]);
+               return;
              }
            }
          }
