@@ -35,7 +35,7 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_CXX
 
-AC_CHECK_PROGS([LLVM_CONFIG], [llvm-config])
+AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -111,7 +111,7 @@ fi
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
 AC_ARG_VAR([CLANGFLAGS], [Flags to be passed to CLANG regardless of the target])
 
-AC_CHECK_PROGS([CLANG], [clang])
+AC_PATH_PROG([CLANG], [clang])
 test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
@@ -121,10 +121,10 @@ AC_LANG([C])
 old_CC="$CC"
 CC="$CLANG"
 
-AC_CHECK_PROGS([OPT], [opt])
-AC_CHECK_PROGS([LLVM_LD], [llvm-ld])
-AC_CHECK_PROGS([LLC], [llc])
-AC_CHECK_PROGS([LLVM_AS], [llvm-as])
+AC_PATH_PROG([OPT], [opt])
+AC_PATH_PROG([LLVM_LD], [llvm-ld])
+AC_PATH_PROG([LLC], [llc])
+AC_PATH_PROG([LLVM_AS], [llvm-as])
 test -z "$OPT" || \
 test -z "$LLVM_LD" || \
 test -z "$LLC" || \

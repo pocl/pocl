@@ -53,7 +53,7 @@ else
     @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 fi
 
-clang -c -o ${output_file}.o -x c - <<EOF
+@CLANG@ -c -o ${output_file}.o -x c - <<EOF
 #include "${header}"
 
 unsigned _num_args = _${kernel}_NUM_ARGS;
