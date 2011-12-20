@@ -166,14 +166,38 @@ AT_CLEANUP
           
 AT_BANNER([Kernel runtime library])
 
-AT_SETUP([Kernel functions])
+AT_SETUP([Kernel function bitselect])
 AT_DATA([expout],
-[Running test #0 test_bitselect...
-Running test #1 test_fabs...
-Running test #2 test_hadd...
-DONE
+[Running test test_bitselect...
+OK
 ])
-AT_CHECK([$abs_top_builddir/examples/kernel/kernel], 0, expout)
+AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_bitselect], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions fabs signbit copysign])
+AT_DATA([expout],
+[Running test test_fabs...
+OK
+])
+AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_fabs], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions abs abs_diff add_sat hadd rhadd])
+AT_DATA([expout],
+[Running test test_hadd...
+OK
+])
+AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions << >> rotate])
+AT_DATA([expout],
+[Running test test_rotate...
+OK
+])
+#AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_rotate], 0, expout)
+# Skip this test until << and >> work correctly in clang's OpenCL
+AT_CHECK([exit 77])
 AT_CLEANUP
 
 AT_SETUP([Trigonometric functions])

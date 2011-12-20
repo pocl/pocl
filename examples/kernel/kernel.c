@@ -70,25 +70,41 @@ int call_test(char const *const name)
 
 
 int
-main(void)
+main(int argc, char **argv)
 {
-  char const *const tests[] = {
-    "test_bitselect",
-    "test_fabs",
-    "test_hadd",
-    //"test_rotate",   /* TODO: this test fails; LLVM bug #11555 */
-  };
-  int const ntests = sizeof(tests)/sizeof(*tests);
-  for (int i=0; i<ntests; ++i) {
-    printf("Running test #%d %s...\n", i, tests[i]);
+  if (argc < 2) {
+    
+    /* Run all tests */
+    char const *const tests[] = {
+      "test_bitselect",
+      "test_fabs",
+      "test_hadd",
+      //"test_rotate",   /* TODO: this test fails; LLVM bug #11555 */
+    };
+    int const ntests = sizeof(tests)/sizeof(*tests);
+    for (int i=0; i<ntests; ++i) {
+      printf("Running test #%d %s...\n", i, tests[i]);
+      int ierr;
+      ierr = call_test(tests[i]);
+      if (ierr) {
+        printf("FAIL\n");
+        return 1;
+      }
+    }
+    
+  } else {
+    
+    /* Run one test */
+    printf("Running test %s...\n", argv[1]);
     int ierr;
-    ierr = call_test(tests[i]);
+    ierr = call_test(argv[1]);
     if (ierr) {
       printf("FAIL\n");
       return 1;
     }
+    
   }
   
-  printf("DONE\n");
+  printf("OK\n");
   return 0;
 }

@@ -1,6 +1,6 @@
+// TESTING: copysign
 // TESTING: fabs
 // TESTING: signbit
-// TESTING: copysign
 
 #define IMPLEMENT_BODY_V(NAME, BODY, VTYPE, STYPE, JTYPE, SJTYPE)       \
   void NAME##_##VTYPE()                                                 \
