@@ -27,6 +27,25 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "utlist.h"
+
+#include "config.h"
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+
+#include "bufalloc.h"
+
+
+/* The minimum region size to reserve using malloc(). The maximum is
+   the size of the buffer which initiated the region allocation */
+#define MIN_REGION_SIZE 16*1024*1024
+
+/* Lock for protecting the mem_regions linked list. Held when new mem_regions
+   are created or old ones freed. */
+ba_lock_t mem_regions_lock;
+struct memory_region *mem_regions = NULL;
+
+#endif
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -74,7 +93,42 @@ pocl_pthread_init (cl_device_id device)
   d->current_dlhandle = 0;
 
   device->data = d;
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+  BA_INIT_LOCK(mem_regions_lock);
+#endif  
+
 }
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+static void *
+allocate_aligned_buffer (void **memptr, size_t alignment, size_t size) 
+{
+  BA_LOCK(mem_regions_lock);
+  chunk_info_t *chunk = alloc_buffer (regions, size);
+  if (chunk == NULL)
+    {
+      memory_region_t *new_mem_region = (memory_region_t*)malloc(sizeof(memory_region_t));
+      size_t region_size = std::min(size, MIN_REGION_SIZE);
+      void* space = NULL;
+      if ((posix_memalmalloc(&space, alignment, region_size)) == 0)
+        {
+          BA_UNLOCK (mem_regions_lock);
+          return NULL;
+        }
+      init_mem_region(new_mem_region, (memory_address_t)space, region_size);
+    }
+  BA_UNLOCK(mem_regions_lock);
+
+  return NULL;
+}
+#else
+static void *
+allocate_aligned_buffer (void **memptr, size_t alignment, size_t size) 
+{
+  return posix_memalign (memptr, alignment, size);
+}
+#endif
 
 void *
 pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr)
@@ -83,11 +137,11 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, ALIGNMENT, size) == 0)
-	{
-	  memcpy (b, host_ptr, size);
-	  return b;
-	}
+      if (allocate_aligned_buffer (&b, ALIGNMENT, size) == 0)
+        {
+          memcpy (b, host_ptr, size);
+          return b;
+        }
       
       return NULL;
     }
@@ -97,12 +151,32 @@ pocl_pthread_malloc (void *data, cl_mem_flags flags, size_t size, void *host_ptr
       return host_ptr;
     }
 
-  if (posix_memalign (&b, ALIGNMENT, size) == 0)
+  if (allocate_aligned_buffer (&b, ALIGNMENT, size) == 0)
     return b;
   
   return NULL;
 }
 
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+void
+pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
+{
+  BA_LOCK(mem_regions_lock);
+  memory_region_t *region = free_buffer (mem_regions, data);
+  if (region == NULL)
+    assert(0 && "Unable to free chunk.");
+
+  BA_LOCK(region->lock);
+  if (&region->last_chunk == region->chunks && !region->chunks->is_allocated) 
+    {
+      /* All chunks have been deallocated. free() the whole memory region at once. */
+      free ((void*)region->last_chunk.start_address);
+    }  
+  DL_DELETE(mem_regions, region);
+  BA_UNLOCK(region->lock);
+  BA_UNLOCK(mem_regions_lock);
+}
+#else
 void
 pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
 {
@@ -111,6 +185,7 @@ pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
   
   free (ptr);
 }
+#endif
 
 void
 pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)

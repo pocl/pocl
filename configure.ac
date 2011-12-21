@@ -57,6 +57,11 @@ Unsupported LLVM version.
    ;;
 esac
 
+AC_ARG_ENABLE([custom-buffer-allocator],
+[AS_HELP_STRING([--enable-custom-buffer-allocator], 
+ [use a custom OpenCL optimized memory allocator instead of malloc for buffer allocation (experimental)])],
+[AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")], 
+[])
 
 #AC_LANG([C++])
 ACX_PTHREAD()
