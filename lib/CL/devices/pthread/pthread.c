@@ -121,7 +121,7 @@ pocl_pthread_uninit (cl_device_id device)
   DL_FOREACH_SAFE(d->mem_regions, region, temp)
     {
       DL_DELETE(d->mem_regions, region);
-      free ((void*)region->last_chunk->start_address);
+      free ((void*)region->chunks->start_address);
       free (region);    
     }
   d->mem_regions = NULL;
