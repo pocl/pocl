@@ -58,6 +58,7 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\
+                   devices/bufalloc.c		\
                    devices/native/native.h	\
                    devices/native/native.c	\
                    devices/pthread/pthread.h	\

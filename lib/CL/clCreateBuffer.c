@@ -53,15 +53,15 @@ clCreateBuffer(cl_context context,
       device_id = context->devices[i];
       device_ptr = device_id->malloc(device_id->data, flags, size, host_ptr);
       if (device_ptr == NULL)
-	{
+        {
           for (j = 0; j < i; ++j)
             {
               device_id = context->devices[j];
               device_id->free(device_id->data, flags, mem->device_ptrs[j]);
             }
           free(mem);
-	  POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
-	}
+          POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
+        }
       mem->device_ptrs[i] = device_ptr;
     }
 
