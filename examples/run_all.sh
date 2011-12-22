@@ -2,7 +2,7 @@
 #
 # Executes all the examples in a row.
 #
-TESTS="example1 example2 barriers forloops kernel loopbarriers trig scalarwave"
+TESTS="example1 example2 barriers forloops loopbarriers trig"
 
 for dname in ${TESTS}; 
 do 

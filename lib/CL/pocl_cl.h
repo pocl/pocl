@@ -95,6 +95,7 @@ struct _cl_device_id {
   char *version;
   char *extensions;
   /* implementation */
+  void (*uninit) (cl_device_id device);
   void (*init) (cl_device_id device);
   void *(*malloc) (void *data, cl_mem_flags flags,
 		   size_t size, void *host_ptr);

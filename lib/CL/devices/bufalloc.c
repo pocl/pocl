@@ -77,9 +77,9 @@
 static void
 print_chunk (chunk_info_t *chunk)
 {
-  printf ("### chunk %x: allocated: %d start: %x size: %u\n", 
+  printf ("### chunk %x: allocated: %d start: %x size: %u prev: %x next: %x\n", 
           chunk, chunk->is_allocated, chunk->start_address,
-          chunk->size);
+          chunk->size, chunk->prev, chunk->next);
 }
 
 static void
@@ -119,10 +119,10 @@ append_new_chunk (struct memory_region *region,
   chunk_info_t* new_chunk = NULL;
   BA_LOCK (region->lock);
 
-  /* if the last_chunk is allocated or too small we cannot append
+  assert (!region->last_chunk->is_allocated);
+  /* if the last_chunk is too small we cannot append
      a new chunk before it */
-  if (region->last_chunk->is_allocated || 
-      chunk_slack (region->last_chunk, size) < 0)
+  if (chunk_slack (region->last_chunk, size) < 0)
     {
       BA_UNLOCK (region->lock);
       return NULL;
@@ -151,7 +151,7 @@ append_new_chunk (struct memory_region *region,
   new_chunk->size = size;
   new_chunk->is_allocated = 1;
 
-  region->last_chunk->size -= new_chunk->start_address - region->last_chunk->start_address;
+  region->last_chunk->size = chunk_slack (region->last_chunk, size);
   region->last_chunk->start_address = 
     new_chunk->start_address + new_chunk->size;
 
@@ -166,7 +166,6 @@ append_new_chunk (struct memory_region *region,
 #endif
   
   BA_UNLOCK (region->lock);
-
 
   return new_chunk;
 }
@@ -185,7 +184,7 @@ alloc_buffer_from_region (memory_region_t *region, size_t size)
      Assume there's plenty of memory so just try to append the
      buffer to the end of the region without trying to reuse
      unallocated ones first. */
-  chunk_info_t* chunk = NULL;
+  chunk_info_t* chunk = NULL, *cursor;
   if (region->strategy == BALLOCS_WASTEFUL)
     {
       chunk = append_new_chunk(region, size);
@@ -194,13 +193,27 @@ alloc_buffer_from_region (memory_region_t *region, size_t size)
 
   BA_LOCK (region->lock);
   
-  DL_FOREACH (region->chunks, chunk) 
+  DL_FOREACH (region->chunks, cursor) 
     {
-      if (chunk->is_allocated || 
-          chunk_slack (chunk, size) < 0)
+      if (cursor == region->last_chunk ||
+          cursor->is_allocated || 
+          chunk_slack (cursor, size) < 0)
+      {
+#ifdef DEBUG_BUFALLOC
+          printf ("#### no good for reuse (slack: %d): ", chunk_slack (cursor, size));
+          print_chunk (cursor);
+#endif         
         continue; /* doesn't fit */
+      }
       /* found one */
+      chunk = cursor;
       chunk->is_allocated = 1;
+
+#ifdef DEBUG_BUFALLOC
+      printf ("#### after reusing a chunk in region %x\n", region);
+      print_chunks (region->chunks);
+      printf ("\n");
+#endif
       break;
     }
 
@@ -255,11 +268,29 @@ coalesce_chunks (chunk_info_t* first,
   if (first == NULL) return second;
   if (second == NULL) return first;
   if (first->is_allocated || second->is_allocated) return second;
+
+  /* The linked list head has a prev pointing to the last (sentinel),
+     detect that here and do not merge first with the second. */
+  if (first->start_address > second->start_address) return second;
+
+#ifdef DEBUG_BUFALLOC
+  printf ("### coalescing chunks:\n");
+  print_chunk (first);
+  print_chunk (second);
+  puts ("\n");
+#endif
+
   /* Should not just add the size of the second chunk as we might have
      done alignment adjustment to the start address */
   first->size = second->start_address + second->size - first->start_address;
   DL_DELETE (first->parent_region->chunks, second);
   DL_APPEND (first->parent_region->free_chunks, second);
+
+  /* Did we coalesce away the sentinel chunk? Need to set it to
+     a new valid one. */
+  if (second->parent_region->last_chunk == second)
+      second->parent_region->last_chunk = first;
+
   return first;
 }
 
@@ -280,6 +311,12 @@ free_buffer (memory_region_t *regions, memory_address_t addr)
               chunk->is_allocated = 0;
               coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
               BA_UNLOCK (region->lock);
+#ifdef DEBUG_BUFALLOC
+              printf ("#### region %x after free_buffer at addr %x\n", 
+                      region, addr);
+              print_chunks (region->chunks);
+              printf ("\n");
+#endif
               return region;
             }
         }
@@ -297,11 +334,18 @@ free_buffer (memory_region_t *regions, memory_address_t addr)
 void 
 free_chunk (chunk_info_t* chunk) 
 {
-  struct memory_region *region = chunk->parent_region;
+  memory_region_t *region = chunk->parent_region;
   BA_LOCK (region->lock);
   chunk->is_allocated = 0;
   coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
   BA_UNLOCK (region->lock);
+
+#ifdef DEBUG_BUFALLOC
+  printf ("#### after free_chunk (%x)\n", chunk);
+  print_chunks (region->chunks);
+  printf ("\n");
+#endif
+
 }
 
 void 
@@ -309,6 +353,8 @@ init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
 {
   int i;
   BA_INIT_LOCK (region->lock);
+
+  region->strategy = BALLOCS_WASTEFUL;
 
   /* Create the "sentinel chunk" */
   region->last_chunk = &region->all_chunks[0];
@@ -323,4 +369,8 @@ init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
   for (i = 1; i < MAX_CHUNKS_IN_REGION; ++i)
     DL_APPEND (region->free_chunks, &region->all_chunks[i]);
 
+#ifdef DEBUG_BUFALLOC
+  printf ("#### memory region %x created. start: %x size: %u\n", 
+          region, start, size);
+#endif
 }
