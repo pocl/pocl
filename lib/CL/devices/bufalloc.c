@@ -70,11 +70,35 @@
 #include "bufalloc.h"
 #include "utlist.h"
 
-static int chunk_slack (chunk_info_t* chunk, size_t size)
+//#define DEBUG_BUFALLOC
+
+#ifdef DEBUG_BUFALLOC
+
+static void
+print_chunk (chunk_info_t *chunk)
+{
+  printf ("### chunk %x: allocated: %d start: %x size: %u\n", 
+          chunk, chunk->is_allocated, chunk->start_address,
+          chunk->size);
+}
+
+static void
+print_chunks (chunk_info_t *first)
+{
+  chunk_info_t *chunk;
+  DL_FOREACH (first, chunk) 
+    {
+      print_chunk (chunk);
+    }
+}
+#endif
+
+static int
+chunk_slack (chunk_info_t* chunk, size_t size)
 {
   memory_address_t aligned_start_addr = 
     (chunk->start_address + chunk->parent_region->alignment - 1) &
-    ~chunk->parent_region->alignment; 
+    ~(chunk->parent_region->alignment - 1);
 
   return chunk->start_address + chunk->size - (aligned_start_addr + size);
 }
@@ -87,18 +111,20 @@ static int chunk_slack (chunk_info_t* chunk, size_t size)
  *
  * @return The address of the chunk if it fits, 0 otherwise.
  */
-static chunk_info_t* append_new_chunk (struct memory_region *region, 
-                                       size_t size) 
+static chunk_info_t * 
+append_new_chunk (struct memory_region *region, 
+                  size_t size) 
 {
+
   chunk_info_t* new_chunk = NULL;
-  BU_LOCK (region->lock);
+  BA_LOCK (region->lock);
 
   /* if the last_chunk is allocated or too small we cannot append
      a new chunk before it */
-  if (region->last_chunk.is_allocated || 
-      chunk_slack (&region->last_chunk, size) < 0)
+  if (region->last_chunk->is_allocated || 
+      chunk_slack (region->last_chunk, size) < 0)
     {
-      BU_UNLOCK (region->lock);
+      BA_UNLOCK (region->lock);
       return NULL;
     }
 
@@ -108,7 +134,7 @@ static chunk_info_t* append_new_chunk (struct memory_region *region,
 
   if (new_chunk == NULL)
     {
-      BU_UNLOCK (region->lock);
+      BA_UNLOCK (region->lock);
       return NULL;
     } 
   else 
@@ -119,21 +145,28 @@ static chunk_info_t* append_new_chunk (struct memory_region *region,
   /* Round the start address up towards the closest aligned
      address. */
   new_chunk->start_address = 
-    (region->last_chunk.start_address + region->alignment - 1) &
-    ~region->alignment; 
+    (region->last_chunk->start_address + region->alignment - 1) &
+    ~(region->alignment - 1); 
   new_chunk->parent_region = region;
   new_chunk->size = size;
   new_chunk->is_allocated = 1;
 
-  region->last_chunk.size -= new_chunk->start_address - region->last_chunk.start_address;
-  region->last_chunk.start_address = 
+  region->last_chunk->size -= new_chunk->start_address - region->last_chunk->start_address;
+  region->last_chunk->start_address = 
     new_chunk->start_address + new_chunk->size;
 
-  DL_DELETE (region->chunks, &region->last_chunk);
+  DL_DELETE (region->chunks, region->last_chunk);
   DL_APPEND (region->chunks, new_chunk);
-  DL_APPEND (region->chunks, &region->last_chunk);
+  DL_APPEND (region->chunks, region->last_chunk);
 
-  BU_UNLOCK (region->lock);
+#ifdef DEBUG_BUFALLOC
+  printf ("#### after append_new_chunk (%x, %u)\n", region, size);
+  print_chunks (region->chunks);
+  printf ("\n");
+#endif
+  
+  BA_UNLOCK (region->lock);
+
 
   return new_chunk;
 }
@@ -143,8 +176,10 @@ static chunk_info_t* append_new_chunk (struct memory_region *region,
  *
  * @return The chunk, or NULL if no space available in the region.
  */
-chunk_info_t* alloc_buffer_from_region (struct memory_region *region, size_t size) 
+chunk_info_t* 
+alloc_buffer_from_region (memory_region_t *region, size_t size) 
 {
+  assert (region != NULL);
   /* The memory-wasteful but fast strategy:
 
      Assume there's plenty of memory so just try to append the
@@ -157,7 +192,7 @@ chunk_info_t* alloc_buffer_from_region (struct memory_region *region, size_t siz
       if (chunk != NULL) return chunk;
     }
 
-  BU_LOCK (region->lock);
+  BA_LOCK (region->lock);
   
   DL_FOREACH (region->chunks, chunk) 
     {
@@ -169,8 +204,7 @@ chunk_info_t* alloc_buffer_from_region (struct memory_region *region, size_t siz
       break;
     }
 
-  /* TODO: try to find a free'd chunk */
-  BU_UNLOCK (region->lock);
+  BA_UNLOCK (region->lock);
 
   if (chunk == NULL && region->strategy != BALLOCS_WASTEFUL) 
     {
@@ -190,7 +224,8 @@ chunk_info_t* alloc_buffer_from_region (struct memory_region *region, size_t siz
  * @return The start address of the chunk, or 0 if no space available
  * in the buffer.
  */
-chunk_info_t *alloc_buffer (struct memory_region *regions, size_t size)
+chunk_info_t *
+alloc_buffer (struct memory_region *regions, size_t size)
 {
   chunk_info_t *chunk = NULL;
   struct memory_region *region = NULL;
@@ -213,8 +248,9 @@ chunk_info_t *alloc_buffer (struct memory_region *regions, size_t size)
  * @return A pointer to the coalesced chunk, or the second chunk in case
  * coalsecing could not be done. 
  */
-static chunk_info_t* coalesce_chunks (chunk_info_t* first, 
-                                      chunk_info_t* second)
+static chunk_info_t * 
+coalesce_chunks (chunk_info_t* first, 
+                 chunk_info_t* second)
 {
   if (first == NULL) return second;
   if (second == NULL) return first;
@@ -222,49 +258,69 @@ static chunk_info_t* coalesce_chunks (chunk_info_t* first,
   /* Should not just add the size of the second chunk as we might have
      done alignment adjustment to the start address */
   first->size = second->start_address + second->size - first->start_address;
-  DL_REMOVE (first->parent_region->chunks, second);
+  DL_DELETE (first->parent_region->chunks, second);
   DL_APPEND (first->parent_region->free_chunks, second);
   return first;
 }
 
-memory_region_t *free_buffer (struct memory_region *regions, memory_address_t addr)
+memory_region_t *
+free_buffer (memory_region_t *regions, memory_address_t addr)
 {
   chunk_info_t *chunk = NULL;
   struct memory_region *region = NULL;
 
-  LL_FOREACH(regions, region) 
+  LL_FOREACH (regions, region) 
     {
       chunk_info_t *chunk = NULL;
-      BU_LOCK (region->lock);
-      DL_FOREACH(region->chunks, chunk)
+      BA_LOCK (region->lock);
+      DL_FOREACH (region->chunks, chunk)
         {
           if (chunk->start_address == addr) 
             {
               chunk->is_allocated = 0;
-              coalesce_chunks (coalesce_chunks(chunk->prev, chunk), chunk->next);
-              BU_UNLOCK (region->lock);
+              coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+              BA_UNLOCK (region->lock);
               return region;
             }
         }
-      BU_UNLOCK (region->lock);
+      BA_UNLOCK (region->lock);
     }
   return NULL;
 }
 
 /**
- * Marks the given chunk at given address as freed.
+ * Frees the given chunk.
+ *
+ * Successive unallocated chunks in the region, if found, are merged to
+ * form larger unallocated chunks.
  */
-void free_chunk (chunk_info_t* chunk) 
+void 
+free_chunk (chunk_info_t* chunk) 
 {
   struct memory_region *region = chunk->parent_region;
-  BU_LOCK (region->lock);
+  BA_LOCK (region->lock);
   chunk->is_allocated = 0;
-  coalesce_chunks (coalesce_chunks(chunk->prev, chunk), chunk->next);
-  BU_UNLOCK (region->lock);
+  coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+  BA_UNLOCK (region->lock);
 }
 
-void init_mem_region (memory_region_t* region, memory_address_t start, size_t size)
+void 
+init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
 {
-  /* TODO: create the sentinel chunk */
-  /* TODO: initialize the free chunks? */
+  int i;
+  BA_INIT_LOCK (region->lock);
+
+  /* Create the "sentinel chunk" */
+  region->last_chunk = &region->all_chunks[0];
+  region->last_chunk->start_address = start;
+  region->last_chunk->size = size;
+  region->last_chunk->is_allocated = 0;
+  region->last_chunk->parent_region = region;
+
+  DL_APPEND(region->chunks, region->last_chunk);
+
+  /* Setup the linked list of free chunk data structures */
+  for (i = 1; i < MAX_CHUNKS_IN_REGION; ++i)
+    DL_APPEND (region->free_chunks, &region->all_chunks[i]);
+
 }

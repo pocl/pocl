@@ -32,18 +32,14 @@
 
 #include <stddef.h>
 
-/* Always align the returned chunks at this number of bytes.
-   Must be a 2's exponent. 
-*/
-
 #ifndef __TCE_STANDALONE__
 
 #include <pthread.h>
 typedef pthread_mutex_t ba_lock_t;
 
-#define BA_WAIT_LOCK(LOCK) pthread_mutex_lock(&LOCK)
-#define BA_RELEASE_LOCK(LOCK) phtread_mutex_unlock(&LOCK)
-#define BA_INIT_LOCK(LOCK) pthread_init_lock(&LOCK)
+#define BA_LOCK(LOCK) pthread_mutex_lock (&LOCK)
+#define BA_UNLOCK(LOCK) pthread_mutex_unlock (&LOCK)
+#define BA_INIT_LOCK(LOCK) pthread_mutex_init (&LOCK, NULL)
 
 #else
 
@@ -58,6 +54,13 @@ typedef int ba_lock_t;
 #define BA_UNLOCK(LOCK) 0
 #define BA_INIT_LOCK(LOCK) LOCK = 0
 
+#endif
+
+/* The number of chunks in a region should be scaled to an approximate
+   maximum number of kernel buffer arguments. Running out of chunk 
+   data structures might leave region space unused due to that only. */
+#ifndef MAX_CHUNKS_IN_REGION
+#define MAX_CHUNKS_IN_REGION 32
 #endif
 
 /* address-space agnostic memory address */
@@ -104,6 +107,7 @@ typedef __SHARED_QUALIFIER__ struct memory_region memory_region_t;
    itself. */
 __SHARED_QUALIFIER__ struct memory_region 
 {
+  chunk_info_t all_chunks[MAX_CHUNKS_IN_REGION];
   chunk_info_t *chunks;
   chunk_info_t *free_chunks; /* A pointer to a head of a linked list of 
                                 chunk_info records that can be used for 
@@ -113,10 +117,10 @@ __SHARED_QUALIFIER__ struct memory_region
                                 client of the bufalloc should first ensure 
                                 there is at least one free chunk info before 
                                 trying the allocation. If not, create one. */
-  chunk_info_t last_chunk; /* The last chunk in the region (a "sentinel"). In case
-                              the last chunk is allocated, the region 
-                              is completely full. New chunks should be inserted
-                              before this chunk. */
+  chunk_info_t *last_chunk; /* The last chunk in the region (a "sentinel"). In case
+                               the last chunk is allocated, the region 
+                               is completely full. New chunks should be inserted
+                               before this chunk. */
   memory_region_t *next;
   memory_region_t *prev;
   enum allocation_strategy strategy; 
@@ -125,10 +129,10 @@ __SHARED_QUALIFIER__ struct memory_region
 
 };
 
-chunk_info_t *alloc_buffer_from_region(struct memory_region *region, size_t size);
-chunk_info_t *alloc_buffer(struct memory_region *regions, size_t size);
+chunk_info_t *alloc_buffer_from_region(memory_region_t *region, size_t size);
+chunk_info_t *alloc_buffer(memory_region_t *regions, size_t size);
 
-memory_region_t *free_buffer (struct memory_region *regions, memory_address_t addr);
+memory_region_t *free_buffer (memory_region_t *regions, memory_address_t addr);
 void free_chunk(chunk_info_t* chunk);
 
 #endif
