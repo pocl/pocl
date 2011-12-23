@@ -74,6 +74,8 @@
 
 #ifdef DEBUG_BUFALLOC
 
+#include <stdio.h>
+
 static void
 print_chunk (chunk_info_t *chunk)
 {
@@ -112,7 +114,7 @@ chunk_slack (chunk_info_t* chunk, size_t size)
  * @return The address of the chunk if it fits, 0 otherwise.
  */
 static chunk_info_t * 
-append_new_chunk (struct memory_region *region, 
+append_new_chunk (memory_region_t *region, 
                   size_t size) 
 {
 
@@ -198,13 +200,7 @@ alloc_buffer_from_region (memory_region_t *region, size_t size)
       if (cursor == region->last_chunk ||
           cursor->is_allocated || 
           chunk_slack (cursor, size) < 0)
-      {
-#ifdef DEBUG_BUFALLOC
-          printf ("#### no good for reuse (slack: %d): ", chunk_slack (cursor, size));
-          print_chunk (cursor);
-#endif         
         continue; /* doesn't fit */
-      }
       /* found one */
       chunk = cursor;
       chunk->is_allocated = 1;
@@ -238,10 +234,10 @@ alloc_buffer_from_region (memory_region_t *region, size_t size)
  * in the buffer.
  */
 chunk_info_t *
-alloc_buffer (struct memory_region *regions, size_t size)
+alloc_buffer (memory_region_t *regions, size_t size)
 {
   chunk_info_t *chunk = NULL;
-  struct memory_region *region = NULL;
+  memory_region_t *region = NULL;
   LL_FOREACH(regions, region) 
     {
       chunk = alloc_buffer_from_region (region, size);
@@ -298,7 +294,7 @@ memory_region_t *
 free_buffer (memory_region_t *regions, memory_address_t addr)
 {
   chunk_info_t *chunk = NULL;
-  struct memory_region *region = NULL;
+  memory_region_t *region = NULL;
 
   LL_FOREACH (regions, region) 
     {
@@ -355,6 +351,8 @@ init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
   BA_INIT_LOCK (region->lock);
 
   region->strategy = BALLOCS_WASTEFUL;
+  region->chunks = NULL;
+  region->alignment = 64;
 
   /* Create the "sentinel chunk" */
   region->last_chunk = &region->all_chunks[0];

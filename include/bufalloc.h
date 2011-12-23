@@ -41,38 +41,42 @@ typedef pthread_mutex_t ba_lock_t;
 #define BA_UNLOCK(LOCK) pthread_mutex_unlock (&LOCK)
 #define BA_INIT_LOCK(LOCK) pthread_mutex_init (&LOCK, NULL)
 
-#else
+/* The qualifier to add in case using non-default
+   address space. */
+#ifndef AS_QUALIFIER
+#define AS_QUALIFIER
+#endif
 
+#else
 /* TCE standalone mode. */
 
-typedef int ba_lock_t;
+#include "tce-sync.h"
 
-/* Assume single thread standalone for now, no locking
-   needed. */
+typedef tce_sm_lock ba_lock_t;
 
-#define BA_LOCK(LOCK) 0
-#define BA_UNLOCK(LOCK) 0
+#define BA_LOCK(LOCK) tce_sync_spin_lock (&LOCK)
+#define BA_UNLOCK(LOCK) tce_sync_unlock (&LOCK)
 #define BA_INIT_LOCK(LOCK) LOCK = 0
 
+#ifndef AS_QUALIFIER
+#define AS_QUALIFIER __shared__
+#endif
+
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* The number of chunks in a region should be scaled to an approximate
    maximum number of kernel buffer arguments. Running out of chunk 
    data structures might leave region space unused due to that only. */
 #ifndef MAX_CHUNKS_IN_REGION
-#define MAX_CHUNKS_IN_REGION 32
+#define MAX_CHUNKS_IN_REGION 64
 #endif
 
 /* address-space agnostic memory address */
 typedef size_t memory_address_t;
-
-/* A qualifier added to variables that should reside in
-   global memory. Used for the "TCE standalone" mode where the
-   device thread coordination and memory allocation is done
-   in a single "standalone" osless. */
-#ifndef __SHARED_QUALIFIER__
-#define __SHARED_QUALIFIER__ 
-#endif
 
 /* the different strategies for how to allocate buffers from a memory region */
 enum allocation_strategy 
@@ -84,7 +88,9 @@ enum allocation_strategy
                       */
   };
 
-typedef struct chunk_info chunk_info_t;
+typedef AS_QUALIFIER struct chunk_info chunk_info_t;
+
+typedef AS_QUALIFIER struct memory_region memory_region_t;
 
 /* Info of a single "chunk" inside a memory region. Chunk is a piece 
    of memory that has been allocated to a buffer (but might have been 
@@ -97,15 +103,13 @@ struct chunk_info
   size_t size; /* size in bytes */
   chunk_info_t* next;
   chunk_info_t* prev;
-  struct memory_region* parent_region;
+  memory_region_t* parent_region;
 };
-
-typedef __SHARED_QUALIFIER__ struct memory_region memory_region_t;
 
 /* Represents a single continuous region of memory from which smaller
    "chunks" are allocated. Note: this doesn't include the memory space
    itself. */
-__SHARED_QUALIFIER__ struct memory_region 
+struct memory_region 
 {
   chunk_info_t all_chunks[MAX_CHUNKS_IN_REGION];
   chunk_info_t *chunks;
@@ -126,7 +130,6 @@ __SHARED_QUALIFIER__ struct memory_region
   enum allocation_strategy strategy; 
   short alignment; /* alignment of the returned chunks in a 2's exponent byte count */
   ba_lock_t lock;
-
 };
 
 chunk_info_t *alloc_buffer_from_region(memory_region_t *region, size_t size);
@@ -134,5 +137,12 @@ chunk_info_t *alloc_buffer(memory_region_t *regions, size_t size);
 
 memory_region_t *free_buffer (memory_region_t *regions, memory_address_t addr);
 void free_chunk(chunk_info_t* chunk);
+
+void init_mem_region (
+    memory_region_t *region, memory_address_t start, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
