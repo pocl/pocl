@@ -30,6 +30,10 @@
 #ifndef BUFALLOC_H
 #define BUFALLOC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 
 #ifndef __TCE_STANDALONE__
@@ -51,6 +55,7 @@ typedef pthread_mutex_t ba_lock_t;
 /* TCE standalone mode. */
 
 #include "tce-sync.h"
+#include "dthread.h"
 
 typedef tce_sm_lock ba_lock_t;
 
@@ -62,10 +67,6 @@ typedef tce_sm_lock ba_lock_t;
 #define AS_QUALIFIER __shared__
 #endif
 
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 /* The number of chunks in a region should be scaled to an approximate
