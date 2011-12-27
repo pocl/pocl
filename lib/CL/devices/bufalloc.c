@@ -352,6 +352,7 @@ init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
 
   region->strategy = BALLOCS_WASTEFUL;
   region->chunks = NULL;
+  region->free_chunks = NULL;
   region->alignment = 64;
 
   /* Create the "sentinel chunk" */
