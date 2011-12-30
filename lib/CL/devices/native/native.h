@@ -90,6 +90,7 @@ extern size_t pocl_native_max_work_item_sizes[];
   "OpenCL 1.0 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\
+  NULL, /* uninit */                                                \
   pocl_native_init, /* init */                                          \
   pocl_native_malloc, /* malloc */					\
   pocl_native_free, /* free */						\

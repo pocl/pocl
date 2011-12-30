@@ -57,6 +57,11 @@ Unsupported LLVM version.
    ;;
 esac
 
+AC_ARG_ENABLE([region-allocator],
+[AS_HELP_STRING([--disable-region-allocator], 
+ [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly.])],
+[],
+[AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
 #AC_LANG([C++])
 ACX_PTHREAD()

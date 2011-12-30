@@ -1,4 +1,4 @@
-1.0 (unreleased)
+x.x (unreleased)
 -----------------
 - Added optimized kernel library for X86_64/SSE
 - Multithreading at work group granularity using pthreads.
@@ -9,4 +9,6 @@
 - Barrier handling finished. Barriers inside for-loops etc.
   now supported.
 - Support for automatic local variables.
+- Region-based customized memory allocator for buffer
+  allocations.
 
