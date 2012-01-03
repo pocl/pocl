@@ -126,6 +126,8 @@ pocl_pthread_uninit (cl_device_id device)
     }
   d->mem_regions = NULL;
 #endif  
+  free (d);
+  device->data = NULL;
 }
 
 
@@ -160,8 +162,8 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
           region_size = size;
         }
 
-      new_mem_region->alignment = alignment;
       init_mem_region (new_mem_region, (memory_address_t)space, region_size);
+      new_mem_region->alignment = alignment;
       DL_APPEND (d->mem_regions, new_mem_region);
       chunk = alloc_buffer_from_region (new_mem_region, size);
       
@@ -178,7 +180,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 #else
 
 static int
-allocate_aligned_buffer (data* d, void **memptr, size_t alignment, size_t size) 
+allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
 {
   return posix_memalign (memptr, alignment, size);
 }
