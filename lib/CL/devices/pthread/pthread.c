@@ -178,7 +178,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 #else
 
 static int
-allocate_aligned_buffer (data* d, void **memptr, size_t alignment, size_t size) 
+allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
 {
   return posix_memalign (memptr, alignment, size);
 }
