@@ -24,10 +24,12 @@
 AC_PREREQ([2.61])
 AC_INIT([pocl], [0.9], [carlos.delalama@urjc.es])
 AC_CONFIG_SRCDIR([config.h.in])
-AC_CONFIG_HEADER([config.h clconfig.h])
+AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_TESTDIR([tests])
+AC_CANONICAL_TARGET
+AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 
@@ -109,17 +111,13 @@ fi
 
 # Checks for programs.
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
-AC_ARG_VAR([CLANGFLAGS], [Flags to be passed to CLANG regardless of the target])
+AC_ARG_VAR([CLFLAGS], [Flags to be uused when compiling CL sources])
 
 AC_PATH_PROG([CLANG], [clang])
 test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
-AC_DEFINE_UNQUOTED([CLANGFLAGS], ["$CLANGFLAGS"], [clang flags.])
-
-AC_LANG([C])
-old_CC="$CC"
-CC="$CLANG"
+AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
 AC_PATH_PROG([OPT], [opt])
 AC_PATH_PROG([LLVM_LD], [llvm-ld])
@@ -133,9 +131,9 @@ test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH]
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
-ARM_CLANG_FLAGS="-D__ARM__DEVICE__"
-X86_64_CLANG_FLAGS="-D__X86_64_DEVICE__"
-TCE_CLANG_FLAGS="-D__TCE_DEVICE__"
+AC_CONFIG_FILES([lib/kernel/arm/Makefile
+                 lib/kernel/tce/Makefile
+                 lib/kernel/x86_64/Makefile])
 
 AC_ARG_ENABLE([arm-cortex-a8],
         [AS_HELP_STRING([--enable-arm-cortex-a8],
@@ -147,72 +145,83 @@ AC_ARG_ENABLE([arm-cortex-a8],
         ]
 )
 
-NATIVE_CLANG_FLAGS="$CLANGFLAGS"
-NATIVE_LLC_FLAGS="-relocation-model=pic"
+case $target_cpu in
+  arm*)   
+    TARGET=arm
+    TARGET_CLANG_FLAGS="$TARGET_CLANG_FLAGS $ARM_CLANG_FLAGS"
+    TARGET_LLC_FLAGS="$ARM_LLC_FLAGS"
+    ;;
+  x86_64) TARGET=x86_64 ;;
+  tce)    TARGET=tce ;;
+  *)      TARGET=$target ;;
+esac
 
-AC_CANONICAL_HOST
+HOST_LLC_FLAGS="-relocation-model=pic"
+HOST_LD_FLAGS="-shared"
+
 case $host_os in
   darwin* )
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    SHARED_LD_FLAGS="-bundle -w"  
-         ;;
-  *)
-    SHARED_LD_FLAGS="-shared"
-         ;;
+    HOST_LD_FLAGS="-bundle -w"  
+    ;;
 esac
 case $host_cpu in
   arm*)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_ARCH=arm
-    # Use the Scratchbox default Clang ARM target by default.
-    NATIVE_CLANG_FLAGS="$ARM_CLANG_FLAGS"
-    NATIVE_LLC_FLAGS="$ARM_LLC_FLAGS"
+    HOST="arm"
+    HOST_CLANG_FALGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS"
+    HOST_LLC_FLAGS="$ARM_LLC_FLAGS"
     ;;
   x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
-    HOST_ARCH=x86_64
-    NATIVE_CLANG_FLAGS="$X86_64_CLANG_FLAGS"
-    SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
+    HOST="x86_64"
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
-
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
-    HOST_ARCH=tce
-    NATIVE_CLANG_FLAGS="$TCE_CLANG_FLAGS"
-    SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
+    HOST="tce"
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
-
   *)
     AC_MSG_NOTICE([unknown host, using the generic kernel lib])
-    SHARED_LD_FLAGS="$SHARED_LD_FLAGS -lm"
-    HOST_ARCH=""
+    HOST="$host"
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
 esac
-AC_SUBST([HOST_ARCH])
-AC_DEFINE_UNQUOTED([NATIVE_CLANG_FLAGS], ["$NATIVE_CLANG_FLAGS"], 
-["Additional flags to pass to the Clang when compiling code for the 'native device'."])
-AC_SUBST([NATIVE_CLANG_FLAGS])
-AC_DEFINE_UNQUOTED([NATIVE_LLC_FLAGS], ["$NATIVE_LLC_FLAGS"], 
-["Additional flags to pass to the llc call of the code generation of the 'native device'."])
-AC_SUBST([SHARED_LD_FLAGS])
-AC_DEFINE_UNQUOTED([SHARED_LD_FLAGS], ["$SHARED_LD_FLAGS"], [Parameter to compiler to generate loadable module.])
 
-AM_CONDITIONAL([NATIVE_ARM], [test x$HOST_ARCH = xarm])
-AM_CONDITIONAL([NATIVE_X86_64], [test x$HOST_ARCH = xx86_64])
-AM_CONDITIONAL([NATIVE_TCE], [test x$HOST_ARCH = xtce])
+AC_SUBST([TARGET])
+AC_ARG_VAR([TARGET_CLANG_FLAGS],
+           [Parameters to for target compilation.])
+AC_DEFINE_UNQUOTED([TARGET_CLANG_FLAGS],
+                   ["$TARGET_CLANG_FLAGS"],
+                   [Parameters to for target compilation.])
+AC_SUBST([TARGET_LLC_FLAGS])
+AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
+                   ["$TARGET_LLC_FLAGS"], 
+                   [Parameters to llc for code generation in the target.])
 
-# Use the Scratchbox default Clang ARM target by default.
-ARM_CLANG_FLAGS="-ccc-host-triple armv4t-unknown-linux-gnueabihf $ARM_CLANG_FLAGS"
-X86_64_CLANG_FLAGS="-ccc-host-triple x86_64-unknown-linux-gnu $X86_64_CLANG_FLAGS"
-TCE_CLANG_FLAGS="-ccc-host-triple tce-tut-llvm $TCE_CLANG_FLAGS"
+AC_SUBST([HOST])
+AC_ARG_VAR([HOST_CLANG_FLAGS],
+           [Parameters to for host compilation.])
+AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
+                   ["$HOST_CLANG_FLAGS"],
+                   [Parameters to for host compilation.])
+AC_SUBST([HOST_LLC_FLAGS])
+AC_DEFINE_UNQUOTED([HOST_LLC_FLAGS],
+                   ["$HOST_LLC_FLAGS"], 
+                   [Parameters to llc for code generation in the host.])
 
-AC_SUBST([ARM_CLANG_FLAGS])
-AC_SUBST([X86_64_CLANG_FLAGS])
-AC_SUBST([TCE_CLANG_FLAGS])
+AC_SUBST([HOST_LD_FLAGS])
+AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
+                   ["$HOST_LD_FLAGS"],
+                   [Parameter to compiler to generate loadable module.])
+
+AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
+AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 
@@ -221,26 +230,66 @@ AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_CHECK_SIZEOF([long])
-AC_CHECK_SIZEOF([__fp16])
-AC_MSG_CHECKING([whether __fp16 can be converted to float])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x; float y;]],
-                                   [[y=x]])],
-                  [
-                    AC_MSG_RESULT([yes])
-                    AC_DEFINE_UNQUOTED([CONVERT___FP16_FLOAT], 1, [Define to 1 if __fp16 can be converted to float.])
-                  ],
-                  [
-                    AC_MSG_RESULT([no])
-                    AC_DEFINE_UNQUOTED([CONVERT___FP16_FLOAT], 0, [Define to 1 if __fp16 can be converted to float.])
-                  ]
-                 )
-AC_CHECK_SIZEOF([double])
-AC_CHECK_SIZEOF([void *])
+AC_LANG([C])
+
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
 
+old_CC="$CC"
+old_CFLAGS="$CFLAGS"
+CC=$srcdir/config/xclang
+
+AC_CONFIG_FILES([include/arm/types.h
+                 include/tce/types.h
+                 include/x86_64/types.h])
+
+AC_MSG_NOTICE([Checking target compiler characteristics])
+CFLAGS="-h $target"
+AC_CHECK_SIZEOF([long])
+AC_SUBST([TARGET_SIZEOF_LONG], [$ac_cv_sizeof_long])
+AC_CHECK_SIZEOF([__fp16])
+AC_SUBST([TARGET_SIZEOF_HALF], [$ac_cv_sizeof___fp16])
+AC_CHECK_SIZEOF([double])
+AC_SUBST([TARGET_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
+AC_CHECK_SIZEOF([void *])
+AC_SUBST([TARGET_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
+
+AC_CONFIG_FILES([include/${TARGET}/types.h:include/types.target.in])
+
+AS_UNSET([ac_cv_sizeof_long])
+AS_UNSET([ac_cv_sizeof___fp16])
+AS_UNSET([ac_cv_sizeof_double])
+AS_UNSET([ac_cv_sizeof_void_p])
+
+AC_MSG_NOTICE([Checking host compiler characteristics])
+CFLAGS="-h $host"
+AC_CHECK_SIZEOF([long])
+AC_SUBST([HOST_SIZEOF_LONG], [$ac_cv_sizeof_long])
+AC_CHECK_SIZEOF([__fp16])
+AC_SUBST([HOST_SIZEOF_HALF], [$ac_cv_sizeof___fp16])
+AC_CHECK_SIZEOF([double])
+AC_SUBST([HOST_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
+AC_CHECK_SIZEOF([void *])
+AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
+
+AC_CONFIG_FILES([include/${HOST}/types.h:include/types.host.in])
+
+# Seems to be unused
+#AC_MSG_CHECKING([whether __fp16 can be converted to float])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x; float y;]],
+#                                   [[y=x]])],
+#                  [
+#                    AC_MSG_RESULT([yes])
+#                    AC_DEFINE_UNQUOTED([CONVERT___FP16_FLOAT], 1, [Define to 1 if __fp16 can be converted to float.])
+#                  ],
+#                  [
+#                    AC_MSG_RESULT([no])
+#                    AC_DEFINE_UNQUOTED([CONVERT___FP16_FLOAT], 0, [Define to 1 if __fp16 can be converted to float.])
+#                  ]
+#                 )
+
 CC="$old_CC"
+CFLAGS="$old_CFLAGS"
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc
@@ -250,9 +299,6 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
-                 lib/kernel/tce/Makefile
-                 lib/kernel/x86_64/Makefile
-                 lib/kernel/arm/Makefile
                  examples/Makefile
                  examples/example1/Makefile
                  examples/example2/Makefile

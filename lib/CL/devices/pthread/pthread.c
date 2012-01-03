@@ -374,7 +374,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       // I do not know why it has to be there to produce valid
       // sos on x86_64
       error = snprintf (command, COMMAND_LENGTH,
-			LLC " " NATIVE_LLC_FLAGS " -o %s %s",
+			LLC " " HOST_LLC_FLAGS " -o %s %s",
 			assembly,
 			bytecode);
       assert (error >= 0);
@@ -397,7 +397,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error == 0);
 
       error = snprintf (command, COMMAND_LENGTH,
-                       "ld " SHARED_LD_FLAGS " -o %s %s.o",
+                       "ld " HOST_LD_FLAGS " -o %s %s.o",
                        module,
                        module);
       assert (error >= 0);
