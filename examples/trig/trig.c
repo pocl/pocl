@@ -73,7 +73,7 @@ main (void)
       srcA[i].s3 = i;
       switch (i % 5) {
       case 0: dstS[i] = cosf((float)i); break;
-      case 1: dstS[i] = fabsf((float)i); break;
+      case 1: dstS[i] = fabsf((float)i) + 7.3; break;
       case 2: dstS[i] = sinf((float)i); break;
       case 3: dstS[i] = sqrtf((float)i); break;
       case 4: dstS[i] = tanf((float)i); break;
