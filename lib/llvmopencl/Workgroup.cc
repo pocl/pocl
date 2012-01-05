@@ -159,8 +159,8 @@ Workgroup::isKernelToProcess(const Function &F)
 static void
 noaliasArguments(Function *F)
 {
-  for (unsigned i = 0, e = F->getFunctionType()->getNumParams(); i <= e; ++i)
-    if (dyn_cast<PointerType> (F->getFunctionType()->getParamType(i)))
+  for (unsigned i = 0, e = F->getFunctionType()->getNumParams(); i < e; ++i)
+    if (isa<PointerType> (F->getFunctionType()->getParamType(i)))
       F->setDoesNotAlias(i + 1); // arg 0 is return type
 }
 
