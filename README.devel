@@ -1,0 +1,45 @@
+This file contains documentation for pocl developers. It is not meant
+to be read by users (even from those buildign from source) so do not
+put here information thy might need.
+THIS FILE IS NOT DISTRIBUTED.
+
+CONFIGURING
+
+If you checked out a development version of pocl, the configuration
+scripts need to be regenerated. This is achieved by issuing the command
+
+    ./autogen.sh
+
+in the root of the source tree. You will need a decent version of GNU
+autotools, usually installable from distribution packages 'automake', 
+'autoconf', and 'libtool'.
+
+Once that is done, the usual GNU build commands build pocl. Builds out
+of source directory are supported. We recommend using
+
+    ./configure --enable-debug
+    make
+
+This will build pocl without optimization, which simplifies debugging.
+(This does not influence whether pocl will optimize the code that it
+generates from OpenCL source files.)
+
+The configure script will use the following special environment variables,
+if present or passed in the command line:
+
+  CLANG       Program to compile kernels to bytecode
+  CLFLAGS     Flags to be uused when compiling CL sources
+  TARGET_CLANG_FLAGS
+              Parameters to for target compilation.
+  HOST_CLANG_FLAGS
+              Parameters to for host compilation.
+
+MULTI-TARGET SUPPORT
+
+By default, pocl build system compiles the kernel libraries for:
+
+   - Each architecture with a dedicated library (in pocl/lib/kenrel)
+   - Target architecture (as per --target, using standard GNU rules)
+   - Host architecture (same)
+
+Host and/or target can be one of the specialized architectures.

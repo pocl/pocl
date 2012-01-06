@@ -1,0 +1,43 @@
+#!/bin/sh
+while getopts h:o:cSE o
+do
+    case "$o" in
+        h)   host="${OPTARG}";;
+        o)   output="-o ${OPTARG}";;
+        c)   mode=-c;;
+        S)   mode=-S;;
+        E)   mode=-E;;
+	[?]) echo >&2 "Usage: $0 [-h <host>] [-c | -S | -E] [-o <output_file>] <input_file>" && exit 1;;
+    esac
+done
+shift $((${OPTIND}-1))
+
+if [ "x$host" = x ]
+then
+    exec clang $mode $output $1
+fi
+
+config=`dirname $0`
+build=`$config/config.guess`
+
+if [ "$mode" = -c ]
+then
+    clang -ccc-host-triple $host -c -emit-llvm -o _xclang.bc $@
+    llc -mtriple=$build -o _xclang.s _xclang.bc
+    exec clang -c $output _xclang.s
+fi
+
+if [ "$mode" = -S ]
+then
+    clang -ccc-host-triple $host -c -emit-llvm -o _xclang.bc $@
+    exec llc -mtriple=$build $output _xclang.bc
+fi
+
+if [ "$mode" = -E ]
+then
+    exec clang -E $output $1
+fi
+
+clang -ccc-host-triple $host -c -emit-llvm -o _xclang.bc $@
+llc -mtriple=$build -o _xclang.s _xclang.bc
+exec clang $output _xclang.s
