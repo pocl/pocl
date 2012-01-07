@@ -23,34 +23,6 @@ make) the following packages are needed:
    clang 3.0
 
 
-CONFIGURING
-
-If you checked out a development version of pocl, the configuration
-scripts need to be regenerated. This is achieved by issuing the command
-
-    ./autogen.sh
-
-in the root of the source tree. You will need a decent version of GNU
-autotools, usually installable from distribution packages 'automake', 
-'autoconf', and 'libtool'.
-
-Once that is done, the usual GNU build commands build pocl. Builds out
-of source directory are supported. We recommend using
-
-    ./configure --enable-debug
-    make
-
-This will build pocl without optimization, which simplifies debugging.
-(This does not influence whether pocl will optimize the code that it
-generates from OpenCL source files.)
-
-The configure script will use the following special environment variables,
-if present or passed in the command line:
-
-    CLANG         The program to compile kernels to bytecode.
-    CLANGFLAGS    The flags to be passed to the CLANG compiler.
-
-
 EXAMPLES
 
 After the build is complete, a number of examples are ready to be run on

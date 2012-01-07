@@ -26,7 +26,5 @@ SUBDIRS = include lib scripts examples tests
 
 ACLOCAL_AMFLAGS = -I m4
 
-pkginclude_HEADERS = clconfig.h
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pocl.pc
