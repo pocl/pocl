@@ -44,7 +44,7 @@ clCreateContextFromType(const cl_context_properties *properties,
 
   num_devices = 0;
   for (i = 0; i < POCL_NUM_DEVICES; ++i) {
-    if ((pocl_devices[i].type == device_type) &&
+    if ((pocl_devices[i].type & device_type) &&
 	(pocl_devices[i].available == CL_TRUE))
       ++num_devices;
   }
@@ -57,7 +57,7 @@ clCreateContextFromType(const cl_context_properties *properties,
   
   j = 0;
   for (i = 0; i < POCL_NUM_DEVICES; ++i) {
-    if ((pocl_devices[i].type == device_type) &&
+    if ((pocl_devices[i].type & device_type) &&
 	(pocl_devices[i].available == CL_TRUE)) {
       context->devices[j] = &pocl_devices[i];
       context->devices[j]->init(context->devices[j]);
