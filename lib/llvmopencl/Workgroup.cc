@@ -42,6 +42,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
 #include <map>
+#include <iostream>
 
 #define STRING_LENGTH 32
 
@@ -152,12 +153,15 @@ Workgroup::isKernelToProcess(const Function &F)
   return false;
 }
 
+/**
+ * Marks the pointer arguments to the kernel functions as noalias.
+ */
 static void
 noaliasArguments(Function *F)
 {
-  // Argument 0 is return type, so add 1 to index here.
-  for (unsigned i = 0, e = F->getFunctionType()->getNumParams(); i != e; ++i)
-    F->setDoesNotAlias(i + 1);
+  for (unsigned i = 0, e = F->getFunctionType()->getNumParams(); i < e; ++i)
+    if (isa<PointerType> (F->getFunctionType()->getParamType(i)))
+      F->setDoesNotAlias(i + 1); // arg 0 is return type
 }
 
 static Function *

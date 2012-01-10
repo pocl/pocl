@@ -23,6 +23,8 @@ exec_trig_kernel(const char *program_source,
   size_t       local_work_size[1]; 
   size_t       cb; 
   cl_int       err; 
+
+  float c = 7.3; // a scalar number to test non-pointer args
  
   // create the OpenCL context on a GPU device 
   context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
@@ -105,6 +107,8 @@ exec_trig_kernel(const char *program_source,
 		       sizeof(cl_mem), (void *) &memobjs[0]); 
   err |= clSetKernelArg(kernel, 1,
 			sizeof(cl_mem), (void *) &memobjs[1]); 
+  err |= clSetKernelArg(kernel, 2,
+			sizeof(float), (void *) &c); 
  
   if (err != CL_SUCCESS) 
     { 

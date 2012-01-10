@@ -1,10 +1,17 @@
 # srcdir
 
 Makefile.in
+Makefile.*.in
 ./aclocal.m4
 ./autom4te.cache
 ./configure
-./config/*
+config/config.guess
+config/config.sub
+config/depcomp
+config/install-sh
+config/ltmain.sh
+config/missing
+config/ylwrap
 ./config.h.in
 ./m4/*
 

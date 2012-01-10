@@ -23,9 +23,10 @@
 # THE SOFTWARE.
 
 pkginclude_HEADERS = pocl.h _kernel.h
-nobase_pkginclude_HEADERS = types.h		\
-                            arm/types.h		\
+nobase_pkginclude_HEADERS = arm/types.h		\
+                            x86_64/types.h	\
                             tce/types.h		\
-                            x86_64/types.h
+                            @TARGET@/types.h	\
+                            @HOST@/types.h
 
 SUBDIRS = CL

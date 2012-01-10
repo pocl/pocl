@@ -30,37 +30,26 @@ targetpkglibdir = $(pkglibdir)/tce
 targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @@srcdir@:@srcdir@/..
-vpath %.ll @srcdir:@srcdir@/..
+vpath %.c @srcdir@:@srcdir@/..
+vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
 RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
 AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
 
-if NATIVE_TCE
-
-CLANGFLAGS += @NATIVE_CLANG_FLAGS@
+CLANGFLAGS = -ccc-host-triple tce-tut-llvm
 
 .cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -I$(top_builddir) -include $(top_srcdir)/include/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-else
-
-CLANGFLAGS += @TCE_CLANG_FLAGS@
-
-.cl.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-endif
+	$(CLANG) $(CLANGFLAGS) $(CLFLAGS) -c -emit-llvm -include $(top_builddir)/include/tce/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
 
 .c.o:
-	$(CLANG) $(AM_CPPFLAGS) $(CLANGFLAGS) -c -emit-llvm -include $(top_srcdir)/include/tce/types.h -o $@ $<
+	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/tce/types.h -o $@ $<
 
 barrier.o: barrier.ll
 	$(LLVM_AS) -o $@ $<
 
-# TODO: This misses the dependency on the device-specific include files
-# TODO: Dependencies should be generated automatically
-$(patsubst %.c, %.o, $(filter %.c, $(libkernel_a_SOURCES))): $(top_srcdir)/include/tce/types.h
-$(patsubst %.cl, %.o, $(filter %.cl, $(libkernel_a_SOURCES))): $(top_srcdir)/include/types.h $(top_srcdir)/include/tce/types.h $(top_srcdir)/include/_kernel.h ../templates.h
+# # TODO: This misses the dependency on the device-specific include files
+# # TODO: Dependencies should be generated automatically
+# $(patsubst %.c, %.o, $(filter %.c, $(libkernel_a_SOURCES))): $(top_srcdir)/include/tce/types.h
+# $(patsubst %.cl, %.o, $(filter %.cl, $(libkernel_a_SOURCES))): $(top_srcdir)/include/types.h $(top_srcdir)/include/tce/types.h $(top_srcdir)/include/_kernel.h ../templates.h

@@ -1,7 +1,7 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel.
-# 
+# Makefile.am for pocl/lib/kernel (host version).
+#
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,4 +22,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = tce x86_64 arm @TARGET@ @HOST@ # ppc
+LEX =
+
+export TARGET = @TARGET@
+
+targetpkglibdir = $(pkglibdir)/@TARGET@
+targetpkglib_LIBRARIES = libkernel.a
+
+vpath %.cl @srcdir@:@top_srcdir@/lib/kernel
+vpath %.c @srcdir@:@top_srcdir@/lib/kernel
+vpath %.ll @srcdir@:@top_srcdir@/lib/kernel
+
+include $(top_srcdir)/lib/kernel/sources.mk
+
+RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
+AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
+
+CLANGFLAGS = -ccc-host-triple @TARGET@
+
+.cl.o:
+	$(CLANG) $(CLANGFLAGS) $(CLFLAGS) -c -emit-llvm -include $(top_builddir)/include/@TARGET@/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
+
+.c.o:
+	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/@TARGET@/types.h -o $@ $<
+
+barrier.o: barrier.ll
+	$(LLVM_AS) -o $@ $<

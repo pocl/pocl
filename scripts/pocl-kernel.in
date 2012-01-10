@@ -65,4 +65,4 @@ unsigned _local_size = _${kernel}_LOCAL_SIZE;
 #endif
 EOF
 
-ld ${output_file}.o @SHARED_LD_FLAGS@ -o ${output_file}
+ld ${output_file}.o @HOST_LD_FLAGS@ -o ${output_file}

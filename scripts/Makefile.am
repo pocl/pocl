@@ -31,26 +31,28 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]pkgincludedir[@],$(pkgincludedir),g'		\
                -e 's,[@]pkglibdir[@],$(pkglibdir),g'			\
                -e 's,[@]CLANG[@],$(CLANG),g'				\
-               -e 's,[@]CLANGFLAGS[@],$(CLANGFLAGS),g'			\
-               -e 's,[@]NATIVE_CLANG_FLAGS[@],$(NATIVE_CLANG_FLAGS),g'			\
+               -e 's,[@]CLFLAGS[@],$(CLFLAGS),g'			\
+               -e 's,[@]TARGET[@],$(TARGET),g'	\
+               -e 's,[@]TARGET_CLANG_FLAGS[@],$(TARGET_CLANG_FLAGS),g'	\
+               -e 's,[@]HOST[@],$(HOST),g'	\
+               -e 's,[@]HOST_CLANG_FLAGS[@],$(HOST_CLANG_FLAGS),g'	\
+               -e 's,[@]HOST_LD_FLAGS[@],$(HOST_LD_FLAGS),g'		\
                -e 's,[@]OPT[@],$(OPT),g'				\
                -e 's,[@]LLVM_LD[@],$(LLVM_LD),g'			\
-               -e 's,[@]LLC[@],$(LLC),g'				\
-               -e 's,[@]HOST_ARCH[@],$(HOST_ARCH),g'				\
-               -e 's,[@]SHARED_LD_FLAGS[@],$(SHARED_LD_FLAGS),g'
+               -e 's,[@]LLC[@],$(LLC),g'
 
-pocl-build: pocl-build.in
+pocl-build: pocl-build.in Makefile
 	$(do_subst) < $< > $@
 	chmod +x $@
 
-pocl-kernel: pocl-kernel.in
+pocl-kernel: pocl-kernel.in Makefile
 	$(do_subst) < $< > $@
 	chmod +x $@
 
-pocl-workgroup: pocl-workgroup.in
+pocl-workgroup: pocl-workgroup.in Makefile
 	$(do_subst) < $< > $@
 	chmod +x $@
 
-pocl-standalone: pocl-standalone.in
+pocl-standalone: pocl-standalone.in Makefile
 	$(do_subst) < $< > $@
 	chmod +x $@
