@@ -54,10 +54,9 @@ clGetDeviceIDs(cl_platform_id   platform,
     return CL_INVALID_DEVICE_TYPE;
   
   if (devices != NULL) {
-    if (num < num_entries)
-      return CL_INVALID_VALUE;
+    int devnum = (num < num_entries) ? num : num_entries;
     
-    for (i=0; i<num; ++i)
+    for (i=0; i<devnum; ++i)
       devices[i] = &pocl_devices[i];
   }
   

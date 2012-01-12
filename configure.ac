@@ -237,9 +237,6 @@ AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_LANG([C])
 
-AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
-AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
-
 old_CC="$CC"
 old_CFLAGS="$CFLAGS"
 CC=$srcdir/config/xclang
@@ -278,6 +275,9 @@ AC_CHECK_SIZEOF([void *])
 AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
 AC_CONFIG_FILES([include/${HOST}/types.h:include/types.host.in])
+
+AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
+AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
 
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])

@@ -23,10 +23,14 @@
 # THE SOFTWARE.
 
 pkginclude_HEADERS = pocl.h _kernel.h
-nobase_pkginclude_HEADERS = arm/types.h		\
-                            x86_64/types.h	\
-                            tce/types.h		\
+# The sort command (also) removes duplicate entries which might appear 
+# due to @TARGET@ and/or @HOST@ being one of the manually defined 
+# targets. 
+nobase_pkginclude_HEADERS = $(sort 				\
+							arm/types.h			\
+                            x86_64/types.h		\
+                            tce/types.h			\
                             @TARGET@/types.h	\
-                            @HOST@/types.h
+                            @HOST@/types.h)
 
 SUBDIRS = CL
