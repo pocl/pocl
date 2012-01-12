@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011, 2012 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -152,13 +152,9 @@ AC_ARG_ENABLE([arm-cortex-a8],
 
 case $target_cpu in
   arm*)   
-    TARGET=arm
     TARGET_CLANG_FLAGS="$TARGET_CLANG_FLAGS $ARM_CLANG_FLAGS"
-    TARGET_LLC_FLAGS="$ARM_LLC_FLAGS"
+    TARGET_LLC_FLAGS="$TARGET_LLC_FLAGS $ARM_LLC_FLAGS"
     ;;
-  x86_64) TARGET=x86_64 ;;
-  tce)    TARGET=tce ;;
-  *)      TARGET=$target ;;
 esac
 
 HOST_LLC_FLAGS="-relocation-model=pic"
@@ -177,28 +173,25 @@ case $host_cpu in
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST="arm"
-    HOST_CLANG_FALGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS"
     HOST_LLC_FLAGS="$ARM_LLC_FLAGS"
     ;;
   x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
-    HOST="x86_64"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
-    HOST="tce"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
   *)
     AC_MSG_NOTICE([unknown host, using the generic kernel lib])
-    HOST="$host"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
 esac
 
-AC_SUBST([TARGET])
+AC_SUBST([TARGET], [$target])
+AC_SUBST([TARGET_CPU], [$target_cpu])
 AC_ARG_VAR([TARGET_CLANG_FLAGS],
            [Parameters to for target compilation.])
 AC_DEFINE_UNQUOTED([TARGET_CLANG_FLAGS],
@@ -209,7 +202,8 @@ AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
                    ["$TARGET_LLC_FLAGS"], 
                    [Parameters to llc for code generation in the target.])
 
-AC_SUBST([HOST])
+AC_SUBST([HOST], [$host])
+AC_SUBST([HOST_CPU], [$host_cpu])
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
