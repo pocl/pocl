@@ -150,16 +150,12 @@ AC_ARG_ENABLE([arm-cortex-a8],
         ]
 )
 
-TARGET=$target
-
 case $target_cpu in
   arm*)   
     TARGET_CLANG_FLAGS="$TARGET_CLANG_FLAGS $ARM_CLANG_FLAGS"
     TARGET_LLC_FLAGS="$TARGET_LLC_FLAGS $ARM_LLC_FLAGS"
     ;;
 esac
-
-HOST=$host
 
 HOST_LLC_FLAGS="-relocation-model=pic"
 HOST_LD_FLAGS="-shared"
@@ -186,17 +182,16 @@ case $host_cpu in
     ;;
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
-    HOST="tce"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
   *)
     AC_MSG_NOTICE([unknown host, using the generic kernel lib])
-    HOST="$host"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
 esac
 
-AC_SUBST([TARGET])
+AC_SUBST([TARGET], [$target])
+AC_SUBST([TARGET_CPU], [$target_cpu])
 AC_ARG_VAR([TARGET_CLANG_FLAGS],
            [Parameters to for target compilation.])
 AC_DEFINE_UNQUOTED([TARGET_CLANG_FLAGS],
@@ -207,7 +202,8 @@ AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
                    ["$TARGET_LLC_FLAGS"], 
                    [Parameters to llc for code generation in the target.])
 
-AC_SUBST([HOST])
+AC_SUBST([HOST], [$host])
+AC_SUBST([HOST_CPU], [$host_cpu])
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],

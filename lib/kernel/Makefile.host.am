@@ -30,11 +30,9 @@ export HOST = @HOST@
 targetpkglibdir = $(pkglibdir)/@HOST@
 targetpkglib_LIBRARIES = libkernel.a
 
-ARCH = `echo @TARGET@ | sed s/-.*//`
-
-vpath %.cl @srcdir@:@top_srcdir@/lib/kernel/$(ARCH):@top_srcdir@/lib/kernel
-vpath %.c @srcdir@:@top_srcdir@/lib/kernel/$(ARCH):@top_srcdir@/lib/kernel
-vpath %.ll @srcdir@:@top_srcdir@/lib/kernel/$(ARCH):@top_srcdir@/lib/kernel
+vpath %.cl @top_srcdir@/lib/kernel/@HOST_CPU@:@top_srcdir@/lib/kernel
+vpath %.c @top_srcdir@/lib/kernel/@HOST_CPU@:@top_srcdir@/lib/kernel
+vpath %.ll @top_srcdir@/lib/kernel/@HOST_CPU@:@top_srcdir@/lib/kernel
 
 include $(top_srcdir)/lib/kernel/sources.mk
 
