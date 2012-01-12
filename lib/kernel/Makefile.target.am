@@ -24,14 +24,17 @@
 
 LEX =
 
+# For config.status makefile regeneration
 export TARGET = @TARGET@
 
 targetpkglibdir = $(pkglibdir)/@TARGET@
 targetpkglib_LIBRARIES = libkernel.a
 
-vpath %.cl @srcdir@:@top_srcdir@/lib/kernel
-vpath %.c @srcdir@:@top_srcdir@/lib/kernel
-vpath %.ll @srcdir@:@top_srcdir@/lib/kernel
+ARCH = `echo @TARGET@ | sed s/-.*//`
+
+vpath %.cl @srcdir@:@top_srcdir@/lib/kernel/$(ARCH):@top_srcdir@/lib/kernel
+vpath %.c @srcdir@:@top_srcdir@/lib/kernel/$(ARCH):@top_srcdir@/lib/kernel
+vpath %.ll @srcdir@:@top_srcdir@/lib/kernel/$(ARCH):@top_srcdir@/lib/kernel
 
 include $(top_srcdir)/lib/kernel/sources.mk
 
