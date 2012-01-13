@@ -1,9 +1,13 @@
-Portable OpenCL --- TODO
+Version roadmap
+---------------
 
 High priority:
+    * add the https://code.google.com/p/opencl-book-samples/
+      to the test suite (0.x)
+    * clean up the hidden temp directories by default (0.x)
     * make NVIDIA OpenCL SDK examples to work (1.0)
     * make Intel OpenCL SDK examples to work (1.0)    
-    * make AMD OpenCL SDK examples to work (1.0)        
+    * make AMD OpenCL SDK examples to work (1.0)
     * create workgroups by looping instead of fully unrolling for
       flexible WG parallelization (1.0)
 
@@ -24,3 +28,27 @@ Low priority:
     * better workgroup (replicated) function caching.
 
 (1.0) == requirement for the pocl 1.0 release
+(0.x) == requirement for the first pocl 0.x release
+
+Known missing OpenCL 1.2 features
+---------------------------------
+
+  4. THE OPENCL PLATFORM LAYER
+  
+* 4.1 Querying platform info (properly)
+* 4.3 Partitioning device
+
+  5. THE OPENCL RUNTIME
+
+* 5.1 Command queues
+* 5.3 Image objects
+* 5.4 Querying, Umapping, Migrating, ... Mem objects
+* 5.5 Sampler objects
+* 5.12 Profiling 
+
+* Reference counting for the OpenCL objects
+
+  6. THE OPENCL C PROGRAMMING LANGUAGE
+
+* 6.12.10 Async Copies 
+* 6.12.11 Atomic functions
