@@ -1,4 +1,5 @@
-Portable OpenCL --- TODO
+Version roadmap
+---------------
 
 High priority:
     * add the https://code.google.com/p/opencl-book-samples/
@@ -28,3 +29,26 @@ Low priority:
 
 (1.0) == requirement for the pocl 1.0 release
 (0.x) == requirement for the first pocl 0.x release
+
+Known missing OpenCL 1.2 features
+---------------------------------
+
+  4. THE OPENCL PLATFORM LAYER
+  
+* 4.1 Querying platform info (properly)
+* 4.3 Partitioning device
+
+  5. THE OPENCL RUNTIME
+
+* 5.1 Command queues
+* 5.3 Image objects
+* 5.4 Querying, Umapping, Migrating, ... Mem objects
+* 5.5 Sampler objects
+* 5.12 Profiling 
+
+* Reference counting for the OpenCL objects
+
+  6. THE OPENCL C PROGRAMMING LANGUAGE
+
+* 6.12.10 Async Copies 
+* 6.12.11 Atomic functions
