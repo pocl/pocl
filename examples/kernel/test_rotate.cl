@@ -169,6 +169,7 @@ DEFINE_BODY_G
            printf("FAIL: shift left (<<) type=%s pattern=0x%x shiftbase=%d shiftoffset=%d res=0x%08x good=0x%08x\n",
                   typename, patterns[p], shiftbase, shiftoffset,
                   (uint)res.s[0], (uint)shl.s[0]);
+           return;
          }
          /* shift right */
          res.v = val.v >> shift.v;
@@ -180,6 +181,7 @@ DEFINE_BODY_G
            printf("FAIL: shift right (>>) type=%s pattern=0x%x shiftbase=%d shiftoffset=%d res=0x%08x good=0x%08x\n",
                   typename, patterns[p], shiftbase, shiftoffset,
                   (uint)res.s[0], (uint)shr.s[0]);
+           return;
          }
          /* rotate */
          res.v = rotate(val.v, shift.v);
@@ -191,6 +193,7 @@ DEFINE_BODY_G
            printf("FAIL: rotate type=%s pattern=0x%x shiftbase=%d shiftoffset=%d res=0x%08x good=0x%08x\n",
                   typename, patterns[p], shiftbase, shiftoffset,
                   (uint)res.s[0], (uint)rot.s[0]);
+           return;
          }
        }
      }

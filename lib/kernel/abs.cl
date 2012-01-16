@@ -23,13 +23,12 @@
 
 #include "templates.h"
 
-/* Define "missing" builtins */
-#define __builtin_abshh(a)  (uchar )(a>=(char )0 ? a : -a)
-#define __builtin_absh(a)   (ushort)(a>=(short)0 ? a : -a)
-#define __builtin_absl(a)   (ulong )(a>=(long )0 ? a : -a)
-#define __builtin_absuhh(a) a
-#define __builtin_absuh(a)  a
-#define __builtin_absu(a)   a
-#define __builtin_absul(a)  a
+#define __builtin_abshh(a)   ((uchar )(a>=(char )0 ? a : -a))
+#define __builtin_absh(a)    ((ushort)(a>=(short)0 ? a : -a))
+#define __builtin_absl(a)    ((ulong )(a>=(long )0 ? a : -a))
+#define __builtin_absuhh(a)  a
+#define __builtin_absuh(a)   a
+#define __builtin_absu(a)    a
+#define __builtin_absul(a)   a
 
 DEFINE_BUILTIN_UG_G(abs)

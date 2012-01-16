@@ -30,7 +30,6 @@
 //    ushort   __builtin_ia32_paddusw128
 // Other types don't seem to be supported.
 
-// This could do with some testing
 // This could probably also be optimised (i.e. the ?: operators eliminated)
 DEFINE_EXPR_G_GG(add_sat,
                  (sgtype)-1 < (sgtype)0 ?
@@ -38,7 +37,7 @@ DEFINE_EXPR_G_GG(add_sat,
                  ({
                    int bits = CHAR_BIT * sizeof(sgtype);
                    gtype min = (sgtype)1 << (sgtype)(bits-1);
-                   gtype max = min + (sgtype)1;
+                   gtype max = min - (sgtype)1;
                    (a^b) < (gtype)0 ?
                      /* different signs: no overflow/underflow */
                      a+b :
