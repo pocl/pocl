@@ -25,7 +25,7 @@
 noinst_PROGRAMS = example2a
 
 example2a_SOURCES = example2a.c example2a.cl
-example2a_LDADD = ../../lib/CL/libCL.la @PTHREAD_LIBS@
+example2a_LDADD = ../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
 example2a_CFLAGS = @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
