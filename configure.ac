@@ -325,7 +325,8 @@ then
 AC_MSG_NOTICE(
    [ 
      Warning: You are using an LLVM version with an unstable OpenCL C 
-     support. Please upgrade to the latest LLVM svn version (3.1 or later) 
+     support that includes major OpenCL C miscompilation issues.  
+     Please upgrade to the latest LLVM svn version (3.1 or later) 
      for more robust OpenCL C compilation.
    ])
 fi
