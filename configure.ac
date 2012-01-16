@@ -311,6 +311,7 @@ AC_CONFIG_FILES([Makefile
                  examples/scalarwave/Makefile
                  examples/loopbarriers/Makefile
                  examples/kernel/Makefile
+                 examples/opencl-book-samples/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal

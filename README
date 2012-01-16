@@ -45,6 +45,14 @@ program. However, please bear in mind that:
        API calls, it will not work. Please implement the mssing APIs
        when you need them and submit us a patch :)
 
+The pkg-config tool is used to locate the libraries and headers in
+the installation directory. 
+
+Example of compiling an OpenCL host program against pocl using
+the pkg-config:
+
+g++ example1.c -o example `pkg-config --libs --cflags pocl`
+
 
 STANDALONE
 
