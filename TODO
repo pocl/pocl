@@ -33,22 +33,62 @@ Low priority:
 Known missing OpenCL 1.2 features
 ---------------------------------
 
+Missing APIs used by the tested OpenCL example suites are
+entered here.
+
+(*) == Used by the opencl-book-samples. 
+
   4. THE OPENCL PLATFORM LAYER
   
 * 4.1 Querying platform info (properly)
 * 4.3 Partitioning device
-
+* 4.4 Contexts
+  * clRetainContext (*)
+  
   5. THE OPENCL RUNTIME
 
 * 5.1 Command queues
+  * clRetainCommandQueue (*)
+* 5.2.1 Creating buffer objects
+  * clCreateSubBuffer (*)
+* 5.2.4 Mapping buffer objects
+  * clEnqueueMapBuffer (*)
 * 5.3 Image objects
+  * clCreateImage2D (deprecated in OpenCL 1.2) (*)
+* 5.3.3 Reading, Writing and Copying Image Objects
+  * clEnqueueReadImage (*)
 * 5.4 Querying, Umapping, Migrating, ... Mem objects
+* 5.4.1 Retaining and Releasing Memory Objects
+  * clRetainMemObject (*)
+* 5.4.2 Unmapping Mapped Memory Objects
+  * clEnqueueUnmapMemObject (*)
 * 5.5 Sampler objects
+* 5.5.1 Creating Sampler Objects
+  * clCreateSampler (*)
+* 5.6.1 Creating Program Objects
+  * clCreateProgramWithBinary (*)
+  * clRetainProgram (*)
+* 5.7.1 Creating Kernel Objects
+  * clRetainKernel (*)
+* 5.9 Event objects
+  * clWaitForEvents (*)
+  * clReleaseEvent (*)
+* 5.10 Markers, Barriers and Waiting for Events
+  * clEnqueueMarker (deprecated in OpenCL 1.2) (*)
 * 5.12 Profiling 
 
-* Reference counting for the OpenCL objects
+* Reference counting for all the OpenCL objects
 
   6. THE OPENCL C PROGRAMMING LANGUAGE
 
 * 6.12.10 Async Copies 
 * 6.12.11 Atomic functions
+
+  OpenCL 1.2 Extensions
+
+* 9.7 Sharing Memory Objects with OpenGL / OpenGL
+  ES Buffer, Texture and Renderbuffer Objects
+* 9.7.6 Sharing memory objects that map to GL objects 
+  between GL and CL contexts
+  * clEnqueueAcquireGLObjects (*)
+
