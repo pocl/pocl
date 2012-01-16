@@ -22,16 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-lib_LTLIBRARIES = libCL.la
+lib_LTLIBRARIES = libOpenCL.la
 
-libCL_la_SOURCES = clCreateContextFromType.c	\
+libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
                    clGetContextInfo.c		\
                    clCreateCommandQueue.c	\
                    clReleaseCommandQueue.c	\
                    clCreateBuffer.c		\
-	           clEnqueueReadBuffer.c	\
-	           clEnqueueReadBufferRect.c	\
+	        	   clEnqueueReadBuffer.c	\
+	       		   clEnqueueReadBufferRect.c	\
                    clReleaseMemObject.c		\
                    clCreateProgramWithSource.c	\
                    clReleaseProgram.c		\
@@ -64,5 +64,5 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    devices/pthread/pthread.h	\
                    devices/pthread/pthread.c
 
-libCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
-libCL_la_LDFLAGS = -lltdl
+libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
+libOpenCL_la_LDFLAGS = -lltdl
