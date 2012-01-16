@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -60,7 +61,36 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->read(device_id->data, ptr, buffer->device_ptrs[i], cb);
+  /* enqueue the read, or execute directly */
+  if (blocking_read)
+    {
+      if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+        {
+          /* wait for the event in event_wait_list to finish */
+          #warning - undone
+        }
+      else
+        {
+          /* in-order queue - all previously enqueued commands must 
+           * finish before this read */
+          clFinish(command_queue);
+        }
+      device_id->read(device_id->data, ptr, buffer->device_ptrs[i], cb);
+    }
+  else
+  {
+    _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
+    if ( cmd == NULL )
+      return CL_OUT_OF_HOST_MEMORY;
+    
+    cmd->type=CL_COMMAND_TYPE_READ;
+    cmd->command.read.data = device_id->data;
+    cmd->command.read.host_ptr = ptr;
+    cmd->command.read.device_ptr = buffer->device_ptrs[i];
+    cmd->command.read.cb = cb;
+    cmd->next = NULL;
+    LL_APPEND(command_queue->root, cmd );
+  }
 
   return CL_SUCCESS;
 }

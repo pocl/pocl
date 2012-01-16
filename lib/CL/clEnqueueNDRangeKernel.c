@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -53,6 +54,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   char command[COMMAND_LENGTH];
   int error;
   struct pocl_context pc;
+  _cl_command_node *command_node;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -67,6 +69,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       work_dim > command_queue->device->max_work_item_dimensions)
     return CL_INVALID_WORK_DIMENSION;
   assert(command_queue->device->max_work_item_dimensions <= 3);
+
+  command_node = (_cl_command_node*) malloc(sizeof(_cl_command_node));
+  if (command_node == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
 
   if (global_work_offset != NULL)
     {
@@ -165,10 +171,19 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   pc.global_offset[1] = offset_y;
   pc.global_offset[2] = offset_z;
 
-  command_queue->device->run(command_queue->device->data,
+  
+  command_node->type = CL_COMMAND_TYPE_RUN;
+  command_node->command.run.data = command_queue->device->data;
+  #warning parallel_filename is local
+  command_node->command.run.file = parallel_filename;
+  command_node->command.run.kernel = kernel;
+  command_node->command.run.pc = pc;
+  command_node->next = NULL; 
+  LL_APPEND(command_queue->root, command_node);
+/*  command_queue->device->run(command_queue->device->data,
 			     parallel_filename,
 			     kernel,
 			     &pc);
-
+*/
   return CL_SUCCESS;
 }

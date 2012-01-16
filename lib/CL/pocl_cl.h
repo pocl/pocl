@@ -153,6 +153,7 @@ struct _cl_command_queue {
   cl_uint reference_count;
   cl_command_queue_properties properties;
   /* implementation */
+  _cl_command_node *root;
 };
 
 struct _cl_mem {
