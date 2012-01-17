@@ -78,6 +78,8 @@ clCreateKernel(cl_program program,
   if (kernel == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
+  POCL_INIT_OBJECT (kernel);
+
   error = snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
 		   "%s/descriptor.so",
 		   tmpdir);

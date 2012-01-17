@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clReleaseCommandQueue()
+/* OpenCL runtime library: clRetainContext()
 
-   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and Pekka Jääskeläinen
+   Copyright (c) 2012 Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,8 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+clRetainContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RELEASE_OBJECT(command_queue);
-  if (command_queue->pocl_refcount == 0)
-    {
-      free (command_queue);
-    }
+  POCL_RETAIN_OBJECT(context);
   return CL_SUCCESS;
 }

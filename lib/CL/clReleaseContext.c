@@ -26,14 +26,24 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clReleaseContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
-  int i;
-  for (i = 0; i < context->num_devices; ++i) 
+  POCL_RELEASE_OBJECT(context);
+  if (context->pocl_refcount == 0)
     {
-      /* Free the device driver allocations. */
-      if (context->devices[i]->uninit != NULL)
-        context->devices[i]->uninit(context->devices[i]);
-    }   
-
-  free(context);
+      /* The context holds references to all its devices,
+         memory objects, command-queues etc. Release the
+         references and let the objects to get freed. */
+      /* TODO: call the corresponding clRelease* functions
+         for all the referred objects. */
+      int i;
+      for (i = 0; i < context->num_devices; ++i) 
+        {
+          /* Free the device driver allocations. 
+             TODO: move this to clReleaseDevice?
+           */
+          if (context->devices[i]->uninit != NULL)
+            context->devices[i]->uninit(context->devices[i]);
+        }   
+      free(context);
+    }
   return CL_SUCCESS;
 }

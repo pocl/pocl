@@ -29,13 +29,18 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   cl_device_id device_id;
   unsigned i;
 
-  for (i = 0; i < memobj->context->num_devices; ++i)
+  POCL_RELEASE_OBJECT(memobj);
+
+  if (memobj->pocl_refcount == 0) 
     {
-      device_id = memobj->context->devices[i];
-      device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[i]);
+
+      for (i = 0; i < memobj->context->num_devices; ++i)
+        {
+          device_id = memobj->context->devices[i];
+          device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[i]);
+        }
+      
+      free(memobj->device_ptrs);
     }
-
-  free(memobj->device_ptrs);
-
   return CL_SUCCESS;
 }

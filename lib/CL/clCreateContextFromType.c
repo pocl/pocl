@@ -42,10 +42,12 @@ clCreateContextFromType(const cl_context_properties *properties,
   if (context == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
+  POCL_INIT_OBJECT(context);
+
   num_devices = 0;
   for (i = 0; i < POCL_NUM_DEVICES; ++i) {
     if ((pocl_devices[i].type & device_type) &&
-	(pocl_devices[i].available == CL_TRUE))
+        (pocl_devices[i].available == CL_TRUE))
       ++num_devices;
   }
 
@@ -66,7 +68,6 @@ clCreateContextFromType(const cl_context_properties *properties,
   }   
 
   context->properties = properties;
-  context->reference_count = 1;
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

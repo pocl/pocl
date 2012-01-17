@@ -43,6 +43,8 @@ clCreateProgramWithSource(cl_context context,
   if (program == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
+  POCL_INIT_OBJECT(program);
+
   size = 0;
   for (i = 0; i < count; ++i)
     {

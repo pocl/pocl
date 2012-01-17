@@ -38,12 +38,13 @@ extern "C" {
 
 #ifndef __TCE_STANDALONE__
 
-#include <pthread.h>
-typedef pthread_mutex_t ba_lock_t;
+#include "pocl_cl.h"
 
-#define BA_LOCK(LOCK) pthread_mutex_lock (&LOCK)
-#define BA_UNLOCK(LOCK) pthread_mutex_unlock (&LOCK)
-#define BA_INIT_LOCK(LOCK) pthread_mutex_init (&LOCK, NULL)
+typedef pocl_lock_t ba_lock_t;
+
+#define BA_LOCK(LOCK) POCL_LOCK(LOCK)
+#define BA_UNLOCK(LOCK) POCL_UNLOCK(LOCK)
+#define BA_INIT_LOCK(LOCK) POCL_INIT_LOCK(LOCK)
 
 /* The qualifier to add in case using non-default
    address space. */
