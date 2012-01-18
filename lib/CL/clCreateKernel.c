@@ -116,7 +116,6 @@ clCreateKernel(cl_program program,
 
   kernel->function_name = strdup(kernel_name);
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
-  kernel->reference_count = 1;
   kernel->context = program->context;
   kernel->program = program;
   kernel->dlhandle = dlhandle;
@@ -146,6 +145,8 @@ clCreateKernel(cl_program program,
   cl_kernel k = program->kernels;
   program->kernels = kernel;
   kernel->next = k;
+
+  POCL_RETAIN_OBJECT(program);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

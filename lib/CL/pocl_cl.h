@@ -36,7 +36,9 @@
 #define POCL_KERNEL "pocl-kernel"
 #define POCL_WORKGROUP "pocl-workgroup"
 
-#define POCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
+#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+
+#define POCL_PRINT_RUNTIME_WARNING(x) fprintf(stderr, "pocl warning: " x)
 
 typedef pthread_mutex_t pocl_lock_t;
 
@@ -191,10 +193,11 @@ struct _cl_command_queue {
   /* queries */
   cl_context context;
   cl_device_id device;
-  cl_uint reference_count;
   cl_command_queue_properties properties;
   /* implementation */
 };
+
+typedef struct _cl_mem cl_mem_t;
 
 struct _cl_mem {
   POCL_OBJECT;
@@ -204,16 +207,17 @@ struct _cl_mem {
   size_t size;
   void *mem_host_ptr;
   cl_uint map_count;
-  cl_uint reference_count;
   cl_context context;
   /* implementation */
   void **device_ptrs;
+  /* in case this is a sub buffer, this points to the parent
+     buffer */
+  cl_mem_t *parent;
 };
 
 struct _cl_program {
   POCL_OBJECT;
   /* queries */
-  cl_uint reference_count;
   cl_context context;
   cl_uint num_devices;
   cl_device_id *devices;
@@ -229,7 +233,6 @@ struct _cl_kernel {
   /* queries */
   const char *function_name;
   cl_uint num_args;
-  cl_uint reference_count;
   cl_context context;
   cl_program program;
   /* implementation */

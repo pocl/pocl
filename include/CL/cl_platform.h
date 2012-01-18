@@ -59,6 +59,9 @@ extern "C" {
     #define CL_API_SUFFIX__VERSION_1_1
     #define CL_EXT_SUFFIX__VERSION_1_1
     #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
+    #define CL_API_SUFFIX__VERSION_1_2
+    #define CL_EXT_SUFFIX__VERSION_1_2
+    #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #endif
 
 #if (defined (_WIN32) && defined(_MSC_VER))

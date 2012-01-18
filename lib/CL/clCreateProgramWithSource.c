@@ -49,14 +49,14 @@ clCreateProgramWithSource(cl_context context,
   for (i = 0; i < count; ++i)
     {
       if (strings[i] == NULL)
-	POCL_ERROR(CL_INVALID_VALUE);
+        POCL_ERROR(CL_INVALID_VALUE);
 
       if (lengths == NULL)
-	size += strlen(strings[i]);
+        size += strlen(strings[i]);
       else if (lengths[i] == 0)
-	size += strlen(strings[i]);
+        size += strlen(strings[i]);
       else
-	size += lengths[i];
+        size += lengths[i];
     }
   
   source = (char *) malloc(size + 1);
@@ -68,32 +68,33 @@ clCreateProgramWithSource(cl_context context,
   for (i = 0; i < count; ++i)
     {
       if (lengths == NULL)
-	{
-	  memcpy(source, strings[i], strlen(strings[i]));
-	  source += strlen(strings[i]);
-	}
+        {
+          memcpy(source, strings[i], strlen(strings[i]));
+          source += strlen(strings[i]);
+        }
       else if (lengths[i] == 0)
-	{
-	  memcpy(source, strings[i], strlen(strings[i]));
-	  source += strlen(strings[i]);
-	}
+        {
+          memcpy(source, strings[i], strlen(strings[i]));
+          source += strlen(strings[i]);
+        }
       else
-	{
-	  memcpy(source, strings[i], lengths[i]);
-	  source += lengths[i];
-	}
+        {
+          memcpy(source, strings[i], lengths[i]);
+          source += lengths[i];
+        }
     }
 
   *source = '\0';
 
-  program->reference_count = 1;
   program->context = context;
   program->num_devices = context->num_devices;
   program->devices = context->devices;
   program->binary_size = 0;
   program->binary = NULL;
   program->kernels = NULL;
-  
+
+  POCL_RETAIN_OBJECT(context);
+
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return program;
