@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples.
+# Makefile.am for pocl/examples/example2.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,4 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a example2b barriers forloops standalone trig scalarwave loopbarriers kernel
+noinst_PROGRAMS = example2b
+
+example2b_SOURCES = example2b.c example2.cl
+example2b_LDADD = ../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
+example2b_CFLAGS = @PTHREAD_CFLAGS@
+
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
