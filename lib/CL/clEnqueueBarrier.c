@@ -26,6 +26,6 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueBarrier(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  /* All operations are serialised, so we never have to wait */
+  POCL_ABORT_UNIMPLEMENTED();
   return CL_SUCCESS;
 }

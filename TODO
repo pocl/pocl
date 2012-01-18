@@ -52,7 +52,6 @@ entered here.
 * 5.1 Command queues
 * 5.2.1 Creating buffer objects
 * 5.2.4 Mapping buffer objects
-  * clEnqueueMapBuffer (*)
 * 5.3 Image objects
   * clCreateImage2D (deprecated in OpenCL 1.2) (*)
 * 5.3.3 Reading, Writing and Copying Image Objects
@@ -60,7 +59,6 @@ entered here.
 * 5.4 Querying, Umapping, Migrating, ... Mem objects
 * 5.4.1 Retaining and Releasing Memory Objects
 * 5.4.2 Unmapping Mapped Memory Objects
-  * clEnqueueUnmapMemObject (*)
 * 5.5 Sampler objects
 * 5.5.1 Creating Sampler Objects
   * clCreateSampler (*)

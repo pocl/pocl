@@ -36,9 +36,28 @@
 #define POCL_KERNEL "pocl-kernel"
 #define POCL_WORKGROUP "pocl-workgroup"
 
-#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define __func__ __PRETTY_FUNCTION__
+# else
+#  define __func__ UNKNOWN_FUNCTION
+# endif
+#endif
 
-#define POCL_PRINT_RUNTIME_WARNING(x) fprintf(stderr, "pocl warning: " x)
+#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+#define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
+
+#define POCL_ABORT_UNIMPLEMENTED()                                      \
+    do {                                                                \
+        fprintf(stderr, "pocl error: encountered unimplemented part of the OpenCL specs in %s:%d\n", __FILE__, __LINE__); \
+        exit(2);                                                        \
+    } while (0) 
+
+#define POCL_WARN_UNTESTED()                                            \
+    do {                                                                \
+        fprintf(stderr, "pocl warning: encountered untested part of the implementation in %s:%d\n", __FILE__, __LINE__); \
+    } while (0) 
+
 
 typedef pthread_mutex_t pocl_lock_t;
 
@@ -160,7 +179,7 @@ struct _cl_device_id {
                       size_t buffer_slice_pitch,
                       size_t host_row_pitch,
                       size_t host_slice_pitch);
-  void (*copy) (void *data, const void *src_ptr, const void *dst_ptr, size_t cb);
+  void (*copy) (void *data, const void *src_ptr,  void *__restrict__ dst_ptr, size_t cb);
   void (*copy_rect) (void *data, const void *src_ptr, void *dst_ptr,
                      const size_t *src_origin,
                      const size_t *dst_origin, 
@@ -169,6 +188,13 @@ struct _cl_device_id {
                      size_t src_slice_pitch,
                      size_t dst_row_pitch,
                      size_t dst_slice_pitch);
+
+  /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
+     host-accessible memory. This might or might not involve copying 
+     the block from the device. */
+  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size);
+  void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
+
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
 	       struct pocl_context *pc);
@@ -197,6 +223,16 @@ struct _cl_command_queue {
   /* implementation */
 };
 
+
+typedef struct _mem_mapping mem_mapping_t;
+/* represents a single buffer to host memory mapping */
+struct _mem_mapping {
+  void *host_ptr;
+  size_t offset; /* offset to the beginning of the buffer */
+  size_t size;
+  mem_mapping_t *prev, *next;
+};
+
 typedef struct _cl_mem cl_mem_t;
 
 struct _cl_mem {
@@ -210,6 +246,9 @@ struct _cl_mem {
   cl_context context;
   /* implementation */
   void **device_ptrs;
+  /* A linked list of regions of the buffer mapped to the 
+     host memory */
+  mem_mapping_t *mappings;
   /* in case this is a sub buffer, this points to the parent
      buffer */
   cl_mem_t *parent;

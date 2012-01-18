@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "utlist.h"
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -28,6 +29,7 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;
+  mem_mapping_t *mapping, *temp;
 
   POCL_RELEASE_OBJECT(memobj);
 
@@ -48,6 +50,12 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_RELEASE_OBJECT(memobj->parent);
         }
       POCL_RELEASE_OBJECT(memobj->context);
+      DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
+        {
+          free (mapping);
+        }
+      memobj->mappings = NULL;
+      
       free(memobj->device_ptrs);
       free(memobj);
     }

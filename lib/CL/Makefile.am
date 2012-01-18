@@ -36,6 +36,8 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateSubBuffer.c		\
 	        	   clEnqueueReadBuffer.c	\
 	       		   clEnqueueReadBufferRect.c	\
+	        	   clEnqueueMapBuffer.c	\
+	        	   clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
                    clCreateProgramWithSource.c	\

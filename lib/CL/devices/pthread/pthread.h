@@ -49,7 +49,7 @@ void pocl_pthread_write_rect (void *data, const void *host_ptr, void *device_ptr
                               size_t buffer_slice_pitch,
                               size_t host_row_pitch,
                               size_t host_slice_pitch);
-void pocl_pthread_copy (void *data, const void *src_ptr, const void *dst_ptr, size_t cb);
+void pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb);
 void pocl_pthread_copy_rect (void *data, const void *src_ptr, void *dst_ptr,
                              const size_t *src_origin,
                              const size_t *dst_origin, 
@@ -61,6 +61,11 @@ void pocl_pthread_copy_rect (void *data, const void *src_ptr, void *dst_ptr,
 void pocl_pthread_run (void *data, const char *bytecode,
 		      cl_kernel kernel,
 		      struct pocl_context *pc);
+
+void* 
+pocl_pthread_map_mem (void *data, void *buf_ptr, 
+                      size_t offset, size_t size);
+
 
 extern size_t pocl_pthread_max_work_item_sizes[];
 
@@ -170,7 +175,9 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   pocl_pthread_write_rect, /* write_rect */				\
   pocl_pthread_copy, /* copy */						\
   pocl_pthread_copy_rect, /* copy_rect */				\
-  pocl_pthread_run, /* run */						\
+  pocl_pthread_map_mem,                               \
+  NULL, /* unmap_mem is a NOP */                    \
+  pocl_pthread_run, /* run */                         \
   NULL /* data */							\
 }
 

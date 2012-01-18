@@ -33,7 +33,8 @@ clCreateSubBuffer(cl_mem                   buffer,
 {
   cl_mem mem;
   int i;
-  POCL_PRINT_RUNTIME_WARNING("Untested function clCreateSubBuffer executed!");
+
+  POCL_WARN_UNTESTED();
 
   if (buffer == NULL || buffer->parent != NULL)
     POCL_ERROR(CL_INVALID_MEM_OBJECT);
