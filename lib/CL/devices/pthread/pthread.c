@@ -332,7 +332,7 @@ pocl_pthread_write_rect (void *data,
 }
 
 void
-pocl_pthread_copy (void *data, const void *src_ptr, const void *dst_ptr, size_t cb)
+pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
   if (src_ptr == dst_ptr)
     return;
@@ -627,6 +627,15 @@ pocl_pthread_run (void *data, const char *parallel_filename,
 
   free(threads);
   free(arguments);
+}
+
+void *
+pocl_pthread_map_mem (void *data, void *buf_ptr, 
+                      size_t offset, size_t size) 
+{
+  /* All global pointers of the pthread/CPU device are in 
+     the host address space already, and up to date. */     
+  return buf_ptr + offset;
 }
 
 void *

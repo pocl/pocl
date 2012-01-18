@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include "utlist.h"
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -28,19 +29,35 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;
+  mem_mapping_t *mapping, *temp;
 
   POCL_RELEASE_OBJECT(memobj);
 
   if (memobj->pocl_refcount == 0) 
     {
 
-      for (i = 0; i < memobj->context->num_devices; ++i)
+      if (memobj->parent == NULL) 
         {
-          device_id = memobj->context->devices[i];
-          device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[i]);
+          for (i = 0; i < memobj->context->num_devices; ++i)
+            {
+              device_id = memobj->context->devices[i];
+              device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[i]);
+            }
+        } else 
+        {
+          /* a sub buffer object does not free the memory from
+             the device */
+          POCL_RELEASE_OBJECT(memobj->parent);
         }
+      POCL_RELEASE_OBJECT(memobj->context);
+      DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
+        {
+          free (mapping);
+        }
+      memobj->mappings = NULL;
       
       free(memobj->device_ptrs);
+      free(memobj);
     }
   return CL_SUCCESS;
 }

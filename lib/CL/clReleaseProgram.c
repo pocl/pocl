@@ -39,6 +39,7 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
           k->program = NULL;
         }
 
+      POCL_RELEASE_OBJECT(program->context);
       free(program->source);
       free(program->binary);
       free(program);

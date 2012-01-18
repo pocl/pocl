@@ -2,20 +2,23 @@ Version roadmap
 ---------------
 
 High priority:
-    * add the https://code.google.com/p/opencl-book-samples/
-      to the test suite (0.x)
     * clean up the hidden temp directories by default (0.x)
     * make NVIDIA OpenCL SDK examples to work (1.0)
     * make Intel OpenCL SDK examples to work (1.0)    
     * make AMD OpenCL SDK examples to work (1.0)
-    * create workgroups by looping instead of fully unrolling for
-      flexible WG parallelization (1.0)
+    * make Rodinia OpenCL benchmarks to work (1.0)
+    * make ViennaCL to work (1.0)
+    * make the book examples at 
+      https://code.google.com/p/opencl-book-samples
+      to work (1.0)   
+    * vectorize workgroups
 
 Medium priority:
     * device selection at runtime.
     * complete kernel runtime library.   
     * complete host runtime library.
-    * vectorize workgroups.
+    * create workgroups by looping instead of fully unrolling for
+      flexible WG parallelization (1.0)
     * ttasim target (heterogeneous TCE scenario).
     * device supporting ATI cards.
 
@@ -48,9 +51,7 @@ entered here.
 
 * 5.1 Command queues
 * 5.2.1 Creating buffer objects
-  * clCreateSubBuffer (*)
 * 5.2.4 Mapping buffer objects
-  * clEnqueueMapBuffer (*)
 * 5.3 Image objects
   * clCreateImage2D (deprecated in OpenCL 1.2) (*)
 * 5.3.3 Reading, Writing and Copying Image Objects
@@ -58,7 +59,6 @@ entered here.
 * 5.4 Querying, Umapping, Migrating, ... Mem objects
 * 5.4.1 Retaining and Releasing Memory Objects
 * 5.4.2 Unmapping Mapped Memory Objects
-  * clEnqueueUnmapMemObject (*)
 * 5.5 Sampler objects
 * 5.5.1 Creating Sampler Objects
   * clCreateSampler (*)

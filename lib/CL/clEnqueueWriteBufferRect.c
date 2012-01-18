@@ -63,7 +63,8 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
        buffer_row_pitch * (buffer_origin[1] + region[1]-1) +
        buffer_slice_pitch * (buffer_origin[2] + region[2]-1) >= buffer->size))
   {
-#warning "TODO"
+      POCL_ABORT_UNIMPLEMENTED();
+#if 0
     printf("bo=[%d,%d,%d]\n"
            "ho=[%d,%d,%d]\n"
            "re=[%d,%d,%d]\n"
@@ -76,14 +77,15 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
            (int)buffer_row_pitch, (int)buffer_slice_pitch,
            (int)host_row_pitch, (int)host_slice_pitch,
            (int)buffer->size);
+#endif
     return CL_INVALID_VALUE;
   }
 
   device_id = command_queue->device;
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
-      if (command_queue->context->devices[i] == device_id)
-	break;
+        if (command_queue->context->devices[i] == device_id)
+            break;
     }
 
   assert(i < command_queue->context->num_devices);
