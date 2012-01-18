@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples/barriers.
+# Makefile.am for pocl/examples/example1.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS = barriers
+# Usage:
+#
+# mkdir -p ~/src && cd ~/src  (or wherever you want) 
+# svn checkout http://opencl-book-samples.googlecode.com/svn/trunk/ opencl-book-samples-read-only
+# make book_samples_dir=~/src/opencl-book-samples-read-only
 
-barriers_SOURCES = barriers.c barriers.cl
-barriers_LDADD = ../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
-barriers_CFLAGS = @PTHREAD_CFLAGS@
+abs_builddir=${PWD}/$(top_builddir)
+abs_srcdir=${PWD}/$(top_srcdir)
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+all:
+	@(if test "x${book_samples_dir}" == "x";  \
+		then \
+	echo Usage: make book_samples_dir=BOOK-SAMPLES-CHECKOUT;  \
+	exit 1; \
+	fi)
+	(cd ${book_samples_dir}; mkdir -p build; cd build; \
+	cmake \
+	-D CMAKE_CXX_FLAGS:STRING='-g -O3' \
+	-D OPENCL_LIBRARIES:FILEPATH=${abs_builddir}/lib/CL/.libs/libOpenCL.so \
+	-D OPENCL_INCLUDE_DIRS:PATH=${abs_srcdir}/include .. && \
+	make clean all -sk)

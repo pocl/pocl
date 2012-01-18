@@ -1,6 +1,6 @@
-/* OpenCL built-in library: abs()
+/* OpenCL runtime library: clRetainContext()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2012 Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +21,11 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#include "pocl_cl.h"
 
-#define __builtin_abshh(a)   ((uchar )(a>=(char )0 ? a : -a))
-#define __builtin_absh(a)    ((ushort)(a>=(short)0 ? a : -a))
-#define __builtin_absl(a)    ((ulong )(a>=(long )0 ? a : -a))
-#define __builtin_absuhh(a)  a
-#define __builtin_absuh(a)   a
-#define __builtin_absu(a)    a
-#define __builtin_absul(a)   a
-
-DEFINE_BUILTIN_UG_G(abs)
+CL_API_ENTRY cl_int CL_API_CALL
+clRetainContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
+{
+  POCL_RETAIN_OBJECT(context);
+  return CL_SUCCESS;
+}

@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clGetDeviceInfo()
 
-   Copyright (c) 2011 Kalle Raiskila 
+   Copyright (c) 2011-2012 Kalle Raiskila and Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,36 @@
 */
 
 #include "pocl_cl.h"
+#include <string.h>
 
+#define POCL_RETURN_DEVICE_INFO(__TYPE__, __VALUE__)                \
+  {                                                                 \
+    size_t const value_size = sizeof(__TYPE__);                     \
+    if (param_value)                                                \
+      {                                                             \
+        if (param_value_size < value_size) return CL_INVALID_VALUE; \
+        *(__TYPE__*)param_value = __VALUE__;                        \
+      }                                                             \
+    if (param_value_size_ret)                                       \
+      *param_value_size_ret = value_size;                           \
+    return CL_SUCCESS;                                              \
+  } 
+
+#define POCL_RETURN_DEVICE_INFO_STR(__STR__)                        \
+  {                                                                 \
+    size_t const value_size = strlen(__STR__) + 1;                  \
+    if (param_value)                                                \
+      {                                                             \
+        if (param_value_size < value_size) return CL_INVALID_VALUE; \
+        memcpy(param_value, __STR__, value_size);                   \
+      }                                                             \
+    if (param_value_size_ret)                                       \
+      *param_value_size_ret = value_size;                           \
+    return CL_SUCCESS;                                              \
+  }                                                                 \
+    
+
+  
 CL_API_ENTRY cl_int CL_API_CALL
 clGetDeviceInfo(cl_device_id   device,
                 cl_device_info param_name, 
@@ -32,19 +61,11 @@ clGetDeviceInfo(cl_device_id   device,
 {
   switch (param_name)
   {
+  case CL_DEVICE_IMAGE_SUPPORT: 
+    /* Return CL_FALSE until the APIs are implemented. */
+    POCL_RETURN_DEVICE_INFO(cl_bool, CL_FALSE);
   case CL_DEVICE_TYPE:
-    {
-      size_t const value_size = sizeof(cl_device_type);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_device_type*)param_value = device->type;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
-    
+    POCL_RETURN_DEVICE_INFO(cl_device_type, device->type);   
   case CL_DEVICE_VENDOR_ID                         : break;
   case CL_DEVICE_MAX_COMPUTE_UNITS                 : break;
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : break;
@@ -52,82 +73,22 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_MAX_WORK_ITEM_SIZES               : break;
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_uint*)param_value = device->preferred_vector_width_char;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_char);   
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_uint*)param_value = device->preferred_vector_width_short;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_short);
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_uint*)param_value = device->preferred_vector_width_int;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
-    
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_int);
+
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_uint*)param_value = device->preferred_vector_width_long;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_long);
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_uint*)param_value = device->preferred_vector_width_float;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_float);
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(cl_uint*)param_value = device->preferred_vector_width_double;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_double);
 
   case CL_DEVICE_MAX_CLOCK_FREQUENCY               : break;
   case CL_DEVICE_ADDRESS_BITS                      : break;
@@ -139,7 +100,6 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_IMAGE3D_MAX_WIDTH                 : break;
   case CL_DEVICE_IMAGE3D_MAX_HEIGHT                : break;
   case CL_DEVICE_IMAGE3D_MAX_DEPTH                 : break;
-  case CL_DEVICE_IMAGE_SUPPORT                     : break;
   case CL_DEVICE_MAX_PARAMETER_SIZE                : break;
   case CL_DEVICE_MAX_SAMPLERS                      : break;
   case CL_DEVICE_MEM_BASE_ADDR_ALIGN               : break;
@@ -162,18 +122,8 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_QUEUE_PROPERTIES                  : break;
     
   case CL_DEVICE_NAME:
-    {
-      size_t const value_size = strlen(device->name) + 1;
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, device->name, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
-    
+    POCL_RETURN_DEVICE_INFO_STR(device->name);
+   
   case CL_DEVICE_VENDOR                            : break;
   case CL_DRIVER_VERSION                           : break;
   case CL_DEVICE_PROFILE                           : break;
@@ -193,6 +143,5 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : break;
   case CL_DEVICE_OPENCL_C_VERSION                  : break;
   }
-  
   return CL_INVALID_VALUE;
 }

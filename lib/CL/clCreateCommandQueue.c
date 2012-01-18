@@ -36,10 +36,11 @@ clCreateCommandQueue(cl_context context,
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  
+  POCL_INIT_OBJECT(command_queue);
 
   command_queue->context = context;
   command_queue->device = device;
-  command_queue->reference_count = 1;
   command_queue->properties = properties;
   command_queue->root = NULL;
 

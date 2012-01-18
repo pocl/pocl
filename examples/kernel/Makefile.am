@@ -24,8 +24,8 @@
 
 noinst_PROGRAMS = kernel
 
-kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_rotate.cl
-kernel_LDADD = ../../lib/CL/libCL.la -lm @PTHREAD_LIBS@
+kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_hadd.cl test_rotate.cl
+kernel_LDADD = ../../lib/CL/libOpenCL.la -lm @PTHREAD_LIBS@
 kernel_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

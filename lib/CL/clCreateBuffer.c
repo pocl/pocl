@@ -41,6 +41,9 @@ clCreateBuffer(cl_context context,
   mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+
+  POCL_INIT_OBJECT(mem);
+
   mem->device_ptrs = (void **) malloc(context->num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
@@ -67,7 +70,6 @@ clCreateBuffer(cl_context context,
 
   mem->size = size;
   mem->mem_host_ptr = host_ptr;
-  mem->reference_count = 1;
   mem->context = context;
   
   if (errcode_ret != NULL)

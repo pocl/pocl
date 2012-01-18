@@ -27,6 +27,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <ltdl.h>
+#include <pthread.h>
 #include "pocl.h"
 
 #define POCL_FILENAME_LENGTH 1024
@@ -36,6 +37,45 @@
 #define POCL_WORKGROUP "pocl-workgroup"
 
 #define POCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
+
+typedef pthread_mutex_t pocl_lock_t;
+
+/* Generic functionality for handling different types of 
+   OpenCL (host) objects. */
+
+#define POCL_LOCK(__LOCK__) pthread_mutex_lock (&__LOCK__)
+#define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&__LOCK__)
+#define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&__LOCK__, NULL)
+
+#define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK(__OBJ__->pocl_lock)
+#define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK(__OBJ__->pocl_lock)
+
+#define POCL_RELEASE_OBJECT(__OBJ__)             \
+  do {                                           \
+    POCL_LOCK_OBJ (__OBJ__);                     \
+    __OBJ__->pocl_refcount--;                    \
+    POCL_UNLOCK_OBJ (__OBJ__);                   \
+  } while (0)                          
+
+#define POCL_RETAIN_OBJECT(__OBJ__)             \
+  do {                                          \
+    POCL_LOCK_OBJ (__OBJ__);                    \
+    __OBJ__->pocl_refcount++;                   \
+    POCL_UNLOCK_OBJ (__OBJ__);                  \
+  } while (0)
+
+/* The reference counter is initialized to 1,
+   when it goes to 0 object can be freed. */
+#define POCL_INIT_OBJECT(__OBJ__)                \
+  do {                                           \
+    POCL_INIT_LOCK (__OBJ__->pocl_lock);         \
+    __OBJ__->pocl_refcount = 1;                  \
+  } while (0)
+
+/* Declares the generic pocl object attributes inside a struct. */
+#define POCL_OBJECT \
+  pocl_lock_t pocl_lock; \
+  int pocl_refcount 
 
 struct pocl_argument {
   size_t size;
@@ -138,8 +178,8 @@ struct _cl_platform_id {
 }; 
 
 struct _cl_context {
+  POCL_OBJECT;
   /* queries */
-  cl_uint reference_count;
   cl_device_id *devices;
   const cl_context_properties *properties;
   /* implementation */
@@ -147,6 +187,7 @@ struct _cl_context {
 };
 
 struct _cl_command_queue {
+  POCL_OBJECT;
   /* queries */
   cl_context context;
   cl_device_id device;
@@ -157,6 +198,7 @@ struct _cl_command_queue {
 };
 
 struct _cl_mem {
+  POCL_OBJECT;
   /* queries */
   cl_mem_object_type type;
   cl_mem_flags flags;
@@ -170,6 +212,7 @@ struct _cl_mem {
 };
 
 struct _cl_program {
+  POCL_OBJECT;
   /* queries */
   cl_uint reference_count;
   cl_context context;
@@ -183,6 +226,7 @@ struct _cl_program {
 };
 
 struct _cl_kernel {
+  POCL_OBJECT;
   /* queries */
   const char *function_name;
   cl_uint num_args;

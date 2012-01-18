@@ -42,6 +42,7 @@ clCreateContext(const cl_context_properties * properties,
   if (context == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
+  POCL_INIT_OBJECT(context);
 	/* Step through the devices ptr - checking they are valid
   num_devices = 0;
   for (i = 0; i < POCL_NUM_DEVICES; ++i) {
@@ -70,7 +71,6 @@ clCreateContext(const cl_context_properties * properties,
     }   
 
   context->properties = properties;
-  context->reference_count = 1;
 
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;

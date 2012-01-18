@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clReleaseCommandQueue()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,10 @@ CL_API_ENTRY cl_int CL_API_CALL
 clReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
   clFinish(command_queue);
-  free(command_queue);
+  POCL_RELEASE_OBJECT(command_queue);
+  if (command_queue->pocl_refcount == 0)
+    {
+      free (command_queue);
+    }
   return CL_SUCCESS;
 }

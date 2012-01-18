@@ -1,6 +1,6 @@
+// TESTING: copysign
 // TESTING: fabs
 // TESTING: signbit
-// TESTING: copysign
 
 #define IMPLEMENT_BODY_V(NAME, BODY, VTYPE, STYPE, JTYPE, SJTYPE)       \
   void NAME##_##VTYPE()                                                 \
@@ -135,8 +135,11 @@ DEFINE_BODY_V
            equal = equal && r.sj == g.sj;
          }
          if (!equal) {
-           printf("FAIL: fabs type=%s val=%.17g res=%.17g\n",
-                  typename, val.s[0], res.s[0]);
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: fabs type=%s val=%.17g res=%.17g\n",
+                    typename, val.s[n], res.s[n]);
+           }
+           return;
          }
          /* signbit */
          Jvec ires;
@@ -146,8 +149,11 @@ DEFINE_BODY_V
            equal = equal && ires.s[n] == (sign>0 ? 0 : vecsize==1 ? +1 : -1);
          }
          if (!equal) {
-           printf("FAIL: signbit type=%s val=%.17g res=%d\n",
-                  typename, val.s[0], (int)ires.s[0]);
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: signbit type=%s val=%.17g res=%d\n",
+                    typename, val.s[n], (int)ires.s[n]);
+           }
+           return;
          }
          /* copysign */
          for (int sign2=-1; sign2<=+1; sign2+=2) {
@@ -164,6 +170,7 @@ DEFINE_BODY_V
                printf("FAIL: copysign type=%s val=%.17g sign=%.17g res=%.17g\n",
                       typename, val.s[n], sign2*val2.s[n], res.s[n]);
              }
+             return;
            }
          }
        }

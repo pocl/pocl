@@ -14,15 +14,6 @@ host C library or syscall in your kernels which might be useful for
 kernel debugging (see HOST LIBRARY CALLS).
 
 
-REQUIRED SOFTWARE PACKAGES
-
-To build pocl, apart from a decent development environment (C/C++ compiler,
-make) the following packages are needed:
-
-   llvm 3.0
-   clang 3.0
-
-
 EXAMPLES
 
 After the build is complete, a number of examples are ready to be run on
@@ -41,7 +32,7 @@ and run the executable there (executable name matches subdirectory name).
 LINKING YOUR PROGRAM WITH POCL
 
 During installation, pocl places a copy of standard OpenCL headers in
-<prefix>/include/CL, and the host runtime OpenCL library (libCL) in
+<prefix>/include/CL, and the host runtime OpenCL library (libOpenCL) in
 <prefix>/lib.
 
 Passing the appropriate linker flags is enough to use pocl in your
@@ -53,6 +44,14 @@ program. However, please bear in mind that:
        is far for complete. If your program uses any of the unimplemented
        API calls, it will not work. Please implement the mssing APIs
        when you need them and submit us a patch :)
+
+The pkg-config tool is used to locate the libraries and headers in
+the installation directory. 
+
+Example of compiling an OpenCL host program against pocl using
+the pkg-config:
+
+g++ example1.c -o example `pkg-config --libs --cflags pocl`
 
 
 STANDALONE

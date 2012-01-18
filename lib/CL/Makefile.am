@@ -2,7 +2,8 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/CL.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012-2012 Universidad Rey Juan Carlos and 
+# Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,22 +23,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-lib_LTLIBRARIES = libCL.la
+lib_LTLIBRARIES = libOpenCL.la
 
-libCL_la_SOURCES = clCreateContextFromType.c	\
+libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
+                   clRetainContext.c		\
                    clGetContextInfo.c		\
                    clCreateCommandQueue.c	\
                    clReleaseCommandQueue.c	\
+                   clRetainCommandQueue.c	\
                    clCreateBuffer.c		\
-	           clEnqueueReadBuffer.c	\
-	           clEnqueueReadBufferRect.c	\
+	        	   clEnqueueReadBuffer.c	\
+	       		   clEnqueueReadBufferRect.c	\
                    clReleaseMemObject.c		\
+                   clRetainMemObject.c		\
                    clCreateProgramWithSource.c	\
                    clReleaseProgram.c		\
+                   clRetainProgram.c		\
                    clBuildProgram.c		\
                    clCreateKernel.c		\
                    clReleaseKernel.c		\
+                   clRetainKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
                    clGetPlatformIDs.c		\
@@ -64,5 +70,5 @@ libCL_la_SOURCES = clCreateContextFromType.c	\
                    devices/pthread/pthread.h	\
                    devices/pthread/pthread.c
 
-libCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
-libCL_la_LDFLAGS = -lltdl
+libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
+libOpenCL_la_LDFLAGS = -lltdl

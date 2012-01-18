@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: Portable OpenCL
 Description: Portable OpenCL
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lCL
-Cflags: -I${includedir}
+Libs: -L${libdir} -lOpenCL @PTHREAD_LIBS@
+Cflags: -I${includedir} @PTHREAD_CFLAGS@
 

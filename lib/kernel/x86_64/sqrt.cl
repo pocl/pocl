@@ -21,6 +21,10 @@
    THE SOFTWARE.
 */
 
+#include "../templates.h"
+
+
+
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
   TYPE _cl_overloadable NAME(TYPE a)            \
   {                                             \
@@ -120,3 +124,8 @@ IMPLEMENT_SPLIT (sqrt, double4 , lo, hi)
 #endif
 IMPLEMENT_SPLIT (sqrt, double8 , lo, hi)
 IMPLEMENT_SPLIT (sqrt, double16, lo, hi)
+
+
+
+DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
+DEFINE_EXPR_F_F(native_sqrt, sqrt(a))

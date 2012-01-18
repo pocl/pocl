@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.61])
-AC_INIT([pocl], [0.9], [carlos.delalama@urjc.es])
+AC_INIT([pocl], [0.x], [carlos.delalama@urjc.es])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -41,10 +41,12 @@ AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
+LLVM_UNSTABLE="no"
 
 case "$LLVM_VERSION" in
      3.0*)
      AC_DEFINE([LLVM_3_0], [], "Using LLVM 3.0")
+     LLVM_UNSTABLE="yes"
    ;;
      *svn)
      AC_DEFINE([LLVM_3_1], [], "Using LLVM svn (upcoming 3.1)")     
@@ -309,6 +311,7 @@ AC_CONFIG_FILES([Makefile
                  examples/scalarwave/Makefile
                  examples/loopbarriers/Makefile
                  examples/kernel/Makefile
+                 examples/opencl-book-samples/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal
@@ -317,3 +320,15 @@ AC_CONFIG_FILES([Makefile
 # lib/kernel/ppc/Makefile
 
 AC_OUTPUT
+
+if test "$LLVM_UNSTABLE" == "yes";
+then  
+AC_MSG_NOTICE(
+   [ 
+     Warning: You are using an LLVM version with an unstable OpenCL C 
+     support that includes major OpenCL C miscompilation issues.  
+     Please upgrade to the latest LLVM svn version (3.1 or later) 
+     for more robust OpenCL C compilation.
+   ])
+fi
+
