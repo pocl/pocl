@@ -59,6 +59,15 @@
     } while (0) 
 
 
+/* Attribute for marking functionality that is deprecated in a new 
+   OpenCL standard. */
+#ifdef __GNUC__
+# define POCL_DEPRECATED_SINCE(__VERSION__) \
+  __attribute__((deprecated))
+#else
+# define POCL_DEPRECATED_SINCE(__VERSION__) 
+#endif
+
 typedef pthread_mutex_t pocl_lock_t;
 
 /* Generic functionality for handling different types of 
