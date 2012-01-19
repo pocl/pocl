@@ -79,7 +79,7 @@ main(int argc, char **argv)
       "test_bitselect",
       "test_fabs",
       "test_hadd",
-      //"test_rotate",   /* TODO: this test fails; LLVM bug #11555 */
+      "test_rotate",
     };
     int const ntests = sizeof(tests)/sizeof(*tests);
     for (int i=0; i<ntests; ++i) {
