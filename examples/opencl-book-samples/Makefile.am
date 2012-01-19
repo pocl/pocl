@@ -2,7 +2,7 @@
 # and all subdirectories).
 # Makefile.am for pocl/examples/example1.
 # 
-# Copyright (c) 2012 Tampere University of Technology
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ abs_builddir=${PWD}/$(top_builddir)
 abs_srcdir=${PWD}/$(top_srcdir)
 
 .PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
+.PHONY: run_SimpleBufferSubBuffer
 
 build: check_dir
 	(cd ${book_samples_dir}; mkdir -p build; cd build; \
@@ -69,7 +70,15 @@ run_OpenCLConvolutionChap3: check_dir
 	ln -sf ../../../../src/Chapter_3/OpenCLConvolution/Convolution.cl; \
 	./OpenCLConvolutionChap3)
 
-run_working: run_HelloWorld run_OpenCLConvolutionChap3
+run_SimpleBufferSubBuffer: check_dir
+	@echo
+	@echo "###### Chapter 7: SimpleBufferSubBuffer"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_7/SimpleBufferSubBuffer; \
+	./SimpleBufferSubBuffer --useMap)
+
+run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_SimpleBufferSubBuffer
 
 run_all: run_working run_OpenCLInfo
 

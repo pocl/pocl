@@ -46,6 +46,7 @@ clCreateBuffer(cl_context context,
   mem->parent = NULL;
   mem->map_count = 0;
   mem->mappings = NULL;
+  mem->flags = flags;
 
   mem->device_ptrs = (void **) malloc(context->num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)

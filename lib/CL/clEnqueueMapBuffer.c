@@ -45,8 +45,6 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
   if (blocking_map != CL_TRUE)
     POCL_ABORT_UNIMPLEMENTED();
 
-  POCL_WARN_UNTESTED();
-
   if (buffer == NULL)
     POCL_ERROR(CL_INVALID_MEM_OBJECT);
 
