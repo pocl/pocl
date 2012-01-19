@@ -94,9 +94,19 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (global_x ==0 || global_y == 0 || global_z == 0)
     return CL_INVALID_GLOBAL_WORK_SIZE;
 
-  local_x = local_work_size[0];
-  local_y = work_dim > 1 ? local_work_size[1] : 1;
-  local_z = work_dim > 2 ? local_work_size[2] : 1;
+  if (local_work_size != NULL) 
+    {
+      local_x = local_work_size[0];
+      local_y = work_dim > 1 ? local_work_size[1] : 1;
+      local_z = work_dim > 2 ? local_work_size[2] : 1;
+    } 
+  else 
+    {
+      /* TODO: 
+         figure the optimal dimensions from the device and 
+         the  kernel at hand. */
+      local_x = local_y = local_z = 1;
+    }   
 
   if (local_x * local_y * local_z > command_queue->device->max_work_group_size)
     return CL_INVALID_WORK_GROUP_SIZE;
