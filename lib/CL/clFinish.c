@@ -44,6 +44,13 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           node->command.read.device_ptr, 
           node->command.read.cb); 
         break;
+      case CL_COMMAND_TYPE_WRITE:
+        command_queue->device->write(
+          node->command.write.data, 
+          node->command.write.host_ptr, 
+          node->command.write.device_ptr, 
+          node->command.write.cb);
+        break;
       case CL_COMMAND_TYPE_RUN:
         command_queue->device->run(node->command.run.data,
 			     node->command.run.file,
