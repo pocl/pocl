@@ -61,15 +61,26 @@ typedef struct
   size_t cb;
 } _cl_command_read;
 
+//EnqueueWriteBuffer-command
+typedef struct
+{
+  void *data;
+  const void *host_ptr;
+  void *device_ptr;
+  size_t cb;
+} _cl_command_write;
+
 typedef union
 {
   _cl_command_run run;
   _cl_command_read read;
+  _cl_command_write write;
 } _cl_command_t;
 
 typedef enum
 {
   CL_COMMAND_TYPE_READ,
+  CL_COMMAND_TYPE_WRITE,
   CL_COMMAND_TYPE_RUN
 } _cl_command_en;
 

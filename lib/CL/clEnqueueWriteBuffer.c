@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -60,7 +61,45 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+    }
+
+  /* enqueue the write, or execute directly */
+  if (blocking_write)
+    {
+      if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+        {
+          /* wait for the events in event_wait_list to finish */
+          POCL_ABORT_UNIMPLEMENTED();
+        }
+      else
+        {
+          /* in-order queue - all previously enqueued commands must 
+           * finish before this read */
+          clFinish(command_queue);
+        }
+      device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
+    }
+  else
+  {
+    _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
+    if (cmd == NULL)
+      return CL_OUT_OF_HOST_MEMORY;
+    
+    cmd->type=CL_COMMAND_TYPE_WRITE;
+    cmd->command.write.data = device_id->data;
+    cmd->command.write.host_ptr = ptr;
+    cmd->command.write.device_ptr = buffer->device_ptrs[i];
+    cmd->command.write.cb = cb;
+    cmd->next = NULL;
+    LL_APPEND(command_queue->root, cmd );
+  }
 
   return CL_SUCCESS;
 }
