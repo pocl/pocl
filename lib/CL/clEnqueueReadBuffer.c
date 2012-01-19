@@ -61,6 +61,16 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+    }
+
+
   /* enqueue the read, or execute directly */
   if (blocking_read)
     {

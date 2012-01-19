@@ -163,6 +163,15 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
   
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+    }
+
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
   pc.num_groups[1] = global_y / local_y;
@@ -179,6 +188,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
   command_node->next = NULL; 
+  
+  POCL_RETAIN_OBJECT(command_queue);
+  POCL_RETAIN_OBJECT(kernel);
+
   LL_APPEND(command_queue->root, command_node);
 /*  command_queue->device->run(command_queue->device->data,
 			     parallel_filename,
