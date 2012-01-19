@@ -58,6 +58,10 @@
         fprintf(stderr, "pocl warning: encountered untested part of the implementation in %s:%d\n", __FILE__, __LINE__); \
     } while (0) 
 
+#define POCL_WARN_INCOMPLETE()                                            \
+    do {                                                                \
+        fprintf(stderr, "pocl warning: encountered incomplete implementation in %s:%d\n", __FILE__, __LINE__); \
+    } while (0) 
 
 typedef pthread_mutex_t pocl_lock_t;
 

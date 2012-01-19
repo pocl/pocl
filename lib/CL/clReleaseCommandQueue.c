@@ -31,6 +31,7 @@ clReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   if (command_queue->pocl_refcount == 0)
     {
       free (command_queue);
+      /* TODO: should clReleaseContext()? */
     }
   return CL_SUCCESS;
 }

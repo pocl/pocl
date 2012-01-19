@@ -65,6 +65,7 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clGetProgramInfo.c		\
                    clGetEventProfilingInfo.c	\
                    clWaitForEvents.c		\
+                   clReleaseEvent.c		\
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\

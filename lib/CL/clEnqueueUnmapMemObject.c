@@ -37,8 +37,6 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
   unsigned i;
   mem_mapping_t *mapping = NULL;
 
-  POCL_WARN_UNTESTED();
-
   if (memobj == NULL)
     return CL_INVALID_MEM_OBJECT;
 

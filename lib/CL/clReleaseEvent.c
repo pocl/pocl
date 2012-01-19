@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clEnqueueBarrier()
+/* OpenCL runtime library: clReleaseEvent()
 
-   Copyright (c) 2011 Erik Schnetter
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,21 @@
 
 #include "pocl_cl.h"
 
-CL_API_ENTRY 
-cl_int CL_API_CALL
-clEnqueueBarrier(cl_command_queue command_queue) 
-CL_API_SUFFIX__VERSION_1_0
+CL_API_ENTRY cl_int CL_API_CALL
+clReleaseEvent(cl_event event) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_WARN_UNTESTED();
+  if (event == NULL && event->queue == NULL)
+    return CL_INVALID_EVENT;
+
+  POCL_RELEASE_OBJECT(event);
+
+  if (event->pocl_refcount == 0)
+    {
+      clReleaseCommandQueue (event->queue);
+      free (event);
+    }
+
   return CL_SUCCESS;
+
 }
