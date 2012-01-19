@@ -31,7 +31,9 @@
 #define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
   TYPE _cl_overloadable NAME(TYPE a)                    \
   {                                                     \
-    return NAME(*(UPTYPE*)&a).LO;                       \
+    UPTYPE a1;                                          \
+    a1.LO = a;                                          \
+    return NAME(a1).LO;                                 \
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)     \
