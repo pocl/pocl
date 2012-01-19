@@ -29,6 +29,10 @@ clCreateCommandQueue(cl_context context,
                      cl_command_queue_properties properties,
                      cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  /* we don't handle out-of-order queues yet */
+  if (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
+    POCL_ERROR(CL_INVALID_QUEUE_PROPERTIES);
+
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
@@ -38,6 +42,7 @@ clCreateCommandQueue(cl_context context,
   command_queue->context = context;
   command_queue->device = device;
   command_queue->properties = properties;
+  command_queue->root = NULL;
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

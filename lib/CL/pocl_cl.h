@@ -64,24 +64,24 @@ typedef pthread_mutex_t pocl_lock_t;
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
 
-#define POCL_LOCK(__LOCK__) pthread_mutex_lock (&__LOCK__)
-#define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&__LOCK__)
-#define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&__LOCK__, NULL)
+#define POCL_LOCK(__LOCK__) pthread_mutex_lock (&(__LOCK__))
+#define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&(__LOCK__))
+#define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&(__LOCK__), NULL)
 
-#define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK(__OBJ__->pocl_lock)
-#define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK(__OBJ__->pocl_lock)
+#define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK((__OBJ__)->pocl_lock)
+#define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK((__OBJ__)->pocl_lock)
 
 #define POCL_RELEASE_OBJECT(__OBJ__)             \
   do {                                           \
     POCL_LOCK_OBJ (__OBJ__);                     \
-    __OBJ__->pocl_refcount--;                    \
+    (__OBJ__)->pocl_refcount--;                    \
     POCL_UNLOCK_OBJ (__OBJ__);                   \
   } while (0)                          
 
 #define POCL_RETAIN_OBJECT(__OBJ__)             \
   do {                                          \
     POCL_LOCK_OBJ (__OBJ__);                    \
-    __OBJ__->pocl_refcount++;                   \
+    (__OBJ__)->pocl_refcount++;                   \
     POCL_UNLOCK_OBJ (__OBJ__);                  \
   } while (0)
 
@@ -89,8 +89,8 @@ typedef pthread_mutex_t pocl_lock_t;
    when it goes to 0 object can be freed. */
 #define POCL_INIT_OBJECT(__OBJ__)                \
   do {                                           \
-    POCL_INIT_LOCK (__OBJ__->pocl_lock);         \
-    __OBJ__->pocl_refcount = 1;                  \
+    POCL_INIT_LOCK ((__OBJ__)->pocl_lock);         \
+    (__OBJ__)->pocl_refcount = 1;                  \
   } while (0)
 
 /* Declares the generic pocl object attributes inside a struct. */
@@ -221,6 +221,7 @@ struct _cl_command_queue {
   cl_device_id device;
   cl_command_queue_properties properties;
   /* implementation */
+  _cl_command_node *root;
 };
 
 
@@ -281,6 +282,11 @@ struct _cl_kernel {
   cl_uint num_locals;
   struct pocl_argument *arguments;
   struct _cl_kernel *next;
+};
+
+struct _cl_event {
+  POCL_OBJECT;
+  cl_command_queue queue;
 };
 
 #endif /* POCL_CL_H */
