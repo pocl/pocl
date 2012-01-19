@@ -48,7 +48,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   char *tmpdir;
   char kernel_filename[POCL_FILENAME_LENGTH];
   FILE *kernel_file;
-  char parallel_filename[POCL_FILENAME_LENGTH];
+  char *parallel_filename;
   size_t n;
   struct stat buf;
   char command[COMMAND_LENGTH];
@@ -138,6 +138,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   
   fclose(kernel_file);
 
+  parallel_filename = (char*)malloc(POCL_FILENAME_LENGTH);
+  if (parallel_filename == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+  
   error = snprintf(parallel_filename, POCL_FILENAME_LENGTH,
 		   "%s/parallel.bc",
 		   tmpdir);
@@ -183,7 +187,6 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   
   command_node->type = CL_COMMAND_TYPE_RUN;
   command_node->command.run.data = command_queue->device->data;
-  #warning parallel_filename is local
   command_node->command.run.file = parallel_filename;
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
@@ -193,10 +196,6 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   POCL_RETAIN_OBJECT(kernel);
 
   LL_APPEND(command_queue->root, command_node);
-/*  command_queue->device->run(command_queue->device->data,
-			     parallel_filename,
-			     kernel,
-			     &pc);
-*/
+
   return CL_SUCCESS;
 }

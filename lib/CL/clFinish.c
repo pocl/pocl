@@ -49,11 +49,11 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 			     node->command.run.file,
 			     node->command.run.kernel,
 			     &node->command.run.pc);
-
+	free(node->command.run.file);
         break;
   
       default:
-        assert(CL_FALSE && "Unimplemented command in commandqueue");
+        POCL_ABORT_UNIMPLEMENTED();
         break;
     }
   } 

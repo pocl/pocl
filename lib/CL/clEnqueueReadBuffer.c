@@ -77,7 +77,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
       if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
         {
           /* wait for the event in event_wait_list to finish */
-          #warning - undone
+          POCL_ABORT_UNIMPLEMENTED();
         }
       else
         {
