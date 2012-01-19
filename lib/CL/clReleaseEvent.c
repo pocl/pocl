@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clReleaseCommandQueue()
+/* OpenCL runtime library: clReleaseEvent()
 
-   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and Pekka Jääskeläinen
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,20 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+clReleaseEvent(cl_event event) CL_API_SUFFIX__VERSION_1_0
 {
-  clFinish(command_queue);
-  POCL_RELEASE_OBJECT(command_queue);
-  if (command_queue->pocl_refcount == 0)
+  POCL_WARN_UNTESTED();
+  if (event == NULL && event->queue == NULL)
+    return CL_INVALID_EVENT;
+
+  POCL_RELEASE_OBJECT(event);
+
+  if (event->pocl_refcount == 0)
     {
-      free (command_queue);
-      /* TODO: should clReleaseContext()? */
+      clReleaseCommandQueue (event->queue);
+      free (event);
     }
+
   return CL_SUCCESS;
+
 }

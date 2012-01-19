@@ -32,7 +32,7 @@ abs_builddir=${PWD}/$(top_builddir)
 abs_srcdir=${PWD}/$(top_srcdir)
 
 .PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
-.PHONY: run_SimpleBufferSubBuffer
+.PHONY: run_SimpleBufferSubBuffer run_spmv
 
 build: check_dir
 	(cd ${book_samples_dir}; mkdir -p build; cd build; \
@@ -78,7 +78,16 @@ run_SimpleBufferSubBuffer: check_dir
 	cd build/src/Chapter_7/SimpleBufferSubBuffer; \
 	./SimpleBufferSubBuffer --useMap)
 
+run_spmv: check_dir
+	@echo
+	@echo "###### Chapter 22: spmv"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_22; \
+	ln -sf ../../../src/Chapter_22/spmv.cl; \
+	./spmv)
+
 run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_SimpleBufferSubBuffer
 
-run_all: run_working run_OpenCLInfo
+run_all: run_working run_OpenCLInfo run_spmv
 

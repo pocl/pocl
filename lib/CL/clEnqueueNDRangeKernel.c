@@ -173,17 +173,18 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
-  error = system(command);
+  error = system (command);
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
   
   if (event != NULL)
     {
-      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      *event = (cl_event)malloc (sizeof(struct _cl_event));
       if (*event == NULL)
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
+      POCL_RETAIN_OBJECT (command_queue);
     }
 
   pc.work_dim = work_dim;
