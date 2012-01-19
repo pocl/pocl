@@ -77,6 +77,8 @@ entered here.
   6. THE OPENCL C PROGRAMMING LANGUAGE
 
 * 6.12.10 Async Copies 
+  * async_work_group_copy (* spmv.cl)
+  * wait_group_events (* spmv.cl)
 * 6.12.11 Atomic functions
 
   OpenCL 1.2 Extensions
