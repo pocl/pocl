@@ -67,14 +67,14 @@ extern "C" {
 /* TODO: try to somehow define these without modifying
    this header copied from the OpenCL site. */
 #ifdef __GNUC__
-# define DEPRECATED_ATTR \
-  __attribute__((deprecated))
+# define __DEPRECATED_ATTR \
+  __attribute__((__deprecated__))
 #else
-# define DEPRECATED_ATTR
+# define __DEPRECATED_ATTR
 #endif
 
-#define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED DEPRECATED_ATTR
-#define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED DEPRECATED_ATTR
+#define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED __DEPRECATED_ATTR
+#define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED __DEPRECATED_ATTR
 
 /* FROM POCL END */
 
