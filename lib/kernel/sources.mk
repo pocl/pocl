@@ -127,4 +127,9 @@ libkernel_a_SOURCES = templates.h		\
                       vload.cl			\
                       vstore.cl			\
                       vload_half.cl		\
-                      vstore_half.cl
+                      vstore_half.cl 	\
+                      async_work_group_copy.cl \
+                      wait_group_events.cl
+
+
+
