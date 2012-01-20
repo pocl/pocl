@@ -63,14 +63,15 @@ then
 fi
 
 linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
+linked_out="${linked_bc}.out"
 
 if [ -f @abs_top_builddir@/lib/kernel/${target}/libkernel.a ]
 then
-    @LLVM_LD@ -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target} -lkernel
+    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target} -lkernel
 else
-    @LLVM_LD@ -b ${linked_bc} $1 -L@pkglibdir@/${target} -lkernel
+    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target} -lkernel
 fi
-rm a.out
+rm ${linked_out}
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 

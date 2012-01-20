@@ -40,4 +40,56 @@ struct pocl_context {
 
 typedef void (*pocl_workgroup) (void **, struct pocl_context *);
 
+
+// Command Queue datatypes
+
+//EnqueueNDRangeKernel-command
+typedef struct
+{
+  void *data;
+  const char *file; 
+  cl_kernel kernel;
+  struct pocl_context pc;
+} _cl_command_run;
+
+//EnqueueReadBuffer-command
+typedef struct
+{
+  void *data;
+  void *host_ptr;
+  const void *device_ptr;
+  size_t cb;
+} _cl_command_read;
+
+//EnqueueWriteBuffer-command
+typedef struct
+{
+  void *data;
+  const void *host_ptr;
+  void *device_ptr;
+  size_t cb;
+} _cl_command_write;
+
+typedef union
+{
+  _cl_command_run run;
+  _cl_command_read read;
+  _cl_command_write write;
+} _cl_command_t;
+
+typedef enum
+{
+  CL_COMMAND_TYPE_READ,
+  CL_COMMAND_TYPE_WRITE,
+  CL_COMMAND_TYPE_RUN
+} _cl_command_en;
+
+// one item in the command queue
+typedef struct
+{
+  _cl_command_t command;
+  _cl_command_en type;
+  void *next; // for linked-list storage
+} _cl_command_node;
+
 #endif /* POCL_H */

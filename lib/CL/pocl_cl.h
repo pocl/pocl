@@ -27,6 +27,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <ltdl.h>
+#include <pthread.h>
 #include "pocl.h"
 
 #define POCL_FILENAME_LENGTH 1024
@@ -35,7 +36,71 @@
 #define POCL_KERNEL "pocl-kernel"
 #define POCL_WORKGROUP "pocl-workgroup"
 
-#define POCL_ERROR(x) if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;}
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define __func__ __PRETTY_FUNCTION__
+# else
+#  define __func__ UNKNOWN_FUNCTION
+# endif
+#endif
+
+#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+#define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
+
+#define POCL_ABORT_UNIMPLEMENTED()                                      \
+    do {                                                                \
+        fprintf(stderr, "pocl error: encountered unimplemented part of the OpenCL specs in %s:%d\n", __FILE__, __LINE__); \
+        exit(2);                                                        \
+    } while (0) 
+
+#define POCL_WARN_UNTESTED()                                            \
+    do {                                                                \
+        fprintf(stderr, "pocl warning: encountered untested part of the implementation in %s:%d\n", __FILE__, __LINE__); \
+    } while (0) 
+
+#define POCL_WARN_INCOMPLETE()                                            \
+    do {                                                                \
+        fprintf(stderr, "pocl warning: encountered incomplete implementation in %s:%d\n", __FILE__, __LINE__); \
+    } while (0) 
+
+typedef pthread_mutex_t pocl_lock_t;
+
+/* Generic functionality for handling different types of 
+   OpenCL (host) objects. */
+
+#define POCL_LOCK(__LOCK__) pthread_mutex_lock (&(__LOCK__))
+#define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&(__LOCK__))
+#define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&(__LOCK__), NULL)
+
+#define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK((__OBJ__)->pocl_lock)
+#define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK((__OBJ__)->pocl_lock)
+
+#define POCL_RELEASE_OBJECT(__OBJ__)             \
+  do {                                           \
+    POCL_LOCK_OBJ (__OBJ__);                     \
+    (__OBJ__)->pocl_refcount--;                    \
+    POCL_UNLOCK_OBJ (__OBJ__);                   \
+  } while (0)                          
+
+#define POCL_RETAIN_OBJECT(__OBJ__)             \
+  do {                                          \
+    POCL_LOCK_OBJ (__OBJ__);                    \
+    (__OBJ__)->pocl_refcount++;                   \
+    POCL_UNLOCK_OBJ (__OBJ__);                  \
+  } while (0)
+
+/* The reference counter is initialized to 1,
+   when it goes to 0 object can be freed. */
+#define POCL_INIT_OBJECT(__OBJ__)                \
+  do {                                           \
+    POCL_INIT_LOCK ((__OBJ__)->pocl_lock);         \
+    (__OBJ__)->pocl_refcount = 1;                  \
+  } while (0)
+
+/* Declares the generic pocl object attributes inside a struct. */
+#define POCL_OBJECT \
+  pocl_lock_t pocl_lock; \
+  int pocl_refcount 
 
 struct pocl_argument {
   size_t size;
@@ -118,7 +183,7 @@ struct _cl_device_id {
                       size_t buffer_slice_pitch,
                       size_t host_row_pitch,
                       size_t host_slice_pitch);
-  void (*copy) (void *data, const void *src_ptr, const void *dst_ptr, size_t cb);
+  void (*copy) (void *data, const void *src_ptr,  void *__restrict__ dst_ptr, size_t cb);
   void (*copy_rect) (void *data, const void *src_ptr, void *dst_ptr,
                      const size_t *src_origin,
                      const size_t *dst_origin, 
@@ -127,6 +192,13 @@ struct _cl_device_id {
                      size_t src_slice_pitch,
                      size_t dst_row_pitch,
                      size_t dst_slice_pitch);
+
+  /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
+     host-accessible memory. This might or might not involve copying 
+     the block from the device. */
+  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size);
+  void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
+
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
 	       struct pocl_context *pc);
@@ -138,8 +210,8 @@ struct _cl_platform_id {
 }; 
 
 struct _cl_context {
+  POCL_OBJECT;
   /* queries */
-  cl_uint reference_count;
   cl_device_id *devices;
   const cl_context_properties *properties;
   /* implementation */
@@ -147,30 +219,49 @@ struct _cl_context {
 };
 
 struct _cl_command_queue {
+  POCL_OBJECT;
   /* queries */
   cl_context context;
   cl_device_id device;
-  cl_uint reference_count;
   cl_command_queue_properties properties;
   /* implementation */
+  _cl_command_node *root;
 };
 
+
+typedef struct _mem_mapping mem_mapping_t;
+/* represents a single buffer to host memory mapping */
+struct _mem_mapping {
+  void *host_ptr;
+  size_t offset; /* offset to the beginning of the buffer */
+  size_t size;
+  mem_mapping_t *prev, *next;
+};
+
+typedef struct _cl_mem cl_mem_t;
+
 struct _cl_mem {
+  POCL_OBJECT;
   /* queries */
   cl_mem_object_type type;
   cl_mem_flags flags;
   size_t size;
   void *mem_host_ptr;
   cl_uint map_count;
-  cl_uint reference_count;
   cl_context context;
   /* implementation */
   void **device_ptrs;
+  /* A linked list of regions of the buffer mapped to the 
+     host memory */
+  mem_mapping_t *mappings;
+  /* in case this is a sub buffer, this points to the parent
+     buffer */
+  cl_mem_t *parent;
 };
 
 struct _cl_program {
+  POCL_OBJECT;
   /* queries */
-  cl_uint reference_count;
   cl_context context;
   cl_uint num_devices;
   cl_device_id *devices;
@@ -182,10 +273,10 @@ struct _cl_program {
 };
 
 struct _cl_kernel {
+  POCL_OBJECT;
   /* queries */
   const char *function_name;
   cl_uint num_args;
-  cl_uint reference_count;
   cl_context context;
   cl_program program;
   /* implementation */
@@ -195,6 +286,11 @@ struct _cl_kernel {
   cl_uint num_locals;
   struct pocl_argument *arguments;
   struct _cl_kernel *next;
+};
+
+struct _cl_event {
+  POCL_OBJECT;
+  cl_command_queue queue;
 };
 
 #endif /* POCL_CL_H */

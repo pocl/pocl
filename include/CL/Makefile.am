@@ -25,4 +25,4 @@
 library_includedir = $(includedir)/CL
 library_include_HEADERS = cl.h cl_ext.h			\
                           cl_gl.h cl_gl_ext.h		\
-                          cl_platform.h opencl.h
+                          cl_platform.h opencl.h cl.hpp

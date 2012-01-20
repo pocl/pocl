@@ -28,15 +28,22 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel k;
 
-  /* Mark all kernels as having no program */
-  for (k=program->kernels; k!=NULL; k=k->next)
-    {
-      k->program = NULL;
-    }
+  POCL_RELEASE_OBJECT(program);
 
-  free(program->source);
-  free(program->binary);
-  free(program);
+  if (program->pocl_refcount == 0)
+    {
+
+      /* Mark all kernels as having no program */
+      for (k=program->kernels; k!=NULL; k=k->next)
+        {
+          k->program = NULL;
+        }
+
+      POCL_RELEASE_OBJECT(program->context);
+      free(program->source);
+      free(program->binary);
+      free(program);
+    }
 
   return CL_SUCCESS;
 }

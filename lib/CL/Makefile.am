@@ -2,7 +2,8 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/CL.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012-2012 Universidad Rey Juan Carlos and 
+# Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,18 +27,26 @@ lib_LTLIBRARIES = libOpenCL.la
 
 libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
+                   clRetainContext.c		\
                    clGetContextInfo.c		\
                    clCreateCommandQueue.c	\
                    clReleaseCommandQueue.c	\
+                   clRetainCommandQueue.c	\
                    clCreateBuffer.c		\
+                   clCreateSubBuffer.c		\
 	        	   clEnqueueReadBuffer.c	\
 	       		   clEnqueueReadBufferRect.c	\
+	        	   clEnqueueMapBuffer.c	\
+	        	   clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
+                   clRetainMemObject.c		\
                    clCreateProgramWithSource.c	\
                    clReleaseProgram.c		\
+                   clRetainProgram.c		\
                    clBuildProgram.c		\
                    clCreateKernel.c		\
                    clReleaseKernel.c		\
+                   clRetainKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
                    clGetPlatformIDs.c		\
@@ -55,6 +64,8 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clGetKernelWorkGroupInfo.c	\
                    clGetProgramInfo.c		\
                    clGetEventProfilingInfo.c	\
+                   clWaitForEvents.c		\
+                   clReleaseEvent.c		\
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\

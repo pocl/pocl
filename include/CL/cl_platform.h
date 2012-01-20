@@ -58,7 +58,26 @@ extern "C" {
     #define CL_EXT_SUFFIX__VERSION_1_0
     #define CL_API_SUFFIX__VERSION_1_1
     #define CL_EXT_SUFFIX__VERSION_1_1
-    #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
+/*    #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED */
+    #define CL_API_SUFFIX__VERSION_1_2
+    #define CL_EXT_SUFFIX__VERSION_1_2
+/*    #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED */
+
+/* FROM POCL START */
+/* TODO: try to somehow define these without modifying
+   this header copied from the OpenCL site. */
+#ifdef __GNUC__
+# define DEPRECATED_ATTR \
+  __attribute__((deprecated))
+#else
+# define DEPRECATED_ATTR
+#endif
+
+#define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED DEPRECATED_ATTR
+#define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED DEPRECATED_ATTR
+
+/* FROM POCL END */
+
 #endif
 
 #if (defined (_WIN32) && defined(_MSC_VER))

@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -47,12 +48,13 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   char *tmpdir;
   char kernel_filename[POCL_FILENAME_LENGTH];
   FILE *kernel_file;
-  char parallel_filename[POCL_FILENAME_LENGTH];
+  char *parallel_filename;
   size_t n;
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
   struct pocl_context pc;
+  _cl_command_node *command_node;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -67,6 +69,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       work_dim > command_queue->device->max_work_item_dimensions)
     return CL_INVALID_WORK_DIMENSION;
   assert(command_queue->device->max_work_item_dimensions <= 3);
+
+  command_node = (_cl_command_node*) malloc(sizeof(_cl_command_node));
+  if (command_node == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
 
   if (global_work_offset != NULL)
     {
@@ -88,9 +94,19 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (global_x ==0 || global_y == 0 || global_z == 0)
     return CL_INVALID_GLOBAL_WORK_SIZE;
 
-  local_x = local_work_size[0];
-  local_y = work_dim > 1 ? local_work_size[1] : 1;
-  local_z = work_dim > 2 ? local_work_size[2] : 1;
+  if (local_work_size != NULL) 
+    {
+      local_x = local_work_size[0];
+      local_y = work_dim > 1 ? local_work_size[1] : 1;
+      local_z = work_dim > 2 ? local_work_size[2] : 1;
+    } 
+  else 
+    {
+      /* TODO: 
+         figure the optimal dimensions from the device and 
+         the  kernel at hand. */
+      local_x = local_y = local_z = 1;
+    }   
 
   if (local_x * local_y * local_z > command_queue->device->max_work_group_size)
     return CL_INVALID_WORK_GROUP_SIZE;
@@ -132,6 +148,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   
   fclose(kernel_file);
 
+  parallel_filename = (char*)malloc(POCL_FILENAME_LENGTH);
+  if (parallel_filename == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+  
   error = snprintf(parallel_filename, POCL_FILENAME_LENGTH,
 		   "%s/parallel.bc",
 		   tmpdir);
@@ -153,10 +173,20 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
-  error = system(command);
+  error = system (command);
   if (error != 0)
     return CL_OUT_OF_RESOURCES;
   
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc (sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POCL_RETAIN_OBJECT (command_queue);
+    }
+
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
   pc.num_groups[1] = global_y / local_y;
@@ -165,10 +195,18 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   pc.global_offset[1] = offset_y;
   pc.global_offset[2] = offset_z;
 
-  command_queue->device->run(command_queue->device->data,
-			     parallel_filename,
-			     kernel,
-			     &pc);
+  
+  command_node->type = CL_COMMAND_TYPE_RUN;
+  command_node->command.run.data = command_queue->device->data;
+  command_node->command.run.file = parallel_filename;
+  command_node->command.run.kernel = kernel;
+  command_node->command.run.pc = pc;
+  command_node->next = NULL; 
+  
+  POCL_RETAIN_OBJECT(command_queue);
+  POCL_RETAIN_OBJECT(kernel);
+
+  LL_APPEND(command_queue->root, command_node);
 
   return CL_SUCCESS;
 }

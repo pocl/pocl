@@ -2,7 +2,7 @@
 # and all subdirectories).
 # Makefile.am for pocl/examples/example1.
 # 
-# Copyright (c) 2012 Tampere University of Technology
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,15 +31,63 @@
 abs_builddir=${PWD}/$(top_builddir)
 abs_srcdir=${PWD}/$(top_srcdir)
 
-all:
-	@(if test "x${book_samples_dir}" == "x";  \
-		then \
-	echo Usage: make book_samples_dir=BOOK-SAMPLES-CHECKOUT;  \
-	exit 1; \
-	fi)
+.PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
+.PHONY: run_SimpleBufferSubBuffer run_spmv
+
+build: check_dir
 	(cd ${book_samples_dir}; mkdir -p build; cd build; \
 	cmake \
 	-D CMAKE_CXX_FLAGS:STRING='-g -O3' \
 	-D OPENCL_LIBRARIES:FILEPATH=${abs_builddir}/lib/CL/.libs/libOpenCL.so \
 	-D OPENCL_INCLUDE_DIRS:PATH=${abs_srcdir}/include .. && \
 	make clean all -sk)
+
+check_dir: 
+	@(if test "x${book_samples_dir}" == "x";  \
+		then \
+	echo Usage: make book_samples_dir=BOOK-SAMPLES-CHECKOUT;  \
+	exit 1; \
+	fi)
+
+run_HelloWorld: check_dir
+	@echo
+	@echo "###### Chapter 2: Hello World"
+	@echo
+	@(cd ${book_samples_dir}; cd build/src/Chapter_2/HelloWorld; ./HelloWorld)
+
+run_OpenCLInfo: check_dir
+	@echo
+	@echo "###### Chapter 3: OpenCLInfo"
+	@echo
+	@(cd ${book_samples_dir}; cd build/src/Chapter_3/OpenCLInfo; ./OpenCLInfo)
+
+run_OpenCLConvolutionChap3: check_dir
+	@echo
+	@echo "###### Chapter 3: OpenCLConvolution"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_3/OpenCLConvolution; \
+	ln -sf ../../../../src/Chapter_3/OpenCLConvolution/Convolution.cl; \
+	./OpenCLConvolutionChap3)
+
+run_SimpleBufferSubBuffer: check_dir
+	@echo
+	@echo "###### Chapter 7: SimpleBufferSubBuffer"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_7/SimpleBufferSubBuffer; \
+	./SimpleBufferSubBuffer --useMap)
+
+run_spmv: check_dir
+	@echo
+	@echo "###### Chapter 22: spmv"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_22; \
+	ln -sf ../../../src/Chapter_22/spmv.cl; \
+	./spmv)
+
+run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_SimpleBufferSubBuffer
+
+run_all: run_working run_OpenCLInfo run_spmv
+

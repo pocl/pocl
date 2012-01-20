@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clEnqueueBarrier()
+/* OpenCL runtime library: clRetainContext()
 
-   Copyright (c) 2011 Erik Schnetter
+   Copyright (c) 2012 Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,9 @@
 
 #include "pocl_cl.h"
 
-CL_API_ENTRY 
-cl_int CL_API_CALL
-clEnqueueBarrier(cl_command_queue command_queue) 
-CL_API_SUFFIX__VERSION_1_0
+CL_API_ENTRY cl_int CL_API_CALL
+clRetainContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_RETAIN_OBJECT(context);
   return CL_SUCCESS;
 }
