@@ -1734,3 +1734,47 @@ _CL_DECLARE_VSTORE_HALF(__local   , _rtn)
 
 int printf(const /*constant*/ char * restrict format, ...)
   __attribute__((format(printf, 1, 2)));
+
+
+/* Async Copies from Global to Local Memory, Local to
+   Global Memory, and Prefetch */
+
+typedef uint event_t;
+
+#define _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)            \
+  _cl_overloadable                                              \
+  event_t async_work_group_copy (__local GENTYPE *dst,          \
+                                 const __global GENTYPE *src,   \
+                                 size_t num_gentypes,           \
+                                 event_t event);                \
+                                                                \
+  _cl_overloadable                                              \
+  event_t async_work_group_copy (__global GENTYPE *dst,         \
+                                 const __local GENTYPE *src,    \
+                                 size_t num_gentypes,           \
+                                 event_t event);                \
+                                                                
+void wait_group_events (int num_events,                      
+                        event_t *event_list);                 
+
+#define _CL_DECLARE_ASYNC_COPY_FUNCS(GENTYPE)      \
+  _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)     \
+  _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##2)   \
+  _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##3)   \
+  _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##4)   \
+  _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##8)   \
+  _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##16)  \
+
+_CL_DECLARE_ASYNC_COPY_FUNCS(char);
+_CL_DECLARE_ASYNC_COPY_FUNCS(uchar);
+_CL_DECLARE_ASYNC_COPY_FUNCS(short);
+_CL_DECLARE_ASYNC_COPY_FUNCS(ushort);
+_CL_DECLARE_ASYNC_COPY_FUNCS(int);
+_CL_DECLARE_ASYNC_COPY_FUNCS(uint);
+__IF_INT64(_CL_DECLARE_ASYNC_COPY_FUNCS(long));
+__IF_INT64(_CL_DECLARE_ASYNC_COPY_FUNCS(ulong));
+
+__IF_FP16(_CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(half));
+_CL_DECLARE_ASYNC_COPY_FUNCS(float);
+__IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
+

@@ -1278,3 +1278,9 @@
   IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint4   , uint  , uint4   , uint  )  \
   IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint8   , uint  , uint8   , uint  )  \
   IMPLEMENT_EXPR_J_JJJ(NAME, EXPR, uint16  , uint  , uint16  , uint  )
+
+#define __SINGLE_WI                             \
+    if (get_local_id(0) == 0 &&                 \
+        get_local_id(1) == 0 &&                 \
+        get_local_id(2) == 0)
+
