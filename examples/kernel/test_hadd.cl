@@ -2,7 +2,11 @@
 // TESTING: abs_diff
 // TESTING: add_sat
 // TESTING: hadd
+// TESTING: mad_hi
+// TESTING: mad_sat
+// TESTING: mul_hi
 // TESTING: rhadd
+// TESTING: sub_sat
 
 
 
@@ -21,6 +25,24 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
+  STYPE##4 _cl_overloadable safe_normalize(STYPE##4 const a)            \
+  {                                                                     \
+    STYPE const halfbits = 4*sizeof(STYPE);                             \
+    STYPE const halfmax = (STYPE)1 << halfbits;                         \
+    STYPE const halfmask = halfmax - (STYPE)1;                          \
+    STYPE tmp;                                                          \
+    STYPE##4 b;                                                         \
+    tmp = a.s0;                                                         \
+    b.s0 = tmp & halfmask;                                              \
+    tmp = tmp >> halfbits + a.s1;                                       \
+    b.s1 = tmp & halfmask;                                              \
+    tmp = tmp >> halfbits + a.s2;                                       \
+    b.s2 = tmp & halfmask;                                              \
+    tmp = tmp >> halfbits + a.s3;                                       \
+    b.s3 = tmp;                                                         \
+    return b;                                                           \
+  }                                                                     \
+                                                                        \
   STYPE _cl_overloadable safe_extract(STYPE##2 const a)                 \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
@@ -29,6 +51,19 @@
     STYPE b;                                                            \
     b = a.s0 | a.s1 << halfbits;                                        \
     return b;                                                           \
+  }                                                                     \
+                                                                        \
+  STYPE _cl_overloadable safe_extract(STYPE##4 const a)                 \
+  {                                                                     \
+    STYPE const halfbits = 4*sizeof(STYPE);                             \
+    STYPE const halfmax = (STYPE)1 << halfbits;                         \
+    STYPE const halfmask = halfmax - (STYPE)1;                          \
+    STYPE b;                                                            \
+    if (safe_extract(a.hi) != 0) {                                      \
+      printf("FAIL: safe_extract [%d,%d,%d,%d]\n",                      \
+             (int)a.s0, (int)a.s1, (int)a.s2, (int)a.s3);               \
+    }                                                                   \
+    return safe_extract(a.lo);                                          \
   }                                                                     \
                                                                         \
   STYPE##2 _cl_overloadable safe_neg(STYPE##2 a)                        \
@@ -57,12 +92,43 @@
     return safe_normalize(c);                                           \
   }                                                                     \
                                                                         \
+  STYPE##4 _cl_overloadable safe_add(STYPE##4 const a, STYPE##4 const b) \
+  {                                                                     \
+    STYPE##4 c;                                                         \
+    c.s0 = a.s0 + b.s0;                                                 \
+    c.s1 = a.s1 + b.s1;                                                 \
+    c.s2 = a.s2 + b.s2;                                                 \
+    c.s3 = a.s3 + b.s3;                                                 \
+    return safe_normalize(c);                                           \
+  }                                                                     \
+                                                                        \
   STYPE##2 _cl_overloadable safe_sub(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
     c.s0 = a.s0 - b.s0;                                                 \
     c.s1 = a.s1 - b.s1;                                                 \
     return safe_normalize(c);                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##4 _cl_overloadable safe_mul(STYPE##2 const a, STYPE##2 const b) \
+  {                                                                     \
+    STYPE##4 c00, c01, c10, c11;                                        \
+    c00 = 0;                                                            \
+    c00.s0 = a.s0 * b.s0;                                               \
+    c00 = safe_normalize(c00);                                          \
+    c01 = 0;                                                            \
+    c01.s1 = a.s0 * b.s1;                                               \
+    c01 = safe_normalize(c01);                                          \
+    c10 = 0;                                                            \
+    c10.s1 = a.s1 * b.s0;                                               \
+    c10 = safe_normalize(c10);                                          \
+    c11 = 0;                                                            \
+    c11.s2 = a.s1 * b.s1;                                               \
+    c11 = safe_normalize(c11);                                          \
+    STYPE##4 c;                                                         \
+    c = safe_add(safe_add(c00, c01),                                    \
+                 safe_add(c10, c11));                                   \
+    return c;                                                           \
   }                                                                     \
                                                                         \
   STYPE##2 _cl_overloadable safe_max(STYPE##2 const a, STYPE##2 const b) \
@@ -87,6 +153,38 @@
     return c;                                                           \
   }                                                                     \
                                                                         \
+  STYPE##2 _cl_overloadable safe_clamp(STYPE##2 const a,                \
+                                       STYPE##2 const alo, STYPE##2 const ahi) \
+  {                                                                     \
+    STYPE##2 b;                                                         \
+    if (a.s1 < alo.s1 || (a.s1 == alo.s1 && a.s0 < alo.s0)) {           \
+      b = alo;                                                          \
+    } else if (a.s1 > ahi.s1 || (a.s1 == ahi.s1 && a.s0 > ahi.s0)) {    \
+      b = ahi;                                                          \
+    } else {                                                            \
+      b = a;                                                            \
+    }                                                                   \
+    return b;                                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##2 _cl_overloadable safe_clamp(STYPE##4 const a,                \
+                                       STYPE##2 const alo, STYPE##2 const ahi) \
+  {                                                                     \
+    STYPE##2 b;                                                         \
+    if (a.s3 < 0 || a.s2 < 0 ||                                         \
+        a.s1 < alo.s1 || (a.s1 == alo.s1 && a.s0 < alo.s0))             \
+    {                                                                   \
+      b = alo;                                                          \
+    } else if (a.s3 > 0 || a.s2 > 0 ||                                  \
+               a.s1 > ahi.s1 || (a.s1 == ahi.s1 && a.s0 > ahi.s0))      \
+    {                                                                   \
+      b = ahi;                                                          \
+    } else {                                                            \
+      b = safe_normalize(a.lo);                                         \
+    }                                                                   \
+    return b;                                                           \
+  }                                                                     \
+                                                                        \
   STYPE##2 _cl_overloadable safe_rshift(STYPE##2 a)                     \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
@@ -98,6 +196,11 @@
     b.s0 >>= (STYPE)1;                                                  \
     b.s1 >>= (STYPE)1;                                                  \
     return safe_normalize(b);                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##2 _cl_overloadable safe_hi(STYPE##4 a)                         \
+  {                                                                     \
+    return safe_normalize(a.hi);                                        \
   }
 
 
@@ -114,6 +217,19 @@
     b.s1 = a >> (TYPE)halfbits;                                         \
     b = safe_normalize(b);                                              \
     if ((TYPE)safe_extract(b) != a) printf("FAIL: safe_create %d\n", (int)a); \
+    return b;                                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##4 _cl_overloadable safe_create4(TYPE const a)                  \
+  {                                                                     \
+    STYPE const halfbits = 4*sizeof(STYPE);                             \
+    STYPE const halfmax = (STYPE)1 << halfbits;                         \
+    STYPE const halfmask = halfmax - (STYPE)1;                          \
+    STYPE##4 b;                                                         \
+    b = 0;                                                              \
+    b.lo = safe_create(a);                                              \
+    b = safe_normalize(b);                                              \
+    if ((TYPE)safe_extract(b) != a) printf("FAIL: safe_create4 %d\n", (int)a); \
     return b;                                                           \
   }
 
@@ -1285,8 +1401,8 @@ DEFINE_BODY_G
      } Tvec;
      Tvec x, y, z;
      Tvec good_abs;
-     Tvec good_abs_diff, good_add_sat;
-     Tvec good_hadd, good_rhadd;
+     Tvec good_abs_diff, good_add_sat, good_mad_sat, good_sub_sat;
+     Tvec good_hadd, good_mad_hi, good_mul_hi, good_rhadd;
      int vecsize = vec_step(gtype);
      for (int n=0; n<vecsize; ++n) {
        x.s[n] = randoms[(iter+n   ) % nrandoms];
@@ -1303,25 +1419,49 @@ DEFINE_BODY_G
          safe_extract(safe_abs(safe_sub(safe_create(x.s[n]),
                                         safe_create(y.s[n]))));
        good_add_sat.s[n] =
-         safe_extract(safe_min(safe_max(safe_add(safe_create(x.s[n]),
-                                                 safe_create(y.s[n])),
-                                        safe_create(tmin)),
-                               safe_create(tmax)));
+         safe_extract(safe_clamp(safe_add(safe_create(x.s[n]),
+                                          safe_create(y.s[n])),
+                                 safe_create(tmin),
+                                 safe_create(tmax)));
+       good_mad_sat.s[n] =
+         safe_extract(safe_clamp(safe_add(safe_mul(safe_create(x.s[n]),
+                                                   safe_create(y.s[n])),
+                                          safe_create4(z.s[n])),
+                                 safe_create(tmin),
+                                 safe_create(tmax)));
+       good_sub_sat.s[n] =
+         safe_extract(safe_clamp(safe_sub(safe_create(x.s[n]),
+                                          safe_create(y.s[n])),
+                                 safe_create(tmin),
+                                 safe_create(tmax)));
        good_hadd.s[n] =
          safe_extract(safe_rshift(safe_add(safe_create(x.s[n]),
                                            safe_create(y.s[n]))));
+       good_mad_hi.s[n] =
+         safe_extract(safe_clamp(safe_add(safe_hi(safe_mul(safe_create(x.s[n]),
+                                                           safe_create(y.s[n]))),
+                                          safe_create(z.s[n])),
+                                 safe_create(tmin),
+                                 safe_create(tmax)));
+       good_mul_hi.s[n] =
+         safe_extract(safe_hi(safe_mul(safe_create(x.s[n]),
+                                       safe_create(y.s[n]))));
        good_rhadd.s[n] =
          safe_extract(safe_rshift(safe_add(safe_add(safe_create(x.s[n]),
                                                     safe_create(y.s[n])),
                                            safe_create((sgtype)1))));
      }
      Tvec res_abs;
-     Tvec res_abs_diff, res_add_sat;
-     Tvec res_hadd, res_rhadd;
+     Tvec res_abs_diff, res_add_sat, res_mad_sat, res_sub_sat;
+     Tvec res_hadd, res_mad_hi, res_mul_hi, res_rhadd;
      res_abs.u      = abs     (x.v);
      res_abs_diff.u = abs_diff(x.v, y.v);
      res_add_sat.v  = add_sat (x.v, y.v);
+     res_mad_sat.v  = mad_sat (x.v, y.v, z.v);
+     res_sub_sat.v  = sub_sat (x.v, y.v);
      res_hadd.v     = hadd    (x.v, y.v);
+     res_mad_hi.v   = mad_hi  (x.v, y.v, z.v);
+     res_mul_hi.v   = mul_hi  (x.v, y.v);
      res_rhadd.v    = rhadd   (x.v, y.v);
      bool equal;
      // abs
@@ -1384,6 +1524,51 @@ DEFINE_BODY_G
        }
        return;
      }
+     // mad_hi
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       equal = equal && res_mad_hi.s[n] == good_mad_hi.s[n];
+     }
+     if (!equal) {
+       printf("FAIL: mad_hi type=%s\n", typename);
+       for (int n=0; n<vecsize; ++n) {
+         printf("   [%d] a=%d b=%d c=%d good=%d res=%d\n",
+                n,
+                (int)x.s[n], (int)y.s[n], (int)z.s[n],
+                (int)good_mad_hi.s[n], (int)res_mad_hi.s[n]);
+       }
+       return;
+     }
+     // mad_sat
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       equal = equal && res_mad_sat.s[n] == good_mad_sat.s[n];
+     }
+     if (!equal) {
+       printf("FAIL: mad_sat type=%s\n", typename);
+       for (int n=0; n<vecsize; ++n) {
+         printf("   [%d] a=%d b=%d c=%d good=%d res=%d\n",
+                n,
+                (int)x.s[n], (int)y.s[n], (int)z.s[n],
+                (int)good_mad_sat.s[n], (int)res_mad_sat.s[n]);
+       }
+       return;
+     }
+     // mul_hi
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       equal = equal && res_mul_hi.s[n] == good_mul_hi.s[n];
+     }
+     if (!equal) {
+       printf("FAIL: mul_hi type=%s\n", typename);
+       for (int n=0; n<vecsize; ++n) {
+         printf("   [%d] a=%d b=%d good=%d res=%d\n",
+                n,
+                (int)x.s[n], (int)y.s[n],
+                (int)good_mul_hi.s[n], (int)res_mul_hi.s[n]);
+       }
+       return;
+     }
      // rhadd
      equal = true;
      for (int n=0; n<vecsize; ++n) {
@@ -1396,6 +1581,21 @@ DEFINE_BODY_G
                 n,
                 (int)x.s[n], (int)y.s[n],
                 (int)good_rhadd.s[n], (int)res_rhadd.s[n]);
+       }
+       return;
+     }
+     // sub_sat
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       equal = equal && res_sub_sat.s[n] == good_sub_sat.s[n];
+     }
+     if (!equal) {
+       printf("FAIL: sub_sat type=%s\n", typename);
+       for (int n=0; n<vecsize; ++n) {
+         printf("   [%d] a=%d b=%d good=%d res=%d\n",
+                n,
+                (int)x.s[n], (int)y.s[n],
+                (int)good_sub_sat.s[n], (int)res_sub_sat.s[n]);
        }
        return;
      }
