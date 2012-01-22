@@ -136,8 +136,8 @@ DEFINE_BODY_V
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
-             printf("FAIL: fabs type=%s val=%.17g res=%.17g\n",
-                    typename, val.s[n], res.s[n]);
+             printf("FAIL: fabs type=%s val=%.17g res=%.17g good=%.17g\n",
+                    typename, val.s[n], res.s[n], good.s[n]);
            }
            return;
          }
@@ -150,8 +150,9 @@ DEFINE_BODY_V
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
-             printf("FAIL: signbit type=%s val=%.17g res=%d\n",
-                    typename, val.s[n], (int)ires.s[n]);
+             printf("FAIL: signbit type=%s val=%.17g res=%d good=%d\n",
+                    typename, val.s[n], (int)ires.s[n],
+                    (sign>0 ? 0 : vecsize==1 ? +1 : -1));
            }
            return;
          }
@@ -167,8 +168,8 @@ DEFINE_BODY_V
            }
            if (!equal) {
              for (int n=0; n<vecsize; ++n) {
-               printf("FAIL: copysign type=%s val=%.17g sign=%.17g res=%.17g\n",
-                      typename, val.s[n], sign2*val2.s[n], res.s[n]);
+               printf("FAIL: copysign type=%s val=%.17g sign=%.17g res=%.17g good=%.17g\n",
+                      typename, val.s[n], sign2*val2.s[n], res.s[n], good.s[n]);
              }
              return;
            }
