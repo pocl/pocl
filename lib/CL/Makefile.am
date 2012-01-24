@@ -41,6 +41,7 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
                    clCreateProgramWithSource.c	\
+                   clCreateProgramWithBinary.c	\
                    clReleaseProgram.c		\
                    clRetainProgram.c		\
                    clBuildProgram.c		\

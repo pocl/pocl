@@ -44,8 +44,8 @@
 # endif
 #endif
 
-#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
-#define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
+/* Debugging macros. Also macros for marking unimplemented parts of specs or
+   untested parts of the implementation. */
 
 #define POCL_ABORT_UNIMPLEMENTED()                                      \
     do {                                                                \
@@ -62,6 +62,9 @@
     do {                                                                \
         fprintf(stderr, "pocl warning: encountered incomplete implementation in %s:%d\n", __FILE__, __LINE__); \
     } while (0) 
+
+#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+#define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
 
 typedef pthread_mutex_t pocl_lock_t;
 
@@ -265,9 +268,12 @@ struct _cl_program {
   cl_context context;
   cl_uint num_devices;
   cl_device_id *devices;
+  /* all the program sources appended together, terminated with a zero */
   char *source;
-  size_t binary_size; /* same binary for all devices.  */
-  unsigned char *binary; /* same binary for all devices.  */
+  /* The binaries for each device. Currently the binary is directly the
+     sequential bitcode produced from the kernel sources.*/
+  size_t *binary_sizes; 
+  unsigned char **binaries; 
   /* implementation */
   cl_kernel kernels;
 };

@@ -141,9 +141,12 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (kernel_file == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  n = fwrite(kernel->program->binary, 1,
-	     kernel->program->binary_size, kernel_file);
-  if (n < kernel->program->binary_size)
+  if (kernel->program->num_devices > 1)
+    POCL_ABORT_UNIMPLEMENTED();
+
+  n = fwrite(kernel->program->binaries[0], 1,
+	     kernel->program->binary_sizes[0], kernel_file);
+  if (n < kernel->program->binary_sizes[0])
     return CL_OUT_OF_HOST_MEMORY;
   
   fclose(kernel_file);

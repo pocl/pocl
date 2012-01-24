@@ -37,7 +37,7 @@ abs_srcdir=${PWD}/$(top_srcdir)
 build: check_dir
 	(cd ${book_samples_dir}; mkdir -p build; cd build; \
 	cmake \
-	-D CMAKE_CXX_FLAGS:STRING='-g -O3' \
+	-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut' \
 	-D OPENCL_LIBRARIES:FILEPATH=${abs_builddir}/lib/CL/.libs/libOpenCL.so \
 	-D OPENCL_INCLUDE_DIRS:PATH=${abs_srcdir}/include .. && \
 	make clean all -sk)
@@ -70,6 +70,16 @@ run_OpenCLConvolutionChap3: check_dir
 	ln -sf ../../../../src/Chapter_3/OpenCLConvolution/Convolution.cl; \
 	./OpenCLConvolutionChap3)
 
+run_HelloBinaryWorld: check_dir
+	@echo
+	@echo "###### Chapter 6: HelloBinaryWorld"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_6/HelloBinaryWorld; \
+	rm -f HelloWorld.cl.bin; \
+	./HelloBinaryWorld; \
+	./HelloBinaryWorld)
+
 run_SimpleBufferSubBuffer: check_dir
 	@echo
 	@echo "###### Chapter 7: SimpleBufferSubBuffer"
@@ -87,7 +97,7 @@ run_spmv: check_dir
 	ln -sf ../../../src/Chapter_22/spmv.cl; \
 	./spmv)
 
-run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_SimpleBufferSubBuffer
+run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_HelloBinaryWorld run_SimpleBufferSubBuffer
 
 run_all: run_working run_OpenCLInfo run_spmv
 
