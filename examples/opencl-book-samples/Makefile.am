@@ -88,6 +88,14 @@ run_SimpleBufferSubBuffer: check_dir
 	cd build/src/Chapter_7/SimpleBufferSubBuffer; \
 	./SimpleBufferSubBuffer --useMap)
 
+run_VectorAdd: check_dir
+	@echo
+	@echo "###### Chapter 12: VectorAdd (C++ bindings)"
+	@echo
+	@(cd ${book_samples_dir}; \
+	cd build/src/Chapter_12/VectorAdd; \
+	./vecadd)
+
 # This failed because --cpu is not parsed correctly
 # and it tries to run the --cpugpu case. We
 # force 'doCPU = true' in oclDijkstra.cpp to make
@@ -113,6 +121,6 @@ run_spmv: check_dir
 
 run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_HelloBinaryWorld run_SimpleBufferSubBuffer
 
-run_all: run_working run_OpenCLInfo run_Dijkstra run_spmv
+run_all: run_working run_OpenCLInfo run_VectorAdd run_Dijkstra run_spmv
 
 
