@@ -88,6 +88,20 @@ run_SimpleBufferSubBuffer: check_dir
 	cd build/src/Chapter_7/SimpleBufferSubBuffer; \
 	./SimpleBufferSubBuffer --useMap)
 
+# This failed because --cpu is not parsed correctly
+# and it tries to run the --cpugpu case. We
+# force 'doCPU = true' in oclDijkstra.cpp to make
+# it run. This case uses the maximum work group size
+# thus the llc takes a lot of memory and time.
+run_Dijkstra: check_dir
+	@echo
+	@echo "###### Chapter 16: Dijkstra"
+	@echo
+	@(cd ${book_samples_dir}; \
+	sed -i 's/bool doCPU = false/bool doCPU = true/g' src/Chapter_16/Dijkstra/oclDijkstra.cpp; \
+	cd build/src/Chapter_16/Dijkstra; \
+	./Dijkstra --cpu)
+
 run_spmv: check_dir
 	@echo
 	@echo "###### Chapter 22: spmv"
@@ -99,5 +113,6 @@ run_spmv: check_dir
 
 run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_HelloBinaryWorld run_SimpleBufferSubBuffer
 
-run_all: run_working run_OpenCLInfo run_spmv
+run_all: run_working run_OpenCLInfo run_Dijkstra run_spmv
+
 

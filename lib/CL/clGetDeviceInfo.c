@@ -69,7 +69,28 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_VENDOR_ID                         : break;
   case CL_DEVICE_MAX_COMPUTE_UNITS                 : break;
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : break;
-  case CL_DEVICE_MAX_WORK_GROUP_SIZE               : break;
+  case CL_DEVICE_MAX_WORK_GROUP_SIZE               : 
+    /* There is no "preferred WG size" device query, so we probably should
+       return something more sensible than the CL_INT_MAX that seems
+       to be the default in the pthread device. It should be computed from 
+       the machine's vector width or issue width.
+
+       Some OpenCL programs (e.g. the Dijkstra book sample) seem to scale 
+       the work groups using this. 
+
+       There's a kernel query CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
+       that can yield better heuristics for the good WG size and forms
+       a basis for a higher level performance portability layer.
+       
+       Basically the size is now limited by the absence of work item
+       loops. A huge unrolling factor explodes the instruction memory size with
+       no benefits.
+
+       16 should be large enough for anything (tm) for now ;) Let's 
+       increase it when at least vectorization works and there's a better
+       machine heuristics.
+    */
+    POCL_RETURN_DEVICE_INFO(cl_uint, 16); // device->max_work_group_size
   case CL_DEVICE_MAX_WORK_ITEM_SIZES               : break;
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
@@ -143,5 +164,6 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : break;
   case CL_DEVICE_OPENCL_C_VERSION                  : break;
   }
+
   return CL_INVALID_VALUE;
 }
