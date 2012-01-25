@@ -24,12 +24,11 @@
 
 # Usage:
 #
-# mkdir -p ~/src && cd ~/src  (or wherever you want) 
-# svn checkout http://opencl-book-samples.googlecode.com/svn/trunk/ opencl-book-samples-read-only
-# make book_samples_dir=~/src/opencl-book-samples-read-only
+# svn checkout http://opencl-book-samples.googlecode.com/svn/trunk/ checkout
+# make build
+# make run_all
 
-abs_builddir=${PWD}/$(top_builddir)
-abs_srcdir=${PWD}/$(top_srcdir)
+book_samples_dir=${top_srcdir}/examples/opencl-book-samples/checkout
 
 .PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
 .PHONY: run_SimpleBufferSubBuffer run_spmv run_VectorAdd run_Dijkstra
@@ -37,61 +36,40 @@ abs_srcdir=${PWD}/$(top_srcdir)
 build: check_dir
 	(cd ${book_samples_dir}; mkdir -p build; cd build; \
 	cmake \
-	-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut' \
-	-D OPENCL_LIBRARIES:FILEPATH=${abs_builddir}/lib/CL/.libs/libOpenCL.so \
-	-D OPENCL_INCLUDE_DIRS:PATH=${abs_srcdir}/include .. && \
+	-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut ${PTHREAD_CFLAGS}' \
+	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libOpenCL.so \
+	-D CMAKE_EXE_LINKER_FLAGS:STRING='${PTHREAD_CFLAGS}' \
+	-D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include .. && \
 	make clean all -sk)
 
-check_dir: 
-	@(if test "x${book_samples_dir}" == "x";  \
-		then \
-	echo Usage: make book_samples_dir=BOOK-SAMPLES-CHECKOUT;  \
-	exit 1; \
-	fi)
-
-run_HelloWorld: check_dir
-	@echo
-	@echo "###### Chapter 2: Hello World"
-	@echo
+run_HelloWorld: 
 	@(cd ${book_samples_dir}; cd build/src/Chapter_2/HelloWorld; ./HelloWorld)
 
-run_OpenCLInfo: check_dir
+run_OpenCLInfo: 
 	@echo
 	@echo "###### Chapter 3: OpenCLInfo"
 	@echo
 	@(cd ${book_samples_dir}; cd build/src/Chapter_3/OpenCLInfo; ./OpenCLInfo)
 
-run_OpenCLConvolutionChap3: check_dir
-	@echo
-	@echo "###### Chapter 3: OpenCLConvolution"
-	@echo
+run_OpenCLConvolutionChap3: 
 	@(cd ${book_samples_dir}; \
 	cd build/src/Chapter_3/OpenCLConvolution; \
 	ln -sf ../../../../src/Chapter_3/OpenCLConvolution/Convolution.cl; \
 	./OpenCLConvolutionChap3)
 
-run_HelloBinaryWorld: check_dir
-	@echo
-	@echo "###### Chapter 6: HelloBinaryWorld"
-	@echo
+run_HelloBinaryWorld: 
 	@(cd ${book_samples_dir}; \
 	cd build/src/Chapter_6/HelloBinaryWorld; \
 	rm -f HelloWorld.cl.bin; \
 	./HelloBinaryWorld; \
 	./HelloBinaryWorld)
 
-run_SimpleBufferSubBuffer: check_dir
-	@echo
-	@echo "###### Chapter 7: SimpleBufferSubBuffer"
-	@echo
+run_SimpleBufferSubBuffer: 
 	@(cd ${book_samples_dir}; \
 	cd build/src/Chapter_7/SimpleBufferSubBuffer; \
 	./SimpleBufferSubBuffer --useMap)
 
-run_VectorAdd: check_dir
-	@echo
-	@echo "###### Chapter 12: VectorAdd (C++ bindings)"
-	@echo
+run_VectorAdd: 
 	@(cd ${book_samples_dir}; \
 	cd build/src/Chapter_12/VectorAdd; \
 	./vecadd)
@@ -101,7 +79,7 @@ run_VectorAdd: check_dir
 # force 'doCPU = true' in oclDijkstra.cpp to make
 # it run. This case uses the maximum work group size
 # thus the llc takes a lot of memory and time.
-run_Dijkstra: check_dir
+run_Dijkstra: 
 	@echo
 	@echo "###### Chapter 16: Dijkstra"
 	@echo
@@ -110,7 +88,7 @@ run_Dijkstra: check_dir
 	cd build/src/Chapter_16/Dijkstra; \
 	./Dijkstra --cpu)
 
-run_spmv: check_dir
+run_spmv: 
 	@echo
 	@echo "###### Chapter 22: spmv"
 	@echo
@@ -123,4 +101,5 @@ run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_HelloBinaryWorld run_
 
 run_all: run_working run_OpenCLInfo run_Dijkstra run_spmv
 
-
+clean:
+	rm -fr ${book_samples_dir}/build

@@ -56,7 +56,7 @@ clean-local:
 
 AUTOM4TE = $(SHELL) $(top_srcdir)/config/missing --run autom4te
 AUTOTEST = $(AUTOM4TE) --language=autotest
-$(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
+$(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/testsuite-samples.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
 

@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 
 AT_INIT()
+AT_COLOR_TESTS
 
 AT_BANNER([llvmopencl passes tests])
 
@@ -243,3 +244,6 @@ Done.
 ])
 AT_CHECK([$abs_top_builddir/examples/scalarwave/scalarwave], 0, expout)
 AT_CLEANUP
+
+m4_include(testsuite-samples.at)
+
