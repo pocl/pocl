@@ -89,3 +89,13 @@ entered here.
   between GL and CL contexts
   * clEnqueueAcquireGLObjects (*)
 
+Misc/laundry list
+-----------------
+
+* The objects that increment/decrement the ref count
+  of the parent objects should call the respective
+  retain/destroy functions instead of incrementing
+  the counters directly. Now if a subobject is the
+  last holder of a reference, the references of the
+  parent object do not get freed.
+  

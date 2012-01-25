@@ -204,7 +204,7 @@ pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *h
       return NULL;
     }
   
-  if (host_ptr != NULL)
+  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
     {
       return host_ptr;
     }
@@ -220,7 +220,12 @@ void
 pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
 {
   struct data* d = (struct data*) device_data;
-  memory_region_t *region = free_buffer (d->mem_regions, (memory_address_t)ptr);
+  memory_region_t *region = NULL;
+
+  if (flags & CL_MEM_USE_HOST_PTR)
+      return; /* The host code should free the host ptr. */
+
+  region = free_buffer (d->mem_regions, (memory_address_t)ptr);
 
   assert(region != NULL && "Unable to find the region for chunk.");
 

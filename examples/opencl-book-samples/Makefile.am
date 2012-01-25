@@ -32,7 +32,7 @@ abs_builddir=${PWD}/$(top_builddir)
 abs_srcdir=${PWD}/$(top_srcdir)
 
 .PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
-.PHONY: run_SimpleBufferSubBuffer run_spmv
+.PHONY: run_SimpleBufferSubBuffer run_spmv run_VectorAdd run_Dijkstra
 
 build: check_dir
 	(cd ${book_samples_dir}; mkdir -p build; cd build; \
@@ -119,8 +119,8 @@ run_spmv: check_dir
 	ln -sf ../../../src/Chapter_22/spmv.cl; \
 	./spmv)
 
-run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_HelloBinaryWorld run_SimpleBufferSubBuffer
+run_working: run_HelloWorld run_OpenCLConvolutionChap3 run_HelloBinaryWorld run_SimpleBufferSubBuffer run_VectorAdd
 
-run_all: run_working run_OpenCLInfo run_VectorAdd run_Dijkstra run_spmv
+run_all: run_working run_OpenCLInfo run_Dijkstra run_spmv
 
 
