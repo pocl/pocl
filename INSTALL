@@ -28,7 +28,7 @@ improvements and major bug fixes in the LLVM trunk (upcoming 3.1). It's
 highly recommended to use the latest development version of LLVM for now, 
 until 3.1 is released. However, as llvm-svn is a moving target, new
 revisions might break pocl compilation. The latest LLVM svn revision 
-pocl has been tested successfully with is 148233. 
+pocl has been tested successfully with is 148489.
 
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development

@@ -39,7 +39,7 @@ void pocl_native_run (void *data, const char *bytecode,
 extern size_t pocl_native_max_work_item_sizes[];
 
 #define POCL_DEVICES_NATIVE {						\
-  CL_DEVICE_TYPE_CPU, /* type */					\
+  CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU , /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   1, /* max_work_item_dimensions */					\

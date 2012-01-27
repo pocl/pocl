@@ -46,11 +46,14 @@ clCreateKernel(cl_program program,
   int error;
   lt_dlhandle dlhandle;
   int i;
+  
+  if (program->num_devices > 1)
+    POCL_ABORT_UNIMPLEMENTED();
 
   if (program == NULL)
     POCL_ERROR(CL_INVALID_PROGRAM);
 
-  if (program->binary == NULL)
+  if (program->binaries == NULL || program->binary_sizes == NULL)
     POCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
 
   tmpdir = mkdtemp(template);
@@ -67,9 +70,9 @@ clCreateKernel(cl_program program,
   if (binary_file == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  n = fwrite(program->binary, 1,
-	     program->binary_size, binary_file);
-  if (n < program->binary_size)
+  n = fwrite(program->binaries[0], 1,
+	     program->binary_sizes[0], binary_file);
+  if (n < program->binary_sizes[0])
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
   
   fclose(binary_file);

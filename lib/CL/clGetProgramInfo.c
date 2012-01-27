@@ -31,20 +31,9 @@ clGetProgramInfo(cl_program program,
                  void *param_value,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  int i;
   switch (param_name)
   {
-  case CL_PROGRAM_REFERENCE_COUNT:
-    return CL_INVALID_VALUE;    /* not yet implemented */
-    
-  case CL_PROGRAM_CONTEXT:
-    return CL_INVALID_VALUE;    /* not yet implemented */
-    
-  case CL_PROGRAM_NUM_DEVICES:
-    return CL_INVALID_VALUE;    /* not yet implemented */
-    
-  case CL_PROGRAM_DEVICES:
-    return CL_INVALID_VALUE;    /* not yet implemented */
-    
   case CL_PROGRAM_SOURCE:
     {
       size_t const value_size = strlen(program->source) + 1;
@@ -60,11 +49,11 @@ clGetProgramInfo(cl_program program,
     
   case CL_PROGRAM_BINARY_SIZES:
     {
-      size_t const value_size = sizeof(size_t);
+      size_t const value_size = sizeof(size_t) * program->num_devices;
       if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(size_t*)param_value = program->binary_size;
+        memcpy(param_value, program->binary_sizes, value_size);
       }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
@@ -73,17 +62,53 @@ clGetProgramInfo(cl_program program,
     
   case CL_PROGRAM_BINARIES:
     {
-      size_t const value_size = sizeof(unsigned char *);
+      size_t const value_size = sizeof(unsigned char *) * program->num_devices;
       if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(unsigned char **)param_value = program->binary;
+        for (i = 0; i < program->num_devices; ++i)
+          {
+            unsigned char **target = (unsigned char**) param_value;
+            if (target[i] == NULL) continue;
+            memcpy (target[i], program->binaries[i], program->binary_sizes[i]);
+          }
       }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
+  case CL_PROGRAM_NUM_DEVICES:
+    {
+      size_t const value_size = sizeof(cl_uint);
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        *(size_t *) param_value = program->num_devices;
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
+
+  case CL_PROGRAM_DEVICES:
+    {
+      size_t const value_size = sizeof(cl_device_id) * program->num_devices;
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        for (i = 0; i < program->num_devices; ++i)
+          {           
+            cl_device_id *devices = (cl_device_id*) param_value;
+            devices[i] = program->context->devices[i];
+          }
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+      return CL_SUCCESS;
+    }
+  default:
+    break;
   }
-  
+  POCL_ABORT_UNIMPLEMENTED();
   return CL_INVALID_VALUE;
 }

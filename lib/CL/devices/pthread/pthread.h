@@ -114,7 +114,7 @@ extern size_t pocl_pthread_max_work_item_sizes[];
 #define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_HALF POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT
 
 #define POCL_DEVICES_PTHREAD {						\
-  CL_DEVICE_TYPE_CPU, /* type */					\
+  CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU , /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\

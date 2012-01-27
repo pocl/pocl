@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clReleaseProgram()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Universidad Rey Juan Carlos, 
+   Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -28,21 +29,29 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel k;
 
-  POCL_RELEASE_OBJECT(program);
+  POCL_RELEASE_OBJECT (program);
 
   if (program->pocl_refcount == 0)
     {
 
-      /* Mark all kernels as having no program */
+      /* Mark all kernels as having no program.
+         FIXME: this should not be needed if the kernels
+         retain the parent program (and release when the kernel
+         is released). */
       for (k=program->kernels; k!=NULL; k=k->next)
         {
           k->program = NULL;
         }
 
-      POCL_RELEASE_OBJECT(program->context);
-      free(program->source);
-      free(program->binary);
-      free(program);
+      POCL_RELEASE_OBJECT (program->context);
+      free (program->source);
+      if (program->binaries != NULL)
+        {
+          free (program->binaries[0]);
+          free (program->binaries);
+        }
+      free (program->binary_sizes);
+      free (program);
     }
 
   return CL_SUCCESS;

@@ -47,62 +47,90 @@ clBuildProgram(cl_program program,
   if (program == NULL)
     return CL_INVALID_PROGRAM;
 
-  if (program->source == NULL && program->binary == NULL)
+  if (program->source == NULL && program->binaries == NULL)
     return CL_INVALID_PROGRAM;
 
-  if (program->binary == NULL)
+  if ((num_devices > 0 && device_list == NULL) ||
+      (num_devices == 0 && device_list != NULL))
+      return CL_INVALID_VALUE;
+      
+  if (num_devices > 0 && program->num_devices != num_devices)
+    POCL_ABORT_UNIMPLEMENTED();     
+
+  if (program->binaries == NULL)
     {
+      if (num_devices > 1) /* TODO: build the binary for all the devices. */
+        POCL_ABORT_UNIMPLEMENTED(); 
+
+      if ((program->binary_sizes =
+           (size_t *) malloc (sizeof (size_t) * num_devices)) == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+
+      if ((program->binaries = 
+           (unsigned char**) 
+           malloc( sizeof (unsigned char*) * num_devices)) == NULL)
+        {
+          free (program->binary_sizes);
+          program->binary_sizes = NULL;
+          return CL_OUT_OF_HOST_MEMORY;
+        }
+
+
       tmpnam(source_file_name);
       source_file = fopen(source_file_name, "w+");
       if (source_file == NULL)
-	return CL_OUT_OF_HOST_MEMORY;
+        return CL_OUT_OF_HOST_MEMORY;
 
       n = fwrite(program->source, 1,
-		 strlen(program->source), source_file);
+                 strlen(program->source), source_file);
       if (n < strlen(program->source))
-	return CL_OUT_OF_HOST_MEMORY;
+        return CL_OUT_OF_HOST_MEMORY;
 
       fclose(source_file);
       
       tmpnam(binary_file_name);
 
       if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
-	error = snprintf(command, COMMAND_LENGTH,
-			 BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
-			 binary_file_name, source_file_name);
+        error = snprintf(command, COMMAND_LENGTH,
+                         BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
+                         binary_file_name, source_file_name);
       else
-	error = snprintf(command, COMMAND_LENGTH, POCL_BUILD " -o %s %s",
-			 binary_file_name, source_file_name);
+        error = snprintf(command, COMMAND_LENGTH, POCL_BUILD " -o %s %s",
+                         binary_file_name, source_file_name);
       if (error < 0)
-	return CL_OUT_OF_HOST_MEMORY;
+        return CL_OUT_OF_HOST_MEMORY;
 
       error = system(command);
       if (error != 0)
-	return CL_BUILD_PROGRAM_FAILURE;
+        return CL_BUILD_PROGRAM_FAILURE;
 
       binary_file = fopen(binary_file_name, "r");
       if (binary_file == NULL)
-	return CL_OUT_OF_HOST_MEMORY;
+        return CL_OUT_OF_HOST_MEMORY;
 
       fseek(binary_file, 0, SEEK_END);
-      program->binary_size = ftell(binary_file);
+
+      program->binary_sizes[0] = ftell(binary_file);
       fseek(binary_file, 0, SEEK_SET);
 
-      binary = (unsigned char *) malloc(program->binary_size);
+      binary = (unsigned char *) malloc(program->binary_sizes[0]);
       if (binary == NULL)
-	return CL_OUT_OF_HOST_MEMORY;
+        return CL_OUT_OF_HOST_MEMORY;
 
-      n = fread(binary, 1, program->binary_size, binary_file);
-      if (n < program->binary_size)
-	{
-	  free(binary);
-	  return CL_OUT_OF_HOST_MEMORY;
-	}
+      n = fread(binary, 1, program->binary_sizes[0], binary_file);
+      if (n < program->binary_sizes[0])
+        {
+          free (binary);
+          return CL_OUT_OF_HOST_MEMORY;
+        }
 
-      program->binary = binary;
+      program->binaries[0] = binary;
     }
-
-  //assert(program->num_devices == num_devices);
+  else
+    {
+      /* Build from a binary. The binaries are already loaded
+         in the clBuildWithBinary().  */
+    }
 
   return CL_SUCCESS;
 }

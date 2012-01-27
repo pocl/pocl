@@ -34,6 +34,9 @@ clGetContextInfo(cl_context context,
 {
   size_t value_size;
   
+  if (context == NULL)
+    return CL_INVALID_CONTEXT;
+
   switch (param_name) {
     
   case CL_CONTEXT_DEVICES:
@@ -48,5 +51,9 @@ clGetContextInfo(cl_context context,
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
+  default: 
+    break;
   }
+  POCL_WARN_INCOMPLETE();
+  return CL_INVALID_VALUE;
 }

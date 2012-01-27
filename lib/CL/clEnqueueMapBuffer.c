@@ -42,9 +42,6 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
   void *host_ptr = NULL;
   mem_mapping_t *mapping_info = NULL;
 
-  if (blocking_map != CL_TRUE)
-    POCL_ABORT_UNIMPLEMENTED();
-
   if (buffer == NULL)
     POCL_ERROR(CL_INVALID_MEM_OBJECT);
 
@@ -66,6 +63,12 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
       map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION))
     POCL_ERROR(CL_INVALID_OPERATION);
 
+
+  if (blocking_map != CL_TRUE)
+    POCL_ABORT_UNIMPLEMENTED();
+  else
+    clFinish(command_queue);
+
   /* find the index of the device's ptr in the buffer */
   device_id = command_queue->device;
   for (i = 0; i < command_queue->context->num_devices; ++i)
@@ -76,7 +79,7 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  mapping_info = (mem_mapping_t*) malloc (sizeof(mem_mapping_t));
+  mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
@@ -88,7 +91,8 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
          device accessible memory or just point there until the
          kernel(s) get executed or similar? */
       host_ptr = buffer->mem_host_ptr + offset;
-    } else 
+    } 
+  else 
     {
       host_ptr = device_id->map_mem (device_id->data, buffer->device_ptrs[i], offset, size);
       if (host_ptr == NULL)

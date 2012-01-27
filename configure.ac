@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.61])
-AC_INIT([pocl], [0.x], [carlos.delalama@urjc.es])
+AC_INIT([pocl], [0.x], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])

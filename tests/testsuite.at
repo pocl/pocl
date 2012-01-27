@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 
 AT_INIT()
+AT_COLOR_TESTS
 
 AT_BANNER([llvmopencl passes tests])
 
@@ -166,7 +167,7 @@ AT_CLEANUP
           
 AT_BANNER([Kernel runtime library])
 
-AT_SETUP([Kernel function bitselect])
+AT_SETUP([Kernel functions bitselect clz popcount])
 AT_DATA([expout],
 [Running test test_bitselect...
 OK
@@ -182,7 +183,7 @@ OK
 AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
-AT_SETUP([Kernel functions abs abs_diff add_sat hadd rhadd])
+AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
@@ -243,3 +244,6 @@ Done.
 ])
 AT_CHECK([$abs_top_builddir/examples/scalarwave/scalarwave], 0, expout)
 AT_CLEANUP
+
+m4_include(testsuite-samples.at)
+
