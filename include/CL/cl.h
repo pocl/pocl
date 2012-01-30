@@ -1190,6 +1190,7 @@ clGetExtensionFunctionAddressForPlatform(cl_platform_id /* platform */,
     
     
 #ifdef CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#warning CL_USE_DEPRECATED_OPENCL_1_1_APIS is defined. Most APIs are UNIMPLEMENTED in pocl!
     extern CL_API_ENTRY cl_mem CL_API_CALL
     clCreateImage2D(cl_context              /* context */,
                     cl_mem_flags            /* flags */,
