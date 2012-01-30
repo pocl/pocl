@@ -312,6 +312,7 @@ AC_CONFIG_FILES([Makefile
                  examples/loopbarriers/Makefile
                  examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
+                 examples/ViennaCL/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal

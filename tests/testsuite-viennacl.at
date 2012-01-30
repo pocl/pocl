@@ -1,0 +1,87 @@
+
+AT_BANNER([ViennaCL projects tests])
+
+AT_SETUP([fft-test])
+AT_KEYWORDS([viennacl])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build fft-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target fft-test
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/fft-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/fft-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([iterators-test])
+AT_KEYWORDS([viennacl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build iterators-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target iterators-test])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/iterators-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/iterators-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([matrix-test])
+AT_KEYWORDS([viennacl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build matrix-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target matrix-test])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/matrix-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/matrix-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([scalar-test])
+AT_KEYWORDS([viennacl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build scalar-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target scalar-test])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/scalar-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/scalar-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([sparse-test])
+AT_KEYWORDS([viennacl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build sparse-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target sparse-test])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/sparse-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/sparse-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([vector-test])
+AT_KEYWORDS([viennacl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build vector-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target vector-test])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/vector-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/vector-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([blas1])
+AT_KEYWORDS([viennalcl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build blas1 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target blas1
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/blas1], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/blas1.stdout`
+])
+AT_CLEANUP
+
