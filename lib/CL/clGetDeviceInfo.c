@@ -83,14 +83,10 @@ clGetDeviceInfo(cl_device_id   device,
        a basis for a higher level performance portability layer.
        
        Basically the size is now limited by the absence of work item
-       loops. A huge unrolling factor explodes the instruction memory size with
-       no benefits.
-
-       16 should be large enough for anything (tm) for now ;) Let's 
-       increase it when at least vectorization works and there's a better
-       machine heuristics.
+       loops. A huge unrolling factor explodes the instruction memory size (and
+       compilation time) with usually no benefits.
     */
-    POCL_RETURN_DEVICE_INFO(cl_uint, 16); // device->max_work_group_size
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_group_size);
   case CL_DEVICE_MAX_WORK_ITEM_SIZES               : break;
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:

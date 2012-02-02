@@ -44,7 +44,8 @@ extern size_t pocl_native_max_work_item_sizes[];
   0, /* max_compute_units */						\
   1, /* max_work_item_dimensions */					\
   pocl_native_max_work_item_sizes, /* max_work_item_sizes */		\
-  1, /*max_work_group_size */						\
+  1024, /*max_work_group_size */						\
+  8, /* preferred_wg_size_multiple */                                \
   0, /* preferred_vector_width_char */					\
   0, /* preferred_vector_width_shortr */				\
   0, /* preferred_vector_width_int */					\
