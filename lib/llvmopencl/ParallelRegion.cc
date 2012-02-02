@@ -145,19 +145,19 @@ ParallelRegion::insertPrologue(unsigned x,
   if (gvx != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(),
-                                             32), x), gvx);
+                                             64), x), gvx);
 
   GlobalVariable *gvy = M->getGlobalVariable(LOCAL_ID_Y);
   if (gvy != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(),
-                                             32), y), gvy);
+                                             64), y), gvy);
 
   GlobalVariable *gvz = M->getGlobalVariable(LOCAL_ID_Z);
   if (gvz != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(),
-                                             32), z), gvz);
+                                             64), z), gvz);
 }
 
 void

@@ -206,17 +206,17 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   gv = M->getGlobalVariable("_local_size_x");
   if (gv != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 64),
 					 LocalSizeX),
 			gv);
   gv = M->getGlobalVariable("_local_size_y");
   if (gv != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 64),
 					 LocalSizeY),
 			gv);
   gv = M->getGlobalVariable("_local_size_z");
   if (gv != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 32),
+    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 64),
 					 LocalSizeZ),
 			gv);
 
