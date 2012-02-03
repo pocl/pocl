@@ -21,21 +21,21 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_size_x;
-extern unsigned int _local_size_y;
-extern unsigned int _local_size_z;
+extern size_t _local_size_x;
+extern size_t _local_size_y;
+extern size_t _local_size_z;
 
-extern unsigned int _group_id_x;
-extern unsigned int _group_id_y;
-extern unsigned int _group_id_z;
+extern size_t _group_id_x;
+extern size_t _group_id_y;
+extern size_t _group_id_z;
 
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
+extern size_t _local_id_x;
+extern size_t _local_id_y;
+extern size_t _local_id_z;
 
-extern unsigned int _global_offset_x;
-extern unsigned int _global_offset_y;
-extern unsigned int _global_offset_z;
+extern size_t _global_offset_x;
+extern size_t _global_offset_y;
+extern size_t _global_offset_z;
 
 size_t
 get_global_id(unsigned int dimindx)
