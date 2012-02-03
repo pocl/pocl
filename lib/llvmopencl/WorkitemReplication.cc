@@ -204,21 +204,30 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   GlobalVariable *gv;
 
+  int size_t_width = 32;
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+
   gv = M->getGlobalVariable("_local_size_x");
   if (gv != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 64),
-					 LocalSizeX),
-			gv);
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeX), gv);
   gv = M->getGlobalVariable("_local_size_y");
+
   if (gv != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 64),
-					 LocalSizeY),
-			gv);
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeY), gv);
   gv = M->getGlobalVariable("_local_size_z");
+
   if (gv != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::get(M->getContext(), 64),
-					 LocalSizeZ),
-			gv);
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeZ), gv);
 
   return true;
 }

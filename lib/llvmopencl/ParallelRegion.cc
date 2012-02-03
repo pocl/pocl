@@ -130,6 +130,8 @@ ParallelRegion::purge()
   insert(end(), new_blocks.begin(), new_blocks.end());
 }
 
+#include <iostream>
+
 void
 ParallelRegion::insertPrologue(unsigned x,
                                unsigned y,
@@ -141,23 +143,27 @@ ParallelRegion::insertPrologue(unsigned x,
 
   Module *M = entry->getParent()->getParent();
 
+  int size_t_width = 32;
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+
   GlobalVariable *gvx = M->getGlobalVariable(LOCAL_ID_X);
   if (gvx != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(),
-                                             64), x), gvx);
+      builder.CreateStore(ConstantInt::get(IntegerType::
+                                           get(M->getContext(), size_t_width), 
+                                           x), gvx);
 
   GlobalVariable *gvy = M->getGlobalVariable(LOCAL_ID_Y);
   if (gvy != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(),
-                                             64), y), gvy);
+                                         get(M->getContext(), size_t_width),
+                                         y), gvy);
 
   GlobalVariable *gvz = M->getGlobalVariable(LOCAL_ID_Z);
   if (gvz != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(),
-                                             64), z), gvz);
+                                         get(M->getContext(), size_t_width),
+                                         z), gvz);
 }
 
 void
