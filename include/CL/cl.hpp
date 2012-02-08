@@ -140,6 +140,11 @@
 #ifndef CL_HPP_
 #define CL_HPP_
 
+#ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
+/* This file is made for OpenCL 1.0 and 1.1, not 1.2 */
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #include <malloc.h>
