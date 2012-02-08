@@ -31,6 +31,12 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+#define DUMP_RESULT_CFG
+
+#ifdef DUMP_RESULT_CFG
+#include "llvm/Analysis/CFGPrinter.h"
+#endif
+
 using namespace llvm;
 using namespace pocl;
 
@@ -64,7 +70,12 @@ WorkitemReplication::runOnFunction(Function &F)
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
-  return ProcessFunction(F);
+  bool ok = ProcessFunction(F);
+#ifdef DUMP_RESULT_CFG
+  FunctionPass* cfgPrinter = createCFGPrinterPass();
+  cfgPrinter->runOnFunction(F);
+#endif
+  return ok;
 }
 
 bool
@@ -81,7 +92,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   BasicBlockVector original_bbs;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
     if (!block_has_barrier(i))
-        original_bbs.push_back(i);
+      original_bbs.push_back(i);
   }
 
   Kernel *K = cast<Kernel> (&F);
@@ -121,51 +132,48 @@ WorkitemReplication::ProcessFunction(Function &F)
              "Could not determine parallel region entry!");
       assert ((exit != NULL) && "Parallel region without entry barrier!");
     }
-
+    
     for (int z = 0; z < LocalSizeZ; ++z) {
       for (int y = 0; y < LocalSizeY; ++y) {
-	for (int x = 0; x < LocalSizeX ; ++x) {
+        for (int x = 0; x < LocalSizeX ; ++x) {
 	  
-	  int index = (LocalSizeY * LocalSizeX * z +
-		       LocalSizeX * y +
-		       x);
+          int index = 
+            (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
 	  
-	  if (index == 0)
-	    continue;
+          if (index == 0)
+            continue;
 	  
-	  for (SmallVector<ParallelRegion *, 8>::iterator
-		 i = parallel_regions[0].begin(), e = parallel_regions[0].end();
-	       i != e; ++i) {
-	    ParallelRegion *original = (*i);
-	    ParallelRegion *replicated =
-	      original->replicate(reference_map[index - 1],
-				  (".wi_" + Twine(x) +
-				   "_" + Twine(y) +
-				   "_" + Twine(z)));
-	    parallel_regions[index].push_back(replicated);
-	  }
-	}
+          for (SmallVector<ParallelRegion *, 8>::iterator
+                 i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+               i != e; ++i) {
+            ParallelRegion *original = (*i);
+            ParallelRegion *replicated =
+              original->replicate
+              (reference_map[index - 1],
+               (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
+            parallel_regions[index].push_back(replicated);
+          }
+        }
       }
     }
     
     for (int z = 0; z < LocalSizeZ; ++z) {
       for (int y = 0; y < LocalSizeY; ++y) {
-	for (int x = 0; x < LocalSizeX ; ++x) {
+        for (int x = 0; x < LocalSizeX ; ++x) {
 	  
-	  int index = (LocalSizeY * LocalSizeX * z +
-		       LocalSizeX * y +
-		       x);
+          int index = 
+            (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
 	  
-	  for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
-	    ParallelRegion *region = parallel_regions[index][i];
-	    if (index != 0) {
-	      region->remap(reference_map[index - 1]);
-	      region->chainAfter(parallel_regions[index - 1][i]);
-	      region->purge();
-	    }
-	    region->insertPrologue(x, y, z);
-	  }
-	}
+          for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
+            ParallelRegion *region = parallel_regions[index][i];
+            if (index != 0) {
+              region->remap(reference_map[index - 1]);
+              region->chainAfter(parallel_regions[index - 1][i]);
+              region->purge();
+            }
+            region->insertPrologue(x, y, z);
+          }
+        }
       }
     }
 
@@ -175,15 +183,14 @@ WorkitemReplication::ProcessFunction(Function &F)
       for (int y = LocalSizeY - 1; y >= 0; --y) {
         for (int x = LocalSizeX - 1; x >= 0; --x) {
           
-          int index = (LocalSizeY * LocalSizeX * z +
-		       LocalSizeX * y +
-		       x);
+          int index = 
+            (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
 
           if (index == 0)
             continue;
-
-	  for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
-	    ParallelRegion *region = parallel_regions[index][i];
+          
+          for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
+            ParallelRegion *region = parallel_regions[index][i];
             BasicBlock *entry = region->front();
             MergeBlockIntoPredecessor(entry, this);
           }
@@ -236,11 +243,11 @@ void
 WorkitemReplication::CheckLocalSize(Function *F)
 {
   Module *M = F->getParent();
-
+  
   LocalSizeX = LocalSize[0];
   LocalSizeY = LocalSize[1];
   LocalSizeZ = LocalSize[2];
-
+  
   NamedMDNode *size_info = M->getNamedMetadata("opencl.kernel_wg_size_info");
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
@@ -262,6 +269,5 @@ block_has_barrier(const BasicBlock *bb)
     if (isa<Barrier>(i))
       return true;
   }
-
   return false;
 }
