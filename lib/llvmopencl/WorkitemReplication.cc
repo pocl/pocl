@@ -176,7 +176,7 @@ WorkitemReplication::ProcessFunction(Function &F)
         }
       }
     }
-
+    
     // Try to merge all workitem first block of each region
     // together (for PHI predecessor correctness).
     for (int z = LocalSizeZ - 1; z >= 0; --z) {
@@ -192,7 +192,20 @@ WorkitemReplication::ProcessFunction(Function &F)
           for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
             ParallelRegion *region = parallel_regions[index][i];
             BasicBlock *entry = region->front();
+
+#ifdef DEBUG_BB_MERGING
+            std::cerr << "### before merge into predecessor " << std::endl;
+            entry->dump();
+#endif
+
+            BasicBlock *pred = entry->getUniquePredecessor();
+            movePhiNodes(entry, pred);
             MergeBlockIntoPredecessor(entry, this);
+
+#ifdef DEBUG_BB_MERGING
+            std::cerr << "### pred after merge " << std::endl;
+            pred->dump();
+#endif
           }
         }
       }
@@ -237,6 +250,20 @@ WorkitemReplication::ProcessFunction(Function &F)
         LocalSizeZ), gv);
 
   return true;
+}
+
+/**
+ * Moves the phi nodes in the beginning of the src to the beginning of
+ * the dst. 
+ *
+ * MergeBlockIntoPredecessor function from llvm discards the phi nodes
+ * of the replicated BB because it has only one entry.
+ */
+void
+WorkitemReplication::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst) 
+{
+  while (PHINode *PN = dyn_cast<PHINode>(src->begin())) 
+    PN->moveBefore(dst->getFirstNonPHI());
 }
 
 void
