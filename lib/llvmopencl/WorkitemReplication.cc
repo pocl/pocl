@@ -31,7 +31,7 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
-#define DUMP_RESULT_CFG
+//#define DUMP_RESULT_CFG
 
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
