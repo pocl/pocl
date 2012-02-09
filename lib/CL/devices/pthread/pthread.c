@@ -1,6 +1,7 @@
 /* OpenCL native pthreaded device implementation.
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011-2012 Universidad Rey Juan Carlos, 
+   Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -36,9 +37,9 @@
 
 #include "bufalloc.h"
 
-/* Instead of mallocing a buffer size (or MIN_REGION_SIZE, whichever
-   is larger) for a region, try to allocate this many times the buffer
-   size to hopefully avoid mallocs for the next buffer allocations.
+/* Instead of mallocing a buffer size for a region, try to allocate 
+   this many times the buffer size to hopefully avoid mallocs for 
+   the next buffer allocations.
    
    Falls back to single multiple allocation if fails to allocate a
    larger region. */
@@ -562,10 +563,10 @@ pocl_pthread_run (void *data, const char *parallel_filename,
   for (i = 0; i < kernel->context->num_devices; ++i)
     {
       if (kernel->context->devices[i]->data == data)
-	{
-	  device = i;
-	  break;
-	}
+        {
+          device = i;
+          break;
+        }
     }
 
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,

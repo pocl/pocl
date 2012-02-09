@@ -91,7 +91,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   global_y = work_dim > 1 ? global_work_size[1] : 1;
   global_z = work_dim > 2 ? global_work_size[2] : 1;
 
-  if (global_x ==0 || global_y == 0 || global_z == 0)
+  if (global_x == 0 || global_y == 0 || global_z == 0)
     return CL_INVALID_GLOBAL_WORK_SIZE;
 
   if (local_work_size != NULL) 
@@ -102,11 +102,32 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
     } 
   else 
     {
-      /* TODO: 
-         figure the optimal dimensions from the device and 
-         the  kernel at hand. */
+      size_t preferred_wg_multiple;
+      cl_int retval = 
+        clGetKernelWorkGroupInfo(
+         kernel, command_queue->device, 
+         CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
+         sizeof (size_t), &preferred_wg_multiple, NULL);
+
       local_x = local_y = local_z = 1;
-    }   
+      if (retval == CL_SUCCESS)
+        {
+          /* Find the largest multiple of the preferred wg multiple.
+             E.g. if the preferred is 8 it doesn't work with a
+             global size of 20. However, 4 is better than 1 in that
+             case because it still enables wi-parallelization. */
+          while (preferred_wg_multiple >= 1)
+            {
+              if (global_x % preferred_wg_multiple == 0 &&
+                  preferred_wg_multiple <= global_x)
+                {
+                  local_x = preferred_wg_multiple;
+                  break;
+                }
+              preferred_wg_multiple /= 2;
+            }
+        }
+    }
 
   if (local_x * local_y * local_z > command_queue->device->max_work_group_size)
     return CL_INVALID_WORK_GROUP_SIZE;

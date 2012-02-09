@@ -11,6 +11,7 @@ Built target OpenCLConvolutionChap3
 Built target HelloBinaryWorld
 Built target SimpleBufferSubBuffer
 Built target vecadd
+Built target histogram
 Built target Dijkstra
 Built target spmv
 ])

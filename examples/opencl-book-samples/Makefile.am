@@ -34,7 +34,11 @@ book_samples_dir=${top_srcdir}/examples/opencl-book-samples/checkout
 .PHONY: run_SimpleBufferSubBuffer run_spmv run_VectorAdd run_Dijkstra
 
 build: check_dir
-	(cd ${book_samples_dir}; mkdir -p build; cd build; \
+	(cd ${book_samples_dir}; \
+	sed -i 's/bool doCPU = false/bool doCPU = true/g' src/Chapter_16/Dijkstra/oclDijkstra.cpp; \
+	sed -i 's/size_t localWorkSize = maxWorkGroupSize/size_t localWorkSize = 2/g' src/Chapter_16/Dijkstra/oclDijkstraKernel.cpp; \
+	sed -i 's/device.j..type == CL_DEVICE_TYPE_GPU/device[j].type \& CL_DEVICE_TYPE_GPU/g' src/Chapter_22/spmv.c; \
+	mkdir -p build; cd build; \
 	cmake \
 	-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut ${PTHREAD_CFLAGS}' \
 	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libOpenCL.so \
@@ -79,12 +83,12 @@ run_VectorAdd:
 # force 'doCPU = true' in oclDijkstra.cpp to make
 # it run. This case uses the maximum work group size
 # thus the llc takes a lot of memory and time.
+# The latter sed patch forces the localWorkSize to 2 to make it feasible for now.
 run_Dijkstra: 
 	@echo
 	@echo "###### Chapter 16: Dijkstra"
 	@echo
 	@(cd ${book_samples_dir}; \
-	sed -i 's/bool doCPU = false/bool doCPU = true/g' src/Chapter_16/Dijkstra/oclDijkstra.cpp; \
 	cd build/src/Chapter_16/Dijkstra; \
 	./Dijkstra --cpu)
 

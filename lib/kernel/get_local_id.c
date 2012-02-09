@@ -21,9 +21,9 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _local_id_x;
-extern unsigned int _local_id_y;
-extern unsigned int _local_id_z;
+extern size_t _local_id_x;
+extern size_t _local_id_y;
+extern size_t _local_id_z;
 
 size_t
 get_local_id(unsigned int dimindx)

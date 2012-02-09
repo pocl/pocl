@@ -142,7 +142,7 @@ clCreateKernel(cl_program program,
     {
       kernel->arguments[kernel->num_args + i].value = NULL;
       kernel->arguments[kernel->num_args + i].size =
-        ((size_t *) lt_dlsym(dlhandle, "_local_size"))[i];
+        ((unsigned *) lt_dlsym(dlhandle, "_local_sizes"))[i];
     }
 
   cl_kernel k = program->kernels;

@@ -82,6 +82,7 @@ namespace pocl {
 			  const ValueValueMap &reference_map);
     bool isReplicable(const llvm::Instruction *i);
 
+    void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
     friend class pocl::Workgroup;
   };
 }

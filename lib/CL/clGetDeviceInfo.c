@@ -84,14 +84,10 @@ clGetDeviceInfo(cl_device_id   device,
        a basis for a higher level performance portability layer.
        
        Basically the size is now limited by the absence of work item
-       loops. A huge unrolling factor explodes the instruction memory size with
-       no benefits.
-
-       16 should be large enough for anything (tm) for now ;) Let's 
-       increase it when at least vectorization works and there's a better
-       machine heuristics.
+       loops. A huge unrolling factor explodes the instruction memory size (and
+       compilation time) with usually no benefits.
     */
-    POCL_RETURN_DEVICE_INFO(cl_uint, 16); // device->max_work_group_size
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_group_size);
   case CL_DEVICE_MAX_WORK_ITEM_SIZES               : break;
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
@@ -149,11 +145,16 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_NAME:
     POCL_RETURN_DEVICE_INFO_STR(device->name);
    
-  case CL_DEVICE_VENDOR                            : break;
+  case CL_DEVICE_VENDOR                            : 
+    POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
+
   case CL_DRIVER_VERSION                           : break;
   case CL_DEVICE_PROFILE                           : break;
-  case CL_DEVICE_VERSION                           : break;
-  case CL_DEVICE_EXTENSIONS                        : break;
+  case CL_DEVICE_VERSION                           : 
+    POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
+
+  case CL_DEVICE_EXTENSIONS                        : 
+    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16");
   case CL_DEVICE_PLATFORM                          : break;
   case CL_DEVICE_DOUBLE_FP_CONFIG                  : break;
   case CL_DEVICE_HALF_FP_CONFIG                    : break;

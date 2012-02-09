@@ -2,7 +2,8 @@
 # pocl-kernel - Examine a OpenCL bytecode and generate a loadable module
 #               with kernel function information.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos, 
+# Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +62,7 @@ int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
 int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
 unsigned _num_locals = _${kernel}_NUM_LOCALS;
 #if _${kernel}_NUM_LOCALS != 0
-unsigned _local_size = _${kernel}_LOCAL_SIZE;
+unsigned _local_sizes[_${kernel}_NUM_LOCALS] = _${kernel}_LOCAL_SIZE;
 #endif
 EOF
 
