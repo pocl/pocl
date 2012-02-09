@@ -317,6 +317,7 @@ AC_CONFIG_FILES([Makefile
                  tests/atlocal
                  tests/regression/Makefile
                  tests/regression/loop-phi-replication/Makefile
+                 tests/regression/locals/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile

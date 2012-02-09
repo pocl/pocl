@@ -1,4 +1,4 @@
-/* Tests the bug that caused the phi nodes not be replicated (launchpad #927573).
+/* Issues with __local pointers (lp:918801)
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -29,42 +29,40 @@
 #include <cstdlib>
 #include <iostream>
 
-#define WINDOW_SIZE 16
-#define WORK_ITEMS 16
-#define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
+#define WORK_ITEMS 2
+#define BUFFER_SIZE (WORK_ITEMS)
 
-float A[BUFFER_SIZE];
-int R[WORK_ITEMS];
 
 static char
 kernelSourceCode[] = 
-"kernel \n"
-"void test_kernel(__global float *input, \n"
-"                 __global int *result) {\n"
-"  int gid = get_global_id(0);\n"
-"  float global_sum = 0.0f;\n"
-"  int i;\n"
+"kernel void test_kernel (global float *a, local int *local_buf, private int scalar)\n"
+"{\n"
+"   int gid = get_local_id(0); \n"
+//"   local int automatic_local_scalar; \n"
+"   local int automatic_local_buf[2];\n"
 "\n"
-" for (i=0; i < 16; ++i) {\n"
-"   float value = input[gid+i];\n"
-"   global_sum += value;\n"
+"   __local int *p;\n"
+"\n"
+"   p = automatic_local_buf;\n"
+"   p[gid] = gid + scalar;\n"
+"   p = local_buf;\n"
+"   p[gid] = a[gid];\n"
+//"   automatic_local_scalar = scalar;\n"
 "   barrier(CLK_LOCAL_MEM_FENCE);\n"
-" }\n"
-" result[gid] = global_sum;\n"
+"   a[gid] = automatic_local_buf[gid] + local_buf[gid] + scalar;\n"
+"   \n"
 "}\n";
 
 int
 main(void)
 {
-    cl_int err;
+    float A[BUFFER_SIZE];
+    int scalar = 4;
 
-    for (int i = 0; i < BUFFER_SIZE; i++) {
+    for (int i = 0; i < BUFFER_SIZE; ++i)
         A[i] = i;
-    }
 
-    for (int i = 0; i < WORK_ITEMS; i++) {
-        R[i] = i;
-    }
+    cl_int err;
 
     try {
         std::vector<cl::Platform> platformList;
@@ -87,26 +85,22 @@ main(void)
         // Build program
         program.build(devices);
 
-        // Create buffer for A and copy host contents
         cl::Buffer aBuffer = cl::Buffer(
             context, 
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+            CL_MEM_COPY_HOST_PTR,
             BUFFER_SIZE * sizeof(float), 
             (void *) &A[0]);
 
-        // Create buffer for that uses the host ptr C
-        cl::Buffer cBuffer = cl::Buffer(
-            context, 
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
-            WORK_ITEMS * sizeof(int), 
-            (void *) &R[0]);
+        cl::Buffer localBuffer = cl::Buffer(
+            context, 0, BUFFER_SIZE * sizeof(int), NULL);
 
         // Create kernel object
         cl::Kernel kernel(program, "test_kernel");
 
         // Set kernel args
         kernel.setArg(0, aBuffer);
-        kernel.setArg(1, cBuffer);
+        kernel.setArg(1, localBuffer);
+        kernel.setArg(2, scalar);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
@@ -118,34 +112,24 @@ main(void)
             cl::NDRange(WORK_ITEMS),
             cl::NullRange);
  
-
-        // Map cBuffer to host pointer. This enforces a sync with 
+        // Map aBuffer to host pointer. This enforces a sync with 
         // the host backing space, remember we choose GPU device.
-        int * output = (int *) queue.enqueueMapBuffer(
-            cBuffer,
+        float * res = (float *) queue.enqueueMapBuffer(
+            aBuffer,
             CL_TRUE, // block 
             CL_MAP_READ,
             0,
-            WORK_ITEMS * sizeof(int));
+            BUFFER_SIZE * sizeof(float));
 
-        bool ok = true;
-        for (int i = 0; i < WORK_ITEMS; i++) {
-            float global_sum = 0.0f;
-            for (int j=0; j < 16; ++j) {
-                float value = A[i + j];
-                global_sum += value;
-            }
-            if ((int)global_sum != R[i]) {
-                std::cout << "F";
-                ok = false;
-            }
-        }
-        if (ok) std::cout << "OK" << std::endl;
+        bool ok = res[0] == 8 && res[1] == 10;
+        if (ok) 
+            std::cout << "OK" << std::endl;
+        else
+            std::cout << "NOK " << res[0] << " " << res[1] << std::endl;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(
-            cBuffer,
-            (void *) output);
+            aBuffer, (void *) res);
  
         // There is no need to perform a finish on the final unmap
         // or release any objects as this all happens implicitly with

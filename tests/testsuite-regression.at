@@ -8,3 +8,11 @@ AT_DATA([expout],
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/loop-phi-replication/host], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([issues with local pointers - lp:#918801])
+AT_KEYWORDS([regression])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/locals/host], 0, expout)
+AT_CLEANUP

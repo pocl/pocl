@@ -94,6 +94,7 @@ run_spmv:
 	@echo
 	@(cd ${book_samples_dir}; \
 	cd build/src/Chapter_22; \
+	sed -i 's/type == CL_DEVICE_TYPE_GPU/type & CL_DEVICE_TYPE_GPU/g' spmv.c; \
 	ln -sf ../../../src/Chapter_22/spmv.cl; \
 	./spmv)
 

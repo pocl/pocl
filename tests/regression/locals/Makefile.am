@@ -1,6 +1,5 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for tests/regression.
 # 
 # Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
@@ -22,5 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = loop-phi-replication locals
+noinst_PROGRAMS = host
 
+host_SOURCES = host.cpp 
+host_LDADD = ../../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
+host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
