@@ -38,7 +38,7 @@ kernelSourceCode[] =
 "kernel void test_kernel (global float *a, local int *local_buf, private int scalar)\n"
 "{\n"
 "   int gid = get_local_id(0); \n"
-//"   local int automatic_local_scalar; \n"
+"   local int automatic_local_scalar; \n"
 "   local int automatic_local_buf[2];\n"
 "\n"
 "   __local int *p;\n"
@@ -47,9 +47,9 @@ kernelSourceCode[] =
 "   p[gid] = gid + scalar;\n"
 "   p = local_buf;\n"
 "   p[gid] = a[gid];\n"
-//"   automatic_local_scalar = scalar;\n"
+"   automatic_local_scalar = scalar;\n"
 "   barrier(CLK_LOCAL_MEM_FENCE);\n"
-"   a[gid] = automatic_local_buf[gid] + local_buf[gid] + scalar;\n"
+"   a[gid] = automatic_local_buf[gid] + local_buf[gid] + automatic_local_scalar;\n"
 "   \n"
 "}\n";
 
