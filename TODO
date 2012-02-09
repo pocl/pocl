@@ -80,6 +80,7 @@ entered here.
   * async_work_group_copy (* spmv.cl)
   * wait_group_events (* spmv.cl)
 * 6.12.11 Atomic functions
+  * cl_khr_local_int32_base_atomics (Chapter_14/histogram)
 
   OpenCL 1.2 Extensions
 

@@ -141,11 +141,16 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_NAME:
     POCL_RETURN_DEVICE_INFO_STR(device->name);
    
-  case CL_DEVICE_VENDOR                            : break;
+  case CL_DEVICE_VENDOR                            : 
+    POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
+
   case CL_DRIVER_VERSION                           : break;
   case CL_DEVICE_PROFILE                           : break;
-  case CL_DEVICE_VERSION                           : break;
-  case CL_DEVICE_EXTENSIONS                        : break;
+  case CL_DEVICE_VERSION                           : 
+    POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
+
+  case CL_DEVICE_EXTENSIONS                        : 
+    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16");
   case CL_DEVICE_PLATFORM                          : break;
   case CL_DEVICE_DOUBLE_FP_CONFIG                  : break;
   case CL_DEVICE_HALF_FP_CONFIG                    : break;
