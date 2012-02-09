@@ -23,7 +23,7 @@
 
 noinst_PROGRAMS = host
 
-host_SOURCES = host.cpp example1.cl
+host_SOURCES = host.cpp 
 host_LDADD = ../../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
 host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 
