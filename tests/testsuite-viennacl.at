@@ -25,14 +25,12 @@ AT_CLEANUP
 
 AT_SETUP([iterators-test])
 AT_KEYWORDS([viennacl])
-#Fails currently.
-AT_CHECK([exit 77])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
 AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build iterators-test 2>&1 | grep 'Built target' | cut -c8-], 0,
-[Built target iterators-test])
-AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/iterators-test], 0, 
-[`cat $abs_top_srcdir/examples/ViennaCL/iterators-test.stdout`
+[Built target iterators-test
 ])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/iterators-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/iterators-test.stdout`])
 AT_CLEANUP
 
 AT_SETUP([matrix-test])
@@ -93,6 +91,19 @@ AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build bl
 ])
 AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/blas1], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/blas1.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([blas3])
+AT_KEYWORDS([viennalcl])
+#Fails currently.
+AT_CHECK([exit 77])
+AT_SKIP_IF([! est -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build blas3-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target blas3-test
+])
+AT_CHECK([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/test/blas3-test | grep passed | wc -l], 0, 
+[121
 ])
 AT_CLEANUP
 
