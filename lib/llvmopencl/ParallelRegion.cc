@@ -36,6 +36,12 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
+//#define DEBUG_REMAP
+//#define DEBUG_REPLICATE
+//#define DEBUG_PURGE
+
+#include <iostream>
+
 // BarrierBlock *
 // ParallelRegion::getEntryBarrier()
 // {
@@ -57,6 +63,13 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
     // Insert the block itself into the map.
     map[block] = new_block;
     new_region->push_back(new_block);
+
+#ifdef DEBUG_REPLICATE
+    std::cerr << "### clonee block:" << std::endl;
+    block->dump();
+    std::cerr << endl << "### cloned block: " << std::endl;
+    new_block->dump();
+#endif
   }
   
   return new_region;
@@ -66,10 +79,21 @@ void
 ParallelRegion::remap(ValueToValueMapTy &map)
 {
   for (iterator i = begin(), e = end(); i != e; ++i) {
+
+#ifdef DEBUG_REMAP
+    std::cerr << "### block before remap:" << std::endl;
+    (*i)->dump();
+#endif
+
     for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
          ii != ee; ++ii)
       RemapInstruction(ii, map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
+
+#ifdef DEBUG_PARALLEL_REGION
+    std::cerr << endl << "### block after remap: " << std::endl;
+    (*i)->dump();
+#endif
   }
 }
 
@@ -104,6 +128,10 @@ ParallelRegion::purge()
     if (*i == back())
       continue;
 
+#ifdef DEBUG_PURGE
+    std::cerr << "### block before purge:" << std::endl;
+    (*i)->dump();
+#endif
     TerminatorInst *t = (*i)->getTerminator();
     for (unsigned ii = 0, ee = t->getNumSuccessors(); ii != ee; ++ii) {
       BasicBlock *successor = t->getSuccessor(ii);
@@ -122,6 +150,10 @@ ParallelRegion::purge()
         new_blocks.push_back(unreachable);
       }
     }
+#ifdef DEBUG_PURGE
+    std::cerr << std::endl << "### block after purge:" << std::endl;
+    (*i)->dump();
+#endif
   }
 
   // Add the new "unreachable" blocks to the
@@ -141,23 +173,27 @@ ParallelRegion::insertPrologue(unsigned x,
 
   Module *M = entry->getParent()->getParent();
 
+  int size_t_width = 32;
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+
   GlobalVariable *gvx = M->getGlobalVariable(LOCAL_ID_X);
   if (gvx != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(),
-                                             32), x), gvx);
+      builder.CreateStore(ConstantInt::get(IntegerType::
+                                           get(M->getContext(), size_t_width), 
+                                           x), gvx);
 
   GlobalVariable *gvy = M->getGlobalVariable(LOCAL_ID_Y);
   if (gvy != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(),
-                                             32), y), gvy);
+                                         get(M->getContext(), size_t_width),
+                                         y), gvy);
 
   GlobalVariable *gvz = M->getGlobalVariable(LOCAL_ID_Z);
   if (gvz != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(),
-                                             32), z), gvz);
+                                         get(M->getContext(), size_t_width),
+                                         z), gvz);
 }
 
 void

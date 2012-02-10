@@ -21,9 +21,9 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _group_id_x;
-extern unsigned int _group_id_y;
-extern unsigned int _group_id_z;
+extern size_t _group_id_x;
+extern size_t _group_id_y;
+extern size_t _group_id_z;
 
 size_t
 get_group_id(unsigned int dimindx)

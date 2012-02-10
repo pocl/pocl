@@ -71,13 +71,41 @@ namespace llvm {
   template<bool xcompile> class TypeBuilder<PoclContext, xcompile> {
   public:
     static StructType *get(LLVMContext &Context) {
-        return StructType::get(
-        TypeBuilder<types::i<32>, xcompile>::get(Context),
-	TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-	TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-	TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-        NULL);
+      if (size_t_width == 64)
+        {
+          return StructType::get
+            (TypeBuilder<types::i<32>, xcompile>::get(Context),
+             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+             NULL);
+        }
+      else if (size_t_width == 32)
+        {
+          return StructType::get
+            (TypeBuilder<types::i<32>, xcompile>::get(Context),
+             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+             NULL);
+        }
+      else
+        {
+          assert (false && "Unsupported size_t width.");
+        }
     }
+
+    /** 
+     * We compile for various targets with various widths for the size_t
+     * type that depends on the pointer type. 
+     *
+     * This should be set when the correct type is known. This is hack
+     * until a better way is found. It's not thread safe, e.g. if one
+     * compiles multiple Modules for multiple different pointer widths in
+     * a same process with multiple threads. */
+    static void setSizeTWidth(int width) {
+      size_t_width = width;
+    }    
   
     enum Fields {
       WORK_DIM,
@@ -85,17 +113,37 @@ namespace llvm {
       GROUP_ID,
       GLOBAL_OFFSET
     };
+  private:
+    static int size_t_width;
+    
   };  
+
+  template<bool xcompile>  
+  int TypeBuilder<PoclContext, xcompile>::size_t_width = 0;
 
 }  // namespace llvm
   
 char Workgroup::ID = 0;
 static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 
+
 bool
 Workgroup::runOnModule(Module &M)
 {
   // BasicInliner BI;
+
+  if (M.getPointerSize() == llvm::Module::Pointer64)
+    {
+      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
+    }
+  else if (M.getPointerSize() == llvm::Module::Pointer32) 
+    {
+      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
+    }
+  else 
+    {
+      assert (false && "Target has an unsupported pointer width.");
+    }  
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
@@ -203,15 +251,6 @@ createLauncher(Module &M, Function *F)
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
-  // TODO: _num_groups_%c and friends should probably have type size_t
-  // instead of unsigned int, because this may avoid integer
-  // conversions when accessing these variables
-
-  // TODO: _num_groups_%c and friends should probably be stored as
-  // arrays instead of as 3 independent variables, because this may
-  // lead to better code when the respective get_* functions are
-  // called in a loop (array access instead of switch statement)
-
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::WORK_DIM);
   gv = M.getGlobalVariable("_work_dim");
@@ -220,13 +259,25 @@ createLauncher(Module &M, Function *F)
     builder.CreateStore(v, gv);
   }
 
+
+  int size_t_width = 32;
+  if (M.getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
     if (gv != NULL) {
-      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      if (size_t_width == 64)
+        {
+          v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+        }
+      else
+        {
+          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+        }
       builder.CreateStore(v, gv);
     }
   }
@@ -237,7 +288,14 @@ createLauncher(Module &M, Function *F)
     snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
     if (gv != NULL) {
-      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      if (size_t_width == 64)
+        {
+          v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+        }
+      else 
+        {
+          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+        }
       builder.CreateStore(v, gv);
     }
   }
@@ -248,7 +306,14 @@ createLauncher(Module &M, Function *F)
     snprintf(s, STRING_LENGTH, "_global_offset_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
     if (gv != NULL) {
-      v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+      if (size_t_width == 64)
+        {
+          v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+        }
+      else
+        {
+          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+        }
       builder.CreateStore(v, gv);
     }
   }
@@ -279,16 +344,16 @@ privatizeContext(Module &M, Function *F)
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
 				   0, s);
       if(gv[i]->hasInitializer()) {
-	Constant *c = gv[i]->getInitializer();
-	builder.CreateStore(c, ai[i]);
+        Constant *c = gv[i]->getInitializer();
+        builder.CreateStore(c, ai[i]);
       }
     }
   }
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     for (BasicBlock::iterator ii = i->begin(), ee = i->end();
-	 ii != ee; ++ii) {
+         ii != ee; ++ii) {
       for (int j = 0; j < 3; ++j)
-	ii->replaceUsesOfWith(gv[j], ai[j]);
+        ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
   
@@ -298,18 +363,18 @@ privatizeContext(Module &M, Function *F)
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
-				   0, s);
+                                   0, s);
       if(gv[i]->hasInitializer()) {
-	Constant *c = gv[i]->getInitializer();
-	builder.CreateStore(c, ai[i]);
+        Constant *c = gv[i]->getInitializer();
+        builder.CreateStore(c, ai[i]);
       }
     }
   }
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     for (BasicBlock::iterator ii = i->begin(), ee = i->end();
-	 ii != ee; ++ii) {
+         ii != ee; ++ii) {
       for (int j = 0; j < 3; ++j)
-	ii->replaceUsesOfWith(gv[j], ai[j]);
+        ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
 
@@ -336,18 +401,18 @@ privatizeContext(Module &M, Function *F)
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
-				   0, s);
+                                   0, s);
       if(gv[i]->hasInitializer()) {
-	Constant *c = gv[i]->getInitializer();
-	builder.CreateStore(c, ai[i]);
+        Constant *c = gv[i]->getInitializer();
+        builder.CreateStore(c, ai[i]);
       }
     }
   }
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     for (BasicBlock::iterator ii = i->begin(), ee = i->end();
-	 ii != ee; ++ii) {
+         ii != ee; ++ii) {
       for (int j = 0; j < 3; ++j)
-	ii->replaceUsesOfWith(gv[j], ai[j]);
+        ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
 
@@ -357,18 +422,18 @@ privatizeContext(Module &M, Function *F)
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
-				   0, s);
+                                   0, s);
       if(gv[i]->hasInitializer()) {
-	Constant *c = gv[i]->getInitializer();
-	builder.CreateStore(c, ai[i]);
+        Constant *c = gv[i]->getInitializer();
+        builder.CreateStore(c, ai[i]);
       }
     }
   }
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     for (BasicBlock::iterator ii = i->begin(), ee = i->end();
-	 ii != ee; ++ii) {
+         ii != ee; ++ii) {
       for (int j = 0; j < 3; ++j)
-	ii->replaceUsesOfWith(gv[j], ai[j]);
+        ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
   
@@ -378,18 +443,18 @@ privatizeContext(Module &M, Function *F)
     gv[i] = M.getGlobalVariable(s);
     if (gv[i] != NULL) {
       ai[i] = builder.CreateAlloca(gv[i]->getType()->getElementType(),
-				   0, s);
+                                   0, s);
       if(gv[i]->hasInitializer()) {
-	Constant *c = gv[i]->getInitializer();
-	builder.CreateStore(c, ai[i]);
+        Constant *c = gv[i]->getInitializer();
+        builder.CreateStore(c, ai[i]);
       }
     }
   }
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     for (BasicBlock::iterator ii = i->begin(), ee = i->end();
-	 ii != ee; ++ii) {
+         ii != ee; ++ii) {
       for (int j = 0; j < 3; ++j)
-	ii->replaceUsesOfWith(gv[j], ai[j]);
+        ii->replaceUsesOfWith(gv[j], ai[j]);
     }
   }
 }

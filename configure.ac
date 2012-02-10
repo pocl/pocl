@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
-# Copyright (c) 2011, 2012 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -315,6 +315,9 @@ AC_CONFIG_FILES([Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal
+                 tests/regression/Makefile
+                 tests/regression/loop-phi-replication/Makefile
+                 tests/regression/locals/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile
