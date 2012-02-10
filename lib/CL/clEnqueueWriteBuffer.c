@@ -84,7 +84,8 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
            * finish before this read */
           clFinish(command_queue);
         }
-      device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
+      // TODO: check the intended semantics of buffer->device_ptrs[i] - can we just add a offset like this?
+      device_id->write(device_id->data, ptr, ((char*)buffer->device_ptrs[i])+offset, cb);
     }
   else
   {
@@ -95,6 +96,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     cmd->type=CL_COMMAND_TYPE_WRITE;
     cmd->command.write.data = device_id->data;
     cmd->command.write.host_ptr = ptr;
+    // TODO: check the intended semantics of buffer->device_ptrs[i] - can we just add a offset like this?
     cmd->command.write.device_ptr = buffer->device_ptrs[i];
     cmd->command.write.cb = cb;
     cmd->next = NULL;

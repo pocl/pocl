@@ -85,7 +85,8 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
            * finish before this read */
           clFinish(command_queue);
         }
-      device_id->read(device_id->data, ptr, buffer->device_ptrs[i], cb);
+      // TODO: check the intended semantics of buffer->device_ptrs[i] - can we just add a offset like this?
+      device_id->read(device_id->data, ptr, buffer->device_ptrs[i]+offset, cb);
     }
   else
   {
@@ -96,7 +97,8 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
     cmd->type=CL_COMMAND_TYPE_READ;
     cmd->command.read.data = device_id->data;
     cmd->command.read.host_ptr = ptr;
-    cmd->command.read.device_ptr = buffer->device_ptrs[i];
+    // TODO: check the intended semantics of buffer->device_ptrs[i] - can we just add a offset like this?
+    cmd->command.read.device_ptr = buffer->device_ptrs[i]+offset;
     cmd->command.read.cb = cb;
     cmd->next = NULL;
     LL_APPEND(command_queue->root, cmd );
