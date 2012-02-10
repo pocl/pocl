@@ -12,25 +12,16 @@ AT_CHECK([cd $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build && cmake
 AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build kernels], ignore, ignore, ignore)
 AT_CLEANUP
 
-AT_SETUP([fft-test])
-AT_KEYWORDS([viennacl])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
-AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build fft-test 2>&1 | grep 'Built target' | cut -c8-], 0,
-[Built target fft-test
-])
-AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/fft-test], 0, 
-[`cat $abs_top_srcdir/examples/ViennaCL/fft-test.stdout`
-])
-AT_CLEANUP
-
 AT_SETUP([iterators-test])
 AT_KEYWORDS([viennacl])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
 AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build iterators-test 2>&1 | grep 'Built target' | cut -c8-], 0,
 [Built target iterators-test
 ])
-AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/iterators-test], 0, 
-[`cat $abs_top_srcdir/examples/ViennaCL/iterators-test.stdout`])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/iterators-test], 0,
+[$(cat $abs_top_srcdir/examples/ViennaCL/iterators-test.stdout)
+
+])
 AT_CLEANUP
 
 AT_SETUP([matrix-test])
