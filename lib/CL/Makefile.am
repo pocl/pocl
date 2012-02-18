@@ -69,7 +69,7 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clWaitForEvents.c		\
                    clEnqueueWaitForEvents.c	\
                    clReleaseEvent.c		\
-                   clEnqueueTask.c \
+                   clEnqueueTask.c		\
                    clCreateImage2D.c		\
                    clCreateImage3D.c		\
                    clCreateFromGLTexture2D.c	\

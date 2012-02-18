@@ -6,10 +6,6 @@ clEnqueueTask(cl_command_queue   command_queue,
               const cl_event *   event_wait_list,
               cl_event *         event ) CL_API_SUFFIX__VERSION_1_0
 {
-    /* Spec says:
-    clEnqueueTask is equivalent to calling clEnqueueNDRangeKernel with work_dim = 1,
-    global_work_offset = NULL, global_work_size[0] set to 1 and local_work_size[0] set to 1.
-    */
     const size_t globalWS=1; 
     const size_t localWS=1; 
     return clEnqueueNDRangeKernel( command_queue,
