@@ -98,3 +98,16 @@ AT_CHECK([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/test/blas3-
 ])
 AT_CLEANUP
 
+AT_SETUP([opencl benchmark])
+AT_KEYWORDS([viennacl])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build openclbench 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target openclbench
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/benchmarks/openclbench 2>&1|grep "Result of operation"], 0,
+[Result of operation on host: 104839
+Result of operation via OpenCL: 104839
+])
+AT_CLEANUP
+
+

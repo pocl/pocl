@@ -66,7 +66,8 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO(cl_bool, CL_FALSE);
   case CL_DEVICE_TYPE:
     POCL_RETURN_DEVICE_INFO(cl_device_type, device->type);   
-  case CL_DEVICE_VENDOR_ID                         : break;
+  case CL_DEVICE_VENDOR_ID:
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->vendor_id);
   case CL_DEVICE_MAX_COMPUTE_UNITS:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->max_compute_units);
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : break;
@@ -148,7 +149,8 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_VENDOR                            : 
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
 
-  case CL_DRIVER_VERSION                           : break;
+  case CL_DRIVER_VERSION:
+    POCL_RETURN_DEVICE_INFO_STR(device->driver_version);
   case CL_DEVICE_PROFILE                           : break;
   case CL_DEVICE_VERSION                           : 
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
