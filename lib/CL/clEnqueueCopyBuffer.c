@@ -61,7 +61,7 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->copy(device_id->data, src_buffer->device_ptrs[i], dst_buffer->device_ptrs[i], cb);
+  device_id->copy(device_id->data, src_buffer->device_ptrs[i]+src_offset, dst_buffer->device_ptrs[i]+dst_offset, cb);
 
   return CL_SUCCESS;
 }

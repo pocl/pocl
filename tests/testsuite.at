@@ -248,4 +248,5 @@ AT_CLEANUP
 m4_include(testsuite-regression.at)
 
 m4_include(testsuite-samples.at)
+m4_include(testsuite-viennacl.at)
 
