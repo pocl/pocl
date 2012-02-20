@@ -38,6 +38,7 @@ build: check_dir
 	sed -i 's/bool doCPU = false/bool doCPU = true/g' src/Chapter_16/Dijkstra/oclDijkstra.cpp; \
 	sed -i 's/size_t localWorkSize = maxWorkGroupSize/size_t localWorkSize = 2/g' src/Chapter_16/Dijkstra/oclDijkstraKernel.cpp; \
 	sed -i 's/device.j..type == CL_DEVICE_TYPE_GPU/device[j].type \& CL_DEVICE_TYPE_GPU/g' src/Chapter_22/spmv.c; \
+	sed -i 's/context.CL_DEVICE_TYPE_GPU/context\(CL_DEVICE_TYPE_CPU/g' src/Chapter_12/VectorAdd/vecadd.cpp; \
 	mkdir -p build; cd build; \
 	cmake \
 	-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut ${PTHREAD_CFLAGS}' \
