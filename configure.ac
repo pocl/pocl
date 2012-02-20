@@ -318,6 +318,7 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/Makefile
                  tests/regression/loop-phi-replication/Makefile
                  tests/regression/locals/Makefile
+                 tests/regression/branch-to-middle-of-region/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile
