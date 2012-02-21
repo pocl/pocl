@@ -29,12 +29,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#define WINDOW_SIZE 16
-#define WORK_ITEMS 16
+#define WINDOW_SIZE 32
+#define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
-
-float A[BUFFER_SIZE];
-int R[WORK_ITEMS];
 
 // adding before the first for-loop produces another crash
 // " if (result[gid] == 0) return; \n"
@@ -50,18 +47,10 @@ kernelSourceCode[] =
 "  float global_sum = 0.0f;\n"
 "  int i;\n"
 "\n"
-" for (i=0; i < 32; ++i) {\n"
-"   float value = input[gid+i];\n"
-"   global_sum += value;\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
-" }\n"
 " result[gid] = global_sum;\n"
-" \n"
-" \n"
 " for (i=0; i < 32; ++i) {\n"
 "   float value = input[gid+i];\n"
 "   global_sum += value;\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
 " }\n"
 " result[gid] = result[gid] + global_sum;\n"
 " barrier(CLK_GLOBAL_MEM_FENCE);\n"
@@ -69,7 +58,6 @@ kernelSourceCode[] =
 " for (i=0; i < 32; ++i) {\n"
 "   float value = input[gid+i];\n"
 "   global_sum += value;\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
 " }\n"
 " result[gid] = result[gid] + global_sum;\n"
 "}\n";
@@ -77,6 +65,8 @@ kernelSourceCode[] =
 int
 main(void)
 {
+    float A[BUFFER_SIZE];
+    int R[WORK_ITEMS];
     cl_int err;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
@@ -151,13 +141,27 @@ main(void)
 
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
+
             float global_sum = 0.0f;
-            for (int j=0; j < 16; ++j) {
-                float value = A[i + j];
+            int j;
+            float result;
+
+            result = global_sum;
+            for (j=0; j < 32; ++j) {
+                float value = A[i+j];
                 global_sum += value;
             }
-            if ((int)global_sum != R[i]) {
-                std::cout << "F";
+            result = result + global_sum;
+            for (j=0; j < 32; ++j) {
+                float value = A[i+j];
+                global_sum += value;
+            }
+            result = result + global_sum;
+
+            if ((int)result != R[i]) {
+                std::cout 
+                    << "F(" << i << ": " << (int)result << " != " << R[i] 
+                    << ") ";
                 ok = false;
             }
         }

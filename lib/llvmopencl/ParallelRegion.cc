@@ -90,7 +90,7 @@ ParallelRegion::remap(ValueToValueMapTy &map)
       RemapInstruction(ii, map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
 
-#ifdef DEBUG_PARALLEL_REGION
+#ifdef DEBUG_REMAP
     std::cerr << endl << "### block after remap: " << std::endl;
     (*i)->dump();
 #endif

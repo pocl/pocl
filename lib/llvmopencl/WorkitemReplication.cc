@@ -31,6 +31,7 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+//#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
 
 #ifdef DUMP_RESULT_CFG
@@ -199,6 +200,7 @@ WorkitemReplication::ProcessFunction(Function &F)
 #endif
 
             BasicBlock *pred = entry->getUniquePredecessor();
+            assert (pred != NULL && "No unique predecessor.");
             movePhiNodes(entry, pred);
             MergeBlockIntoPredecessor(entry, this);
 

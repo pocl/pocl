@@ -22,5 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = loop-phi-replication locals
+SUBDIRS = loop-phi-replication locals branch-to-middle-of-region
+
 
