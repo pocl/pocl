@@ -242,6 +242,7 @@ ParallelRegion::Verify()
     for (pred_iterator ii(*i), ee(*i, true); ii != ee; ++ii) {
       if (count(begin(), end(), *ii) == 0) {
         if ((*i) != front()) {
+          dump();
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         }

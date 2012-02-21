@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <iostream>
 
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG

@@ -143,5 +143,23 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
     }
   }
 
+  /* This is a loop without a barrier. Ensure we have a non-barrier
+     block as a preheader so we can replicate the loop as a whole. 
+
+     If the block has proper instructions after the barrier, it
+     will be split in CanonicalizeBarriers. */
+  BasicBlock *preheader = L->getLoopPreheader();
+  assert((preheader != NULL) && "Non-canonicalized loop found!\n");
+  TerminatorInst *t = preheader->getTerminator();
+  Instruction *prev = NULL;
+  if (&preheader->front() != t)
+    prev = t->getPrevNode();
+  if (prev && isa<Barrier>(prev))
+    {
+      BasicBlock *new_b = SplitBlock(preheader, t, this);
+      new_b->setName(preheader->getName() + ".postbarrier_dummy");
+      return true;
+    }
+
   return false;
 }

@@ -319,6 +319,7 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/loop-phi-replication/Makefile
                  tests/regression/locals/Makefile
                  tests/regression/barrier-between-for-loops/Makefile
+                 tests/regression/simple-for-with-a-barrier/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile
