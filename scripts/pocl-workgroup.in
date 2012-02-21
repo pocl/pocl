@@ -80,4 +80,6 @@ if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
     pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
 fi
-@OPT@ -load=${pocl_lib} -generate-header -loop-simplify -loop-barriers -barriertails -barriers -flatten -always-inline -workitem -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
+@OPT@ -load=${pocl_lib} -generate-header -loop-simplify -loop-barriers \
+    -barriertails -barriers -flatten -always-inline -workitem -workgroup \
+    -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}

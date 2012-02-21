@@ -16,3 +16,11 @@ AT_DATA([expout],
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/locals/host], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([barrier between two for loops])
+AT_KEYWORDS([regression])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/barrier-between-for-loops/host], 0, expout)
+AT_CLEANUP

@@ -121,7 +121,24 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // Change: barriers with several successors are all right
     // they just start several parallel regions. Simplifies
     // loop handling.
-    if (t->getPrevNode() != *i) {
+
+    /* In reality we want to create a BB after the barrier always
+       when the barrier is not an implicitly added one. Couldn't
+       find a way to figure that out robustly. This now covers 
+       the cases when now having the BB after barrier causes
+       problems.
+
+       --Pekka */
+
+    const bool HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER = 
+        t->getPrevNode() != *i;
+
+    const bool ENTERS_A_BLOCK_WITH_PHIS = 
+        t->getNumSuccessors() == 1 &&
+        (isa<PHINode>(*t->getSuccessor(0)->begin()));
+
+    if (HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER ||
+        ENTERS_A_BLOCK_WITH_PHIS) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;

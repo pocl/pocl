@@ -246,7 +246,7 @@ ParallelRegion::Verify()
           return false;
         }
         if (!isa<BarrierBlock>(*ii)) {
-          assert (0 && "Entry has edges from non-barrer blocks!");
+          assert (0 && "Entry has edges from non-barrier blocks!");
           return false;
         }
         ++entry_edges;

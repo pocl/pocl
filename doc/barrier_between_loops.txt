@@ -1,0 +1,24 @@
+Case: barriers between loops
+----------------------------
+
+There was an issue with kernels that had two or more ParallelRegions where
+the latter was a block with phi nodes (basically a for-loop which uses
+private variables). The problem was due to the phi-nodes getting broken
+in replication. This case is now a regression test 'barrier-between-for-loops'.
+
+Originally, the for-loop formed a ParallelRegion with the first
+basic block being the single BB loop that branched to itself. 
+However, the barrier node is not part of the ParallelRegion as it should 
+not be replicated. Therefore, it was not added to the reference map system 
+which is used to correct references in instructions to point to the cloned
+basic blocks.
+
+This resulted in a replicated ParallelRegion with a phi node that referred
+to the original "entry BB", not the correct one (the preceeding barrier
+BB). The fix for this was to always create a (dummy or not) basic block
+after the barrier blocks. These blocks become part of the ParallelRegion,
+thus get replicated and reference fixed normally, leading the for-loop
+getting the phi nodes corrected.
+
+Search CanonicalizeBarriers for "ENTERS_A_BLOCK_WITH_PHIS" for the
+location where the barrier containing BB is split.
