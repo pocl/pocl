@@ -1,4 +1,4 @@
-/* Tests multi-level for-loops with barriers inside.
+/* Tests a for-loops with variable iteration count with a barriers inside.
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -40,14 +40,13 @@ kernelSourceCode[] =
 "                 __global int *result,\n"
 "                 int a) {\n"
 " int gid = get_global_id(0);\n"
-" int i, j;\n"
-" for (i = 0; i < 32; ++i) {\n"
-"   result[gid] = input[gid];\n"
-"   for (j = 0; j < 32; ++j) {\n"
-"      result[gid] = input[gid] * input[gid + j];\n"  
-"      barrier(CLK_GLOBAL_MEM_FENCE);\n"
-"   }\n"
+" int i;\n"
+" float sum = 0.0f;\n"
+" for (i = 0; i < a; ++i) {\n"
+"   sum += input[i]; \n"
+"   barrier(CLK_GLOBAL_MEM_FENCE);\n"
 " }\n"
+" result[gid] = sum;\n"
 "}\n";
 
 int
@@ -130,20 +129,11 @@ main(void)
             WORK_ITEMS * sizeof(int));
 
         bool ok = true;
-        // TODO: validate results
-        for (int gid = 0; gid < WORK_ITEMS; gid++) {
+        for (int i = 0; i < WORK_ITEMS; i++) {
 
-            float result;
-            int i, j;
-            for (i = 0; i < 32; ++i) {
-                result = A[gid];
-                for (j = 0; j < 32; ++j) {
-                    result = A[gid] * A[gid + j];
-                }
-            }
-            if ((int)result != R[gid]) {
+            if ((int)R[i] != 3) {
                 std::cout 
-                    << "F(" << gid << ": " << (int)result << " != " << R[gid] 
+                    << "F(" << i << ": " << 3 << " != " << R[i] 
                     << ") ";
                 ok = false;
             }
