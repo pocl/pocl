@@ -34,6 +34,7 @@
 
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
+//#define DEBUG_PR_CREATION
 
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
@@ -102,7 +103,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   SmallVector<BarrierBlock *, 4> exit_blocks;
   K->getExitBlocks(exit_blocks);
 
-  while(!exit_blocks.empty()) {
+  while (!exit_blocks.empty()) {
     // We need to keep track of traversed barriers to detect back edges.
     SmallPtrSet<BarrierBlock *, 8> found_barriers;
     
@@ -114,25 +115,60 @@ WorkitemReplication::ProcessFunction(Function &F)
     SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
     ValueToValueMapTy reference_map[workitem_count - 1];
 
-    while(ParallelRegion *PR = K->createParallelRegionBefore(exit)) {
-      assert(!PR->empty() && "Empty parallel region in kernel (contiguous barriers)!");
+    while (ParallelRegion *PR = K->createParallelRegionBefore(exit)) {
+      assert(PR != NULL && !PR->empty() && "Empty parallel region in kernel (contiguous barriers)!");
 
       found_barriers.insert(exit);
 
       parallel_regions[0].push_back(PR);
       BasicBlock *entry = PR->front();
-      int non_backedge_predecessors = 0;
+      int found_predecessors = 0;
+      BarrierBlock *latch_barrier = NULL;
       for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
            i != e; ++i) {
         BarrierBlock *barrier = cast<BarrierBlock> (*i);
         if (!found_barriers.count(barrier)) {
-          ++non_backedge_predecessors;
-          exit = barrier;
+          /* If this is a loop header block we might have edges from two 
+             unprocessed barriers. The one inside the loop (coming from a computation
+             block after a branch block) should be processed first. */
+          
+          /* TODO: more robust detection for this. */
+          const bool IS_A_LATCH_BARRIER =
+            barrier->getName().endswith(".latchbarrier");
+
+          if (IS_A_LATCH_BARRIER)
+            {
+              latch_barrier = barrier;
+            }
+          else
+            {
+              exit = barrier;
+            }
+          ++found_predecessors;
         }
       }
-      assert((non_backedge_predecessors == 1) &&
-             "Could not determine parallel region entry!");
+
+      if (latch_barrier != NULL)
+        {
+          if (exit != NULL)
+            exit_blocks.push_back(exit);
+          exit = latch_barrier; /* always process the inner loop regions first */
+        }
+
+      if (found_predecessors == 0)
+        {
+          /* This path has been traversed and we encountered no more
+             unprocessed regions. It means we have either traversed all
+             paths from the exit or have transformed a loop and thus 
+             encountered only a barrier that was seen (and thus
+             processed) before. */
+          break;
+        }
       assert ((exit != NULL) && "Parallel region without entry barrier!");
+#ifdef DEBUG_PR_CREATION
+      std::cout << "Created a ParallelRegion:" << std::endl;
+      PR->dump();
+#endif
     }
     
     for (int z = 0; z < LocalSizeZ; ++z) {

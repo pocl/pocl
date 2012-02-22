@@ -96,9 +96,21 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           header->setName(header->getName() + ".phibarrier");
         }
 
-        // Now add the barriers on the latches.
+        // Now add the barriers on the exit block and the latches,
+        // which might not always be the same if there is computation
+        // after the exit decision.
+        BasicBlock *brexit = L->getExitingBlock();
+
+        if (brexit != NULL) {
+          if ((brexit->size() == 1) ||
+              (!isa<Barrier>(brexit->getTerminator()->getPrevNode()))) {
+            Barrier::Create(brexit->getTerminator());
+            brexit->setName(brexit->getName() + ".brexitbarrier");
+          }
+        }
+
         BasicBlock *latch = L->getLoopLatch();
-        if (latch != NULL) {
+        if (latch != NULL && brexit != latch) {
           // This loop has only one latch. Do not check for dominance, we
           // are probably running before BTR.
           // Avoid adding a barrier here if the latch happens to have a

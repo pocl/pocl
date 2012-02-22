@@ -32,3 +32,11 @@ AT_DATA([expout],
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/simple-for-with-a-barrier/host], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([two-level for-loop with computation after the brexit])
+AT_KEYWORDS([regression])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/multi-level-loops-with-barriers/host], 0, expout)
+AT_CLEANUP

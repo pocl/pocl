@@ -44,8 +44,8 @@ kernelSourceCode[] =
 " for (i = 0; i < 32; ++i) {\n"
 "   result[gid] = input[gid];\n"
 "   for (j = 0; j < 32; ++j) {\n"
-"       result[gid] = input[gid] * input[gid + j];\n"  
-"       barrier(CLK_GLOBAL_MEM_FENCE);\n"
+"      result[gid] = input[gid] * input[gid + j];\n"  
+"      barrier(CLK_GLOBAL_MEM_FENCE);\n"
 "   }\n"
 " }\n"
 "}\n";

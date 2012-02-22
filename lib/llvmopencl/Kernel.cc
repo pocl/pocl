@@ -22,6 +22,9 @@
 
 #include "Kernel.h"
 #include "Barrier.h"
+#include <iostream>
+
+//#define DEBUG_PR_CREATION
 
 using namespace llvm;
 using namespace pocl;
@@ -50,15 +53,30 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
   // BarrierBlock *region_entry_barrier = NULL;
  
   add_predecessors(pending_blocks, B);
+
+#ifdef DEBUG_PR_CREATION
+  std::cerr << "createParallelRegionBefore:" << std::endl;
+  B->dump();
+#endif
   
   while (!pending_blocks.empty()) {
     BasicBlock *current = pending_blocks.back();
     pending_blocks.pop_back();
+
+#ifdef DEBUG_PR_CREATION
+    std::cerr << "considering" << std::endl;
+    current->dump();
+#endif
     
     // If this block is already in the region, continue
     // (avoid infinite recursion of loops).
     if (blocks_in_region.count(current) != 0)
-      continue;
+      {
+#ifdef DEBUG_PR_CREATION
+        std::cerr << "already in the region!" << std::endl;
+#endif
+        continue;
+      }
     
     // If we reach another barrier this must be the
     // parallel region entry.
@@ -69,13 +87,19 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
       //   assert((region_entry_barrier == current) &&
       //          "Barrier is dominated by more than one barrier! (forgot BTR?)");
       // }
-      
+
+#ifdef DEBUG_PR_CREATION
+        std::cerr << "it's a barrier!" << std::endl;
+#endif     
       continue;
     }
     
     assert(verify_no_barriers(current) &&
 	   "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
-    
+
+#ifdef DEBUG_PR_CREATION
+    std::cerr << "added it to the region" << std::endl;
+#endif        
     // Non-barrier block, this must be on the region.
     blocks_in_region.insert(current);
     
