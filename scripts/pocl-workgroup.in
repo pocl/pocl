@@ -83,3 +83,6 @@ fi
 @OPT@ -load=${pocl_lib} -generate-header -loop-simplify -loop-barriers \
     -barriertails -barriers -flatten -always-inline -workitem -workgroup \
     -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
+
+rm -f .ek
+ln -sf `dirname ${output_file}` .ek

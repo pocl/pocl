@@ -103,6 +103,10 @@ WorkitemReplication::ProcessFunction(Function &F)
   SmallVector<BarrierBlock *, 4> exit_blocks;
   K->getExitBlocks(exit_blocks);
 
+  ValueToValueMapTy reference_map[workitem_count - 1];
+  SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
+
+  // First find all the ParallelRegions in the Function.
   while (!exit_blocks.empty()) {
     // We need to keep track of traversed barriers to detect back edges.
     SmallPtrSet<BarrierBlock *, 8> found_barriers;
@@ -111,9 +115,6 @@ WorkitemReplication::ProcessFunction(Function &F)
     // (finding an execution trace).
     BarrierBlock *exit = exit_blocks.back();
     exit_blocks.pop_back();
-    
-    SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
-    ValueToValueMapTy reference_map[workitem_count - 1];
 
     while (ParallelRegion *PR = K->createParallelRegionBefore(exit)) {
       assert(PR != NULL && !PR->empty() && "Empty parallel region in kernel (contiguous barriers)!");
@@ -176,82 +177,83 @@ WorkitemReplication::ProcessFunction(Function &F)
       PR->dump();
 #endif
     }
-    
-    for (int z = 0; z < LocalSizeZ; ++z) {
-      for (int y = 0; y < LocalSizeY; ++y) {
-        for (int x = 0; x < LocalSizeX ; ++x) {
+  }
+  // The replicate the ParallelRegions.
+  
+  for (int z = 0; z < LocalSizeZ; ++z) {
+    for (int y = 0; y < LocalSizeY; ++y) {
+      for (int x = 0; x < LocalSizeX ; ++x) {
+              
+        int index = 
+          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
 	  
-          int index = 
-            (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
+        if (index == 0)
+          continue;
 	  
-          if (index == 0)
-            continue;
-	  
-          for (SmallVector<ParallelRegion *, 8>::iterator
-                 i = parallel_regions[0].begin(), e = parallel_regions[0].end();
-               i != e; ++i) {
-            ParallelRegion *original = (*i);
-            ParallelRegion *replicated =
-              original->replicate
-              (reference_map[index - 1],
-               (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
-            parallel_regions[index].push_back(replicated);
-          }
+        for (SmallVector<ParallelRegion *, 8>::iterator
+               i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+             i != e; ++i) {
+          ParallelRegion *original = (*i);
+          ParallelRegion *replicated =
+            original->replicate
+            (reference_map[index - 1],
+             (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
+          parallel_regions[index].push_back(replicated);
         }
       }
     }
+  }
     
-    for (int z = 0; z < LocalSizeZ; ++z) {
-      for (int y = 0; y < LocalSizeY; ++y) {
-        for (int x = 0; x < LocalSizeX ; ++x) {
+  for (int z = 0; z < LocalSizeZ; ++z) {
+    for (int y = 0; y < LocalSizeY; ++y) {
+      for (int x = 0; x < LocalSizeX ; ++x) {
 	  
-          int index = 
-            (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
-	  
-          for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
-            ParallelRegion *region = parallel_regions[index][i];
-            if (index != 0) {
-              region->remap(reference_map[index - 1]);
-              region->chainAfter(parallel_regions[index - 1][i]);
-              region->purge();
-            }
-            region->insertPrologue(x, y, z);
+        int index = 
+          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
+        
+        for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
+          ParallelRegion *region = parallel_regions[index][i];
+          if (index != 0) {
+            region->remap(reference_map[index - 1]);
+            region->chainAfter(parallel_regions[index - 1][i]);
+            region->purge();
           }
+          region->insertPrologue(x, y, z);
         }
       }
     }
+  }
     
-    // Try to merge all workitem first block of each region
-    // together (for PHI predecessor correctness).
-    for (int z = LocalSizeZ - 1; z >= 0; --z) {
-      for (int y = LocalSizeY - 1; y >= 0; --y) {
-        for (int x = LocalSizeX - 1; x >= 0; --x) {
+  // Try to merge all workitem first block of each region
+  // together (for PHI predecessor correctness).
+  for (int z = LocalSizeZ - 1; z >= 0; --z) {
+    for (int y = LocalSizeY - 1; y >= 0; --y) {
+      for (int x = LocalSizeX - 1; x >= 0; --x) {
           
-          int index = 
-            (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
+        int index = 
+          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
 
-          if (index == 0)
-            continue;
+        if (index == 0)
+          continue;
           
-          for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
-            ParallelRegion *region = parallel_regions[index][i];
-            BasicBlock *entry = region->front();
+        for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
+          ParallelRegion *region = parallel_regions[index][i];
+          BasicBlock *entry = region->front();
 
 #ifdef DEBUG_BB_MERGING
-            std::cerr << "### before merge into predecessor " << std::endl;
-            entry->dump();
+          std::cerr << "### before merge into predecessor " << std::endl;
+          entry->dump();
 #endif
 
-            BasicBlock *pred = entry->getUniquePredecessor();
-            assert (pred != NULL && "No unique predecessor.");
-            movePhiNodes(entry, pred);
-            MergeBlockIntoPredecessor(entry, this);
+          BasicBlock *pred = entry->getUniquePredecessor();
+          assert (pred != NULL && "No unique predecessor.");
+          movePhiNodes(entry, pred);
+          MergeBlockIntoPredecessor(entry, this);
 
 #ifdef DEBUG_BB_MERGING
-            std::cerr << "### pred after merge " << std::endl;
-            pred->dump();
+          std::cerr << "### pred after merge " << std::endl;
+          pred->dump();
 #endif
-          }
         }
       }
     }

@@ -27,6 +27,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <iostream>
+
+//#define DEBUG_LOOP_BARRIERS
 
 using namespace llvm;
 using namespace pocl;
@@ -74,18 +77,52 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         // 1) add a barrier on the loop header.
         // 2) add a barrier on the latches
         
+        // TODO: refactor the code to add a barrier before a 
+        // terminator in case there is no barrier already,
+        // it is done N times here.
+
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
         // executed.
+
         BasicBlock *preheader = L->getLoopPreheader();
         assert((preheader != NULL) && "Non-canonicalized loop found!\n");
         if ((preheader->size() == 1) ||
             (!isa<Barrier>(preheader->getTerminator()->getPrevNode()))) {
           // Avoid adding a barrier here if there is already a barrier
           // just before the terminator.
+#ifdef DEBUG_LOOP_BARRIERS
+          std::cerr << "### adding to preheader BB" << std::endl;
+          preheader->dump();
+          std::cerr << "### before instr" << std::endl;
+          preheader->getTerminator()->dump();
+#endif
           Barrier::Create(preheader->getTerminator());
           preheader->setName(preheader->getName() + ".loopbarrier");
         }
+
+
+        /* In case the loop is conditional, that is, it
+           can be skipped completely, add a barrier to the
+           branch block so it won't get replicated multiple
+           times. This situation happens when one has 
+           a compile-time unknown variable iteration count which
+           can be zero, or if the iteration variable is volatile
+           in which case LLVM inserts a loop skip condition
+           just after initializing the loop variable. */
+        BasicBlock *condBB = preheader->getSinglePredecessor();
+        if (condBB != NULL && condBB->getTerminator() != NULL &&
+            condBB->getTerminator()->getNumSuccessors() > 1)
+          {
+#ifdef DEBUG_LOOP_BARRIERS
+            std::cerr << "### loop skip BB: " << std::endl;
+            condBB->dump();
+#endif
+            if (!isa<Barrier>(condBB->getTerminator()->getPrevNode())) {
+              Barrier::Create(condBB->getTerminator());
+              condBB->setName(condBB->getName() + ".loopskipbarrier");
+            }
+          }
 
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
@@ -96,7 +133,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           header->setName(header->getName() + ".phibarrier");
         }
 
-        // Now add the barriers on the exit block and the latches,
+        // Now add the barriers on the exititing block and the latches,
         // which might not always be the same if there is computation
         // after the exit decision.
         BasicBlock *brexit = L->getExitingBlock();
