@@ -84,7 +84,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
            * finish before this read */
           clFinish(command_queue);
         }
-      device_id->write(device_id->data, ptr, buffer->device_ptrs[i], cb);
+      device_id->write(device_id->data, ptr, buffer->device_ptrs[i]+offset, cb);
     }
   else
   {
@@ -95,7 +95,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     cmd->type=CL_COMMAND_TYPE_WRITE;
     cmd->command.write.data = device_id->data;
     cmd->command.write.host_ptr = ptr;
-    cmd->command.write.device_ptr = buffer->device_ptrs[i];
+    cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
     cmd->command.write.cb = cb;
     cmd->next = NULL;
     LL_APPEND(command_queue->root, cmd );

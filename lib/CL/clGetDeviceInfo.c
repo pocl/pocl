@@ -66,8 +66,10 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO(cl_bool, CL_FALSE);
   case CL_DEVICE_TYPE:
     POCL_RETURN_DEVICE_INFO(cl_device_type, device->type);   
-  case CL_DEVICE_VENDOR_ID                         : break;
-  case CL_DEVICE_MAX_COMPUTE_UNITS                 : break;
+  case CL_DEVICE_VENDOR_ID:
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->vendor_id);
+  case CL_DEVICE_MAX_COMPUTE_UNITS:
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_compute_units);
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : break;
   case CL_DEVICE_MAX_WORK_GROUP_SIZE               : 
     /* There is no "preferred WG size" device query, so we probably should
@@ -111,7 +113,8 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_ADDRESS_BITS                      : break;
   case CL_DEVICE_MAX_READ_IMAGE_ARGS               : break;
   case CL_DEVICE_MAX_WRITE_IMAGE_ARGS              : break;
-  case CL_DEVICE_MAX_MEM_ALLOC_SIZE                : break;
+  case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->max_mem_alloc_size);
   case CL_DEVICE_IMAGE2D_MAX_WIDTH                 : break;
   case CL_DEVICE_IMAGE2D_MAX_HEIGHT                : break;
   case CL_DEVICE_IMAGE3D_MAX_WIDTH                 : break;
@@ -125,11 +128,13 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE             : break;
   case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         : break;
   case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             : break;
-  case CL_DEVICE_GLOBAL_MEM_SIZE                   : break;
+  case CL_DEVICE_GLOBAL_MEM_SIZE:
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->global_mem_size);
   case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE          : break;
   case CL_DEVICE_MAX_CONSTANT_ARGS                 : break;
   case CL_DEVICE_LOCAL_MEM_TYPE                    : break;
-  case CL_DEVICE_LOCAL_MEM_SIZE                    : break;
+  case CL_DEVICE_LOCAL_MEM_SIZE:
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->local_mem_size);
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          : break;
   case CL_DEVICE_PROFILING_TIMER_RESOLUTION        : break;
   case CL_DEVICE_ENDIAN_LITTLE                     : break;
@@ -144,7 +149,8 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_VENDOR                            : 
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
 
-  case CL_DRIVER_VERSION                           : break;
+  case CL_DRIVER_VERSION:
+    POCL_RETURN_DEVICE_INFO_STR(device->driver_version);
   case CL_DEVICE_PROFILE                           : break;
   case CL_DEVICE_VERSION                           : 
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
@@ -166,5 +172,7 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_OPENCL_C_VERSION                  : break;
   }
 
+  // remove me when everything *is* implemented, and param_name really is invalid
+  POCL_WARN_INCOMPLETE();
   return CL_INVALID_VALUE;
 }

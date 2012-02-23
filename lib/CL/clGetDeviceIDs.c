@@ -57,7 +57,7 @@ clGetDeviceIDs(cl_platform_id   platform,
   if (num_devices != NULL)
     *num_devices = total_num;
   
-  if (devices_added > 0)
+  if (devices_added > 0 || num_entries == 0)
     return CL_SUCCESS;
   else
     return CL_DEVICE_NOT_FOUND;

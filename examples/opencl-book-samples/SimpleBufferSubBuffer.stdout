@@ -1,6 +1,6 @@
 Simple buffer and sub-buffer Example
 Number of platforms: 	1
 	CL_PLATFORM_VENDOR:	The POCL project
-		CL_DEVICE_TYPE:	CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU
+		CL_DEVICE_TYPE:	CL_DEVICE_TYPE_CPU
  0 1 4 9 16 25 36 49 64 81 100 121 144 169 196 225
 Program completed successfully
