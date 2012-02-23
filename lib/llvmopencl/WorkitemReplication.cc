@@ -133,8 +133,14 @@ WorkitemReplication::ProcessFunction(Function &F)
              block after a branch block) should be processed first. */
           
           /* TODO: more robust detection for this. */
+          std::string bbName = "";
+#ifdef LLVM_3_0
           const bool IS_A_LATCH_BARRIER =
-            barrier->getName().endswith(".latchbarrier");
+              barrier->getNameStr().endswith(".latchbarrier");
+#else
+          const bool IS_A_LATCH_BARRIER =
+              barrier->getName().endswith(".latchbarrier");
+#endif
 
           if (IS_A_LATCH_BARRIER)
             {
