@@ -1,6 +1,7 @@
 // LLVM function pass to replicate barrier tails (successors to barriers).
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2011 Universidad Rey Juan Carlos and
+//               2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +26,14 @@
 #include "Workgroup.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
+#include <iostream>
 
 using namespace llvm;
 using namespace pocl;
+
+//#define DEBUG_BARRIER_REPL
 
 static bool block_has_barrier(const BasicBlock *bb);
   
@@ -61,6 +67,13 @@ BarrierTailReplication::runOnFunction(Function &F)
 
   DT->verifyAnalysis();
   LI->verifyAnalysis();
+
+  for (Function::iterator i = F.begin(), e = F.end();
+       i != e; ++i)
+    {
+      llvm::BasicBlock *bb = i;
+      changed |= CleanupPHIs(bb);
+    }      
 
   return changed;
 }
@@ -123,7 +136,7 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
   Loop *l = LI->getLoopFor(subgraph_entry);
   for (int i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *b = t->getSuccessor(i);
-    if ((l != NULL) && (l->getHeader() == b)) {
+    if (l != NULL && l->getHeader() == b) {
       // This is a loop backedge. Do not find subgraphs across
       // those.
       continue;
@@ -135,15 +148,70 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
         ReplicateSubgraph(b, f);
       t->setSuccessor(i, replicated_subgraph_entry);
       changed = true;
-
       // We have modified the function. Possibly created new loops.
       // Update analysis passes.
       DT->runOnFunction(*f);
-      LI->releaseMemory();
       LI->getBase().Calculate(DT->getBase());
+
     }
   }
 
+  return changed;
+}
+
+// Removes phi elements for which there is no successors (anymore).
+bool
+BarrierTailReplication::CleanupPHIs(llvm::BasicBlock *BB)
+{
+
+  bool changed = false;
+#ifdef DEBUG_BARRIER_REPL
+  std::cerr << "### CleanupPHIs for BB:" << std::endl;
+  BB->dump();
+#endif
+
+  for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; )
+    {
+      PHINode *PN = dyn_cast<PHINode>(BI);
+      if (PN == NULL) break;
+
+      bool PHIRemoved = false;
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i)
+        {
+          bool isSuccessor = false;
+          // find if the predecessor branches to this one (anymore)
+          for (unsigned s = 0, 
+                 se = PN->getIncomingBlock(i)->getTerminator()->getNumSuccessors();
+               s < se; ++s) {
+            if (PN->getIncomingBlock(i)->getTerminator()->getSuccessor(s) == BB) 
+              {
+                isSuccessor = true;
+                break;
+              }
+          }
+          if (!isSuccessor)
+            {
+#ifdef DEBUG_BARRIER_REPL
+              std::cerr << "removing incoming value " << i << " from PHINode:" << std::endl;
+              PN->dump();            
+#endif
+              PN->removeIncomingValue(i, true);
+              changed = true;
+              e--;
+              if (e == 0)
+                {
+                  PHIRemoved = true;
+                  break;
+                }
+              i = 0; 
+              continue;
+            }
+        }
+      if (PHIRemoved)
+        BI = BB->begin();
+      else
+        BI++;
+    }
   return changed;
 }
 
@@ -224,12 +292,13 @@ BarrierTailReplication::UpdateReferences(const BasicBlockVector &graph,
 	 i2 != e2; ++i2) {
       Instruction *i = i2;
       for (ValueValueMap::const_iterator i3 =
-	     reference_map.begin(), e3 = reference_map.end();
-	   i3 != e3; ++i3) {
-	i->replaceUsesOfWith(i3->first, i3->second);
+             reference_map.begin(), e3 = reference_map.end();
+           i3 != e3; ++i3) {
+        i->replaceUsesOfWith(i3->first, i3->second);
       }
     }
   }
+
 }
 
 

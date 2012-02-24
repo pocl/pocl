@@ -1,6 +1,7 @@
 // LLVM function pass to replicate kernel body for several workitems.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2011 Universidad Rey Juan Carlos and
+//               2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +36,7 @@
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
 //#define DEBUG_PR_CREATION
+//#define DEBUG_PR_REPLICATION
 
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
@@ -105,11 +107,11 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   ValueToValueMapTy reference_map[workitem_count - 1];
   SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
+  // We need to keep track of traversed barriers to detect back edges.
+  SmallPtrSet<BarrierBlock *, 8> found_barriers;
 
   // First find all the ParallelRegions in the Function.
   while (!exit_blocks.empty()) {
-    // We need to keep track of traversed barriers to detect back edges.
-    SmallPtrSet<BarrierBlock *, 8> found_barriers;
     
     // We start on an exit block and process the parallel regions upwards
     // (finding an execution trace).
@@ -130,8 +132,8 @@ WorkitemReplication::ProcessFunction(Function &F)
         BarrierBlock *barrier = cast<BarrierBlock> (*i);
         if (!found_barriers.count(barrier)) {
           /* If this is a loop header block we might have edges from two 
-             unprocessed barriers. The one inside the loop (coming from a computation
-             block after a branch block) should be processed first. */
+             unprocessed barriers. The one inside the loop (coming from a 
+             computation block after a branch block) should be processed first. */
           
           /* TODO: more robust detection for this. */
           std::string bbName = "";
@@ -162,6 +164,11 @@ WorkitemReplication::ProcessFunction(Function &F)
           exit = latch_barrier; /* always process the inner loop regions first */
         }
 
+#ifdef DEBUG_PR_CREATION
+      std::cout << "### created a ParallelRegion:" << std::endl;
+      PR->dump();
+#endif
+
       if (found_predecessors == 0)
         {
           /* This path has been traversed and we encountered no more
@@ -172,14 +179,10 @@ WorkitemReplication::ProcessFunction(Function &F)
           break;
         }
       assert ((exit != NULL) && "Parallel region without entry barrier!");
-#ifdef DEBUG_PR_CREATION
-      std::cout << "Created a ParallelRegion:" << std::endl;
-      PR->dump();
-#endif
     }
   }
-  // The replicate the ParallelRegions.
-  
+
+  // Then replicate the ParallelRegions.  
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {
       for (int x = 0; x < LocalSizeX ; ++x) {
@@ -199,6 +202,10 @@ WorkitemReplication::ProcessFunction(Function &F)
             (reference_map[index - 1],
              (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
           parallel_regions[index].push_back(replicated);
+#ifdef DEBUG_PR_REPLICATION
+          std::cerr << "### new replica:" << std::endl;
+          replicated->dump();
+#endif
         }
       }
     }
@@ -240,20 +247,17 @@ WorkitemReplication::ProcessFunction(Function &F)
           ParallelRegion *region = parallel_regions[index][i];
           BasicBlock *entry = region->front();
 
-#ifdef DEBUG_BB_MERGING
-          std::cerr << "### before merge into predecessor " << std::endl;
-          entry->dump();
-#endif
-
+          assert (entry != NULL);
           BasicBlock *pred = entry->getUniquePredecessor();
           assert (pred != NULL && "No unique predecessor.");
+#ifdef DEBUG_BB_MERGING
+          std::cerr << "### pred before merge into predecessor " << std::endl;
+          pred->dump();
+          std::cerr << "### entry before merge into predecessor " << std::endl;
+          entry->dump();
+#endif
           movePhiNodes(entry, pred);
           MergeBlockIntoPredecessor(entry, this);
-
-#ifdef DEBUG_BB_MERGING
-          std::cerr << "### pred after merge " << std::endl;
-          pred->dump();
-#endif
         }
       }
     }

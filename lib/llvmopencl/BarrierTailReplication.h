@@ -64,6 +64,8 @@ namespace pocl {
     void UpdateReferences(const BasicBlockVector &graph,
                           const ValueValueMap &reference_map);
 
+    bool CleanupPHIs(llvm::BasicBlock *BB);
+
     friend class pocl::Workgroup;
   };
 }

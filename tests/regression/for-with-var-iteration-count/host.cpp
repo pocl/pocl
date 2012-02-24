@@ -39,13 +39,15 @@ kernelSourceCode[] =
 "void test_kernel(__global float *input, \n"
 "                 __global int *result,\n"
 "                 int a) {\n"
-" int gid = get_global_id(0);\n"
-" int i;\n"
+" size_t gid = get_global_id(0);\n"
+" size_t i;\n"
 " float sum = 0.0f;\n"
 " for (i = 0; i < a; ++i) {\n"
 "   sum += input[i]; \n"
+//"   printf(\"[gid=%d, i=%d, input=%f, sum=%f] \", gid, i, input[i], sum);\n"
 "   barrier(CLK_GLOBAL_MEM_FENCE);\n"
 " }\n"
+//" printf(\"final sum for gid %d is %f\\n\", gid, sum);\n"
 " result[gid] = sum;\n"
 "}\n";
 
@@ -55,7 +57,7 @@ main(void)
     float A[BUFFER_SIZE];
     int R[WORK_ITEMS];
     cl_int err;
-    int a = 2;
+    int a = 3;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -130,10 +132,10 @@ main(void)
 
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
-
-            if ((int)R[i] != 3) {
+            int correct = 3;
+            if ((int)R[i] != correct) {
                 std::cout 
-                    << "F(" << i << ": " << 3 << " != " << R[i] 
+                    << "F(" << i << ": " << R[i] << " != " << correct 
                     << ") ";
                 ok = false;
             }

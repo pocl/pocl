@@ -42,7 +42,7 @@ AT_CHECK([$abs_top_builddir/tests/regression/multi-level-loops-with-barriers/hos
 AT_CLEANUP
 
 AT_SETUP([for-loop with a variable iteration count - lp:938883])
-AT_XFAIL_IF(true)
+#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_DATA([expout],
 [OK
