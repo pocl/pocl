@@ -58,3 +58,12 @@ AT_DATA([expout],
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/early-return/host], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([id-dependent computation before kernel exit - lp:#940549])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/id-dependent-computation/host], 0, expout)
+AT_CLEANUP
