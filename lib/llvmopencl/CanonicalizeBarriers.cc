@@ -27,6 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <iostream>
 
 using namespace llvm;
 using namespace pocl;
