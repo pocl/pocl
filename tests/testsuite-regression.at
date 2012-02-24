@@ -33,7 +33,7 @@ AT_DATA([expout],
 AT_CHECK([$abs_top_builddir/tests/regression/simple-for-with-a-barrier/host], 0, expout)
 AT_CLEANUP
 
-AT_SETUP([for-loop with computation after the brexit - lp:938123])
+AT_SETUP([for-loop with computation after the brexit - lp:#938123])
 AT_KEYWORDS([regression])
 AT_DATA([expout],
 [OK
@@ -41,11 +41,20 @@ AT_DATA([expout],
 AT_CHECK([$abs_top_builddir/tests/regression/multi-level-loops-with-barriers/host], 0, expout)
 AT_CLEANUP
 
-AT_SETUP([for-loop with a variable iteration count - lp:938883])
+AT_SETUP([for-loop with a variable iteration count - lp:#938883])
 #AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_DATA([expout],
 [OK
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/for-with-var-iteration-count/host], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([early return before a barrier region - lp:#940248])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/early-return/host], 0, expout)
 AT_CLEANUP
