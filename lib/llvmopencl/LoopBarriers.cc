@@ -77,31 +77,19 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         // 1) add a barrier on the loop header.
         // 2) add a barrier on the latches
         
-        // TODO: refactor the code to add a barrier before a 
-        // terminator in case there is no barrier already,
-        // it is done N times here. Now Barrier::Create() has
-        // this check so it's safe to remove the checks from here.
-
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
         // executed.
-
         BasicBlock *preheader = L->getLoopPreheader();
         assert((preheader != NULL) && "Non-canonicalized loop found!\n");
-        if ((preheader->size() == 1) ||
-            (!isa<Barrier>(preheader->getTerminator()->getPrevNode()))) {
-          // Avoid adding a barrier here if there is already a barrier
-          // just before the terminator.
 #ifdef DEBUG_LOOP_BARRIERS
-          std::cerr << "### adding to preheader BB" << std::endl;
-          preheader->dump();
-          std::cerr << "### before instr" << std::endl;
-          preheader->getTerminator()->dump();
+        std::cerr << "### adding to preheader BB" << std::endl;
+        preheader->dump();
+        std::cerr << "### before instr" << std::endl;
+        preheader->getTerminator()->dump();
 #endif
-          Barrier::Create(preheader->getTerminator());
-          preheader->setName(preheader->getName() + ".loopbarrier");
-        }
-
+        Barrier::Create(preheader->getTerminator());
+        preheader->setName(preheader->getName() + ".loopbarrier");
 
         /* In case the loop is conditional, that is, it
            can be skipped completely, add a barrier to the
@@ -119,46 +107,33 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
             std::cerr << "### loop skip BB: " << std::endl;
             condBB->dump();
 #endif
-            if (!isa<Barrier>(condBB->getTerminator()->getPrevNode())) {
-              Barrier::Create(condBB->getTerminator());
-              condBB->setName(condBB->getName() + ".loopskipbarrier");
-            }
+            Barrier::Create(condBB->getTerminator());
+            condBB->setName(condBB->getName() + ".loopskipbarrier");
           }
 
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
         BasicBlock *header = L->getHeader();
-        if ((header->getFirstNonPHI() != &header->front()) &&
-            (!isa<Barrier>(header->getFirstNonPHI()))) {
+        if (header->getFirstNonPHI() != &header->front()) {
           Barrier::Create(header->getFirstNonPHI());
           header->setName(header->getName() + ".phibarrier");
         }
 
-        // Now add the barriers on the exititing block and the latches,
+        // Add the barriers on the exiting block and the latches,
         // which might not always be the same if there is computation
         // after the exit decision.
         BasicBlock *brexit = L->getExitingBlock();
-
         if (brexit != NULL) {
-          if ((brexit->size() == 1) ||
-              (!isa<Barrier>(brexit->getTerminator()->getPrevNode()))) {
-            Barrier::Create(brexit->getTerminator());
-            brexit->setName(brexit->getName() + ".brexitbarrier");
-          }
+          Barrier::Create(brexit->getTerminator());
+          brexit->setName(brexit->getName() + ".brexitbarrier");
         }
 
         BasicBlock *latch = L->getLoopLatch();
         if (latch != NULL && brexit != latch) {
           // This loop has only one latch. Do not check for dominance, we
           // are probably running before BTR.
-          // Avoid adding a barrier here if the latch happens to have a
-          // barrier just before the terminator.
-          if ((latch->size() == 1) ||
-              (!isa<Barrier>(latch->getTerminator()->getPrevNode()))) {
-            Barrier::Create(latch->getTerminator());
-            latch->setName(latch->getName() + ".latchbarrier");
-          }
-
+          Barrier::Create(latch->getTerminator());
+          latch->setName(latch->getName() + ".latchbarrier");
           return true;
         }
 
@@ -177,13 +152,8 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
             // (otherwise if might no even belong to this "tail", see
             // forifbarrier1 graph test).
             if (DT->dominates(j->getParent(), Latch)) {
-              // If there is a barrier happens before the latch terminator,
-              // there is no need to add an additional barrier.
-              if ((Latch->size() == 1) ||
-                  (!isa<Barrier>(Latch->getTerminator()->getPrevNode()))) {
-                Barrier::Create(Latch->getTerminator());
-                Latch->setName(Latch->getName() + ".latchbarrier");
-              }
+              Barrier::Create(Latch->getTerminator());
+              Latch->setName(Latch->getName() + ".latchbarrier");
             }
           }
         }
