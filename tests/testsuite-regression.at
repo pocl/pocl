@@ -51,7 +51,7 @@ AT_CHECK([$abs_top_builddir/tests/regression/for-with-var-iteration-count/host],
 AT_CLEANUP
 
 AT_SETUP([early return before a barrier region - lp:#940248])
-AT_XFAIL_IF(true)
+#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_DATA([expout],
 [OK

@@ -79,7 +79,8 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         
         // TODO: refactor the code to add a barrier before a 
         // terminator in case there is no barrier already,
-        // it is done N times here.
+        // it is done N times here. Now Barrier::Create() has
+        // this check so it's safe to remove the checks from here.
 
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 

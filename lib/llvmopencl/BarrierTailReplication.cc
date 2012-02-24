@@ -68,6 +68,10 @@ BarrierTailReplication::runOnFunction(Function &F)
   DT->verifyAnalysis();
   LI->verifyAnalysis();
 
+  /* The created tails might contain PHI nodes with
+     operands referring to the non-predecessor (split point)
+     BB. These must be cleaned to avoid breakage later on.
+   */
   for (Function::iterator i = F.begin(), e = F.end();
        i != e; ++i)
     {
@@ -146,7 +150,31 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
     else {
       BasicBlock *replicated_subgraph_entry =
         ReplicateSubgraph(b, f);
+      /* Ensure there's a barrier just before the terminator
+         branch of the split point BB. Otherwise the PR gets
+         replicated multiple times and there will be illegal
+         references in the another branch. Without this
+         the case with an early return before a barrier fails.
+
+         Basically it's the case:
+
+         something1;
+         if (data_dependent_condition) 
+            return;
+         else
+            barrier();
+         something2;
+
+         Here something1 -> ddc -> return and something1 -> ddcs -> barrier
+         got replicated separately and the variable references were broken.
+         This inserts a barrier just before the branch in the condition
+         check of the if block.
+
+         TODO: check from Carlos how the "tail replication" is supposed to
+         work without the barrier. It's not entirely clear to me (Pekka).
+      */
       t->setSuccessor(i, replicated_subgraph_entry);
+      Barrier::Create(b->getSinglePredecessor()->getTerminator());
       changed = true;
       // We have modified the function. Possibly created new loops.
       // Update analysis passes.

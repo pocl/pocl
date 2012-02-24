@@ -34,7 +34,7 @@ using namespace pocl;
 namespace {
   static
   RegisterPass<CanonicalizeBarriers> X("barriers",
-                                       "Barrier canizalization pass");
+                                       "Barrier canonicalization pass");
 }
 
 char CanonicalizeBarriers::ID = 0;
@@ -87,7 +87,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 
 
 // Canonicalize barriers: ensure all barriers are in a separate BB
-// containint only the barrier and the terminator, with just one
+// containing only the barrier and the terminator, with just one
 // predecessor and one successor. This allows us to use
 // those BBs as markers only, they will not be replicated.
 bool
