@@ -67,18 +67,19 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
      broken. This hack ensures the BB suffices are unique
      before cloning so each path gets their own value
      names. Split points can be such paths.*/
-  static std::map<BasicBlock*, int> cloneCounts;
+  static std::map<std::string, int> cloneCounts;
 
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock *block = *i;
     std::ostringstream suf;
     suf << suffix.str();
-    if (cloneCounts[block] > 0)
+    std::string block_name = block->getName().str() + "." + suffix.str();
+    if (cloneCounts[block_name] > 0)
       {
-        suf << ".pocl_" << cloneCounts[block];
+        suf << ".pocl_" << cloneCounts[block_name];
       }
     BasicBlock *new_block = CloneBasicBlock(block, map, suf.str());
-    cloneCounts[block]++;
+    cloneCounts[block_name]++;
     // Insert the block itself into the map.
     map[block] = new_block;
     new_region->push_back(new_block);
@@ -124,15 +125,36 @@ ParallelRegion::remap(ValueToValueMapTy &map)
 void
 ParallelRegion::chainAfter(ParallelRegion *region)
 {
-  TerminatorInst *t = region->back()->getTerminator();
-  assert (t->getNumSuccessors() == 1);
+  /* If we are replicating a conditional barrier
+     region, the last block can be an unreachable 
+     block to mark the impossible path. Skip
+     it and choose the correct branch instead. 
+
+     TODO: why have the unreachable block there the
+     first place? Could we just not add it and fix
+     the branch? */
+  BasicBlock *tail = region->back();
+  TerminatorInst *t = tail->getTerminator();
+  if (isa<UnreachableInst>(t))
+    {
+      tail = region->at(region->size() - 2);
+      t = tail->getTerminator();
+    }
+  if (t->getNumSuccessors() != 1)
+    {
+      std::cout << "!!! trying to chain region" << std::endl;
+      this->dump();
+      std::cout << "!!! after region" << std::endl;
+      region->dump();
+      assert (t->getNumSuccessors() == 1);
+    }
   
   BasicBlock *successor = t->getSuccessor(0);
   Function::BasicBlockListType &bb_list = 
     successor->getParent()->getBasicBlockList();
   
   for (iterator i = begin(), e = end(); i != e; ++i)
-    bb_list.insertAfter(region->back(), *i);
+    bb_list.insertAfter(tail, *i);
   
   t->setSuccessor(0, front());
 

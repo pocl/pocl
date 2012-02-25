@@ -30,8 +30,7 @@
 #include <iostream>
 
 #define WINDOW_SIZE 32
-/* Works with WORK_ITEMS = 3?? */
-#define WORK_ITEMS 2
+#define WORK_ITEMS 32
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
 
 /* This is an interesting case because of the
