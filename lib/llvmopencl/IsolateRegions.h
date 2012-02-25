@@ -1,7 +1,6 @@
-// Class definition for parallel regions, a group of BasicBlocks that
-// each kernel should run in parallel.
+// Header for IsolateRegions RegionPass.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "BarrierBlock.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include <vector>
+#ifndef POCL_ISOLATE_REGIONS_H
+#define POCL_ISOLATE_REGIONS_H
+
+#include "llvm/Analysis/RegionPass.h"
 
 namespace pocl {
-  
-  class ParallelRegion : public std::vector<llvm::BasicBlock *> {
-    
-  public:    
-    /* BarrierBlock *getEntryBarrier(); */
-    ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
-                              const llvm::Twine &suffix);
-    void remap(llvm::ValueToValueMapTy &map);
-    void purge();
-    void chainAfter(ParallelRegion *region);
-    void insertPrologue(unsigned x, unsigned y, unsigned z);
-    void dump();
-    void dumpNames();
 
-    static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
-                                  llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
-    
-  private:
-    bool Verify();
+  class IsolateRegions : public llvm::RegionPass {
+  public:
+    static char ID;
+
+    IsolateRegions() : RegionPass(ID) {}
+
+    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
+    virtual bool runOnRegion(llvm::Region *R, llvm::RGPassManager&);
   };
-    
 }
-                              
+
+#endif

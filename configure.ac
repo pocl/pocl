@@ -318,6 +318,12 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/Makefile
                  tests/regression/loop-phi-replication/Makefile
                  tests/regression/locals/Makefile
+                 tests/regression/barrier-between-for-loops/Makefile
+                 tests/regression/simple-for-with-a-barrier/Makefile
+                 tests/regression/multi-level-loops-with-barriers/Makefile
+                 tests/regression/for-with-var-iteration-count/Makefile
+                 tests/regression/early-return/Makefile
+                 tests/regression/id-dependent-computation/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile

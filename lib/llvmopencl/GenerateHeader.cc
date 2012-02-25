@@ -107,8 +107,19 @@ GenerateHeader::runOnModule(Module &M)
   }
 
   if (changed)
-    regenerate_kernel_metadata(M, kernels);
- 
+    {
+      regenerate_kernel_metadata(M, kernels);
+
+      /* Delete the old kernels. */
+      for (KernelPairVector::const_iterator i = kernels.begin(),
+             e = kernels.end(); i != e; ++i) 
+        {
+          Function *old_kernel = (*i).first;
+          Function *new_kernel = (*i).second;
+          if (old_kernel == new_kernel) continue;
+          old_kernel->eraseFromParent();
+        }
+    }
   return changed;
 }
 

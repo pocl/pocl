@@ -99,14 +99,20 @@ void
 pocl_pthread_init (cl_device_id device)
 {
   struct data *d;
-  
+
+  // TODO: this checks if the device was already initialized previously.
+  // Should we instead have a separate bool field in device, or do the
+  // initialization at library startup time with __attribute__((constructor))?
+  if (device->data!=NULL)
+    return;  
+
   d = (struct data *) malloc (sizeof (struct data));
   
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
 
   device->data = d;
-
+  device->max_compute_units = get_max_thread_count();
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   BA_INIT_LOCK (d->mem_regions_lock);
   d->mem_regions = NULL;

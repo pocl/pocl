@@ -41,8 +41,18 @@ namespace pocl {
           B.push_back(llvm::cast<Barrier>(*i));
       }
     }
+    /**
+     * Creates a new barrier before the given instruction.
+     *
+     * If there was already a barrier there, returns the old one.
+     */
     static Barrier *Create(llvm::Instruction *InsertBefore) {
       llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
+
+      if (InsertBefore != &InsertBefore->getParent()->front() && 
+          llvm::isa<Barrier>(InsertBefore->getPrevNode()))
+        return llvm::cast<Barrier>(InsertBefore->getPrevNode());
+
       llvm::Function *F = llvm::cast<llvm::Function>
         (M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext()),

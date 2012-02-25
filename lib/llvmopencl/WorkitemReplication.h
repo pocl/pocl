@@ -83,6 +83,9 @@ namespace pocl {
     bool isReplicable(const llvm::Instruction *i);
 
     void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
+
+    bool fixUndominatedVariableUses(llvm::Function &F);
+
     friend class pocl::Workgroup;
   };
 }

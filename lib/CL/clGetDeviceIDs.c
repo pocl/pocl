@@ -48,6 +48,7 @@ clGetDeviceIDs(cl_platform_id   platform,
         if (devices != NULL && devices_added < num_entries) 
           {
             devices[devices_added] = &pocl_devices[i];
+            devices[devices_added]->init(devices[devices_added]);
             ++devices_added;
           }
         ++total_num;

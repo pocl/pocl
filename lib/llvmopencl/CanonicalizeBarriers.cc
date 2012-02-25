@@ -27,6 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <iostream>
 
 using namespace llvm;
 using namespace pocl;
@@ -34,7 +35,7 @@ using namespace pocl;
 namespace {
   static
   RegisterPass<CanonicalizeBarriers> X("barriers",
-                                       "Barrier canizalization pass");
+                                       "Barrier canonicalization pass");
 }
 
 char CanonicalizeBarriers::ID = 0;
@@ -87,7 +88,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 
 
 // Canonicalize barriers: ensure all barriers are in a separate BB
-// containint only the barrier and the terminator, with just one
+// containing only the barrier and the terminator, with just one
 // predecessor and one successor. This allows us to use
 // those BBs as markers only, they will not be replicated.
 bool
@@ -121,7 +122,11 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // Change: barriers with several successors are all right
     // they just start several parallel regions. Simplifies
     // loop handling.
-    if (t->getPrevNode() != *i) {
+
+    const bool HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER = 
+        t->getPrevNode() != *i;
+
+    if (HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;

@@ -22,5 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = loop-phi-replication locals
+SUBDIRS = loop-phi-replication locals barrier-between-for-loops \
+	simple-for-with-a-barrier multi-level-loops-with-barriers \
+	for-with-var-iteration-count early-return id-dependent-computation
+
+
+
+
+
+
+
 

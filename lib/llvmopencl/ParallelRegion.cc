@@ -27,6 +27,8 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <set>
+#include <sstream>
+#include <map>
 
 #define LOCAL_ID_X "_local_id_x"
 #define LOCAL_ID_Y "_local_id_y"
@@ -57,9 +59,27 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 {
   ParallelRegion *new_region = new ParallelRegion();
 
+  /* Because ParallelRegions are all replicated before they
+     are attached to the function, it can happen that
+     the same BB is replicated multiple times and it gets
+     the same name (only the BB name will be autorenamed
+     by LLVM). This causes the variable references to become
+     broken. This hack ensures the BB suffices are unique
+     before cloning so each path gets their own value
+     names. Split points can be such paths.*/
+  static std::map<std::string, int> cloneCounts;
+
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock *block = *i;
-    BasicBlock *new_block = CloneBasicBlock(block, map, suffix);
+    std::ostringstream suf;
+    suf << suffix.str();
+    std::string block_name = block->getName().str() + "." + suffix.str();
+    if (cloneCounts[block_name] > 0)
+      {
+        suf << ".pocl_" << cloneCounts[block_name];
+      }
+    BasicBlock *new_block = CloneBasicBlock(block, map, suf.str());
+    cloneCounts[block_name]++;
     // Insert the block itself into the map.
     map[block] = new_block;
     new_region->push_back(new_block);
@@ -72,6 +92,11 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 #endif
   }
   
+
+  /* Remap here to get local variables fixed before they
+     are (possibly) overwritten by another clone of the 
+     same BB. */
+  new_region->remap(map); 
   return new_region;
 }
 
@@ -90,7 +115,7 @@ ParallelRegion::remap(ValueToValueMapTy &map)
       RemapInstruction(ii, map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
 
-#ifdef DEBUG_PARALLEL_REGION
+#ifdef DEBUG_REMAP
     std::cerr << endl << "### block after remap: " << std::endl;
     (*i)->dump();
 #endif
@@ -100,15 +125,36 @@ ParallelRegion::remap(ValueToValueMapTy &map)
 void
 ParallelRegion::chainAfter(ParallelRegion *region)
 {
-  TerminatorInst *t = region->back()->getTerminator();
-  assert (t->getNumSuccessors() == 1);
+  /* If we are replicating a conditional barrier
+     region, the last block can be an unreachable 
+     block to mark the impossible path. Skip
+     it and choose the correct branch instead. 
+
+     TODO: why have the unreachable block there the
+     first place? Could we just not add it and fix
+     the branch? */
+  BasicBlock *tail = region->back();
+  TerminatorInst *t = tail->getTerminator();
+  if (isa<UnreachableInst>(t))
+    {
+      tail = region->at(region->size() - 2);
+      t = tail->getTerminator();
+    }
+  if (t->getNumSuccessors() != 1)
+    {
+      std::cout << "!!! trying to chain region" << std::endl;
+      this->dump();
+      std::cout << "!!! after region" << std::endl;
+      region->dump();
+      assert (t->getNumSuccessors() == 1);
+    }
   
   BasicBlock *successor = t->getSuccessor(0);
   Function::BasicBlockListType &bb_list = 
     successor->getParent()->getBasicBlockList();
   
   for (iterator i = begin(), e = end(); i != e; ++i)
-    bb_list.insertAfter(region->back(), *i);
+    bb_list.insertAfter(tail, *i);
   
   t->setSuccessor(0, front());
 
@@ -203,6 +249,14 @@ ParallelRegion::dump()
     (*i)->dump();
 }
 
+void
+ParallelRegion::dumpNames()
+{
+  for (iterator i = begin(), e = end(); i != e; ++i)
+    std::cout << (*i)->getName().str() << " ";
+  std::cout << std::endl;
+}
+
 ParallelRegion *
 ParallelRegion::Create(SmallPtrSetIterator<BasicBlock *> entry,
                        SmallPtrSetIterator<BasicBlock *> exit)
@@ -242,11 +296,12 @@ ParallelRegion::Verify()
     for (pred_iterator ii(*i), ee(*i, true); ii != ee; ++ii) {
       if (count(begin(), end(), *ii) == 0) {
         if ((*i) != front()) {
+          dump();
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         }
         if (!isa<BarrierBlock>(*ii)) {
-          assert (0 && "Entry has edges from non-barrer blocks!");
+          assert (0 && "Entry has edges from non-barrier blocks!");
           return false;
         }
         ++entry_edges;
