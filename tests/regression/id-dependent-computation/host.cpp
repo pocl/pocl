@@ -62,7 +62,6 @@ kernelSourceCode[] =
 "    result[gid] = 43;\n"
 " } else \n"
 "    result[gid] += input[gid];\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
 "}\n";
 
 int

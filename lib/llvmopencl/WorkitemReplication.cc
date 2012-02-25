@@ -256,7 +256,7 @@ WorkitemReplication::ProcessFunction(Function &F)
       parallel_regions[0].push_back(PR);
       BasicBlock *entry = PR->front();
       int found_predecessors = 0;
-      BarrierBlock *latch_barrier = NULL;
+      BarrierBlock *loop_barrier = NULL;
       for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
            i != e; ++i) {
         BarrierBlock *barrier = cast<BarrierBlock> (*i);
@@ -265,30 +265,24 @@ WorkitemReplication::ProcessFunction(Function &F)
              unprocessed barriers. The one inside the loop (coming from a 
              computation block after a branch block) should be processed 
              first. */
-          
-          /* TODO: more robust detection for this case using LoopInfo.
-*/
           std::string bbName = "";
-#ifdef LLVM_3_0
-          const bool IS_LATCH_BARRIER =
-              barrier->getNameStr().endswith(".latchbarrier");
-#else
-          const bool IS_LATCH_BARRIER =
-              barrier->getName().endswith(".latchbarrier");
-#endif
+          const bool IS_IN_THE_SAME_LOOP = 
+              LI->getLoopFor(barrier) != NULL &&
+              LI->getLoopFor(entry) != NULL &&
+              LI->getLoopFor(entry) == LI->getLoopFor(barrier);
 
-          if (IS_LATCH_BARRIER)
+          if (IS_IN_THE_SAME_LOOP)
             {
 #ifdef DEBUG_PR_CREATION
-              std::cout << "### found a latch barrier:" << std::endl;
+              std::cout << "### found a barrier inside the loop:" << std::endl;
               std::cout << barrier->getName().str() << std::endl;
 #endif
-              latch_barrier = barrier;
+              loop_barrier = barrier;
             }
           else
             {
 #ifdef DEBUG_PR_CREATION
-              std::cout << "### found an exit barrier:" << std::endl;
+              std::cout << "### found a barrier:" << std::endl;
               std::cout << barrier->getName().str() << std::endl;
 #endif
               exit = barrier;
@@ -297,18 +291,21 @@ WorkitemReplication::ProcessFunction(Function &F)
         }
       }
 
-      if (latch_barrier != NULL)
+      if (loop_barrier != NULL)
         {
-          if (exit != NULL)
+          /* The secondary barrier to process in case it was a loop
+             header. Push it for later processing. */
+          if (exit != NULL) 
             exit_blocks.push_back(exit);
           /* always process the inner loop regions first */
-          if (!found_barriers.count(latch_barrier))
-            exit = latch_barrier; 
+          if (!found_barriers.count(loop_barrier))
+            exit = loop_barrier; 
         }
 
 #ifdef DEBUG_PR_CREATION
       std::cout << "### created a ParallelRegion:" << std::endl;
       PR->dumpNames();
+      std::cout << std::endl;
 #endif
 
       if (found_predecessors == 0)

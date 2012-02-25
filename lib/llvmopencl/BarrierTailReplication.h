@@ -20,10 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef POCL_BARRIER_TAIL_REPLICATION
+#define POCL_BARRIER_TAIL_REPLICATION
+
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <map>
 #include <set>
 
@@ -58,14 +62,16 @@ namespace pocl {
     void FindSubgraph(BasicBlockVector &subgraph,
                       llvm::BasicBlock *entry);
     void ReplicateBasicBlocks(BasicBlockVector &new_graph,
-                              ValueValueMap &reference_map,
+                              llvm::ValueToValueMapTy &reference_map,
                               BasicBlockVector &graph,
                               llvm::Function *f);
     void UpdateReferences(const BasicBlockVector &graph,
-                          const ValueValueMap &reference_map);
+                          llvm::ValueToValueMapTy &reference_map);
 
     bool CleanupPHIs(llvm::BasicBlock *BB);
 
     friend class pocl::Workgroup;
   };
 }
+
+#endif

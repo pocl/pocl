@@ -36,7 +36,7 @@ llvmopencl_la_SOURCES = Barrier.h						\
                         LoopBarriers.h LoopBarriers.cc				\
                         GenerateHeader.cc Workgroup.cc				\
 						BarrierTailReplication.h BarrierTailReplication.cc	\
-                        Flatten.cc                                              \
+                        Flatten.cc IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc
 
