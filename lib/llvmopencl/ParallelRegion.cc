@@ -27,6 +27,8 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <set>
+#include <sstream>
+#include <map>
 
 #define LOCAL_ID_X "_local_id_x"
 #define LOCAL_ID_Y "_local_id_y"
@@ -57,9 +59,26 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 {
   ParallelRegion *new_region = new ParallelRegion();
 
+  /* Because ParallelRegions are all replicated before they
+     are attached to the function, it can happen that
+     the same BB is replicated multiple times and it gets
+     the same name (only the BB name will be autorenamed
+     by LLVM). This causes the variable references to become
+     broken. This hack ensures the BB suffices are unique
+     before cloning so each path gets their own value
+     names. Split points can be such paths.*/
+  static std::map<BasicBlock*, int> cloneCounts;
+
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock *block = *i;
-    BasicBlock *new_block = CloneBasicBlock(block, map, suffix);
+    std::ostringstream suf;
+    suf << suffix.str();
+    if (cloneCounts[block] > 0)
+      {
+        suf << ".pocl_" << cloneCounts[block];
+      }
+    BasicBlock *new_block = CloneBasicBlock(block, map, suf.str());
+    cloneCounts[block]++;
     // Insert the block itself into the map.
     map[block] = new_block;
     new_region->push_back(new_block);
@@ -72,6 +91,11 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 #endif
   }
   
+
+  /* Remap here to get local variables fixed before they
+     are (possibly) overwritten by another clone of the 
+     same BB. */
+  new_region->remap(map); 
   return new_region;
 }
 
@@ -201,6 +225,14 @@ ParallelRegion::dump()
 {
   for (iterator i = begin(), e = end(); i != e; ++i)
     (*i)->dump();
+}
+
+void
+ParallelRegion::dumpNames()
+{
+  for (iterator i = begin(), e = end(); i != e; ++i)
+    std::cout << (*i)->getName().str() << " ";
+  std::cout << std::endl;
 }
 
 ParallelRegion *

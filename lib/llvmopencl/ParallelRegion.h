@@ -41,6 +41,7 @@ namespace pocl {
     void chainAfter(ParallelRegion *region);
     void insertPrologue(unsigned x, unsigned y, unsigned z);
     void dump();
+    void dumpNames();
 
     static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
                                   llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);

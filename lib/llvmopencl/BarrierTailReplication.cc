@@ -174,13 +174,6 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
          work without the barrier. It's not entirely clear to me (Pekka).
       */
       t->setSuccessor(i, replicated_subgraph_entry);
-      
-      if (replicated_subgraph_entry->getSinglePredecessor() != NULL)
-        Barrier::Create(replicated_subgraph_entry->getSinglePredecessor()->
-                        getTerminator());
-
-      if (b->getSinglePredecessor() != NULL)
-        Barrier::Create(b->getSinglePredecessor()->getTerminator());
       changed = true;
       // We have modified the function. Possibly created new loops.
       // Update analysis passes.

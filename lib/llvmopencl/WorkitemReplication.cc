@@ -31,12 +31,14 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/ValueSymbolTable.h"
 #include <iostream>
 
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
 //#define DEBUG_PR_CREATION
 //#define DEBUG_PR_REPLICATION
+//#define DEBUG_REFERENCE_FIXING
 
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
@@ -75,12 +77,101 @@ WorkitemReplication::runOnFunction(Function &F)
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
-  bool ok = ProcessFunction(F);
+  bool changed = ProcessFunction(F);
 #ifdef DUMP_RESULT_CFG
   FunctionPass* cfgPrinter = createCFGPrinterPass();
   cfgPrinter->runOnFunction(F);
 #endif
-  return ok;
+  changed |= fixUndominatedVariableUses(F);
+  return changed;
+}
+
+/* Fixes the undominated variable uses.
+
+   These appear when a conditional barrier kernel is replicated to
+   form a copy of the *same basic block* in the alternative 
+   "barrier path".
+
+   E.g., from
+
+   A -> [exit], A -> B -> [exit]
+
+   a replicated CFG as follows, is created:
+
+   A1 -> (T) A2 -> [exit1],  A1 -> (F) A2' -> B1, B2 -> [exit2] 
+
+   The regions are correct because of the barrier semantics
+   of "all or none". In case any barrier enters the [exit1]
+   from A1, all must (because there's a barrier in the else
+   branch).
+
+   Here at A2 and A2' one creates the same variables. 
+   However, B2 does not know which copy
+   to refer to, the ones created in A2 or ones in A2' (correct).
+   The mapping data contains only one possibility, the
+   one that was placed there last. Thus, the instructions in B2 
+   might end up referring to the variables defined in A2 
+   which do not nominate them.
+
+   The variable references are fixed by exploiting the knowledge
+   of the naming convention of the cloned variables. 
+
+   One potential alternative way would be to collect the refmaps per BB,
+   not globally. Then as a final phase traverse through the 
+   basic blocks starting from the beginning and propagating the
+   reference data downwards, the data from the new BB overwriting
+   the old one. This should ensure the reachability without 
+   the costly dominance analysis.
+*/
+bool
+WorkitemReplication::fixUndominatedVariableUses(llvm::Function &F) 
+{
+  bool changed = false;
+  DT = &getAnalysis<DominatorTree>();
+  DT->runOnFunction(F);
+  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) 
+    {
+      llvm::BasicBlock *bb = i;
+      for (llvm::BasicBlock::iterator ins = bb->begin(), inse = bb->end();
+           ins != inse; ++ins)
+        {
+          if (isa<PHINode>(ins)) continue;
+          for (unsigned opr = 0; opr < ins->getNumOperands(); ++opr)
+            {
+              if (!isa<Instruction>(ins->getOperand(opr))) continue;
+              Instruction *operand = cast<Instruction>(ins->getOperand(opr));
+              if (!DT->dominates(operand, ins))
+                {
+#ifdef DEBUG_REFERENCE_FIXING
+                  std::cout << "### dominance error!" << std::endl;
+                  operand->dump();
+                  std::cout << "### does not dominate:" << std::endl;
+                  ins->dump();
+#endif
+                  std::string alternativeName;
+                  if (operand->getName().endswith(".pocl_1"))
+                      alternativeName = 
+                          operand->getName().drop_back(strlen(".pocl_1")).
+                          str();
+                  else
+                      alternativeName += ".pocl_1";
+                  Value *alternative = 
+                      F.getValueSymbolTable().lookup(alternativeName);
+                  if (alternative != NULL)
+                  {
+#ifdef DEBUG_REFERENCE_FIXING
+                      std::cout << "### found the alternative:" << std::endl;
+                      alternative->dump();
+#endif                      
+                      ins->setOperand(opr, alternative);
+                      changed |= true;
+                  }
+                }
+            }
+        }
+
+    }
+  return changed;
 }
 
 bool
@@ -119,10 +210,11 @@ WorkitemReplication::ProcessFunction(Function &F)
     exit_blocks.pop_back();
 
     while (ParallelRegion *PR = K->createParallelRegionBefore(exit)) {
-      assert(PR != NULL && !PR->empty() && "Empty parallel region in kernel (contiguous barriers)!");
+      assert(PR != NULL && !PR->empty() && 
+             "Empty parallel region in kernel (contiguous barriers)!");
 
       found_barriers.insert(exit);
-
+      exit = NULL;
       parallel_regions[0].push_back(PR);
       BasicBlock *entry = PR->front();
       int found_predecessors = 0;
@@ -133,24 +225,34 @@ WorkitemReplication::ProcessFunction(Function &F)
         if (!found_barriers.count(barrier)) {
           /* If this is a loop header block we might have edges from two 
              unprocessed barriers. The one inside the loop (coming from a 
-             computation block after a branch block) should be processed first. */
+             computation block after a branch block) should be processed 
+             first. */
           
-          /* TODO: more robust detection for this. */
+          /* TODO: more robust detection for this case using LoopInfo.
+*/
           std::string bbName = "";
 #ifdef LLVM_3_0
-          const bool IS_A_LATCH_BARRIER =
+          const bool IS_LATCH_BARRIER =
               barrier->getNameStr().endswith(".latchbarrier");
 #else
-          const bool IS_A_LATCH_BARRIER =
+          const bool IS_LATCH_BARRIER =
               barrier->getName().endswith(".latchbarrier");
 #endif
 
-          if (IS_A_LATCH_BARRIER)
+          if (IS_LATCH_BARRIER)
             {
+#ifdef DEBUG_PR_CREATION
+              std::cout << "### found a latch barrier:" << std::endl;
+              std::cout << barrier->getName().str() << std::endl;
+#endif
               latch_barrier = barrier;
             }
           else
             {
+#ifdef DEBUG_PR_CREATION
+              std::cout << "### found an exit barrier:" << std::endl;
+              std::cout << barrier->getName().str() << std::endl;
+#endif
               exit = barrier;
             }
           ++found_predecessors;
@@ -161,12 +263,14 @@ WorkitemReplication::ProcessFunction(Function &F)
         {
           if (exit != NULL)
             exit_blocks.push_back(exit);
-          exit = latch_barrier; /* always process the inner loop regions first */
+          /* always process the inner loop regions first */
+          if (!found_barriers.count(latch_barrier))
+            exit = latch_barrier; 
         }
 
 #ifdef DEBUG_PR_CREATION
       std::cout << "### created a ParallelRegion:" << std::endl;
-      PR->dump();
+      PR->dumpNames();
 #endif
 
       if (found_predecessors == 0)
@@ -257,7 +361,9 @@ WorkitemReplication::ProcessFunction(Function &F)
           entry->dump();
 #endif
           movePhiNodes(entry, pred);
-          MergeBlockIntoPredecessor(entry, this);
+          // TODO: -simplifycfg does this, use it instead 
+          // to modularize further
+          //MergeBlockIntoPredecessor(entry, this);
         }
       }
     }

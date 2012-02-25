@@ -30,8 +30,25 @@
 #include <iostream>
 
 #define WINDOW_SIZE 32
+/* Works with WORK_ITEMS = 3?? */
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
+
+/* This is an interesting case because of the
+   barrier "all WIs or none" semantics.
+   This is a case of a conditional barrier.
+   
+   The first if, due to the barrier, can be
+   assumed to be "all WIs or none" because
+   if it's not, the kernel execution becomes
+   undefined as the barrier region is entered
+   by only a subset of the WIs. 
+
+   The second if should be replicated normally
+   by chaining. The problem here seems to be that
+   the else branches to the exit so the PR formation
+   gets confused.
+*/
 
 static char
 kernelSourceCode[] = 
@@ -42,10 +59,11 @@ kernelSourceCode[] =
 " if (input[0] > 2) return;\n"
 " result[gid] = 0;\n"
 " barrier(CLK_GLOBAL_MEM_FENCE);\n"
-" result[gid] += input[gid];\n"
-" if (gid == 0) {\n"
-"    result[gid] = 42;\n"
-" }\n"
+" if (gid == 1) {\n"
+"    result[gid] = 43;\n"
+" } else \n"
+"    result[gid] += input[gid];\n"
+" barrier(CLK_GLOBAL_MEM_FENCE);\n"
 "}\n";
 
 int
@@ -128,8 +146,8 @@ main(void)
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
             int correct = i;
-            if (i == 0) 
-                correct = 42; 
+            if (i == 1)
+                correct = 43;
             else 
                 correct = i;
             if ((int)R[i] != correct) {
