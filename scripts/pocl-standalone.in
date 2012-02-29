@@ -97,6 +97,6 @@ then
 fi
 @OPT@ -load=${pocl_lib} -generate-header -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -flatten -always-inline -workitem -workgroup \
-    -kernel=${kernel} -local-size=1 1 1 -header=${header} -o ${output_file} ${linked_bc}
+    -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
 
 rm -fr ${tempdir}
