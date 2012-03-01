@@ -86,6 +86,8 @@ namespace pocl {
 
     bool fixUndominatedVariableUses(llvm::Function &F);
 
+    bool dominatesUse(llvm::Instruction &I, unsigned i);
+
     friend class pocl::Workgroup;
   };
 }

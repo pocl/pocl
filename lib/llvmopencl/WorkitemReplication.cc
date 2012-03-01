@@ -71,6 +71,28 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 }
 
 bool
+WorkitemReplication::dominatesUse(Instruction &I, unsigned i) {
+  Instruction *Op = cast<Instruction>(I.getOperand(i));
+  BasicBlock *OpBlock = Op->getParent();
+  PHINode *PN = dyn_cast<PHINode>(&I);
+
+  // DT can handle non phi instructions for us.
+  if (!PN) 
+    {
+      // Definition must dominate use unless use is unreachable!
+      return Op->getParent() == I.getParent() ||
+        DT->dominates(Op, &I);
+    }
+
+  // PHI nodes are more difficult than other nodes because they actually
+  // "use" the value in the predecessor basic blocks they correspond to.
+  unsigned j = PHINode::getIncomingValueNumForOperand(i);
+  BasicBlock *PredBB = PN->getIncomingBlock(j);
+  return (PredBB && DT->dominates(OpBlock, PredBB));
+}
+
+
+bool
 WorkitemReplication::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
@@ -84,9 +106,11 @@ WorkitemReplication::runOnFunction(Function &F)
   FunctionPass* cfgPrinter = createCFGPrinterPass();
   cfgPrinter->runOnFunction(F);
 #endif
+
   changed |= fixUndominatedVariableUses(F);
   return changed;
 }
+
 
 /* Fixes the undominated variable uses.
 
@@ -131,82 +155,83 @@ WorkitemReplication::fixUndominatedVariableUses(llvm::Function &F)
   bool changed = false;
   DT = &getAnalysis<DominatorTree>();
   DT->runOnFunction(F);
+  LI->runOnFunction(F);
+
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) 
     {
       llvm::BasicBlock *bb = i;
       for (llvm::BasicBlock::iterator ins = bb->begin(), inse = bb->end();
            ins != inse; ++ins)
         {
-          if (isa<PHINode>(ins)) continue;
           for (unsigned opr = 0; opr < ins->getNumOperands(); ++opr)
             {
               if (!isa<Instruction>(ins->getOperand(opr))) continue;
               Instruction *operand = cast<Instruction>(ins->getOperand(opr));
-              if (!DT->dominates(operand, ins))
+              if (dominatesUse(*ins, opr)) 
+                  continue;
+#ifdef DEBUG_REFERENCE_FIXING
+              std::cout << "### dominance error!" << std::endl;
+              operand->dump();
+              std::cout << "### does not dominate:" << std::endl;
+              ins->dump();
+#endif
+              StringRef baseName;
+              std::pair< StringRef, StringRef > pieces = 
+                operand->getName().rsplit('.');
+              if (pieces.second.startswith("pocl_"))
+                baseName = pieces.first;
+              else
+                baseName = operand->getName();
+              
+              Value *alternative = NULL;
+
+              unsigned int copy_i = 0;
+              do {
+                std::ostringstream alternativeName;
+                alternativeName << baseName.str();
+                if (copy_i > 0)
+                  alternativeName << ".pocl_" << copy_i;
+#ifdef DEBUG_REFERENCE_FIXING
+                std::cout << "### trying to find alternative variable:" 
+                          << alternativeName.str() << std::endl;
+#endif
+
+                alternative = 
+                  F.getValueSymbolTable().lookup(alternativeName.str());
+
+#ifdef DEBUG_REFERENCE_FIXING
+                if (alternative == NULL)
+                  std::cout << "### did not find it!" << std::endl;
+#endif
+                if (alternative != NULL)
+                  {
+                    ins->setOperand(opr, alternative);
+                    if (dominatesUse(*ins, opr))
+                      break;
+                  }
+                     
+                if (copy_i > UINT_MAX && alternative == NULL)
+                  break; /* ran out of possibilities */
+                ++copy_i;
+              } while (true);
+
+              if (alternative != NULL)
                 {
 #ifdef DEBUG_REFERENCE_FIXING
-                  std::cout << "### dominance error!" << std::endl;
-                  operand->dump();
-                  std::cout << "### does not dominate:" << std::endl;
-                  ins->dump();
-#endif
-                  StringRef baseName;
-                  std::pair< StringRef, StringRef > pieces = 
-                      operand->getName().rsplit('.');
-                  if (pieces.second.startswith("pocl_"))
-                      baseName = pieces.first;
-                  else
-                      baseName = operand->getName();
-
-                  Value *alternative = NULL;
-
-                  unsigned int copy_i = 0;
-                  do {
-                      std::ostringstream alternativeName;
-                      alternativeName << baseName.str();
-                      if (copy_i > 0)
-                          alternativeName << ".pocl_" << copy_i;
-#ifdef DEBUG_REFERENCE_FIXING
-                      std::cout << "### trying to find alternative variable:" 
-                                << alternativeName.str() << std::endl;
-#endif
-
-                      alternative = 
-                          F.getValueSymbolTable().lookup(alternativeName.str());
-
-#ifdef DEBUG_REFERENCE_FIXING
-                      if (alternative == NULL)
-                          std::cout << "### did not find it!" << std::endl;
-#endif
-                      if (alternative != NULL &&
-                          DT->dominates(cast<Instruction>(alternative), ins))
-                          break;
-                      
-                      if (copy_i > 1 && alternative == NULL)
-                          break; /* ran out of possibilities */
-                      ++copy_i;
-                  } while (true);
-
-                  if (alternative != NULL)
-                  {
-#ifdef DEBUG_REFERENCE_FIXING
-                      std::cout << "### found the alternative:" << std::endl;
-                      alternative->dump();
+                  std::cout << "### found the alternative:" << std::endl;
+                  alternative->dump();
 #endif                      
-                      ins->setOperand(opr, alternative);
-                      changed |= true;
-                  } else {
+                  changed |= true;
+                } else {
 #ifdef DEBUG_REFERENCE_FIXING
-                      std::cout << "### didn't found an alternative for" << std::endl;
-                      operand->dump();
+                  std::cout << "### didn't found an alternative for" << std::endl;
+                  operand->dump();
 #endif
-                      std::cerr << "Could not find a dominating alternative variable." << std::endl;
-                      abort();
-                  }
-                }
+                  std::cerr << "Could not find a dominating alternative variable." << std::endl;
+                  abort();
+              }
             }
         }
-
     }
   return changed;
 }

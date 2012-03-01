@@ -27,6 +27,8 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/ValueSymbolTable.h"
+
 #include <set>
 #include <sstream>
 #include <map>
@@ -52,16 +54,19 @@ using namespace pocl;
 void
 ParallelRegion::GenerateTempNames(llvm::BasicBlock *bb) 
 {
-  static int tempCounter = 0;
   for (llvm::BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i)
     {
       llvm::Instruction *instr = i;
       if (instr->hasName() || !instr->isUsedOutsideOfBlock(bb)) continue;
-
-      std::ostringstream name;
-      name << ".pocl_temp." << tempCounter;
-      ++tempCounter;
-      instr->setName(name.str());
+      int tempCounter = 0;
+      std::string tempName = "";
+      do {
+          std::ostringstream name;
+          name << ".pocl_temp." << tempCounter;
+          ++tempCounter;
+          tempName = name.str();
+      } while (bb->getParent()->getValueSymbolTable().lookup(tempName) != NULL);
+      instr->setName(tempName);
     }
 }
 
@@ -319,6 +324,12 @@ ParallelRegion::Verify()
       if (count(begin(), end(), *ii) == 0) {
         if ((*i) != front()) {
           dump();
+#if 0          
+          std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
+          std::cerr << "the entry is: " << front()->getName().str() << std::endl;
+
+          (*i)->getParent()->viewCFG();
+#endif
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         }

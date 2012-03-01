@@ -91,32 +91,6 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         Barrier::Create(preheader->getTerminator());
         preheader->setName(preheader->getName() + ".loopbarrier");
 
-#if 0
-        /* In case the loop is conditional, that is, it
-           can be skipped completely, add a barrier to the
-           branch block so it won't get replicated multiple
-           times. This situation happens when one has 
-           a compile-time unknown variable iteration count which
-           can be zero, or if the iteration variable is volatile
-           in which case LLVM inserts a loop skip condition
-           just after initializing the loop variable.
-
-           FIXME: this is dangerous as the loop condition might
-           be using WI IDs. Cannot do this unconditionally.
- */
-        BasicBlock *condBB = preheader->getSinglePredecessor();
-        if (condBB != NULL && condBB->getTerminator() != NULL &&
-            condBB->getTerminator()->getNumSuccessors() > 1)
-          {
-#ifdef DEBUG_LOOP_BARRIERS
-            std::cerr << "### loop skip BB: " << std::endl;
-            condBB->dump();
-#endif
-            Barrier::Create(condBB->getTerminator());
-            condBB->setName(condBB->getName() + ".loopskipbarrier");
-          }
-#endif
-
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
         BasicBlock *header = L->getHeader();

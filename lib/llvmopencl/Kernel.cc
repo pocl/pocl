@@ -64,8 +64,7 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     pending_blocks.pop_back();
 
 #ifdef DEBUG_PR_CREATION
-    std::cerr << "considering" << std::endl;
-    current->dump();
+    std::cerr << "considering " << current->getName().str() << std::endl;
 #endif
     
     // If this block is already in the region, continue
@@ -94,8 +93,12 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
       continue;
     }
     
-    assert(verify_no_barriers(current) &&
-	   "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
+
+    if (!verify_no_barriers(current))
+      {
+        assert(verify_no_barriers(current) &&
+               "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
+      }
 
 #ifdef DEBUG_PR_CREATION
     std::cerr << "added it to the region" << std::endl;

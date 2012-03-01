@@ -30,6 +30,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include <iostream>
+#include <algorithm>
 
 using namespace llvm;
 using namespace pocl;
@@ -61,6 +62,10 @@ BarrierTailReplication::runOnFunction(Function &F)
   if (!Workgroup::isKernelToProcess(F))
     return false;
   
+#ifdef DEBUG_BARRIER_REPL
+  std::cerr << "### BTR on " << F.getName().str() << std::endl;
+#endif
+
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
@@ -157,7 +162,6 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       // Update analysis passes.
       DT->runOnFunction(*f);
       LI->getBase().Calculate(DT->getBase());
-
     }
   }
 
@@ -248,6 +252,12 @@ void
 BarrierTailReplication::FindSubgraph(BasicBlockVector &subgraph,
                                      BasicBlock *entry)
 {
+  // The subgraph can have internal branches (join points)
+  // avoid replicating these parts multiple times within the
+  // same tail.
+  if (std::count(subgraph.begin(), subgraph.end(), entry) > 0)
+    return;
+
   subgraph.push_back(entry);
 
   const TerminatorInst *t = entry->getTerminator();
@@ -270,8 +280,11 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
                                              BasicBlockVector &graph,
                                              Function *f)
 {
+#ifdef DEBUG_BARRIER_REPL
+  std::cerr << "### ReplicateBasicBlocks: " << std::endl;
+#endif
   for (BasicBlockVector::const_iterator i = graph.begin(),
-	 e = graph.end();
+         e = graph.end();
        i != e; ++i) {
     BasicBlock *b = *i;
     BasicBlock *new_b = BasicBlock::Create(b->getContext(),
@@ -280,6 +293,10 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
     reference_map.insert(std::make_pair(b, new_b));
     new_graph.push_back(new_b);
 
+#ifdef DEBUG_BARRIER_REPL
+    std::cerr << "Replicated BB: " << new_b->getName().str() << std::endl;
+#endif
+
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
 	 i2 != e2; ++i2) {
       Instruction *i = i2->clone();
@@ -287,6 +304,9 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
       new_b->getInstList().push_back(i);
     }
   }
+#ifdef DEBUG_BARRIER_REPL
+  std::cerr << std::endl;
+#endif
 }
 
 
@@ -303,16 +323,8 @@ BarrierTailReplication::UpdateReferences(const BasicBlockVector &graph,
       Instruction *i = i2;
       RemapInstruction(i, reference_map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
-#if 0
-      for (ValueValueMap::const_iterator i3 =
-             reference_map.begin(), e3 = reference_map.end();
-           i3 != e3; ++i3) {
-        i->replaceUsesOfWith(i3->first, i3->second);
-      }
-#endif
     }
   }
-
 }
 
 
