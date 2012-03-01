@@ -200,9 +200,8 @@ WorkitemReplication::fixUndominatedVariableUses(llvm::Function &F)
                       std::cout << "### didn't found an alternative for" << std::endl;
                       operand->dump();
 #endif
-                      assert (
-                          false && 
-                          "Could not find a dominating alternative variable.");
+                      std::cerr << "Could not find a dominating alternative variable." << std::endl;
+                      abort();
                   }
                 }
             }

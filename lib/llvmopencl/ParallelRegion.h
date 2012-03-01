@@ -45,7 +45,10 @@ namespace pocl {
 
     static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
                                   llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
-    
+
+
+    static void GenerateTempNames(llvm::BasicBlock *bb);
+
   private:
     bool Verify();
   };

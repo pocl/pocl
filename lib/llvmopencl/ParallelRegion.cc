@@ -1,7 +1,8 @@
 // Class definition for parallel regions, a group of BasicBlocks that
 // each kernel should run in parallel.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2011 Universidad Rey Juan Carlos and
+//               2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +45,26 @@ using namespace pocl;
 
 #include <iostream>
 
+/**
+ * Ensure all variables are named so they will be replicated and renamed
+ * correctly.
+ */
+void
+ParallelRegion::GenerateTempNames(llvm::BasicBlock *bb) 
+{
+  static int tempCounter = 0;
+  for (llvm::BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i)
+    {
+      llvm::Instruction *instr = i;
+      if (instr->hasName() || !instr->isUsedOutsideOfBlock(bb)) continue;
+
+      std::ostringstream name;
+      name << ".pocl_temp." << tempCounter;
+      ++tempCounter;
+      instr->setName(name.str());
+    }
+}
+
 // BarrierBlock *
 // ParallelRegion::getEntryBarrier()
 // {
@@ -71,6 +92,7 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock *block = *i;
+    GenerateTempNames(block);
     std::ostringstream suf;
     suf << suffix.str();
     std::string block_name = block->getName().str() + "." + suffix.str();
