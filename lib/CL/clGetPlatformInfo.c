@@ -24,6 +24,33 @@
 #include <string.h>
 #include "pocl_cl.h"
 
+// TODO: these two macros are copied from GetDeviceInfo. Share them somewhere
+#define POCL_RETURN_PLATFORM_INFO(__TYPE__, __VALUE__)                \
+  {                                                                 \
+    size_t const value_size = sizeof(__TYPE__);                     \
+    if (param_value)                                                \
+      {                                                             \
+        if (param_value_size < value_size) return CL_INVALID_VALUE; \
+        *(__TYPE__*)param_value = __VALUE__;                        \
+      }                                                             \
+    if (param_value_size_ret)                                       \
+      *param_value_size_ret = value_size;                           \
+    return CL_SUCCESS;                                              \
+  } 
+
+#define POCL_RETURN_PLATFORM_INFO_STR(__STR__)                        \
+  {                                                                 \
+    size_t const value_size = strlen(__STR__) + 1;                  \
+    if (param_value)                                                \
+      {                                                             \
+        if (param_value_size < value_size) return CL_INVALID_VALUE; \
+        memcpy(param_value, __STR__, value_size);                   \
+      }                                                             \
+    if (param_value_size_ret)                                       \
+      *param_value_size_ret = value_size;                           \
+    return CL_SUCCESS;                                              \
+  }                                                                 \
+    
 CL_API_ENTRY cl_int CL_API_CALL 
 clGetPlatformInfo(cl_platform_id   platform,
                   cl_platform_info param_name,
@@ -34,7 +61,8 @@ clGetPlatformInfo(cl_platform_id   platform,
   const char *ret;
   int retlen;
 
-  if (platform == NULL || (platform->magic != 42))
+  // TODO: if we don't have ICD in use, platform==NULL should be valid & point to pocl
+  if (platform == NULL)
     return CL_INVALID_PLATFORM;
 	
   switch (param_name)
@@ -42,21 +70,24 @@ clGetPlatformInfo(cl_platform_id   platform,
     case CL_PLATFORM_PROFILE:
       // TODO: figure this out depending on the native execution host.
       // assume FULL_PROFILE for now.
-      ret = "FULL_PROFILE";
-      break;
+      POCL_RETURN_PLATFORM_INFO_STR("FULL_PROFILE");
+
     case CL_PLATFORM_VERSION:
-      ret = "OpenCL 1.2";
-      break;
+      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2");
+
     case CL_PLATFORM_NAME:
-      ret = "Portable OpenCL";
-      break;
+      POCL_RETURN_PLATFORM_INFO_STR("Portable OpenCL");
+
     case CL_PLATFORM_VENDOR:
-      ret = "The POCL project";
-      break;
+      POCL_RETURN_PLATFORM_INFO_STR("The POCL project");
+
     case CL_PLATFORM_EXTENSIONS:
-      // TODO: list all suppoted extensions here.
-      ret = "";
-      break;
+      // TODO: do we want to list all suppoted extensions *here*, or in some header?.
+      POCL_RETURN_PLATFORM_INFO_STR("cl_khr_icd");
+
+    case CL_PLATFORM_ICD_SUFFIX_KHR:
+      POCL_RETURN_PLATFORM_INFO_STR("pocl_dont_support_extenstions_via_ICD_yet");
+
     default: 
       return CL_INVALID_VALUE;
   }

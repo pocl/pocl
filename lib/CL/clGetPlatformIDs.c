@@ -23,9 +23,10 @@
 
 #include <assert.h>
 #include <string.h>
+#include "pocl_icd.h"
 #include "pocl_cl.h"
-
-static struct _cl_platform_id _platforms[1]  = {{42}};
+struct _cl_icd_dispatch pocl_dispatch = POCL_ICD_STRUCT;
+struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 
 /*
  * Get the number of supported platforms on this system. 

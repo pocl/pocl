@@ -75,6 +75,8 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
+                   clGetExtensionFunctionAddress.c \
+                   clIcdGetPlatformIDsKHR.c \
                    pocl_cl.h			\
                    devices/devices.h		\
                    devices/devices.c		\
