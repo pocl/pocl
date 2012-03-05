@@ -278,7 +278,7 @@ WorkitemReplication::ProcessFunction(Function &F)
       found_barriers.insert(exit);
       exit = NULL;
       parallel_regions[0].push_back(PR);
-      BasicBlock *entry = PR->front();
+      BasicBlock *entry = PR->entryBB();
       int found_predecessors = 0;
       BarrierBlock *loop_barrier = NULL;
       for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
@@ -408,7 +408,7 @@ WorkitemReplication::ProcessFunction(Function &F)
           
         for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
           ParallelRegion *region = parallel_regions[index][i];
-          BasicBlock *entry = region->front();
+          BasicBlock *entry = region->entryBB();
 
           assert (entry != NULL);
           BasicBlock *pred = entry->getUniquePredecessor();
