@@ -49,6 +49,6 @@ DEFINE_EXPR_G_GG(add_sat,
                  }) :
                  /* unsigned */
                  ({
-                   gtype max = (sgtype)-1;
+                   gtype max = ~(gtype)0;
                    a > max-b ? max : a+b;
                  }))
