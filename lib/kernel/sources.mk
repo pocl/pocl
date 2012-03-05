@@ -64,6 +64,7 @@ libkernel_a_SOURCES = templates.h		\
                       round.cl			\
                       rsqrt.cl			\
                       sin.cl			\
+                      sincos.cl			\
                       sinh.cl			\
                       sinpi.cl			\
                       sqrt.cl			\

@@ -904,7 +904,7 @@ _CL_DECLARE_FUNC_V_VI(rootn)
 _CL_DECLARE_FUNC_V_V(round)
 _CL_DECLARE_FUNC_V_V(rsqrt)
 _CL_DECLARE_FUNC_V_V(sin)
-// sincos
+_CL_DECLARE_FUNC_V_VPV(sincos)
 _CL_DECLARE_FUNC_V_V(sinh)
 _CL_DECLARE_FUNC_V_V(sinpi)
 _CL_DECLARE_FUNC_V_V(sqrt)
