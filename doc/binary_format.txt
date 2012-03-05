@@ -1,0 +1,44 @@
+binary format of pocl
+---------------------
+
+This is a proposal for a binary format that can contain the very final
+kernel binaries also for efficient compiler caching.
+
+The format contains a set of files that can be used to speed up program
+build and use fully prebuilt binaries. After the file header, it contains 
+a sequence of contained binary file headers with minimal information of the
+cached kernel binaries followed by the payload data for direct dlopening.
+
+All integers are stored as little endian.
+
+The overall format is:
+
+[file header]
+[bitcode data]              -- the LLVM bitcode of the program always present
+
+[kernel binary header #0]         
+[kernel binary file data #0]    
+
+[kernel binary header #1]         
+[kernel binary file data #1]    
+
+...
+
+[kernel binary header #n]         
+[kernel binary file data #n]    
+
+The contents of headers:
+
+* file header:
+
+2 bytes    pocl binary format version, uint
+4 bytes    device id, uint (0x0 = "unknown device id")
+4 bytes    size_bc = size of the succeeding bitcode
+
+* kernel binary file header:
+
+N bytes  name of the kernel contained in the binary
+4 bytes  local size x (uint)
+4 bytes  local size y (uint)
+4 bytes  local size z (uint)
+4 bytes  size of the succeeding binary (uint)
