@@ -1,7 +1,8 @@
 // Class definition for parallel regions, a group of BasicBlocks that
 // each kernel should run in parallel.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2011 Universidad Rey Juan Carlos and
+//               2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +27,8 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/ValueSymbolTable.h"
+
 #include <set>
 #include <sstream>
 #include <map>
@@ -43,6 +46,29 @@ using namespace pocl;
 //#define DEBUG_PURGE
 
 #include <iostream>
+
+/**
+ * Ensure all variables are named so they will be replicated and renamed
+ * correctly.
+ */
+void
+ParallelRegion::GenerateTempNames(llvm::BasicBlock *bb) 
+{
+  for (llvm::BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i)
+    {
+      llvm::Instruction *instr = i;
+      if (instr->hasName() || !instr->isUsedOutsideOfBlock(bb)) continue;
+      int tempCounter = 0;
+      std::string tempName = "";
+      do {
+          std::ostringstream name;
+          name << ".pocl_temp." << tempCounter;
+          ++tempCounter;
+          tempName = name.str();
+      } while (bb->getParent()->getValueSymbolTable().lookup(tempName) != NULL);
+      instr->setName(tempName);
+    }
+}
 
 // BarrierBlock *
 // ParallelRegion::getEntryBarrier()
@@ -71,6 +97,7 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock *block = *i;
+    GenerateTempNames(block);
     std::ostringstream suf;
     suf << suffix.str();
     std::string block_name = block->getName().str() + "." + suffix.str();
@@ -92,7 +119,8 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 #endif
   }
   
-
+  new_region->exitIndex_ = exitIndex_;
+  new_region->entryIndex_ = entryIndex_;
   /* Remap here to get local variables fixed before they
      are (possibly) overwritten by another clone of the 
      same BB. */
@@ -133,7 +161,7 @@ ParallelRegion::chainAfter(ParallelRegion *region)
      TODO: why have the unreachable block there the
      first place? Could we just not add it and fix
      the branch? */
-  BasicBlock *tail = region->back();
+  BasicBlock *tail = region->exitBB();
   TerminatorInst *t = tail->getTerminator();
   if (isa<UnreachableInst>(t))
     {
@@ -156,9 +184,9 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   for (iterator i = begin(), e = end(); i != e; ++i)
     bb_list.insertAfter(tail, *i);
   
-  t->setSuccessor(0, front());
+  t->setSuccessor(0, entryBB());
 
-  t = back()->getTerminator();
+  t = exitBB()->getTerminator();
   assert (t->getNumSuccessors() == 1);
   t->setSuccessor(0, successor);
 }
@@ -171,7 +199,7 @@ ParallelRegion::purge()
   for (iterator i = begin(), e = end(); i != e; ++i) {
 
     // Exit block has a successor out of the region.
-    if (*i == back())
+    if (*i == exitBB())
       continue;
 
 #ifdef DEBUG_PURGE
@@ -213,7 +241,7 @@ ParallelRegion::insertPrologue(unsigned x,
                                unsigned y,
                                unsigned z)
 {
-  BasicBlock *entry = front();
+  BasicBlock *entry = entryBB();
 
   IRBuilder<> builder(entry, entry->getFirstInsertionPt());
 
@@ -258,19 +286,25 @@ ParallelRegion::dumpNames()
 }
 
 ParallelRegion *
-ParallelRegion::Create(SmallPtrSetIterator<BasicBlock *> entry,
-                       SmallPtrSetIterator<BasicBlock *> exit)
+ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entry, BasicBlock *exit)
 {
   ParallelRegion *new_region = new ParallelRegion();
 
+  assert (entry != NULL);
+  assert (exit != NULL);
+
   // This is done in two steps so order of the vector
   // is the same as original function order.
-  Function *F = (*entry)->getParent();
+  Function *F = entry->getParent();
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     BasicBlock *b = i;
-    for (SmallPtrSetIterator<BasicBlock *> j = entry; j != exit; ++j) {
+    for (SmallPtrSetIterator<BasicBlock *> j = bbs.begin(); j != bbs.end(); ++j) {
       if (*j == b) {
         new_region->push_back(i);
+        if (entry == *j)
+            new_region->setEntryBBIndex(new_region->size() - 1);
+        else if (exit == *j)
+            new_region->setExitBBIndex(new_region->size() - 1);
         break;
       }
     }
@@ -295,8 +329,14 @@ ParallelRegion::Verify()
   for (iterator i = begin(), e = end(); i != e; ++i) {
     for (pred_iterator ii(*i), ee(*i, true); ii != ee; ++ii) {
       if (count(begin(), end(), *ii) == 0) {
-        if ((*i) != front()) {
-          dump();
+        if ((*i) != entryBB()) {
+          dumpNames();
+#if 1          
+          std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
+          std::cerr << "the entry is: " << entryBB()->getName().str() << std::endl;
+
+          (*i)->getParent()->viewCFG();
+#endif
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         }
@@ -313,7 +353,7 @@ ParallelRegion::Verify()
     //   return false;
     // }
 
-    if (back()->getTerminator()->getNumSuccessors() != 1) {
+    if (exitBB()->getTerminator()->getNumSuccessors() != 1) {
       assert(0 && "Multiple outgoing edges from exit block!");
       return false;
     }

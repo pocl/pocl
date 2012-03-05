@@ -24,6 +24,7 @@
 #include "Workgroup.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "config.h"
 
 #include <iostream>
 
@@ -74,8 +75,14 @@ IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&)
     if (R->contains(pred))
       regionPreds.push_back(pred);
   }
+#ifdef LLVM_3_0
+  llvm::BasicBlock* newExit = 
+    SplitBlockPredecessors
+    (exit, &regionPreds[0], regionPreds.size(), ".region_exit", this);
+#else
   llvm::BasicBlock* newExit = 
     SplitBlockPredecessors(exit, regionPreds, ".region_exit", this);
+#endif
   R->replaceExit(newExit);
   return true;
 }

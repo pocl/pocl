@@ -100,6 +100,11 @@ ACX_PTHREAD()
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
+# libtool dynamic library handling library
+AC_SEARCH_LIBS([lt_dlsym], [ltdl], [], [
+AC_MSG_ERROR([unable to find the libtool dl library (usually libltdl-dev)])
+])
+
 # Following checks are related to the build system for devices (clang and so),
 # and not for building the host code.
 AC_MSG_NOTICE([Starting OpenCL runtime build system checks])

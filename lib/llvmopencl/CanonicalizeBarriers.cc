@@ -99,15 +99,19 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
   InstructionSet Barriers;
 
   for (Function::iterator i = F.begin(), e = F.end();
-       i != e; ++i) {
-    BasicBlock *b = i;
-    for (BasicBlock::iterator i = b->begin(), e = b->end();
-	 i != e; ++i) {
-      if (isa<Barrier>(i))
-        Barriers.insert(i);
+       i != e; ++i) 
+    {
+      BasicBlock *b = i;
+      for (BasicBlock::iterator i = b->begin(), e = b->end();
+           i != e; ++i) 
+        {
+          if (isa<Barrier>(i))
+            {
+              Barriers.insert(i);
+            }
+        }
     }
-  }
-
+  
   // Finally add all the split points, now that we are done with the
   // iterators.
   for (InstructionSet::iterator i = Barriers.begin(), e = Barriers.end();

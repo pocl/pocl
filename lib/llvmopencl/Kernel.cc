@@ -50,8 +50,9 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
 {
   SmallVector<BasicBlock *, 4> pending_blocks;
   SmallPtrSet<BasicBlock *, 8> blocks_in_region;
-  // BarrierBlock *region_entry_barrier = NULL;
- 
+  BarrierBlock *region_entry_barrier = NULL;
+  llvm::BasicBlock *entry = NULL;
+  llvm::BasicBlock *exit = B->getSinglePredecessor();
   add_predecessors(pending_blocks, B);
 
 #ifdef DEBUG_PR_CREATION
@@ -64,8 +65,7 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     pending_blocks.pop_back();
 
 #ifdef DEBUG_PR_CREATION
-    std::cerr << "considering" << std::endl;
-    current->dump();
+    std::cerr << "considering " << current->getName().str() << std::endl;
 #endif
     
     // If this block is already in the region, continue
@@ -81,21 +81,30 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     // If we reach another barrier this must be the
     // parallel region entry.
     if (isa<BarrierBlock>(current)) {
-      // if (region_entry_barrier == NULL)
-      //   region_entry_barrier = cast<BarrierBlock>(current);
-      // else {
-      //   assert((region_entry_barrier == current) &&
-      //          "Barrier is dominated by more than one barrier! (forgot BTR?)");
-      // }
+      if (region_entry_barrier == NULL)
+        region_entry_barrier = cast<BarrierBlock>(current);
 
+#if 0
+      // This should be legal in case the barriers preceed the same
+      // entry block.
+      else {        
+        B->getParent()->viewCFG();
+        assert((region_entry_barrier == current) &&
+               "Barrier is dominated by more than one barrier! (forgot BTR?)");
+      }
+#endif
 #ifdef DEBUG_PR_CREATION
-        std::cerr << "it's a barrier!" << std::endl;
+      std::cerr << "### it's a barrier!" << std::endl;        
 #endif     
       continue;
     }
     
-    assert(verify_no_barriers(current) &&
-	   "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
+
+    if (!verify_no_barriers(current))
+      {
+        assert(verify_no_barriers(current) &&
+               "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
+      }
 
 #ifdef DEBUG_PR_CREATION
     std::cerr << "added it to the region" << std::endl;
@@ -109,10 +118,23 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
 
   if (blocks_in_region.empty())
     return NULL;
-  
+
+  // Find the entry node.
+  assert (region_entry_barrier != NULL);
+  for (unsigned suc = 0, num = region_entry_barrier->getTerminator()->getNumSuccessors(); 
+       suc < num; ++suc) 
+    {
+      llvm::BasicBlock *entryCandidate = 
+        region_entry_barrier->getTerminator()->getSuccessor(suc);
+      if (blocks_in_region.count(entryCandidate) == 0)
+        continue;
+      entry = entryCandidate;
+      break;
+    }
+  assert (blocks_in_region.count(entry) != 0);
+
   // We got all the blocks in a region, create it.
-  return ParallelRegion::Create(blocks_in_region.begin(),
-				blocks_in_region.end());
+  return ParallelRegion::Create(blocks_in_region, entry, exit);
 }
 
 static void

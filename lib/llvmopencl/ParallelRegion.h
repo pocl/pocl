@@ -29,7 +29,10 @@
 #include <vector>
 
 namespace pocl {
-  
+
+  // TODO Cleanup: this should not inherit vector but contain it.
+  // It now exposes too much to the clients and leads to hard
+  // to track erros when API is changed.
   class ParallelRegion : public std::vector<llvm::BasicBlock *> {
     
   public:    
@@ -42,12 +45,24 @@ namespace pocl {
     void insertPrologue(unsigned x, unsigned y, unsigned z);
     void dump();
     void dumpNames();
+    void setEntryBBIndex(std::size_t index) { entryIndex_ = index; }
+    void setExitBBIndex(std::size_t index) { exitIndex_ = index; }
+    llvm::BasicBlock* exitBB() { return at(exitIndex_); }
+    llvm::BasicBlock* entryBB() { return at(entryIndex_); }
 
-    static ParallelRegion *Create(llvm::SmallPtrSetIterator<llvm::BasicBlock *> entry,
-                                  llvm::SmallPtrSetIterator<llvm::BasicBlock *> exit);
-    
+    static ParallelRegion *
+      Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 
+             llvm::BasicBlock *entry, llvm::BasicBlock *exit);
+
+
+    static void GenerateTempNames(llvm::BasicBlock *bb);
+
   private:
     bool Verify();
+    /// The indices of entry and exit, not pointers, for finding the BBs in the
+    /// replicated PRs too.
+    std::size_t exitIndex_;
+    std::size_t entryIndex_;
   };
     
 }
