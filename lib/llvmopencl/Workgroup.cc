@@ -155,16 +155,20 @@ Workgroup::runOnModule(Module &M)
   // BI.inlineFunctions();
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (isKernelToProcess(*i)) {
-      Function *L = createLauncher(M, i);
-      
-      L->addFnAttr(Attribute::NoInline);
-      noaliasArguments(L);
-
-      privatizeContext(M, L);
-
-      createWorkgroup(M, L);
+    if (!isKernelToProcess(*i)) continue;
+    if (i->getName().str() == "fft_radix2_local") {
+      std::cerr << "### dump fft_radix2_local" << std::endl;
+      i->dump();
+      i->viewCFG();
     }
+    Function *L = createLauncher(M, i);
+      
+    L->addFnAttr(Attribute::NoInline);
+    noaliasArguments(L);
+
+    privatizeContext(M, L);
+
+    createWorkgroup(M, L);
   }
 
   Function *barrier = cast<Function> 

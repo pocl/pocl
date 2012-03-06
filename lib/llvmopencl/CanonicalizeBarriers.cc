@@ -128,7 +128,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     // loop handling.
 
     const bool HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER = 
-        t->getPrevNode() != *i;
+      t->getPrevNode() != *i;
 
     if (HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
