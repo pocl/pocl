@@ -717,7 +717,6 @@ void barrier (cl_mem_fence_flags flags);
   double4  _cl_overloadable NAME(double4 , __local   double4 *);        \
   double8  _cl_overloadable NAME(double8 , __local   double8 *);        \
   double16 _cl_overloadable NAME(double16, __local   double16*);)       \
-  /* __private is not supported yet                                     \
   float    _cl_overloadable NAME(float   , __private float   *);        \
   float2   _cl_overloadable NAME(float2  , __private float2  *);        \
   float3   _cl_overloadable NAME(float3  , __private float3  *);        \
@@ -730,8 +729,7 @@ void barrier (cl_mem_fence_flags flags);
   double3  _cl_overloadable NAME(double3 , __private double3 *);        \
   double4  _cl_overloadable NAME(double4 , __private double4 *);        \
   double8  _cl_overloadable NAME(double8 , __private double8 *);        \
-  double16 _cl_overloadable NAME(double16, __private double16*);)       \
-  */
+  double16 _cl_overloadable NAME(double16, __private double16*);)
 #define _CL_DECLARE_FUNC_V_SV(NAME)                     \
   float2   _cl_overloadable NAME(float , float2  );     \
   float3   _cl_overloadable NAME(float , float3  );     \
@@ -1490,7 +1488,6 @@ _CL_DECLARE_VLOAD(float , __constant)
 _CL_DECLARE_VLOAD(double, __constant)
 #endif
 
-/* __private is not supported yet               \
 _CL_DECLARE_VLOAD(char  , __private)
 _CL_DECLARE_VLOAD(uchar , __private)
 _CL_DECLARE_VLOAD(short , __private)
@@ -1505,7 +1502,6 @@ _CL_DECLARE_VLOAD(float , __private)
 #ifdef cl_khr_fp64
 _CL_DECLARE_VLOAD(double, __private)
 #endif
-*/
 
 #define _CL_DECLARE_VSTORE(TYPE, MOD)                                   \
   void _cl_overloadable vstore2 (TYPE##2  data, size_t offset, MOD TYPE *p); \
@@ -1544,7 +1540,6 @@ _CL_DECLARE_VSTORE(float , __local)
 _CL_DECLARE_VSTORE(double, __local)
 #endif
 
-/* __private is not supported yet
 _CL_DECLARE_VSTORE(char  , __private)
 _CL_DECLARE_VSTORE(uchar , __private)
 _CL_DECLARE_VSTORE(short , __private)
@@ -1559,7 +1554,6 @@ _CL_DECLARE_VSTORE(float , __private)
 #ifdef cl_khr_fp64
 _CL_DECLARE_VSTORE(double, __private)
 #endif
-*/
 
 #ifdef cl_khr_fp16
 
@@ -1579,7 +1573,7 @@ _CL_DECLARE_VSTORE(double, __private)
 _CL_DECLARE_VLOAD_HALF(__global)
 _CL_DECLARE_VLOAD_HALF(__local)
 _CL_DECLARE_VLOAD_HALF(__constant)
-/* _CL_DECLARE_VLOAD_HALF(__private) */
+_CL_DECLARE_VLOAD_HALF(__private)
 
 /* stores to half may have a suffix: _rte _rtz _rtp _rtn */
 #define _CL_DECLARE_VSTORE_HALF(MOD, SUFFIX)                            \
@@ -1605,11 +1599,11 @@ _CL_DECLARE_VSTORE_HALF(__local   , _rte)
 _CL_DECLARE_VSTORE_HALF(__local   , _rtz)
 _CL_DECLARE_VSTORE_HALF(__local   , _rtp)
 _CL_DECLARE_VSTORE_HALF(__local   , _rtn)
-/* _CL_DECLARE_VSTORE_HALF(__private ,     ) */
-/* _CL_DECLARE_VSTORE_HALF(__private , _rte) */
-/* _CL_DECLARE_VSTORE_HALF(__private , _rtz) */
-/* _CL_DECLARE_VSTORE_HALF(__private , _rtp) */
-/* _CL_DECLARE_VSTORE_HALF(__private , _rtn) */
+_CL_DECLARE_VSTORE_HALF(__private ,     )
+_CL_DECLARE_VSTORE_HALF(__private , _rte)
+_CL_DECLARE_VSTORE_HALF(__private , _rtz)
+_CL_DECLARE_VSTORE_HALF(__private , _rtp)
+_CL_DECLARE_VSTORE_HALF(__private , _rtn)
 
 #endif
 
