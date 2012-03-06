@@ -129,6 +129,11 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
         }
     }
 
+#if 0
+  printf("### building kernel %s for dimensions %u x %u x %u\n", 
+         kernel->function_name, local_x, local_y, local_z);
+#endif
+
   if (local_x * local_y * local_z > command_queue->device->max_work_group_size)
     return CL_INVALID_WORK_GROUP_SIZE;
 
@@ -182,10 +187,6 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
  
-#if 0
-  printf("### building kernel %s for dimensions %u x %u x %u\n", 
-         kernel->function_name, local_x, local_y, local_z);
-#endif
 
   if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
     error = snprintf(command, COMMAND_LENGTH,

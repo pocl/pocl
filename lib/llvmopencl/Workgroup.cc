@@ -156,11 +156,6 @@ Workgroup::runOnModule(Module &M)
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
-    if (i->getName().str() == "fft_radix2_local") {
-      std::cerr << "### dump fft_radix2_local" << std::endl;
-      i->dump();
-      i->viewCFG();
-    }
     Function *L = createLauncher(M, i);
       
     L->addFnAttr(Attribute::NoInline);
@@ -197,6 +192,8 @@ Workgroup::isKernelToProcess(const Function &F)
   }
 
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
+    if (kernels->getOperand(i)->getOperand(0) == NULL)
+      continue; // globaldce might have removed uncalled kernels
     Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
     if (&F == k)
       return true;
