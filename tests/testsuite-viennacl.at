@@ -24,6 +24,18 @@ AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/te
 ])
 AT_CLEANUP
 
+AT_SETUP([custom-context])
+AT_KEYWORDS([viennalcl])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build custom-context 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target custom-context
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/custom-context | grep -v 0x], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/custom-context.stdout`
+])
+AT_CLEANUP
+
+
 AT_SETUP([matrix-test])
 AT_KEYWORDS([viennacl])
 #Fails currently.
@@ -33,6 +45,17 @@ AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build ma
 [Built target matrix-test])
 AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/matrix-test], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/matrix-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([matrix_range-test])
+AT_KEYWORDS([viennacl])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build matrix_range-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target matrix_range-test
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/matrix_range-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/matrix_range-test.stdout`
 ])
 AT_CLEANUP
 
@@ -60,6 +83,18 @@ AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/te
 ])
 AT_CLEANUP
 
+AT_SETUP([structured-matrices-test])
+AT_KEYWORDS([viennacl])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build structured-matrices-test 2>&1 | grep 'Built target' | cut -c8-], 0,
+[Built target structured-matrices-test
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/structured-matrices-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/structured-matrices-test.stdout`
+
+])
+AT_CLEANUP
+
 AT_SETUP([vector-test])
 AT_KEYWORDS([viennacl])
 #Fails currently.
@@ -69,6 +104,17 @@ AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build ve
 [Built target vector-test])
 AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/vector-test], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/vector-test.stdout`
+])
+AT_CLEANUP
+
+AT_SETUP([vector_range-test])
+AT_KEYWORDS([viennacl])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
+AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build vector_range-test 2>&1 | grep 'Built target'], 0,
+[Built target vector_range-test
+])
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/vector_range-test], 0, 
+[`cat $abs_top_srcdir/examples/ViennaCL/vector_range-test.stdout`
 ])
 AT_CLEANUP
 

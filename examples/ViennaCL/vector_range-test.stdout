@@ -1,0 +1,30 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Vector Range
+----------------------------------------------
+----------------------------------------------
+
+# Testing setup:
+  eps:     0
+  numeric: float
+
+//
+////////// Test 1: Copy to GPU //////////
+//
+Testing copy to begin of v1... PASSED!
+Testing copy to middle of v1... PASSED!
+Testing copy to bottom of v1... PASSED!
+
+//
+////////// Test 2: Copy from GPU //////////
+//
+Testing beginning of v1... PASSED!
+Testing middle of v1... PASSED!
+Testing bottom of v1... PASSED!
+//
+////////// Test 3: Inplace add //////////
+//
+Testing inplace add at beginning of v1: PASSED!
+Testing inplace add at middle of v1: PASSED!
+Testing inplace add at end of v1: PASSED!
