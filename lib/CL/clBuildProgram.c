@@ -36,6 +36,8 @@ clBuildProgram(cl_program program,
                void (CL_CALLBACK *pfn_notify)(cl_program program, void *user_data),
                void *user_data) CL_API_SUFFIX__VERSION_1_0
 {
+  char dir_template[] = ".clbpXXXXXX";
+  char *tmpdir;
   char source_file_name[L_tmpnam], binary_file_name[L_tmpnam];
   FILE *source_file, *binary_file;
   size_t n;
@@ -59,6 +61,11 @@ clBuildProgram(cl_program program,
 
   if (program->binaries == NULL)
     {
+
+      tmpdir = mkdtemp(dir_template);
+      if (tmpdir == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+
       if (num_devices > 1) /* TODO: build the binary for all the devices. */
         POCL_ABORT_UNIMPLEMENTED(); 
 
@@ -75,8 +82,7 @@ clBuildProgram(cl_program program,
           return CL_OUT_OF_HOST_MEMORY;
         }
 
-
-      tmpnam(source_file_name);
+      snprintf (source_file_name, POCL_FILENAME_LENGTH, "%s/program.cl", tmpdir);
       source_file = fopen(source_file_name, "w+");
       if (source_file == NULL)
         return CL_OUT_OF_HOST_MEMORY;
@@ -87,8 +93,8 @@ clBuildProgram(cl_program program,
         return CL_OUT_OF_HOST_MEMORY;
 
       fclose(source_file);
-      
-      tmpnam(binary_file_name);
+
+      snprintf (binary_file_name, POCL_FILENAME_LENGTH, "%s/program.bc", tmpdir);
 
       if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
         error = snprintf(command, COMMAND_LENGTH,
