@@ -21,11 +21,16 @@
    THE SOFTWARE.
 */
 
-#define DEFINE_AS_TYPE(SRC, DST)                \
-  DST _cl_overloadable                          \
-  as_##DST(SRC a)                               \
-  {                                             \
-    return *(DST*)&a;                           \
+#define DEFINE_AS_TYPE(SRC, DST)                                        \
+  DST _cl_overloadable                                                  \
+  as_##DST(SRC a)                                                       \
+  {                                                                     \
+    /* This may not be safe: */                                         \
+    /* return *(DST*)&a; */                                             \
+    /* This should be safe, but is not officially supported in OpenCL: */ \
+    union { SRC src; DST dst; } cvt;                                    \
+    cvt.src = a;                                                        \
+    return cvt.dst;                                                     \
   }
 
 

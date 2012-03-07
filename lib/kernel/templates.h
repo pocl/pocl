@@ -565,15 +565,13 @@
     typedef STYPE stype;                                \
     return EXPR;                                        \
   }                                                     \
-  /* __private is not supported yet                     \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a, __private VTYPE *b)                     \
   {                                                     \
     typedef VTYPE vtype;                                \
     typedef STYPE stype;                                \
     return EXPR;                                        \
-    }                                                   \
-  */
+  }
 #define DEFINE_EXPR_V_VPV(NAME, EXPR)                   \
   IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float   , float )    \
   IMPLEMENT_EXPR_V_VPV(NAME, EXPR, float2  , float )    \
