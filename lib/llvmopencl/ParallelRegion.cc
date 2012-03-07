@@ -331,16 +331,15 @@ ParallelRegion::Verify()
       if (count(begin(), end(), *ii) == 0) {
         if ((*i) != entryBB()) {
           dumpNames();
-#if 1          
           std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
           std::cerr << "the entry is: " << entryBB()->getName().str() << std::endl;
 
+#if 1
           (*i)->getParent()->viewCFG();
 #endif
           assert(0 && "Incoming edges to non-entry block!");
           return false;
-        }
-        if (!isa<BarrierBlock>(*ii)) {
+        } else if (!isa<BarrierBlock>(*ii)) {
           assert (0 && "Entry has edges from non-barrier blocks!");
           return false;
         }

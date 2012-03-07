@@ -155,16 +155,15 @@ Workgroup::runOnModule(Module &M)
   // BI.inlineFunctions();
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (isKernelToProcess(*i)) {
-      Function *L = createLauncher(M, i);
+    if (!isKernelToProcess(*i)) continue;
+    Function *L = createLauncher(M, i);
       
-      L->addFnAttr(Attribute::NoInline);
-      noaliasArguments(L);
+    L->addFnAttr(Attribute::NoInline);
+    noaliasArguments(L);
 
-      privatizeContext(M, L);
+    privatizeContext(M, L);
 
-      createWorkgroup(M, L);
-    }
+    createWorkgroup(M, L);
   }
 
   Function *barrier = cast<Function> 
@@ -193,6 +192,8 @@ Workgroup::isKernelToProcess(const Function &F)
   }
 
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
+    if (kernels->getOperand(i)->getOperand(0) == NULL)
+      continue; // globaldce might have removed uncalled kernels
     Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
     if (&F == k)
       return true;

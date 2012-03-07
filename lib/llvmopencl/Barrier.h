@@ -73,6 +73,17 @@ namespace pocl {
       return (llvm::isa<Instruction>(U) &&
               classof(llvm::cast<llvm::Instruction>(U)));
     }
+
+
+    static bool hasBarrier(const llvm::BasicBlock *bb) 
+    {
+      for (llvm::BasicBlock::const_iterator i = bb->begin(), e = bb->end();
+           i != e; ++i) 
+        {
+          if (llvm::isa<Barrier>(i)) return true;
+        }
+      return false;
+    }
   };
 
 }
