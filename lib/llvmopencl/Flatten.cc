@@ -71,7 +71,8 @@ Flatten::runOnModule(Module &M)
     {
       llvm::Function *f = i;
       if (f->isDeclaration()) continue;
-      if (Kernel == f->getName())
+      if (Kernel == f->getName() || 
+          (Kernel == "" && pocl::Workgroup::isKernelToProcess(*f)))
         {
           f->removeFnAttr(Attribute::AlwaysInline);
           f->addFnAttr(Attribute::NoInline);
