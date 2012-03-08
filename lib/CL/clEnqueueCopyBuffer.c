@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -61,7 +62,21 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
+  _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
+  if (cmd == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+    
+  cmd->type = CL_COMMAND_TYPE_COPY;
+  cmd->command.copy.data = device_id->data;
+  cmd->command.copy.src_ptr = src_buffer->device_ptrs[i] + src_offset;
+  cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[i] + dst_offset;
+  cmd->command.copy.cb = cb;
+  cmd->next = NULL;
+  LL_APPEND(command_queue->root, cmd );
+#if 0
+  printf ("### copying from %x to %x\n", src_buffer->device_ptrs[i]+src_offset, dst_buffer->device_ptrs[i]+dst_offset);
   device_id->copy(device_id->data, src_buffer->device_ptrs[i]+src_offset, dst_buffer->device_ptrs[i]+dst_offset, cb);
+#endif
 
   return CL_SUCCESS;
 }

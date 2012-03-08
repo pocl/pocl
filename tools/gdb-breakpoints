@@ -1,0 +1,7 @@
+# adds breakpoints to OpenCL function starts 
+# use 'source gdb-breakpoints' in gdb to load
+# TODO: complete this list
+break clFinish
+break clEnqueueReadBuffer
+break clEnqueueWriteBuffer
+break clEnqueueNDRangeKernel

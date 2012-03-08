@@ -90,10 +90,10 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
   else
   {
     _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
-    if ( cmd == NULL )
+    if (cmd == NULL)
       return CL_OUT_OF_HOST_MEMORY;
     
-    cmd->type=CL_COMMAND_TYPE_READ;
+    cmd->type = CL_COMMAND_TYPE_READ;
     cmd->command.read.data = device_id->data;
     cmd->command.read.host_ptr = ptr;
     cmd->command.read.device_ptr = buffer->device_ptrs[i]+offset;

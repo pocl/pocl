@@ -43,7 +43,7 @@ typedef void (*pocl_workgroup) (void **, struct pocl_context *);
 
 // Command Queue datatypes
 
-//EnqueueNDRangeKernel-command
+// clEnqueueNDRangeKernel
 typedef struct
 {
   void *data;
@@ -52,7 +52,7 @@ typedef struct
   struct pocl_context pc;
 } _cl_command_run;
 
-//EnqueueReadBuffer-command
+// clEnqueueReadBuffer
 typedef struct
 {
   void *data;
@@ -61,7 +61,7 @@ typedef struct
   size_t cb;
 } _cl_command_read;
 
-//EnqueueWriteBuffer-command
+// clEnqueueWriteBuffer
 typedef struct
 {
   void *data;
@@ -70,18 +70,29 @@ typedef struct
   size_t cb;
 } _cl_command_write;
 
+// clEnqueueCopyBuffer
+typedef struct
+{
+  void *data;
+  void *src_ptr;
+  void *dst_ptr;
+  size_t cb;
+} _cl_command_copy;
+
 typedef union
 {
   _cl_command_run run;
   _cl_command_read read;
   _cl_command_write write;
+  _cl_command_copy copy;
 } _cl_command_t;
 
 typedef enum
 {
   CL_COMMAND_TYPE_READ,
   CL_COMMAND_TYPE_WRITE,
-  CL_COMMAND_TYPE_RUN
+  CL_COMMAND_TYPE_RUN,
+  CL_COMMAND_TYPE_COPY
 } _cl_command_en;
 
 // one item in the command queue
