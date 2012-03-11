@@ -87,4 +87,4 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    devices/pthread/pthread.c
 
 libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
-libOpenCL_la_LDFLAGS = -lltdl
+libOpenCL_la_LDFLAGS = -lltdl -Wl,-Bsymbolic
