@@ -67,6 +67,12 @@ AC_ARG_ENABLE([region-allocator],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
+# Option to build as an ICD
+AC_ARG_ENABLE([icd],
+              [AS_HELP_STRING([--enable-icd], [Build pocl with the ICD extensions])],
+              [AC_DEFINE([BUILD_ICD], [], "Build with ICD")],
+              [] )
+
 #AC_LANG([C++])
 ACX_PTHREAD()
 
