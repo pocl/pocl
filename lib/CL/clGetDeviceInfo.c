@@ -70,7 +70,8 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO(cl_uint, device->vendor_id);
   case CL_DEVICE_MAX_COMPUTE_UNITS:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->max_compute_units);
-  case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : break;
+  case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_item_dimensions);
   case CL_DEVICE_MAX_WORK_GROUP_SIZE               : 
     /* There is no "preferred WG size" device query, so we probably should
        return something more sensible than the CL_INT_MAX that seems
@@ -89,7 +90,8 @@ clGetDeviceInfo(cl_device_id   device,
        compilation time) with usually no benefits.
     */
     POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_group_size);
-  case CL_DEVICE_MAX_WORK_ITEM_SIZES               : break;
+  case CL_DEVICE_MAX_WORK_ITEM_SIZES               :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_item_sizes);
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_char);   
@@ -109,8 +111,10 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_double);
 
-  case CL_DEVICE_MAX_CLOCK_FREQUENCY               : break;
-  case CL_DEVICE_ADDRESS_BITS                      : break;
+  case CL_DEVICE_MAX_CLOCK_FREQUENCY               :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_clock_frequency);
+  case CL_DEVICE_ADDRESS_BITS                      :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->address_bits);
   case CL_DEVICE_MAX_READ_IMAGE_ARGS               : break;
   case CL_DEVICE_MAX_WRITE_IMAGE_ARGS              : break;
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:

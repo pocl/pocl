@@ -12,12 +12,16 @@
 #include "pocl_cl.h"
 
 // TODO: Add functions from OCL 1.2
-// TODO: what is the correct order of these? The ICD has only a binary interface
-// thus it must know the order. But it was not specified in the ICD spec. (or was it?)
+/* Correct order of these functions is specified in the OPEN CL ICD extension example code, 
+ * which is available only to Khronos members. TODO: dig this order out from somewhere. 
+ * A few of these orders are reversed by trial and error. Those are marked.
+ */
 struct _cl_icd_dispatch {
   void *clBuildProgram;
+  void *clGetPlatformInfo;	// 2nd
+  void *clGetDeviceIDs;  	// 3rd
+  void *clGetDeviceInfo;	// 4th
   void *clCreateBuffer;
-  void *clGetDeviceIDs;
   void *clCreateCommandQueue;
   void *clCreateContext;
   void *clCreateContextFromType;
@@ -54,7 +58,6 @@ struct _cl_icd_dispatch {
   void *clFlush;
   void *clGetCommandQueueInfo;
   void *clGetContextInfo;
-  void *clGetDeviceInfo;
   void *clGetEventInfo;
   void *clGetEventProfilingInfo;
   void *clGetExtensionFunctionAddress;
@@ -63,7 +66,6 @@ struct _cl_icd_dispatch {
   void *clGetKernelWorkGroupInfo;
   void *clGetMemObjectInfo;
   void *clGetPlatformIDs;
-  void *clGetPlatformInfo;
   void *clGetProgramBuildInfo;
   void *clGetProgramInfo;
   void *clGetSamplerInfo;
@@ -97,8 +99,10 @@ struct _cl_icd_dispatch {
  */
 #define POCL_ICD_STRUCT { \
   (void *)&clBuildProgram,	\
-  (void *)&clCreateBuffer,	\
+  (void *)&clGetPlatformInfo,	\
   (void *)&clGetDeviceIDs,	\
+  (void *)&clGetDeviceInfo,	\
+  (void *)&clCreateBuffer,	\
   (void *)&clCreateCommandQueue,	\
   (void *)&clCreateContext,	\
   (void *)&clCreateContextFromType,	\
@@ -135,7 +139,6 @@ struct _cl_icd_dispatch {
   NULL/*(void *)&clFlush*/,	\
   NULL /*(void *)&clGetCommandQueueInfo*/,	\
   (void *)&clGetContextInfo,	\
-  (void *)&clGetDeviceInfo,	\
   NULL /*(void *)&clGetEventInfo*/,	\
   (void *)&clGetEventProfilingInfo,	\
   (void *)&clGetExtensionFunctionAddress,	\
@@ -144,7 +147,6 @@ struct _cl_icd_dispatch {
   (void *)&clGetKernelWorkGroupInfo,	\
   NULL /*(void *)&clGetMemObjectInfo*/,	\
   (void *)&clGetPlatformIDs,	\
-  (void *)&clGetPlatformInfo,	\
   (void *)&clGetProgramBuildInfo,	\
   (void *)&clGetProgramInfo,	\
   NULL /*(void *)&clGetSamplerInfo*/,	\

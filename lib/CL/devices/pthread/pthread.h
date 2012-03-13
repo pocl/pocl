@@ -25,6 +25,7 @@
 #define POCL_PTHREAD_H
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 
 void pocl_pthread_uninit (cl_device_id device);
 void pocl_pthread_init (cl_device_id device);
@@ -113,7 +114,15 @@ extern size_t pocl_pthread_max_work_item_sizes[];
 /* Half is internally represented as short */
 #define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_HALF POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT
 
-#define POCL_DEVICES_PTHREAD {						\
+#ifdef BUILD_ICD
+extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
+#define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
+#else
+#define POCL_DEVICE_ICD_DISPATCH
+#endif
+
+#define POCL_DEVICES_PTHREAD {	 					\
+  POCL_DEVICE_ICD_DISPATCH						\
   CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
