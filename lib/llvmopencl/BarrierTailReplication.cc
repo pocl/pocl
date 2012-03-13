@@ -115,11 +115,14 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
 
   processed_bbs.insert(bb);
 
-  TerminatorInst *t = bb->getTerminator();
-
   if (block_has_barrier(bb)) {
+#ifdef DEBUG_BARRIER_REPL
+    std::cerr << "### block " << bb->getName().str() << " has barrier, RJS" << std::endl;
+#endif
     changed = ReplicateJoinedSubgraphs(bb, bb);
   }
+
+  TerminatorInst *t = bb->getTerminator();
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
@@ -143,26 +146,44 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
   Function *f = dominator->getParent();
 
   TerminatorInst *t = subgraph_entry->getTerminator();
-  Loop *l = LI->getLoopFor(subgraph_entry);
   for (int i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *b = t->getSuccessor(i);
-    if (l != NULL && l->getHeader() == b) {
+#ifdef DEBUG_BARRIER_REPL
+    std::cerr << "### traversing from " << subgraph_entry->getName().str() 
+              << " to " << b->getName().str() << std::endl;
+#endif
+    const bool isBackedge = DT->dominates(b, subgraph_entry);
+    if (isBackedge) {
       // This is a loop backedge. Do not find subgraphs across
       // those.
+#ifdef DEBUG_BARRIER_REPL
+      std::cerr << "### a loop backedge, skipping" << std::endl;
+#endif
       continue;
     }
     if (DT->dominates(dominator, b))
-      changed |= ReplicateJoinedSubgraphs(dominator, b);
-    else {
-      BasicBlock *replicated_subgraph_entry =
-        ReplicateSubgraph(b, f);
-      t->setSuccessor(i, replicated_subgraph_entry);
-      changed = true;
-      // We have modified the function. Possibly created new loops.
-      // Update analysis passes.
-      DT->runOnFunction(*f);
-      LI->getBase().Calculate(DT->getBase());
-    }
+      {
+#ifdef DEBUG_BARRIER_REPL
+        std::cerr << "### " << dominator->getName().str() << " dominates "
+                  << b->getName().str() << std::endl;
+#endif
+        changed |= ReplicateJoinedSubgraphs(dominator, b);
+      } 
+    else           
+      {
+#ifdef DEBUG_BARRIER_REPL
+        std::cerr << "### " << dominator->getName().str() << " does not dominate "
+                  << b->getName().str() << " replicating " << std::endl;
+#endif
+        BasicBlock *replicated_subgraph_entry =
+          ReplicateSubgraph(b, f);
+        t->setSuccessor(i, replicated_subgraph_entry);
+        changed = true;
+        // We have modified the function. Possibly created new loops.
+        // Update analysis passes.
+        DT->runOnFunction(*f);
+        LI->getBase().Calculate(DT->getBase());
+      }
   }
 
   return changed;
