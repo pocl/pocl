@@ -49,6 +49,10 @@ typedef struct
   void *data;
   const char *file; 
   cl_kernel kernel;
+  /* A list of argument buffers to free after the command has 
+     been executed. */
+  cl_mem *arg_buffers;
+  int arg_buffer_count;
   struct pocl_context pc;
 } _cl_command_run;
 
@@ -59,6 +63,7 @@ typedef struct
   void *host_ptr;
   const void *device_ptr;
   size_t cb;
+  cl_mem buffer;
 } _cl_command_read;
 
 // clEnqueueWriteBuffer
@@ -68,6 +73,7 @@ typedef struct
   const void *host_ptr;
   void *device_ptr;
   size_t cb;
+  cl_mem buffer;
 } _cl_command_write;
 
 // clEnqueueCopyBuffer
@@ -77,6 +83,8 @@ typedef struct
   void *src_ptr;
   void *dst_ptr;
   size_t cb;
+  cl_mem src_buffer;
+  cl_mem dst_buffer;
 } _cl_command_copy;
 
 typedef union

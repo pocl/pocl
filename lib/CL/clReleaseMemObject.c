@@ -39,17 +39,10 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
      a command-queue(s) that use memobj have finished, the memory object is deleted. If 
      memobj is a buffer object, memobj cannot be deleted until all sub-buffer objects associated 
      with memobj are deleted.
-
-     ViennaCL crashes if the freeing is enabled as it uses the same mem objects in multiple
-     kernels and they get freed too early. Maybe the C++ bindings do not retain correctly in 
-     copy constructors? Or it relies on the "command-queues that use memobj have finished" part
-     so we should check for that here.
   */
 
-#if 0
   if (memobj->pocl_refcount == 0) 
     {
-
       if (memobj->parent == NULL) 
         {
           for (i = 0; i < memobj->context->num_devices; ++i)
@@ -73,6 +66,5 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       free(memobj->device_ptrs);
       free(memobj);
     }
-#endif
   return CL_SUCCESS;
 }

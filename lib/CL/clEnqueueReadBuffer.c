@@ -83,9 +83,12 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
         {
           /* in-order queue - all previously enqueued commands must 
            * finish before this read */
+          // ensure our buffer is not freed yet
+          clRetainMemObject (buffer);
           clFinish(command_queue);
         }
       device_id->read(device_id->data, ptr, buffer->device_ptrs[i]+offset, cb);
+      clReleaseMemObject (buffer);
     }
   else
   {
@@ -99,6 +102,8 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
     cmd->command.read.device_ptr = buffer->device_ptrs[i]+offset;
     cmd->command.read.cb = cb;
     cmd->next = NULL;
+    cmd->command.read.buffer = buffer;
+    clRetainMemObject (buffer);
     LL_APPEND(command_queue->root, cmd );
   }
 

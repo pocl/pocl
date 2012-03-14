@@ -50,6 +50,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   FILE *kernel_file;
   char *parallel_filename;
   size_t n;
+  int i, count;
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
@@ -235,6 +236,33 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   
   POCL_RETAIN_OBJECT(command_queue);
   POCL_RETAIN_OBJECT(kernel);
+
+  command_node->command.run.arg_buffer_count = 0;
+  /* Retain all memobjects so they won't get freed before the
+     queued kernel has been executed. */
+  for (i = 0; i < kernel->num_args; ++i)
+  {
+    struct pocl_argument *al = &(kernel->arguments[i]);
+    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i])
+      ++command_node->command.run.arg_buffer_count;
+  }
+  
+  /* Copy the argument buffers just so we can free them after execution. */
+  command_node->command.run.arg_buffers = 
+    (cl_mem *) malloc (sizeof (struct _cl_mem) * command_node->command.run.arg_buffer_count);
+  count = 0;
+  for (i = 0; i < kernel->num_args; ++i)
+  {
+    struct pocl_argument *al = &(kernel->arguments[i]);
+    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i])
+      {
+        cl_mem buf = *(cl_mem *) (al->value);
+        //printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
+        clRetainMemObject (buf);
+        command_node->command.run.arg_buffers[count] = buf;
+        ++count;
+      }
+  }
 
   LL_APPEND(command_queue->root, command_node);
 

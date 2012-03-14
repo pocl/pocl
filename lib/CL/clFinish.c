@@ -27,6 +27,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
+  int i;
   _cl_command_node *node;
   
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE != 0)
@@ -43,6 +44,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.read.host_ptr, 
              node->command.read.device_ptr, 
              node->command.read.cb); 
+          clReleaseMemObject (node->command.read.buffer);
           break;
         case CL_COMMAND_TYPE_WRITE:
           command_queue->device->write
@@ -50,6 +52,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.write.host_ptr, 
              node->command.write.device_ptr, 
              node->command.write.cb);
+          clReleaseMemObject (node->command.write.buffer);
           break;
         case CL_COMMAND_TYPE_COPY:
           command_queue->device->copy
@@ -57,6 +60,8 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.copy.src_ptr, 
              node->command.copy.dst_ptr,
              node->command.copy.cb);
+          clReleaseMemObject (node->command.copy.src_buffer);
+          clReleaseMemObject (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_TYPE_RUN:
           command_queue->device->run
@@ -64,6 +69,13 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.run.file,
              node->command.run.kernel,
              &node->command.run.pc);
+          for (i = 0; i < node->command.run.arg_buffer_count; ++i)
+            {
+              cl_mem buf = node->command.run.arg_buffers[i];
+              //printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, buf,  node->command.run.kernel->function_name);
+              clReleaseMemObject (buf);
+            }
+          free (node->command.run.arg_buffers);
           break;  
         default:
           POCL_ABORT_UNIMPLEMENTED();
@@ -71,15 +83,15 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
         }
     } 
   
-  // clear the queue 
+  // free the queue contents
   node = command_queue->root;
   command_queue->root = NULL;
-  while( node )
+  while (node)
     {
       _cl_command_node *tmp;
       tmp = node->next;
-      free(node);
-      node=tmp;
+      free (node);
+      node = tmp;
     }  
 
   return CL_SUCCESS;
