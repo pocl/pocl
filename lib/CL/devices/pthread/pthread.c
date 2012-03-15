@@ -559,7 +559,12 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       assert (error == 0);
       
       d->current_dlhandle = lt_dlopen (module);
-      assert (d->current_dlhandle != NULL);
+      if (d->current_dlhandle == NULL)
+        {
+          printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module, lt_dlerror());
+          printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
+          abort();
+        }
 
       d->current_kernel = kernel;
     }
