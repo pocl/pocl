@@ -34,7 +34,7 @@ AT_CHECK([$abs_top_builddir/tests/regression/simple-for-with-a-barrier/host], 0,
 AT_CLEANUP
 
 AT_SETUP([for-loop with computation after the brexit - lp:#938123])
-AT_XFAIL_IF(true)
+#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_DATA([expout],
 [OK

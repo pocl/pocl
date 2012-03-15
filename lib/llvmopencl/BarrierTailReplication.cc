@@ -324,7 +324,36 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
       reference_map.insert(std::make_pair(i2, i));
       new_b->getInstList().push_back(i);
     }
+
+    // Add predicates to PHINodes of basic blocks the replicated
+    // block jumps to (backedges).
+    TerminatorInst *t = new_b->getTerminator();
+    for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
+      BasicBlock *successor = t->getSuccessor(i);
+      if (std::count(graph.begin(), graph.end(), successor) == 0) {
+        // Successor is not in the graph, possible backedge.
+        for (BasicBlock::iterator i  = successor->begin(), e = successor->end();
+             i != e; ++i) {
+          PHINode *phi = dyn_cast<PHINode>(i);
+          if (phi == NULL)
+            break; // All PHINodes already checked.
+          
+          // Get value for original incoming edge and add new predicate.
+          Value *v = phi->getIncomingValueForBlock(b);
+          Value *new_v = reference_map[v];
+          if (new_b == NULL) {
+            // csanchez: This could happen AFAIU if the value for this
+            // incoming edge is not in the original tail (i.e. comes
+            // from the common part of the CFG before the tails split).
+            // But unsure so I am adding an assert for the moment.
+            assert (0);
+          }
+          phi->addIncoming(new_v, new_b);
+        }
+      }
+    }
   }
+
 #ifdef DEBUG_BARRIER_REPL
   std::cerr << std::endl;
 #endif
