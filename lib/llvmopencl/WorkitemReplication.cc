@@ -1,7 +1,7 @@
 // LLVM function pass to replicate kernel body for several workitems.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012 Pekka Jääskeläinen / TUT
+// Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
+//                         Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#define DEBUG_TYPE "workitem"
+
 #include "WorkitemReplication.h"
 #include "Workgroup.h"
 #include "Barrier.h"
 #include "Kernel.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
 #include <iostream>
@@ -51,6 +55,9 @@ using namespace pocl;
 
 static bool block_has_barrier(const BasicBlock *bb);
 
+STATISTIC(ContextValues, "Number of SSA values which have to be context-saved");
+STATISTIC(ContextSize, "Context size per workitem in bytes");
+
 namespace {
   static
   RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
@@ -68,6 +75,7 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addRequired<LoopInfo>();
+  AU.addRequired<TargetData>();
 }
 
 bool
@@ -342,6 +350,37 @@ WorkitemReplication::ProcessFunction(Function &F)
           break;
         }
       assert ((exit != NULL) && "Parallel region without entry barrier!");
+    }
+  }
+
+  // Measure the required context (variables alive in more than one region).
+  TargetData &TD = getAnalysis<TargetData>();
+
+  for (SmallVector<ParallelRegion *, 8>::iterator
+         i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+       i != e; ++i) {
+    ParallelRegion *pr = (*i);
+    
+    for (ParallelRegion::iterator i2 = pr->begin(), e2 = pr->end();
+         i2 != e2; ++i2) {
+      BasicBlock *bb = (*i2);
+      
+      for (BasicBlock::iterator i3 = bb->begin(), e3 = bb->end();
+           i3 != e3; ++i3) {
+        for (Value::use_iterator i4 = i3->use_begin(), e4 = i3->use_end();
+             i4 != e4; ++i4) {
+          // Instructions can only be used by instructions.
+          Instruction *user = cast<Instruction> (*i4);
+          
+          if (find (pr->begin(), pr->end(), user->getParent()) ==
+              pr->end()) {
+            // User is no in the defining region.
+            ++ContextValues;
+            ContextSize += TD.getTypeAllocSize(i3->getType());
+            break;
+          }
+        }
+      }
     }
   }
 
