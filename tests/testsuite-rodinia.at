@@ -14,3 +14,30 @@ AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/lud/
 ])
 AT_CLEANUP
 
+AT_SETUP([kmeans])
+AT_KEYWORDS([rodinia kmeans])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/ use_gpu = 1/ use_gpu = 0/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/kmeans/kmeans.cpp; \
+make clean kmeans OPENCL_INC=${abs_top_srcdir}/include OPENCL_LIB=${abs_top_builddir}/lib/CL/.libs \
+CC_FLAGS="-Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/kmeans 2>&1 | egrep -v "^kmeans.cpp:|^read_input.c:|^make" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/kmeans; ./run | grep "Number of" | grep .], 0,
+[Number of objects: 494020
+Number of features: 34
+Number of Iteration: 1
+])
+AT_CLEANUP
+
+AT_SETUP([lavaMD])
+AT_KEYWORDS([rodinia lavaMD])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD/kernel/kernel_gpu_opencl_wrapper.c; \
+rm -f ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD/lavaMD; \
+make OPENCL_INC=${abs_top_srcdir}/include OCL_LIB="-L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpthread -lOpenCL" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD 2>&1 | egrep -v "^make|^./kernel/kernel_gpu_opencl_wrapper.c:" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD; ./run | grep "Total time:"], 0,
+[Total time:
+])
+AT_CLEANUP
