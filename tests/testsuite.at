@@ -246,7 +246,6 @@ AT_CHECK([$abs_top_builddir/examples/scalarwave/scalarwave], 0, expout)
 AT_CLEANUP
 
 m4_include(testsuite-regression.at)
-
 m4_include(testsuite-samples.at)
 m4_include(testsuite-viennacl.at)
-
+m4_include(testsuite-rodinia.at)

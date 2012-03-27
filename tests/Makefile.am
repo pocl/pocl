@@ -42,7 +42,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo '  [$(PACKAGE_URL)])'; \
 	} >'$(srcdir)/package.m4'
 
-EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-regression.at $(srcdir)/package.m4 $(TESTSUITE) atlocal.in
+EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at $(srcdir)/package.m4 $(TESTSUITE) atlocal.in
 TESTSUITE = $(srcdir)/testsuite
 
 check-local: atconfig atlocal $(TESTSUITE)
@@ -58,7 +58,7 @@ clean-local:
 
 AUTOM4TE = $(SHELL) $(top_srcdir)/config/missing --run autom4te
 AUTOTEST = $(AUTOM4TE) --language=autotest
-$(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/testsuite-samples.at $(srcdir)/testsuite-regression.at $(srcdir)/package.m4
+$(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/testsuite-samples.at $(srcdir)/testsuite-regression.at $(srcdir)/testsuite-viennacl.at $(srcdir)/testsuite-rodinia.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
 

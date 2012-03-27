@@ -1,0 +1,16 @@
+
+AT_BANNER([Rodinia 2.0.1 tests])
+
+AT_SETUP([lud])
+AT_KEYWORDS([rodinia lud])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/ use_gpu = 1/ use_gpu = 0/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lud/ocl/lud.cpp; \
+make clean lud OPENCL_INC=${abs_top_srcdir}/include OPENCL_LIB=${abs_top_builddir}/lib/CL/.libs \
+CC_FLAGS="-Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lud 2>&1 | egrep -v "^lud.cpp:|^make" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/lud/ocl; ./run | grep "Time con" | cut -c -18 | grep .], 0,
+[Time consumed(ms):
+])
+AT_CLEANUP
+
