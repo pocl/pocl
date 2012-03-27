@@ -14,6 +14,20 @@ AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/lud/
 ])
 AT_CLEANUP
 
+AT_SETUP([hotspot])
+AT_KEYWORDS([rodinia hotspot])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/hotspot/hotspot.c; \
+make clean hotspot OPENCL_INC=${abs_top_srcdir}/include OPENCL_LIB=${abs_top_builddir}/lib/CL/.libs \
+CC_FLAGS="-Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/hotspot 2>&1 | egrep -v "^make" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/hotspot; ./run | grep "time" | cut -d ' ' -f1 | grep .], 0,
+[Kernel
+Total
+])
+AT_CLEANUP
+
 AT_SETUP([kmeans])
 AT_KEYWORDS([rodinia kmeans])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])

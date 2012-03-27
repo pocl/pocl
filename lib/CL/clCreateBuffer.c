@@ -53,7 +53,7 @@ clCreateBuffer(cl_context context,
     {
       free(mem);
       POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
-    }
+    }  
   
   for (i = 0; i < context->num_devices; ++i)
     {
@@ -70,10 +70,13 @@ clCreateBuffer(cl_context context,
           POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
         }
       mem->device_ptrs[i] = device_ptr;
+      /* The device allocator allocated from a device-host shared memory. */
+      if (flags & CL_MEM_ALLOC_HOST_PTR ||
+          flags & CL_MEM_USE_HOST_PTR)
+          mem->mem_host_ptr = device_ptr;
     }
 
   mem->size = size;
-  mem->mem_host_ptr = host_ptr;
   mem->context = context;
 
   POCL_RETAIN_OBJECT(context);

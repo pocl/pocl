@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clFinish()
+/* OpenCL runtime library: clFlush()
 
-   Copyright (c) 2011 Erik Schnetter
+   Copyright (c) 2012 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clFlush(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  clFinish(command_queue);
+  /* "clFlush only guarantees that all queued commands to command_queue
+     will eventually be submitted to the appropriate device. There is no guarantee 
+     that they will be complete after clFlush returns." */
   return CL_SUCCESS;
 }
