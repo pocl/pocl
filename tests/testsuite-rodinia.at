@@ -1,6 +1,20 @@
 
 AT_BANNER([Rodinia 2.0.1 tests])
 
+AT_SETUP([bfs])
+AT_KEYWORDS([rodinia bfs])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs/CLHelper.h; \
+make clean bfs OPENCL_INC=${abs_top_srcdir}/include \
+CXXFLAGS="-L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs 2>&1 | egrep -v "^make" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run | grep .], 0,
+[Reading File
+--cambine:passed:-)
+])
+AT_CLEANUP
+
 AT_SETUP([lud])
 AT_KEYWORDS([rodinia lud])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
