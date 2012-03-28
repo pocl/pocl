@@ -21,11 +21,13 @@
 
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-clGetKernelWorkGroupInfo (cl_kernel kernel,
-			  cl_device_id device,
-			  cl_kernel_work_group_info param_name,
-			  size_t param_value_size,
-			  void *param_value, size_t * param_value_size_ret)
+clGetKernelWorkGroupInfo 
+(cl_kernel kernel,
+ cl_device_id device,
+ cl_kernel_work_group_info param_name,
+ size_t param_value_size,
+ void *param_value, 
+ size_t * param_value_size_ret)
   CL_API_SUFFIX__VERSION_1_0
 {
     
@@ -55,7 +57,9 @@ clGetKernelWorkGroupInfo (cl_kernel kernel,
   switch (param_name)
     {
     case CL_KERNEL_WORK_GROUP_SIZE: 
-      POCL_RETURN_KERNEL_WG_INFO(size_t, device->max_work_group_size);
+      return clGetDeviceInfo 
+        (device, CL_DEVICE_MAX_WORK_GROUP_SIZE, param_value_size,
+         param_value, param_value_size_ret);
         
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
       POCL_ABORT_UNIMPLEMENTED();
