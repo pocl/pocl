@@ -34,6 +34,25 @@ AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/bfs;
 ])
 AT_CLEANUP
 
+AT_SETUP([cfd])
+AT_KEYWORDS([rodinia cfd])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/t gpu/t cpu/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/cfd/run; \
+make clean release OPENCL_INC=${abs_top_srcdir}/include \
+OPENCL_LIB="${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/cfd 2>&1 | egrep -v "^make|euler3d.cpp:" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/cfd; ./run | grep .], 0,
+[--cambine: device name=pthread
+--cambine: nel=97046, nelr=97152
+Starting...
+Saving solution...
+Saved solution...
+Cleaning up...
+Done...
+])
+AT_CLEANUP
+
 AT_SETUP([lud])
 AT_KEYWORDS([rodinia lud])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])

@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clCreateKernel()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Universidad Rey Juan Carlos and
+                 2012 Pekka Jääskeläinen / Tampere Univ. of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -34,9 +35,9 @@ clCreateKernel(cl_program program,
                const char *kernel_name,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  char template[] = ".clckXXXXXX";
+//  char template[] = ".clckXXXXXX";
   cl_kernel kernel;
-  char *tmpdir;
+  char tmpdir[POCL_FILENAME_LENGTH];
   char binary_filename[POCL_FILENAME_LENGTH];
   FILE *binary_file;
   size_t n;
@@ -56,9 +57,8 @@ clCreateKernel(cl_program program,
   if (program->binaries == NULL || program->binary_sizes == NULL)
     POCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
 
-  tmpdir = mkdtemp(template);
-  if (tmpdir == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", program->temp_dir, kernel_name);
+  mkdir (tmpdir, S_IRWXU);
 
   error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
 		   "%s/kernel.bc",
@@ -118,10 +118,11 @@ clCreateKernel(cl_program program,
     }
 
   kernel->function_name = strdup(kernel_name);
+  kernel->name = strdup(kernel_name);
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
   kernel->context = program->context;
   kernel->program = program;
-  kernel->dlhandle = dlhandle;
+  kernel->dlhandle = dlhandle; /* TODO: why is this stored? */
   kernel->arg_is_pointer = lt_dlsym(dlhandle, "_arg_is_pointer");
   kernel->arg_is_local = lt_dlsym(dlhandle, "_arg_is_local");
   kernel->num_locals = *(cl_uint *) lt_dlsym(dlhandle, "_num_locals");

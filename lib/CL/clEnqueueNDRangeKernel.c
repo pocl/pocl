@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueNDRangeKernel()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Universidad Rey Juan Carlos and
+                 2012 Pekka Jääskeläinen / Tampere Univ. of Tech.
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +27,13 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #define COMMAND_LENGTH 1024
 #define ARGUMENT_STRING_LENGTH 32
+
+//#define DEBUG_NDRANGE
 
 CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueNDRangeKernel(cl_command_queue command_queue,
@@ -41,14 +46,13 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
                        const cl_event *event_wait_list,
                        cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
-  char template[] = ".clekXXXXXX";
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
-  char *tmpdir;
+  char tmpdir[POCL_FILENAME_LENGTH];
   char kernel_filename[POCL_FILENAME_LENGTH];
   FILE *kernel_file;
-  char *parallel_filename;
+  char parallel_filename[POCL_FILENAME_LENGTH];
   size_t n;
   int i, count;
   struct stat buf;
@@ -130,8 +134,8 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
         }
     }
 
-#if 0
-  printf("### building kernel %s for dimensions %u x %u x %u\n", 
+#ifdef DEBUG_NDRANGE
+  printf("### queueing kernel %s for dimensions %lu x %lu x %lu...", 
          kernel->function_name, local_x, local_y, local_z);
 #endif
 
@@ -150,64 +154,86 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       global_z % local_z != 0)
     return CL_INVALID_WORK_GROUP_SIZE;
 
-  tmpdir = mkdtemp(template);
-  if (tmpdir == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%lu-%lu-%lu.%lu-%lu-%lu", 
+            kernel->program->temp_dir, kernel->name, 
+            local_x, local_y, local_z, offset_x, offset_y, offset_z);
+  mkdir (tmpdir, S_IRWXU);
 
   if ((event_wait_list == NULL && num_events_in_wait_list > 0) ||
       (event_wait_list != NULL && num_events_in_wait_list == 0))
     return CL_INVALID_EVENT_WAIT_LIST;
 
-  error = snprintf(kernel_filename, POCL_FILENAME_LENGTH,
-		   "%s/kernel.bc",
-		   tmpdir);
+  error = snprintf
+    (kernel_filename, POCL_FILENAME_LENGTH,
+     "%s/%s/kernel.bc", kernel->program->temp_dir, kernel->name);
+
+  if (error < 0)
+    return CL_OUT_OF_HOST_MEMORY;
+  
+  error = snprintf
+    (parallel_filename, POCL_FILENAME_LENGTH,
+     "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
-  kernel_file = fopen(kernel_filename, "w+");
-  if (kernel_file == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  if (access (kernel_filename, F_OK) != 0) 
+    {
+      kernel_file = fopen(kernel_filename, "w+");
+      if (kernel_file == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
 
-  if (kernel->program->num_devices > 1)
-    POCL_ABORT_UNIMPLEMENTED();
+      if (kernel->program->num_devices > 1)
+        POCL_ABORT_UNIMPLEMENTED();
 
-  n = fwrite(kernel->program->binaries[0], 1,
-	     kernel->program->binary_sizes[0], kernel_file);
-  if (n < kernel->program->binary_sizes[0])
-    return CL_OUT_OF_HOST_MEMORY;
+      n = fwrite(kernel->program->binaries[0], 1,
+                 kernel->program->binary_sizes[0], kernel_file);
+      if (n < kernel->program->binary_sizes[0])
+        return CL_OUT_OF_HOST_MEMORY;
   
-  fclose(kernel_file);
+      fclose(kernel_file);
 
-  parallel_filename = (char*)malloc(POCL_FILENAME_LENGTH);
-  if (parallel_filename == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-  
-  error = snprintf(parallel_filename, POCL_FILENAME_LENGTH,
-		   "%s/parallel.bc",
-		   tmpdir);
-  if (error < 0)
-    return CL_OUT_OF_HOST_MEMORY;
- 
-
-  if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
-    error = snprintf(command, COMMAND_LENGTH,
-		     BUILDDIR "/scripts/" POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
-		     kernel->function_name,
-		     local_x, local_y, local_z,
-		     parallel_filename, kernel_filename);
+#ifdef DEBUG_NDRANGE
+      printf("[kernel bc written] ");
+#endif
+    }
   else
-    error = snprintf(command, COMMAND_LENGTH,
-		     POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
-		     kernel->function_name,
-		     local_x, local_y, local_z,
-		     parallel_filename, kernel_filename);
-  if (error < 0)
-    return CL_OUT_OF_HOST_MEMORY;
+    {
+#ifdef DEBUG_NDRANGE
+      printf("[kernel bc already written] ");
+#endif
+    }
 
-  error = system (command);
-  if (error != 0)
-    return CL_OUT_OF_RESOURCES;
-  
+  if (access (parallel_filename, F_OK) != 0) 
+    {
+      if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
+        error = snprintf(command, COMMAND_LENGTH,
+                         BUILDDIR "/scripts/" POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
+                         kernel->function_name,
+                         local_x, local_y, local_z,
+                         parallel_filename, kernel_filename);
+      else
+        error = snprintf(command, COMMAND_LENGTH,
+                         POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
+                         kernel->function_name,
+                         local_x, local_y, local_z,
+                         parallel_filename, kernel_filename);
+      if (error < 0)
+        return CL_OUT_OF_HOST_MEMORY;
+
+      error = system (command);
+      if (error != 0)
+        return CL_OUT_OF_RESOURCES;
+#ifdef DEBUG_NDRANGE
+      printf("[parallel bc created]\n");
+#endif
+    }
+  else
+    {
+#ifdef DEBUG_NDRANGE
+      printf("[parallel bc already created]\n");
+#endif
+    }
+
   if (event != NULL)
     {
       *event = (cl_event)malloc (sizeof(struct _cl_event));
@@ -215,7 +241,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POCL_RETAIN_OBJECT (command_queue);
+      clRetainCommandQueue (command_queue);
     }
 
   pc.work_dim = work_dim;
@@ -226,16 +252,15 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   pc.global_offset[1] = offset_y;
   pc.global_offset[2] = offset_z;
 
-  
-  command_node->type = CL_COMMAND_TYPE_RUN;
+    command_node->type = CL_COMMAND_TYPE_RUN;
   command_node->command.run.data = command_queue->device->data;
-  command_node->command.run.file = parallel_filename;
+  command_node->command.run.tmp_dir = strdup(tmpdir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
   command_node->next = NULL; 
   
-  POCL_RETAIN_OBJECT(command_queue);
-  POCL_RETAIN_OBJECT(kernel);
+  clRetainCommandQueue (command_queue);
+  clRetainKernel (kernel);
 
   command_node->command.run.arg_buffer_count = 0;
   /* Retain all memobjects so they won't get freed before the

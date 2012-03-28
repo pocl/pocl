@@ -66,7 +66,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
         case CL_COMMAND_TYPE_RUN:
           command_queue->device->run
             (node->command.run.data,
-             node->command.run.file,
+             node->command.run.tmp_dir,
              node->command.run.kernel,
              &node->command.run.pc);
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
@@ -76,6 +76,8 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
               clReleaseMemObject (buf);
             }
           free (node->command.run.arg_buffers);
+          free (node->command.run.tmp_dir);
+          clReleaseKernel(node->command.run.kernel);
           break;  
         default:
           POCL_ABORT_UNIMPLEMENTED();
