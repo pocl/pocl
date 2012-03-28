@@ -67,6 +67,9 @@ cl::list<int>
 LocalSize("local-size",
 	  cl::desc("Local size (x y z)"),
 	  cl::multi_val(3));
+static cl::opt<bool>
+AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
+  cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
 char WorkitemReplication::ID = 0;
 
@@ -403,6 +406,8 @@ WorkitemReplication::ProcessFunction(Function &F)
             original->replicate
             (reference_map[index - 1],
              (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
+          if (AddWIMetadata)
+            replicated->setID(M->getContext(), x, y, z);
           parallel_regions[index].push_back(replicated);
 #ifdef DEBUG_PR_REPLICATION
           std::cerr << "### new replica:" << std::endl;
@@ -412,7 +417,15 @@ WorkitemReplication::ProcessFunction(Function &F)
       }
     }
   }
-    
+  if (AddWIMetadata) {
+    for (SmallVector<ParallelRegion *, 8>::iterator
+          i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+        i != e; ++i) {
+      ParallelRegion *original = (*i);  
+      original->setID(M->getContext(), 0,0,0);
+    }
+  }  
+  
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {
       for (int x = 0; x < LocalSizeX ; ++x) {
