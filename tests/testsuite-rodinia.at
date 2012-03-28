@@ -1,6 +1,25 @@
 
 AT_BANNER([Rodinia 2.0.1 tests])
 
+AT_SETUP([backprop])
+AT_KEYWORDS([rodinia backprop])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i "s/log2(HEIGHT)/log2((float)HEIGHT)/g" ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop/backprop_kernel.cl; \
+sed -i 's/pow(2, i)/pow(2.0f, i)/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop/backprop_kernel.cl; \
+make clean backprop OPENCL_INC=${abs_top_srcdir}/include \
+CC_FLAGS="-L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop 2>&1 | egrep -v "^make|^backprop_ocl.cpp:" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/backprop; ./run | grep .], 0,
+[Random number generator seed: 7
+Input layer size : 65536
+Starting training kernel
+num_devices = 1
+Performing GPU computation
+Finish the training for one iteration
+])
+AT_CLEANUP
+
 AT_SETUP([bfs])
 AT_KEYWORDS([rodinia bfs])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
