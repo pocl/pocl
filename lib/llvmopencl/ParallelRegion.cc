@@ -368,3 +368,28 @@ ParallelRegion::Verify()
 
   return true;
 }
+
+void
+ParallelRegion::setID(
+    llvm::LLVMContext& context, 
+    std::size_t x, 
+    std::size_t y, 
+    std::size_t z) {
+  
+    int counter = 1;
+    for (iterator i = begin(), e = end(); i != e; ++i) {
+      BasicBlock* bb= *i;      
+      for (BasicBlock::iterator ii = bb->begin();
+            ii != bb->end(); ii++) {
+        Value *v[] = {
+            MDString::get(context, "WI_id"),      
+            ConstantInt::get(Type::getInt32Ty(context), x),
+            ConstantInt::get(Type::getInt32Ty(context), y),      
+            ConstantInt::get(Type::getInt32Ty(context), z),
+            ConstantInt::get(Type::getInt32Ty(context), counter)};      
+        MDNode* md = MDNode::get(context, v);  
+        counter++;
+        ii->setMetadata("wi",md);
+      }
+    }
+}
