@@ -47,7 +47,7 @@ typedef void (*pocl_workgroup) (void **, struct pocl_context *);
 typedef struct
 {
   void *data;
-  const char *file; 
+  char *tmp_dir; 
   cl_kernel kernel;
   /* A list of argument buffers to free after the command has 
      been executed. */

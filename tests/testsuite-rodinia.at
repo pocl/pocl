@@ -34,6 +34,25 @@ AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/bfs;
 ])
 AT_CLEANUP
 
+AT_SETUP([cfd])
+AT_KEYWORDS([rodinia cfd])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/t gpu/t cpu/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/cfd/run; \
+make clean release OPENCL_INC=${abs_top_srcdir}/include \
+OPENCL_LIB="${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/cfd 2>&1 | egrep -v "^make|euler3d.cpp:" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/cfd; ./run | grep .], 0,
+[--cambine: device name=pthread
+--cambine: nel=97046, nelr=97152
+Starting...
+Saving solution...
+Saved solution...
+Cleaning up...
+Done...
+])
+AT_CLEANUP
+
 AT_SETUP([lud])
 AT_KEYWORDS([rodinia lud])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
@@ -85,6 +104,37 @@ make OPENCL_INC=${abs_top_srcdir}/include OCL_LIB="-L${abs_top_builddir}/lib/CL/
 -sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD 2>&1 | egrep -v "^make|^./kernel/kernel_gpu_opencl_wrapper.c:" | grep . ], 1,
 [])
 AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD; ./run | grep "Total time:"], 0,
+[Total time:
+])
+AT_CLEANUP
+
+AT_SETUP([pathfinder])
+AT_KEYWORDS([rodinia pathfinder])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/cl.init(1)/cl.init(0)/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/pathfinder/main.cpp; \
+rm -f ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/pathfinder/pathfinder ;
+make OPENCL_INC=${abs_top_srcdir}/include \
+OPENCL_LIB="${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/pathfinder 2>&1 | egrep -v "^make" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/pathfinder; \
+POCL_MAX_WORK_GROUP_SIZE=2 ./run 2>&1 | grep -v "pocl warning:" ; \
+cat result.txt 2>&1 | egrep -v "DEVICE_|PROFILE|VERSION|NAME|EXTENSIONS" | grep .], 0,
+[$(cat $abs_top_srcdir/examples/Rodinia/pathfinder.stdout)
+])
+AT_CLEANUP
+
+AT_SETUP([srad])
+AT_KEYWORDS([rodinia srad])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/srad/main.cpp; \
+rm -f ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/srad/srad ;
+make OPENCL_INC=${abs_top_srcdir}/include \
+OPENCL_LIB="${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+-sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/srad 2>&1 | egrep -v "^make" | grep . ], 1,
+[])
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/srad; \
+POCL_MAX_WORK_GROUP_SIZE=2 ./run 2>&1 | grep "Total time" | grep .], 0,
 [Total time:
 ])
 AT_CLEANUP

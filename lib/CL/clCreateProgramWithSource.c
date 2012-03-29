@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clCreateProgramWithSource()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Universidad Rey Juan Carlos and
+                 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -92,6 +93,11 @@ clCreateProgramWithSource(cl_context context,
   program->binary_sizes = NULL;
   program->binaries = NULL;
   program->kernels = NULL;
+
+  /* Create the temporary directory where all kernel files and compilation
+     (intermediate) results are stored. */
+  strncpy(program->temp_dir, ".poclXXXXXX\0", 12);
+  mkdtemp(program->temp_dir);
 
   POCL_RETAIN_OBJECT(context);
 

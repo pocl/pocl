@@ -70,7 +70,8 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO(cl_uint, device->vendor_id);
   case CL_DEVICE_MAX_COMPUTE_UNITS:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->max_compute_units);
-  case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : break;
+  case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, 3);
   case CL_DEVICE_MAX_WORK_GROUP_SIZE               : 
     /* There is no "preferred WG size" device query, so we probably should
        return something more sensible than the CL_INT_MAX that seems
@@ -88,7 +89,18 @@ clGetDeviceInfo(cl_device_id   device,
        loops. A huge unrolling factor explodes the instruction memory size (and
        compilation time) with usually no benefits.
     */
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_group_size);
+    {
+      cl_uint max_wg_size = device->max_work_group_size;
+      /* Allow overriding the max WG size to reduce compilation time
+         for cases which use the maximum. This is needed until pocl has
+         the WI loops.  */
+      if (getenv ("POCL_MAX_WORK_GROUP_SIZE") != NULL)
+        {
+          cl_uint from_env = atoi (getenv ("POCL_MAX_WORK_GROUP_SIZE"));
+          if (from_env < max_wg_size) max_wg_size = from_env;
+        }
+      POCL_RETURN_DEVICE_INFO(cl_uint, max_wg_size);
+    }
   case CL_DEVICE_MAX_WORK_ITEM_SIZES               : break;
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
@@ -171,7 +183,6 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : break;
   case CL_DEVICE_OPENCL_C_VERSION                  : break;
   }
-
   // remove me when everything *is* implemented, and param_name really is invalid
   POCL_WARN_INCOMPLETE();
   return CL_INVALID_VALUE;

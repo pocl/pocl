@@ -1,0 +1,15 @@
+pocl supports some environment variables to control its behavior. They
+are as follows:
+
+POCL_MAX_WORK_GROUP_SIZE 
+
+Forces the maximum WG size returned by the device or kernel work group quries
+to be at most this number. 
+
+POCL_MAX_PTHREAD_COUNT
+
+The maximum number of threads created for work group execution in the
+pthread device driver. The default is to determine this from the number of
+hardware threads available in the CPU.
+
+

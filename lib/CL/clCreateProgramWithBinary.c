@@ -86,6 +86,10 @@ clCreateProgramWithBinary(cl_context                     context,
   program->devices = context->devices;
   program->source = NULL;
   program->kernels = NULL;
+  /* Create the temporary directory where all kernel files and compilation
+     (intermediate) results are stored. */
+  strncpy(program->temp_dir, ".poclXXXXXX\0", 12);
+  mkdtemp(program->temp_dir);
 
   pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)

@@ -53,6 +53,7 @@ clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
         }
       
       free ((char*)kernel->function_name);
+      free ((char*)kernel->name);
       free (kernel);
     }
   
