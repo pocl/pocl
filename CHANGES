@@ -11,4 +11,4 @@ x.x (unreleased)
 - Support for automatic local variables.
 - Region-based customized memory allocator for buffer
   allocations.
-
+- Added ICD support
