@@ -34,9 +34,9 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clRetainCommandQueue.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
-	        	   clEnqueueReadBuffer.c	\
-	       		   clEnqueueReadBufferRect.c	\
-	        	   clEnqueueMapBuffer.c	\
+	       	   clEnqueueReadBuffer.c	\
+			clEnqueueReadBufferRect.c	\
+	       	   clEnqueueMapBuffer.c	\
 	        	   clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
@@ -86,4 +86,7 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    devices/pthread/pthread.c
 
 libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
-libOpenCL_la_LDFLAGS = -lltdl
+# libtool versions:
+# 0:0.0        The (unreleased) first alpha release.
+libOpenCL_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info 0:0:0
+

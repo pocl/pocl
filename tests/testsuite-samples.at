@@ -15,7 +15,9 @@ Built target histogram
 Built target Dijkstra
 Built target spmv
 ])
-AT_CHECK([make -sC $abs_top_srcdir/examples/opencl-book-samples clean build 2>&1 | grep 'Built target' | cut -c8-], 0, expout)
+AT_CHECK([sed -i 's/#include "bmpLoader.hpp"/\/\/#include "bmpLoader.hpp/g' \
+$abs_top_srcdir/examples/opencl-book-samples/checkout/src/Chapter_12/Sinewave/sinewave.cpp;
+make -sC $abs_top_srcdir/examples/opencl-book-samples clean build 2>&1 | grep 'Built target' | cut -c8-], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Run Chapter 2: Hello World])
