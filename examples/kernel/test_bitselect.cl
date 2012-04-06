@@ -1,5 +1,8 @@
+// TESTING: abs
 // TESTING: bitselect
 // TESTING: clz
+// TESTING: max
+// TESTING: min
 // TESTING: popcount
 
 #define IMPLEMENT_BODY_G(NAME, BODY, GTYPE, SGTYPE, UGTYPE, SUGTYPE)    \
@@ -1144,7 +1147,13 @@ DEFINE_BODY_G
        gtype  v;
        sgtype s[16];
      } Tvec;
-     Tvec sel, left, right, res_bitselect, res_clz, res_popcount;
+     typedef union {
+       ugtype  v;
+       sugtype s[16];
+     } UTvec;
+     Tvec sel, left, right;
+     UTvec res_abs;
+     Tvec res_bitselect, res_clz, res_max, res_min, res_popcount;
      int vecsize = vec_step(gtype);
      for (int n=0; n<vecsize; ++n) {
        sel.s[n]   = randoms[(iter+n   ) % nrandoms];
@@ -1156,10 +1165,26 @@ DEFINE_BODY_G
          right.s[n] = (right.s[n] << (bits/2)) | randoms[(iter+n+140) % nrandoms];
        }
      }
+     res_abs.v = abs(left.v);
      res_bitselect.v = bitselect(left.v, right.v, sel.v);
      res_clz.v = clz(left.v);
+     res_max.v = max(left.v, right.v);
+     res_min.v = min(left.v, right.v);
      res_popcount.v = popcount(left.v);
      bool equal;
+     // abs
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       sugtype absval =left.s[n] < 0 ? -left.s[n] : left.s[n];
+       equal = equal && res_abs.s[n] == absval;
+     }
+     if (!equal) {
+       printf("FAIL: abs type=%s a=0x%08x c=0x%08x\n",
+              typename,
+              (uint)left.s[0],
+              (uint)res_abs.s[0]);
+       return;
+     }
      // bitselect
      equal = true;
      for (int n=0; n<vecsize; ++n) {
@@ -1188,6 +1213,30 @@ DEFINE_BODY_G
        printf("FAIL: clz type=%s a=0x%08x a=0x%08x\n",
               typename,
               (uint)left.s[0], (uint)res_clz.s[0]);
+       return;
+     }
+     // max
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       equal = equal && res_max.s[n] == (left.s[n] > right.s[n] ? left.s[n] : right.s[n]);
+     }
+     if (!equal) {
+       printf("FAIL: max type=%s a=0x%08x b=0x%08x c=0x%08x\n",
+              typename,
+              (uint)left.s[0], (uint)right.s[0],
+              (uint)res_max.s[0]);
+       return;
+     }
+     // min
+     equal = true;
+     for (int n=0; n<vecsize; ++n) {
+       equal = equal && res_min.s[n] == (left.s[n] < right.s[n] ? left.s[n] : right.s[n]);
+     }
+     if (!equal) {
+       printf("FAIL: min type=%s a=0x%08x b=0x%08x c=0x%08x\n",
+              typename,
+              (uint)left.s[0], (uint)right.s[0],
+              (uint)res_min.s[0]);
        return;
      }
      // popcount

@@ -23,8 +23,6 @@
 
 #include "templates.h"
 
-// Intel: LZCNT
-
 #define __builtin_clzhh  __builtin_clz
 #define __builtin_clzh   __builtin_clz
 #define __builtin_clzuhh __builtin_clz
@@ -33,43 +31,3 @@
 #define __builtin_clzul  __builtin_clzl
 
 DEFINE_BUILTIN_G_G(clz)
-
-#if 0
-
-/* Count ones */
-#define CO(b)                                                           \
-  ({                                                                    \
-    ugtype c = b;                                                       \
-    int bitmask = CHAR_BIT * sizeof(sugtype) - 1;                       \
-    c -= ((c >> (sugtype)1) & (ugtype)0x5555555555555555UL);            \
-    c = (((c >> (sugtype)2) & (ugtype)0x3333333333333333UL) +           \
-         (c & (ugtype)0x3333333333333333UL));                           \
-    c = (((c >> (sugtype)4) + c) & (ugtype)0x0f0f0f0f0f0f0f0fUL);       \
-    c += (c >> (sugtype)( 8 & bitmask));                                \
-    c += (c >> (sugtype)(16 & bitmask));                                \
-    c += (c >> (sugtype)(32 & bitmask));                                \
-    c & (ugtype)0xff;                                                   \
-  })
-
-/* Count leading zeros */
-#define CLZ(a)                                          \
-  ({                                                    \
-    ugtype b = a;                                       \
-    sugtype bits = CHAR_BIT * sizeof(sugtype);          \
-    int bitmask = CHAR_BIT * sizeof(sugtype) - 1;       \
-    b |= (b >> (sugtype)1);                             \
-    b |= (b >> (sugtype)2);                             \
-    b |= (b >> (sugtype)4);                             \
-    b |= (b >> (sugtype)( 8 & bitmask));                \
-    b |= (b >> (sugtype)(16 & bitmask));                \
-    b |= (b >> (sugtype)(32 & bitmask));                \
-    (ugtype)bits - CO(b);                               \
-  })
-
-DEFINE_EXPR_G_G(clz,
-                ({
-                  ugtype lz = CLZ(*(ugtype*)&a);
-                  *(gtype*)&lz;
-                }))
-
-#endif
