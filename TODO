@@ -37,9 +37,12 @@ Known missing OpenCL 1.2 features
 ---------------------------------
 
 Missing APIs used by the tested OpenCL example suites are
-entered here.
+entered here. This is not a complete list of unimplemented
+APIs in pocl, but one that has been updated whenever 
+missing APIs have been encountered in the test cases.
 
 (*) == Used by the opencl-book-samples. 
+(R) == Used by the Rodinia benchmark suite.
 
   4. THE OPENCL PLATFORM LAYER
   
@@ -53,9 +56,9 @@ entered here.
 * 5.2.1 Creating buffer objects
 * 5.2.4 Mapping buffer objects
 * 5.3 Image objects
-  * clCreateImage2D (deprecated in OpenCL 1.2) (*)
+  * clCreateImage2D (deprecated in OpenCL 1.2) (*, R[gaussian, leukocyte, nn])
 * 5.3.3 Reading, Writing and Copying Image Objects
-  * clEnqueueReadImage (*)
+  * clEnqueueReadImage (*, R[nn])
 * 5.4 Querying, Umapping, Migrating, ... Mem objects
 * 5.4.1 Retaining and Releasing Memory Objects
 * 5.4.2 Unmapping Mapped Memory Objects
@@ -63,24 +66,20 @@ entered here.
 * 5.5.1 Creating Sampler Objects
   * clCreateSampler (*)
 * 5.6.1 Creating Program Objects
-  * clCreateProgramWithBinary (*)
 * 5.7.1 Creating Kernel Objects
 * 5.9 Event objects
   * clWaitForEvents (*)
-  * clReleaseEvent (*)
 * 5.10 Markers, Barriers and Waiting for Events
   * clEnqueueMarker (deprecated in OpenCL 1.2) (*)
 * 5.12 Profiling 
 
-* Reference counting for all the OpenCL objects
-
   6. THE OPENCL C PROGRAMMING LANGUAGE
 
-* 6.12.10 Async Copies 
-  * async_work_group_copy (* spmv.cl)
-  * wait_group_events (* spmv.cl)
 * 6.12.11 Atomic functions
   * cl_khr_local_int32_base_atomics (Chapter_14/histogram)
+
+* 6.12.14.2 Built-in Image Read Functions
+  * read_imagef (R[particlefilter])
 
   OpenCL 1.2 Extensions
 
@@ -96,7 +95,10 @@ Misc/laundry list
 * The objects that increment/decrement the ref count
   of the parent objects should call the respective
   retain/destroy functions instead of incrementing
-  the counters directly. Now if a subobject is the
-  last holder of a reference, the references of the
-  parent object do not get freed.
+  the counters directly to ensure the objects get freed
+  in case the object was the last referred. 
+
+  Now if a (sub)object is the last holder of a reference, the 
+  references of the parent object do not get freed. 
+
   

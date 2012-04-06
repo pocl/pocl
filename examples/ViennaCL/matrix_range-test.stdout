@@ -1,0 +1,54 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Matrix Range
+----------------------------------------------
+----------------------------------------------
+
+# Testing setup:
+  eps:     0
+  numeric: float
+
+//
+////////// Test 1: Copy to GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+
+//
+////////// Test 2: Copy from GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+//
+////////// Test 2: Inplace add //////////
+//
+PASSED!
+Inplace add to matrix: PASSED!
+Inplace add of prod(): PASSED!
+
+//
+////////// Test 1: Copy to GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+
+//
+////////// Test 2: Copy from GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+//
+////////// Test 2: Inplace add //////////
+//
+PASSED!
+Inplace add to matrix: PASSED!
+Inplace add of prod(): PASSED!

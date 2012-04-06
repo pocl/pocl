@@ -64,11 +64,6 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
     POCL_ERROR(CL_INVALID_OPERATION);
 
 
-  if (blocking_map != CL_TRUE)
-    POCL_ABORT_UNIMPLEMENTED();
-  else
-    clFinish(command_queue);
-
   /* find the index of the device's ptr in the buffer */
   device_id = command_queue->device;
   for (i = 0; i < command_queue->context->num_devices; ++i)
@@ -83,6 +78,17 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
   if (mapping_info == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
+  /* Ensure the parent buffer is not freed prematurely. */
+  clRetainMemObject (buffer);
+  if (blocking_map != CL_TRUE)
+    {
+      POCL_ABORT_UNIMPLEMENTED();
+    }
+  else
+    {
+      clFinish (command_queue);
+    }
+
   if (buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
     {
       /* TODO: should we ensure the host_ptr region is updated from
@@ -91,6 +97,8 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
          device accessible memory or just point there until the
          kernel(s) get executed or similar? */
       host_ptr = buffer->mem_host_ptr + offset;
+      if (host_ptr == NULL)
+        POCL_ERROR (CL_MAP_FAILURE);
     } 
   else 
     {

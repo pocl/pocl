@@ -26,6 +26,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/LLVMContext.h"
 #include <vector>
 
 namespace pocl {
@@ -49,6 +50,11 @@ namespace pocl {
     void setExitBBIndex(std::size_t index) { exitIndex_ = index; }
     llvm::BasicBlock* exitBB() { return at(exitIndex_); }
     llvm::BasicBlock* entryBB() { return at(entryIndex_); }
+    void setID(
+	llvm::LLVMContext& context, 
+	std::size_t x = 0, 
+	std::size_t y = 0, 
+	std::size_t z = 0);
 
     static ParallelRegion *
       Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 

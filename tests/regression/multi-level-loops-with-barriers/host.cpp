@@ -30,9 +30,10 @@
 #include <iostream>
 
 #define WINDOW_SIZE 32
-#define WORK_ITEMS 2
+#define WORK_ITEMS 1
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
 
+// without -loop-barriers the BTR result seems more sensible
 static char
 kernelSourceCode[] = 
 "kernel \n"
@@ -43,7 +44,7 @@ kernelSourceCode[] =
 " int i, j;\n"
 " for (i = 0; i < 32; ++i) {\n"
 "   result[gid] = input[gid];\n"
-"   for (j = 0; j < 32; ++j) {\n"
+"   for (j = 0; j < i; ++j) {\n"
 "      result[gid] = input[gid] * input[gid + j];\n"  
 "      barrier(CLK_GLOBAL_MEM_FENCE);\n"
 "   }\n"

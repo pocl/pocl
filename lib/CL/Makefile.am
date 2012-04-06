@@ -61,6 +61,7 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueCopyBuffer.c	\
                    clEnqueueCopyBufferRect.c	\
                    clFinish.c			\
+                   clFlush.c			\
                    clEnqueueBarrier.c		\
                    clEnqueueMarker.c		\
                    clGetKernelWorkGroupInfo.c	\

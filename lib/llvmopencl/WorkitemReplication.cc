@@ -1,7 +1,7 @@
 // LLVM function pass to replicate kernel body for several workitems.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012 Pekka Jääskeläinen / TUT
+// Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
+//                         Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#define DEBUG_TYPE "workitem"
+
 #include "WorkitemReplication.h"
 #include "Workgroup.h"
 #include "Barrier.h"
 #include "Kernel.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
 #include <iostream>
@@ -51,6 +55,9 @@ using namespace pocl;
 
 static bool block_has_barrier(const BasicBlock *bb);
 
+STATISTIC(ContextValues, "Number of SSA values which have to be context-saved");
+STATISTIC(ContextSize, "Context size per workitem in bytes");
+
 namespace {
   static
   RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
@@ -60,6 +67,9 @@ cl::list<int>
 LocalSize("local-size",
 	  cl::desc("Local size (x y z)"),
 	  cl::multi_val(3));
+static cl::opt<bool>
+AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
+  cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
 char WorkitemReplication::ID = 0;
 
@@ -68,6 +78,7 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addRequired<LoopInfo>();
+  AU.addRequired<TargetData>();
 }
 
 bool
@@ -345,6 +356,37 @@ WorkitemReplication::ProcessFunction(Function &F)
     }
   }
 
+  // Measure the required context (variables alive in more than one region).
+  TargetData &TD = getAnalysis<TargetData>();
+
+  for (SmallVector<ParallelRegion *, 8>::iterator
+         i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+       i != e; ++i) {
+    ParallelRegion *pr = (*i);
+    
+    for (ParallelRegion::iterator i2 = pr->begin(), e2 = pr->end();
+         i2 != e2; ++i2) {
+      BasicBlock *bb = (*i2);
+      
+      for (BasicBlock::iterator i3 = bb->begin(), e3 = bb->end();
+           i3 != e3; ++i3) {
+        for (Value::use_iterator i4 = i3->use_begin(), e4 = i3->use_end();
+             i4 != e4; ++i4) {
+          // Instructions can only be used by instructions.
+          Instruction *user = cast<Instruction> (*i4);
+          
+          if (find (pr->begin(), pr->end(), user->getParent()) ==
+              pr->end()) {
+            // User is no in the defining region.
+            ++ContextValues;
+            ContextSize += TD.getTypeAllocSize(i3->getType());
+            break;
+          }
+        }
+      }
+    }
+  }
+
   // Then replicate the ParallelRegions.  
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {
@@ -364,6 +406,8 @@ WorkitemReplication::ProcessFunction(Function &F)
             original->replicate
             (reference_map[index - 1],
              (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
+          if (AddWIMetadata)
+            replicated->setID(M->getContext(), x, y, z);
           parallel_regions[index].push_back(replicated);
 #ifdef DEBUG_PR_REPLICATION
           std::cerr << "### new replica:" << std::endl;
@@ -373,7 +417,15 @@ WorkitemReplication::ProcessFunction(Function &F)
       }
     }
   }
-    
+  if (AddWIMetadata) {
+    for (SmallVector<ParallelRegion *, 8>::iterator
+          i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+        i != e; ++i) {
+      ParallelRegion *original = (*i);  
+      original->setID(M->getContext(), 0,0,0);
+    }
+  }  
+  
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {
       for (int x = 0; x < LocalSizeX ; ++x) {

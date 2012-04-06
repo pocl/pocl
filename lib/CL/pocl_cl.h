@@ -36,6 +36,14 @@
 #define POCL_KERNEL "pocl-kernel"
 #define POCL_WORKGROUP "pocl-workgroup"
 
+/* The filename in which the program source is stored in the program's temp dir. */
+#define POCL_PROGRAM_CL_FILENAME "program.cl"
+/* The filename in which the program LLVM bc is stored in the program's temp dir. */
+#define POCL_PROGRAM_BC_FILENAME "program.bc"
+/* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
+   the kernel's temp dir. */
+#define POCL_PARALLEL_BC_FILENAME "parallel.bc"
+
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
 #  define __func__ __PRETTY_FUNCTION__
@@ -275,6 +283,8 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 
   unsigned char **binaries; 
+  /* Temp directory (relative to CWD) where the kernel files reside. */
+  char temp_dir[12];
   /* implementation */
   cl_kernel kernels;
 };
@@ -283,6 +293,7 @@ struct _cl_kernel {
   POCL_OBJECT;
   /* queries */
   const char *function_name;
+  const char *name;
   cl_uint num_args;
   cl_context context;
   cl_program program;

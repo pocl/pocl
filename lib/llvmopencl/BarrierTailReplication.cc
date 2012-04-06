@@ -115,11 +115,14 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
 
   processed_bbs.insert(bb);
 
-  TerminatorInst *t = bb->getTerminator();
-
   if (block_has_barrier(bb)) {
+#ifdef DEBUG_BARRIER_REPL
+    std::cerr << "### block " << bb->getName().str() << " has barrier, RJS" << std::endl;
+#endif
     changed = ReplicateJoinedSubgraphs(bb, bb);
   }
+
+  TerminatorInst *t = bb->getTerminator();
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
@@ -143,26 +146,44 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
   Function *f = dominator->getParent();
 
   TerminatorInst *t = subgraph_entry->getTerminator();
-  Loop *l = LI->getLoopFor(subgraph_entry);
   for (int i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *b = t->getSuccessor(i);
-    if (l != NULL && l->getHeader() == b) {
+#ifdef DEBUG_BARRIER_REPL
+    std::cerr << "### traversing from " << subgraph_entry->getName().str() 
+              << " to " << b->getName().str() << std::endl;
+#endif
+    const bool isBackedge = DT->dominates(b, subgraph_entry);
+    if (isBackedge) {
       // This is a loop backedge. Do not find subgraphs across
       // those.
+#ifdef DEBUG_BARRIER_REPL
+      std::cerr << "### a loop backedge, skipping" << std::endl;
+#endif
       continue;
     }
     if (DT->dominates(dominator, b))
-      changed |= ReplicateJoinedSubgraphs(dominator, b);
-    else {
-      BasicBlock *replicated_subgraph_entry =
-        ReplicateSubgraph(b, f);
-      t->setSuccessor(i, replicated_subgraph_entry);
-      changed = true;
-      // We have modified the function. Possibly created new loops.
-      // Update analysis passes.
-      DT->runOnFunction(*f);
-      LI->getBase().Calculate(DT->getBase());
-    }
+      {
+#ifdef DEBUG_BARRIER_REPL
+        std::cerr << "### " << dominator->getName().str() << " dominates "
+                  << b->getName().str() << std::endl;
+#endif
+        changed |= ReplicateJoinedSubgraphs(dominator, b);
+      } 
+    else           
+      {
+#ifdef DEBUG_BARRIER_REPL
+        std::cerr << "### " << dominator->getName().str() << " does not dominate "
+                  << b->getName().str() << " replicating " << std::endl;
+#endif
+        BasicBlock *replicated_subgraph_entry =
+          ReplicateSubgraph(b, f);
+        t->setSuccessor(i, replicated_subgraph_entry);
+        changed = true;
+        // We have modified the function. Possibly created new loops.
+        // Update analysis passes.
+        DT->runOnFunction(*f);
+        LI->getBase().Calculate(DT->getBase());
+      }
   }
 
   return changed;
@@ -303,7 +324,36 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
       reference_map.insert(std::make_pair(i2, i));
       new_b->getInstList().push_back(i);
     }
+
+    // Add predicates to PHINodes of basic blocks the replicated
+    // block jumps to (backedges).
+    TerminatorInst *t = new_b->getTerminator();
+    for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
+      BasicBlock *successor = t->getSuccessor(i);
+      if (std::count(graph.begin(), graph.end(), successor) == 0) {
+        // Successor is not in the graph, possible backedge.
+        for (BasicBlock::iterator i  = successor->begin(), e = successor->end();
+             i != e; ++i) {
+          PHINode *phi = dyn_cast<PHINode>(i);
+          if (phi == NULL)
+            break; // All PHINodes already checked.
+          
+          // Get value for original incoming edge and add new predicate.
+          Value *v = phi->getIncomingValueForBlock(b);
+          Value *new_v = reference_map[v];
+          if (new_b == NULL) {
+            // csanchez: This could happen AFAIU if the value for this
+            // incoming edge is not in the original tail (i.e. comes
+            // from the common part of the CFG before the tails split).
+            // But unsure so I am adding an assert for the moment.
+            assert (0);
+          }
+          phi->addIncoming(new_v, new_b);
+        }
+      }
+    }
   }
+
 #ifdef DEBUG_BARRIER_REPL
   std::cerr << std::endl;
 #endif
