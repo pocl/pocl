@@ -6,8 +6,10 @@ AT_KEYWORDS([rodinia backprop])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
 AT_CHECK([sed -i "s/log2(HEIGHT)/log2((float)HEIGHT)/g" ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop/backprop_kernel.cl; \
 sed -i 's/pow(2, i)/pow(2.0f, i)/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop/backprop_kernel.cl; \
+sed -i 's/ use_gpu = 1/ use_gpu = 0/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop/backprop_ocl.cpp;
 make clean backprop OPENCL_INC=${abs_top_srcdir}/include \
 CC_FLAGS="-L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+OPENCL_LIB="$${abs_top_builddir}/lib/CL/.libs -lOpenCL" \
 -sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/backprop 2>&1 | egrep -v "^make|^backprop_ocl.cpp:" | grep . ], 1,
 [])
 AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/backprop; ./run | grep .], 0,
@@ -24,8 +26,10 @@ AT_SETUP([bfs])
 AT_KEYWORDS([rodinia bfs])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
 AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs/CLHelper.h; \
-make clean bfs OPENCL_INC=${abs_top_srcdir}/include \
-CXXFLAGS="-L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
+rm -f ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs/bfs ;
+make \
+OPENCL_INC="${abs_top_srcdir}/include" \
+CC_FLAGS="-I${abs_top_srcdir}/include -L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
 -sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs 2>&1 | egrep -v "^make" | grep . ], 1,
 [])
 AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run | grep .], 0,
