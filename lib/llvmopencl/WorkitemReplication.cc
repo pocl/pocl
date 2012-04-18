@@ -398,6 +398,7 @@ WorkitemReplication::ProcessFunction(Function &F)
         if (index == 0)
           continue;
 	  
+        std::size_t regionCounter = 0;
         for (SmallVector<ParallelRegion *, 8>::iterator
                i = parallel_regions[0].begin(), e = parallel_regions[0].end();
              i != e; ++i) {
@@ -407,7 +408,8 @@ WorkitemReplication::ProcessFunction(Function &F)
             (reference_map[index - 1],
              (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
           if (AddWIMetadata)
-            replicated->setID(M->getContext(), x, y, z);
+            replicated->setID(M->getContext(), x, y, z, regionCounter);
+          regionCounter++;
           parallel_regions[index].push_back(replicated);
 #ifdef DEBUG_PR_REPLICATION
           std::cerr << "### new replica:" << std::endl;
@@ -418,11 +420,13 @@ WorkitemReplication::ProcessFunction(Function &F)
     }
   }
   if (AddWIMetadata) {
+    std::size_t regionCounter = 0;
     for (SmallVector<ParallelRegion *, 8>::iterator
           i = parallel_regions[0].begin(), e = parallel_regions[0].end();
         i != e; ++i) {
       ParallelRegion *original = (*i);  
-      original->setID(M->getContext(), 0,0,0);
+      original->setID(M->getContext(), 0,0,0, regionCounter);
+      regionCounter++;
     }
   }  
   
