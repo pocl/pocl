@@ -3,7 +3,8 @@
 #                   file and generate a parallel bytecode and a kernel description
 #                   header file.
 # 
-# Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC
+# Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
+#                         Pekka Jääskeläinen / TUT
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -95,9 +96,9 @@ if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
     pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
 fi
-@OPT@ -stats -load=${pocl_lib} -generate-header -flatten -always-inline \
+@OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -workitem -workgroup \
-    -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
+    -barriertails -barriers -isolate-regions -add-wi-metadata -workitem \
+    -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
 
 rm -fr ${tempdir}

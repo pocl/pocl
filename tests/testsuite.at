@@ -167,7 +167,7 @@ AT_CLEANUP
           
 AT_BANNER([Kernel runtime library])
 
-AT_SETUP([Kernel functions bitselect clz popcount])
+AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 AT_DATA([expout],
 [Running test test_bitselect...
 OK

@@ -37,7 +37,6 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/BasicInliner.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
@@ -130,8 +129,6 @@ static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 bool
 Workgroup::runOnModule(Module &M)
 {
-  // BasicInliner BI;
-
   if (M.getPointerSize() == llvm::Module::Pointer64)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(64);

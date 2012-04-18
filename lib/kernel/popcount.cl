@@ -23,8 +23,6 @@
 
 #include "templates.h"
 
-// Intel: POPCNT
-
 #define __builtin_popcounthh  __builtin_popcount
 #define __builtin_popcounth   __builtin_popcount
 #define __builtin_popcountuhh __builtin_popcount
