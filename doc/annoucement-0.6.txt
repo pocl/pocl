@@ -1,0 +1,44 @@
+Portable OpenCL (pocl) v0.6 released
+------------------------------------
+
+Portable OpenCL is an open source (MIT-licensed) implementation of 
+the OpenCL 1.2 standard. 
+
+In addition to producing an easily portable open source OpenCL
+implementation, another major goal of the project is improving 
+performance portability of OpenCL programs with compiler 
+optimizations, reducing the need for target-dependent manual 
+optimizations. An important part of pocl is a set of LLVM passes 
+used to statically parallelize multiple work-items with the kernel
+compiler, even in the presence of work-group barriers. This enables 
+exploitation of fine-grained static parallelism in the work groups in 
+multiple ways (SIMD, vector, VLIW, superscalar,...).
+
+The code base is structured to allow adding new "device drivers"
+for the host-device layer. Currently a single generic multithreaded 
+"target driver" is included. It allows running OpenCL applications on 
+a host that supports the pthread library with multithreading at
+the work group granularity.
+
+An optimized kernel library is provided for x86_64. The generic
+unoptimized (no instruction set extensions used) version has been 
+successfully used with an ARMv7 CPU under Meego, and with several 
+application-specific TTA processors designed using the TCE toolset.
+
+Even though the OpenCL 1.2 standard is not yet implemented fully, we 
+consider pocl now ready for wider scale testing. pocl 0.6 compiles and 
+runs successfully the Rodinia benchmark, ViennaCL and most of the
+OpenCL Programming Guide Samples. 
+
+Acknowledgements
+----------------
+
+
+
+Links
+-----
+Home page/wiki:    http://pocl.sourceforge.net/
+This announcement: http://launchpad.net/pocl/TODO
+Download:          http://launchpad.net/pocl/TODO
+Change log:        http://luanchpad.net/pocl/TODO
+IRC:               #pocl @ irc.oftc.net

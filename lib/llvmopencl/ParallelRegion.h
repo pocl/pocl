@@ -54,7 +54,8 @@ namespace pocl {
 	llvm::LLVMContext& context, 
 	std::size_t x = 0, 
 	std::size_t y = 0, 
-	std::size_t z = 0);
+	std::size_t z = 0,
+        std::size_t regionID = 0);
 
     static ParallelRegion *
       Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 
