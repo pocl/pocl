@@ -15,20 +15,22 @@ Requirements
 In order to build pocl, you need the following support libraries and
 tools:
 
-  LLVM svn (see below for the highest known good revision) and
-  Clang svn (3.1+) installed in PATH (and library path)
-  gcc or a compatible compiler
-  GNU make
-  autotools (autoconf, automake, libtool)
-  libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
-  pthread (should be installed by default)
+  * LLVM 3.1
+  * Clang 3.1
+  * gcc or a compatible compiler
+  * GNU make
+  * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
+  * pthread (should be installed by default)
 
-Note! Even though pocl compiles with LLVM 3.0, there are several OpenCL
-improvements and major bug fixes in the LLVM trunk (upcoming 3.1). It's
-highly recommended to use the latest development version of LLVM for now, 
-until 3.1 is released. However, as llvm-svn is a moving target, new
-revisions might break pocl compilation. The latest LLVM svn revision 
-pocl has been tested successfully with is 153643.
+Note! Even though pocl compiles with LLVM 3.0 and works somehow, there are 
+several OpenCL improvements and major bug fixes in LLVM 3.1. 
+
+It's highly recommended to use the latest development version of LLVM,
+However, as llvm-svn is a moving target, new revisions might break pocl
+compilation. The latest LLVM svn revision pocl has been tested successfully 
+with is:    
+
+    153643
 
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
