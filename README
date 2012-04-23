@@ -51,7 +51,7 @@ the installation directory.
 Example of compiling an OpenCL host program against pocl using
 the pkg-config:
 
-g++ example1.c -o example `pkg-config --libs --cflags pocl`
+gcc example1.c -o example `pkg-config --libs --cflags pocl`
 
 
 STANDALONE
