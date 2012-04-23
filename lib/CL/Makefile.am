@@ -77,6 +77,7 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
                    pocl_cl.h			\
+					pocl_util.c pocl_util.h \
                    devices/devices.h		\
                    devices/devices.c		\
                    devices/bufalloc.c		\

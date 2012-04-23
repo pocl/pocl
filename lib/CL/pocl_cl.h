@@ -75,6 +75,7 @@
 #define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
 
 typedef pthread_mutex_t pocl_lock_t;
+#define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
@@ -284,7 +285,7 @@ struct _cl_program {
   size_t *binary_sizes; 
   unsigned char **binaries; 
   /* Temp directory (relative to CWD) where the kernel files reside. */
-  char temp_dir[12];
+  const char *temp_dir;
   /* implementation */
   cl_kernel kernels;
 };

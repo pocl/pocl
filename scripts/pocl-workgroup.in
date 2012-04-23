@@ -87,5 +87,3 @@ fi
     -barriertails -barriers -isolate-regions -workitem -workgroup \
     -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
 
-rm -f .ek
-ln -sf `dirname ${output_file}` .ek

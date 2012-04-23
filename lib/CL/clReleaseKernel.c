@@ -50,6 +50,7 @@ clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           /* Remove the kernel from the program's linked list of
              kernels */
           *pk = (*pk)->next;
+          clReleaseProgram (kernel->program);
         }
       
       free ((char*)kernel->function_name);
