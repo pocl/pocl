@@ -7,7 +7,6 @@ High priority:
     * make Intel OpenCL SDK examples to work (1.0)    
     * make AMD OpenCL SDK examples to work (1.0)
     * make Rodinia OpenCL benchmarks to work (1.0)
-    * make ViennaCL to work (1.0)
     * make the book examples at 
       https://code.google.com/p/opencl-book-samples
       to work (1.0)   
@@ -28,10 +27,8 @@ Low priority:
     * standalone target (and standalone-mt).
     * ICD support.
     * device supporting IBM Cell BE.
-    * better workgroup (replicated) function caching.
 
 (1.0) == requirement for the pocl 1.0 release
-(0.x) == requirement for the first pocl 0.x release
 
 Known missing OpenCL 1.2 features
 ---------------------------------

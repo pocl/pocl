@@ -32,6 +32,13 @@ with is:
 
     153643
 
+IMPORTANT NOTE! In order to use LLVM with pocl you need to configure LLVM 
+with '--enable-shared' switch and compile it with 'make REQUIRES_RTTI=1',
+as follows:
+
+  ./configure --enable-shared --prefix=YOUR_INSTALLATION_PREFIX_HERE 
+  make REQUIRES_RTTI=1 && make install
+
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
 source tree, you need to generate the autotool build files with 
