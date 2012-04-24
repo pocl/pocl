@@ -44,13 +44,12 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_UNSTABLE="no"
 
 case "$LLVM_VERSION" in
-     3.0*)
-     AC_DEFINE([LLVM_3_0], [], "Using LLVM 3.0")
-     LLVM_UNSTABLE="yes"
+     3.1*)
+     AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
    ;;
-     *svn)
-     AC_DEFINE([LLVM_3_1], [], "Using LLVM svn (upcoming 3.1)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.1)")     
+     3.2svn)
+     AC_DEFINE([LLVM_3_2], [], "Using LLVM svn (upcoming 3.2)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.2)")     
    ;;   
      *)
    AC_MSG_NOTICE(
@@ -345,7 +344,7 @@ AC_MSG_NOTICE(
    [ 
      Warning: You are using an LLVM version with an unstable OpenCL C 
      support that includes major OpenCL C miscompilation issues.  
-     Please upgrade to the latest LLVM svn version (3.1 or later) 
+     Please upgrade to the latest LLVM version (3.1 or later) 
      for more robust OpenCL C compilation.
    ])
 fi
