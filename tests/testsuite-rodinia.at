@@ -46,9 +46,8 @@ make clean release OPENCL_INC=${abs_top_srcdir}/include \
 OPENCL_LIB="${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
 -sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/cfd 2>&1 | egrep -v "^make|euler3d.cpp:" | grep . ], 1,
 [])
-AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/cfd; ./run | grep .], 0,
-[--cambine: device name=pthread
---cambine: nel=97046, nelr=97152
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/cfd; ./run | grep . | grep -v "device name"], 0,
+[--cambine: nel=97046, nelr=97152
 Starting...
 Saving solution...
 Saved solution...

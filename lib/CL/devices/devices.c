@@ -22,7 +22,8 @@
 */
 
 #include "devices.h"
-#include "native/native.h"
+#include "common.h"
+#include "basic/basic.h"
 #include "pthread/pthread.h"
 
 struct _cl_device_id pocl_devices[POCL_NUM_DEVICES] = {

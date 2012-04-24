@@ -34,9 +34,9 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clRetainCommandQueue.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
-	       	   clEnqueueReadBuffer.c	\
-			clEnqueueReadBufferRect.c	\
-	       	   clEnqueueMapBuffer.c	\
+		       	   clEnqueueReadBuffer.c	\
+				   clEnqueueReadBufferRect.c	\
+	    	   	   clEnqueueMapBuffer.c	\
 	        	   clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
@@ -77,16 +77,16 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
                    pocl_cl.h			\
-					pocl_util.c pocl_util.h \
+				   pocl_util.c pocl_util.h \
                    devices/devices.h		\
                    devices/devices.c		\
                    devices/bufalloc.c		\
-                   devices/native/native.h	\
-                   devices/native/native.c	\
+                   devices/basic/basic.h	\
+                   devices/basic/basic.c	\
                    devices/pthread/pthread.h	\
                    devices/pthread/pthread.c
 
-libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__
+libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
 libOpenCL_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info 0:0:0
