@@ -219,56 +219,56 @@ pocl_basic_run
 
   void *arguments[kernel->num_args + kernel->num_locals];
 
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      p = &(kernel->arguments[i]);
+      if (kernel->arg_is_local[i])
+        {
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, p->size, NULL);
+        }
+      else if (kernel->arg_is_pointer[i])
+        {
+          arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+        }
+      else
+        {
+          arguments[i] = p->value;
+        }
+    }
+  for (i = kernel->num_args;
+       i < kernel->num_args + kernel->num_locals;
+       ++i)
+    {
+      p = &(kernel->arguments[i]);
+      arguments[i] = malloc (sizeof (void *));
+      *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, p->size, NULL);
+    }
+
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
         {
           for (x = 0; x < pc->num_groups[0]; ++x)
             {
-              for (i = 0; i < kernel->num_args; ++i)
-                {
-                  p = &(kernel->arguments[i]);
-                  if (kernel->arg_is_local[i])
-                    {
-                      arguments[i] = malloc (sizeof (void *));
-                      *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, p->size, NULL);
-                    }
-                  else if (kernel->arg_is_pointer[i])
-                    {
-                      arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
-                    }
-                  else
-                    {
-                      arguments[i] = p->value;
-                    }
-                }
-              for (i = kernel->num_args;
-                   i < kernel->num_args + kernel->num_locals;
-                   ++i)
-                {
-                  p = &(kernel->arguments[i]);
-                  arguments[i] = malloc (sizeof (void *));
-                  *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, p->size, NULL);
-                }
-
               pc->group_id[0] = x;
               pc->group_id[1] = y;
               pc->group_id[2] = z;
 
               w (arguments, pc);
 
-              for (i = 0; i < kernel->num_args; ++i)
-                {
-                  if (kernel->arg_is_local[i])
-                    pocl_basic_free(data, 0, *(void **)(arguments[i]));
-                }
-              for (i = kernel->num_args;
-                   i < kernel->num_args + kernel->num_locals;
-                   ++i)
-                pocl_basic_free(data, 0, *(void **)(arguments[i]));
             }
         }
     }
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      if (kernel->arg_is_local[i])
+        pocl_basic_free(data, 0, *(void **)(arguments[i]));
+    }
+  for (i = kernel->num_args;
+       i < kernel->num_args + kernel->num_locals;
+       ++i)
+    pocl_basic_free(data, 0, *(void **)(arguments[i]));
 }
 
 void

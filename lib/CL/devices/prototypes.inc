@@ -65,4 +65,3 @@
                         size_t offset, size_t size); 
 
 
-GEN_PROTOTYPES (POCL_DRIVER_NAME)

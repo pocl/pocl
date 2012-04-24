@@ -332,6 +332,7 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/for-with-var-iteration-count/Makefile
                  tests/regression/early-return/Makefile
                  tests/regression/id-dependent-computation/Makefile
+                 tests/regression/structs-as-args/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile
