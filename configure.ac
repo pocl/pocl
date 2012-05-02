@@ -99,6 +99,47 @@ ACX_PTHREAD()
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
+# look for the TCE library (needed for the ttasim device driver)
+
+AC_PATH_PROG([TCE_CONFIG], [tce-config])
+
+if test ! -z "$TCE_CONFIG"; then
+
+AC_PATH_PROG([TCECC], [tcecc])
+
+AC_LANG([C++])
+
+AC_LANG_CONFTEST(
+[AC_LANG_PROGRAM(
+  [[#include <Application.hh>]],
+  [Application::initialize()])
+])
+
+  if $CXX `$TCE_CONFIG --libs --cxxflags --includes` conftest.cpp -o /dev/null;
+  then
+        TCE_LIBRARY=ok
+  fi
+
+cp conftest.cpp conffitest.cpp
+
+fi
+
+if test -z "$TCECC" || \
+   test -z "$TCE_CONFIG" || \
+   test -z "$TCE_LIBRARY"; then
+
+AC_MSG_NOTICE([TCE installation not found. The ttasim device won't be built.])
+
+else
+
+AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
+AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
+AC_SUBST([TCE_AVAILABLE], ["1"])
+
+fi
+
+AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
+
 # libtool dynamic library handling library
 AC_SEARCH_LIBS([lt_dlsym], [ltdl], [], [
 AC_MSG_ERROR([unable to find the libtool dl library (usually libltdl-dev)])
@@ -299,12 +340,19 @@ CC="$old_CC"
 CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
 
+# The libtool library version string to use (passed to --version-info).
+AC_SUBST([LIB_VERSION], ["0:0:0"])
+
 AC_CONFIG_FILES([Makefile
                  pocl.pc
                  include/Makefile
                  include/CL/Makefile
                  lib/Makefile
                  lib/CL/Makefile
+                 lib/CL/devices/Makefile
+                 lib/CL/devices/pthread/Makefile
+                 lib/CL/devices/basic/Makefile
+                 lib/CL/devices/ttasim/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  examples/Makefile

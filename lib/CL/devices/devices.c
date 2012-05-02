@@ -26,6 +26,14 @@
 #include "basic/basic.h"
 #include "pthread/pthread.h"
 
+#if defined(TCE_AVAILABLE)
+#include "ttasim/ttasim.h"
+#endif
+
 struct _cl_device_id pocl_devices[POCL_NUM_DEVICES] = {
-  POCL_DEVICES_PTHREAD
+    POCL_DEVICES_PTHREAD
+#if 0 && defined(TCE_AVAILABLE)
+    ,
+    POCL_DEVICES_TTASIM
+#endif
 };

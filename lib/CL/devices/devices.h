@@ -26,7 +26,15 @@
 
 #include "../pocl_cl.h"
 
+#if 0 && defined(TCE_AVAILABLE)
+
+#define POCL_NUM_DEVICES 2
+
+#else
+
 #define POCL_NUM_DEVICES 1
+
+#endif
 
 extern struct _cl_device_id pocl_devices[POCL_NUM_DEVICES];
 

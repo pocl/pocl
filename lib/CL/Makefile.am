@@ -2,8 +2,8 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/CL.
 # 
-# Copyright (c) 2012-2012 Universidad Rey Juan Carlos and 
-# Tampere University of Technology
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
+#                         Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
+SUBDIRS = devices
 
 lib_LTLIBRARIES = libOpenCL.la
 
@@ -77,17 +79,13 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
                    pocl_cl.h			\
-				   pocl_util.c pocl_util.h \
-                   devices/devices.h		\
-                   devices/devices.c		\
-                   devices/bufalloc.c		\
-                   devices/basic/basic.h	\
-                   devices/basic/basic.c	\
-                   devices/pthread/pthread.h	\
-                   devices/pthread/pthread.c
+				   pocl_util.c pocl_util.h 
+
 
 libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
-libOpenCL_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info 0:0:0
+libOpenCL_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+
+libOpenCL_la_LIBADD = devices/libOpenCL-devices.la 
 
