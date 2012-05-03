@@ -1,51 +1,5 @@
-binary format of pocl
----------------------
-
-This is a proposal for a binary format that can contain the very final
-kernel binaries also for efficient compiler caching.
-
-The format contains a set of files that can be used to speed up program
-build and use fully prebuilt binaries. After the file header, it contains 
-a sequence of contained binary file headers with minimal information of the
-cached kernel binaries followed by the payload data for direct dlopening.
-
-All integers are stored as little endian.
-
-The overall format is:
-
-[file header]
-[bitcode data]              -- the LLVM bitcode of the program always present
-
-[kernel binary header #0]         
-[kernel binary file data #0]    
-
-[kernel binary header #1]         
-[kernel binary file data #1]    
-
-...
-
-[kernel binary header #n]         
-[kernel binary file data #n]    
-
-The contents of headers:
-
-* file header:
-
-2 bytes    pocl binary format version, uint
-4 bytes    device id, uint (0x0 = "unknown device id")
-4 bytes    size_bc = size of the succeeding bitcode
-
-* kernel binary file header:
-
-N bytes  name of the kernel contained in the binary
-4 bytes  local size x (uint)
-4 bytes  local size y (uint)
-4 bytes  local size z (uint)
-4 bytes  size of the succeeding binary (uint)
-
-
-Alternative simplified Program binary format
---------------------------------------------
+plan for a proper binary format for pocl
+---------------------------------------
 
 Extremely simple archive format that stores the temporary file structure. 
 Contains a sequence of [pathname, data blob] pairs, nothing else.
@@ -58,34 +12,18 @@ reporting purposes.
 The file and pathnames follow a previously defined convention in order to
 find the files for each alternative WG sizes for each kernel in the program.
 All the compilation files are stored under a single temporary directory
-(in contrast to the current N .naBLAH directories) with subdirectories for
-kernels and WG sizes, as described in the mailing list.
+with subdirectories for devices, kernels and WG sizes, as described in the 
+mailing list.
 
-Format:
+We could create a tar, zip or similar archive of the whole temp directory
+hierarcy. Implementing the queries for binary sizes etc. is
+problematic as they need to build the archive just for the file size
+check.
 
-[file magic number, 4 bytes]
-[full relative pathname #0]
-\0
-[unsigned size (S) of data in file #0, 4 bytes]
-[data S bytes]
 
-[full relative pathname #1]
-\0
-[unsigned size (S) of data in file #1, 4 bytes]
-[data S bytes]
-...
-EOF
+TODO: Implementation of the new binary format, caching of kernel compilations etc.
+----------------------------------------------------------------------------------
 
-Implementation of the new binary format, caching of kernel compilations etc.
-----------------------------------------------------------------------------
-
-* Allow the kernel compiler to check first if the final binary is already on
-  disk. dlopen() that instead of recreating. 
-* Even further optimization allows using a previous dlopen() handle to avoid 
-  the dlopen() syscall.
-* Create a temporary directory per clProgram. 
-* Store the different kernel compilation files under subdirectories under that
-  temporary directory.
 * In the binary query, create the archive in-memory (no need to create the binary
   file at this point).
 * In the clCreateProgramWithBinary, unpack the binary to the temporary directory

@@ -2,7 +2,6 @@ Version roadmap
 ---------------
 
 High priority:
-    * clean up the hidden temp directories by default (0.x)
     * make NVIDIA OpenCL SDK examples to work (1.0)
     * make Intel OpenCL SDK examples to work (1.0)    
     * make AMD OpenCL SDK examples to work (1.0)
@@ -13,7 +12,6 @@ High priority:
     * vectorize workgroups
 
 Medium priority:
-    * device selection at runtime.
     * complete kernel runtime library.   
     * complete host runtime library.
     * create workgroups by looping instead of fully unrolling for
@@ -24,7 +22,6 @@ Medium priority:
 Low priority:
     * gdb target (generates code for any llvm-compatible target and launches.
       workgroups on gdb simulator).
-    * standalone target (and standalone-mt).
     * ICD support.
     * device supporting IBM Cell BE.
 
