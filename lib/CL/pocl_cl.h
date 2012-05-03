@@ -71,6 +71,12 @@
         fprintf(stderr, "pocl warning: encountered incomplete implementation in %s:%d\n", __FILE__, __LINE__); \
     } while (0) 
 
+#define POCL_ABORT(__MSG__)                                      \
+    do {                                                                \
+        fprintf(stderr, __MSG__,  __FILE__, __LINE__); \
+        exit(2);                                                        \
+    } while (0) 
+
 #define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
 #define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
 

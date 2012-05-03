@@ -26,16 +26,21 @@
 
 #include "../pocl_cl.h"
 
-#if defined(TCE_AVAILABLE)
+/* The number of available devices. */
+extern int pocl_num_devices;
+/* The enabled devices. */
+struct _cl_device_id* pocl_devices;
 
-#define POCL_NUM_DEVICES 2
+/**
+ * Populates the pocl_devices with the wanted device types.
+ *
+ * Should be before accessing the device list. Can be called repeatedly.
+ * The devices are shared across contexts, thus implement resource
+ * management internally also across multiple contexts.
+ */
+void pocl_init_devices();
 
-#else
-
-#define POCL_NUM_DEVICES 1
-
-#endif
-
-extern struct _cl_device_id pocl_devices[POCL_NUM_DEVICES];
+/* the environment variable that lists the enabled devices */
+#define POCL_DEVICES_ENV "POCL_DEVICES"
 
 #endif /* POCL_DEVICES_H */

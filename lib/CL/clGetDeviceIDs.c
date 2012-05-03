@@ -35,13 +35,13 @@ clGetDeviceIDs(cl_platform_id   platform,
   int total_num = 0;
   int devices_added = 0;
   int i;
-
+  pocl_init_devices();
   /* TODO: OpenCL API specification allows implementation dependent
      behaviour if platform == NULL. Should we just allow it? */
   if (platform == NULL || ( platform->magic != 42 ))
     return CL_INVALID_PLATFORM;
 
-  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
+  for (i = 0; i < pocl_num_devices; ++i) {
     if ((pocl_devices[i].type & device_type) &&
         (pocl_devices[i].available == CL_TRUE))
       {

@@ -84,7 +84,7 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   "OpenCL 1.2 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\
-  pocl_pthread_uninit, /* init */                                     \
+  pocl_pthread_uninit, /* uninit */                                     \
   pocl_pthread_init, /* init */                                       \
   pocl_pthread_malloc, /* malloc */					\
   pocl_pthread_free, /* free */						\
