@@ -32,7 +32,7 @@
 
 struct _cl_device_id pocl_devices[POCL_NUM_DEVICES] = {
     POCL_DEVICES_PTHREAD
-#if 0 && defined(TCE_AVAILABLE)
+#if defined(TCE_AVAILABLE)
     ,
     POCL_DEVICES_TTASIM
 #endif

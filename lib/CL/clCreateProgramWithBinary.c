@@ -83,7 +83,7 @@ clCreateProgramWithBinary(cl_context                     context,
 
   program->context = context;
   program->num_devices = num_devices;
-  program->devices = context->devices;
+  program->devices = malloc (sizeof(cl_device_id) * num_devices);
   program->source = NULL;
   program->kernels = NULL;
   /* Create the temporary directory where all kernel files and compilation
@@ -93,6 +93,7 @@ clCreateProgramWithBinary(cl_context                     context,
   pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)
     {
+      program->devices[i] = device_list[i];
       program->binary_sizes[i] = lengths[i];
       memcpy (pos, binaries[i], lengths[i]);
       program->binaries[i] = pos;

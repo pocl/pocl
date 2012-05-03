@@ -32,7 +32,7 @@ GEN_PROTOTYPES (ttasim)
 extern size_t pocl_ttasim_max_work_item_sizes[];
 
 #define POCL_DEVICES_TTASIM {						\
-  CL_DEVICE_TYPE_CPU, /* type */					\
+  CL_DEVICE_TYPE_GPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
@@ -77,10 +77,10 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   CL_EXEC_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
-  "basic", /* name */							\
+  "ttasim", /* name */							\
   "pocl", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
-  "FULL_PROFILE", /* profile */						\
+  "EMBEDDED_PROFILE", /* profile */						\
   "OpenCL 1.2 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\

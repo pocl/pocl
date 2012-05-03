@@ -57,6 +57,8 @@ clCreateBuffer(cl_context context,
   
   for (i = 0; i < context->num_devices; ++i)
     {
+      if (i > 0)
+        clRetainMemObject (mem);
       device_id = context->devices[i];
       device_ptr = device_id->malloc(device_id->data, flags, size, host_ptr);
       if (device_ptr == NULL)
@@ -73,7 +75,7 @@ clCreateBuffer(cl_context context,
       /* The device allocator allocated from a device-host shared memory. */
       if (flags & CL_MEM_ALLOC_HOST_PTR ||
           flags & CL_MEM_USE_HOST_PTR)
-          mem->mem_host_ptr = device_ptr;
+          mem->mem_host_ptr = device_ptr;      
     }
 
   mem->size = size;

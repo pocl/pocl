@@ -26,7 +26,7 @@
 
 #include "../pocl_cl.h"
 
-#if 0 && defined(TCE_AVAILABLE)
+#if defined(TCE_AVAILABLE)
 
 #define POCL_NUM_DEVICES 2
 

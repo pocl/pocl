@@ -154,18 +154,20 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       global_z % local_z != 0)
     return CL_INVALID_WORK_GROUP_SIZE;
 
-  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%lu-%lu-%lu.%lu-%lu-%lu", 
-            kernel->program->temp_dir, kernel->name, 
-            local_x, local_y, local_z, offset_x, offset_y, offset_z);
-  mkdir (tmpdir, S_IRWXU);
-
   if ((event_wait_list == NULL && num_events_in_wait_list > 0) ||
       (event_wait_list != NULL && num_events_in_wait_list == 0))
     return CL_INVALID_EVENT_WAIT_LIST;
 
+  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%s/%lu-%lu-%lu.%lu-%lu-%lu", 
+            kernel->program->temp_dir, command_queue->device->name, 
+            kernel->name, 
+            local_x, local_y, local_z, offset_x, offset_y, offset_z);
+  mkdir (tmpdir, S_IRWXU);
+
   error = snprintf
     (kernel_filename, POCL_FILENAME_LENGTH,
-     "%s/%s/kernel.bc", kernel->program->temp_dir, kernel->name);
+     "%s/%s/%s/kernel.bc", kernel->program->temp_dir, 
+     command_queue->device->name, kernel->name);
 
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
@@ -182,11 +184,9 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       if (kernel_file == NULL)
         return CL_OUT_OF_HOST_MEMORY;
 
-      if (kernel->program->num_devices > 1)
-        POCL_ABORT_UNIMPLEMENTED();
-
       n = fwrite(kernel->program->binaries[0], 1,
-                 kernel->program->binary_sizes[0], kernel_file);
+                 kernel->program->binary_sizes[0], 
+                 kernel_file);
       if (n < kernel->program->binary_sizes[0])
         return CL_OUT_OF_HOST_MEMORY;
   
@@ -252,7 +252,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   pc.global_offset[1] = offset_y;
   pc.global_offset[2] = offset_z;
 
-    command_node->type = CL_COMMAND_TYPE_RUN;
+  command_node->type = CL_COMMAND_TYPE_RUN;
   command_node->command.run.data = command_queue->device->data;
   command_node->command.run.tmp_dir = strdup(tmpdir);
   command_node->command.run.kernel = kernel;
@@ -281,8 +281,9 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
     struct pocl_argument *al = &(kernel->arguments[i]);
     if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i])
       {
-        cl_mem buf = *(cl_mem *) (al->value);
+        cl_mem buf;
         //printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
+        buf = *(cl_mem *) (al->value);
         clRetainMemObject (buf);
         command_node->command.run.arg_buffers[count] = buf;
         ++count;
