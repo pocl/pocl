@@ -9,11 +9,13 @@ High priority:
     * make the book examples at 
       https://code.google.com/p/opencl-book-samples
       to work (1.0)   
-    * vectorize workgroups
+    * stabilize and optimize the WG vectorization so
+      it can be enabled by default for targets with
+      SIMD instructions
 
 Medium priority:
-    * complete kernel runtime library.   
-    * complete host runtime library.
+    * complete the kernel runtime library.   
+    * complete the host runtime library.
     * create workgroups by looping instead of fully unrolling for
       flexible WG parallelization (1.0)
     * ttasim target (heterogeneous TCE scenario).

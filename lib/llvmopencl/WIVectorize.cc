@@ -1,5 +1,9 @@
 //===- WIVectorize.cpp - A Work Item Vectorizer -------------------------===//
 //
+// This code has been adapted from BBVectorize of the LLVM project.
+// The original file comment:
+//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -7,13 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 //
+//
 // This file implements a basic-block vectorization pass. The algorithm was
 // inspired by that used by the Vienna MAP Vectorizor by Franchetti and Kral,
 // et al. It works by looking for chains of pairable operations and then
 // pairing them.
+//
+//===----------------------------------------------------------------------===//
+// 
+// WIVectorize:
+// 
 // Additional options are provided to vectorize only candidate from differnt
 // work items according to metadata provided by 'pocl' frontend 
 // (launchpad.net/pocl). 
+//
 // Additional option is also available to vectorize loads and stores only.
 // Still work in progress by vladimir guzma [at] tut fi.
 //

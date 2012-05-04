@@ -43,3 +43,8 @@ POCL_MAX_PTHREAD_COUNT
 The maximum number of threads created for work group execution in the
 pthread device driver. The default is to determine this from the number of
 hardware threads available in the CPU.
+
+POCL_VECTORIZE_WORK_GROUPS
+
+If set to 1, uses the (experimental) work group vectorizer that builds 
+vector instructions from multiple work items.
