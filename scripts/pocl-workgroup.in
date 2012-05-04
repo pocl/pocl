@@ -84,6 +84,5 @@ fi
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -workitem -workgroup \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem -workgroup \
     -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -header=${header} -o ${output_file} ${linked_bc}
-

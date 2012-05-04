@@ -98,7 +98,7 @@ then
 fi
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -workitem \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
     -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
 
 rm -fr ${tempdir}
