@@ -39,6 +39,6 @@ llvmopencl_la_SOURCES = Barrier.h						\
                         Flatten.cc IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc
+						WorkItemAliasAnalysis.cc WIVectorize.cc
 
 #llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

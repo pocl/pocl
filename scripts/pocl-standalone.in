@@ -100,5 +100,5 @@ fi
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
     -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
-
+#    -workgroup -local-size=1 1 1 -O3 -wi-vectorize -instcombine -header=/dev/null -o ${output_file} ${linked_bc}
 rm -fr ${tempdir}
