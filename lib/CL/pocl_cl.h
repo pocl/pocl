@@ -73,11 +73,11 @@
 
 #define POCL_ABORT(__MSG__)                                      \
     do {                                                                \
-        fprintf(stderr, __MSG__,  __FILE__, __LINE__); \
+        fprintf(stderr, __MSG__); \
         exit(2);                                                        \
     } while (0) 
 
-#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); } return NULL; } while (0)
 #define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
 
 typedef pthread_mutex_t pocl_lock_t;
@@ -172,7 +172,7 @@ struct _cl_device_id {
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
-  char *name;
+  char *name; 
   char *vendor;
   char *driver_version;
   char *profile;
@@ -180,7 +180,7 @@ struct _cl_device_id {
   char *extensions;
   /* implementation */
   void (*uninit) (cl_device_id device);
-  void (*init) (cl_device_id device);
+  void (*init) (cl_device_id device, const char *parameters);
   void *(*malloc) (void *data, cl_mem_flags flags,
 		   size_t size, void *host_ptr);
   void (*free) (void *data, cl_mem_flags flags, void *ptr);
@@ -222,6 +222,8 @@ struct _cl_device_id {
 	       cl_kernel kernel,
 	       struct pocl_context *pc);
   void *data;
+  const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
+  const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
 };
 
 struct _cl_platform_id {

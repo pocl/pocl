@@ -87,5 +87,11 @@ libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -
 # 0:0.0        The (unreleased) first alpha release.
 libOpenCL_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 
+if TCE_AVAILABLE
+# The ttasim device is written in C++ as it accesses the ttasim library of TCE
+# directly.
+libOpenCL_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
+endif
+
 libOpenCL_la_LIBADD = devices/libOpenCL-devices.la 
 

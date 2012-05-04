@@ -37,6 +37,10 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_CXX
 
+
+# The extra LDFLAGS that must be given to link final binaries against pocl
+LD_FLAGS_BIN=""
+
 AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
@@ -68,6 +72,8 @@ AC_ARG_ENABLE([region-allocator],
 
 #AC_LANG([C++])
 ACX_PTHREAD()
+
+LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
 # Checks for libraries.
 #old_LDFLAGS="$LDFLAGS"
@@ -135,7 +141,7 @@ else
 AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
 AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
 AC_SUBST([TCE_AVAILABLE], ["1"])
-
+LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
 fi
 
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
@@ -342,6 +348,7 @@ CFLAGS="$old_CFLAGS"
 
 # The libtool library version string to use (passed to --version-info).
 AC_SUBST([LIB_VERSION], ["0:0:0"])
+AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc

@@ -1,6 +1,7 @@
 /* Definition of available OpenCL devices.
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Universidad Rey Juan Carlos and
+                 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -93,15 +94,23 @@ pocl_init_devices()
       struct _cl_device_id* device_type = NULL;
 
       for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
-      {
-        if (strcmp(pocl_device_types[i].name, token) == 0)
-          {
-            device_type = &pocl_device_types[i];
-            memcpy (&pocl_devices[devcount], device_type, sizeof(struct _cl_device_id));
-            pocl_devices[devcount].init(&pocl_devices[devcount]);
-            devcount++;
-          }
-      }
+        {
+          if (strcmp(pocl_device_types[i].name, token) == 0)
+            {
+              /* Check if there are device-specific parameters set in the
+                 POCL_DEVICEn_PARAMETERS env. */
+              char env_name[1024];
+              
+              if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", devcount) < 0)
+                POCL_ABORT("Unable to generate the env string.");
+
+              device_type = &pocl_device_types[i];
+              memcpy (&pocl_devices[devcount], device_type, sizeof(struct _cl_device_id));
+              pocl_devices[devcount].init(&pocl_devices[devcount], getenv(env_name));
+              devcount++;
+              break;
+            }
+        }
       if (device_type == NULL)
         POCL_ABORT("device type not found\n");
       ptr = NULL;

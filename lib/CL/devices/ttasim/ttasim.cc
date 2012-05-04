@@ -22,10 +22,28 @@
 */
 
 #include "ttasim.h"
+#include "bufalloc.h"
+
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string>
+
+/* Supress some warnings because of including tce_config.h after pocl's config.h. */
+#undef PACKAGE
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+#undef VERSION
+
+#include <SimpleSimulatorFrontend.hh>
+#include <Machine.hh>
+#include <MemorySystem.hh>
+
+using namespace TTAMachine;
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -39,21 +57,90 @@ struct data {
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
+  /* The ttasim engine handle. */
+  SimpleSimulatorFrontend *simulator;
+  /* The bufalloc memory regions for memory allocation book keeping. */
+  struct memory_region local_mem;
+  struct memory_region global_mem;
+  
+  AddressSpace *local_as;
+  AddressSpace *global_as;
+  char* machine_file;
 };
 
 size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
-pocl_ttasim_init (cl_device_id device)
+pocl_ttasim_init (cl_device_id device, const char* parameters)
 {
+  static int device_count = 0;
+  char dev_name[256];
   struct data *d;
   
+  if (parameters == NULL)
+    POCL_ABORT("The ttasim device requires the adf file as a device parameter.\n"
+               "Set it with POCL_DEVICEn_PARAMETERS=\"path/to/themachine.adf\".\n");
+
   d = (struct data *) malloc (sizeof (struct data));
   
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
 
   device->data = d;
+
+  if (device_count > 0)
+    {
+      if (snprintf (dev_name, 256, "ttasim%d", device_count) < 0)
+        POCL_ABORT("Unable to generate the device name string.");
+      device->name = strdup(dev_name);  
+    }
+  ++device_count;
+
+  SimpleSimulatorFrontend *simFront = 
+    new SimpleSimulatorFrontend(parameters);  
+  d->simulator = simFront;
+  /* TODO:
+     d->simulator->setZeroFillMemoriesOnReset(false);
+  */
+  d->machine_file = strdup(parameters);
+
+  /* Create the memory allocation book keeping structures based on
+     the machine's address spaces (see tta.txt). */
+  const Machine& mach = simFront->machine();
+  AddressSpace *local = NULL, *global = NULL;
+  Machine::AddressSpaceNavigator nav = mach.addressSpaceNavigator();
+  for (int i = 0; i < nav.count(); ++i) 
+    {
+      AddressSpace *as = nav.item(i);
+      if (as->hasNumericalId(TTA_ASID_PRIVATE) &&
+          as->hasNumericalId(TTA_ASID_LOCAL))
+        {
+          d->local_as = as;
+          continue;
+        } 
+      if (as->hasNumericalId(TTA_ASID_GLOBAL) &&
+          as->hasNumericalId(TTA_ASID_CONSTANT))
+        {
+          d->global_as = as;
+        }
+    }
+  if (d->local_as == NULL) 
+    POCL_ABORT("local address space not found in the ADF. Mark it by adding numerical ids 0 and 4 to the AS.\n");
+  if (d->global_as == NULL) 
+    POCL_ABORT("global address space not found in the ADF. Mark it by adding numerical ids 3 and 5 to the AS.\n");
+
+  int local_size = 
+    d->local_as->end() - d->local_as->start() - TTA_UNALLOCATED_LOCAL_SPACE;
+  if (local_size < 0)
+    POCL_ABORT("Not enough space in the local memory with the assumed unallocated space.\n");
+
+  device->local_mem_size = local_size;
+  device->global_mem_size = d->global_as->end() - d->local_as->start();
+
+  init_mem_region 
+    (&d->local_mem, (memory_address_t)d->local_as->start(), device->local_mem_size);
+  init_mem_region 
+    (&d->global_mem, (memory_address_t)d->global_as->start(), device->global_mem_size);
 }
 
 void *
@@ -63,40 +150,34 @@ pocl_ttasim_malloc (void *device_data, cl_mem_flags flags,
   void *b;
   struct data* d = (struct data*)device_data;
 
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      if (posix_memalign (&b, ALIGNMENT, size) == 0)
-        {
-          memcpy (b, host_ptr, size);
-          return b;
-        }
-      
-      return NULL;
-    }
-  
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
-    {
-      return host_ptr;
-    }
+  chunk_info_t *chunk = alloc_buffer (&d->global_mem, size);
+  if (chunk == NULL) return NULL;
 
-  if (posix_memalign (&b, ALIGNMENT, size) == 0)
-    return b;
-  
-  return NULL;
+  if ((flags & CL_MEM_COPY_HOST_PTR) ||  
+      ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL))
+    {
+      /* TODO: 
+         CL_MEM_USE_HOST_PTR must synch the buffer after execution 
+         back to the host's memory in case it's used as an output. */
+      pocl_ttasim_copy_h2d (d, host_ptr, chunk, size);
+      return (void*) chunk;
+    }
+  return (void*) chunk;
 }
 
 void
 pocl_ttasim_free (void *data, cl_mem_flags flags, void *ptr)
 {
   if (flags & CL_MEM_USE_HOST_PTR)
-    return;
-  
-  free (ptr);
+    POCL_ABORT_UNIMPLEMENTED();
+
+  free_chunk ((chunk_info_t*) ptr);
 }
 
 void
 pocl_ttasim_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 {
+  POCL_ABORT_UNIMPLEMENTED();
   if (host_ptr == device_ptr)
     return;
 
@@ -106,6 +187,7 @@ pocl_ttasim_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 void
 pocl_ttasim_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 {
+  POCL_ABORT_UNIMPLEMENTED();
   if (host_ptr == device_ptr)
     return;
 
@@ -134,12 +216,10 @@ pocl_ttasim_run
   assert (data != NULL);
   d = (struct data *) data;
 
-  error = snprintf 
-    (module, POCL_FILENAME_LENGTH,
-     "%s/parallel.so", tmpdir);
-  assert (error >= 0);
+  std::string assemblyFileName(tmpdir);
+  assemblyFileName += "/parallel.tpef";
 
-  if ( access (module, F_OK) != 0)
+  if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/linked.bc", tmpdir);
@@ -153,126 +233,44 @@ pocl_ttasim_run
       error = system(command);
       assert (error == 0);
       
-      error = snprintf (assembly, POCL_FILENAME_LENGTH,
-			"%s/parallel.s",
-			tmpdir);
-      assert (error >= 0);
-      
-      // "-relocation-model=dynamic-no-pic" is a magic string,
-      // I do not know why it has to be there to produce valid
-      // sos on x86_64
-      error = snprintf (command, COMMAND_LENGTH,
-			LLC " " HOST_LLC_FLAGS " -o %s %s",
-			assembly,
-			bytecode);
-      assert (error >= 0);
-      
-      error = system (command);
-      assert (error == 0);
-           
-      error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -c -o %s.o %s",
-			module,
-			assembly);
-      assert (error >= 0);
-      
-      error = system (command);
-      assert (error == 0);
+      std::string deviceMainSrc = "";
 
-      error = snprintf (command, COMMAND_LENGTH,
-                       "ld " HOST_LD_FLAGS " -o %s %s.o",
-                       module,
-                       module);
-      assert (error >= 0);
-
-      error = system (command);
-      assert (error == 0);
-    }
-      
-  d->current_dlhandle = lt_dlopen (module);
-  if (d->current_dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
-      abort();
-    }
-
-  d->current_kernel = kernel;
-
-  /* Find which device number within the context correspond
-     to current device.  */
-  for (i = 0; i < kernel->context->num_devices; ++i)
-    {
-      if (kernel->context->devices[i]->data == data)
-	{
-	  device = i;
-	  break;
-	}
-    }
-
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_%s_workgroup", kernel->function_name);
-  
-  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
-  assert (w != NULL);
-
-  void *arguments[kernel->num_args + kernel->num_locals];
-
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      p = &(kernel->arguments[i]);
-      if (kernel->arg_is_local[i])
-        {
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_ttasim_malloc(data, 0, p->size, NULL);
-        }
-      else if (kernel->arg_is_pointer[i])
-        {
-          arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
-        }
+      if (access (BUILDDIR "/lib/CL/devices/ttasim/tta_device_main.c", R_OK) == 0)
+        deviceMainSrc = BUILDDIR "/lib/CL/devices/ttasim/tta_device_main.c";
       else
-        {
-          arguments[i] = p->value;
-        }
-    }
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
-    {
-      p = &(kernel->arguments[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_ttasim_malloc(data, 0, p->size, NULL);
+        POCL_ABORT_UNIMPLEMENTED();
+     
+      /* TODO: add the launcher code + main */
+      /* At this point the kernel has been fully linked. */
+      std::string buildCmd = 
+        "tcecc " + deviceMainSrc + " " + bytecode + " -a " + d->machine_file + 
+        " -O3 -o " + assemblyFileName;
+      error = system(buildCmd.c_str());
+      if (error != 0)
+        POCL_ABORT("Error while running tcecc.");
     }
 
-  for (z = 0; z < pc->num_groups[2]; ++z)
-    {
-      for (y = 0; y < pc->num_groups[1]; ++y)
-        {
-          for (x = 0; x < pc->num_groups[0]; ++x)
-            {
-              pc->group_id[0] = x;
-              pc->group_id[1] = y;
-              pc->group_id[2] = z;
+  /* Load the binary assembly (TPEF) to the simulator. */
+  d->simulator->loadProgram(assemblyFileName);
+  d->simulator->run();
+}
 
-              w (arguments, pc);
-
-            }
-        }
-    }
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      if (kernel->arg_is_local[i])
-        pocl_ttasim_free(data, 0, *(void **)(arguments[i]));
-    }
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
-    pocl_ttasim_free(data, 0, *(void **)(arguments[i]));
+/* Copy data between the host memory and the global memory of the device. */
+void 
+pocl_ttasim_copy_h2d (void *device_data, const void *src_ptr, chunk_info_t *dest, size_t count)  
+{
+  /* Find the simulation model for the global address space. */
+  struct data *d = (struct data*)device_data;
+  MemorySystem &mems = d->simulator->memorySystem();
+  Memory& globalMem = mems.memory (*d->global_as);
+  for (int i = 0; i < count; ++i)
+    globalMem.write (dest->start_address + i, ((Memory::MAU*)src_ptr)[i]);
 }
 
 void
 pocl_ttasim_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
+  POCL_ABORT_UNIMPLEMENTED();
   if (src_ptr == dst_ptr)
     return;
   
@@ -299,6 +297,8 @@ pocl_ttasim_copy_rect (void *data,
     dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
   
   size_t j, k;
+
+  POCL_ABORT_UNIMPLEMENTED();
 
   /* TODO: handle overlaping regions */
   
@@ -331,6 +331,7 @@ pocl_ttasim_write_rect (void *data,
   size_t j, k;
 
   /* TODO: handle overlaping regions */
+  POCL_ABORT_UNIMPLEMENTED();
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
@@ -361,6 +362,7 @@ pocl_ttasim_read_rect (void *data,
   size_t j, k;
   
   /* TODO: handle overlaping regions */
+  POCL_ABORT_UNIMPLEMENTED();
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
@@ -374,6 +376,8 @@ void *
 pocl_ttasim_map_mem (void *data, void *buf_ptr, 
                     size_t offset, size_t size) 
 {
+  POCL_ABORT_UNIMPLEMENTED();
+
   /* All global pointers of the pthread/CPU device are in 
      the host address space already, and up to date. */     
   return buf_ptr + offset;

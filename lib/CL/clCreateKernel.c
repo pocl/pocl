@@ -48,12 +48,11 @@ clCreateKernel(cl_program program,
   int i;
   int device_i;
   
-  if (program == NULL)
+  if (program == NULL || program->num_devices == 0)
     POCL_ERROR(CL_INVALID_PROGRAM);
 
   if (program->binaries == NULL || program->binary_sizes == NULL)
     POCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
-
 
   kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
@@ -121,6 +120,9 @@ clCreateKernel(cl_program program,
 
       if (dlhandle == NULL)
         {
+          if (access (descriptor_filename, R_OK) != 0)
+            POCL_ABORT("The kernel descriptor.so is not found.");
+        
           dlhandle = lt_dlopen(descriptor_filename);
           if (dlhandle == NULL) 
             {

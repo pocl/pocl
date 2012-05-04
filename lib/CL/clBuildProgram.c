@@ -48,6 +48,7 @@ clBuildProgram(cl_program program,
   int device_i;
   unsigned real_num_devices;
   cl_device_id *real_device_list;
+  char *pocl_build_script;
 
   if (program == NULL)
     return CL_INVALID_PROGRAM;
@@ -114,14 +115,25 @@ clBuildProgram(cl_program program,
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          /* TODO: compile with the correct device lib */
           if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
-            error = snprintf(command, COMMAND_LENGTH,
-                             BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
-                             binary_file_name, source_file_name);
+            pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
           else
-            error = snprintf(command, COMMAND_LENGTH, POCL_BUILD " -o %s %s",
-                             binary_file_name, source_file_name);
+            pocl_build_script = POCL_BUILD;
+
+          if (real_device_list[device_i]->llvm_target_triplet != NULL)
+            {
+              error = snprintf(command, COMMAND_LENGTH,
+                               BUILDDIR "/scripts/" POCL_BUILD " -t %s -o %s %s",
+                               real_device_list[device_i]->llvm_target_triplet,                               
+                               binary_file_name, source_file_name);
+            }
+          else 
+            {
+              error = snprintf(command, COMMAND_LENGTH,
+                               BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
+                               binary_file_name, source_file_name);
+            }
+          
           if (error < 0)
             return CL_OUT_OF_HOST_MEMORY;
 

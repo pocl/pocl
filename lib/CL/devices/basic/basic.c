@@ -45,7 +45,7 @@ struct data {
 size_t pocl_basic_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
-pocl_basic_init (cl_device_id device)
+pocl_basic_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
   

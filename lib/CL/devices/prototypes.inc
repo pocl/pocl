@@ -23,7 +23,7 @@
 
 #define GEN_PROTOTYPES(__DRV__)                                         \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
-  void pocl_##__DRV__##_init (cl_device_id device);                         \
+  void pocl_##__DRV__##_init (cl_device_id device, const char* parameters); \
   void *pocl_##__DRV__##_malloc (void *data, cl_mem_flags flags,            \
                              size_t size, void *host_ptr);              \
   void pocl_##__DRV__##_free (void *data, cl_mem_flags flags, void *ptr);   \

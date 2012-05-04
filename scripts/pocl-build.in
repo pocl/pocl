@@ -28,19 +28,21 @@ do
     case "$o" in
 	t)   target="$OPTARG";;
 	o)   output_file="$OPTARG";;
-	[?]) echo >&2 "Usage: $0 [-t <target_arch>] -o output input" && exit 1;;
+	[?]) echo >&2 "Usage: $0 [-t <llvm_target_triplet>] -o output input" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
 if [ "x$output_file" = x ]
 then
-    echo >&2 "Usage: $0 [-t <target_arch>] -o output input" && exit 1
+    echo >&2 "Usage: $0 [-t <llvm_target_triplet>] -o output input" && exit 1
 fi
 
+target_dir=${target}
 case $target in
   @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@" ;;
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
+  tce-*)    target_dir="tce"
 esac
 
 CLANG_FLAGS="$CLANG_FLAGS -ccc-host-triple $target"
@@ -49,9 +51,9 @@ preprocessed_file=${output_file}.i
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 else
-    @CLANG@ ${CLANGFLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl$1
+    @CLANG@ ${CLANGFLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
 fi
 
 substituted_file=${preprocessed_file}.cl
@@ -62,3 +64,4 @@ sed 's/__pocl_constant/__attribute__ ((address_space(5)))/g'							\
 > ${substituted_file}
 
 @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${substituted_file}
+

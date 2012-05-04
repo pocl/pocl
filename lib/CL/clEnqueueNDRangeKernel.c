@@ -60,6 +60,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   int error;
   struct pocl_context pc;
   _cl_command_node *command_node;
+  char *pocl_wg_script;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -205,18 +206,34 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
 
   if (access (parallel_filename, F_OK) != 0) 
     {
+
       if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
-        error = snprintf(command, COMMAND_LENGTH,
-                         BUILDDIR "/scripts/" POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
-                         kernel->function_name,
-                         local_x, local_y, local_z,
-                         parallel_filename, kernel_filename);
+        pocl_wg_script = BUILDDIR "/scripts/" POCL_WORKGROUP;
       else
-        error = snprintf(command, COMMAND_LENGTH,
-                         POCL_WORKGROUP " -k %s -x %zu -y %zu -z %zu -o %s %s",
-                         kernel->function_name,
-                         local_x, local_y, local_z,
-                         parallel_filename, kernel_filename);
+        pocl_wg_script = POCL_WORKGROUP;
+
+      if (command_queue->device->llvm_target_triplet != NULL) 
+        {
+          error = snprintf
+            (command, COMMAND_LENGTH,
+             "%s -k %s -x %zu -y %zu -z %zu -t %s -o %s %s",
+             pocl_wg_script,
+             kernel->function_name,
+             local_x, local_y, local_z,
+             command_queue->device->llvm_target_triplet,
+             parallel_filename, kernel_filename);
+        }
+      else
+        {
+          error = snprintf
+            (command, COMMAND_LENGTH,
+             "%s -k %s -x %zu -y %zu -z %zu -o %s %s",
+             pocl_wg_script,
+             kernel->function_name,
+             local_x, local_y, local_z,
+             parallel_filename, kernel_filename);
+        }
+
       if (error < 0)
         return CL_OUT_OF_HOST_MEMORY;
 

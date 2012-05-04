@@ -24,8 +24,11 @@
 
 noinst_LTLIBRARIES = libOpenCL-devices-ttasim.la
 
-libOpenCL_devices_ttasim_la_SOURCES = ttasim.h ttasim.c
+libOpenCL_devices_ttasim_la_SOURCES = ttasim.h ttasim.cc
+libOpenCL_devices_ttasim_ladir = ${datadir}
+libOpenCL_devices_ttasim_la_DATA = tta_device_main.c
 
-libOpenCL_devices_ttasim_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL -U__APPLE__
+libOpenCL_devices_ttasim_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices \
+-I$(top_srcdir)/lib/CL -U__APPLE__
 libOpenCL_devices_ttasim_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 

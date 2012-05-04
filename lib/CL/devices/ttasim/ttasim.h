@@ -25,8 +25,14 @@
 #define POCL_TTASIM_H
 
 #include "pocl_cl.h"
+#include "bufalloc.h"
 
 #include "prototypes.inc"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 GEN_PROTOTYPES (ttasim)
 
 extern size_t pocl_ttasim_max_work_item_sizes[];
@@ -78,7 +84,7 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   "ttasim", /* name */							\
-  "pocl", /* vendor */							\
+  "TTA-Based Co-design Environment", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
   "EMBEDDED_PROFILE", /* profile */						\
   "OpenCL 1.2 pocl", /* version */					\
@@ -97,7 +103,23 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   pocl_ttasim_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_ttasim_run, /* run */                         \
-  NULL /* data */							\
+  NULL, /* data */                               \
+  "tce", /* kernel_lib_target (forced kernel library dir) */    \
+  "tce-tut-llvm" /* llvm_target_triplet */ \
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+/* The address space ids in the ADFs. */
+#define TTA_ASID_PRIVATE  0
+#define TTA_ASID_GLOBAL   3
+#define TTA_ASID_LOCAL    4
+#define TTA_ASID_CONSTANT 5
+
+#define TTA_UNALLOCATED_LOCAL_SPACE (16*1024)
+
+void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, chunk_info_t *dest, size_t count);
 
 #endif /* POCL_TTASIM_H */

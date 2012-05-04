@@ -96,7 +96,7 @@ static void * workgroup_thread (void *p);
 size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
-pocl_pthread_init (cl_device_id device)
+pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
 
@@ -503,7 +503,7 @@ pocl_pthread_run
      "%s/parallel.so", tmpdir);
   assert (error >= 0);
 
-  if ( access (module, F_OK) != 0)
+  if (access (module, F_OK) != 0)
     {
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/linked.bc", tmpdir);
