@@ -30,7 +30,7 @@
 /* The number of available devices. */
 extern int pocl_num_devices;
 /* The enabled devices. */
-struct _cl_device_id* pocl_devices;
+extern struct _cl_device_id* pocl_devices;
 
 /**
  * Populates the pocl_devices with the wanted device types.
