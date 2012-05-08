@@ -24,6 +24,12 @@
 #ifndef POCL_UTIL_H
 #define POCL_UTIL_H
 
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Create a temporary directory that is cleaned atexit.
  *
  * The returned path name is a string that will be alive
@@ -31,5 +37,11 @@
  */
 char *pocl_create_temp_dir();
 void remove_directory (const char *path_name);
+
+uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

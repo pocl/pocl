@@ -26,20 +26,12 @@
 
 #include <CL/opencl.h>
 
+#include "pocl_device.h"
+
 #define POCL_ADDRESS_SPACE_PRIVATE 0
 #define POCL_ADDRESS_SPACE_GLOBAL 3
 #define POCL_ADDRESS_SPACE_LOCAL 4
 #define POCL_ADDRESS_SPACE_CONSTANT 5
-
-struct pocl_context {
-  cl_uint work_dim;
-  size_t num_groups[3];
-  size_t group_id[3];
-  size_t global_offset[3];
-};
-
-typedef void (*pocl_workgroup) (void **, struct pocl_context *);
-
 
 // Command Queue datatypes
 

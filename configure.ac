@@ -276,6 +276,7 @@ AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
 AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
+AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
 
 # Checks for libraries.
 
@@ -387,6 +388,8 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/early-return/Makefile
                  tests/regression/id-dependent-computation/Makefile
                  tests/regression/structs-as-args/Makefile
+                 tests/tce/Makefile
+                 tests/tce/ttasim/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile

@@ -22,7 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = regression
+SUBDIRS = regression 
+if TCE_AVAILABLE
+SUBDIRS += tce
+endif
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac

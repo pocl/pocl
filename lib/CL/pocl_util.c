@@ -30,7 +30,8 @@
 
 #define TEMP_DIR_PATH_CHARS 16
 
-void remove_directory (const char *path_name) 
+void 
+remove_directory (const char *path_name) 
 {
   int str_size = 8 + strlen(path_name) + 1;
   char *cmd = (char*)malloc(str_size);
@@ -39,12 +40,31 @@ void remove_directory (const char *path_name)
   free (cmd);
 }
 
-char *pocl_create_temp_dir() 
+char*
+pocl_create_temp_dir() 
 {  
   struct temp_dir *td; 
-  char *path_name = (struct temp_dir*)malloc (TEMP_DIR_PATH_CHARS);
+  char *path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
   assert (path_name != NULL);
   strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
   mkdtemp (path_name);  
   return path_name;
+}
+
+uint32_t
+byteswap_uint32_t (uint32_t word, char should_swap) 
+{
+    union word_union 
+    {
+        uint32_t full_word;
+        unsigned char bytes[4];
+    } old, neww;
+    if (!should_swap) return word;
+
+    old.full_word = word;
+    neww.bytes[0] = old.bytes[3];
+    neww.bytes[1] = old.bytes[2];
+    neww.bytes[2] = old.bytes[1];
+    neww.bytes[3] = old.bytes[0];
+    return neww.full_word;
 }

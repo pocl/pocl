@@ -224,6 +224,9 @@ struct _cl_device_id {
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
+  /* A running number (starting from zero) across all the device instances. Used for 
+     indexing  arrays in data structures with device specific entries. */
+  int dev_id;
 };
 
 struct _cl_platform_id {

@@ -77,7 +77,7 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_FALSE, /* endian_little */						\
+  CL_TRUE, /* endian_little */						\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\
@@ -105,7 +105,8 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   pocl_ttasim_run, /* run */                         \
   NULL, /* data */                               \
   "tce", /* kernel_lib_target (forced kernel library dir) */    \
-  "tce-tut-llvm" /* llvm_target_triplet */ \
+  "tce-tut-llvm", /* llvm_target_triplet */               \
+  0 /* dev_id */ \
 }
 
 #ifdef __cplusplus
@@ -120,6 +121,6 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
 
 #define TTA_UNALLOCATED_LOCAL_SPACE (16*1024)
 
-void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, chunk_info_t *dest, size_t count);
+void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, uint32_t dest_addr, size_t count);
 
 #endif /* POCL_TTASIM_H */
