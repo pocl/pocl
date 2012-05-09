@@ -46,9 +46,8 @@ make clean release OPENCL_INC=${abs_top_srcdir}/include \
 OPENCL_LIB="${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lOpenCL -lpthread" \
 -sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/cfd 2>&1 | egrep -v "^make|euler3d.cpp:" | grep . ], 1,
 [])
-AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/cfd; ./run | grep .], 0,
-[--cambine: device name=pthread
---cambine: nel=97046, nelr=97152
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/cfd; ./run | grep . | grep -v "device name"], 0,
+[--cambine: nel=97046, nelr=97152
 Starting...
 Saving solution...
 Saved solution...
@@ -101,7 +100,13 @@ AT_CLEANUP
 
 AT_SETUP([lavaMD])
 AT_KEYWORDS([rodinia lavaMD])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+#AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+# This test case uses struct kernel arguments which current do not
+# work correctly due to assuming the ABI maps variables 1:1 to kernel
+# arguments and at least AMD64 seems to sometimes split the struct
+# arguments to multiple scalar arguments. This (falsely) passes with
+# the pthread device and crashes with the basic device.
+AT_SKIP_IF([true])
 AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD/kernel/kernel_gpu_opencl_wrapper.c; \
 rm -f ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/lavaMD/lavaMD; \
 make OPENCL_INC=${abs_top_srcdir}/include OCL_LIB="-L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpthread -lOpenCL" \

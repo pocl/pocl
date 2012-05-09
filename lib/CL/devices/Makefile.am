@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/llvmopencl.
+# Makefile.am for pocl/lib/devices.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,23 +22,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkglib_LTLIBRARIES = llvmopencl.la
+SUBDIRS = pthread basic
 
-AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
-AM_CXXFLAGS = `@LLVM_CONFIG@ --cxxflags`
-AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
+noinst_LTLIBRARIES = libOpenCL-devices.la
 
-llvmopencl_la_SOURCES = Barrier.h						\
-                        BarrierBlock.h BarrierBlock.cc				\
-                        Kernel.h Kernel.cc					\
-                        ParallelRegion.h ParallelRegion.cc			\
-                        CanonicalizeBarriers.h CanonicalizeBarriers.cc		\
-                        LoopBarriers.h LoopBarriers.cc				\
-                        GenerateHeader.cc Workgroup.cc				\
-						BarrierTailReplication.h BarrierTailReplication.cc	\
-                        Flatten.cc IsolateRegions.cc \
-						WorkitemReplication.h WorkitemReplication.cc \
-						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc WIVectorize.cc
+libOpenCL_devices_la_SOURCES = devices.h devices.c bufalloc.c bufalloc.h
+libOpenCL_devices_la_LIBADD = pthread/libOpenCL-devices-pthread.la \
+	basic/libOpenCL-devices-basic.la
 
-#llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@
+libOpenCL_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
+-I$(top_srcdir)/lib/CL/devices \
+-I$(top_srcdir)/lib/CL \
+-U__APPLE__
+
+if TCE_AVAILABLE
+SUBDIRS += ttasim
+libOpenCL_devices_la_LIBADD += ttasim/libOpenCL-devices-ttasim.la
+endif
+

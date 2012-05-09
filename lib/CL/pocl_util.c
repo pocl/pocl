@@ -1,7 +1,6 @@
-/* devices.h - OpenCL device type definition.
+/* OpenCL runtime library: pocl_util utility functions
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2011-2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +21,30 @@
    THE SOFTWARE.
 */
 
-#ifndef POCL_DEVICES_H
-#define POCL_DEVICES_H
+#include <stdlib.h>
+#include <string.h>
 
-#include "../pocl_cl.h"
+#include "pocl_util.h"
+#include "pocl_cl.h"
+#include "utlist.h"
 
-/* The number of available devices. */
-extern int pocl_num_devices;
-/* The enabled devices. */
-struct _cl_device_id* pocl_devices;
+#define TEMP_DIR_PATH_CHARS 16
 
-/**
- * Populates the pocl_devices with the wanted device types.
- *
- * Should be before accessing the device list. Can be called repeatedly.
- * The devices are shared across contexts, thus implement resource
- * management internally also across multiple contexts.
- */
-void pocl_init_devices();
+void remove_directory (const char *path_name) 
+{
+  int str_size = 8 + strlen(path_name) + 1;
+  char *cmd = (char*)malloc(str_size);
+  snprintf (cmd, str_size, "rm -fr %s", path_name);
+  system (cmd);
+  free (cmd);
+}
 
-/* the environment variable that lists the enabled devices */
-#define POCL_DEVICES_ENV "POCL_DEVICES"
-
-#endif /* POCL_DEVICES_H */
+char *pocl_create_temp_dir() 
+{  
+  struct temp_dir *td; 
+  char *path_name = (struct temp_dir*)malloc (TEMP_DIR_PATH_CHARS);
+  assert (path_name != NULL);
+  strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+  mkdtemp (path_name);  
+  return path_name;
+}

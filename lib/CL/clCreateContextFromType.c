@@ -37,6 +37,7 @@ clCreateContextFromType(const cl_context_properties *properties,
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
+  pocl_init_devices();
 
   cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
@@ -45,7 +46,7 @@ clCreateContextFromType(const cl_context_properties *properties,
   POCL_INIT_OBJECT(context);
 
   num_devices = 0;
-  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
+  for (i = 0; i < pocl_num_devices; ++i) {
     if ((pocl_devices[i].type & device_type) &&
         (pocl_devices[i].available == CL_TRUE))
       ++num_devices;
@@ -58,11 +59,10 @@ clCreateContextFromType(const cl_context_properties *properties,
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
   
   j = 0;
-  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
+  for (i = 0; i < pocl_num_devices; ++i) {
     if ((pocl_devices[i].type & device_type) &&
 	(pocl_devices[i].available == CL_TRUE)) {
       context->devices[j] = &pocl_devices[i];
-      context->devices[j]->init(context->devices[j]);
       ++j;
     }
   }   

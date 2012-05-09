@@ -37,6 +37,10 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_CXX
 
+
+# The extra LDFLAGS that must be given to link final binaries against pocl
+LD_FLAGS_BIN=""
+
 AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
@@ -44,13 +48,12 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_UNSTABLE="no"
 
 case "$LLVM_VERSION" in
-     3.0*)
-     AC_DEFINE([LLVM_3_0], [], "Using LLVM 3.0")
-     LLVM_UNSTABLE="yes"
+     3.1*)
+     AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
    ;;
-     *svn)
-     AC_DEFINE([LLVM_3_1], [], "Using LLVM svn (upcoming 3.1)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.1)")     
+     3.2svn)
+     AC_DEFINE([LLVM_3_2], [], "Using LLVM svn (upcoming 3.2)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.2)")     
    ;;   
      *)
    AC_MSG_NOTICE(
@@ -69,6 +72,8 @@ AC_ARG_ENABLE([region-allocator],
 
 #AC_LANG([C++])
 ACX_PTHREAD()
+
+LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
 # Checks for libraries.
 #old_LDFLAGS="$LDFLAGS"
@@ -99,6 +104,47 @@ ACX_PTHREAD()
 
 # Checks for library functions.
 #AC_FUNC_MALLOC
+
+# look for the TCE library (needed for the ttasim device driver)
+
+AC_PATH_PROG([TCE_CONFIG], [tce-config])
+
+if test ! -z "$TCE_CONFIG"; then
+
+AC_PATH_PROG([TCECC], [tcecc])
+
+AC_LANG([C++])
+
+AC_LANG_CONFTEST(
+[AC_LANG_PROGRAM(
+  [[#include <Application.hh>]],
+  [Application::initialize()])
+])
+
+  if $CXX `$TCE_CONFIG --libs --cxxflags --includes` conftest.cpp -o /dev/null;
+  then
+        TCE_LIBRARY=ok
+  fi
+
+cp conftest.cpp conffitest.cpp
+
+fi
+
+if test -z "$TCECC" || \
+   test -z "$TCE_CONFIG" || \
+   test -z "$TCE_LIBRARY"; then
+
+AC_MSG_NOTICE([TCE installation not found. The ttasim device won't be built.])
+
+else
+
+AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
+AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
+AC_SUBST([TCE_AVAILABLE], ["1"])
+LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
+fi
+
+AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
 
 # libtool dynamic library handling library
 AC_SEARCH_LIBS([lt_dlsym], [ltdl], [], [
@@ -300,12 +346,20 @@ CC="$old_CC"
 CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
 
+# The libtool library version string to use (passed to --version-info).
+AC_SUBST([LIB_VERSION], ["0:0:0"])
+AC_SUBST([LD_FLAGS_BIN])
+
 AC_CONFIG_FILES([Makefile
                  pocl.pc
                  include/Makefile
                  include/CL/Makefile
                  lib/Makefile
                  lib/CL/Makefile
+                 lib/CL/devices/Makefile
+                 lib/CL/devices/pthread/Makefile
+                 lib/CL/devices/basic/Makefile
+                 lib/CL/devices/ttasim/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  examples/Makefile
@@ -332,6 +386,7 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/for-with-var-iteration-count/Makefile
                  tests/regression/early-return/Makefile
                  tests/regression/id-dependent-computation/Makefile
+                 tests/regression/structs-as-args/Makefile
                  ])
 # lib/kernel/bgp/Makefile
 # lib/kernel/ppc/Makefile
@@ -344,7 +399,7 @@ AC_MSG_NOTICE(
    [ 
      Warning: You are using an LLVM version with an unstable OpenCL C 
      support that includes major OpenCL C miscompilation issues.  
-     Please upgrade to the latest LLVM svn version (3.1 or later) 
+     Please upgrade to the latest LLVM version (3.1 or later) 
      for more robust OpenCL C compilation.
    ])
 fi

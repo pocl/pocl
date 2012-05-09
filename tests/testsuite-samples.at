@@ -21,10 +21,10 @@ make -sC $abs_top_srcdir/examples/opencl-book-samples clean build 2>&1 | grep 'B
 AT_CLEANUP
 
 AT_SETUP([Run Chapter 2: Hello World])
-AT_KEYWORDS([booksamples])
+AT_KEYWORDS([booksamples helloworld])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
 
-AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_2/HelloWorld; ./HelloWorld], 0, 
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_2/HelloWorld; ./HelloWorld | grep -v "Could not create GPU context, trying CPU"], 0, 
 [`cat $abs_top_srcdir/examples/opencl-book-samples/HelloWorld.stdout`
 ])
           
@@ -45,14 +45,14 @@ ln -sf ../../../../src/Chapter_3/OpenCLConvolution/Convolution.cl
 AT_CLEANUP
 
 AT_SETUP([Run Chapter 6: HelloBinaryWorld])
-AT_KEYWORDS([booksamples])
+AT_KEYWORDS([booksamples hellobinaryworld])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
 
 AT_CHECK_UNQUOTED([
 cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_6/HelloBinaryWorld
 rm -f HelloWorld.cl.bin
-./HelloBinaryWorld
-./HelloBinaryWorld
+./HelloBinaryWorld | grep -v "Could not create GPU"
+./HelloBinaryWorld | grep -v "Could not create GPU"
 ], 0, 
 [`cat $abs_top_srcdir/examples/opencl-book-samples/HelloBinaryWorld.stdout`
 ])
@@ -60,12 +60,12 @@ rm -f HelloWorld.cl.bin
 AT_CLEANUP
 
 AT_SETUP([Run Chapter 7: SimpleBufferSubBuffer])
-AT_KEYWORDS([booksamples])
+AT_KEYWORDS([booksamples simplebuffersubbuffer])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
 
 AT_CHECK_UNQUOTED([
 cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_7/SimpleBufferSubBuffer
-./SimpleBufferSubBuffer --useMap
+./SimpleBufferSubBuffer --useMap | egrep -v "_TYPE_GPU|16 17 18 19"
 ], 0, 
 [`cat $abs_top_srcdir/examples/opencl-book-samples/SimpleBufferSubBuffer.stdout`
 ], [ignore])

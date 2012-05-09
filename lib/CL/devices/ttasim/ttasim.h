@@ -1,6 +1,6 @@
-/* pthread.h - native pthreaded device declarations.
+/* ttasim.h - a pocl device driver for simulating TTA devices using TCE's ttasim
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,22 +21,28 @@
    THE SOFTWARE.
 */
 
-#ifndef POCL_PTHREAD_H
-#define POCL_PTHREAD_H
+#ifndef POCL_TTASIM_H
+#define POCL_TTASIM_H
 
 #include "pocl_cl.h"
+#include "bufalloc.h"
 
 #include "prototypes.inc"
-GEN_PROTOTYPES (pthread)
 
-extern size_t pocl_pthread_max_work_item_sizes[];
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define POCL_DEVICES_PTHREAD {						\
-  CL_DEVICE_TYPE_CPU, /* type */					\
+GEN_PROTOTYPES (ttasim)
+
+extern size_t pocl_ttasim_max_work_item_sizes[];
+
+#define POCL_DEVICES_TTASIM {						\
+  CL_DEVICE_TYPE_GPU, /* type */					\
   0, /* vendor_id */							\
-  0, /* max_compute_units */						\
+  1, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
-  pocl_pthread_max_work_item_sizes, /* max_work_item_sizes */		\
+  pocl_ttasim_max_work_item_sizes, /* max_work_item_sizes */		\
   1024, /* max_work_group_size */					\
   8, /* preferred_wg_size_multiple */                                \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
@@ -77,29 +83,43 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   CL_EXEC_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
-  "pthread", /* name */							\
-  "pocl", /* vendor */							\
+  "ttasim", /* name */							\
+  "TTA-Based Co-design Environment", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
-  "FULL_PROFILE", /* profile */						\
+  "EMBEDDED_PROFILE", /* profile */						\
   "OpenCL 1.2 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\
-  pocl_pthread_uninit, /* uninit */                                     \
-  pocl_pthread_init, /* init */                                       \
-  pocl_pthread_malloc, /* malloc */					\
-  pocl_pthread_free, /* free */						\
-  pocl_pthread_read, /* read */						\
-  pocl_pthread_read_rect, /* read_rect */				\
-  pocl_pthread_write, /* write */					\
-  pocl_pthread_write_rect, /* write_rect */				\
-  pocl_pthread_copy, /* copy */						\
-  pocl_pthread_copy_rect, /* copy_rect */				\
-  pocl_pthread_map_mem,                               \
+  pocl_ttasim_uninit, /* init */                                     \
+  pocl_ttasim_init, /* init */                                       \
+  pocl_ttasim_malloc, /* malloc */					\
+  pocl_ttasim_free, /* free */						\
+  pocl_ttasim_read, /* read */						\
+  pocl_ttasim_read_rect, /* read_rect */				\
+  pocl_ttasim_write, /* write */					\
+  pocl_ttasim_write_rect, /* write_rect */				\
+  pocl_ttasim_copy, /* copy */						\
+  pocl_ttasim_copy_rect, /* copy_rect */				\
+  pocl_ttasim_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
-  pocl_pthread_run, /* run */                         \
-  NULL, /* data */                                  \
-  NULL,  /* kernel_lib_target (forced kernel library dir) */  \
-  NULL /* llvm_target_triplet */ \
+  pocl_ttasim_run, /* run */                         \
+  NULL, /* data */                               \
+  "tce", /* kernel_lib_target (forced kernel library dir) */    \
+  "tce-tut-llvm" /* llvm_target_triplet */ \
 }
 
-#endif /* POCL_PTHREAD_H */
+#ifdef __cplusplus
+}
+#endif
+
+/* The address space ids in the ADFs. */
+#define TTA_ASID_PRIVATE  0
+#define TTA_ASID_GLOBAL   3
+#define TTA_ASID_LOCAL    4
+#define TTA_ASID_CONSTANT 5
+
+#define TTA_UNALLOCATED_LOCAL_SPACE (16*1024)
+
+void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, chunk_info_t *dest, size_t count);
+
+#endif /* POCL_TTASIM_H */

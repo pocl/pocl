@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/llvmopencl.
+# Makefile.am for pocl/lib/CL/devices/ttasim.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkglib_LTLIBRARIES = llvmopencl.la
+noinst_LTLIBRARIES = libOpenCL-devices-ttasim.la
 
-AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
-AM_CXXFLAGS = `@LLVM_CONFIG@ --cxxflags`
-AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
+libOpenCL_devices_ttasim_la_SOURCES = ttasim.h ttasim.cc
+libOpenCL_devices_ttasim_ladir = ${datadir}
+libOpenCL_devices_ttasim_la_DATA = tta_device_main.c
 
-llvmopencl_la_SOURCES = Barrier.h						\
-                        BarrierBlock.h BarrierBlock.cc				\
-                        Kernel.h Kernel.cc					\
-                        ParallelRegion.h ParallelRegion.cc			\
-                        CanonicalizeBarriers.h CanonicalizeBarriers.cc		\
-                        LoopBarriers.h LoopBarriers.cc				\
-                        GenerateHeader.cc Workgroup.cc				\
-						BarrierTailReplication.h BarrierTailReplication.cc	\
-                        Flatten.cc IsolateRegions.cc \
-						WorkitemReplication.h WorkitemReplication.cc \
-						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc WIVectorize.cc
+libOpenCL_devices_ttasim_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices \
+-I$(top_srcdir)/lib/CL -U__APPLE__
+libOpenCL_devices_ttasim_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 
-#llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

@@ -1,7 +1,6 @@
-/* devices.h - OpenCL device type definition.
+/* OpenCL runtime library: pocl_util utility functions
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2011-2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +21,15 @@
    THE SOFTWARE.
 */
 
-#ifndef POCL_DEVICES_H
-#define POCL_DEVICES_H
+#ifndef POCL_UTIL_H
+#define POCL_UTIL_H
 
-#include "../pocl_cl.h"
-
-/* The number of available devices. */
-extern int pocl_num_devices;
-/* The enabled devices. */
-struct _cl_device_id* pocl_devices;
-
-/**
- * Populates the pocl_devices with the wanted device types.
+/* Create a temporary directory that is cleaned atexit.
  *
- * Should be before accessing the device list. Can be called repeatedly.
- * The devices are shared across contexts, thus implement resource
- * management internally also across multiple contexts.
+ * The returned path name is a string that will be alive
+ * until the exit.
  */
-void pocl_init_devices();
+char *pocl_create_temp_dir();
+void remove_directory (const char *path_name);
 
-/* the environment variable that lists the enabled devices */
-#define POCL_DEVICES_ENV "POCL_DEVICES"
-
-#endif /* POCL_DEVICES_H */
+#endif

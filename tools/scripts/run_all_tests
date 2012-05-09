@@ -1,8 +1,7 @@
-# Process this file with automake to produce Makefile.in (in this,
-# and all subdirectories).
-# Makefile.am for tests/regression.
-# 
-# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+#!/bin/bash
+# run_all_tests - Runs a longer test suite using different device drivers etc.
+#
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere Univ. of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +21,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = loop-phi-replication locals barrier-between-for-loops \
-	simple-for-with-a-barrier multi-level-loops-with-barriers \
-	for-with-var-iteration-count early-return id-dependent-computation \
-	structs-as-args
+failures=no
 
+function run {
+    log=`mktemp`
+    if $* > $log 2>&1;
+        then
+        echo "OK"
+        rm -f $log
+        else
+        echo "FAIL! See $log."
+        failures=yes
+        fi
+}
 
+echo -n "Running 'make check' with the 'pthread' device..."
+export POCL_DEVICES="pthread"
+run make check
 
+echo -n "Running 'make check' with the 'basic' device..."
+export POCL_DEVICES="basic"
+run make check
 
+echo -n "Running 'make check' with multiple devices..."
+export POCL_DEVICES="pthread basic pthread pthread"
+run make check
 
-
-
-
-
+if test "$failures" == "yes";
+then
+    exit 1
+else
+    exit 0
+fi

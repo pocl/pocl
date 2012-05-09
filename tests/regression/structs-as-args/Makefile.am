@@ -1,8 +1,7 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/llvmopencl.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkglib_LTLIBRARIES = llvmopencl.la
+noinst_PROGRAMS = host
 
-AM_CPPFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cppflags`
-AM_CXXFLAGS = `@LLVM_CONFIG@ --cxxflags`
-AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
+host_SOURCES = host.cpp 
+host_LDADD = ../../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
+host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 
-llvmopencl_la_SOURCES = Barrier.h						\
-                        BarrierBlock.h BarrierBlock.cc				\
-                        Kernel.h Kernel.cc					\
-                        ParallelRegion.h ParallelRegion.cc			\
-                        CanonicalizeBarriers.h CanonicalizeBarriers.cc		\
-                        LoopBarriers.h LoopBarriers.cc				\
-                        GenerateHeader.cc Workgroup.cc				\
-						BarrierTailReplication.h BarrierTailReplication.cc	\
-                        Flatten.cc IsolateRegions.cc \
-						WorkitemReplication.h WorkitemReplication.cc \
-						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc WIVectorize.cc
-
-#llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

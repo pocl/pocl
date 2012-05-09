@@ -37,6 +37,7 @@ clCreateContext(const cl_context_properties * properties,
   cl_device_id device_ptr;
 
   lt_dlinit();
+  pocl_init_devices();
 
   cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
@@ -65,7 +66,6 @@ clCreateContext(const cl_context_properties * properties,
       if (device_ptr->available == CL_TRUE) 
         {
           context->devices[j] = device_ptr;
-          context->devices[j]->init(context->devices[j]);
           ++j;
         }
     }   

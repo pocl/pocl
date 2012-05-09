@@ -96,9 +96,15 @@ if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
     pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
 fi
+
+EXTRA_OPTS=""
+if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
+then
+EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
+fi
+
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -workitem \
-    -workgroup -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
-
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
+    -workgroup -local-size=1 1 1 ${EXTRA_OPTS} -header=/dev/null -o ${output_file} ${linked_bc}
 rm -fr ${tempdir}

@@ -68,3 +68,12 @@ AT_DATA([expout],
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/id-dependent-computation/host], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([struct kernel arguments - lp:##987905])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression struct])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/structs-as-args/host], 0, expout)
+AT_CLEANUP

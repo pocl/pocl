@@ -2,21 +2,20 @@ Version roadmap
 ---------------
 
 High priority:
-    * clean up the hidden temp directories by default (0.x)
     * make NVIDIA OpenCL SDK examples to work (1.0)
     * make Intel OpenCL SDK examples to work (1.0)    
     * make AMD OpenCL SDK examples to work (1.0)
     * make Rodinia OpenCL benchmarks to work (1.0)
-    * make ViennaCL to work (1.0)
     * make the book examples at 
       https://code.google.com/p/opencl-book-samples
       to work (1.0)   
-    * vectorize workgroups
+    * stabilize and optimize the WG vectorization so
+      it can be enabled by default for targets with
+      SIMD instructions
 
 Medium priority:
-    * device selection at runtime.
-    * complete kernel runtime library.   
-    * complete host runtime library.
+    * complete the kernel runtime library.   
+    * complete the host runtime library.
     * create workgroups by looping instead of fully unrolling for
       flexible WG parallelization (1.0)
     * ttasim target (heterogeneous TCE scenario).
@@ -25,13 +24,10 @@ Medium priority:
 Low priority:
     * gdb target (generates code for any llvm-compatible target and launches.
       workgroups on gdb simulator).
-    * standalone target (and standalone-mt).
     * ICD support.
     * device supporting IBM Cell BE.
-    * better workgroup (replicated) function caching.
 
 (1.0) == requirement for the pocl 1.0 release
-(0.x) == requirement for the first pocl 0.x release
 
 Known missing OpenCL 1.2 features
 ---------------------------------
