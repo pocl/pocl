@@ -48,6 +48,9 @@
 #include <Program.hh>
 #include <GlobalScope.hh>
 #include <DataLabel.hh>
+#include <SimulatorCLI.hh>
+#include <SimulationEventHandler.hh>
+#include <Listener.hh>
 
 using namespace TTAMachine;
 
@@ -67,6 +70,10 @@ struct data {
   lt_dlhandle current_dlhandle;
   /* The ttasim engine handle. */
   SimpleSimulatorFrontend *simulator;
+  /* A Command Line Interface for debugging. */
+  SimulatorCLI* simulatorCLI;
+  volatile bool debuggerRequested;
+
   /* The bufalloc memory regions for memory allocation book keeping. */
   struct memory_region local_mem;
   struct memory_region global_mem;
@@ -94,11 +101,55 @@ pocl_ttasim_thread (void *p)
   struct data *d = (data*)p;
   do {
     pthread_cond_wait (&d->simulation_start_cond, &d->lock);
-    d->simulator->run();
+    std::cout << "### run!" << std::flush << std::endl;
+    do {
+      d->simulator->run();
+      if (d->debuggerRequested) {
+          d->debuggerRequested = false;
+          d->simulatorCLI->run();
+          continue;
+      }
+
+      if (d->simulator->hadRuntimeError()) {
+          d->simulatorCLI->run();
+          POCL_ABORT("Runtime error in a ttasim device.");
+      }
+    } while (true);
   } while (true);
   return NULL;
 }
 
+/**
+ * A handler class for Ctrl-c signal.
+ *
+ * Stops the simulation (if it's running) and attaches the ttasim
+ * console to it.
+ */
+class SigINTHandler : public Application::UnixSignalHandler {
+public:
+    /**
+     * Constructor.
+     *
+     * @param target The target SimulatorFrontend instance.
+     */
+    SigINTHandler(struct data* d) :
+        d_(d) {
+    }
+
+    /**
+     * Stops the simulation.
+     */
+    virtual void execute(int /*data*/, siginfo_t* /*info*/) {
+        std::cerr << "### ctrl-C handler" << std::endl;
+        d_->debuggerRequested = true;
+        d_->simulator->stop();
+        std::cerr << "### handler exit" << std::endl;
+        /* Make it a one shot handler. Next Ctrl-C should kill the program. */
+        Application::restoreSignalHandler(SIGINT);
+    }
+private:
+    struct data* d_;
+};
 
 void
 pocl_ttasim_init (cl_device_id device, const char* parameters)
@@ -129,7 +180,16 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
 
   SimpleSimulatorFrontend *simFront = 
     new SimpleSimulatorFrontend(parameters);  
+
+  /* TODO: only if debug_mode is on. */
+#if 1
+  SigINTHandler* ctrlcHandler = new SigINTHandler(d);
+  Application::setSignalHandler(SIGINT, *ctrlcHandler);
+#endif
+  d->debuggerRequested = false;
+
   d->simulator = simFront;
+  d->simulatorCLI = new SimulatorCLI(simFront->frontend());
   /* TODO:
      d->simulator->setZeroFillMemoriesOnReset(false);
   */
