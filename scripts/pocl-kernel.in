@@ -3,7 +3,7 @@
 #               with kernel function information.
 # 
 # Copyright (c) 2011-2012 Universidad Rey Juan Carlos, 
-# Pekka Jääskeläinen / Tampere University of Technology
+#                         Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,3 +67,31 @@ unsigned _local_sizes[_${kernel}_NUM_LOCALS] = _${kernel}_LOCAL_SIZE;
 EOF
 
 ld ${output_file}.o @HOST_LD_FLAGS@ -o ${output_file}
+
+# Generate a C global object suitable for using from the device as
+# the kernel metadata object. The idea is that multiple of these
+# can be linked to the same device binary and the addresses of the
+# global metadata objects can be used as the kernel references from
+# the host.
+cat ${header} > ${output_file}.kernel_obj.c
+
+cat >> ${output_file}.kernel_obj.c <<EOF
+
+#include <pocl_device.h>
+
+void _${kernel}_workgroup(void** args, struct pocl_context*);
+
+__kernel_metadata _${kernel}_md = {
+    "${kernel}", /* name */
+    _${kernel}_NUM_ARGS, /* num_args */
+    _${kernel}_NUM_LOCALS, /* num_locals */
+#if _${kernel}_NUM_LOCALS != 0
+    _${kernel}_LOCAL_SIZE,
+#else
+    {0}, 
+#endif
+    _${kernel}_ARG_IS_LOCAL,
+    _${kernel}_ARG_IS_POINTER,
+    _${kernel}_workgroup
+};
+EOF

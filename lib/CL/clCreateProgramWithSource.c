@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL

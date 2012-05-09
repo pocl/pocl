@@ -107,6 +107,7 @@ pocl_init_devices()
               device_type = &pocl_device_types[i];
               memcpy (&pocl_devices[devcount], device_type, sizeof(struct _cl_device_id));
               pocl_devices[devcount].init(&pocl_devices[devcount], getenv(env_name));
+              pocl_devices[devcount].dev_id = devcount;
               devcount++;
               break;
             }

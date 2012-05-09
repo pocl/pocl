@@ -924,7 +924,16 @@ namespace {
 
       bool IsSimpleLoadStore;
       if (!isInstVectorizable(I, IsSimpleLoadStore)) continue;
-
+      
+      // If I is already in some candidate pair there is no point
+      // pairing it again.
+      for (std::multimap<Value*, Value*>::const_iterator it 
+            = CandidatePairs.begin();
+        it != CandidatePairs.end(); it++) {
+          if ((*it).second == I) {
+              continue;
+          }
+      }
       // Look for an instruction with which to pair instruction *I...
       DenseSet<Value *> Users;
       AliasSetTracker WriteSet(*AA);
@@ -932,7 +941,8 @@ namespace {
       BasicBlock::iterator J = llvm::next(I);
       for (unsigned ss = 0; J != E ; ++J, ++ss) {
         if (J == Start) JAfterStart = true;
-
+        
+        if (!areInstsCompatibleFromDifferentWi(I,J)) continue;        
         // Determine if J uses I, if so, exit the loop.
         bool UsesI = trackUsesOfI(Users, WriteSet, I, J, !FastDep);
         if (FastDep) {
@@ -949,8 +959,7 @@ namespace {
         }
 
         // J does not use I, and comes before the first use of I, so it can be
-        // merged with I if the instructions are compatible.
-	if (!areInstsCompatibleFromDifferentWi(I,J)) continue;        
+        // merged with I if the instructions are compatible.	
         if (!areInstsCompatible(I, J, IsSimpleLoadStore)) continue;
         
         // J is a candidate for merging with I.
@@ -970,7 +979,10 @@ namespace {
 
         DEBUG(if (DebugCandidateSelection) dbgs() << "WIV: candidate pair "
                      << *I << " <-> " << *J << "\n");
-
+        // Found a pair, we break since we do not want to find more then one
+        // candidate pair at a time. Work Item ID and Original Cycle test
+        // guarantees that the pair can be combined to vector.
+        break;
       }
 
       if (ShouldContinue)

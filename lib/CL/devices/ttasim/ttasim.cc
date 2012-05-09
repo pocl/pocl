@@ -23,11 +23,14 @@
 
 #include "ttasim.h"
 #include "bufalloc.h"
+#include "pocl_device.h"
+#include "pocl_util.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <string>
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
@@ -42,6 +45,9 @@
 #include <SimpleSimulatorFrontend.hh>
 #include <Machine.hh>
 #include <MemorySystem.hh>
+#include <Program.hh>
+#include <GlobalScope.hh>
+#include <DataLabel.hh>
 
 using namespace TTAMachine;
 
@@ -51,6 +57,8 @@ using namespace TTAMachine;
 #define WORKGROUP_STRING_LENGTH 128
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
+
+#define DEBUG_TTASIM_DRIVER
 
 struct data {
   /* Currently loaded kernel. */
@@ -66,9 +74,31 @@ struct data {
   AddressSpace *local_as;
   AddressSpace *global_as;
   char* machine_file;
+
+  pthread_t ttasim_thread;
+  pthread_cond_t simulation_start_cond;
+  pthread_mutex_t lock;
+
+  cl_device_id parent;
 };
 
 size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
+
+uint32_t pocl_ttasim_read_device (void *device_data, uint32_t addr);
+void pocl_ttasim_write_device (void *device_data, uint32_t addr, uint32_t word);
+
+static 
+void * 
+pocl_ttasim_thread (void *p)
+{
+  struct data *d = (data*)p;
+  do {
+    pthread_cond_wait (&d->simulation_start_cond, &d->lock);
+    d->simulator->run();
+  } while (true);
+  return NULL;
+}
+
 
 void
 pocl_ttasim_init (cl_device_id device, const char* parameters)
@@ -85,6 +115,7 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
   
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
+  d->parent = device;
 
   device->data = d;
 
@@ -141,6 +172,10 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
     (&d->local_mem, (memory_address_t)d->local_as->start(), device->local_mem_size);
   init_mem_region 
     (&d->global_mem, (memory_address_t)d->global_as->start(), device->global_mem_size);
+
+  pthread_cond_init (&d->simulation_start_cond, NULL);
+
+  pthread_create (&d->ttasim_thread, NULL, pocl_ttasim_thread, d);
 }
 
 void *
@@ -158,8 +193,8 @@ pocl_ttasim_malloc (void *device_data, cl_mem_flags flags,
     {
       /* TODO: 
          CL_MEM_USE_HOST_PTR must synch the buffer after execution 
-         back to the host's memory in case it's used as an output. */
-      pocl_ttasim_copy_h2d (d, host_ptr, chunk, size);
+         back to the host's memory in case it's used as an output (?). */
+      pocl_ttasim_copy_h2d (d, host_ptr, chunk->start_address, size);
       return (void*) chunk;
     }
   return (void*) chunk;
@@ -219,6 +254,10 @@ pocl_ttasim_run
   std::string assemblyFileName(tmpdir);
   assemblyFileName += "/parallel.tpef";
 
+  std::string kernelMdSymbolName = "_";
+  kernelMdSymbolName += kernel->name;
+  kernelMdSymbolName += "_md";
+
   if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
@@ -240,31 +279,158 @@ pocl_ttasim_run
       else
         POCL_ABORT_UNIMPLEMENTED();
      
+      std::string kernelObjSrc = "";
+      kernelObjSrc += tmpdir;
+      kernelObjSrc += "/../descriptor.so.kernel_obj.c";
+
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
-        "tcecc " + deviceMainSrc + " " + bytecode + " -a " + d->machine_file + 
+        std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
+        kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
+        " -k " + kernelMdSymbolName +
         " -O3 -o " + assemblyFileName;
+      std::cerr << "CMD: " << buildCmd << std::endl;
       error = system(buildCmd.c_str());
       if (error != 0)
         POCL_ABORT("Error while running tcecc.");
     }
 
   /* Load the binary assembly (TPEF) to the simulator. */
+  if (d->simulator->isRunning()) 
+    d->simulator->stop();
+  while (d->simulator->isRunning()) 
+    ;
   d->simulator->loadProgram(assemblyFileName);
-  d->simulator->run();
+  pthread_cond_signal (&d->simulation_start_cond);
+
+  /* Figure out the locations of the shared data structures in
+     the device memories from the fully-linked program. 
+     
+     TODO: load both the ADF and the TPEF objects only once and use the
+     object interface of the simulator instead of the file name interface.  
+  */
+  TTAProgram::Program* prog = 
+    TTAProgram::Program::loadFromTPEF(assemblyFileName, *d->local_as->machine());
+  assert (prog != NULL);
+
+  const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
+  
+  uint32_t kernelAddr;
+  uint32_t commandQueueAddr;
+  try {
+    kernelAddr = globalScope.dataLabel(kernelMdSymbolName).address().location();
+    commandQueueAddr = globalScope.dataLabel("kernel_command").address().location();
+  } catch (const KeyNotFound& e) {
+    POCL_ABORT ("Could not find the shared data structures from the device binary.");
+  }
+  //printf ("_test_kernel_md @ %u  kernel_command @ %u\n", kernelAddr, commandQueueAddr);
+
+  int swap = 1; /* TODO, compare the host&device endiannesses */
+
+  __kernel_exec_cmd cmd;
+  cmd.kernel = byteswap_uint32_t (kernelAddr, swap);
+
+  struct pocl_argument *al;  
+
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      al = &(kernel->arguments[i]);
+      if (kernel->arg_is_local[i])
+        {
+          cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
+        }
+      else if (kernel->arg_is_pointer[i])
+        cmd.args[i] = byteswap_uint32_t 
+          (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, swap);
+      else /* The scalar values should be byteswapped by the user. */
+        cmd.args[i] = (uint32_t)((size_t)al->value & 0x00000000FFFFFFFF); 
+    }
+  cmd.work_dim = byteswap_uint32_t (pc->work_dim, swap);
+  cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], swap);
+  cmd.num_groups[1] = byteswap_uint32_t (pc->num_groups[1], swap);
+  cmd.num_groups[2] = byteswap_uint32_t (pc->num_groups[2], swap);
+
+  cmd.global_offset[0] = byteswap_uint32_t (pc->global_offset[0], swap);
+  cmd.global_offset[1] = byteswap_uint32_t (pc->global_offset[1], swap);
+  cmd.global_offset[2] = byteswap_uint32_t (pc->global_offset[2], swap);
+
+  cmd.status = byteswap_uint32_t (POCL_KST_READY, swap);
+
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("--- waiting for the device command queue (@ %x) to get room.\n",
+         commandQueueAddr);
+  printf("--- commmand queue status: %d\n",
+         pocl_ttasim_read_device (d, commandQueueAddr));
+#endif
+  /* Wait until the device command queue has room. */
+  do {} 
+  while (pocl_ttasim_read_device (d, commandQueueAddr) != POCL_KST_FREE);
+
+#ifdef DEBUG_TTASIM_DRIVER
+  printf( "--- writing the command.\n");
+#endif
+  pocl_ttasim_copy_h2d (d, &cmd, commandQueueAddr, sizeof(__kernel_exec_cmd) );
+
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("--- commmand queue status: %x\n",
+         pocl_ttasim_read_device (d, commandQueueAddr));
+
+  printf("--- waiting for the command to get executed.\n");
+#endif
+  /* Wait until the command has executed. */
+  do {} 
+  while (pocl_ttasim_read_device (d, commandQueueAddr) != POCL_KST_FINISHED);
+
+#ifdef DEBUG_TTASIM_DRIVER
+  printf( "--- done. Freeing the command queue entry.\n");
+#endif
+  /* We are done with this kernel, free the command queue entry. */
+  pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_FREE, swap));
 }
 
-/* Copy data between the host memory and the global memory of the device. */
+/* Reads a single 32bit word from the device global memory. 
+
+   NOTE: ttasim word read/write interface byteswaps internally. */
+uint32_t
+pocl_ttasim_read_device (void *device_data, uint32_t addr)  
+{
+  struct data *d = (struct data*)device_data;
+  MemorySystem &mems = d->simulator->memorySystem();
+  Memory& globalMem = mems.memory (*d->global_as);
+  uint32_t val;
+  globalMem.read (addr, 4, val);
+  return val;
+}
+
+/* Writes a single 32bit word to the device global memory. 
+
+   NOTE: ttasim word read/write interface byteswaps internally. */
+void
+pocl_ttasim_write_device (void *device_data, uint32_t addr, uint32_t word)  
+{
+  struct data *d = (struct data*)device_data;
+  MemorySystem &mems = d->simulator->memorySystem();
+  Memory& globalMem = mems.memory (*d->global_as);
+  uint32_t val;
+  globalMem.write (addr, 4, val);
+}
+
+/* Copy data between the host memory and the global memory of the device. 
+    
+   Raw byte copy without byte swapping. 
+ */
 void 
-pocl_ttasim_copy_h2d (void *device_data, const void *src_ptr, chunk_info_t *dest, size_t count)  
+pocl_ttasim_copy_h2d (void *device_data, const void *src_ptr, uint32_t dest_addr, size_t count)  
 {
   /* Find the simulation model for the global address space. */
   struct data *d = (struct data*)device_data;
   MemorySystem &mems = d->simulator->memorySystem();
   Memory& globalMem = mems.memory (*d->global_as);
-  for (int i = 0; i < count; ++i)
-    globalMem.write (dest->start_address + i, ((Memory::MAU*)src_ptr)[i]);
+  for (int i = 0; i < count; ++i) {
+    unsigned char val = ((char*)src_ptr)[i];
+    globalMem.write (dest_addr + i, (Memory::MAU)(val));
+  }
 }
 
 void

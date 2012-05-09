@@ -1,8 +1,7 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/include.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h
-# The sort command (also) removes duplicate entries which might appear 
-# due to @TARGET@ and/or @HOST@ being one of the manually defined 
-# targets. 
-nobase_pkginclude_HEADERS = $(sort 				\
-							arm/types.h			\
-                            x86_64/types.h		\
-                            tce/types.h			\
-                            @TARGET@/types.h	\
-                            @HOST@/types.h)
+noinst_PROGRAMS = host
 
-SUBDIRS = CL
+host_SOURCES = host.cpp 
+host_LDADD = ../../../lib/CL/libOpenCL.la @LD_FLAGS_BIN@
+host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+
+AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+
+
+run: host
+	POCL_DEVICES="ttasim" POCL_DEVICE0_PARAMETERS="test_machine.adf" ./host
