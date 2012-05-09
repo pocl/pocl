@@ -2157,7 +2157,7 @@ namespace {
       if (I->hasName()) K->takeName(I);
       
       if (I->getMetadata("wi") != NULL) {
-	K->setMetadata("wi", I->getMetadata("wi"));
+          K->setMetadata("wi", I->getMetadata("wi"));
       }
       if (!isa<StoreInst>(K))
         K->mutateType(getVecTypeForPair(I->getType()));

@@ -87,13 +87,22 @@ then
 fi
 
 
+OPT_SWITCH="-O3"
+
+if test "x$POCL_KERNEL_COMPILER_OPT_SWITCH" != "x";
+then
+OPT_SWITCH=$POCL_KERNEL_COMPILER_OPT_SWITCH
+fi
+
 EXTRA_OPTS=""
 if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
 then
-EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
+OPT_SWITCH="-O3"
+EXTRA_OPTS="-wi-vectorize -instcombine"
 fi
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem -workgroup \
-    -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}
+    -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
+    ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}

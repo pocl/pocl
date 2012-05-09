@@ -27,6 +27,11 @@ Creates two devices, one CPU device with pthread multithreading and a
 TTA device simulated with the ttasim. The ttasim device gets a path to
 the architecture description file of the tta to simulate as a parameter.
 
+POCL_KERNEL_COMPILER_OPT_SWITCH
+
+Override the default "-O3" that is passed to the LLVM opt as a final
+optimization switch.
+
 POCL_LEAVE_TEMP_DIRS 
 
 If this is set to 1, the kernel compiler temporary directory that contains
@@ -46,5 +51,6 @@ hardware threads available in the CPU.
 
 POCL_VECTORIZE_WORK_GROUPS
 
-If set to 1, uses the (experimental) work group vectorizer that builds 
-vector instructions from multiple work items.
+If set to 1, enables the (experimental) work group vectorizer that builds 
+vector instructions from multiple work items. Currently disabled as it
+slows down the compilation too much (needs to be optimized).
