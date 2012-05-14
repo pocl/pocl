@@ -774,7 +774,7 @@
     </writes-to>
   </socket>
 
-  <function-unit name="LSU">
+  <function-unit name="LSUL">
     <port name="in1t">
       <connects-to>lsu_i1</connects-to>
       <width>32</width>
@@ -1200,7 +1200,7 @@
     <address-space/>
   </function-unit>
 
-  <function-unit name="LSU_1">
+  <function-unit name="LSUG">
     <port name="in1t">
       <connects-to>LSU_1_i1</connects-to>
       <width>32</width>

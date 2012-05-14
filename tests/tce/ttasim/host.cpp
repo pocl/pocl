@@ -30,6 +30,8 @@
 #include <iostream>
 #include <cassert>
 
+#include "pocl_util.h"
+
 static char
 kernelSourceCode[] = 
 "int putchar(int c);\n"
@@ -39,7 +41,6 @@ kernelSourceCode[] =
 "                 float a,\n"
 "                 int b) {\n"
 "    constant char* pos = input; \n"
-"    printf (\"test_kernel executing\\n\");\n"
 "    while (*pos) {\n"
 "        putchar (*pos);\n"
 "        ++pos;\n"
@@ -80,6 +81,13 @@ main(void)
         cl::Device device = devices.at(0);
 
         assert (device.getInfo<CL_DEVICE_NAME>() == "ttasim");
+
+        bool deviceLittleEndian = device.getInfo<CL_DEVICE_ENDIAN_LITTLE>();
+
+        if (!deviceLittleEndian) { // todo: compare to the host endianness
+            a = byteswap_float(a, 1);
+            b = byteswap_uint32_t(b, 1);
+        }
 
         // Create and program from source
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));

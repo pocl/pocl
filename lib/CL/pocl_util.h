@@ -39,6 +39,7 @@ char *pocl_create_temp_dir();
 void remove_directory (const char *path_name);
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
+float byteswap_float (float word, char should_swap);
 
 #ifdef __cplusplus
 }

@@ -77,7 +77,7 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_TRUE, /* endian_little */						\
+  CL_FALSE, /* endian_little */						\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\
@@ -120,6 +120,11 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
 #define TTA_ASID_CONSTANT 5
 
 #define TTA_UNALLOCATED_LOCAL_SPACE (16*1024)
+/* The space to preserve for the command queue etc. in the
+   device global memory. The structures start from 0, the
+   buffer storage starts after them. TODO: check from the
+   symbol table of the produced program. */
+#define TTA_UNALLOCATED_GLOBAL_SPACE (16*1024)
 
 void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, uint32_t dest_addr, size_t count);
 

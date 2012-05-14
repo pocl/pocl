@@ -68,3 +68,21 @@ byteswap_uint32_t (uint32_t word, char should_swap)
     neww.bytes[3] = old.bytes[0];
     return neww.full_word;
 }
+
+float
+byteswap_float (float word, char should_swap) 
+{
+    union word_union 
+    {
+        float full_word;
+        unsigned char bytes[4];
+    } old, neww;
+    if (!should_swap) return word;
+
+    old.full_word = word;
+    neww.bytes[0] = old.bytes[3];
+    neww.bytes[1] = old.bytes[2];
+    neww.bytes[2] = old.bytes[1];
+    neww.bytes[3] = old.bytes[0];
+    return neww.full_word;
+}

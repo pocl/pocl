@@ -70,7 +70,7 @@ static void tta_opencl_wg_execute(
                 context.group_id[1] = gid_y;
                 context.group_id[2] = gid_z;
 #ifdef DEBUG_TTA_DEVICE
-                lwpr_print_str("### launching WG ");
+                lwpr_print_str("tta: ------------------- launching WG ");
                 lwpr_print_int(gid_x); lwpr_print_str("-");
                 lwpr_print_int(gid_y); lwpr_print_str("-");
                 lwpr_print_int(gid_z); lwpr_print_str(" @ ");
@@ -106,7 +106,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
        to copy the local pointers for each invocation. */
     for (int i = 0; i < kernel->num_args; ++i) {
 #ifdef DEBUG_TTA_DEVICE
-        lwpr_print_str("### processing arg ");
+        lwpr_print_str("tta: processing arg ");
         lwpr_print_int(i); lwpr_print_str(" of ");
         lwpr_print_int(kernel->num_args); 
         lwpr_print_str(" value: ");
@@ -122,7 +122,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
         args[i] = (uint32_t)malloc(cmd->dynamic_local_arg_sizes[i]);
         if (args[i] == 0) {
 #ifdef DEBUG_TTA_DEVICE
-            puts("### out of memory while allocating the local buffers\\n");
+            lwpr_print_str("tta: out of memory while allocating the local buffers\\n");
 #endif
             exit(1);
         }
@@ -131,24 +131,31 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
        been converted to pointer arguments in the kernel launcher
        function. They are the last arguments always. */
         for (int i = kernel->num_args; 
-             i < kernel->num_args + kernel->num_locals; 
+             0 && i < kernel->num_args + kernel->num_locals; 
              ++i) {
             /* TODO: this is broken. It should store a pointer to the buffer pointer
                instead of the buffer pointer directly. */
             args[i] = (uint32_t)malloc(kernel->alocal_sizes[i - kernel->num_args]);
-#if 0
-            iprintf("### allocated %%d bytes for the automatic local arg %%d at %%x\\n", 
+#if 0 && defined(DEBUG_TTA_DEVICE)
+            lwpr_print_str("tta: allocated ");
+            iprintf("tta: allocated %%d bytes for the automatic local arg %%d at %%x\\n", 
                     kernel->alocal_sizes[i - kernel->num_args], i, *(unsigned int*)args[i]);
 #endif
             if (args[i] == 0) {
 #ifdef DEBUG_TTA_DEVICE
-                puts("### out of memory while allocating the local buffers\\n");
+                lwpr_print_str("tta: out of memory while allocating the local buffers\\n");
 #endif
                 exit(1);
             }          
         }
-        tta_opencl_wg_execute(cmd, args, 0, num_groups_x - 1);
 
+#ifdef DEBUG_TTA_DEVICE
+        lwpr_print_str("tta: ------------------- starting kernel\n");
+#endif
+        tta_opencl_wg_execute(cmd, args, 0, num_groups_x - 1);
+#ifdef DEBUG_TTA_DEVICE
+        lwpr_print_str("\ntta: ------------------- kernel finished\n");
+#endif
         /* free the local buffers */
         for (int i = 0; i < kernel->num_args; ++i) {
             if (!kernel->arg_is_local[i]) continue;
@@ -163,7 +170,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
              i < kernel->num_args + kernel->num_locals;
              ++i) {
 #if 0
-            iprintf("### freed automatic local arg %%d\\n", i);
+            iprintf("tta: freed automatic local arg %%d\\n", i);
 #endif
             /* TODO: this is broken. It should store a pointer to the buffer pointer
                instead of the buffer pointer directly. */
@@ -198,8 +205,8 @@ int main() {
     size_t global_work_sizes[3] = {2, 0, 0};
 
 #ifdef DEBUG_TTA_DEVICE
-    puts("### Hello from a TTA device\n");
-    puts("### initializing the command objects\n");
+    lwpr_print_str("tta: Hello from a TTA device\n");
+    lwpr_print_str("tta: initializing the command objects\n");
 #endif
 
     init_command_objects();
@@ -207,15 +214,15 @@ int main() {
     do {
 
 #ifdef DEBUG_TTA_DEVICE
-        puts("### waiting for commands\n");
+        lwpr_print_str("tta: waiting for commands\n");
 #endif
 
         next_command = wait_for_command();
 
         next_kernel = (__kernel_metadata*)next_command->kernel;
 
-#if 0
-        iprintf("### got a command to execute '%s' with dim %lu num_groups:  %lu-%lu-%lu global_offset: %lu-%lu-%lu global\n",
+#ifdef DEBUG_TTA_DEVICE
+        iprintf("tta: got a command to execute '%s' with dim %lu num_groups:  %lu-%lu-%lu global_offset: %lu-%lu-%lu\n",
                 next_kernel->name, 
                 next_command->work_dim,
                 next_command->num_groups[0],
@@ -227,6 +234,7 @@ int main() {
 #endif
 
         tta_opencl_wg_launch(next_command);
+        kernel_command.status = POCL_KST_FINISHED;   
 
     } while (1);
 

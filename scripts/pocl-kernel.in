@@ -80,6 +80,7 @@ cat >> ${output_file}.kernel_obj.c <<EOF
 #include <pocl_device.h>
 
 void _${kernel}_workgroup(void** args, struct pocl_context*);
+void _${kernel}_workgroup_fast(void** args, struct pocl_context*);
 
 __kernel_metadata _${kernel}_md = {
     "${kernel}", /* name */
@@ -92,6 +93,6 @@ __kernel_metadata _${kernel}_md = {
 #endif
     _${kernel}_ARG_IS_LOCAL,
     _${kernel}_ARG_IS_POINTER,
-    _${kernel}_workgroup
+    _${kernel}_workgroup_fast
 };
 EOF

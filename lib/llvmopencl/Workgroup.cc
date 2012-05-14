@@ -43,6 +43,8 @@
 #include <map>
 #include <iostream>
 
+#include "pocl.h"
+
 #define STRING_LENGTH 32
 
 using namespace std;
@@ -53,6 +55,7 @@ static void noaliasArguments(Function *F);
 static Function *createLauncher(Module &M, Function *F);
 static void privatizeContext(Module &M, Function *F);
 static void createWorkgroup(Module &M, Function *F);
+static void createWorkgroupFast(Module &M, Function *F);
 
 // extern cl::opt<string> Header;
 // extern cl::list<int> LocalSize;
@@ -161,6 +164,7 @@ Workgroup::runOnModule(Module &M)
     privatizeContext(M, L);
 
     createWorkgroup(M, L);
+    createWorkgroupFast(M, L);
   }
 
   Function *barrier = cast<Function> 
@@ -225,11 +229,7 @@ createLauncher(Module &M, Function *F)
 				       false);
 
   std::string funcName = "";
-#ifdef LLVM_3_0
-  funcName = F->getNameStr();
-#else
   funcName = F->getName().str();
-#endif
 
   Function *L = Function::Create(ft,
 				 Function::ExternalLinkage,
@@ -457,6 +457,11 @@ privatizeContext(Module &M, Function *F)
   }
 }
 
+/**
+ * Creates a work group launcher function (called KERNELNAME_workgroup)
+ * that assumes kernel pointer arguments are stored as pointers to the
+ * actual buffers and that scalar data is loaded from the default memory.
+ */
 static void
 createWorkgroup(Module &M, Function *F)
 {
@@ -467,11 +472,8 @@ createWorkgroup(Module &M, Function *F)
 		     PoclContext*), true>::get(M.getContext());
 
   std::string funcName = "";
-#ifdef LLVM_3_0
-  funcName = F->getNameStr();
-#else
   funcName = F->getName().str();
-#endif
+
   Function *workgroup =
     dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup", ft));
   assert(workgroup != NULL);
@@ -491,6 +493,67 @@ createWorkgroup(Module &M, Function *F)
     Value *pointer = builder.CreateLoad(gep);
     Value *bc = builder.CreateBitCast(pointer, t->getPointerTo());
     arguments.push_back(builder.CreateLoad(bc));
+    ++i;
+  }
+
+  arguments.back() = ++ai;
+  
+  builder.CreateCall(F, ArrayRef<Value*>(arguments));
+  builder.CreateRetVoid();
+}
+
+/**
+ * Creates a work group launcher more suitable for the proper
+ * host-device setup  (called KERNELNAME_workgroup_fast).
+ *
+ * 1) Pointer arguments are stored directly as pointers to the
+ *    buffers in the argument buffer.
+ *
+ * 2) Scalar values are loaded from the global memory address
+ *    space.
+ *
+ * This should minimize copying of data and memory allocation
+ * at the device.
+ */
+static void
+createWorkgroupFast(Module &M, Function *F)
+{
+  IRBuilder<> builder(M.getContext());
+
+  FunctionType *ft =
+    TypeBuilder<void(types::i<8>*[],
+		     PoclContext*), true>::get(M.getContext());
+
+  std::string funcName = "";
+  funcName = F->getName().str();
+  Function *workgroup =
+    dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup_fast", ft));
+  assert(workgroup != NULL);
+
+  builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
+
+  Function::arg_iterator ai = workgroup->arg_begin();
+
+  SmallVector<Value*, 8> arguments;
+  int i = 0;
+  for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
+       ii != ee; ++ii) {
+    Type *t = ii->getType();
+    
+    Value *gep = builder.CreateGEP(ai, 
+				   ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
+    Value *pointer = builder.CreateLoad(gep);
+    Value *bc = NULL;
+    if (t->isPointerTy()) {
+      /* Assume the pointer is directly in the arg array. */
+      arguments.push_back(builder.CreateBitCast(pointer, t));
+    } else {
+      /* Assume the pointer points to the scalar data in the global         
+         memory. */
+      bc = builder.CreateBitCast
+        (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+      arguments.push_back(builder.CreateLoad(bc));
+    }
     ++i;
   }
 

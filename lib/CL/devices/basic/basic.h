@@ -72,7 +72,7 @@ extern size_t pocl_basic_max_work_item_sizes[];
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_FALSE, /* endian_little */						\
+  CL_TRUE, /* endian_little */						\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\

@@ -149,7 +149,8 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO(cl_ulong, device->local_mem_size);
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          : break;
   case CL_DEVICE_PROFILING_TIMER_RESOLUTION        : break;
-  case CL_DEVICE_ENDIAN_LITTLE                     : break;
+  case CL_DEVICE_ENDIAN_LITTLE                     : 
+    POCL_RETURN_DEVICE_INFO(cl_bool, device->endian_little);
   case CL_DEVICE_AVAILABLE                         : break;
   case CL_DEVICE_COMPILER_AVAILABLE                : break;
   case CL_DEVICE_EXECUTION_CAPABILITIES            : break;

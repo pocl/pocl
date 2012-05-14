@@ -190,9 +190,6 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
 
   d->simulator = simFront;
   d->simulatorCLI = new SimulatorCLI(simFront->frontend());
-  /* TODO:
-     d->simulator->setZeroFillMemoriesOnReset(false);
-  */
   d->machine_file = strdup(parameters);
 
   /* Create the memory allocation book keeping structures based on
@@ -226,12 +223,15 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
     POCL_ABORT("Not enough space in the local memory with the assumed unallocated space.\n");
 
   device->local_mem_size = local_size;
-  device->global_mem_size = d->global_as->end() - d->local_as->start();
+  device->global_mem_size = d->global_as->end() - d->local_as->start() - TTA_UNALLOCATED_GLOBAL_SPACE;
+  if (device->global_mem_size < 0)
+    POCL_ABORT("Not enough space in the global memory with the assumed unallocated space.\n");
 
   init_mem_region 
     (&d->local_mem, (memory_address_t)d->local_as->start(), device->local_mem_size);
   init_mem_region 
-    (&d->global_mem, (memory_address_t)d->global_as->start(), device->global_mem_size);
+    (&d->global_mem, (memory_address_t)d->global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE, 
+     device->global_mem_size);
 
   pthread_cond_init (&d->simulation_start_cond, NULL);
 
@@ -349,7 +349,7 @@ pocl_ttasim_run
         std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
         kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
-        " -O3 -o " + assemblyFileName;
+        " --swfp -g -O0 -o " + assemblyFileName;
       std::cerr << "CMD: " << buildCmd << std::endl;
       error = system(buildCmd.c_str());
       if (error != 0)
@@ -404,8 +404,13 @@ pocl_ttasim_run
         cmd.args[i] = byteswap_uint32_t 
           (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, swap);
       else /* The scalar values should be byteswapped by the user. */
-        cmd.args[i] = (uint32_t)((size_t)al->value & 0x00000000FFFFFFFF); 
-      printf("### arg %d passed as %d\n", i, cmd.args[i]);
+        {
+          /* Copy the scalar argument data to the shared memory. */
+          chunk_info_t* arg_space = 
+            (chunk_info_t*)pocl_ttasim_malloc (d, CL_MEM_COPY_HOST_PTR, al->size, al->value);
+          printf ("host: copied value from %x to global argument memory\n", al->value);
+          cmd.args[i] = byteswap_uint32_t (arg_space->start_address, swap);
+        }
     }
   cmd.work_dim = byteswap_uint32_t (pc->work_dim, swap);
   cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], swap);
@@ -416,12 +421,12 @@ pocl_ttasim_run
   cmd.global_offset[1] = byteswap_uint32_t (pc->global_offset[1], swap);
   cmd.global_offset[2] = byteswap_uint32_t (pc->global_offset[2], swap);
 
-  cmd.status = byteswap_uint32_t (POCL_KST_READY, swap);
+  cmd.status = byteswap_uint32_t (POCL_KST_FREE, swap);
 
 #ifdef DEBUG_TTASIM_DRIVER
-  printf("--- waiting for the device command queue (@ %x) to get room.\n",
+  printf("host: waiting for the device command queue (@ %x) to get room.\n",
          commandQueueAddr);
-  printf("--- commmand queue status: %d\n",
+  printf("host: commmand queue status: %d\n",
          pocl_ttasim_read_device (d, commandQueueAddr));
 #endif
   /* Wait until the device command queue has room. */
@@ -429,22 +434,29 @@ pocl_ttasim_run
   while (pocl_ttasim_read_device (d, commandQueueAddr) != POCL_KST_FREE);
 
 #ifdef DEBUG_TTASIM_DRIVER
-  printf( "--- writing the command.\n");
+  printf( "host: writing the command.\n");
 #endif
   pocl_ttasim_copy_h2d (d, &cmd, commandQueueAddr, sizeof(__kernel_exec_cmd) );
 
+  /* Ensure the READY status is written the last so the device doesn't
+     start executing before all the cmd data has been written. We 
+     need a flush or similar mechanism to ensure all the data has 
+     been really written, in case the data transfers are not guaranteed
+     to be ordered. */
+  pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_READY, swap));
+
 #ifdef DEBUG_TTASIM_DRIVER
-  printf("--- commmand queue status: %x\n",
+  printf("host: commmand queue status: %x\n",
          pocl_ttasim_read_device (d, commandQueueAddr));
 
-  printf("--- waiting for the command to get executed.\n");
+  printf("host: waiting for the command to get executed.\n");
 #endif
   /* Wait until the command has executed. */
   do {} 
   while (pocl_ttasim_read_device (d, commandQueueAddr) != POCL_KST_FINISHED);
 
 #ifdef DEBUG_TTASIM_DRIVER
-  printf( "--- done. Freeing the command queue entry.\n");
+  printf( "host: done. Freeing the command queue entry.\n");
 #endif
   /* We are done with this kernel, free the command queue entry. */
   pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_FREE, swap));
@@ -470,11 +482,7 @@ pocl_ttasim_read_device (void *device_data, uint32_t addr)
 void
 pocl_ttasim_write_device (void *device_data, uint32_t addr, uint32_t word)  
 {
-  struct data *d = (struct data*)device_data;
-  MemorySystem &mems = d->simulator->memorySystem();
-  Memory& globalMem = mems.memory (*d->global_as);
-  uint32_t val;
-  globalMem.write (addr, 4, val);
+  pocl_ttasim_copy_h2d (device_data, &word, addr, sizeof (word) );
 }
 
 /* Copy data between the host memory and the global memory of the device. 
