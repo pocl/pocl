@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "devices.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
 clCreateBuffer(cl_context context,
@@ -31,7 +32,7 @@ clCreateBuffer(cl_context context,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_mem mem;
-  cl_device_id device_id;
+  cl_device_id device;
   void *device_ptr;
   unsigned i, j;
 
@@ -48,30 +49,36 @@ clCreateBuffer(cl_context context,
   mem->mappings = NULL;
   mem->flags = flags;
 
-  mem->device_ptrs = (void **) malloc(context->num_devices * sizeof(void *));
+  /* Store the per device buffer pointers always to a known
+     location in the buffer (dev_id), even though the context
+     might not contain all the devices. */
+  mem->device_ptrs = (void **) malloc(pocl_num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
       free(mem);
       POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
     }  
+
+  for (i = 0; i < pocl_num_devices; ++i)
+    mem->device_ptrs[i] = NULL;
   
   for (i = 0; i < context->num_devices; ++i)
     {
       if (i > 0)
         clRetainMemObject (mem);
-      device_id = context->devices[i];
-      device_ptr = device_id->malloc(device_id->data, flags, size, host_ptr);
+      device = context->devices[i];
+      device_ptr = device->malloc(device->data, flags, size, host_ptr);
       if (device_ptr == NULL)
         {
           for (j = 0; j < i; ++j)
             {
-              device_id = context->devices[j];
-              device_id->free(device_id->data, flags, mem->device_ptrs[j]);
+              device = context->devices[j];
+              device->free(device->data, flags, mem->device_ptrs[device->dev_id]);
             }
           free(mem);
           POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
         }
-      mem->device_ptrs[i] = device_ptr;
+      mem->device_ptrs[device->dev_id] = device_ptr;
       /* The device allocator allocated from a device-host shared memory. */
       if (flags & CL_MEM_ALLOC_HOST_PTR ||
           flags & CL_MEM_USE_HOST_PTR)

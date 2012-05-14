@@ -85,7 +85,8 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
           clRetainMemObject (buffer);
           clFinish (command_queue);
         }
-      device_id->write(device_id->data, ptr, buffer->device_ptrs[i]+offset, cb);
+      /* TODO: fixme. The offset computation must be done at the device driver. */
+      device_id->write(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id]+offset, cb);
       clReleaseMemObject (buffer);
     }
   else

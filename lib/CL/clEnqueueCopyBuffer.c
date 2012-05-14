@@ -75,8 +75,10 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
 
   cmd->type = CL_COMMAND_TYPE_COPY;
   cmd->command.copy.data = device_id->data;
-  cmd->command.copy.src_ptr = src_buffer->device_ptrs[i] + src_offset;
-  cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[i] + dst_offset;
+  /* TODO: call device->buf_offset() or similar as device_ptrs might not be
+     actual buffer pointers but pointers to a book keeping structure. */
+  cmd->command.copy.src_ptr = src_buffer->device_ptrs[device_id->dev_id] + src_offset;
+  cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[device_id->dev_id] + dst_offset;
   cmd->command.copy.cb = cb;
   cmd->next = NULL;
 

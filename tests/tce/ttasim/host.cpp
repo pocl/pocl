@@ -56,7 +56,7 @@ int
 main(void)
 {
     const int OUTPUT_SIZE = 5;
-    char *input = "PING\0";
+    const char *input = "PING\0";
     char output[OUTPUT_SIZE];
     float a = 23456.0f;
     int b = 2000001;   

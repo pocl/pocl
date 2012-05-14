@@ -108,7 +108,10 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("### processing arg ");
         lwpr_print_int(i); lwpr_print_str(" of ");
-        lwpr_print_int(kernel->num_args); lwpr_newline();
+        lwpr_print_int(kernel->num_args); 
+        lwpr_print_str(" value: ");
+        lwpr_print_int(cmd->args[i]);
+        lwpr_newline();
 #endif
         if (!kernel->arg_is_local[i]) {
             args[i] = (unsigned)cmd->args[i];

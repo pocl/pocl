@@ -274,6 +274,14 @@ struct _cl_mem {
   cl_uint map_count;
   cl_context context;
   /* implementation */
+  /* The device-specific pointers to the buffer for all
+     device ids the buffer was allocated to. This can be a
+     direct pointer to the memory of the buffer or a pointer to
+     a book keeping structure. This always contains
+     as many pointers as there are devices in the system, even
+     though the buffer was not allocated for all.
+     The location of the device's buffer ptr is determined by
+     the device's dev_id. */
   void **device_ptrs;
   /* A linked list of regions of the buffer mapped to the 
      host memory */

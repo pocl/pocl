@@ -87,7 +87,9 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
           clRetainMemObject (buffer);
           clFinish(command_queue);
         }
-      device_id->read(device_id->data, ptr, buffer->device_ptrs[i]+offset, cb);
+      /* TODO: offset computation doesn't work in case the ptr is not 
+         a direct pointer */
+      device_id->read(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id]+offset, cb);
       clReleaseMemObject (buffer);
     }
   else

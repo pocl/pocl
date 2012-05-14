@@ -102,7 +102,7 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
     } 
   else 
     {
-      host_ptr = device_id->map_mem (device_id->data, buffer->device_ptrs[i], offset, size);
+      host_ptr = device_id->map_mem (device_id->data, buffer->device_ptrs[device_id->dev_id], offset, size);
       if (host_ptr == NULL)
         POCL_ERROR (CL_MAP_FAILURE);
     }

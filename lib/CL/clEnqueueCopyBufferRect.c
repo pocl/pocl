@@ -78,7 +78,8 @@ clEnqueueCopyBufferRect(cl_command_queue command_queue,
   assert(i < command_queue->context->num_devices);
 
   device_id->copy_rect(device_id->data,
-                       src_buffer->device_ptrs[i], dst_buffer->device_ptrs[i],
+                       src_buffer->device_ptrs[device_id->dev_id], 
+                       dst_buffer->device_ptrs[device_id->dev_id],
                        src_origin, dst_origin, region,
                        src_row_pitch, src_slice_pitch,
                        dst_row_pitch, dst_slice_pitch);

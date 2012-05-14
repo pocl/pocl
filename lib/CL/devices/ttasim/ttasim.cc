@@ -405,6 +405,7 @@ pocl_ttasim_run
           (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, swap);
       else /* The scalar values should be byteswapped by the user. */
         cmd.args[i] = (uint32_t)((size_t)al->value & 0x00000000FFFFFFFF); 
+      printf("### arg %d passed as %d\n", i, cmd.args[i]);
     }
   cmd.work_dim = byteswap_uint32_t (pc->work_dim, swap);
   cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], swap);

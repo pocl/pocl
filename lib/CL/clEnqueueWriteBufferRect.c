@@ -90,7 +90,7 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->write_rect(device_id->data, ptr, buffer->device_ptrs[i],
+  device_id->write_rect(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id],
                         buffer_origin, host_origin, region,
                         buffer_row_pitch, buffer_slice_pitch,
                         host_row_pitch, host_slice_pitch);
