@@ -90,8 +90,8 @@ clGetDeviceInfo(cl_device_id   device,
        compilation time) with usually no benefits.
     */
     POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_group_size);
-  case CL_DEVICE_MAX_WORK_ITEM_SIZES               :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_item_sizes);
+  case CL_DEVICE_MAX_WORK_ITEM_SIZES:
+    POCL_RETURN_DEVICE_INFO(size_t, device->max_work_item_sizes);
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_char);   
@@ -115,37 +115,62 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO(cl_uint, device->max_clock_frequency);
   case CL_DEVICE_ADDRESS_BITS                      :
     POCL_RETURN_DEVICE_INFO(cl_uint, device->address_bits);
-  case CL_DEVICE_MAX_READ_IMAGE_ARGS               : break;
-  case CL_DEVICE_MAX_WRITE_IMAGE_ARGS              : break;
+  case CL_DEVICE_MAX_READ_IMAGE_ARGS               : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_read_image_args);
+  case CL_DEVICE_MAX_WRITE_IMAGE_ARGS              :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_write_image_args);
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO(cl_ulong, device->max_mem_alloc_size);
-  case CL_DEVICE_IMAGE2D_MAX_WIDTH                 : break;
-  case CL_DEVICE_IMAGE2D_MAX_HEIGHT                : break;
-  case CL_DEVICE_IMAGE3D_MAX_WIDTH                 : break;
-  case CL_DEVICE_IMAGE3D_MAX_HEIGHT                : break;
-  case CL_DEVICE_IMAGE3D_MAX_DEPTH                 : break;
-  case CL_DEVICE_MAX_PARAMETER_SIZE                : break;
-  case CL_DEVICE_MAX_SAMPLERS                      : break;
-  case CL_DEVICE_MEM_BASE_ADDR_ALIGN               : break;
-  case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE          : break;
-  case CL_DEVICE_SINGLE_FP_CONFIG                  : break;
-  case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE             : break;
-  case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         : break;
-  case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             : break;
+  case CL_DEVICE_IMAGE2D_MAX_WIDTH                 : 
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->image2d_max_width);
+  case CL_DEVICE_IMAGE2D_MAX_HEIGHT                :
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->image2d_max_height);
+  case CL_DEVICE_IMAGE3D_MAX_WIDTH                 : 
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->image3d_max_width);
+  case CL_DEVICE_IMAGE3D_MAX_HEIGHT                : 
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->image3d_max_height);
+  case CL_DEVICE_IMAGE3D_MAX_DEPTH                 :
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->image3d_max_depth);
+  case CL_DEVICE_MAX_PARAMETER_SIZE                : 
+    POCL_RETURN_DEVICE_INFO(size_t, device->max_parameter_size);
+  case CL_DEVICE_MAX_SAMPLERS                      : 
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->max_samplers);
+  case CL_DEVICE_MEM_BASE_ADDR_ALIGN               : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->mem_base_addr_align);
+  case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE          : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->min_data_type_align_size);
+  case CL_DEVICE_SINGLE_FP_CONFIG                  : 
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->single_fp_config);
+  case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE             :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->global_mem_cache_type);
+  case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->global_mem_cacheline_size);
+  case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             : 
+    POCL_RETURN_DEVICE_INFO(cl_ulong, device->global_mem_cache_size);
   case CL_DEVICE_GLOBAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->global_mem_size);
-  case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE          : break;
-  case CL_DEVICE_MAX_CONSTANT_ARGS                 : break;
-  case CL_DEVICE_LOCAL_MEM_TYPE                    : break;
+  case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE          : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_constant_buffer_size);
+  case CL_DEVICE_MAX_CONSTANT_ARGS                 : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_constant_args);
+  case CL_DEVICE_LOCAL_MEM_TYPE                    :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->local_mem_size);
   case CL_DEVICE_LOCAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO(cl_ulong, device->local_mem_size);
-  case CL_DEVICE_ERROR_CORRECTION_SUPPORT          : break;
-  case CL_DEVICE_PROFILING_TIMER_RESOLUTION        : break;
-  case CL_DEVICE_ENDIAN_LITTLE                     : break;
-  case CL_DEVICE_AVAILABLE                         : break;
-  case CL_DEVICE_COMPILER_AVAILABLE                : break;
-  case CL_DEVICE_EXECUTION_CAPABILITIES            : break;
-  case CL_DEVICE_QUEUE_PROPERTIES                  : break;
+  case CL_DEVICE_ERROR_CORRECTION_SUPPORT          :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->error_correction_support);
+  case CL_DEVICE_PROFILING_TIMER_RESOLUTION        :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->profiling_timer_resolution);
+  case CL_DEVICE_ENDIAN_LITTLE                     :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->endian_little);
+  case CL_DEVICE_AVAILABLE                         :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->available);
+  case CL_DEVICE_COMPILER_AVAILABLE                :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->compiler_available);
+  case CL_DEVICE_EXECUTION_CAPABILITIES            :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->execution_capabilities);
+  case CL_DEVICE_QUEUE_PROPERTIES                  :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->queue_properties);
     
   case CL_DEVICE_NAME:
     POCL_RETURN_DEVICE_INFO_STR(device->name);
@@ -166,14 +191,25 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_HALF_FP_CONFIG                    : break;
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       : break;
   case CL_DEVICE_HOST_UNIFIED_MEMORY               : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR          : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT         : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_INT           : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG          : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT         : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE        : break;
-  case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : break;
-  case CL_DEVICE_OPENCL_C_VERSION                  : break;
+  // TODO: figure out what the difference between preferred and native
+  //       widths are. And why there is no struct fields 'native_vector...'
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR          : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_char);
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT         :
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_short);
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_INT           : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_int);
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG          : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_long);
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT         : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_float);
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE        : 
+    POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_double);
+  case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
+    // TODO: why is there no preferred_vector_width_half?
+    POCL_RETURN_DEVICE_INFO(cl_uint, 0);
+  case CL_DEVICE_OPENCL_C_VERSION                  :
+    POCL_RETURN_DEVICE_INFO_STR("1.2");
   }
 
   // remove me when everything *is* implemented, and param_name really is invalid
