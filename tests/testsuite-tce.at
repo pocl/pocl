@@ -2,7 +2,7 @@
 AT_BANNER([TCE tests])
 
 AT_SETUP([A basic ttasim driver test])
-AT_KEYWORDS([tce ttasim])
+AT_KEYWORDS([tce tta ttasim])
 AT_SKIP_IF([! grep -c "define TCE_AVAILABLE" $abs_top_srcdir/config.h])
 AT_CHECK([make -s -C $abs_top_srcdir/tests/tce/ttasim run | egrep -v "^make"], 0, 
 [PING23456.000000 2000001OK

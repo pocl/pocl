@@ -79,25 +79,12 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
       clFinish (command_queue);
     }
 
-  if (buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
-    {
-      /* TODO: We should ensure the host_ptr region is updated from
-         the device global memory as it might be cached to the device
-         global memory in cases where there is no shared RAM. */
-      host_ptr = buffer->mem_host_ptr + offset;
-      host_ptr = device->map_mem 
-        (device->data, buffer->device_ptrs[device->dev_id], offset, size, host_ptr);
+  host_ptr = device->map_mem 
+      (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
+       buffer->mem_host_ptr);
 
-      if (host_ptr == NULL)
-        POCL_ERROR (CL_MAP_FAILURE);
-    } 
-  else 
-    {
-      host_ptr = device->map_mem 
-        (device->data, buffer->device_ptrs[device->dev_id], offset, size, NULL);
-      if (host_ptr == NULL)
-        POCL_ERROR (CL_MAP_FAILURE);
-    }
+  if (host_ptr == NULL)
+      POCL_ERROR (CL_MAP_FAILURE);
 
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;

@@ -74,7 +74,7 @@ static void tta_opencl_wg_execute(
                 lwpr_print_int(gid_x); lwpr_print_str("-");
                 lwpr_print_int(gid_y); lwpr_print_str("-");
                 lwpr_print_int(gid_z); lwpr_print_str(" @ ");
-                lwpr_print_int(kernel->work_group_func);
+                lwpr_print_int((unsigned)kernel->work_group_func);
                 lwpr_newline();
 #endif
                 kernel->work_group_func (args, &context);
@@ -101,53 +101,16 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
        a single trampoline call as fast as possible. 
 
        Do not create any threads. */
-    /* allocate data for the local buffers. TODO: this is not
-       thread safe due to the shared 'args' struct. In MT we need
-       to copy the local pointers for each invocation. */
-    for (int i = 0; i < kernel->num_args; ++i) {
+    for (int i = 0; i < kernel->num_args + kernel->num_locals; ++i) {
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("tta: processing arg ");
-        lwpr_print_int(i); lwpr_print_str(" of ");
-        lwpr_print_int(kernel->num_args); 
+        lwpr_print_int(i); 
         lwpr_print_str(" value: ");
         lwpr_print_int(cmd->args[i]);
         lwpr_newline();
 #endif
-        if (!kernel->arg_is_local[i]) {
-            args[i] = (void*)cmd->args[i];
-            continue;
-        }
-        /* TODO: this is broken. It should store a pointer to the buffer pointer
-           instead of the buffer pointer directly. */
-        args[i] = malloc(cmd->dynamic_local_arg_sizes[i]);
-        if (args[i] == 0) {
-#ifdef DEBUG_TTA_DEVICE
-            lwpr_print_str("tta: out of memory while allocating the local buffers\\n");
-#endif
-            exit(1);
-        }
+        args[i] = (void*)cmd->args[i];
     }
-    /* Allocate data for the automatic local buffers which have
-       been converted to pointer arguments in the kernel launcher
-       function. They are the last arguments always. */
-        for (int i = kernel->num_args; 
-             0 && i < kernel->num_args + kernel->num_locals; 
-             ++i) {
-            /* TODO: this is broken. It should store a pointer to the buffer pointer
-               instead of the buffer pointer directly. */
-            args[i] = malloc(kernel->alocal_sizes[i - kernel->num_args]);
-#if 0 && defined(DEBUG_TTA_DEVICE)
-            lwpr_print_str("tta: allocated ");
-            iprintf("tta: allocated %%d bytes for the automatic local arg %%d at %%x\\n", 
-                    kernel->alocal_sizes[i - kernel->num_args], i, *(unsigned int*)args[i]);
-#endif
-            if (args[i] == 0) {
-#ifdef DEBUG_TTA_DEVICE
-                lwpr_print_str("tta: out of memory while allocating the local buffers\\n");
-#endif
-                exit(1);
-            }          
-        }
 
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("tta: ------------------- starting kernel\n");
@@ -156,27 +119,6 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("\ntta: ------------------- kernel finished\n");
 #endif
-        /* free the local buffers */
-        for (int i = 0; i < kernel->num_args; ++i) {
-            if (!kernel->arg_is_local[i]) continue;
-
-            /* TODO: this is broken. It should store a pointer to the buffer pointer
-               instead of the buffer pointer directly. */
-            free(*((void**)args[i]));
-            //free(args[1]);
-        }
-        /* free the automatic local buffers */
-        for (int i = kernel->num_args;
-             i < kernel->num_args + kernel->num_locals;
-             ++i) {
-#if 0
-            iprintf("tta: freed automatic local arg %%d\\n", i);
-#endif
-            /* TODO: this is broken. It should store a pointer to the buffer pointer
-               instead of the buffer pointer directly. */
-            free(*((void**)args[i]));
-            //free(args[1]);
-        }
 }
 
 extern __kernel_metadata _test_kernel_md;

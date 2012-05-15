@@ -29,6 +29,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "pocl_util.h"
+
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS)
 
@@ -57,10 +59,6 @@ int
 main(void)
 {
     float A[BUFFER_SIZE];
-    int scalar = 4;
-
-    for (int i = 0; i < BUFFER_SIZE; ++i)
-        A[i] = i;
 
     cl_int err;
 
@@ -73,7 +71,7 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_CPU, cprops);
+        cl::Context context(CL_DEVICE_TYPE_CPU|CL_DEVICE_TYPE_GPU, cprops);
 
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -81,6 +79,14 @@ main(void)
         // Create and program from source
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
         cl::Program program(context, sources);
+
+        bool shouldSwap = 
+            !devices.at(0).getInfo<CL_DEVICE_ENDIAN_LITTLE>();
+
+        int scalar = byteswap_uint32_t (4, shouldSwap);
+
+        for (int i = 0; i < BUFFER_SIZE; ++i)
+            A[i] = byteswap_float (i, shouldSwap);
 
         // Build program
         program.build(devices);
@@ -121,11 +127,15 @@ main(void)
             0,
             BUFFER_SIZE * sizeof(float));
 
+        res[0] = byteswap_float (res[0], shouldSwap);
+        res[1] = byteswap_float (res[1], shouldSwap);
         bool ok = res[0] == 8 && res[1] == 10;
-        if (ok) 
+        if (ok) {
             std::cout << "OK" << std::endl;
-        else
+        } else {
             std::cout << "NOK " << res[0] << " " << res[1] << std::endl;
+            std::cout << "res@" << std::hex << res << std::endl;
+        }
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(

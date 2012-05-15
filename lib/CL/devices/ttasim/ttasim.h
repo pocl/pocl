@@ -128,6 +128,6 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
 
 void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, uint32_t dest_addr, size_t count);
 void pocl_ttasim_copy_d2h (void *data, uint32_t src_addr, void *dst_ptr, size_t count);
-
+chunk_info_t *pocl_ttasim_malloc_local (void *data, size_t size);
 
 #endif /* POCL_TTASIM_H */

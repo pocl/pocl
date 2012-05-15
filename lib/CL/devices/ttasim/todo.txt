@@ -1,9 +1,5 @@
 - basic features:
-  - reading of data back from the tta global memory
   - sub buffers
-  - local memory allocation (at the host side)
-    - static
-    - dynamic
 - reorganize dir structure to 
   - tce/ttasim
   - tce/plda-tta
@@ -14,6 +10,7 @@
   - bufalloc instead of malloc inside the device
 - cleanup code:
   - free allocations for the kernel command constructs
+  - free local memory buffers
 - clEnqueueCopyBuffer:
   - inside the same device 
   - between multiple devices

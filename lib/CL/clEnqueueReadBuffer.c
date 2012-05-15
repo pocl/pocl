@@ -36,8 +36,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
                     const cl_event *event_wait_list,
                     cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
-  cl_device_id device_id;
-  unsigned i;
+  cl_device_id device;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -52,14 +51,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
       (offset + cb > buffer->size))
     return CL_INVALID_VALUE;
 
-  device_id = command_queue->device;
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-      if (command_queue->context->devices[i] == device_id)
-        break;
-    }
-
-  assert(i < command_queue->context->num_devices);
+  device = command_queue->device;
 
   if (event != NULL)
     {
@@ -89,7 +81,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
         }
       /* TODO: offset computation doesn't work in case the ptr is not 
          a direct pointer */
-      device_id->read(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id]+offset, cb);
+      device->read(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
       clReleaseMemObject (buffer);
     }
   else
@@ -99,9 +91,9 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
       return CL_OUT_OF_HOST_MEMORY;
     
     cmd->type = CL_COMMAND_TYPE_READ;
-    cmd->command.read.data = device_id->data;
+    cmd->command.read.data = device->data;
     cmd->command.read.host_ptr = ptr;
-    cmd->command.read.device_ptr = buffer->device_ptrs[i]+offset;
+    cmd->command.read.device_ptr = buffer->device_ptrs[device->dev_id]+offset;
     cmd->command.read.cb = cb;
     cmd->next = NULL;
     cmd->command.read.buffer = buffer;

@@ -212,9 +212,11 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
         }
     }
   if (d->local_as == NULL) 
-    POCL_ABORT("local address space not found in the ADF. Mark it by adding numerical ids 0 and 4 to the AS.\n");
+    POCL_ABORT("local address space not found in the ADF. "
+               "Mark it by adding numerical ids 0 and 4 to the AS.\n");
   if (d->global_as == NULL) 
-    POCL_ABORT("global address space not found in the ADF. Mark it by adding numerical ids 3 and 5 to the AS.\n");
+    POCL_ABORT("global address space not found in the ADF. "
+               "Mark it by adding numerical ids 3 and 5 to the AS.\n");
 
   int local_size = 
     d->local_as->end() - d->local_as->start() - TTA_UNALLOCATED_LOCAL_SPACE;
@@ -247,16 +249,27 @@ pocl_ttasim_malloc (void *device_data, cl_mem_flags flags,
   chunk_info_t *chunk = alloc_buffer (&d->global_mem, size);
   if (chunk == NULL) return NULL;
 
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("host: malloc %x (host) %d (device) size: %u\n", host_ptr, chunk->start_address, size);
+#endif
+
   if ((flags & CL_MEM_COPY_HOST_PTR) ||  
       ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL))
     {
       /* TODO: 
          CL_MEM_USE_HOST_PTR must synch the buffer after execution 
          back to the host's memory in case it's used as an output (?). */
-      pocl_ttasim_copy_h2d (d, host_ptr, chunk->start_address, size);
+      pocl_ttasim_write (d, host_ptr, chunk, size);
       return (void*) chunk;
     }
   return (void*) chunk;
+}
+
+chunk_info_t*
+pocl_ttasim_malloc_local (void *device_data, size_t size) 
+{
+  struct data *d = (struct data*)device_data;
+  return alloc_buffer (&d->global_mem, size);
 }
 
 void
@@ -268,21 +281,21 @@ pocl_ttasim_free (void *data, cl_mem_flags flags, void *ptr)
 void
 pocl_ttasim_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 {
-  POCL_ABORT_UNIMPLEMENTED();
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy (host_ptr, device_ptr, cb);
+  chunk_info_t *chunk = (chunk_info_t*)device_ptr;
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("host: read to %x (host) from %d (device) %u\n", host_ptr, chunk->start_address, cb);
+#endif
+  pocl_ttasim_copy_d2h (data, chunk->start_address, host_ptr, cb);
 }
 
 void
 pocl_ttasim_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 {
-  POCL_ABORT_UNIMPLEMENTED();
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy (device_ptr, host_ptr, cb);
+  chunk_info_t *chunk = (chunk_info_t*)device_ptr;
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("host: write %x %x %u\n", host_ptr, chunk->start_address, cb);
+#endif
+  pocl_ttasim_copy_h2d (data, host_ptr, chunk->start_address, cb);
 }
 
 void
@@ -396,11 +409,21 @@ pocl_ttasim_run
       al = &(kernel->arguments[i]);
       if (kernel->arg_is_local[i])
         {
-          cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
+          //cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
+          /* Allocate the local memory buffer and pass a pointer to it directly. 
+             TODO: remember to free it after finishing. TODO: automatic locals. */
+          chunk_info_t* local_chunk = pocl_ttasim_malloc_local (d, al->size);
+          cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, swap);
+#ifdef DEBUG_TTASIM_DRIVER
+          printf ("host: allocated %d bytes of local memory for arg %d @ %d\n", 
+                  al->size, i, local_chunk->start_address);
+#endif
         }
       else if (kernel->arg_is_pointer[i])
-        cmd.args[i] = byteswap_uint32_t 
-          (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, swap);
+        {
+          cmd.args[i] = byteswap_uint32_t 
+            (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, swap);
+        }
       else /* The scalar values should be byteswapped by the user. */
         {
           /* Copy the scalar argument data to the shared memory. */
@@ -411,6 +434,20 @@ pocl_ttasim_run
 #endif
           cmd.args[i] = byteswap_uint32_t (arg_space->start_address, swap);
         }
+    }
+
+  /* Allocate the automatic local buffers. */
+  for (int i = kernel->num_args;
+       i < kernel->num_args + kernel->num_locals;
+       ++i) 
+    {
+      al = &(kernel->arguments[i]);
+      chunk_info_t* local_chunk = pocl_ttasim_malloc_local (d, al->size);
+      cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, swap);
+#ifdef DEBUG_TTASIM_DRIVER
+      printf ("host: allocated %d bytes of local memory for automated local arg %d @ %d\n", 
+              al->size, i, local_chunk->start_address);
+#endif      
     }
   cmd.work_dim = byteswap_uint32_t (pc->work_dim, swap);
   cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], swap);
@@ -515,6 +552,7 @@ pocl_ttasim_copy_d2h (void *device_data, uint32_t src_addr, void *dst_ptr, size_
   Memory& globalMem = mems.memory (*d->global_as);
   for (int i = 0; i < count; ++i) {
     ((char*)dst_ptr)[i] = globalMem.read (src_addr + i);
+    //    printf("host: read byte %u from %d to %x\n",  ((char*)dst_ptr)[i], src_addr + i, &((char*)dst_ptr)[i]);
   }
 }
 
@@ -637,11 +675,11 @@ pocl_ttasim_map_mem (void *data, void *buf_ptr,
     } 
   else
     {
-      target = malloc (size);
+      posix_memalign (&target, ALIGNMENT, size);
     }
 
   /* Synch the device global region to the host memory. */
-  pocl_ttasim_copy_d2h (data, chunk->start_address, target, size);
+  pocl_ttasim_read (data, target, chunk, size);
   return target;
 }
 
