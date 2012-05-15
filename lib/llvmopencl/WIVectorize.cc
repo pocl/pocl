@@ -65,7 +65,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(3), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(2), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -433,7 +433,6 @@ namespace {
         OffsetInElmts = Offset/VTyTSS;
         return (abs64(Offset) % VTyTSS) == 0;
       }
-
       return false;
     }
 
@@ -940,21 +939,26 @@ namespace {
       }
       tmpVec->push_back(I);
     }
-    
+    DenseSet<Value *> Users;
+    AliasSetTracker WriteSet(*AA);    
     for (std::multimap<int, ValueVector*>::iterator insIt = temporary.begin();
          insIt != temporary.end(); insIt++) {
         ValueVector* tmpVec = (*insIt).second;
         for (unsigned j = 0; j < tmpVec->size()/2; j++) {
             Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
             Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
-            if (!areInstsCompatibleFromDifferentWi(I,J)) continue; 
+            if (!areInstsCompatibleFromDifferentWi(I,J)) continue;
             bool IsSimpleLoadStore;
             if (!isInstVectorizable(I, IsSimpleLoadStore)) {
                 continue;            
             }
             if (!areInstsCompatible(I, J, IsSimpleLoadStore)) { 
                 continue;
-            }
+            }            
+            // Determine if J uses I, if so, exit the loop.
+            bool UsesI = trackUsesOfI(Users, WriteSet, I, J, !FastDep);            
+            if (UsesI) break;            
+            
             if (!PairableInsts.size() ||
                 PairableInsts[PairableInsts.size()-1] != I) {
                 PairableInsts.push_back(I);
