@@ -25,104 +25,6 @@
 AT_INIT()
 AT_COLOR_TESTS
 
-AT_BANNER([llvmopencl passes tests])
-
-AT_SETUP([LoopBarriers pass])
-AT_KEYWORDS([llvmopencl])
-# Skip this group until pass ordering stabilizes.
-AT_CHECK([exit 77])
-for i in $abs_top_srcdir/tests/loopbarriers*_input.ll
-do
-  input=`echo $i | sed 's/.*\///'`
-  golden=`echo $input | sed s/_input.ll/_golden.ll/`
-  output=`echo $input | sed s/_input.ll/_output.ll/`
-  reapply=`echo $input | sed s/_input.ll/_reapply.ll/`
-  echo "input=$input"
-  echo "output=$output"
-  echo "golden=$golden"
-  echo "reapply=$reapply"
-  cp $abs_top_srcdir/tests/$input .
-  cp $abs_top_srcdir/tests/$golden .
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-barriers -S -o $output $input])
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-barriers -loop-barriers -S -o $reapply $input])
-  AT_CHECK([cmp $output $golden])
-  AT_CHECK([cmp $reapply $output])
-done
-AT_CLEANUP
-
-AT_SETUP([CanonicalizeBarriers pass])
-AT_KEYWORDS([llvmopencl])
-# Skip this group until pass ordering stabilizes.
-AT_CHECK([exit 77])
-for i in $abs_top_srcdir/tests/barriers*_input.ll
-do
-  input=`echo $i | sed 's/.*\///'`
-  golden=`echo $input | sed s/_input.ll/_golden.ll/`
-  output=`echo $input | sed s/_input.ll/_output.ll/`
-  reapply=`echo $input | sed s/_input.ll/_reapply.ll/`
-  echo "input=$input"
-  echo "output=$output"
-  echo "golden=$golden"
-  echo "reapply=$reapply"
-  cp $abs_top_srcdir/tests/$input .
-  cp $abs_top_srcdir/tests/$golden .
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $output $input])
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -barriers -S -o $reapply $input])
-  AT_CHECK([cmp $output $golden])
-  AT_CHECK([cmp $reapply $output])
-done
-AT_CLEANUP
-
-AT_SETUP([BarrierTailReplication pass])
-AT_KEYWORDS([llvmopencl])
-# Skip this group until pass ordering stabilizes.
-AT_CHECK([exit 77])
-for i in $abs_top_srcdir/tests/barriertails*_input.ll
-do
-  input=`echo $i | sed 's/.*\///'`
-  golden=`echo $input | sed s/_input.ll/_golden.ll/`
-  output=`echo $input | sed s/_input.ll/_output.ll/`
-  reapply=`echo $input | sed s/_input.ll/_reapply.ll/`
-  echo "input=$input"
-  echo "output=$output"
-  echo "golden=$golden"
-  echo "reapply=$reapply"
-  cp $abs_top_srcdir/tests/$input .
-  cp $abs_top_srcdir/tests/$golden .
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input])
-  AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -barriertails -S -o $reapply $input])
-  AT_CHECK([cmp $output $golden])
-  AT_CHECK([cmp $reapply $output])
-done
-AT_CLEANUP
-
-AT_SETUP([Pass composition])
-AT_KEYWORDS([llvmopencl])
-# Skip this group until pass ordering stabilizes.
-AT_CHECK([exit 77])
-for type in btr loops barriers workitem
-do
-  for i in $abs_top_srcdir/tests/*_$type.ll
-  do
-    golden=`echo $i | sed 's/.*\///' | sed s/.ll/_golden.ll/`
-    input=`echo $golden | sed s/_${type}_golden.ll/.ll/`
-    output=`echo $golden | sed s/_golden.ll/_output.ll/`
-    echo "input=$input"
-    echo "output=$output"
-    echo "golden=$golden"
-    cp $i $golden
-    cp $abs_top_srcdir/tests/$input .
-    case $type in
-      btr)      AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriertails -S -o $output $input], 0, ignore, ignore) ;;
-      loops)    AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -loop-simplify -loop-barriers -S -o $output $input], 0, ignore, ignore) ;;
-      barriers) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -barriers -S -o $output $input], 0, ignore, ignore) ;;
-      workitem) AT_CHECK([opt -load $abs_top_builddir/lib/llvmopencl/.libs/llvmopencl.so -verify-dom-info -verify-loop-info -workitem -local-size=2 2 2 -S -o $output $input], 0, ignore, ignore) ;;
-    esac
-    AT_CHECK([cmp $output $golden])
-  done
-done
-AT_CLEANUP
-
 AT_BANNER([OpenCL specification tests])
 
 AT_SETUP([example1: dot product])
@@ -245,6 +147,7 @@ Done.
 AT_CHECK([$abs_top_builddir/examples/scalarwave/scalarwave], 0, expout)
 AT_CLEANUP
 
+#m4_include(testsuite-llvmopencl.at)
 m4_include(testsuite-regression.at)
 m4_include(testsuite-tce.at)
 m4_include(testsuite-samples.at)
