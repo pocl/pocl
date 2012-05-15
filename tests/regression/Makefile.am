@@ -24,7 +24,9 @@
 
 SUBDIRS = loop-phi-replication locals barrier-between-for-loops \
 	simple-for-with-a-barrier multi-level-loops-with-barriers \
-	for-with-var-iteration-count early-return id-dependent-computation
+	for-with-var-iteration-count early-return id-dependent-computation \
+	structs-as-args
+
 
 
 

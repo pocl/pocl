@@ -97,6 +97,11 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
         if (header->getFirstNonPHI() != &header->front()) {
           Barrier::Create(header->getFirstNonPHI());
           header->setName(header->getName() + ".phibarrier");
+          // Split the block to  create a replicable region of
+          // the loop contents in case the phi node contains a
+          // branch (that can be to inside the region).
+          //          if (header->getTerminator()->getNumSuccessors() > 1)
+          //    SplitBlock(header, header->getTerminator(), this);
         }
 
         // Add the barriers on the exiting block and the latches,

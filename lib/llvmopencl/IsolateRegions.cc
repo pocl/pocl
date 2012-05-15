@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "IsolateRegions.h"
+#include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -48,16 +49,48 @@ IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const
 /* Ensure Single-Entry Single-Exit Regions are isolated from the
    exit node so they won't get split illegally with tail replication. 
 
-   This might happen in casen an if .. else .. structure is just 
+   This might happen in case an if .. else .. structure is just 
    before an exit from kernel. Both branches are split even though
    we would like to replicate the structure as a whole to retain
    semantics. This adds dummy basic blocks to all Regions just for
    clarity. Cleanup with -simplifycfg.
+
+   TODO: Also add a dummy BB in case the Region starts with a
+   barrier. Such a Region might not get optimally replicated and
+   can lead to problematic cases. E.g.:
+
+   digraph G {
+      BAR1 -> A;
+      A -> X; 
+      BAR1 -> X; 
+      X -> BAR2;
+   }
+
+   (draw with "dot -Tpng -o graph.png"   + copy paste the above)
+
+   Here you have a structure which should be replicated fully but
+   it won't as the Region starts with a barrier at a split point
+   BB, thus it tries to replicate both of the branches which lead
+   to interesting errors and is not supported. Another option would
+   be to tail replicate both of the branches, but currently tail
+   replication is done only starting from the exit nodes.
+
+   IsolateRegions "normalizes" the graph to:
+
+   digraph G {
+      BAR1 -> r_entry;
+      r_entry -> A;
+      A -> X; 
+      r_entry -> X; 
+      X -> BAR2;
+   }
+
+   
 */
 bool
 IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) 
 {
-  llvm::BasicBlock* exit = R->getExit();
+  llvm::BasicBlock *exit = R->getExit();
   if (exit == NULL) return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS
@@ -66,10 +99,65 @@ IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&)
   std::cerr << "### exit block:" << std::endl;
   exit->dump();
 #endif
+  bool isFunctionExit = exit->getTerminator()->getNumSuccessors() == 0;
 
+  bool changed = false;
+
+  if (Barrier::hasBarrier(exit) || isFunctionExit)
+    {
+      addDummyBefore(R, exit);
+      changed = true;
+    }
+
+  llvm::BasicBlock *entry = R->getEntry();
+  if (entry == NULL) return changed;
+
+  bool isFunctionEntry = &entry->getParent()->getEntryBlock() == entry;
+
+  if (Barrier::hasBarrier(entry) || isFunctionEntry)
+    {
+      addDummyAfter(R, entry);
+      changed = true;
+    }
+
+  return changed;
+}
+
+
+/**
+ * Adds a dummy node after the given basic block.
+ */
+void
+IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb)
+{
+  std::vector< llvm::BasicBlock* > regionSuccs;
+
+  for (llvm::succ_iterator i = succ_begin(bb), e = succ_end(bb);
+       i != e; ++i) {
+    llvm::BasicBlock* succ = *i;
+    if (R->contains(succ))
+      regionSuccs.push_back(succ);
+  }
+  llvm::BasicBlock* newEntry = 
+    SplitBlock(bb, bb->getTerminator(), this);
+  newEntry->setName(bb->getName() + ".r_entry");
+  R->replaceEntry(newEntry);
+
+}
+
+/**
+ * Adds a dummy node before the given basic block.
+ *
+ * The edges going in to the original BB are moved to go
+ * in to the dummy BB in case the source BB is inside the
+ * same region.
+ */
+void
+IsolateRegions::addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb)
+{
   std::vector< llvm::BasicBlock* > regionPreds;
 
-  for (pred_iterator i = pred_begin(exit), e = pred_end(exit);
+  for (pred_iterator i = pred_begin(bb), e = pred_end(bb);
        i != e; ++i) {
     llvm::BasicBlock* pred = *i;
     if (R->contains(pred))
@@ -78,11 +166,10 @@ IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&)
 #ifdef LLVM_3_0
   llvm::BasicBlock* newExit = 
     SplitBlockPredecessors
-    (exit, &regionPreds[0], regionPreds.size(), ".region_exit", this);
+    (bb, &regionPreds[0], regionPreds.size(), ".r_exit", this);
 #else
   llvm::BasicBlock* newExit = 
-    SplitBlockPredecessors(exit, regionPreds, ".region_exit", this);
+    SplitBlockPredecessors(bb, regionPreds, ".r_exit", this);
 #endif
   R->replaceExit(newExit);
-  return true;
 }

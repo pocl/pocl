@@ -1,0 +1,19 @@
+- basic features:
+  - sub buffers
+- reorganize dir structure to 
+  - tce/ttasim
+  - tce/plda-tta
+- plda-tta:
+  - refactor common code between ttasim and plda-tta
+  - implement plda driver hooks
+- optimizations:
+  - bufalloc instead of malloc inside the device
+- cleanup code:
+  - free allocations for the kernel command constructs
+  - free local memory buffers
+- clEnqueueCopyBuffer:
+  - inside the same device 
+  - between multiple devices
+- proper schedule generation (process the command queue
+  as an entity)
+- out of order command queues

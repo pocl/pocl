@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "devices.h"
 
 /* NOTE: this function is untested! */
 CL_API_ENTRY cl_mem CL_API_CALL
@@ -31,6 +32,7 @@ clCreateSubBuffer(cl_mem                   buffer,
                   const void *             buffer_create_info,
                   cl_int *                 errcode_ret) CL_API_SUFFIX__VERSION_1_1 
 {
+  cl_device_id device;
   cl_mem mem;
   int i;
 
@@ -105,17 +107,25 @@ clCreateSubBuffer(cl_mem                   buffer,
       mem->mem_host_ptr = buffer->mem_host_ptr + info->origin;
     }
 
-  mem->device_ptrs = (void **) malloc(mem->context->num_devices * sizeof(void *));
+  mem->device_ptrs = (void **) malloc(pocl_num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
       free(mem);
       POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
     }
+
+  for (i = 0; i < pocl_num_devices; ++i)
+    mem->device_ptrs[i] = NULL;
   
   for (i = 0; i < mem->context->num_devices; ++i)
     {
-      /* TODO: alignment checks */
-      mem->device_ptrs[i] = buffer->device_ptrs[i] + info->origin;
+      /* TODO: call device->malloc_sub() instead as the
+       device_ptrs can contain a pointer to a book keeping
+       structure instead of the actual buffer in memory*/
+      device = mem->context->devices[i];
+
+      mem->device_ptrs[device->dev_id] = 
+        buffer->device_ptrs[device->dev_id] + info->origin;
     }
 
   POCL_RETAIN_OBJECT(mem->parent);

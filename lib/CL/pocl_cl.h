@@ -36,6 +36,14 @@
 #define POCL_KERNEL "pocl-kernel"
 #define POCL_WORKGROUP "pocl-workgroup"
 
+/* The filename in which the program source is stored in the program's temp dir. */
+#define POCL_PROGRAM_CL_FILENAME "program.cl"
+/* The filename in which the program LLVM bc is stored in the program's temp dir. */
+#define POCL_PROGRAM_BC_FILENAME "program.bc"
+/* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
+   the kernel's temp dir. */
+#define POCL_PARALLEL_BC_FILENAME "parallel.bc"
+
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
 #  define __func__ __PRETTY_FUNCTION__
@@ -63,10 +71,17 @@
         fprintf(stderr, "pocl warning: encountered incomplete implementation in %s:%d\n", __FILE__, __LINE__); \
     } while (0) 
 
-#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); return NULL;} } while (0)
+#define POCL_ABORT(__MSG__)                                      \
+    do {                                                                \
+        fprintf(stderr, __MSG__); \
+        exit(2);                                                        \
+    } while (0) 
+
+#define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); } return NULL; } while (0)
 #define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
 
 typedef pthread_mutex_t pocl_lock_t;
+#define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
@@ -167,7 +182,7 @@ struct _cl_device_id {
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
-  char *name;
+  char *name; 
   char *vendor;
   char *driver_version;
   char *profile;
@@ -175,7 +190,7 @@ struct _cl_device_id {
   char *extensions;
   /* implementation */
   void (*uninit) (cl_device_id device);
-  void (*init) (cl_device_id device);
+  void (*init) (cl_device_id device, const char *parameters);
   void *(*malloc) (void *data, cl_mem_flags flags,
 		   size_t size, void *host_ptr);
   void (*free) (void *data, cl_mem_flags flags, void *ptr);
@@ -210,13 +225,18 @@ struct _cl_device_id {
   /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
-  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size);
+  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
 
   void (*run) (void *data, const char *bytecode,
 	       cl_kernel kernel,
 	       struct pocl_context *pc);
   void *data;
+  const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
+  const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
+  /* A running number (starting from zero) across all the device instances. Used for 
+     indexing  arrays in data structures with device specific entries. */
+  int dev_id;
 };
 
 struct _cl_platform_id {
@@ -267,6 +287,14 @@ struct _cl_mem {
   cl_uint map_count;
   cl_context context;
   /* implementation */
+  /* The device-specific pointers to the buffer for all
+     device ids the buffer was allocated to. This can be a
+     direct pointer to the memory of the buffer or a pointer to
+     a book keeping structure. This always contains
+     as many pointers as there are devices in the system, even
+     though the buffer was not allocated for all.
+     The location of the device's buffer ptr is determined by
+     the device's dev_id. */
   void **device_ptrs;
   /* A linked list of regions of the buffer mapped to the 
      host memory */
@@ -288,6 +316,8 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 
   unsigned char **binaries; 
+  /* Temp directory (relative to CWD) where the kernel files reside. */
+  const char *temp_dir;
   /* implementation */
   cl_kernel kernels;
 };
@@ -297,6 +327,7 @@ struct _cl_kernel {
   POCL_OBJECT;
   /* queries */
   const char *function_name;
+  const char *name;
   cl_uint num_args;
   cl_context context;
   cl_program program;

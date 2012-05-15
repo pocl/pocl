@@ -22,12 +22,16 @@
    THE SOFTWARE.
 */
 
+#include <unistd.h>
+
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel k;
+  char *env = NULL;
 
   POCL_RELEASE_OBJECT (program);
 
@@ -39,7 +43,7 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
          retain the parent program (and release when the kernel
          is released). */
       for (k=program->kernels; k!=NULL; k=k->next)
-        {
+        {          
           k->program = NULL;
         }
 
@@ -51,6 +55,13 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
           free (program->binaries);
         }
       free (program->binary_sizes);
+
+      env = getenv ("POCL_LEAVE_TEMP_DIRS");
+      if (!(env != NULL && strlen (env) == 1 && env[0] == '1'))
+        {
+          remove_directory (program->temp_dir);
+        }
+      free (program->temp_dir);
       free (program);
     }
 

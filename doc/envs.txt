@@ -1,0 +1,56 @@
+pocl supports some environment variables to control its behavior as follows:
+
+POCL_DEVICES and POCL_DEVICEn_PARAMETERS
+
+POCL_DEVICES is a space separated list of the device instances to be enabled. 
+Currently supported device types are: 
+
+          basic        A minimalistic example device driver for executing
+                       kernels on the host CPU. No multithreading.
+
+          pthread      Native kernel execution on the host CPU with
+                       threaded execution of work groups using pthreads.
+
+          ttasim       Device that simulates a TTA device using the
+                       TCE's ttasim library. Enabled only if TCE libraries
+                       installed.
+
+Device-specific parameters can be given with POCL_DEVICEn_PARAMETERS where
+n is the number of the device in the POCL_DEVICES list (starting from zero).
+
+Example:
+
+  export POCL_DEVICES="pthread ttasim" 
+  export POCL_DEVICE1_PARAMETERS="/path/to/my/machine.adf"
+
+Creates two devices, one CPU device with pthread multithreading and a
+TTA device simulated with the ttasim. The ttasim device gets a path to
+the architecture description file of the tta to simulate as a parameter.
+
+POCL_KERNEL_COMPILER_OPT_SWITCH
+
+Override the default "-O3" that is passed to the LLVM opt as a final
+optimization switch.
+
+POCL_LEAVE_TEMP_DIRS 
+
+If this is set to 1, the kernel compiler temporary directory that contains
+all the intermediate compiler files is left to /tmp. Otherwise, it is
+be cleaned in clReleaseProgram.
+
+POCL_MAX_WORK_GROUP_SIZE 
+
+Forces the maximum WG size returned by the device or kernel work group quries
+to be at most this number. 
+
+POCL_MAX_PTHREAD_COUNT
+
+The maximum number of threads created for work group execution in the
+pthread device driver. The default is to determine this from the number of
+hardware threads available in the CPU.
+
+POCL_VECTORIZE_WORK_GROUPS
+
+If set to 1, enables the (experimental) work group vectorizer that builds 
+vector instructions from multiple work items. Currently disabled as it
+slows down the compilation too much (needs to be optimized).

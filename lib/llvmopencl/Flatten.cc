@@ -21,6 +21,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+#include <string>
+#include "Workgroup.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -39,6 +43,8 @@ namespace {
 
 }
 
+extern cl::opt<std::string> Kernel;
+
 char Flatten::ID = 0;
 static RegisterPass<Flatten> X("flatten", "Kernel function flattening pass");
 
@@ -50,6 +56,47 @@ static const char *workgroup_variables[] = {
   "_group_id_x", "_group_id_y", "_group_z",
   "_global_offset_x", "_global_offset_y", "_global_offset_z",
   NULL};
+
+//#define DEBUG_FLATTEN
+
+#define INLINE_ALL_NON_KERNEL
+
+#ifdef INLINE_ALL_NON_KERNEL
+
+bool
+Flatten::runOnModule(Module &M)
+{
+  bool changed = false;
+  for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i)
+    {
+      llvm::Function *f = i;
+      if (f->isDeclaration()) continue;
+      if (Kernel == f->getName() || 
+          (Kernel == "" && pocl::Workgroup::isKernelToProcess(*f)))
+        {
+          f->removeFnAttr(Attribute::AlwaysInline);
+          f->addFnAttr(Attribute::NoInline);
+          f->setLinkage(llvm::GlobalValue::ExternalLinkage);
+          changed = true;
+#ifdef DEBUG_FLATTEN
+          std::cerr << "### NoInline for " << f->getName().str() << std::endl;
+#endif
+        } 
+      else
+        {
+          f->removeFnAttr(Attribute::NoInline);
+          f->addFnAttr(Attribute::AlwaysInline);
+          f->setLinkage(llvm::GlobalValue::InternalLinkage);
+          changed = true;
+#ifdef DEBUG_FLATTEN
+          std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
+#endif
+        }
+    }
+  return changed;
+}
+
+#else
 
 bool
 Flatten::runOnModule(Module &M)
@@ -96,3 +143,7 @@ Flatten::runOnModule(Module &M)
 
   return true;
 }
+
+#endif
+
+

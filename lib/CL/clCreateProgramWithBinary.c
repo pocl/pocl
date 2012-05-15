@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
@@ -83,13 +84,17 @@ clCreateProgramWithBinary(cl_context                     context,
 
   program->context = context;
   program->num_devices = num_devices;
-  program->devices = context->devices;
+  program->devices = malloc (sizeof(cl_device_id) * num_devices);
   program->source = NULL;
   program->kernels = NULL;
+  /* Create the temporary directory where all kernel files and compilation
+     (intermediate) results are stored. */
+  program->temp_dir = pocl_create_temp_dir();
 
   pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)
     {
+      program->devices[i] = device_list[i];
       program->binary_sizes[i] = lengths[i];
       memcpy (pos, binaries[i], lengths[i]);
       program->binaries[i] = pos;

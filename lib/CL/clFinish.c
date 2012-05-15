@@ -27,53 +27,73 @@
 CL_API_ENTRY cl_int CL_API_CALL
 clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
+  int i;
   _cl_command_node *node;
-
-  assert((command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) == 0
-         && "we don't support out-of-order queues yet");
+  
+  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE != 0)
+    POCL_ABORT_UNIMPLEMENTED();
   
   /* Step through the list of commands in-order */  
-  LL_FOREACH(command_queue->root,node)
-  {
-    switch( node->type )
+  LL_FOREACH (command_queue->root, node)
     {
-      case CL_COMMAND_TYPE_READ:
-        command_queue->device->read(
-          node->command.read.data, 
-          node->command.read.host_ptr, 
-          node->command.read.device_ptr, 
-          node->command.read.cb); 
-        break;
-      case CL_COMMAND_TYPE_WRITE:
-        command_queue->device->write(
-          node->command.write.data, 
-          node->command.write.host_ptr, 
-          node->command.write.device_ptr, 
-          node->command.write.cb);
-        break;
-      case CL_COMMAND_TYPE_RUN:
-        command_queue->device->run(node->command.run.data,
-			     node->command.run.file,
-			     node->command.run.kernel,
-			     &node->command.run.pc);
-	free(node->command.run.file);
-        break;
+      switch (node->type)
+        {
+        case CL_COMMAND_TYPE_READ:
+          command_queue->device->read
+            (node->command.read.data, 
+             node->command.read.host_ptr, 
+             node->command.read.device_ptr, 
+             node->command.read.cb); 
+          clReleaseMemObject (node->command.read.buffer);
+          break;
+        case CL_COMMAND_TYPE_WRITE:
+          command_queue->device->write
+            (node->command.write.data, 
+             node->command.write.host_ptr, 
+             node->command.write.device_ptr, 
+             node->command.write.cb);
+          clReleaseMemObject (node->command.write.buffer);
+          break;
+        case CL_COMMAND_TYPE_COPY:
+          command_queue->device->copy
+            (node->command.copy.data, 
+             node->command.copy.src_ptr, 
+             node->command.copy.dst_ptr,
+             node->command.copy.cb);
+          clReleaseMemObject (node->command.copy.src_buffer);
+          clReleaseMemObject (node->command.copy.dst_buffer);
+          break;
+        case CL_COMMAND_TYPE_RUN:
+          command_queue->device->run
+            (node->command.run.data,
+             node->command.run.tmp_dir,
+             node->command.run.kernel,
+             &node->command.run.pc);
+          for (i = 0; i < node->command.run.arg_buffer_count; ++i)
+            {
+              cl_mem buf = node->command.run.arg_buffers[i];
+              //printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, buf,  node->command.run.kernel->function_name);
+              clReleaseMemObject (buf);
+            }
+          free (node->command.run.arg_buffers);
+          free (node->command.run.tmp_dir);
+          clReleaseKernel(node->command.run.kernel);
+          break;  
+        default:
+          POCL_ABORT_UNIMPLEMENTED();
+          break;
+        }
+    } 
   
-      default:
-        POCL_ABORT_UNIMPLEMENTED();
-        break;
-    }
-  } 
-  
-  // clear the queue 
+  // free the queue contents
   node = command_queue->root;
   command_queue->root = NULL;
-  while( node )
+  while (node)
     {
       _cl_command_node *tmp;
       tmp = node->next;
-      free(node);
-      node=tmp;
+      free (node);
+      node = tmp;
     }  
 
   return CL_SUCCESS;

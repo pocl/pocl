@@ -1,14 +1,29 @@
-x.x (unreleased)
------------------
-- Added optimized kernel library for X86_64/SSE
-- Multithreading at work group granularity using pthreads.
+0.6 (unreleased)
+----------------
+
+Kernel library: 
+
+- Added initial optimized kernel library for X86_64/SSE.
+- Preliminary support for ARM architectures on Linux
+  (briefly tested on MeeGo/Nokia N9).
+
+Multithreaded native device:
+
+- Multithreading at the work group granularity using pthreads.
 - Tries to figure out the optimal maximum number of
-  threads for the system. Currently works only in Linux 
-  using the /proc/cpuinfo interface.
-- Preliminary support for ARM architectures on Linux.
-- Barrier handling finished. Barriers inside for-loops etc.
+  threads for the system based on the available hardware
+  threads. Currently works only in Linux using the 
+  /proc/cpuinfo interface.
+
+Kernel compiler:
+
+- Tricky work group barrier cases (barriers inside for-loops etc)
   now supported.
-- Support for automatic local variables.
-- Region-based customized memory allocator for buffer
+- Support for local variables, also automatic locals.
+- Reuse previous compilation results, if available.
+
+Host:
+
+- Region-based customized memory allocator for speeding up buffer 
   allocations.
 - Added ICD support

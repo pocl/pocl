@@ -37,8 +37,7 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
                    cl_event *       event,
                    cl_int *         errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  cl_device_id device_id;
-  unsigned i;
+  cl_device_id device;
   void *host_ptr = NULL;
   mem_mapping_t *mapping_info = NULL;
 
@@ -63,41 +62,29 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
       map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION))
     POCL_ERROR(CL_INVALID_OPERATION);
 
-
-  if (blocking_map != CL_TRUE)
-    POCL_ABORT_UNIMPLEMENTED();
-  else
-    clFinish(command_queue);
-
-  /* find the index of the device's ptr in the buffer */
-  device_id = command_queue->device;
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-      if (command_queue->context->devices[i] == device_id)
-        break;
-    }
-
-  assert(i < command_queue->context->num_devices);
-
+  device = command_queue->device;
+ 
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  if (buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
+  /* Ensure the parent buffer is not freed prematurely. */
+  clRetainMemObject (buffer);
+  if (blocking_map != CL_TRUE)
     {
-      /* TODO: should we ensure the host_ptr region is updated from
-         the device global memory? How does the specs define it,
-         can the host_ptr be assumed to point to the host and the
-         device accessible memory or just point there until the
-         kernel(s) get executed or similar? */
-      host_ptr = buffer->mem_host_ptr + offset;
-    } 
-  else 
-    {
-      host_ptr = device_id->map_mem (device_id->data, buffer->device_ptrs[i], offset, size);
-      if (host_ptr == NULL)
-        POCL_ERROR (CL_MAP_FAILURE);
+      POCL_ABORT_UNIMPLEMENTED();
     }
+  else
+    {
+      clFinish (command_queue);
+    }
+
+  host_ptr = device->map_mem 
+      (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
+       buffer->mem_host_ptr);
+
+  if (host_ptr == NULL)
+      POCL_ERROR (CL_MAP_FAILURE);
 
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;

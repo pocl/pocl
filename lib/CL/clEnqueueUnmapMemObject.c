@@ -75,15 +75,16 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
       /* Assume the region is automatically up to date. */
     } else 
     {
+      /* TODO: fixme. The offset computation must be done at the device driver. */
       if (device_id->unmap_mem != NULL)
         device_id->unmap_mem
-          (device_id->data, mapping->host_ptr, memobj->device_ptrs[i] + mapping->offset, 
+          (device_id->data, mapping->host_ptr, memobj->device_ptrs[device_id->dev_id] + mapping->offset, 
            mapping->size);
     }
 
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;
-
+  clReleaseMemObject (memobj);
   event = NULL;
   return CL_SUCCESS;
 }

@@ -51,7 +51,7 @@ clSetKernelArg(cl_kernel kernel,
 
       value = malloc (arg_size);
       if (value == NULL)
-	return CL_OUT_OF_HOST_MEMORY;
+        return CL_OUT_OF_HOST_MEMORY;
       
       memcpy (value, arg_value, arg_size);
 

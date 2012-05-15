@@ -1,7 +1,7 @@
 /* OpenCL native pthreaded device implementation.
 
-   Copyright (c) 2011-2012 Universidad Rey Juan Carlos, 
-   Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
+                           Pekka Jääskeläinen / Tampere Univ. of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -96,7 +96,7 @@ static void * workgroup_thread (void *p);
 size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
-pocl_pthread_init (cl_device_id device)
+pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
 
@@ -479,13 +479,12 @@ get_max_thread_count()
 }
 
 void
-pocl_pthread_run (void *data, const char *parallel_filename,
-		 cl_kernel kernel,
-		 struct pocl_context *pc)
+pocl_pthread_run 
+(void *data, const char *tmpdir,
+ cl_kernel kernel,
+ struct pocl_context *pc)
 {
   struct data *d;
-  char template[] = ".naruXXXXXX";
-  char *tmpdir;
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
   char assembly[POCL_FILENAME_LENGTH];
@@ -499,20 +498,20 @@ pocl_pthread_run (void *data, const char *parallel_filename,
 
   d = (struct data *) data;
 
-  if (d->current_kernel != kernel)
+  error = snprintf 
+    (module, POCL_FILENAME_LENGTH,
+     "%s/parallel.so", tmpdir);
+  assert (error >= 0);
+
+  if (access (module, F_OK) != 0)
     {
-      tmpdir = mkdtemp (template);
-      assert (tmpdir != NULL);
-      
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-			"%s/parallel.bc",
-			tmpdir);
+                        "%s/linked.bc", tmpdir);
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
-			LLVM_LD " -link-as-library -o %s %s",
-			bytecode,
-			parallel_filename);
+			LLVM_LD " -link-as-library -o %s %s/%s",
+                        bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
       error = system(command);
@@ -534,12 +533,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
       
       error = system (command);
       assert (error == 0);
-      
-      error = snprintf (module, POCL_FILENAME_LENGTH,
-			"%s/parallel.so",
-			tmpdir);
-      assert (error >= 0);
-      
+           
       error = snprintf (command, COMMAND_LENGTH,
 			CLANG " -c -o %s.o %s",
 			module,
@@ -557,12 +551,17 @@ pocl_pthread_run (void *data, const char *parallel_filename,
 
       error = system (command);
       assert (error == 0);
-      
-      d->current_dlhandle = lt_dlopen (module);
-      assert (d->current_dlhandle != NULL);
-
-      d->current_kernel = kernel;
     }
+      
+  d->current_dlhandle = lt_dlopen (module);
+  if (d->current_dlhandle == NULL)
+    {
+      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module, lt_dlerror());
+      printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
+      abort();
+    }
+
+  d->current_kernel = kernel;
 
   /* Find which device number within the context correspond
      to current device.  */
@@ -623,6 +622,7 @@ pocl_pthread_run (void *data, const char *parallel_filename,
     arguments[i].workgroup = w;
     arguments[i].last_gid_x = last_gid_x;
 
+    /* TODO: pool of worker threads to avoid syscalls here */
     error = pthread_create (&threads[i],
                             NULL,
                             workgroup_thread,
@@ -642,19 +642,10 @@ pocl_pthread_run (void *data, const char *parallel_filename,
 }
 
 void *
-pocl_pthread_map_mem (void *data, void *buf_ptr, 
-                      size_t offset, size_t size) 
-{
-  /* All global pointers of the pthread/CPU device are in 
-     the host address space already, and up to date. */     
-  return buf_ptr + offset;
-}
-
-void *
 workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;
-  void *arguments[ta->kernel->num_args];
+  void *arguments[ta->kernel->num_args + ta->kernel->num_locals];
   struct pocl_argument *al;  
   unsigned i = 0;
 

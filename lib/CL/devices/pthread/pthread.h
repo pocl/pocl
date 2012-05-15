@@ -27,99 +27,10 @@
 #include "pocl_cl.h"
 #include "pocl_icd.h"
 
-void pocl_pthread_uninit (cl_device_id device);
-void pocl_pthread_init (cl_device_id device);
-void *pocl_pthread_malloc (void *data, cl_mem_flags flags,
-			  size_t size, void *host_ptr);
-void pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr);
-void pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb);
-void pocl_pthread_read_rect (void *data, void *host_ptr, void *device_ptr,
-                             const size_t *buffer_origin,
-                             const size_t *host_origin, 
-                             const size_t *region,
-                             size_t buffer_row_pitch,
-                             size_t buffer_slice_pitch,
-                             size_t host_row_pitch,
-                             size_t host_slice_pitch);
-void pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb);
-void pocl_pthread_write_rect (void *data, const void *host_ptr, void *device_ptr,
-                              const size_t *buffer_origin,
-                              const size_t *host_origin, 
-                              const size_t *region,
-                              size_t buffer_row_pitch,
-                              size_t buffer_slice_pitch,
-                              size_t host_row_pitch,
-                              size_t host_slice_pitch);
-void pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb);
-void pocl_pthread_copy_rect (void *data, const void *src_ptr, void *dst_ptr,
-                             const size_t *src_origin,
-                             const size_t *dst_origin, 
-                             const size_t *region,
-                             size_t src_row_pitch,
-                             size_t src_slice_pitch,
-                             size_t dst_row_pitch,
-                             size_t dst_slice_pitch);
-void pocl_pthread_run (void *data, const char *bytecode,
-		      cl_kernel kernel,
-		      struct pocl_context *pc);
-
-void* 
-pocl_pthread_map_mem (void *data, void *buf_ptr, 
-                      size_t offset, size_t size);
-
+#include "prototypes.inc"
+GEN_PROTOTYPES (pthread)
 
 extern size_t pocl_pthread_max_work_item_sizes[];
-
-/* Determine preferred vector sizes */
-#if defined(__AVX__)
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR   16
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT   8
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT     4
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG    2
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT   4
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE  2
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_CHAR      16
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_SHORT      8
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_INT        4
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_LONG       2
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_FLOAT      8
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_DOUBLE     4
-#elif defined(__SSE2__)
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR   16
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT   8
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT     4
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG    2
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT   4
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE  2
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_CHAR      16
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_SHORT      8
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_INT        4
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_LONG       2
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_FLOAT      4
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_DOUBLE     2
-#else
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR    1
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT   1
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT     1
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG    1
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT   1
-#  define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE  1
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_CHAR       1
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_SHORT      1
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_INT        1
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_LONG       1
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_FLOAT      1
-#  define POCL_DEVICES_PTHREAD_NATIVE_VECTOR_WIDTH_DOUBLE     1
-#endif
-/* Half is internally represented as short */
-#define POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_HALF POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT
-
-#ifdef BUILD_ICD
-extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
-#define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#else
-#define POCL_DEVICE_ICD_DISPATCH
-#endif
 
 #define POCL_DEVICES_PTHREAD {	 					\
   POCL_DEVICE_ICD_DISPATCH						\
@@ -130,12 +41,12 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
   pocl_pthread_max_work_item_sizes, /* max_work_item_sizes */		\
   1024, /* max_work_group_size */					\
   8, /* preferred_wg_size_multiple */                                \
-  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
-  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
-  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_INT   , /* preferred_vector_width_int */ \
-  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_LONG  , /* preferred_vector_width_long */ \
-  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_FLOAT , /* preferred_vector_width_float */ \
-  POCL_DEVICES_PTHREAD_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT   , /* preferred_vector_width_int */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG  , /* preferred_vector_width_long */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT , /* preferred_vector_width_float */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
   0, /* max_clock_frequency */						\
   0, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
@@ -162,7 +73,7 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_FALSE, /* endian_little */						\
+  CL_TRUE, /* endian_little: TODO: check from CPU id */						\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\
@@ -170,12 +81,12 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
   0, /* platform */							\
   "pthread", /* name */							\
   "pocl", /* vendor */							\
-  "0.1", /* driver_version */						\
+  PACKAGE_VERSION, /* driver_version */						\
   "FULL_PROFILE", /* profile */						\
-  "OpenCL 1.0 pocl", /* version */					\
+  "OpenCL 1.2 pocl", /* version */					\
   "", /* extensions */							\
   /* implementation */							\
-  pocl_pthread_uninit, /* init */                                     \
+  pocl_pthread_uninit, /* uninit */                                     \
   pocl_pthread_init, /* init */                                       \
   pocl_pthread_malloc, /* malloc */					\
   pocl_pthread_free, /* free */						\
@@ -185,10 +96,13 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
   pocl_pthread_write_rect, /* write_rect */				\
   pocl_pthread_copy, /* copy */						\
   pocl_pthread_copy_rect, /* copy_rect */				\
-  pocl_pthread_map_mem,                               \
+  pocl_basic_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_pthread_run, /* run */                         \
-  NULL /* data */							\
+  NULL, /* data */                                  \
+  NULL,  /* kernel_lib_target (forced kernel library dir) */  \
+  NULL, /* llvm_target_triplet */                         \
+  0     /* dev_id */                                    \
 }
 
 #endif /* POCL_PTHREAD_H */

@@ -1,6 +1,7 @@
 /* devices.h - OpenCL device type definition.
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Universidad Rey Juan Carlos and
+                 2011-2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +27,21 @@
 
 #include "../pocl_cl.h"
 
-#define POCL_NUM_DEVICES 1
+/* The number of available devices. */
+extern int pocl_num_devices;
+/* The enabled devices. */
+extern struct _cl_device_id* pocl_devices;
 
-extern struct _cl_device_id pocl_devices[POCL_NUM_DEVICES];
+/**
+ * Populates the pocl_devices with the wanted device types.
+ *
+ * Should be before accessing the device list. Can be called repeatedly.
+ * The devices are shared across contexts, thus implement resource
+ * management internally also across multiple contexts.
+ */
+void pocl_init_devices();
+
+/* the environment variable that lists the enabled devices */
+#define POCL_DEVICES_ENV "POCL_DEVICES"
 
 #endif /* POCL_DEVICES_H */

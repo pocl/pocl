@@ -3,7 +3,8 @@
 #                   file and generate a parallel bytecode and a kernel description
 #                   header file.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
+#                         Pekka Jääskeläinen / TUT
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,12 +39,12 @@ shift $((${OPTIND}-1))
 
 if [ "x$header" = x ]
 then
-    echo >&2 "Usage: $0 [-t target] -header <header> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 [-t target] -h <header> -o <output_file> <input_file>" && exit 1
 fi
 
 if [ "x$output_file" = x ]
 then
-    echo >&2 "Usage: $0 [-t target] -header <header> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 [-t target] -h <header> -o <output_file> <input_file>" && exit 1
 fi
 
 case $target in
@@ -95,9 +96,16 @@ if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
     pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
 fi
-@OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
-    -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -workitem -workgroup \
-    -local-size=1 1 1 -header=/dev/null -o ${output_file} ${linked_bc}
 
+EXTRA_OPTS=""
+if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
+then
+EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
+fi
+EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
+
+@OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
+    -globaldce -loop-simplify -isolate-regions -loop-barriers \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
+    -workgroup -local-size=1 1 1 ${EXTRA_OPTS} -header=/dev/null -o ${output_file} ${linked_bc}
 rm -fr ${tempdir}

@@ -119,7 +119,8 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 #endif
   }
   
-
+  new_region->exitIndex_ = exitIndex_;
+  new_region->entryIndex_ = entryIndex_;
   /* Remap here to get local variables fixed before they
      are (possibly) overwritten by another clone of the 
      same BB. */
@@ -160,7 +161,7 @@ ParallelRegion::chainAfter(ParallelRegion *region)
      TODO: why have the unreachable block there the
      first place? Could we just not add it and fix
      the branch? */
-  BasicBlock *tail = region->back();
+  BasicBlock *tail = region->exitBB();
   TerminatorInst *t = tail->getTerminator();
   if (isa<UnreachableInst>(t))
     {
@@ -183,9 +184,9 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   for (iterator i = begin(), e = end(); i != e; ++i)
     bb_list.insertAfter(tail, *i);
   
-  t->setSuccessor(0, front());
+  t->setSuccessor(0, entryBB());
 
-  t = back()->getTerminator();
+  t = exitBB()->getTerminator();
   assert (t->getNumSuccessors() == 1);
   t->setSuccessor(0, successor);
 }
@@ -198,7 +199,7 @@ ParallelRegion::purge()
   for (iterator i = begin(), e = end(); i != e; ++i) {
 
     // Exit block has a successor out of the region.
-    if (*i == back())
+    if (*i == exitBB())
       continue;
 
 #ifdef DEBUG_PURGE
@@ -240,7 +241,7 @@ ParallelRegion::insertPrologue(unsigned x,
                                unsigned y,
                                unsigned z)
 {
-  BasicBlock *entry = front();
+  BasicBlock *entry = entryBB();
 
   IRBuilder<> builder(entry, entry->getFirstInsertionPt());
 
@@ -285,19 +286,25 @@ ParallelRegion::dumpNames()
 }
 
 ParallelRegion *
-ParallelRegion::Create(SmallPtrSetIterator<BasicBlock *> entry,
-                       SmallPtrSetIterator<BasicBlock *> exit)
+ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entry, BasicBlock *exit)
 {
   ParallelRegion *new_region = new ParallelRegion();
 
+  assert (entry != NULL);
+  assert (exit != NULL);
+
   // This is done in two steps so order of the vector
   // is the same as original function order.
-  Function *F = (*entry)->getParent();
+  Function *F = entry->getParent();
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
     BasicBlock *b = i;
-    for (SmallPtrSetIterator<BasicBlock *> j = entry; j != exit; ++j) {
+    for (SmallPtrSetIterator<BasicBlock *> j = bbs.begin(); j != bbs.end(); ++j) {
       if (*j == b) {
         new_region->push_back(i);
+        if (entry == *j)
+            new_region->setEntryBBIndex(new_region->size() - 1);
+        else if (exit == *j)
+            new_region->setExitBBIndex(new_region->size() - 1);
         break;
       }
     }
@@ -322,18 +329,17 @@ ParallelRegion::Verify()
   for (iterator i = begin(), e = end(); i != e; ++i) {
     for (pred_iterator ii(*i), ee(*i, true); ii != ee; ++ii) {
       if (count(begin(), end(), *ii) == 0) {
-        if ((*i) != front()) {
-          dump();
-#if 0          
+        if ((*i) != entryBB()) {
+          dumpNames();
           std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
-          std::cerr << "the entry is: " << front()->getName().str() << std::endl;
+          std::cerr << "the entry is: " << entryBB()->getName().str() << std::endl;
 
+#if 1
           (*i)->getParent()->viewCFG();
 #endif
           assert(0 && "Incoming edges to non-entry block!");
           return false;
-        }
-        if (!isa<BarrierBlock>(*ii)) {
+        } else if (!isa<BarrierBlock>(*ii)) {
           assert (0 && "Entry has edges from non-barrier blocks!");
           return false;
         }
@@ -346,7 +352,7 @@ ParallelRegion::Verify()
     //   return false;
     // }
 
-    if (back()->getTerminator()->getNumSuccessors() != 1) {
+    if (exitBB()->getTerminator()->getNumSuccessors() != 1) {
       assert(0 && "Multiple outgoing edges from exit block!");
       return false;
     }
@@ -361,4 +367,31 @@ ParallelRegion::Verify()
   }
 
   return true;
+}
+
+void
+ParallelRegion::setID(
+    llvm::LLVMContext& context, 
+    std::size_t x, 
+    std::size_t y, 
+    std::size_t z,
+    std::size_t regionID) {
+  
+    int counter = 1;
+    for (iterator i = begin(), e = end(); i != e; ++i) {
+      BasicBlock* bb= *i;      
+      for (BasicBlock::iterator ii = bb->begin();
+            ii != bb->end(); ii++) {
+        Value *v[] = {
+            MDString::get(context, "WI_id"),      
+            ConstantInt::get(Type::getInt32Ty(context), regionID),
+            ConstantInt::get(Type::getInt32Ty(context), x),
+            ConstantInt::get(Type::getInt32Ty(context), y),      
+            ConstantInt::get(Type::getInt32Ty(context), z),
+            ConstantInt::get(Type::getInt32Ty(context), counter)};      
+        MDNode* md = MDNode::get(context, v);  
+        counter++;
+        ii->setMetadata("wi",md);
+      }
+    }
 }

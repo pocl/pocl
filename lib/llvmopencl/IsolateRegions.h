@@ -35,6 +35,9 @@ namespace pocl {
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnRegion(llvm::Region *R, llvm::RGPassManager&);
+    void addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb);
+    void addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb);
+
   };
 }
 

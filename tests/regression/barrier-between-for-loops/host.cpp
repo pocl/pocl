@@ -29,6 +29,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "pocl_util.h"
+
 #define WINDOW_SIZE 32
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
@@ -86,7 +88,7 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_CPU, cprops);
+        cl::Context context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -94,6 +96,20 @@ main(void)
         // Create and program from source
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
         cl::Program program(context, sources);
+
+// todo: compare to the host endianness
+        bool shouldSwap = 
+            !devices.at(0).getInfo<CL_DEVICE_ENDIAN_LITTLE>();
+
+        if (shouldSwap) { 
+            for (int i = 0; i < BUFFER_SIZE; i++) {
+                A[i] = byteswap_float(A[i], 1);
+            }
+            
+            for (int i = 0; i < WORK_ITEMS; i++) {
+                R[i] = byteswap_uint32_t(R[i], 1);
+            }
+        }
 
         // Build program
         program.build(devices);
@@ -148,17 +164,17 @@ main(void)
 
             result = global_sum;
             for (j=0; j < 32; ++j) {
-                float value = A[i+j];
+                float value = byteswap_float (A[i+j], shouldSwap);
                 global_sum += value;
             }
             result = result + global_sum;
             for (j=0; j < 32; ++j) {
-                float value = A[i+j];
+                float value = byteswap_float (A[i+j], shouldSwap);
                 global_sum += value;
             }
             result = result + global_sum;
 
-            if ((int)result != R[i]) {
+            if ((int)result != byteswap_uint32_t (R[i], shouldSwap)) {
                 std::cout 
                     << "F(" << i << ": " << (int)result << " != " << R[i] 
                     << ") ";

@@ -33,15 +33,23 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   POCL_RELEASE_OBJECT(memobj);
 
+  /* OpenCL 1.2 Page 118:
+
+     After the memobj reference count becomes zero and commands queued for execution on 
+     a command-queue(s) that use memobj have finished, the memory object is deleted. If 
+     memobj is a buffer object, memobj cannot be deleted until all sub-buffer objects associated 
+     with memobj are deleted.
+  */
+
   if (memobj->pocl_refcount == 0) 
     {
-
       if (memobj->parent == NULL) 
         {
           for (i = 0; i < memobj->context->num_devices; ++i)
             {
               device_id = memobj->context->devices[i];
-              device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[i]);
+              device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[device_id->dev_id]);
+              memobj->device_ptrs[device_id->dev_id] = NULL;
             }
         } else 
         {

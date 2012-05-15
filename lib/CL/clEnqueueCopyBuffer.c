@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueCopyBuffer()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
+                           Pekka Jääskeläinen / Tampere Univ. of Tech.
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -61,7 +63,26 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  device_id->copy(device_id->data, src_buffer->device_ptrs[i]+src_offset, dst_buffer->device_ptrs[i]+dst_offset, cb);
+  _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
+  if (cmd == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  cmd->command.copy.src_buffer = src_buffer;
+  cmd->command.copy.dst_buffer = dst_buffer;
+  
+  clRetainMemObject(src_buffer);
+  clRetainMemObject(dst_buffer);
+
+  cmd->type = CL_COMMAND_TYPE_COPY;
+  cmd->command.copy.data = device_id->data;
+  /* TODO: call device->buf_offset() or similar as device_ptrs might not be
+     actual buffer pointers but pointers to a book keeping structure. */
+  cmd->command.copy.src_ptr = src_buffer->device_ptrs[device_id->dev_id] + src_offset;
+  cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[device_id->dev_id] + dst_offset;
+  cmd->command.copy.cb = cb;
+  cmd->next = NULL;
+
+  LL_APPEND(command_queue->root, cmd );
 
   return CL_SUCCESS;
 }

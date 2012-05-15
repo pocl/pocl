@@ -82,9 +82,12 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
         {
           /* in-order queue - all previously enqueued commands must 
            * finish before this read */
-          clFinish(command_queue);
+          clRetainMemObject (buffer);
+          clFinish (command_queue);
         }
-      device_id->write(device_id->data, ptr, buffer->device_ptrs[i]+offset, cb);
+      /* TODO: fixme. The offset computation must be done at the device driver. */
+      device_id->write(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id]+offset, cb);
+      clReleaseMemObject (buffer);
     }
   else
   {
@@ -98,7 +101,10 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
     cmd->command.write.cb = cb;
     cmd->next = NULL;
-    LL_APPEND(command_queue->root, cmd );
+    cmd->command.write.buffer = buffer;
+    clRetainMemObject (buffer);
+
+    LL_APPEND(command_queue->root, cmd);
   }
 
   return CL_SUCCESS;

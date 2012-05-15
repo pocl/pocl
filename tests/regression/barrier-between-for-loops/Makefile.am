@@ -27,4 +27,4 @@ host_SOURCES = host.cpp
 host_LDADD = ../../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
 host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL  -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

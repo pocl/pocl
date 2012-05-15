@@ -1,0 +1,36 @@
+This device uses the ttasim for simulating the tta devices, however,
+some care has been taken to not rely on ttasim too much so it can
+be more easily converted to a device driver for the PCIe card.
+
+memories
+--------
+The TTAs are assumed to have at least two disjoint address spaces:
+
+* one dedicated for shared data 
+  - numerical id 3 (global) and numerical id 4 (const)
+
+* one for local data + the C data
+  - used for stack + heap of the kernel program
+    + the __local and __private address spaces of OpenCL
+  - numerical id 4 and numerical id 0 (the C default address space)
+
+memory allocation
+-----------------
+The device driver keeps book of all shared resources, also the
+global memory space and the local space.
+
+As global space is assumed always to be dedicated, the bufalloc
+can be used to allocate chunks from it and assume the addresses
+also map correctly.
+
+The local space is bit more problematic, though, because it's
+shared by the stack, the heap and the global variables in the
+kernel runtime. However, we do not need address mapping or
+data transfers between the host and the device for local pointers,
+thus it's enough to ensure that we do not overallocate it. 
+Therefore, a conservative estimate of the local space available can 
+be made, e.g. the AS size - 32KB.
+
+
+
+  

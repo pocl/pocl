@@ -15,26 +15,39 @@ Requirements
 In order to build pocl, you need the following support libraries and
 tools:
 
-  LLVM svn (see below for the highest known good revision) and
-  Clang svn (3.1+) installed in PATH (and library path)
-  gcc or a compatible compiler
-  GNU make
-  autotools (autoconf, automake, libtool)
-  libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
-  pthread (should be installed by default)
+  * LLVM 3.1
+  * Clang 3.1
+  * gcc or a compatible compiler
+  * GNU make
+  * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
+  * pthread (should be installed by default)
 
-Note! Even though pocl compiles with LLVM 3.0, there are several OpenCL
-improvements and major bug fixes in the LLVM trunk (upcoming 3.1). It's
-highly recommended to use the latest development version of LLVM for now, 
-until 3.1 is released. However, as llvm-svn is a moving target, new
-revisions might break pocl compilation. The latest LLVM svn revision 
-pocl has been tested successfully with is 149605.
+You can get the LLVM 3.1 branch from the LLVM svn as follows:
+
+  svn co http://llvm.org/svn/llvm-project/llvm/branches/release_31 
+  cd release_31/tools
+  svn co http://llvm.org/svn/llvm-project/cfe/branches/release_31 clang
+
+IMPORTANT NOTE! In order to use LLVM with pocl you need to configure LLVM 
+with '--enable-shared' switch and compile it with 'make REQUIRES_RTTI=1',
+as follows:
+
+  ./configure --enable-shared --prefix=YOUR_INSTALLATION_PREFIX_HERE 
+  make REQUIRES_RTTI=1 && make install
 
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
 source tree, you need to generate the autotool build files with 
 
   "./autogen.sh".
+
+
+It's highly recommended to use the latest development version of LLVM.
+However, as llvm-svn is a moving target, new revisions might break pocl
+compilation. The latest LLVM trunk revision pocl has been tested 
+successfully with is:    
+
+    153643
 
 The standard build installations as provided by FSF are as follows:
 

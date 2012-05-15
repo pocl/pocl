@@ -10,7 +10,7 @@ AT_CHECK([$abs_top_builddir/tests/regression/loop-phi-replication/host], 0, expo
 AT_CLEANUP
 
 AT_SETUP([issues with local pointers - lp:#918801])
-AT_KEYWORDS([regression])
+AT_KEYWORDS([regression locals tce])
 AT_DATA([expout],
 [OK
 ])
@@ -18,7 +18,7 @@ AT_CHECK([$abs_top_builddir/tests/regression/locals/host], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([barrier between two for loops])
-AT_KEYWORDS([regression])
+AT_KEYWORDS([regression tce])
 AT_DATA([expout],
 [OK
 ])
@@ -34,6 +34,7 @@ AT_CHECK([$abs_top_builddir/tests/regression/simple-for-with-a-barrier/host], 0,
 AT_CLEANUP
 
 AT_SETUP([for-loop with computation after the brexit - lp:#938123])
+#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_DATA([expout],
 [OK
@@ -66,4 +67,13 @@ AT_DATA([expout],
 [OK
 ])
 AT_CHECK([$abs_top_builddir/tests/regression/id-dependent-computation/host], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([struct kernel arguments - lp:##987905])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression struct])
+AT_DATA([expout],
+[OK
+])
+AT_CHECK([$abs_top_builddir/tests/regression/structs-as-args/host], 0, expout)
 AT_CLEANUP

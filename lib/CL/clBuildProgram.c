@@ -36,13 +36,19 @@ clBuildProgram(cl_program program,
                void (CL_CALLBACK *pfn_notify)(cl_program program, void *user_data),
                void *user_data) CL_API_SUFFIX__VERSION_1_0
 {
-  char source_file_name[L_tmpnam], binary_file_name[L_tmpnam];
+  char tmpdir[POCL_FILENAME_LENGTH];
+  char device_tmpdir[POCL_FILENAME_LENGTH];
+  char source_file_name[POCL_FILENAME_LENGTH], binary_file_name[POCL_FILENAME_LENGTH];
   FILE *source_file, *binary_file;
   size_t n;
   struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
   unsigned char *binary;
+  int device_i;
+  unsigned real_num_devices;
+  cl_device_id *real_device_list;
+  char *pocl_build_script;
 
   if (program == NULL)
     return CL_INVALID_PROGRAM;
@@ -54,82 +60,130 @@ clBuildProgram(cl_program program,
       (num_devices == 0 && device_list != NULL))
       return CL_INVALID_VALUE;
       
-  if (num_devices > 0 && program->num_devices != num_devices)
-    POCL_ABORT_UNIMPLEMENTED();     
+  if (num_devices == 0)
+    {
+      real_num_devices = program->num_devices;
+      real_device_list = program->devices;
+    } else
+    {
+      real_num_devices = num_devices;
+      real_device_list = device_list;
+    }
 
   if (program->binaries == NULL)
     {
-      if (num_devices > 1) /* TODO: build the binary for all the devices. */
-        POCL_ABORT_UNIMPLEMENTED(); 
+      snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/", program->temp_dir);
+      mkdir (tmpdir, S_IRWXU);
 
       if ((program->binary_sizes =
-           (size_t *) malloc (sizeof (size_t) * num_devices)) == NULL)
+           (size_t *) malloc (sizeof (size_t) * real_num_devices)) == NULL)
         return CL_OUT_OF_HOST_MEMORY;
 
       if ((program->binaries = 
            (unsigned char**) 
-           malloc( sizeof (unsigned char*) * num_devices)) == NULL)
+           malloc( sizeof (unsigned char*) * real_num_devices)) == NULL)
         {
           free (program->binary_sizes);
           program->binary_sizes = NULL;
           return CL_OUT_OF_HOST_MEMORY;
         }
+     
+      snprintf 
+        (source_file_name, POCL_FILENAME_LENGTH, "%s/%s", tmpdir, 
+         POCL_PROGRAM_CL_FILENAME);
 
-
-      tmpnam(source_file_name);
       source_file = fopen(source_file_name, "w+");
       if (source_file == NULL)
         return CL_OUT_OF_HOST_MEMORY;
 
-      n = fwrite(program->source, 1,
-                 strlen(program->source), source_file);
+      n = fwrite (program->source, 1,
+                  strlen(program->source), source_file);
       if (n < strlen(program->source))
         return CL_OUT_OF_HOST_MEMORY;
 
       fclose(source_file);
-      
-      tmpnam(binary_file_name);
 
-      if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
-        error = snprintf(command, COMMAND_LENGTH,
-                         BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
-                         binary_file_name, source_file_name);
-      else
-        error = snprintf(command, COMMAND_LENGTH, POCL_BUILD " -o %s %s",
-                         binary_file_name, source_file_name);
-      if (error < 0)
-        return CL_OUT_OF_HOST_MEMORY;
-
-      error = system(command);
-      if (error != 0)
-        return CL_BUILD_PROGRAM_FAILURE;
-
-      binary_file = fopen(binary_file_name, "r");
-      if (binary_file == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
-
-      fseek(binary_file, 0, SEEK_END);
-
-      program->binary_sizes[0] = ftell(binary_file);
-      fseek(binary_file, 0, SEEK_SET);
-
-      binary = (unsigned char *) malloc(program->binary_sizes[0]);
-      if (binary == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
-
-      n = fread(binary, 1, program->binary_sizes[0], binary_file);
-      if (n < program->binary_sizes[0])
+      /* Build the fully linked non-parallel bitcode for all
+         devices. */
+      for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
-          free (binary);
-          return CL_OUT_OF_HOST_MEMORY;
-        }
+          snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
+                    program->temp_dir, real_device_list[device_i]->name);
+          mkdir (device_tmpdir, S_IRWXU);
 
-      program->binaries[0] = binary;
+          snprintf 
+            (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
+             device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+
+          if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
+            pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
+          else
+            pocl_build_script = POCL_BUILD;
+
+          if (real_device_list[device_i]->llvm_target_triplet != NULL)
+            {
+              error = snprintf(command, COMMAND_LENGTH,
+                               BUILDDIR "/scripts/" POCL_BUILD " -t %s -o %s %s",
+                               real_device_list[device_i]->llvm_target_triplet,                               
+                               binary_file_name, source_file_name);
+            }
+          else 
+            {
+              error = snprintf(command, COMMAND_LENGTH,
+                               BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
+                               binary_file_name, source_file_name);
+            }
+          
+          if (error < 0)
+            return CL_OUT_OF_HOST_MEMORY;
+
+          error = system(command);
+          if (error != 0)
+            return CL_BUILD_PROGRAM_FAILURE;
+
+          binary_file = fopen(binary_file_name, "r");
+          if (binary_file == NULL)
+            return CL_OUT_OF_HOST_MEMORY;
+
+          fseek(binary_file, 0, SEEK_END);
+
+          program->binary_sizes[device_i] = ftell(binary_file);
+          fseek(binary_file, 0, SEEK_SET);
+
+          binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
+          if (binary == NULL)
+            return CL_OUT_OF_HOST_MEMORY;
+
+          n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
+          if (n < program->binary_sizes[device_i])
+            {
+              free (binary);
+              return CL_OUT_OF_HOST_MEMORY;
+            }
+          program->binaries[device_i] = binary;
+        }
     }
   else
     {
-      /* Build from a binary. The binaries are already loaded
-         in the clBuildWithBinary().  */
+      /* Build from a binary. The "binaries" (LLVM bitcodes) are loaded to
+         memory in the clBuildWithBinary(). Dump them to the files. */
+      for (device_i = 0; device_i < real_num_devices; ++device_i)
+        {
+          snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
+                    program->temp_dir, real_device_list[device_i]->name);
+          mkdir (device_tmpdir, S_IRWXU);
+
+          snprintf 
+            (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
+             device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+
+          binary_file = fopen(binary_file_name, "w");
+          fwrite (program->binaries[device_i], 1, program->binary_sizes[device_i],
+                  binary_file);
+
+          fclose (binary_file);
+          
+        }      
     }
 
   return CL_SUCCESS;
