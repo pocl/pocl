@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#define DEBUG_TTA_DEVICE
+//#define DEBUG_TTA_DEVICE
 
 #include <malloc.h>
 #include <stdlib.h>
@@ -114,12 +114,12 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
         lwpr_newline();
 #endif
         if (!kernel->arg_is_local[i]) {
-            args[i] = (unsigned)cmd->args[i];
+            args[i] = (void*)cmd->args[i];
             continue;
         }
         /* TODO: this is broken. It should store a pointer to the buffer pointer
            instead of the buffer pointer directly. */
-        args[i] = (uint32_t)malloc(cmd->dynamic_local_arg_sizes[i]);
+        args[i] = malloc(cmd->dynamic_local_arg_sizes[i]);
         if (args[i] == 0) {
 #ifdef DEBUG_TTA_DEVICE
             lwpr_print_str("tta: out of memory while allocating the local buffers\\n");
@@ -135,7 +135,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
              ++i) {
             /* TODO: this is broken. It should store a pointer to the buffer pointer
                instead of the buffer pointer directly. */
-            args[i] = (uint32_t)malloc(kernel->alocal_sizes[i - kernel->num_args]);
+            args[i] = malloc(kernel->alocal_sizes[i - kernel->num_args]);
 #if 0 && defined(DEBUG_TTA_DEVICE)
             lwpr_print_str("tta: allocated ");
             iprintf("tta: allocated %%d bytes for the automatic local arg %%d at %%x\\n", 

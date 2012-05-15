@@ -61,7 +61,7 @@ using namespace TTAMachine;
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
-#define DEBUG_TTASIM_DRIVER
+//#define DEBUG_TTASIM_DRIVER
 
 struct data {
   /* Currently loaded kernel. */
@@ -101,7 +101,6 @@ pocl_ttasim_thread (void *p)
   struct data *d = (data*)p;
   do {
     pthread_cond_wait (&d->simulation_start_cond, &d->lock);
-    std::cout << "### run!" << std::flush << std::endl;
     do {
       d->simulator->run();
       if (d->debuggerRequested) {
@@ -263,9 +262,6 @@ pocl_ttasim_malloc (void *device_data, cl_mem_flags flags,
 void
 pocl_ttasim_free (void *data, cl_mem_flags flags, void *ptr)
 {
-  if (flags & CL_MEM_USE_HOST_PTR)
-    POCL_ABORT_UNIMPLEMENTED();
-
   free_chunk ((chunk_info_t*) ptr);
 }
 
@@ -349,8 +345,10 @@ pocl_ttasim_run
         std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
         kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
-        " --swfp -g -O0 -o " + assemblyFileName;
+        " -g -O3 -o " + assemblyFileName;
+#ifdef DEBUG_TTASIM_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
+#endif
       error = system(buildCmd.c_str());
       if (error != 0)
         POCL_ABORT("Error while running tcecc.");
@@ -408,7 +406,9 @@ pocl_ttasim_run
           /* Copy the scalar argument data to the shared memory. */
           chunk_info_t* arg_space = 
             (chunk_info_t*)pocl_ttasim_malloc (d, CL_MEM_COPY_HOST_PTR, al->size, al->value);
+#ifdef DEBUG_TTASIM_DRIVER
           printf ("host: copied value from %x to global argument memory\n", al->value);
+#endif
           cmd.args[i] = byteswap_uint32_t (arg_space->start_address, swap);
         }
     }
@@ -501,6 +501,23 @@ pocl_ttasim_copy_h2d (void *device_data, const void *src_ptr, uint32_t dest_addr
     globalMem.write (dest_addr + i, (Memory::MAU)(val));
   }
 }
+
+/* Copy data between the global memory of the device and the host memory. 
+    
+   Raw byte copy without byte swapping. 
+ */
+void 
+pocl_ttasim_copy_d2h (void *device_data, uint32_t src_addr, void *dst_ptr, size_t count)  
+{
+  /* Find the simulation model for the global address space. */
+  struct data *d = (struct data*)device_data;
+  MemorySystem &mems = d->simulator->memorySystem();
+  Memory& globalMem = mems.memory (*d->global_as);
+  for (int i = 0; i < count; ++i) {
+    ((char*)dst_ptr)[i] = globalMem.read (src_addr + i);
+  }
+}
+
 
 void
 pocl_ttasim_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
@@ -609,13 +626,23 @@ pocl_ttasim_read_rect (void *data,
 
 void *
 pocl_ttasim_map_mem (void *data, void *buf_ptr, 
-                    size_t offset, size_t size) 
+                     size_t offset, size_t size,
+                     void *host_ptr) 
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  void *target = NULL;
+  chunk_info_t *chunk = (chunk_info_t*)buf_ptr;
+  if (host_ptr != NULL) 
+    {
+      target = host_ptr;
+    } 
+  else
+    {
+      target = malloc (size);
+    }
 
-  /* All global pointers of the pthread/CPU device are in 
-     the host address space already, and up to date. */     
-  return buf_ptr + offset;
+  /* Synch the device global region to the host memory. */
+  pocl_ttasim_copy_d2h (data, chunk->start_address, target, size);
+  return target;
 }
 
 void

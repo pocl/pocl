@@ -373,10 +373,12 @@ pocl_basic_read_rect (void *data,
 
 void *
 pocl_basic_map_mem (void *data, void *buf_ptr, 
-                    size_t offset, size_t size) 
+                      size_t offset, size_t size,
+                      void *host_ptr) 
 {
   /* All global pointers of the pthread/CPU device are in 
-     the host address space already, and up to date. */     
+     the host address space already, and up to date. */
+  if (host_ptr != NULL) return host_ptr;
   return buf_ptr + offset;
 }
 

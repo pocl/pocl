@@ -62,6 +62,6 @@
                          struct pocl_context *pc);                      \
   void*                                                                 \
   pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
-                        size_t offset, size_t size); 
+                        size_t offset, size_t size, void *host_ptr); 
 
 

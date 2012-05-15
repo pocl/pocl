@@ -642,15 +642,6 @@ pocl_pthread_run
 }
 
 void *
-pocl_pthread_map_mem (void *data, void *buf_ptr, 
-                      size_t offset, size_t size) 
-{
-  /* All global pointers of the pthread/CPU device are in 
-     the host address space already, and up to date. */     
-  return buf_ptr + offset;
-}
-
-void *
 workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;

@@ -215,7 +215,7 @@ struct _cl_device_id {
   /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
-  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size);
+  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
 
   void (*run) (void *data, const char *bytecode,

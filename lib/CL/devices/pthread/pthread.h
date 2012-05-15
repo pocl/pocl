@@ -94,7 +94,7 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   pocl_pthread_write_rect, /* write_rect */				\
   pocl_pthread_copy, /* copy */						\
   pocl_pthread_copy_rect, /* copy_rect */				\
-  pocl_pthread_map_mem,                               \
+  pocl_basic_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_pthread_run, /* run */                         \
   NULL, /* data */                                  \
