@@ -100,8 +100,6 @@ then
 OPT_SWITCH="-O3"
 EXTRA_OPTS="-wi-vectorize -instcombine"
 fi
-OPT_SWITCH="-O3"
-EXTRA_OPTS="-wi-vectorize -instcombine"
 
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
