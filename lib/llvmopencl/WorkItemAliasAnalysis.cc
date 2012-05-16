@@ -41,10 +41,10 @@ namespace {
 /// WorkItemAliasAnalysis - This is a simple alias analysis
 /// implementation that uses pocl metadata to make sure memory accesses from
 /// different work items are not aliasing.
-class WorkItemAliasAnalysis : public FunctionPass, public AliasAnalysis {
+class WorkItemAliasAnalysis : public ImmutablePass, public AliasAnalysis {
 public:
     static char ID; 
-    WorkItemAliasAnalysis() : FunctionPass(ID) {}
+    WorkItemAliasAnalysis() : ImmutablePass(ID) {}
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
@@ -55,9 +55,12 @@ public:
             return (AliasAnalysis*)this;
         return this;
     }
+    virtual void initializePass() {
+        InitializeAliasAnalysis(this);
+    }
+    
     private:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-        virtual bool runOnFunction(Function &F);
         virtual AliasResult alias(const Location &LocA, const Location &LocB);
 
     };
@@ -70,12 +73,12 @@ RegisterPass<WorkItemAliasAnalysis>
 // Register it also to pass group
 RegisterAnalysisGroup<AliasAnalysis> Y(X);  
 
-FunctionPass *createWorkItemAliasAnalysisPass() {
+ImmutablePass *createWorkItemAliasAnalysisPass() {
     return new WorkItemAliasAnalysis();
 }
 
 extern "C" {                                
-    FunctionPass*
+    ImmutablePass*
     create_workitem_aa_plugin() {
         return new WorkItemAliasAnalysis();
     }
@@ -85,12 +88,6 @@ void
 WorkItemAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AliasAnalysis::getAnalysisUsage(AU);
-}
-
-bool
-WorkItemAliasAnalysis::runOnFunction(Function &F) {
-    InitializeAliasAnalysis(this);
-    return false;
 }
 
 /**
