@@ -121,12 +121,10 @@ AC_LANG_CONFTEST(
   [Application::initialize()])
 ])
 
-  if $CXX `$TCE_CONFIG --libs --cxxflags --includes` conftest.cpp -o /dev/null;
+  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
   then
         TCE_LIBRARY=ok
   fi
-
-cp conftest.cpp conffitest.cpp
 
 fi
 
