@@ -25,7 +25,7 @@
 #include <string.h>
 #include "pocl_icd.h"
 #include "pocl_cl.h"
-struct _cl_icd_dispatch pocl_dispatch = POCL_ICD_STRUCT;
+struct _cl_icd_dispatch pocl_dispatch = POCL_ICD_DISPATCH;
 struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 
 /*

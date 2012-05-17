@@ -97,7 +97,7 @@ struct _cl_icd_dispatch {
  *
  * TODO: the NULL entries are functions that lack implementation (or even stubs) in pocl
  */
-#define POCL_ICD_STRUCT { \
+#define POCL_ICD_DISPATCH { \
   (void *)&clBuildProgram,	\
   (void *)&clGetPlatformInfo,	\
   (void *)&clGetDeviceIDs,	\
