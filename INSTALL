@@ -35,6 +35,10 @@ as follows:
   ./configure --enable-shared --prefix=YOUR_INSTALLATION_PREFIX_HERE 
   make REQUIRES_RTTI=1 && make install
 
+
+!!!NOTE: A 64-bit host is at the moment required. See
+https://bugs.launchpad.net/pocl/+bug/911911
+
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
 source tree, you need to generate the autotool build files with 
