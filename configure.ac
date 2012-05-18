@@ -56,9 +56,9 @@ case "$LLVM_VERSION" in
      AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.2)")     
    ;;   
      *)
-   AC_MSG_NOTICE(
+   AC_MSG_ERROR(
    [
-Unsupported LLVM version. 
+Unsupported LLVM version. Please use LLVM 3.1 or later.
    ])
    LLVM_VERSION=
    ;;
