@@ -93,6 +93,7 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   pocl_ttasim_uninit, /* init */                                     \
   pocl_ttasim_init, /* init */                                       \
   pocl_ttasim_malloc, /* malloc */					\
+  pocl_ttasim_create_sub_buffer, \
   pocl_ttasim_free, /* free */						\
   pocl_ttasim_read, /* read */						\
   pocl_ttasim_read_rect, /* read_rect */				\

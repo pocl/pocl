@@ -102,18 +102,18 @@ pocl_ttasim_thread (void *p)
   do {
     pthread_cond_wait (&d->simulation_start_cond, &d->lock);
     do {
-      d->simulator->run();
-      if (d->debuggerRequested) {
-          d->debuggerRequested = false;
-          d->simulatorCLI->run();
-          continue;
-      }
+        d->simulator->run();
+        if (d->debuggerRequested) {
+            d->debuggerRequested = false;
+            d->simulatorCLI->run();
+            continue;
+        }
 
-      if (d->simulator->hadRuntimeError()) {
-          d->simulatorCLI->run();
-          POCL_ABORT("Runtime error in a ttasim device.");
+        if (d->simulator->hadRuntimeError()) {
+            d->simulatorCLI->run();
+            POCL_ABORT("Runtime error in a ttasim device.");
       }
-    } while (true);
+    } while (false);
   } while (true);
   return NULL;
 }
@@ -263,6 +263,19 @@ pocl_ttasim_malloc (void *device_data, cl_mem_flags flags,
       return (void*) chunk;
     }
   return (void*) chunk;
+}
+
+void *
+pocl_ttasim_create_sub_buffer (void *device_data, void* buffer, size_t origin, size_t size)
+{
+  struct data* d = (struct data*)device_data;
+
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("host: create sub buffer %d (buf start) + %d size: %d\n", 
+         ((chunk_info_t*)buffer)->start_address, origin, size);
+#endif
+
+  return create_sub_chunk ((chunk_info_t*)buffer, origin, size);
 }
 
 chunk_info_t*

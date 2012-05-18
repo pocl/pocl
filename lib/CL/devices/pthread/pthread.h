@@ -87,6 +87,7 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   pocl_pthread_uninit, /* uninit */                                     \
   pocl_pthread_init, /* init */                                       \
   pocl_pthread_malloc, /* malloc */					\
+  NULL, /* create_sub_buffer */                   \
   pocl_pthread_free, /* free */						\
   pocl_pthread_read, /* read */						\
   pocl_pthread_read_rect, /* read_rect */				\

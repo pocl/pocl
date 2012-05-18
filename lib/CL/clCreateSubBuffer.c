@@ -36,8 +36,6 @@ clCreateSubBuffer(cl_mem                   buffer,
   cl_mem mem;
   int i;
 
-  POCL_WARN_UNTESTED();
-
   if (buffer == NULL || buffer->parent != NULL)
     POCL_ERROR(CL_INVALID_MEM_OBJECT);
 
@@ -119,13 +117,19 @@ clCreateSubBuffer(cl_mem                   buffer,
   
   for (i = 0; i < mem->context->num_devices; ++i)
     {
-      /* TODO: call device->malloc_sub() instead as the
-       device_ptrs can contain a pointer to a book keeping
-       structure instead of the actual buffer in memory*/
       device = mem->context->devices[i];
 
-      mem->device_ptrs[device->dev_id] = 
-        buffer->device_ptrs[device->dev_id] + info->origin;
+      /* device_ptrs can contain a pointer to a book keeping
+         structure instead of the actual buffer in memory, therefore
+         call the device driver layer to produce the sub buffer
+         reference */
+      if (device->create_sub_buffer != NULL)
+        mem->device_ptrs[device->dev_id] = 
+          device->create_sub_buffer
+          (device->data, buffer->device_ptrs[device->dev_id], info->origin, info->size);
+      else
+        mem->device_ptrs[device->dev_id] = 
+          buffer->device_ptrs[device->dev_id] + info->origin;
     }
 
   POCL_RETAIN_OBJECT(mem->parent);

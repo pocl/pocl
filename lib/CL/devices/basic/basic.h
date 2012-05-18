@@ -88,6 +88,7 @@ extern size_t pocl_basic_max_work_item_sizes[];
   pocl_basic_uninit, /* init */                                     \
   pocl_basic_init, /* init */                                       \
   pocl_basic_malloc, /* malloc */					\
+  NULL, /* create_sub_buffer */ \
   pocl_basic_free, /* free */						\
   pocl_basic_read, /* read */						\
   pocl_basic_read_rect, /* read_rect */				\
