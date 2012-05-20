@@ -359,6 +359,7 @@ AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc
+                 pocl.icd
                  include/Makefile
                  include/CL/Makefile
                  lib/Makefile

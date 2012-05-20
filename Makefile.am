@@ -28,3 +28,6 @@ ACLOCAL_AMFLAGS = -I m4
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pocl.pc
+
+icddir = $(sysconfdir)/OpenCL/vendors/
+icd_DATA = pocl.icd

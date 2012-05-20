@@ -25,9 +25,9 @@
 
 SUBDIRS = devices
 
-lib_LTLIBRARIES = libOpenCL.la
+lib_LTLIBRARIES = libpocl.la
 
-libOpenCL_la_SOURCES = clCreateContextFromType.c	\
+libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
                    clRetainContext.c		\
                    clGetContextInfo.c		\
@@ -84,16 +84,16 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    pocl_util.c pocl_util.h 
 
 
-libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
-libOpenCL_la_LDFLAGS = -lltdl -Wl,-Bsymbolic @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_la_LDFLAGS = -lltdl -Wl,-Bsymbolic @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
 # directly.
-libOpenCL_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
+libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
-libOpenCL_la_LIBADD = devices/libOpenCL-devices.la 
+libpocl_la_LIBADD = devices/libOpenCL-devices.la 
 
