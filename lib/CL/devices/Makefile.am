@@ -24,19 +24,19 @@
 
 SUBDIRS = pthread basic
 
-noinst_LTLIBRARIES = libOpenCL-devices.la
+noinst_LTLIBRARIES = libpocl-devices.la
 
-libOpenCL_devices_la_SOURCES = devices.h devices.c bufalloc.c bufalloc.h
-libOpenCL_devices_la_LIBADD = pthread/libOpenCL-devices-pthread.la \
-	basic/libOpenCL-devices-basic.la
+libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c bufalloc.h
+libpocl_devices_la_LIBADD = pthread/libOpenCL-devices-pthread.la \
+	basic/libpocl-devices-basic.la
 
-libOpenCL_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
+libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices \
 -I$(top_srcdir)/lib/CL \
 -U__APPLE__
 
 if TCE_AVAILABLE
 SUBDIRS += ttasim
-libOpenCL_devices_la_LIBADD += ttasim/libOpenCL-devices-ttasim.la
+libpocl_devices_la_LIBADD += ttasim/libOpenCL-devices-ttasim.la
 endif
 

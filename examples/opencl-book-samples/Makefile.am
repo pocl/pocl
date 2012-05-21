@@ -42,7 +42,7 @@ build: check_dir
 	mkdir -p build; cd build; \
 	cmake \
 	-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut ${PTHREAD_CFLAGS}' \
-	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libOpenCL.so \
+	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
 	-D CMAKE_EXE_LINKER_FLAGS:STRING='${PTHREAD_CFLAGS}' \
 	-D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include .. && \
 	make clean all -sk)

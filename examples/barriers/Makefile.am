@@ -25,7 +25,7 @@
 noinst_PROGRAMS = barriers
 
 barriers_SOURCES = barriers.c barriers.cl
-barriers_LDADD = ../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
+barriers_LDADD = ../../lib/CL/libpocl.la @PTHREAD_LIBS@
 barriers_CFLAGS = @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
