@@ -115,71 +115,71 @@ struct _cl_icd_dispatch {
   (void *)&clCreateCommandQueue,	\
   (void *)&clCreateBuffer,	\
   (void *)&clCreateContextFromType,	\
-  NULL /*(void *)&clCreateImage2D*/,	\
-  NULL /*(void *)&clCreateImage3D*/,	\
+  (void *)&clCreateImage2D,	\
+  (void *)&clCreateImage3D,	\
   (void *)&clCreateKernel,	\
-  NULL /*(void *)&clCreateKernelsInProgram*/,	\
+  (void *)&clCreateKernelsInProgram,	\
   (void *)&clCreateProgramWithBinary,	\
   (void *)&clCreateProgramWithSource,	\
-  NULL /*(void *)&clCreateSampler*/,	\
+  (void *)&clCreateSampler,	\
   (void *)&clCreateSubBuffer,	\
-  NULL /*(void *)&clCreateUserEvent*/,	\
-  NULL /*(void *)&clEnqueueBarrier*/,	\
+  (void *)&clCreateUserEvent,	\
+  (void *)&clEnqueueBarrier,	\
   (void *)&clEnqueueCopyBuffer,	\
   (void *)&clEnqueueCopyBufferRect,	\
-  NULL /*(void *)&clEnqueueCopyBufferToImage*/,	\
-  NULL /*(void *)&clEnqueueCopyImage*/,	\
-  NULL /*(void *)&clEnqueueCopyImageToBuffer*/,	\
+  (void *)&clEnqueueCopyBufferToImage,	\
+  (void *)&clEnqueueCopyImage,	\
+  (void *)&clEnqueueCopyImageToBuffer,	\
   (void *)&clEnqueueMapBuffer,	\
-  NULL /*(void *)&clEnqueueMapImage*/,	\
-  NULL /*(void *)&clEnqueueMarker*/,	\
+  (void *)&clEnqueueMapImage,	\
+  (void *)&clEnqueueMarker,	\
   (void *)&clEnqueueNDRangeKernel,	\
-  NULL /*(void *)&clEnqueueNativeKernel*/,	\
+  (void *)&clEnqueueNativeKernel,	\
   (void *)&clEnqueueReadBuffer,	\
   (void *)&clEnqueueReadBufferRect,	\
-  NULL /*(void *)&clEnqueueReadImage*/,	\
+  (void *)&clEnqueueReadImage,	\
   (void *)&clEnqueueTask,	\
   (void *)&clEnqueueUnmapMemObject,	\
-  NULL /*(void *)&clEnqueueWaitForEvents*/,	\
+  (void *)&clEnqueueWaitForEvents,	\
   (void *)&clEnqueueWriteBuffer,	\
   (void *)&clEnqueueWriteBufferRect,	\
-  NULL /*(void *)&clEnqueueWriteImage*/,	\
+  (void *)&clEnqueueWriteImage,	\
   (void *)&clFinish,	\
-  NULL/*(void *)&clFlush*/,	\
-  NULL /*(void *)&clGetCommandQueueInfo*/,	\
+  (void *)&clFlush,	\
+  (void *)&clGetCommandQueueInfo,	\
   (void *)&clGetContextInfo,	\
-  NULL /*(void *)&clGetEventInfo*/,	\
+  (void *)&clGetEventInfo,	\
   (void *)&clGetEventProfilingInfo,	\
   (void *)&clGetExtensionFunctionAddress,	\
-  NULL /*(void *)&clGetImageInfo*/,	\
-  NULL /*(void *)&clGetKernelInfo*/,	\
+  (void *)&clGetImageInfo,	\
+  (void *)&clGetKernelInfo,	\
   (void *)&clGetKernelWorkGroupInfo,	\
-  NULL /*(void *)&clGetMemObjectInfo*/,	\
+  (void *)&clGetMemObjectInfo,	\
   (void *)&clGetPlatformIDs,	\
   (void *)&clGetProgramBuildInfo,	\
   (void *)&clGetProgramInfo,	\
-  NULL /*(void *)&clGetSamplerInfo*/,	\
-  NULL /*(void *)&clGetSupportedImageFormats*/,	\
+  (void *)&clGetSamplerInfo,	\
+  (void *)&clGetSupportedImageFormats,	\
   (void *)&clReleaseCommandQueue,	\
   (void *)&clReleaseContext,	\
   (void *)&clReleaseEvent,	\
   (void *)&clReleaseKernel,	\
   (void *)&clReleaseMemObject,	\
   (void *)&clReleaseProgram,	\
-  NULL /*(void *)&clReleaseSampler*/,	\
+  (void *)&clReleaseSampler,	\
   (void *)&clRetainCommandQueue,	\
   (void *)&clRetainContext,	\
-  NULL /*(void *)&clRetainEvent*/,	\
+  (void *)&clRetainEvent,	\
   (void *)&clRetainKernel,	\
   (void *)&clRetainMemObject,	\
   (void *)&clRetainProgram,	\
-  NULL /*(void *)&clRetainSampler*/,	\
-  NULL /*(void *)&clSetEventCallback*/,	\
+  (void *)&clRetainSampler,	\
+  (void *)&clSetEventCallback,	\
   (void *)&clSetKernelArg,	\
-  NULL /*(void *)&clSetMemObjectDestructorCallback*/,	\
-  NULL /*(void *)&clSetUserEventStatus*/,	\
-  NULL /*(void *)&clUnloadCompiler*/,	\
-  NULL /*(void *)&clWaitForEvents*/	\
+  (void *)&clSetMemObjectDestructorCallback,	\
+  (void *)&clSetUserEventStatus,	\
+  (void *)&clUnloadCompiler,	\
+  (void *)&clWaitForEvents	\
 }
 
 #endif

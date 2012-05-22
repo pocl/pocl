@@ -34,14 +34,17 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clCreateCommandQueue.c	\
                    clReleaseCommandQueue.c	\
                    clRetainCommandQueue.c	\
+                   clGetCommandQueueInfo.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
 		       	   clEnqueueReadBuffer.c	\
 				   clEnqueueReadBufferRect.c	\
 	    	   	   clEnqueueMapBuffer.c	\
-	        	   clEnqueueUnmapMemObject.c	\
+                   clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
+                   clGetMemObjectInfo.c		\
+                   clSetMemObjectDestructorCallback.c	\
                    clCreateProgramWithSource.c	\
                    clCreateProgramWithBinary.c	\
                    clReleaseProgram.c		\
@@ -52,6 +55,9 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clRetainKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
+                   clEnqueueNativeKernel.c	\
+                   clCreateKernelsInProgram.c		\
+                   clGetKernelInfo.c		\
                    clGetPlatformIDs.c		\
                    clGetPlatformInfo.c		\
                    clGetDeviceIDs.c		\
@@ -62,6 +68,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueWriteBufferRect.c	\
                    clEnqueueCopyBuffer.c	\
                    clEnqueueCopyBufferRect.c	\
+                   clEnqueueCopyBufferToImage.c	\
+                   clEnqueueCopyImageToBuffer.c	\
                    clFinish.c			\
                    clFlush.c			\
                    clEnqueueBarrier.c		\
@@ -72,14 +80,29 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clWaitForEvents.c		\
                    clEnqueueWaitForEvents.c	\
                    clReleaseEvent.c		\
+                   clRetainEvent.c		\
+                   clSetEventCallback.c		\
+                   clGetEventInfo.c		\
+                   clCreateUserEvent.c		\
+                   clSetUserEventStatus.c		\
                    clEnqueueTask.c		\
                    clCreateImage2D.c		\
                    clCreateImage3D.c		\
+                   clEnqueueReadImage.c		\
+                   clEnqueueWriteImage.c		\
+                   clEnqueueCopyImage.c		\
+                   clEnqueueMapImage.c		\
+                   clGetSupportedImageFormats.c		\
+                   clGetImageInfo.c		\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
                    clGetExtensionFunctionAddress.c \
                    clIcdGetPlatformIDsKHR.c \
+                   clCreateSampler.c \
+                   clReleaseSampler.c \
+                   clRetainSampler.c \
+                   clGetSamplerInfo.c \
                    pocl_cl.h			\
                    pocl_util.c pocl_util.h 
 
