@@ -21,9 +21,9 @@ struct _cl_icd_dispatch {
   void *clGetPlatformInfo;	// 2nd
   void *clGetDeviceIDs;  	// 3rd
   void *clGetDeviceInfo;	// 4th
-  void *clCreateBuffer;
+  void *clCreateContext;  // 5th
   void *clCreateCommandQueue;
-  void *clCreateContext;
+  void *clCreateBuffer;
   void *clCreateContextFromType;
   void *clCreateImage2D;
   void *clCreateImage3D;
@@ -102,9 +102,9 @@ struct _cl_icd_dispatch {
   (void *)&clGetPlatformInfo,	\
   (void *)&clGetDeviceIDs,	\
   (void *)&clGetDeviceInfo,	\
-  (void *)&clCreateBuffer,	\
-  (void *)&clCreateCommandQueue,	\
   (void *)&clCreateContext,	\
+  (void *)&clCreateCommandQueue,	\
+  (void *)&clCreateBuffer,	\
   (void *)&clCreateContextFromType,	\
   NULL /*(void *)&clCreateImage2D*/,	\
   NULL /*(void *)&clCreateImage3D*/,	\
