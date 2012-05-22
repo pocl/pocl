@@ -105,6 +105,8 @@ struct chunk_info
   size_t size; /* size in bytes */
   chunk_info_t* next;
   chunk_info_t* prev;
+  chunk_info_t* children;
+  chunk_info_t* parent;
   memory_region_t* parent_region;
 };
 
@@ -142,6 +144,8 @@ void free_chunk(chunk_info_t* chunk);
 
 void init_mem_region (
     memory_region_t *region, memory_address_t start, size_t size);
+
+chunk_info_t *create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size);
 
 #ifdef __cplusplus
 }

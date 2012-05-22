@@ -270,10 +270,6 @@ namespace {
                      DenseMap<Value *, Value *> &ChosenPairs,
                      std::multimap<Value *, Value *> &LoadMoveSet);
 
-    bool canMoveUsesOfIAfterJ(BasicBlock &BB,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
-                     Instruction *I, Instruction *J);
-
     void moveUsesOfIAfterJ(BasicBlock &BB,
                      std::multimap<Value *, Value *> &LoadMoveSet,
                      Instruction *&InsertionPt,
@@ -591,7 +587,6 @@ namespace {
             }          
             
         }
-        //BB.dump();
         return true;      
     }
   // This function implements one vectorization iteration on the provided
@@ -602,13 +597,12 @@ namespace {
 
     std::vector<Value *> AllPairableInsts;
     DenseMap<Value *, Value *> AllChosenPairs;
-
-    do {
+    
       std::vector<Value *> PairableInsts;
       std::multimap<Value *, Value *> CandidatePairs;
       ShouldContinue = getCandidatePairs(BB, Start, CandidatePairs,
                                          PairableInsts);
-      if (PairableInsts.empty()) continue;
+      if (PairableInsts.empty()) return false;
 
       // Now we have a map of all of the pairable instructions and we need to
       // select the best possible pairing. A good pairing is one such that the
@@ -621,7 +615,7 @@ namespace {
 
       std::multimap<ValuePair, ValuePair> ConnectedPairs;
       computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
-      if (ConnectedPairs.empty() && !MemOpsOnly) continue;
+      if (ConnectedPairs.empty() && !MemOpsOnly) return false;
 
       // Build the pairable-instruction dependency map
       DenseSet<ValuePair> PairableInstUsers;
@@ -637,11 +631,10 @@ namespace {
       choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
         PairableInstUsers, ChosenPairs);
 
-      if (ChosenPairs.empty()) continue;
+      if (ChosenPairs.empty()) return false;
       AllPairableInsts.insert(AllPairableInsts.end(), PairableInsts.begin(),
                               PairableInsts.end());
       AllChosenPairs.insert(ChosenPairs.begin(), ChosenPairs.end());
-    } while (ShouldContinue);
 
     if (AllChosenPairs.empty()) return false;
     NumFusedOps += AllChosenPairs.size();
@@ -885,23 +878,8 @@ namespace {
           break;
         }
       }
-    if (!UsesI && J->mayReadFromMemory()) {
-      if (LoadMoveSet) {
-        VPIteratorPair JPairRange = LoadMoveSet->equal_range(J);
-        UsesI = isSecondInIteratorPair<Value*>(I, JPairRange);
-      } else {
-        for (AliasSetTracker::iterator W = WriteSet.begin(),
-             WE = WriteSet.end(); W != WE; ++W) {
-          if (W->aliasesUnknownInst(J, *AA)) {
-            UsesI = true;
-            break;
-          }
-        }
-      }
-    }
 
-    if (UsesI && UpdateUsers) {
-      if (J->mayWriteToMemory()) WriteSet.add(J);
+    if (UsesI && UpdateUsers) {      
       Users.insert(J);
     }
 
@@ -1108,6 +1086,7 @@ namespace {
   bool WIVectorize::pairsConflict(ValuePair P, ValuePair Q,
                      DenseSet<ValuePair> &PairableInstUsers,
                      std::multimap<ValuePair, ValuePair> *PairableInstUserMap) {
+      
     // Two pairs are in conflict if they are mutual Users of eachother.
     bool QUsesP = PairableInstUsers.count(ValuePair(P.first,  Q.first))  ||
                   PairableInstUsers.count(ValuePair(P.first,  Q.second)) ||
@@ -1142,6 +1121,7 @@ namespace {
   bool WIVectorize::pairWillFormCycle(ValuePair P,
                        std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
                        DenseSet<ValuePair> &CurrentPairs) {
+      
     DEBUG(if (DebugCycleCheck)
             dbgs() << "WIV: starting cycle check for : " << *P.first << " <-> "
                    << *P.second << "\n");
@@ -1965,25 +1945,6 @@ namespace {
   }
 
   // Move all uses of the function I (including pairing-induced uses) after J.
-  bool WIVectorize::canMoveUsesOfIAfterJ(BasicBlock &/*BB*/,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
-                     Instruction *I, Instruction *J) {
-    // Skip to the first instruction past I.
-    BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
-
-    DenseSet<Value *> Users;
-    AliasSetTracker WriteSet(*AA);
-    for (; cast<Instruction>(L) != J; ++L)
-      (void) trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSet);
-
-    assert(cast<Instruction>(L) == J &&
-      "Tracking has not proceeded far enough to check for dependencies");
-    // If J is now in the use set of I, then trackUsesOfI will return true
-    // and we have a dependency cycle (and the fusing operation must abort).
-    return !trackUsesOfI(Users, WriteSet, I, J, true, &LoadMoveSet);
-  }
-
-  // Move all uses of the function I (including pairing-induced uses) after J.
   void WIVectorize::moveUsesOfIAfterJ(BasicBlock &/*BB*/,
                      std::multimap<Value *, Value *> &LoadMoveSet,
                      Instruction *&InsertionPt,
@@ -2109,15 +2070,6 @@ namespace {
       assert(FP != ChosenPairs.end() && "Flipped pair not found in list");
       ChosenPairs.erase(FP);
       ChosenPairs.erase(P);
-
-      if (!canMoveUsesOfIAfterJ(BB, LoadMoveSet, I, J)) {
-        DEBUG(dbgs() << "WIV: fusion of: " << *I <<
-               " <-> " << *J <<
-               " aborted because of non-trivial dependency cycle\n");
-        --NumFusedOps;
-        ++PI;
-        continue;
-      }
 
       bool FlipMemInputs;
       unsigned NumOperands = I->getNumOperands();

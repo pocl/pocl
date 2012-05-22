@@ -56,9 +56,9 @@ case "$LLVM_VERSION" in
      AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.2)")     
    ;;   
      *)
-   AC_MSG_NOTICE(
+   AC_MSG_ERROR(
    [
-Unsupported LLVM version. 
+Unsupported LLVM version. Please use LLVM 3.1.
    ])
    LLVM_VERSION=
    ;;
@@ -129,12 +129,10 @@ AC_LANG_CONFTEST(
   [Application::initialize()])
 ])
 
-  if $CXX `$TCE_CONFIG --libs --cxxflags --includes` conftest.cpp -o /dev/null;
+  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
   then
         TCE_LIBRARY=ok
   fi
-
-cp conftest.cpp conffitest.cpp
 
 fi
 

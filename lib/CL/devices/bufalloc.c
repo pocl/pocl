@@ -248,6 +248,24 @@ alloc_buffer (memory_region_t *regions, size_t size)
 }
 
 /**
+ * Creates a reference to a part of a chunk.
+ *
+ * @todo Register to the parent also so it can free the
+ * child references.
+ */
+chunk_info_t *
+create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
+{    
+  chunk_info_t *subchunk = (chunk_info_t*)malloc(sizeof(struct chunk_info));
+  subchunk->start_address = parent->start_address + offset;
+  subchunk->size = size;
+  subchunk->parent = parent;
+  DL_APPEND(parent->children, subchunk);
+  return subchunk;
+}
+
+
+/**
  * Merges two unallocated chunks together to a larger chunk, if both
  * are unallocated.
  *
