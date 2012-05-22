@@ -32,13 +32,6 @@ GEN_PROTOTYPES (pthread)
 
 extern size_t pocl_pthread_max_work_item_sizes[];
 
-#ifdef BUILD_ICD
-extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
-#define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#else
-#define POCL_DEVICE_ICD_DISPATCH
-#endif
-
 #define POCL_DEVICES_PTHREAD {	 					\
   POCL_DEVICE_ICD_DISPATCH     						\
   CL_DEVICE_TYPE_CPU, /* type */					\
@@ -96,6 +89,7 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
   pocl_pthread_uninit, /* uninit */                                     \
   pocl_pthread_init, /* init */                                       \
   pocl_pthread_malloc, /* malloc */					\
+  NULL, /* create_sub_buffer */                   \
   pocl_pthread_free, /* free */						\
   pocl_pthread_read, /* read */						\
   pocl_pthread_read_rect, /* read_rect */				\

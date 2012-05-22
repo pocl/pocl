@@ -1,4 +1,6 @@
 /* Installable Client Driver-realated things. */
+#ifndef POCL_ICD_H
+#define POCL_ICD_H
 
 // this define is a kludge!
 // The ICD loaders seem to require OCL 1.1, so we cannot (can we?) leave deprecated 
@@ -10,6 +12,13 @@
 #endif
 
 #include "pocl_cl.h"
+
+#ifdef BUILD_ICD
+extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
+#define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
+#else
+#define POCL_DEVICE_ICD_DISPATCH
+#endif
 
 // TODO: Add functions from OCL 1.2
 /* Correct order of these functions is specified in the OPEN CL ICD extension example code, 
@@ -173,8 +182,5 @@ struct _cl_icd_dispatch {
   NULL /*(void *)&clWaitForEvents*/	\
 }
 
-
-
-
-
+#endif
 

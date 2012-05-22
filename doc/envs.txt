@@ -51,6 +51,5 @@ hardware threads available in the CPU.
 
 POCL_VECTORIZE_WORK_GROUPS
 
-If set to 1, enables the (experimental) work group vectorizer that builds 
-vector instructions from multiple work items. Currently disabled as it
-slows down the compilation too much (needs to be optimized).
+If set to 0, disables the (experimental) work group vectorizer that builds 
+vector instructions from multiple work items. Enabled by default.

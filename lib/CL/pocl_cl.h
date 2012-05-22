@@ -193,6 +193,7 @@ struct _cl_device_id {
   void (*init) (cl_device_id device, const char *parameters);
   void *(*malloc) (void *data, cl_mem_flags flags,
 		   size_t size, void *host_ptr);
+  void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (void *data, cl_mem_flags flags, void *ptr);
   void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
   void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
