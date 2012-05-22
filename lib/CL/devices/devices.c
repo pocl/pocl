@@ -72,7 +72,7 @@ pocl_init_devices()
       device_list = "pthread";
     }
   
-  ptr = device_list;
+  ptr = strdup(device_list);
 
   /* strtok_r is a braindead function that modifies the ptr so
      we have to copy the original for later use. */
@@ -117,4 +117,5 @@ pocl_init_devices()
       ptr = NULL;
     }
   free (device_list2);
+  free (ptr);
 }
