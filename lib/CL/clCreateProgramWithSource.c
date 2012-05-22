@@ -26,6 +26,11 @@
 #include "pocl_util.h"
 #include <string.h>
 
+#ifdef BUILD_ICD
+#include "pocl_icd.h"
+extern struct _cl_icd_dispatch pocl_dispatch;
+#endif
+
 CL_API_ENTRY cl_program CL_API_CALL
 clCreateProgramWithSource(cl_context context,
                           cl_uint count,
@@ -66,6 +71,9 @@ clCreateProgramWithSource(cl_context context,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   program->source = source;
+  #ifdef BUILD_ICD
+  program->dispatch = &pocl_dispatch;
+  #endif
 
   for (i = 0; i < count; ++i)
     {

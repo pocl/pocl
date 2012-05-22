@@ -26,22 +26,21 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
  * A few of these orders are reversed by trial and error. Those are marked.
  */
 struct _cl_icd_dispatch {
-  void *clBuildProgram;
+  void *clEnqueueReadImage;
   void *clGetPlatformInfo;	// 2nd
   void *clGetDeviceIDs;  	// 3rd
   void *clGetDeviceInfo;	// 4th
   void *clCreateContext;  // 5th
-  void *clCreateCommandQueue;
-  void *clCreateBuffer;
+  void *clCreateImage3D;
+  void *clCreateSubBuffer;
   void *clCreateContextFromType;
   void *clCreateImage2D;
-  void *clCreateImage3D;
-  void *clCreateKernel;
+  void *clCreateCommandQueue; // correct
+  void *clGetProgramBuildInfo;
   void *clCreateKernelsInProgram;
   void *clCreateProgramWithBinary;
-  void *clCreateProgramWithSource;
   void *clCreateSampler;
-  void *clCreateSubBuffer;
+  void *clCreateBuffer;  // correct
   void *clCreateUserEvent;
   void *clEnqueueBarrier;
   void *clEnqueueCopyBuffer;
@@ -52,30 +51,31 @@ struct _cl_icd_dispatch {
   void *clEnqueueMapBuffer;
   void *clEnqueueMapImage;
   void *clEnqueueMarker;
-  void *clEnqueueNDRangeKernel;
+  void *clReleaseSampler;
+  void *clCreateProgramWithSource; //correct
   void *clEnqueueNativeKernel;
-  void *clEnqueueReadBuffer;
+  void *clGetPlatformIDs;
   void *clEnqueueReadBufferRect;
-  void *clEnqueueReadImage;
+  void *clBuildProgram;   // correct
   void *clEnqueueTask;
   void *clEnqueueUnmapMemObject;
   void *clEnqueueWaitForEvents;
-  void *clEnqueueWriteBuffer;
+  void *clCreateKernel;   // correct
   void *clEnqueueWriteBufferRect;
   void *clEnqueueWriteImage;
   void *clFinish;
-  void *clFlush;
+  void *clSetKernelArg;  // correct
   void *clGetCommandQueueInfo;
   void *clGetContextInfo;
-  void *clGetEventInfo;
+  void *clWaitForEvents; // correct
   void *clGetEventProfilingInfo;
   void *clGetExtensionFunctionAddress;
   void *clGetImageInfo;
   void *clGetKernelInfo;
   void *clGetKernelWorkGroupInfo;
   void *clGetMemObjectInfo;
-  void *clGetPlatformIDs;
-  void *clGetProgramBuildInfo;
+  void *clEnqueueReadBuffer; //correct
+  void *clEnqueueWriteBuffer; // correct
   void *clGetProgramInfo;
   void *clGetSamplerInfo;
   void *clGetSupportedImageFormats;
@@ -85,7 +85,7 @@ struct _cl_icd_dispatch {
   void *clReleaseKernel;
   void *clReleaseMemObject;
   void *clReleaseProgram;
-  void *clReleaseSampler;
+  void *clEnqueueNDRangeKernel; //correct
   void *clRetainCommandQueue;
   void *clRetainContext;
   void *clRetainEvent;
@@ -94,11 +94,11 @@ struct _cl_icd_dispatch {
   void *clRetainProgram;
   void *clRetainSampler;
   void *clSetEventCallback;
-  void *clSetKernelArg;
+  void *clFlush;
   void *clSetMemObjectDestructorCallback;
   void *clSetUserEventStatus;
   void *clUnloadCompiler;
-  void *clWaitForEvents;
+  void *clGetEventInfo;
 };
 
 /* The "implementation" of the _cl_device_id struct. 
@@ -107,22 +107,21 @@ struct _cl_icd_dispatch {
  * TODO: the NULL entries are functions that lack implementation (or even stubs) in pocl
  */
 #define POCL_ICD_DISPATCH { \
-  (void *)&clBuildProgram,	\
+  (void *)&clEnqueueReadImage,	\
   (void *)&clGetPlatformInfo,	\
   (void *)&clGetDeviceIDs,	\
   (void *)&clGetDeviceInfo,	\
   (void *)&clCreateContext,	\
-  (void *)&clCreateCommandQueue,	\
-  (void *)&clCreateBuffer,	\
+  (void *)&clCreateImage3D,	\
+  (void *)&clCreateSubBuffer,	\
   (void *)&clCreateContextFromType,	\
   (void *)&clCreateImage2D,	\
-  (void *)&clCreateImage3D,	\
-  (void *)&clCreateKernel,	\
+  (void *)&clCreateCommandQueue,	\
+  (void *)&clGetProgramBuildInfo,	\
   (void *)&clCreateKernelsInProgram,	\
   (void *)&clCreateProgramWithBinary,	\
-  (void *)&clCreateProgramWithSource,	\
   (void *)&clCreateSampler,	\
-  (void *)&clCreateSubBuffer,	\
+  (void *)&clCreateBuffer,	\
   (void *)&clCreateUserEvent,	\
   (void *)&clEnqueueBarrier,	\
   (void *)&clEnqueueCopyBuffer,	\
@@ -133,30 +132,31 @@ struct _cl_icd_dispatch {
   (void *)&clEnqueueMapBuffer,	\
   (void *)&clEnqueueMapImage,	\
   (void *)&clEnqueueMarker,	\
-  (void *)&clEnqueueNDRangeKernel,	\
+  (void *)&clReleaseSampler,	\
+  (void *)&clCreateProgramWithSource,	\
   (void *)&clEnqueueNativeKernel,	\
-  (void *)&clEnqueueReadBuffer,	\
+  (void *)&clGetPlatformIDs,	\
   (void *)&clEnqueueReadBufferRect,	\
-  (void *)&clEnqueueReadImage,	\
+  (void *)&clBuildProgram,	\
   (void *)&clEnqueueTask,	\
   (void *)&clEnqueueUnmapMemObject,	\
   (void *)&clEnqueueWaitForEvents,	\
-  (void *)&clEnqueueWriteBuffer,	\
+  (void *)&clCreateKernel,	\
   (void *)&clEnqueueWriteBufferRect,	\
   (void *)&clEnqueueWriteImage,	\
   (void *)&clFinish,	\
-  (void *)&clFlush,	\
+  (void *)&clSetKernelArg,	\
   (void *)&clGetCommandQueueInfo,	\
   (void *)&clGetContextInfo,	\
-  (void *)&clGetEventInfo,	\
+  (void *)&clWaitForEvents,	\
   (void *)&clGetEventProfilingInfo,	\
   (void *)&clGetExtensionFunctionAddress,	\
   (void *)&clGetImageInfo,	\
   (void *)&clGetKernelInfo,	\
   (void *)&clGetKernelWorkGroupInfo,	\
   (void *)&clGetMemObjectInfo,	\
-  (void *)&clGetPlatformIDs,	\
-  (void *)&clGetProgramBuildInfo,	\
+  (void *)&clEnqueueReadBuffer,	\
+  (void *)&clEnqueueWriteBuffer,	\
   (void *)&clGetProgramInfo,	\
   (void *)&clGetSamplerInfo,	\
   (void *)&clGetSupportedImageFormats,	\
@@ -166,7 +166,7 @@ struct _cl_icd_dispatch {
   (void *)&clReleaseKernel,	\
   (void *)&clReleaseMemObject,	\
   (void *)&clReleaseProgram,	\
-  (void *)&clReleaseSampler,	\
+  (void *)&clEnqueueNDRangeKernel,	\
   (void *)&clRetainCommandQueue,	\
   (void *)&clRetainContext,	\
   (void *)&clRetainEvent,	\
@@ -175,11 +175,11 @@ struct _cl_icd_dispatch {
   (void *)&clRetainProgram,	\
   (void *)&clRetainSampler,	\
   (void *)&clSetEventCallback,	\
-  (void *)&clSetKernelArg,	\
+  (void *)&clFlush,	\
   (void *)&clSetMemObjectDestructorCallback,	\
   (void *)&clSetUserEventStatus,	\
   (void *)&clUnloadCompiler,	\
-  (void *)&clWaitForEvents	\
+  (void *)&clGetEventInfo	\
 }
 
 #endif

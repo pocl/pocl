@@ -27,6 +27,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#ifdef BUILD_ICD
+#include "pocl_icd.h"
+extern struct _cl_icd_dispatch pocl_dispatch;
+#endif
+
 #define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_kernel CL_API_CALL
@@ -147,6 +152,9 @@ clCreateKernel(cl_program program,
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
+  #ifdef BUILD_ICD
+  kernel->dispatch = &pocl_dispatch;
+  #endif
 
   /* Initialize kernel arguments (in case the user doesn't). */
   for (i = 0; i < kernel->num_args; ++i)
