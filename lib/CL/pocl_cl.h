@@ -305,6 +305,7 @@ struct _cl_mem {
 };
 
 struct _cl_program {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_context context;
