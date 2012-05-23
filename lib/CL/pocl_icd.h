@@ -1,6 +1,16 @@
+#include "config.h"
+
 /* Installable Client Driver-realated things. */
 #ifndef POCL_ICD_H
 #define POCL_ICD_H
+
+// stub out ICD related stuff 
+#ifndef BUILD_ICD
+#define POCL_DEVICE_ICD_DISPATCH
+#define POCL_INIT_ICD_OBJECT(__obj__)
+
+// rest of the file: ICD is enabled 
+#else
 
 // this define is a kludge!
 // The ICD loaders seem to require OCL 1.1, so we cannot (can we?) leave deprecated 
@@ -13,12 +23,9 @@
 
 #include "pocl_cl.h"
 
-#ifdef BUILD_ICD
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#else
-#define POCL_DEVICE_ICD_DISPATCH
-#endif
+#define POCL_INIT_ICD_OBJECT(__obj__) {(__obj__)->dispatch=&pocl_dispatch;}
 
 // TODO: Add functions from OCL 1.2
 /* Correct order of these functions is specified in the OPEN CL ICD extension example code, 
@@ -37,14 +44,14 @@ struct _cl_icd_dispatch {
   void *clGetContextInfo; // correct
   void *clCreateCommandQueue; // correct
   void *clGetProgramBuildInfo;
-  void *clCreateKernelsInProgram;
+  void *clReleaseCommandQueue; //correct
   void *clCreateProgramWithBinary;
   void *clCreateSampler;
   void *clCreateBuffer;  // correct
   void *clCreateUserEvent;
   void *clEnqueueBarrier;
   void *clEnqueueCopyBuffer;
-  void *clEnqueueCopyBufferRect;
+  void *clReleaseMemObject; //correct
   void *clEnqueueCopyBufferToImage;
   void *clEnqueueCopyImage;
   void *clEnqueueCopyImageToBuffer;
@@ -63,7 +70,7 @@ struct _cl_icd_dispatch {
   void *clCreateKernel;   // correct
   void *clEnqueueWriteBufferRect;
   void *clEnqueueWriteImage;
-  void *clFinish;
+  void *clReleaseKernel; // correct
   void *clSetKernelArg;  // correct
   void *clGetCommandQueueInfo;
   void *clCreateImage2D;
@@ -79,11 +86,11 @@ struct _cl_icd_dispatch {
   void *clGetProgramInfo;
   void *clGetSamplerInfo;
   void *clGetSupportedImageFormats;
-  void *clReleaseCommandQueue;
+  void *clCreateKernelsInProgram;
   void *clReleaseContext;
   void *clReleaseEvent;
-  void *clReleaseKernel;
-  void *clReleaseMemObject;
+  void *clFinish;
+  void *clEnqueueCopyBufferRect;
   void *clEnqueueReadBufferRect;
   void *clEnqueueNDRangeKernel; //correct
   void *clRetainCommandQueue;
@@ -118,14 +125,14 @@ struct _cl_icd_dispatch {
   (void *)&clGetContextInfo,	\
   (void *)&clCreateCommandQueue,	\
   (void *)&clGetProgramBuildInfo,	\
-  (void *)&clCreateKernelsInProgram,	\
+  (void *)&clReleaseCommandQueue,	\
   (void *)&clCreateProgramWithBinary,	\
   (void *)&clCreateSampler,	\
   (void *)&clCreateBuffer,	\
   (void *)&clCreateUserEvent,	\
   (void *)&clEnqueueBarrier,	\
   (void *)&clEnqueueCopyBuffer,	\
-  (void *)&clEnqueueCopyBufferRect,	\
+  (void *)&clReleaseMemObject,	\
   (void *)&clEnqueueCopyBufferToImage,	\
   (void *)&clEnqueueCopyImage,	\
   (void *)&clEnqueueCopyImageToBuffer,	\
@@ -144,7 +151,7 @@ struct _cl_icd_dispatch {
   (void *)&clCreateKernel,	\
   (void *)&clEnqueueWriteBufferRect,	\
   (void *)&clEnqueueWriteImage,	\
-  (void *)&clFinish,	\
+  (void *)&clReleaseKernel,	\
   (void *)&clSetKernelArg,	\
   (void *)&clGetCommandQueueInfo,	\
   (void *)&clCreateImage2D,	\
@@ -160,11 +167,11 @@ struct _cl_icd_dispatch {
   (void *)&clGetProgramInfo,	\
   (void *)&clGetSamplerInfo,	\
   (void *)&clGetSupportedImageFormats,	\
-  (void *)&clReleaseCommandQueue,	\
+  (void *)&clCreateKernelsInProgram,	\
   (void *)&clReleaseContext,	\
   (void *)&clReleaseEvent,	\
-  (void *)&clReleaseKernel,	\
-  (void *)&clReleaseMemObject,	\
+  (void *)&clFinish,	\
+  (void *)&clEnqueueCopyBufferRect,	\
   (void *)&clEnqueueReadBufferRect,	\
   (void *)&clEnqueueNDRangeKernel,	\
   (void *)&clRetainCommandQueue,	\
@@ -182,5 +189,6 @@ struct _cl_icd_dispatch {
   (void *)&clGetEventInfo	\
 }
 
+#endif
 #endif
 
