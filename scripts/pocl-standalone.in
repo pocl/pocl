@@ -98,11 +98,15 @@ then
 fi
 
 EXTRA_OPTS=""
-if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
+if ! test "x$POCL_VECTORIZE_WORK_GROUPS" = "x0";
 then
 EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
 fi
-EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
+
+if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
+then
+EXTRA_OPTS+=" -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
+fi
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
