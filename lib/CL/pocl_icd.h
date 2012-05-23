@@ -34,7 +34,7 @@ struct _cl_icd_dispatch {
   void *clCreateImage3D;
   void *clCreateSubBuffer;
   void *clCreateContextFromType;
-  void *clCreateImage2D;
+  void *clGetContextInfo; // correct
   void *clCreateCommandQueue; // correct
   void *clGetProgramBuildInfo;
   void *clCreateKernelsInProgram;
@@ -55,7 +55,7 @@ struct _cl_icd_dispatch {
   void *clCreateProgramWithSource; //correct
   void *clEnqueueNativeKernel;
   void *clGetPlatformIDs;
-  void *clEnqueueReadBufferRect;
+  void *clReleaseProgram; // correct
   void *clBuildProgram;   // correct
   void *clEnqueueTask;
   void *clEnqueueUnmapMemObject;
@@ -66,7 +66,7 @@ struct _cl_icd_dispatch {
   void *clFinish;
   void *clSetKernelArg;  // correct
   void *clGetCommandQueueInfo;
-  void *clGetContextInfo;
+  void *clCreateImage2D;
   void *clWaitForEvents; // correct
   void *clGetEventProfilingInfo;
   void *clGetExtensionFunctionAddress;
@@ -84,7 +84,7 @@ struct _cl_icd_dispatch {
   void *clReleaseEvent;
   void *clReleaseKernel;
   void *clReleaseMemObject;
-  void *clReleaseProgram;
+  void *clEnqueueReadBufferRect;
   void *clEnqueueNDRangeKernel; //correct
   void *clRetainCommandQueue;
   void *clRetainContext;
@@ -115,7 +115,7 @@ struct _cl_icd_dispatch {
   (void *)&clCreateImage3D,	\
   (void *)&clCreateSubBuffer,	\
   (void *)&clCreateContextFromType,	\
-  (void *)&clCreateImage2D,	\
+  (void *)&clGetContextInfo,	\
   (void *)&clCreateCommandQueue,	\
   (void *)&clGetProgramBuildInfo,	\
   (void *)&clCreateKernelsInProgram,	\
@@ -136,7 +136,7 @@ struct _cl_icd_dispatch {
   (void *)&clCreateProgramWithSource,	\
   (void *)&clEnqueueNativeKernel,	\
   (void *)&clGetPlatformIDs,	\
-  (void *)&clEnqueueReadBufferRect,	\
+  (void *)&clReleaseProgram,	\
   (void *)&clBuildProgram,	\
   (void *)&clEnqueueTask,	\
   (void *)&clEnqueueUnmapMemObject,	\
@@ -147,7 +147,7 @@ struct _cl_icd_dispatch {
   (void *)&clFinish,	\
   (void *)&clSetKernelArg,	\
   (void *)&clGetCommandQueueInfo,	\
-  (void *)&clGetContextInfo,	\
+  (void *)&clCreateImage2D,	\
   (void *)&clWaitForEvents,	\
   (void *)&clGetEventProfilingInfo,	\
   (void *)&clGetExtensionFunctionAddress,	\
@@ -165,7 +165,7 @@ struct _cl_icd_dispatch {
   (void *)&clReleaseEvent,	\
   (void *)&clReleaseKernel,	\
   (void *)&clReleaseMemObject,	\
-  (void *)&clReleaseProgram,	\
+  (void *)&clEnqueueReadBufferRect,	\
   (void *)&clEnqueueNDRangeKernel,	\
   (void *)&clRetainCommandQueue,	\
   (void *)&clRetainContext,	\
