@@ -96,14 +96,11 @@ enabled by adding the flag
   --enable-icd
 to the ./configure script.
 
-ICD support is currently not finished and requires the following manual steps:
--Do not install pocl on top of your libOpenCL - this is (most likely) the ICD loader.
--Link to the pocl libOpenCL as (e.g.) libpocl. Add the path of libpocl to your ldconfig
- (or use a standard library directory such as /usr/lib/)
--Add a file pocl.icd to /etc/OpenCL/vendors, containing the file name of your libpocl link.
- (It might be possible to have the string (e.g.) /opt/pocl/lib/libOpenCL.so in pocl.icd
-  does this work with all ICD loaders?)
+In case you also give the --prefix=$INSTALL option to ./configure, you need to 
+copy the icd file to where your ICD loader finds it:
+  cp $INSTALL/etc/OpenCL/vendors/pocl.icd /etc/OpenCL/vendors/pocl.icd
 
-Pocl does not supply a ICD loader implementation. 
+Pocl does not supply a ICD loader implementation. At least the OpenCL implementations
+of nVidia, AMD and FreeOCL provide a ICD loader.
 
 
