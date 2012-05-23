@@ -24,7 +24,7 @@
 noinst_PROGRAMS = host
 
 host_SOURCES = host.cpp 
-host_LDADD = ../../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
+host_LDADD = ../../../lib/CL/libOpenCL.la ../../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
 host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -U__APPLE__ \

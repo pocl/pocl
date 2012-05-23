@@ -29,7 +29,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "pocl_util.h"
+#include "poclu.h"
 
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS)
@@ -80,13 +80,12 @@ main(void)
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
         cl::Program program(context, sources);
 
-        bool shouldSwap = 
-            !devices.at(0).getInfo<CL_DEVICE_ENDIAN_LITTLE>();
+        cl_device_id dev_id = devices.at(0)();
 
-        int scalar = byteswap_uint32_t (4, shouldSwap);
+        int scalar = poclu_bswap_cl_int (dev_id, 4);
 
         for (int i = 0; i < BUFFER_SIZE; ++i)
-            A[i] = byteswap_float (i, shouldSwap);
+            A[i] = poclu_bswap_cl_float(dev_id, i);
 
         // Build program
         program.build(devices);
@@ -127,8 +126,8 @@ main(void)
             0,
             BUFFER_SIZE * sizeof(float));
 
-        res[0] = byteswap_float (res[0], shouldSwap);
-        res[1] = byteswap_float (res[1], shouldSwap);
+        res[0] = poclu_bswap_cl_float (dev_id, res[0]);
+        res[1] = poclu_bswap_cl_float (dev_id, res[1]);
         bool ok = res[0] == 8 && res[1] == 10;
         if (ok) {
             std::cout << "OK" << std::endl;

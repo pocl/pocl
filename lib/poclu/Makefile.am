@@ -1,7 +1,9 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
+# Makefile.am for pocl/lib/poclu.
 # 
-# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
+#                         Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +23,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS = host
+lib_LTLIBRARIES = libpoclu.la
 
-host_SOURCES = host.cpp 
-host_LDADD = ../../../lib/CL/libOpenCL.la ../../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
-host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+libpoclu_la_SOURCES = poclu_bswap.c
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL  -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+libpoclu_la_CPPFLAGS = -I$(top_srcdir)/include 
+libpoclu_la_LDFLAGS = --version-info ${LIB_VERSION}

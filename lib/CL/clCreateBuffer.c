@@ -81,6 +81,8 @@ clCreateBuffer(cl_context context,
       mem->device_ptrs[device->dev_id] = device_ptr;
       if (flags & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR))
           mem->mem_host_ptr = host_ptr;      
+      else
+          mem->mem_host_ptr = NULL;
     }
 
   mem->size = size;

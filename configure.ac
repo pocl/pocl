@@ -345,6 +345,8 @@ CC="$old_CC"
 CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
 
+AC_C_BIGENDIAN
+
 # The libtool library version string to use (passed to --version-info).
 AC_SUBST([LIB_VERSION], ["0:0:0"])
 AC_SUBST([LD_FLAGS_BIN])
@@ -361,6 +363,7 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/ttasim/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
+                 lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile
                  examples/example2/Makefile
