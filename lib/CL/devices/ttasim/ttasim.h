@@ -25,6 +25,7 @@
 #define POCL_TTASIM_H
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include "bufalloc.h"
 
 #include "prototypes.inc"
@@ -38,6 +39,7 @@ GEN_PROTOTYPES (ttasim)
 extern size_t pocl_ttasim_max_work_item_sizes[];
 
 #define POCL_DEVICES_TTASIM {						\
+  POCL_DEVICE_ICD_DISPATCH     						\
   CL_DEVICE_TYPE_GPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\
