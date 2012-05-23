@@ -25,7 +25,7 @@
 
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#define POCL_INIT_ICD_OBJECT(__obj__) {(__obj__)->dispatch=&pocl_dispatch;}
+#define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
 
 // TODO: Add functions from OCL 1.2
 /* Correct order of these functions is specified in the OPEN CL ICD extension example code, 

@@ -23,12 +23,8 @@
 
 #include "pocl_cl.h"
 #include "utlist.h"
-#include <assert.h>
-
-#ifdef BUILD_ICD
 #include "pocl_icd.h"
-extern struct _cl_icd_dispatch pocl_dispatch;
-#endif
+#include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueWriteBuffer(cl_command_queue command_queue,
@@ -73,9 +69,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      #ifdef BUILD_ICD
-      (*event)->dispatch = &pocl_dispatch;
-      #endif
+      POCL_INIT_ICD_OBJECT(*event);
     }
 
   /* enqueue the write, or execute directly */

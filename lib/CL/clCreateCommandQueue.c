@@ -22,11 +22,7 @@
 */
 
 #include "pocl_cl.h"
-
-#ifdef BUILD_ICD
 #include "pocl_icd.h"
-extern struct _cl_icd_dispatch pocl_dispatch;
-#endif
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
 clCreateCommandQueue(cl_context context, 
@@ -48,9 +44,7 @@ clCreateCommandQueue(cl_context context,
   command_queue->device = device;
   command_queue->properties = properties;
   command_queue->root = NULL;
-  #ifdef BUILD_ICD
-  command_queue->dispatch = &pocl_dispatch;
-  #endif
+  POCL_INIT_ICD_OBJECT(command_queue);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

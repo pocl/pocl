@@ -24,16 +24,12 @@
 
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "pocl_icd.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-
-#ifdef BUILD_ICD
-#include "pocl_icd.h"
-extern struct _cl_icd_dispatch pocl_dispatch;
-#endif
 
 #define COMMAND_LENGTH 1024
 #define ARGUMENT_STRING_LENGTH 32
@@ -263,9 +259,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      #ifdef BUILD_ICD
-      (*event)->dispatch = &pocl_dispatch;
-      #endif
+      POCL_INIT_ICD_OBJECT(*event);
       clRetainCommandQueue (command_queue);
     }
 
