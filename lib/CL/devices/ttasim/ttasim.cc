@@ -408,14 +408,21 @@ pocl_ttasim_run
   } catch (const KeyNotFound& e) {
     POCL_ABORT ("Could not find the shared data structures from the device binary.");
   }
-  //printf ("_test_kernel_md @ %u  kernel_command @ %u\n", kernelAddr, commandQueueAddr);
 
-  int swap = 1; /* TODO, compare the host&device endiannesses */
+#if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
+  int swap = 0; 
+#else
+  int swap = 1;
+#endif
 
   __kernel_exec_cmd cmd;
   cmd.kernel = byteswap_uint32_t (kernelAddr, swap);
 
   struct pocl_argument *al;  
+
+  typedef std::vector<chunk_info_t*> ChunkVector;
+  /* Chunks to be freed after the kernel finishes. */
+  ChunkVector tempChunks;
 
   for (i = 0; i < kernel->num_args; ++i)
     {
@@ -424,13 +431,17 @@ pocl_ttasim_run
         {
           //cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
           /* Allocate the local memory buffer and pass a pointer to it directly. 
-             TODO: remember to free it after finishing. TODO: automatic locals. */
+             TODO: remember to free it after finishing.  */
           chunk_info_t* local_chunk = pocl_ttasim_malloc_local (d, al->size);
+          if (local_chunk == NULL)
+            POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
+
           cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, swap);
 #ifdef DEBUG_TTASIM_DRIVER
           printf ("host: allocated %d bytes of local memory for arg %d @ %d\n", 
                   al->size, i, local_chunk->start_address);
 #endif
+          tempChunks.push_back(local_chunk);
         }
       else if (kernel->arg_is_pointer[i])
         {
@@ -442,10 +453,13 @@ pocl_ttasim_run
           /* Copy the scalar argument data to the shared memory. */
           chunk_info_t* arg_space = 
             (chunk_info_t*)pocl_ttasim_malloc (d, CL_MEM_COPY_HOST_PTR, al->size, al->value);
+          if (arg_space == NULL)
+            POCL_ABORT ("Could not allocate memory from the device argument space. Out of global mem?\n");
 #ifdef DEBUG_TTASIM_DRIVER
           printf ("host: copied value from %x to global argument memory\n", al->value);
 #endif
           cmd.args[i] = byteswap_uint32_t (arg_space->start_address, swap);
+          tempChunks.push_back(arg_space);
         }
     }
 
@@ -456,11 +470,15 @@ pocl_ttasim_run
     {
       al = &(kernel->arguments[i]);
       chunk_info_t* local_chunk = pocl_ttasim_malloc_local (d, al->size);
+      if (local_chunk == NULL)
+        POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
+
       cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, swap);
 #ifdef DEBUG_TTASIM_DRIVER
       printf ("host: allocated %d bytes of local memory for automated local arg %d @ %d\n", 
               al->size, i, local_chunk->start_address);
 #endif      
+      tempChunks.push_back(local_chunk);
     }
   cmd.work_dim = byteswap_uint32_t (pc->work_dim, swap);
   cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], swap);
@@ -510,6 +528,18 @@ pocl_ttasim_run
 #endif
   /* We are done with this kernel, free the command queue entry. */
   pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_FREE, swap));
+
+  for (ChunkVector::iterator i = tempChunks.begin(); 
+       i != tempChunks.end(); ++i) 
+    free_chunk (*i);
+
+#ifdef DEBUG_TTASIM_DRIVER
+  printf("host: local memory allocations:\n");
+  print_chunks (d->local_mem.chunks);
+
+  printf("host: global memory allocations:\n");
+  print_chunks (d->global_mem.chunks);
+#endif  
 }
 
 /* Reads a single 32bit word from the device global memory. 

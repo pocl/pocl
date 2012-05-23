@@ -147,6 +147,13 @@ void init_mem_region (
 
 chunk_info_t *create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size);
 
+void
+print_chunk (chunk_info_t *chunk);
+
+void
+print_chunks (chunk_info_t *first);
+
+
 #ifdef __cplusplus
 }
 #endif
