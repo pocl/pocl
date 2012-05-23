@@ -43,7 +43,7 @@ struct _cl_icd_dispatch {
   void *clCreateContextFromType;
   void *clGetContextInfo; // correct
   void *clCreateCommandQueue; // correct
-  void *clGetProgramBuildInfo;
+  void *clRetainCommandQueue; // correct
   void *clReleaseCommandQueue; //correct
   void *clCreateProgramWithBinary;
   void *clCreateSampler;
@@ -61,7 +61,7 @@ struct _cl_icd_dispatch {
   void *clReleaseSampler;
   void *clCreateProgramWithSource; //correct
   void *clEnqueueNativeKernel;
-  void *clGetPlatformIDs;
+  void *clRetainProgram;  // correct
   void *clReleaseProgram; // correct
   void *clBuildProgram;   // correct
   void *clEnqueueTask;
@@ -93,12 +93,12 @@ struct _cl_icd_dispatch {
   void *clEnqueueCopyBufferRect;
   void *clEnqueueReadBufferRect;
   void *clEnqueueNDRangeKernel; //correct
-  void *clRetainCommandQueue;
+  void *clGetProgramBuildInfo;
   void *clRetainContext;
   void *clRetainEvent;
   void *clRetainKernel;
   void *clRetainMemObject;
-  void *clRetainProgram;
+  void *clGetPlatformIDs;
   void *clRetainSampler;
   void *clSetEventCallback;
   void *clFlush;
@@ -124,7 +124,7 @@ struct _cl_icd_dispatch {
   (void *)&clCreateContextFromType,	\
   (void *)&clGetContextInfo,	\
   (void *)&clCreateCommandQueue,	\
-  (void *)&clGetProgramBuildInfo,	\
+  (void *)&clRetainCommandQueue,	\
   (void *)&clReleaseCommandQueue,	\
   (void *)&clCreateProgramWithBinary,	\
   (void *)&clCreateSampler,	\
@@ -142,7 +142,7 @@ struct _cl_icd_dispatch {
   (void *)&clReleaseSampler,	\
   (void *)&clCreateProgramWithSource,	\
   (void *)&clEnqueueNativeKernel,	\
-  (void *)&clGetPlatformIDs,	\
+  (void *)&clRetainProgram,	\
   (void *)&clReleaseProgram,	\
   (void *)&clBuildProgram,	\
   (void *)&clEnqueueTask,	\
@@ -174,12 +174,12 @@ struct _cl_icd_dispatch {
   (void *)&clEnqueueCopyBufferRect,	\
   (void *)&clEnqueueReadBufferRect,	\
   (void *)&clEnqueueNDRangeKernel,	\
-  (void *)&clRetainCommandQueue,	\
+  (void *)&clGetProgramBuildInfo,	\
   (void *)&clRetainContext,	\
   (void *)&clRetainEvent,	\
   (void *)&clRetainKernel,	\
   (void *)&clRetainMemObject,	\
-  (void *)&clRetainProgram,	\
+  (void *)&clGetPlatformIDs,	\
   (void *)&clRetainSampler,	\
   (void *)&clSetEventCallback,	\
   (void *)&clFlush,	\
