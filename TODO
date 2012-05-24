@@ -9,9 +9,6 @@ High priority:
     * make the book examples at 
       https://code.google.com/p/opencl-book-samples
       to work (1.0)   
-    * stabilize and optimize the WG vectorization so
-      it can be enabled by default for targets with
-      SIMD instructions
 
 Medium priority:
     * complete the kernel runtime library.   
