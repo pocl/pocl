@@ -31,7 +31,7 @@ Kernel compiler
   
 Miscellaneous  
 -------------
-
+- Installable Client Driver support
 
 Known issues
 ------------
@@ -42,5 +42,4 @@ Known issues
   * https://bugs.launchpad.net/pocl/+bug/966992
 - Non-pointer struct kernel arguments fail due to varying ABIs
   * https://bugs.launchpad.net/pocl/+bug/987905
-  
   

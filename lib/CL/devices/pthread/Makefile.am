@@ -22,10 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_LTLIBRARIES = libOpenCL-devices-pthread.la
+noinst_LTLIBRARIES = libpocl-devices-pthread.la
 
-libOpenCL_devices_pthread_la_SOURCES = pthread.h pthread.c
+libpocl_devices_pthread_la_SOURCES = pthread.h pthread.c
 
-libOpenCL_devices_pthread_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL -U__APPLE__
-libOpenCL_devices_pthread_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_devices_pthread_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL -U__APPLE__
+libpocl_devices_pthread_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 

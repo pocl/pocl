@@ -17,11 +17,11 @@ Medium priority:
       flexible WG parallelization (1.0)
     * ttasim target (heterogeneous TCE scenario).
     * device supporting ATI cards.
+    * Check all the function pointers in the ICD dispatch struct.
 
 Low priority:
     * gdb target (generates code for any llvm-compatible target and launches.
       workgroups on gdb simulator).
-    * ICD support.
     * device supporting IBM Cell BE.
 
 (1.0) == requirement for the pocl 1.0 release

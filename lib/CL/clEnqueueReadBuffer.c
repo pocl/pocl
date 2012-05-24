@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "pocl_icd.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -60,6 +61,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
+      POCL_INIT_ICD_OBJECT(*event);
     }
 
 

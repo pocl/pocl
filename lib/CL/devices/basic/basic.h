@@ -26,6 +26,7 @@
 #define POCL_BASIC_H
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (basic)
@@ -33,6 +34,7 @@ GEN_PROTOTYPES (basic)
 extern size_t pocl_basic_max_work_item_sizes[];
 
 #define POCL_DEVICES_BASIC {						\
+  POCL_DEVICE_ICD_DISPATCH     						\
   CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\

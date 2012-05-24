@@ -23,6 +23,7 @@
 
 #include "devices/devices.h"
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
@@ -55,6 +56,7 @@ clCreateContext(const cl_context_properties * properties,
 
   context->num_devices = num_devices;
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
+  POCL_INIT_ICD_OBJECT(context);
   
   j = 0;
   for (i = 0; i < num_devices; ++i) 

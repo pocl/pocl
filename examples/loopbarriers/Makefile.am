@@ -25,7 +25,7 @@
 noinst_PROGRAMS = loopbarriers
 
 loopbarriers_SOURCES = loopbarriers.c loopbarriers.cl
-loopbarriers_LDADD = ../../lib/CL/libOpenCL.la @PTHREAD_LIBS@
+loopbarriers_LDADD = ../../lib/CL/libpocl.la @PTHREAD_LIBS@
 loopbarriers_CFLAGS = @PTHREAD_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'

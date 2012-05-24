@@ -2,7 +2,7 @@
 AT_BANNER([OpenCL Programming Guide Samples])
 
 AT_SETUP([Building the sources against pocl])
-AT_KEYWORDS([booksamples])
+AT_KEYWORDS([booksamples buildsamples])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
 AT_DATA([expout],
 [Built target HelloWorld
@@ -10,6 +10,7 @@ Built target OpenCLInfo
 Built target OpenCLConvolutionChap3
 Built target HelloBinaryWorld
 Built target SimpleBufferSubBuffer
+Built target ImageFilter2D
 Built target vecadd
 Built target histogram
 Built target Dijkstra

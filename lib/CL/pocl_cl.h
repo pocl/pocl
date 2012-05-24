@@ -120,12 +120,22 @@ typedef pthread_mutex_t pocl_lock_t;
   pocl_lock_t pocl_lock; \
   int pocl_refcount 
 
+/* The ICD compatibility part. This must be first in the objects where
+ * it is used (as the ICD loader assumes that)*/
+#ifdef BUILD_ICD
+#define POCL_ICD_OBJECT\
+  struct _cl_icd_dispatch *dispatch;
+#else
+#define POCL_ICD_OBJECT
+#endif
+
 struct pocl_argument {
   size_t size;
   void *value;
 };
 
 struct _cl_device_id {
+  POCL_ICD_OBJECT
   /* queries */
   cl_device_type type;
   cl_uint vendor_id;
@@ -231,10 +241,11 @@ struct _cl_device_id {
 };
 
 struct _cl_platform_id {
-  int magic;
+  POCL_ICD_OBJECT
 }; 
 
 struct _cl_context {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_device_id *devices;
@@ -244,6 +255,7 @@ struct _cl_context {
 };
 
 struct _cl_command_queue {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_context context;
@@ -266,6 +278,7 @@ struct _mem_mapping {
 typedef struct _cl_mem cl_mem_t;
 
 struct _cl_mem {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_mem_object_type type;
@@ -293,6 +306,7 @@ struct _cl_mem {
 };
 
 struct _cl_program {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_context context;
@@ -311,6 +325,7 @@ struct _cl_program {
 };
 
 struct _cl_kernel {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   const char *function_name;
@@ -328,8 +343,13 @@ struct _cl_kernel {
 };
 
 struct _cl_event {
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   cl_command_queue queue;
+};
+
+struct _cl_sampler {
+  POCL_ICD_OBJECT
 };
 
 #endif /* POCL_CL_H */

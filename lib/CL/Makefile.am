@@ -25,23 +25,26 @@
 
 SUBDIRS = devices
 
-lib_LTLIBRARIES = libOpenCL.la
+lib_LTLIBRARIES = libpocl.la
 
-libOpenCL_la_SOURCES = clCreateContextFromType.c	\
+libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
                    clRetainContext.c		\
                    clGetContextInfo.c		\
                    clCreateCommandQueue.c	\
                    clReleaseCommandQueue.c	\
                    clRetainCommandQueue.c	\
+                   clGetCommandQueueInfo.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
 		       	   clEnqueueReadBuffer.c	\
 				   clEnqueueReadBufferRect.c	\
 	    	   	   clEnqueueMapBuffer.c	\
-	        	   clEnqueueUnmapMemObject.c	\
+                   clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
+                   clGetMemObjectInfo.c		\
+                   clSetMemObjectDestructorCallback.c	\
                    clCreateProgramWithSource.c	\
                    clCreateProgramWithBinary.c	\
                    clReleaseProgram.c		\
@@ -52,6 +55,9 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clRetainKernel.c		\
                    clSetKernelArg.c		\
                    clEnqueueNDRangeKernel.c	\
+                   clEnqueueNativeKernel.c	\
+                   clCreateKernelsInProgram.c		\
+                   clGetKernelInfo.c		\
                    clGetPlatformIDs.c		\
                    clGetPlatformInfo.c		\
                    clGetDeviceIDs.c		\
@@ -62,6 +68,8 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueWriteBufferRect.c	\
                    clEnqueueCopyBuffer.c	\
                    clEnqueueCopyBufferRect.c	\
+                   clEnqueueCopyBufferToImage.c	\
+                   clEnqueueCopyImageToBuffer.c	\
                    clFinish.c			\
                    clFlush.c			\
                    clEnqueueBarrier.c		\
@@ -72,26 +80,53 @@ libOpenCL_la_SOURCES = clCreateContextFromType.c	\
                    clWaitForEvents.c		\
                    clEnqueueWaitForEvents.c	\
                    clReleaseEvent.c		\
+                   clRetainEvent.c		\
+                   clSetEventCallback.c		\
+                   clGetEventInfo.c		\
+                   clCreateUserEvent.c		\
+                   clSetUserEventStatus.c		\
                    clEnqueueTask.c		\
                    clCreateImage2D.c		\
                    clCreateImage3D.c		\
+                   clEnqueueReadImage.c		\
+                   clEnqueueWriteImage.c		\
+                   clEnqueueCopyImage.c		\
+                   clEnqueueMapImage.c		\
+                   clGetSupportedImageFormats.c		\
+                   clGetImageInfo.c		\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
+                   clGetExtensionFunctionAddress.c \
+                   clIcdGetPlatformIDsKHR.c \
+                   clCreateSampler.c \
+                   clReleaseSampler.c \
+                   clRetainSampler.c \
+                   clGetSamplerInfo.c \
                    pocl_cl.h			\
-				   pocl_util.c pocl_util.h 
+                   pocl_util.c pocl_util.h 
 
 
-libOpenCL_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
-libOpenCL_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_la_LDFLAGS = -lltdl -Wl,-Bsymbolic @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
 # directly.
-libOpenCL_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
+libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
-libOpenCL_la_LIBADD = devices/libOpenCL-devices.la 
+libpocl_la_LIBADD = devices/libpocl-devices.la 
 
+all-local: ${pkglib_LTLIBRARIES}
+# Create a link from libpocl.so to libOpenCL.so so the make check tests
+# find them if they do not link to libpocl.so directly (e.g. some Rodinia
+# tests).
+	ln -sf libpocl.so ./.libs/libOpenCL.so
+
+install-exec-local:
+# In case there is no libOpenCL.so (the ICD loader), link the pocl as
+# one for  using it in the non-icd mode.
+	test -e ${libdir}/libOpenCL.so || ln -s libpocl.so ${libdir}/libOpenCL.so

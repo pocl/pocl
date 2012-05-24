@@ -25,13 +25,15 @@
 #define POCL_PTHREAD_H
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)
 
 extern size_t pocl_pthread_max_work_item_sizes[];
 
-#define POCL_DEVICES_PTHREAD {						\
+#define POCL_DEVICES_PTHREAD {	 					\
+  POCL_DEVICE_ICD_DISPATCH     						\
   CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\

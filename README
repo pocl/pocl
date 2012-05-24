@@ -86,3 +86,21 @@ kernels.
 KERNEL REPLICATION
 
 (todo)
+
+INSTALLABLE CLIENT DRIVER (ICD)
+
+Pocl is built with the ICD extensions of OpenCL by default. This allows you
+to have several OpenCL implementations concurrently on your computer, and select
+the one to use at runtime by selecting the corresponding cl_platform. ICD support
+can be disabled by adding the flag
+
+  --disable-icd
+
+to the ./configure script.
+
+In case you also give the --prefix=$INSTALL option to ./configure, you need to 
+copy the icd file to where your ICD loader finds it:
+  cp $INSTALL/etc/OpenCL/vendors/pocl.icd /etc/OpenCL/vendors/pocl.icd
+
+Pocl does not supply a ICD loader implementation. At least the OpenCL implementations
+of nVidia, AMD and FreeOCL provide a ICD loader.

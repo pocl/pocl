@@ -70,6 +70,14 @@ AC_ARG_ENABLE([region-allocator],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
+# Option to build as an ICD
+AC_ARG_ENABLE([icd],
+              [AS_HELP_STRING([--disable-icd], [Do not build pocl with the ICD extensions])],
+              [icd="no"],
+              [AC_DEFINE([BUILD_ICD], [], "Build with ICD")])
+AC_SUBST(icd)
+AM_CONDITIONAL(INSTALL_ICD, test "$icd" != "no")
+
 #AC_LANG([C++])
 ACX_PTHREAD()
 
@@ -353,6 +361,7 @@ AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc
+                 pocl.icd
                  include/Makefile
                  include/CL/Makefile
                  lib/Makefile
