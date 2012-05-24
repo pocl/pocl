@@ -50,7 +50,7 @@ struct _cl_icd_dispatch {
   void *clCreateBuffer;  // correct
   void *clCreateUserEvent;
   void *clEnqueueBarrier;
-  void *clEnqueueCopyBuffer;
+  void *clRetainMemObject;  //correct
   void *clReleaseMemObject; //correct
   void *clEnqueueCopyBufferToImage;
   void *clEnqueueCopyImage;
@@ -64,12 +64,12 @@ struct _cl_icd_dispatch {
   void *clRetainProgram;  // correct
   void *clReleaseProgram; // correct
   void *clBuildProgram;   // correct
-  void *clEnqueueTask;
+  void *clGetProgramBuildInfo;
   void *clEnqueueUnmapMemObject;
   void *clEnqueueWaitForEvents;
   void *clCreateKernel;   // correct
   void *clEnqueueWriteBufferRect;
-  void *clEnqueueWriteImage;
+  void *clRetainKernel;  // correct
   void *clReleaseKernel; // correct
   void *clSetKernelArg;  // correct
   void *clGetCommandQueueInfo;
@@ -80,24 +80,24 @@ struct _cl_icd_dispatch {
   void *clGetImageInfo;
   void *clGetKernelInfo;
   void *clGetKernelWorkGroupInfo;
-  void *clGetMemObjectInfo;
+  void *clFinish;  // correct
   void *clEnqueueReadBuffer; //correct
   void *clEnqueueWriteBuffer; // correct
-  void *clGetProgramInfo;
+  void *clEnqueueCopyBuffer;
   void *clGetSamplerInfo;
   void *clGetSupportedImageFormats;
   void *clCreateKernelsInProgram;
   void *clReleaseContext;
   void *clReleaseEvent;
-  void *clFinish;
+  void *clGetMemObjectInfo;
   void *clEnqueueCopyBufferRect;
   void *clEnqueueReadBufferRect;
   void *clEnqueueNDRangeKernel; //correct
-  void *clGetProgramBuildInfo;
+  void *clEnqueueTask;    //correct
   void *clRetainContext;
   void *clRetainEvent;
-  void *clRetainKernel;
-  void *clRetainMemObject;
+  void *clEnqueueWriteImage;
+  void *clGetProgramInfo;
   void *clGetPlatformIDs;
   void *clRetainSampler;
   void *clSetEventCallback;
@@ -131,7 +131,7 @@ struct _cl_icd_dispatch {
   (void *)&clCreateBuffer,	\
   (void *)&clCreateUserEvent,	\
   (void *)&clEnqueueBarrier,	\
-  (void *)&clEnqueueCopyBuffer,	\
+  (void *)&clRetainMemObject,	\
   (void *)&clReleaseMemObject,	\
   (void *)&clEnqueueCopyBufferToImage,	\
   (void *)&clEnqueueCopyImage,	\
@@ -145,12 +145,12 @@ struct _cl_icd_dispatch {
   (void *)&clRetainProgram,	\
   (void *)&clReleaseProgram,	\
   (void *)&clBuildProgram,	\
-  (void *)&clEnqueueTask,	\
+  (void *)&clGetProgramBuildInfo,	\
   (void *)&clEnqueueUnmapMemObject,	\
   (void *)&clEnqueueWaitForEvents,	\
   (void *)&clCreateKernel,	\
   (void *)&clEnqueueWriteBufferRect,	\
-  (void *)&clEnqueueWriteImage,	\
+  (void *)&clRetainKernel,	\
   (void *)&clReleaseKernel,	\
   (void *)&clSetKernelArg,	\
   (void *)&clGetCommandQueueInfo,	\
@@ -161,24 +161,24 @@ struct _cl_icd_dispatch {
   (void *)&clGetImageInfo,	\
   (void *)&clGetKernelInfo,	\
   (void *)&clGetKernelWorkGroupInfo,	\
-  (void *)&clGetMemObjectInfo,	\
+  (void *)&clFinish,	\
   (void *)&clEnqueueReadBuffer,	\
   (void *)&clEnqueueWriteBuffer,	\
-  (void *)&clGetProgramInfo,	\
+  (void *)&clEnqueueCopyBuffer,	\
   (void *)&clGetSamplerInfo,	\
   (void *)&clGetSupportedImageFormats,	\
   (void *)&clCreateKernelsInProgram,	\
   (void *)&clReleaseContext,	\
   (void *)&clReleaseEvent,	\
-  (void *)&clFinish,	\
+  (void *)&clGetMemObjectInfo,	\
   (void *)&clEnqueueCopyBufferRect,	\
   (void *)&clEnqueueReadBufferRect,	\
   (void *)&clEnqueueNDRangeKernel,	\
-  (void *)&clGetProgramBuildInfo,	\
+  (void *)&clEnqueueTask,	\
   (void *)&clRetainContext,	\
   (void *)&clRetainEvent,	\
-  (void *)&clRetainKernel,	\
-  (void *)&clRetainMemObject,	\
+  (void *)&clEnqueueWriteImage,	\
+  (void *)&clGetProgramInfo,	\
   (void *)&clGetPlatformIDs,	\
   (void *)&clRetainSampler,	\
   (void *)&clSetEventCallback,	\
