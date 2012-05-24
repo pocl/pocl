@@ -1,29 +1,46 @@
 0.6 (unreleased)
-----------------
+===============
 
-Kernel library: 
+Kernel library 
+--------------
 
 - Added initial optimized kernel library for X86_64/SSE.
 - Preliminary support for ARM architectures on Linux
   (briefly tested on MeeGo/Nokia N9).
 
-Multithreaded native device:
+Pthread device driver
+---------------------
 
 - Multithreading at the work group granularity using pthreads.
 - Tries to figure out the optimal maximum number of
   threads for the system based on the available hardware
   threads. Currently works only in Linux using the 
   /proc/cpuinfo interface.
-
-Kernel compiler:
-
-- Tricky work group barrier cases (barriers inside for-loops etc)
-  now supported.
-- Support for local variables, also automatic locals.
-- Reuse previous compilation results, if available.
-
-Host:
-
 - Region-based customized memory allocator for speeding up buffer 
   allocations.
 
+Kernel compiler
+---------------
+
+- Most of the tricky work group barrier cases (barriers inside 
+  for-loops etc) now supported.
+- Support for local variables, also automatic locals.
+- Reuse previous compilation results, if available.
+- Automatic vectorization of work groups (multiple work items
+  in parallel).
+  
+Miscellaneous  
+-------------
+
+
+Known issues
+------------
+
+- Some cases of work group barriers still crash the
+  kernel compiler
+  * https://bugs.launchpad.net/pocl/+bug/966214
+  * https://bugs.launchpad.net/pocl/+bug/966992
+- Non-pointer struct kernel arguments fail due to varying ABIs
+  * https://bugs.launchpad.net/pocl/+bug/987905
+  
+  
