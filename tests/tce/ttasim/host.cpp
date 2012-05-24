@@ -30,7 +30,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "pocl_util.h"
+#include "poclu.h"
 
 static char
 kernelSourceCode[] = 
@@ -82,12 +82,8 @@ main(void)
 
         assert (device.getInfo<CL_DEVICE_NAME>() == "ttasim");
 
-        bool deviceLittleEndian = device.getInfo<CL_DEVICE_ENDIAN_LITTLE>();
-
-        if (!deviceLittleEndian) { // todo: compare to the host endianness
-            a = byteswap_float(a, 1);
-            b = byteswap_uint32_t(b, 1);
-        }
+        a = poclu_bswap_cl_float (device(), a);
+        b = poclu_bswap_cl_int (device(), b);
 
         // Create and program from source
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));

@@ -113,7 +113,8 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
     }
 
 #ifdef DEBUG_TTA_DEVICE
-        lwpr_print_str("tta: ------------------- starting kernel\n");
+        lwpr_print_str("tta: ------------------- starting kernel ");
+        puts(kernel->name);
 #endif
         tta_opencl_wg_execute(cmd, args, 0, num_groups_x - 1);
 #ifdef DEBUG_TTA_DEVICE
@@ -164,17 +165,24 @@ int main() {
         next_kernel = (__kernel_metadata*)next_command->kernel;
 
 #ifdef DEBUG_TTA_DEVICE
-        iprintf("tta: got a command to execute '%s' with dim %lu num_groups:  %lu-%lu-%lu global_offset: %lu-%lu-%lu\n",
-                next_kernel->name, 
-                next_command->work_dim,
-                next_command->num_groups[0],
-                next_command->num_groups[1],
-                next_command->num_groups[2],
-                next_command->global_offset[0],
-                next_command->global_offset[1],
-                next_command->global_offset[2]);
+        lwpr_print_str("tta: got a command to execute: ");
+        lwpr_print_str(next_kernel->name);
+        lwpr_print_str(" with ");
+        lwpr_print_int(next_command->work_dim);
+        lwpr_print_str(" dimensions. num_groups ");
+        lwpr_print_int(next_command->num_groups[0]);
+        lwpr_print_str("-"),
+        lwpr_print_int(next_command->num_groups[1]);
+        lwpr_print_str("-"),
+        lwpr_print_int(next_command->num_groups[2]);
+        lwpr_print_str(" dimensions. global offset ");
+        lwpr_print_int(next_command->global_offset[0]);
+        lwpr_print_str("-"),
+        lwpr_print_int(next_command->global_offset[1]);
+        lwpr_print_str("-"),
+        lwpr_print_int(next_command->global_offset[2]);
+        lwpr_newline();
 #endif
-
         tta_opencl_wg_launch(next_command);
         kernel_command.status = POCL_KST_FINISHED;   
 

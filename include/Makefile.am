@@ -33,4 +33,6 @@ nobase_pkginclude_HEADERS = $(sort 				\
                             @TARGET@/types.h	\
                             @HOST@/types.h)
 
+include_HEADERS = poclu.h
+
 SUBDIRS = CL

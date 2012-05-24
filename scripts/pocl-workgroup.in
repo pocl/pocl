@@ -101,6 +101,10 @@ OPT_SWITCH="-O3"
 EXTRA_OPTS="-wi-vectorize -instcombine"
 fi
 
+if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
+then
+EXTRA_OPTS+=" -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
+fi
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \

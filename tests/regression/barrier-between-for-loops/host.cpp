@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "poclu.h"
 #include "pocl_util.h"
 
 #define WINDOW_SIZE 32
@@ -67,9 +68,9 @@ kernelSourceCode[] =
 int
 main(void)
 {
-    float A[BUFFER_SIZE];
-    int R[WORK_ITEMS];
-    cl_int err;
+    cl_float A[BUFFER_SIZE];
+    cl_int R[WORK_ITEMS];
+    cl_int err = 0;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -97,19 +98,10 @@ main(void)
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
         cl::Program program(context, sources);
 
-// todo: compare to the host endianness
-        bool shouldSwap = 
-            !devices.at(0).getInfo<CL_DEVICE_ENDIAN_LITTLE>();
+        cl_device_id dev_id = devices.at(0)();
 
-        if (shouldSwap) { 
-            for (int i = 0; i < BUFFER_SIZE; i++) {
-                A[i] = byteswap_float(A[i], 1);
-            }
-            
-            for (int i = 0; i < WORK_ITEMS; i++) {
-                R[i] = byteswap_uint32_t(R[i], 1);
-            }
-        }
+        poclu_bswap_cl_float_array(dev_id, A, BUFFER_SIZE);
+        poclu_bswap_cl_int_array(dev_id, R, WORK_ITEMS);
 
         // Build program
         program.build(devices);
@@ -164,17 +156,17 @@ main(void)
 
             result = global_sum;
             for (j=0; j < 32; ++j) {
-                float value = byteswap_float (A[i+j], shouldSwap);
+                float value = poclu_bswap_cl_float (dev_id, A[i+j]);
                 global_sum += value;
             }
             result = result + global_sum;
             for (j=0; j < 32; ++j) {
-                float value = byteswap_float (A[i+j], shouldSwap);
+                float value = poclu_bswap_cl_float (dev_id, A[i+j]);
                 global_sum += value;
             }
             result = result + global_sum;
 
-            if ((int)result != byteswap_uint32_t (R[i], shouldSwap)) {
+            if ((int)result != poclu_bswap_cl_int (dev_id, R[i])) {
                 std::cout 
                     << "F(" << i << ": " << (int)result << " != " << R[i] 
                     << ") ";

@@ -62,7 +62,7 @@
  * also for the case where there's a single region (basically heap) that
  * grows towards the stack or the global data area of the memory.
  *
- * @author Pekka Jääskeläinen 2011
+ * @author Pekka Jääskeläinen 2011-2012
  *
  * @file bufalloc.c
  */
@@ -72,11 +72,10 @@
 
 //#define DEBUG_BUFALLOC
 
-#ifdef DEBUG_BUFALLOC
 
 #include <stdio.h>
 
-static void
+void
 print_chunk (chunk_info_t *chunk)
 {
   printf ("### chunk %x: allocated: %d start: %x size: %u prev: %x next: %x\n", 
@@ -84,7 +83,7 @@ print_chunk (chunk_info_t *chunk)
           chunk->size, chunk->prev, chunk->next);
 }
 
-static void
+void
 print_chunks (chunk_info_t *first)
 {
   chunk_info_t *chunk;
@@ -93,7 +92,6 @@ print_chunks (chunk_info_t *first)
       print_chunk (chunk);
     }
 }
-#endif
 
 static int
 chunk_slack (chunk_info_t* chunk, size_t size)

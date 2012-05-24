@@ -53,3 +53,8 @@ POCL_VECTORIZE_WORK_GROUPS
 
 If set to 0, disables the (experimental) work group vectorizer that builds 
 vector instructions from multiple work items. Enabled by default.
+
+POCL_VECTORIZE_VECTOR_WIDTH
+
+If set, indicates the width of vector to use during vectorization. Default
+is 8 lanes.
