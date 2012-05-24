@@ -34,24 +34,24 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
  */
 struct _cl_icd_dispatch {
   void *clEnqueueReadImage;
-  void *clGetPlatformInfo;	// 2nd
-  void *clGetDeviceIDs;  	// 3rd
-  void *clGetDeviceInfo;	// 4th
-  void *clCreateContext;  // 5th
+  void *clGetPlatformInfo;
+  void *clGetDeviceIDs;
+  void *clGetDeviceInfo;
+  void *clCreateContext;
   void *clCreateImage3D;
   void *clCreateSubBuffer;
   void *clCreateContextFromType;
-  void *clGetContextInfo; // correct
-  void *clCreateCommandQueue; // correct
-  void *clRetainCommandQueue; // correct
-  void *clReleaseCommandQueue; //correct
+  void *clGetContextInfo;
+  void *clCreateCommandQueue;
+  void *clRetainCommandQueue;
+  void *clReleaseCommandQueue;
   void *clCreateProgramWithBinary;
   void *clCreateSampler;
-  void *clCreateBuffer;  // correct
+  void *clCreateBuffer;
   void *clCreateUserEvent;
   void *clEnqueueBarrier;
-  void *clRetainMemObject;  //correct
-  void *clReleaseMemObject; //correct
+  void *clRetainMemObject;
+  void *clReleaseMemObject;
   void *clEnqueueCopyBufferToImage;
   void *clEnqueueCopyImage;
   void *clEnqueueCopyImageToBuffer;
@@ -59,30 +59,30 @@ struct _cl_icd_dispatch {
   void *clEnqueueMapImage;
   void *clEnqueueMarker;
   void *clReleaseSampler;
-  void *clCreateProgramWithSource; //correct
+  void *clCreateProgramWithSource;
   void *clEnqueueNativeKernel;
-  void *clRetainProgram;  // correct
-  void *clReleaseProgram; // correct
-  void *clBuildProgram;   // correct
+  void *clRetainProgram;
+  void *clReleaseProgram;
+  void *clBuildProgram;
   void *clGetProgramBuildInfo;
   void *clEnqueueUnmapMemObject;
   void *clEnqueueWaitForEvents;
-  void *clCreateKernel;   // correct
+  void *clCreateKernel;
   void *clEnqueueWriteBufferRect;
-  void *clRetainKernel;  // correct
-  void *clReleaseKernel; // correct
-  void *clSetKernelArg;  // correct
+  void *clRetainKernel;
+  void *clReleaseKernel;
+  void *clSetKernelArg;
   void *clGetCommandQueueInfo;
   void *clCreateImage2D;
-  void *clWaitForEvents; // correct
+  void *clWaitForEvents;
   void *clGetEventProfilingInfo;
   void *clGetExtensionFunctionAddress;
   void *clGetImageInfo;
   void *clGetKernelInfo;
   void *clGetKernelWorkGroupInfo;
-  void *clFinish;  // correct
-  void *clEnqueueReadBuffer; //correct
-  void *clEnqueueWriteBuffer; // correct
+  void *clFinish;
+  void *clEnqueueReadBuffer;
+  void *clEnqueueWriteBuffer;
   void *clEnqueueCopyBuffer;
   void *clGetSamplerInfo;
   void *clGetSupportedImageFormats;
@@ -92,8 +92,8 @@ struct _cl_icd_dispatch {
   void *clGetMemObjectInfo;
   void *clEnqueueCopyBufferRect;
   void *clEnqueueReadBufferRect;
-  void *clEnqueueNDRangeKernel; //correct
-  void *clEnqueueTask;    //correct
+  void *clEnqueueNDRangeKernel;
+  void *clEnqueueTask;
   void *clRetainContext;
   void *clRetainEvent;
   void *clEnqueueWriteImage;
