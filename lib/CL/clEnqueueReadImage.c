@@ -16,11 +16,11 @@ clEnqueueReadImage(cl_command_queue     command_queue,
                    cl_event *           event) 
 CL_API_SUFFIX__VERSION_1_0 
 {
-  return pocl_read_image   (image,
-                    command_queue->device,
-                    origin,
-                    region,
-                    host_row_pitch,
-                    host_slice_pitch, 
-                    ptr);
+  return pocl_read_image(image,
+                         command_queue->device,
+                         origin,
+                         region,
+                         host_row_pitch,
+                         host_slice_pitch, 
+                         ptr);
 }

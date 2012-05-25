@@ -16,13 +16,13 @@ CL_API_SUFFIX__VERSION_1_0
   if (sampler == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
   
-  if( normalized_coords == CL_TRUE )
+  if (normalized_coords == CL_TRUE)
     POCL_ABORT_UNIMPLEMENTED();
   
-  if( addressing_mode != CL_ADDRESS_CLAMP_TO_EDGE )
+  if (addressing_mode != CL_ADDRESS_CLAMP_TO_EDGE)
     POCL_ABORT_UNIMPLEMENTED();
   
-  if( filter_mode != CL_FILTER_NEAREST ) 
+  if (filter_mode != CL_FILTER_NEAREST)
     POCL_ABORT_UNIMPLEMENTED();
   
   sampler->normalized_coords = normalized_coords;

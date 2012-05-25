@@ -36,6 +36,7 @@
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
+#include <../x86_image.h>
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
@@ -649,19 +650,6 @@ pocl_pthread_map_mem (void *data, void *buf_ptr,
      the host address space already, and up to date. */     
   return buf_ptr + offset;
 }
-
-#include <stdio.h>
-
-typedef cl_int dev_sampler_t;
-
-typedef struct dev_image2d_t {
-  void* data;
-  cl_int width;
-  cl_int height;
-  cl_int rowpitch;
-  cl_int order;
-  cl_int data_type;
-} dev_image2d_t;
 
 void *
 workgroup_thread (void *p)

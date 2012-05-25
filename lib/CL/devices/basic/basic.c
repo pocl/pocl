@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <../x86_image.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -112,22 +113,6 @@ pocl_basic_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 
   memcpy (device_ptr, host_ptr, cb);
 }
-
-
-typedef struct dev_sampler_t {
-  cl_int normalized; // 0 false, 1 true
-  cl_int addressing_mode;
-  cl_int filter_mode;
-} sampler_t_;
-
-typedef struct dev_image2d_t {
-  cl_int width;
-  cl_int height;
-  cl_int rowpitch;
-  cl_int order;
-  cl_int data_type;
-  void* data;
-} image2d_t_;
 
 void
 pocl_basic_run 
@@ -247,24 +232,30 @@ pocl_basic_run
         {
           arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
         }
-      /*else if (kernel->arg_is_image[i])
+      else if (kernel->arg_is_image[i])
         {
           dev_image2d_t di;      
-          cl_mem mem = *(cl_mem*)al->value;
-          di.data = mem->device_ptrs[ta->device];
+          cl_mem mem = *(cl_mem*)p->value;
+          di.data = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+          di.data = ((*(cl_mem *) (p->value))->device_ptrs[device]);
           di.width = mem->image_width;
-          di.width = mem->image_height;
+          di.height = mem->image_height;
           di.rowpitch = mem->image_row_pitch;
           di.order = mem->image_channel_order;
           di.data_type = mem->image_channel_data_type;
-          arguments[i] = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image2d_t), &di); 
+          void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image2d_t), NULL);
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = devptr; 
+          pocl_basic_write( data, &di, devptr, sizeof(dev_image2d_t) );
         }
       else if (kernel->arg_is_sampler[i])
         {
           dev_sampler_t ds;
-          arguments[i] = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), &ds); 
-           
-        }*/
+          
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, sizeof(dev_sampler_t), NULL);
+          pocl_basic_write( data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t) );
+        }
       else
         {
           arguments[i] = p->value;

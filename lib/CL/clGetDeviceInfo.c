@@ -195,7 +195,7 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
 
   case CL_DEVICE_EXTENSIONS                        : 
-    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16,cl_khr_local_int32_base_atomics");
+    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16");
   case CL_DEVICE_PLATFORM                          : break;
   case CL_DEVICE_DOUBLE_FP_CONFIG                  : break;
   case CL_DEVICE_HALF_FP_CONFIG                    : break;

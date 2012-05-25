@@ -11,12 +11,11 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
                            const cl_event *  event_wait_list,
                            cl_event *        event ) CL_API_SUFFIX__VERSION_1_0
   {
-    if( region == NULL )
-      {
-      }
-    else if( region[2] != 1 )
-      POCL_ABORT_UNIMPLEMENTED();
+    if (region == NULL)
+      return CL_INVALID_VALUE;
     
+    if (region[2] != 1) //3D image
+      POCL_ABORT_UNIMPLEMENTED();
     
     int dev_elem_size = sizeof(cl_float);
     int dev_channels = 4;
@@ -35,15 +34,17 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
         image->device_ptrs[device_id->dev_id], 
         image->size); 
             
-    cl_int ret_code = pocl_write_image   (image,
-                      command_queue->device,
-                      dst_origin,
-                      region,
-                      0,
-                      0, 
-                      temp+src_offset);
+    cl_int ret_code = pocl_write_image   
+      (image,
+        command_queue->device,
+        dst_origin,
+        region,
+        0,
+        0, 
+        temp+src_offset);
     
     free(temp);
     
     return ret_code;
   }
+  

@@ -36,15 +36,14 @@ CL_API_SUFFIX__VERSION_1_0
   cl_channel_order order = image_format->image_channel_order;
   cl_channel_type type = image_format->image_channel_data_type;
   
-  int dev_elem_size = sizeof( cl_float ); //TODO
+  int dev_elem_size = sizeof(cl_float); //TODO
   int dev_channels = 4;
   
-  if( image_row_pitch == 0 )
+  if (image_row_pitch == 0)
     image_row_pitch = width;
   
-  if( image_row_pitch != width )
+  if (image_row_pitch != width)
     POCL_ABORT_UNIMPLEMENTED();
-    
   
   size = width * height * dev_elem_size * dev_channels;
   

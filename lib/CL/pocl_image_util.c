@@ -17,17 +17,17 @@ pocl_get_image_information (cl_mem        image,
       host_elem_size=1;
     else
       POCL_ABORT_UNIMPLEMENTED();
-    if( elem_size_out != NULL ) 
+    if (elem_size_out != NULL) 
       *elem_size_out = host_elem_size;
     
     int host_channels;
-    if( order == CL_RGBA )
+    if (order == CL_RGBA)
       host_channels=4;
-    else if( order == CL_R ) 
+    else if (order == CL_R) 
       host_channels=1;
     else
       POCL_ABORT_UNIMPLEMENTED();
-    if( channels_out != NULL ) 
+    if (channels_out != NULL) 
       *channels_out = host_channels;
   }
 extern cl_int
@@ -40,13 +40,11 @@ pocl_write_image    (cl_mem               image,
                    const void *         ptr)
   {
     if (image == NULL)
-      assert(0);
-      //return CL_INVALID_MEM_OBJECT;
+      return CL_INVALID_MEM_OBJECT;
 
     if ((ptr == NULL) ||
         (region_ == NULL))
-      assert(0);
-      //return CL_INVALID_VALUE;
+      return CL_INVALID_VALUE;
     
     int width = image->image_width;
     int height = image->image_height;
@@ -70,17 +68,13 @@ pocl_write_image    (cl_mem               image,
         (region[0]-1 +
         image_row_pitch * (region[1]-1) +
         image_slice_pitch * (region[2]-1) >= image->size))
-      {
-        assert(0);
-      }
+      return CL_INVALID_VALUE;
     
     cl_float* temp = malloc( width*height*dev_channels*dev_elem_size );
     
     if (temp == NULL) 
-      {
-        free(image);
-        //POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
-      }
+      return CL_OUT_OF_HOST_MEMORY;
+    
     int x, y, k;
     
     for (y=0; y<height; y++)
@@ -93,7 +87,7 @@ pocl_write_image    (cl_mem               image,
           {
             cl_float elem[4]; //TODO 0,0,0,0 for some modes?
             
-            for( k=0; k<host_channels; k++ ) 
+            for (k=0; k<host_channels; k++) 
               {
                 if (type == CL_FLOAT)
                   elem[k] = ((float*)ptr)[k+(x+y*width)*host_channels];
@@ -106,10 +100,10 @@ pocl_write_image    (cl_mem               image,
                   POCL_ABORT_UNIMPLEMENTED();
               }
           
-            if( order == CL_RGBA ) 
-              for( k=0; k<4; k++ )
+            if (order == CL_RGBA) 
+              for (k=0; k<4; k++)
                 temp[(x+y*width)*dev_channels+k] = elem[k];
-            else if( order == CL_R ) 
+            else if (order == CL_R) 
               {
                 temp[(x+y*width)*dev_channels+0] = elem[0];
                 temp[(x+y*width)*dev_channels+1] = 0.f;
@@ -141,13 +135,11 @@ pocl_read_image   (cl_mem               image,
   {
     
     if (image == NULL)
-      assert(0);
-      //return CL_INVALID_MEM_OBJECT;
+      return CL_INVALID_MEM_OBJECT;
 
     if ((ptr == NULL) ||
         (region_ == NULL))
-      assert(0);
-      //return CL_INVALID_VALUE;
+      return CL_INVALID_VALUE;
     
     int width = image->image_width;
     int height = image->image_height;
@@ -163,8 +155,7 @@ pocl_read_image   (cl_mem               image,
         (region[0]-1 +
         image_row_pitch * (region[1]-1) +
         image_slice_pitch * (region[2]-1) >= image->size))
-      assert(0);
-      //return CL_INVALID_VALUE;
+      return CL_INVALID_VALUE;
 
   
     int i, j, k;
@@ -175,12 +166,11 @@ pocl_read_image   (cl_mem               image,
     cl_float* temp = malloc( width*height*dev_channels*dev_elem_size );
     
     if (temp == NULL)
-      assert(0);
-    //  POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      return CL_OUT_OF_HOST_MEMORY;
       
     size_t host_channels, host_elem_size;
       
-    pocl_get_image_information (image, &host_channels, &host_elem_size);
+    pocl_get_image_information(image, &host_channels, &host_elem_size);
       
     if (host_row_pitch == 0) {
       host_row_pitch = width*host_channels;
@@ -201,7 +191,7 @@ pocl_read_image   (cl_mem               image,
         for (k=0; k<4; k++)
           elem[k]=0;
         
-        if( order == CL_RGBA ) {
+        if (order == CL_RGBA) {
           for (k=0; k<4; k++) 
             elem[k] = temp[i*dev_channels + j*width*dev_channels + k];
         }
@@ -219,7 +209,7 @@ pocl_read_image   (cl_mem               image,
           }
         else if (type == CL_FLOAT) 
           {
-            for(k=0; k<host_channels; k++)
+            for (k=0; k<host_channels; k++)
               {
                 assert(0);
                 ((cl_float*)ptr)[i*host_channels + j*host_row_pitch + k] 

@@ -37,7 +37,7 @@ clGetSupportedImageFormats(cl_context           context,
   for (i=0; i<supported_order_count; i++)
     for (j=0; j<supported_type_count; j++)
       {
-        if( idx >= num_entries )
+        if (idx >= num_entries)
           return CL_SUCCESS;
         
         image_formats[idx].image_channel_order = supported_orders[i];
