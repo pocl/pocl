@@ -369,7 +369,8 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/Makefile
                  lib/CL/devices/pthread/Makefile
                  lib/CL/devices/basic/Makefile
-                 lib/CL/devices/ttasim/Makefile
+                 lib/CL/devices/tce/Makefile
+                 lib/CL/devices/tce/ttasim/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  lib/poclu/Makefile

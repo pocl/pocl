@@ -36,7 +36,6 @@ libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
 -U__APPLE__
 
 if TCE_AVAILABLE
-SUBDIRS += ttasim
-libpocl_devices_la_LIBADD += ttasim/libpocl-devices-ttasim.la
+SUBDIRS += tce
+libpocl_devices_la_LIBADD += tce/libpocl-devices-tce.la
 endif
-

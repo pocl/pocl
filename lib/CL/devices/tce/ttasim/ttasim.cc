@@ -356,8 +356,8 @@ pocl_ttasim_run
       
       std::string deviceMainSrc = "";
 
-      if (access (BUILDDIR "/lib/CL/devices/ttasim/tta_device_main.c", R_OK) == 0)
-        deviceMainSrc = BUILDDIR "/lib/CL/devices/ttasim/tta_device_main.c";
+      if (access (BUILDDIR "/lib/CL/devices/tce/tta_device_main.c", R_OK) == 0)
+        deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
       else
         POCL_ABORT_UNIMPLEMENTED();
      

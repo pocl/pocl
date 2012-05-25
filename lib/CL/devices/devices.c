@@ -31,7 +31,7 @@
 #include "pthread/pthread.h"
 
 #if defined(TCE_AVAILABLE)
-#include "ttasim/ttasim.h"
+#include "tce/ttasim/ttasim.h"
 #endif
 
 /* the enabled devices */
