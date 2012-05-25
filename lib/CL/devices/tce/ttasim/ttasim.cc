@@ -46,73 +46,152 @@
 #include <Machine.hh>
 #include <MemorySystem.hh>
 #include <Program.hh>
-#include <GlobalScope.hh>
 #include <DataLabel.hh>
 #include <SimulatorCLI.hh>
 #include <SimulationEventHandler.hh>
 #include <Listener.hh>
 
+#include "tce_common.h"
+
 using namespace TTAMachine;
 
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
-#define COMMAND_LENGTH 256
-#define WORKGROUP_STRING_LENGTH 128
+static void *pocl_ttasim_thread (void *p);
 
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
-//#define DEBUG_TTASIM_DRIVER
+class TTASimDevice : public TCEDevice {
+public:
+  TTASimDevice(cl_device_id dev, const char* adfName) :
+    TCEDevice(dev, adfName), simulator(adfName), 
+    simulatorCLI(simulator.frontend()), debuggerRequested(false),
+    shutdownRequested(false) {
+    char dev_name[256];
+    if (device_count > 0)
+      {
+        if (snprintf (dev_name, 256, "ttasim%d", device_count) < 0)
+          POCL_ABORT("Unable to generate the device name string.");
+        dev->name = strdup(dev_name);  
+      }
+    ++device_count;
 
-struct data {
-  /* Currently loaded kernel. */
-  cl_kernel current_kernel;
-  /* Loaded kernel dynamic library handle. */
-  lt_dlhandle current_dlhandle;
-  /* The ttasim engine handle. */
-  SimpleSimulatorFrontend *simulator;
+    SigINTHandler* ctrlcHandler = new SigINTHandler(this);
+    Application::setSignalHandler(SIGINT, *ctrlcHandler);
+
+    initMemoryManagement(simulator.machine());
+
+    pthread_cond_init (&simulation_start_cond, NULL);
+    pthread_create (&ttasim_thread, NULL, pocl_ttasim_thread, this);
+  }
+
+  ~TTASimDevice() {
+    shutdownRequested = true;
+    simulator.stop();
+    pthread_cond_signal (&simulation_start_cond);
+    pthread_join (ttasim_thread, NULL);
+  }
+
+  virtual void copyHostToDevice(const void *host_ptr, uint32_t dest_addr, size_t count) {
+    MemorySystem &mems = simulator.memorySystem();
+    Memory& globalMem = mems.memory (*global_as);
+    for (std::size_t i = 0; i < count; ++i) {
+      unsigned char val = ((char*)host_ptr)[i];
+      globalMem.write (dest_addr + i, (Memory::MAU)(val));
+    }
+  }
+
+  virtual void copyDeviceToHost(uint32_t src_addr, const void *host_ptr, 
+                                size_t count) {
+    /* Find the simulation model for the global address space. */
+    MemorySystem &mems = simulator.memorySystem();
+    Memory& globalMem = mems.memory (*global_as);
+    for (std::size_t i = 0; i < count; ++i) {
+      ((char*)host_ptr)[i] = globalMem.read (src_addr + i);
+      //    printf("host: read byte %u from %d to %x\n",  ((char*)dst_ptr)[i], src_addr + i, &((char*)dst_ptr)[i]);
+    }
+  }
+
+  virtual void loadProgramToDevice(const std::string& asmFile) {
+    if (simulator.isRunning()) 
+      simulator.stop();
+    while (simulator.isRunning()) 
+      ;
+    simulator.loadProgram(asmFile);
+    currentProgram = &simulator.program();
+  }
+
+  virtual void restartProgram() {
+    pthread_cond_signal (&simulation_start_cond);
+  }
+
+  SimpleSimulatorFrontend simulator;
   /* A Command Line Interface for debugging. */
-  SimulatorCLI* simulatorCLI;
+  SimulatorCLI simulatorCLI;
   volatile bool debuggerRequested;
-
-  /* The bufalloc memory regions for memory allocation book keeping. */
-  struct memory_region local_mem;
-  struct memory_region global_mem;
-  
-  AddressSpace *local_as;
-  AddressSpace *global_as;
-  char* machine_file;
+  volatile bool shutdownRequested;
 
   pthread_t ttasim_thread;
   pthread_cond_t simulation_start_cond;
   pthread_mutex_t lock;
+private:
 
-  cl_device_id parent;
+  /**
+   * A handler class for Ctrl-c signal.
+   *
+   * Stops the simulation (if it's running) and attaches the ttasim
+   * console to it.
+   */
+  class SigINTHandler : public Application::UnixSignalHandler {
+  public:
+    /**
+     * Constructor.
+     *
+     * @param target The target SimulatorFrontend instance.
+     */
+    SigINTHandler(TTASimDevice* d) :
+      d_(d) {
+    }
+    
+    /**
+     * Stops the simulation.
+     */
+    virtual void execute(int /*data*/, siginfo_t* /*info*/) {
+      std::cerr << "### ctrl-C handler" << std::endl;
+      d_->debuggerRequested = true;
+      d_->simulator.stop();
+      std::cerr << "### handler exit" << std::endl;
+      /* Make it a one shot handler. Next Ctrl-C should kill the program. */
+      Application::restoreSignalHandler(SIGINT);
+    }
+  private:
+    TTASimDevice* d_;
+  };  
+  static int device_count;
 };
 
-size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
-
-uint32_t pocl_ttasim_read_device (void *device_data, uint32_t addr);
-void pocl_ttasim_write_device (void *device_data, uint32_t addr, uint32_t word);
+int TTASimDevice::device_count = 0;
 
 static 
 void * 
 pocl_ttasim_thread (void *p)
 {
-  struct data *d = (data*)p;
+  TTASimDevice *d = (TTASimDevice*)p;
   do {
+    if (d->shutdownRequested) pthread_exit(NULL);
     pthread_cond_wait (&d->simulation_start_cond, &d->lock);
+    if (d->shutdownRequested) pthread_exit(NULL);
     do {
-        d->simulator->run();
+        d->simulator.run();
         if (d->debuggerRequested) {
             d->debuggerRequested = false;
-            d->simulatorCLI->run();
+            d->simulatorCLI.run();
             continue;
         }
 
-        if (d->simulator->hadRuntimeError()) {
-            d->simulatorCLI->run();
+        if (d->simulator.hadRuntimeError()) {
+            d->simulatorCLI.run();
             POCL_ABORT("Runtime error in a ttasim device.");
-      }
+        }
     } while (false);
   } while (true);
   return NULL;
@@ -131,7 +210,7 @@ public:
      *
      * @param target The target SimulatorFrontend instance.
      */
-    SigINTHandler(struct data* d) :
+    SigINTHandler(TTASimDevice* d) :
         d_(d) {
     }
 
@@ -141,467 +220,34 @@ public:
     virtual void execute(int /*data*/, siginfo_t* /*info*/) {
         std::cerr << "### ctrl-C handler" << std::endl;
         d_->debuggerRequested = true;
-        d_->simulator->stop();
+        d_->simulator.stop();
         std::cerr << "### handler exit" << std::endl;
         /* Make it a one shot handler. Next Ctrl-C should kill the program. */
         Application::restoreSignalHandler(SIGINT);
     }
 private:
-    struct data* d_;
+  TTASimDevice* d_;
 };
+
 
 void
 pocl_ttasim_init (cl_device_id device, const char* parameters)
 {
-  static int device_count = 0;
-  char dev_name[256];
-  struct data *d;
-  
   if (parameters == NULL)
-    POCL_ABORT("The ttasim device requires the adf file as a device parameter.\n"
+    POCL_ABORT("The tta device requires the adf file as a device parameter.\n"
                "Set it with POCL_DEVICEn_PARAMETERS=\"path/to/themachine.adf\".\n");
-
-  d = (struct data *) malloc (sizeof (struct data));
   
-  d->current_kernel = NULL;
-  d->current_dlhandle = 0;
-  d->parent = device;
-
-  device->data = d;
-
-  if (device_count > 0)
-    {
-      if (snprintf (dev_name, 256, "ttasim%d", device_count) < 0)
-        POCL_ABORT("Unable to generate the device name string.");
-      device->name = strdup(dev_name);  
-    }
-  ++device_count;
-
-  SimpleSimulatorFrontend *simFront = 
-    new SimpleSimulatorFrontend(parameters);  
-
-  /* TODO: only if debug_mode is on. */
-#if 1
-  SigINTHandler* ctrlcHandler = new SigINTHandler(d);
-  Application::setSignalHandler(SIGINT, *ctrlcHandler);
-#endif
-  d->debuggerRequested = false;
-
-  d->simulator = simFront;
-  d->simulatorCLI = new SimulatorCLI(simFront->frontend());
-  d->machine_file = strdup(parameters);
-
-  /* Create the memory allocation book keeping structures based on
-     the machine's address spaces (see tta.txt). */
-  const Machine& mach = simFront->machine();
-  AddressSpace *local = NULL, *global = NULL;
-  Machine::AddressSpaceNavigator nav = mach.addressSpaceNavigator();
-  for (int i = 0; i < nav.count(); ++i) 
-    {
-      AddressSpace *as = nav.item(i);
-      if (as->hasNumericalId(TTA_ASID_PRIVATE) &&
-          as->hasNumericalId(TTA_ASID_LOCAL))
-        {
-          d->local_as = as;
-          continue;
-        } 
-      if (as->hasNumericalId(TTA_ASID_GLOBAL) &&
-          as->hasNumericalId(TTA_ASID_CONSTANT))
-        {
-          d->global_as = as;
-        }
-    }
-  if (d->local_as == NULL) 
-    POCL_ABORT("local address space not found in the ADF. "
-               "Mark it by adding numerical ids 0 and 4 to the AS.\n");
-  if (d->global_as == NULL) 
-    POCL_ABORT("global address space not found in the ADF. "
-               "Mark it by adding numerical ids 3 and 5 to the AS.\n");
-
-  int local_size = 
-    d->local_as->end() - d->local_as->start() - TTA_UNALLOCATED_LOCAL_SPACE;
-  if (local_size < 0)
-    POCL_ABORT("Not enough space in the local memory with the assumed unallocated space.\n");
-
-  device->local_mem_size = local_size;
-  device->global_mem_size = d->global_as->end() - d->local_as->start() - TTA_UNALLOCATED_GLOBAL_SPACE;
-  if (device->global_mem_size < 0)
-    POCL_ABORT("Not enough space in the global memory with the assumed unallocated space.\n");
-
-  init_mem_region 
-    (&d->local_mem, (memory_address_t)d->local_as->start(), device->local_mem_size);
-  init_mem_region 
-    (&d->global_mem, (memory_address_t)d->global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE, 
-     device->global_mem_size);
-
-  pthread_cond_init (&d->simulation_start_cond, NULL);
-
-  pthread_create (&d->ttasim_thread, NULL, pocl_ttasim_thread, d);
-}
-
-void *
-pocl_ttasim_malloc (void *device_data, cl_mem_flags flags,
-		    size_t size, void *host_ptr)
-{
-  void *b;
-  struct data* d = (struct data*)device_data;
-
-  chunk_info_t *chunk = alloc_buffer (&d->global_mem, size);
-  if (chunk == NULL) return NULL;
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: malloc %x (host) %d (device) size: %u\n", host_ptr, chunk->start_address, size);
-#endif
-
-  if ((flags & CL_MEM_COPY_HOST_PTR) ||  
-      ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL))
-    {
-      /* TODO: 
-         CL_MEM_USE_HOST_PTR must synch the buffer after execution 
-         back to the host's memory in case it's used as an output (?). */
-      pocl_ttasim_write (d, host_ptr, chunk, size);
-      return (void*) chunk;
-    }
-  return (void*) chunk;
-}
-
-void *
-pocl_ttasim_create_sub_buffer (void *device_data, void* buffer, size_t origin, size_t size)
-{
-  struct data* d = (struct data*)device_data;
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: create sub buffer %d (buf start) + %d size: %d\n", 
-         ((chunk_info_t*)buffer)->start_address, origin, size);
-#endif
-
-  return create_sub_chunk ((chunk_info_t*)buffer, origin, size);
-}
-
-chunk_info_t*
-pocl_ttasim_malloc_local (void *device_data, size_t size) 
-{
-  struct data *d = (struct data*)device_data;
-  return alloc_buffer (&d->global_mem, size);
+  new TTASimDevice(device, parameters); 
 }
 
 void
-pocl_ttasim_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_ttasim_uninit (cl_device_id device)
 {
-  free_chunk ((chunk_info_t*) ptr);
+  delete (TTASimDevice*)device->data;
 }
 
 void
-pocl_ttasim_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
-{
-  chunk_info_t *chunk = (chunk_info_t*)device_ptr;
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: read to %x (host) from %d (device) %u\n", host_ptr, chunk->start_address, cb);
-#endif
-  pocl_ttasim_copy_d2h (data, chunk->start_address, host_ptr, cb);
-}
-
-void
-pocl_ttasim_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
-{
-  chunk_info_t *chunk = (chunk_info_t*)device_ptr;
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: write %x %x %u\n", host_ptr, chunk->start_address, cb);
-#endif
-  pocl_ttasim_copy_h2d (data, host_ptr, chunk->start_address, cb);
-}
-
-void
-pocl_ttasim_run 
-(void *data, const char *tmpdir,
- cl_kernel kernel,
- struct pocl_context *pc)
-{
-  struct data *d;
-  int error;
-  char bytecode[POCL_FILENAME_LENGTH];
-  char assembly[POCL_FILENAME_LENGTH];
-  char module[POCL_FILENAME_LENGTH];
-  char command[COMMAND_LENGTH];
-  char workgroup_string[WORKGROUP_STRING_LENGTH];
-  unsigned device;
-  struct pocl_argument *p;
-  size_t x, y, z;
-  unsigned i;
-  pocl_workgroup w;
-
-  assert (data != NULL);
-  d = (struct data *) data;
-
-  std::string assemblyFileName(tmpdir);
-  assemblyFileName += "/parallel.tpef";
-
-  std::string kernelMdSymbolName = "_";
-  kernelMdSymbolName += kernel->name;
-  kernelMdSymbolName += "_md";
-
-  if (access (assemblyFileName.c_str(), F_OK) != 0)
-    {
-      error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/linked.bc", tmpdir);
-      assert (error >= 0);
-      
-      error = snprintf (command, COMMAND_LENGTH,
-			LLVM_LD " -link-as-library -o %s %s/%s",
-                        bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
-      
-      error = system(command);
-      assert (error == 0);
-      
-      std::string deviceMainSrc = "";
-
-      if (access (BUILDDIR "/lib/CL/devices/tce/tta_device_main.c", R_OK) == 0)
-        deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
-      else
-        POCL_ABORT_UNIMPLEMENTED();
-     
-      std::string kernelObjSrc = "";
-      kernelObjSrc += tmpdir;
-      kernelObjSrc += "/../descriptor.so.kernel_obj.c";
-
-      /* TODO: add the launcher code + main */
-      /* At this point the kernel has been fully linked. */
-      std::string buildCmd = 
-        std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
-        kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
-        " -k " + kernelMdSymbolName +
-        " -g -O3 -o " + assemblyFileName;
-#ifdef DEBUG_TTASIM_DRIVER
-      std::cerr << "CMD: " << buildCmd << std::endl;
-#endif
-      error = system(buildCmd.c_str());
-      if (error != 0)
-        POCL_ABORT("Error while running tcecc.");
-    }
-
-  /* Load the binary assembly (TPEF) to the simulator. */
-  if (d->simulator->isRunning()) 
-    d->simulator->stop();
-  while (d->simulator->isRunning()) 
-    ;
-  d->simulator->loadProgram(assemblyFileName);
-  pthread_cond_signal (&d->simulation_start_cond);
-
-  /* Figure out the locations of the shared data structures in
-     the device memories from the fully-linked program. 
-     
-     TODO: load both the ADF and the TPEF objects only once and use the
-     object interface of the simulator instead of the file name interface.  
-  */
-  TTAProgram::Program* prog = 
-    TTAProgram::Program::loadFromTPEF(assemblyFileName, *d->local_as->machine());
-  assert (prog != NULL);
-
-  const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
-  
-  uint32_t kernelAddr;
-  uint32_t commandQueueAddr;
-  try {
-    kernelAddr = globalScope.dataLabel(kernelMdSymbolName).address().location();
-    commandQueueAddr = globalScope.dataLabel("kernel_command").address().location();
-  } catch (const KeyNotFound& e) {
-    POCL_ABORT ("Could not find the shared data structures from the device binary.");
-  }
-
-#if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
-  int swap = 0; 
-#else
-  int swap = 1;
-#endif
-
-  __kernel_exec_cmd cmd;
-  cmd.kernel = byteswap_uint32_t (kernelAddr, swap);
-
-  struct pocl_argument *al;  
-
-  typedef std::vector<chunk_info_t*> ChunkVector;
-  /* Chunks to be freed after the kernel finishes. */
-  ChunkVector tempChunks;
-
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      al = &(kernel->arguments[i]);
-      if (kernel->arg_is_local[i])
-        {
-          //cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
-          /* Allocate the local memory buffer and pass a pointer to it directly. 
-             TODO: remember to free it after finishing.  */
-          chunk_info_t* local_chunk = pocl_ttasim_malloc_local (d, al->size);
-          if (local_chunk == NULL)
-            POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
-
-          cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, swap);
-#ifdef DEBUG_TTASIM_DRIVER
-          printf ("host: allocated %d bytes of local memory for arg %d @ %d\n", 
-                  al->size, i, local_chunk->start_address);
-#endif
-          tempChunks.push_back(local_chunk);
-        }
-      else if (kernel->arg_is_pointer[i])
-        {
-          cmd.args[i] = byteswap_uint32_t 
-            (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, swap);
-        }
-      else /* The scalar values should be byteswapped by the user. */
-        {
-          /* Copy the scalar argument data to the shared memory. */
-          chunk_info_t* arg_space = 
-            (chunk_info_t*)pocl_ttasim_malloc (d, CL_MEM_COPY_HOST_PTR, al->size, al->value);
-          if (arg_space == NULL)
-            POCL_ABORT ("Could not allocate memory from the device argument space. Out of global mem?\n");
-#ifdef DEBUG_TTASIM_DRIVER
-          printf ("host: copied value from %x to global argument memory\n", al->value);
-#endif
-          cmd.args[i] = byteswap_uint32_t (arg_space->start_address, swap);
-          tempChunks.push_back(arg_space);
-        }
-    }
-
-  /* Allocate the automatic local buffers. */
-  for (int i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i) 
-    {
-      al = &(kernel->arguments[i]);
-      chunk_info_t* local_chunk = pocl_ttasim_malloc_local (d, al->size);
-      if (local_chunk == NULL)
-        POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
-
-      cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, swap);
-#ifdef DEBUG_TTASIM_DRIVER
-      printf ("host: allocated %d bytes of local memory for automated local arg %d @ %d\n", 
-              al->size, i, local_chunk->start_address);
-#endif      
-      tempChunks.push_back(local_chunk);
-    }
-  cmd.work_dim = byteswap_uint32_t (pc->work_dim, swap);
-  cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], swap);
-  cmd.num_groups[1] = byteswap_uint32_t (pc->num_groups[1], swap);
-  cmd.num_groups[2] = byteswap_uint32_t (pc->num_groups[2], swap);
-
-  cmd.global_offset[0] = byteswap_uint32_t (pc->global_offset[0], swap);
-  cmd.global_offset[1] = byteswap_uint32_t (pc->global_offset[1], swap);
-  cmd.global_offset[2] = byteswap_uint32_t (pc->global_offset[2], swap);
-
-  cmd.status = byteswap_uint32_t (POCL_KST_FREE, swap);
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: waiting for the device command queue (@ %x) to get room.\n",
-         commandQueueAddr);
-  printf("host: commmand queue status: %d\n",
-         pocl_ttasim_read_device (d, commandQueueAddr));
-#endif
-  /* Wait until the device command queue has room. */
-  do {} 
-  while (pocl_ttasim_read_device (d, commandQueueAddr) != POCL_KST_FREE);
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf( "host: writing the command.\n");
-#endif
-  pocl_ttasim_copy_h2d (d, &cmd, commandQueueAddr, sizeof(__kernel_exec_cmd) );
-
-  /* Ensure the READY status is written the last so the device doesn't
-     start executing before all the cmd data has been written. We 
-     need a flush or similar mechanism to ensure all the data has 
-     been really written, in case the data transfers are not guaranteed
-     to be ordered. */
-  pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_READY, swap));
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: commmand queue status: %x\n",
-         pocl_ttasim_read_device (d, commandQueueAddr));
-
-  printf("host: waiting for the command to get executed.\n");
-#endif
-  /* Wait until the command has executed. */
-  do {} 
-  while (pocl_ttasim_read_device (d, commandQueueAddr) != POCL_KST_FINISHED);
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf( "host: done. Freeing the command queue entry.\n");
-#endif
-  /* We are done with this kernel, free the command queue entry. */
-  pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_FREE, swap));
-
-  for (ChunkVector::iterator i = tempChunks.begin(); 
-       i != tempChunks.end(); ++i) 
-    free_chunk (*i);
-
-#ifdef DEBUG_TTASIM_DRIVER
-  printf("host: local memory allocations:\n");
-  print_chunks (d->local_mem.chunks);
-
-  printf("host: global memory allocations:\n");
-  print_chunks (d->global_mem.chunks);
-#endif  
-}
-
-/* Reads a single 32bit word from the device global memory. 
-
-   NOTE: ttasim word read/write interface byteswaps internally. */
-uint32_t
-pocl_ttasim_read_device (void *device_data, uint32_t addr)  
-{
-  struct data *d = (struct data*)device_data;
-  MemorySystem &mems = d->simulator->memorySystem();
-  Memory& globalMem = mems.memory (*d->global_as);
-  uint32_t val;
-  globalMem.read (addr, 4, val);
-  return val;
-}
-
-/* Writes a single 32bit word to the device global memory. 
-
-   NOTE: ttasim word read/write interface byteswaps internally. */
-void
-pocl_ttasim_write_device (void *device_data, uint32_t addr, uint32_t word)  
-{
-  pocl_ttasim_copy_h2d (device_data, &word, addr, sizeof (word) );
-}
-
-/* Copy data between the host memory and the global memory of the device. 
-    
-   Raw byte copy without byte swapping. 
- */
-void 
-pocl_ttasim_copy_h2d (void *device_data, const void *src_ptr, uint32_t dest_addr, size_t count)  
-{
-  /* Find the simulation model for the global address space. */
-  struct data *d = (struct data*)device_data;
-  MemorySystem &mems = d->simulator->memorySystem();
-  Memory& globalMem = mems.memory (*d->global_as);
-  for (int i = 0; i < count; ++i) {
-    unsigned char val = ((char*)src_ptr)[i];
-    globalMem.write (dest_addr + i, (Memory::MAU)(val));
-  }
-}
-
-/* Copy data between the global memory of the device and the host memory. 
-    
-   Raw byte copy without byte swapping. 
- */
-void 
-pocl_ttasim_copy_d2h (void *device_data, uint32_t src_addr, void *dst_ptr, size_t count)  
-{
-  /* Find the simulation model for the global address space. */
-  struct data *d = (struct data*)device_data;
-  MemorySystem &mems = d->simulator->memorySystem();
-  Memory& globalMem = mems.memory (*d->global_as);
-  for (int i = 0; i < count; ++i) {
-    ((char*)dst_ptr)[i] = globalMem.read (src_addr + i);
-    //    printf("host: read byte %u from %d to %x\n",  ((char*)dst_ptr)[i], src_addr + i, &((char*)dst_ptr)[i]);
-  }
-}
-
-
-void
-pocl_ttasim_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
+pocl_ttasim_copy (void */*data*/, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
   POCL_ABORT_UNIMPLEMENTED();
   if (src_ptr == dst_ptr)
@@ -611,7 +257,7 @@ pocl_ttasim_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, s
 }
 
 void
-pocl_ttasim_copy_rect (void *data,
+pocl_ttasim_copy_rect (void */*data*/,
                       const void *__restrict const src_ptr,
                       void *__restrict__ const dst_ptr,
                       const size_t *__restrict__ const src_origin,
@@ -643,7 +289,7 @@ pocl_ttasim_copy_rect (void *data,
 }
 
 void
-pocl_ttasim_write_rect (void *data,
+pocl_ttasim_write_rect (void */*data*/,
                        const void *__restrict__ const host_ptr,
                        void *__restrict__ const device_ptr,
                        const size_t *__restrict__ const buffer_origin,
@@ -674,7 +320,7 @@ pocl_ttasim_write_rect (void *data,
 }
 
 void
-pocl_ttasim_read_rect (void *data,
+pocl_ttasim_read_rect (void */*data*/,
                       void *__restrict__ const host_ptr,
                       void *__restrict__ const device_ptr,
                       const size_t *__restrict__ const buffer_origin,
@@ -705,31 +351,3 @@ pocl_ttasim_read_rect (void *data,
 }
 
 
-void *
-pocl_ttasim_map_mem (void *data, void *buf_ptr, 
-                     size_t offset, size_t size,
-                     void *host_ptr) 
-{
-  void *target = NULL;
-  chunk_info_t *chunk = (chunk_info_t*)buf_ptr;
-  if (host_ptr != NULL) 
-    {
-      target = host_ptr;
-    } 
-  else
-    {
-      posix_memalign (&target, ALIGNMENT, size);
-    }
-
-  /* Synch the device global region to the host memory. */
-  pocl_ttasim_read (data, target, chunk, size);
-  return target;
-}
-
-void
-pocl_ttasim_uninit (cl_device_id device)
-{
-  struct data *d = (struct data*)device->data;
-  free (d);
-  device->data = NULL;
-}

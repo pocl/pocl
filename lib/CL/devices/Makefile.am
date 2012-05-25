@@ -31,7 +31,7 @@ libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
 	basic/libpocl-devices-basic.la
 
 libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
--I$(top_srcdir)/lib/CL/devices \
+-I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
 -I$(top_srcdir)/lib/CL \
 -U__APPLE__
 

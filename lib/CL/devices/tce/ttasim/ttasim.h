@@ -28,6 +28,7 @@
 #include "pocl_icd.h"
 #include "bufalloc.h"
 
+#include "tce_common.h"
 #include "prototypes.inc"
 
 #ifdef __cplusplus
@@ -94,18 +95,18 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   /* implementation */							\
   pocl_ttasim_uninit, /* init */                                     \
   pocl_ttasim_init, /* init */                                       \
-  pocl_ttasim_malloc, /* malloc */					\
-  pocl_ttasim_create_sub_buffer, \
-  pocl_ttasim_free, /* free */						\
-  pocl_ttasim_read, /* read */						\
+  pocl_tce_malloc, /* malloc */					\
+  pocl_tce_create_sub_buffer, \
+  pocl_tce_free, /* free */						\
+  pocl_tce_read, /* read */						\
   pocl_ttasim_read_rect, /* read_rect */				\
-  pocl_ttasim_write, /* write */					\
+  pocl_tce_write, /* write */					\
   pocl_ttasim_write_rect, /* write_rect */				\
   pocl_ttasim_copy, /* copy */						\
   pocl_ttasim_copy_rect, /* copy_rect */				\
-  pocl_ttasim_map_mem,                               \
+  pocl_tce_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
-  pocl_ttasim_run, /* run */                         \
+  pocl_tce_run, /* run */                         \
   NULL, /* data */                               \
   "tce", /* kernel_lib_target (forced kernel library dir) */    \
   "tce-tut-llvm", /* llvm_target_triplet */               \
@@ -115,22 +116,5 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
 #ifdef __cplusplus
 }
 #endif
-
-/* The address space ids in the ADFs. */
-#define TTA_ASID_PRIVATE  0
-#define TTA_ASID_GLOBAL   3
-#define TTA_ASID_LOCAL    4
-#define TTA_ASID_CONSTANT 5
-
-#define TTA_UNALLOCATED_LOCAL_SPACE (16*1024)
-/* The space to preserve for the command queue etc. in the
-   device global memory. The structures start from 0, the
-   buffer storage starts after them. TODO: check from the
-   symbol table of the produced program. */
-#define TTA_UNALLOCATED_GLOBAL_SPACE (16*1024)
-
-void pocl_ttasim_copy_h2d (void *data, const void *src_ptr, uint32_t dest_addr, size_t count);
-void pocl_ttasim_copy_d2h (void *data, uint32_t src_addr, void *dst_ptr, size_t count);
-chunk_info_t *pocl_ttasim_malloc_local (void *data, size_t size);
 
 #endif /* POCL_TTASIM_H */
