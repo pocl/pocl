@@ -78,11 +78,12 @@ AT_KEYWORDS([booksamples imagefilter2d])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
 AT_CHECK_UNQUOTED([ 
 cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/src/Chapter_8/ImageFilter2D ;
-sed '13c' -i ImageFilter2D.cl ;
-sed '14c' -i ImageFilter2D.cl ;
-sed '15c' -i ImageFilter2D.cl ;
-sed ´3c float kernelWeights\[9\] = { 1.0f, 2.0f, 1.0f, 2.0f, 4.0f, 2.0f,1.0f, 2.0f, 1.0f };´ -i ImageFilter2D.cl ;
-sed '418iclFinish(commandQueue);' -i ImageFilter2D.cpp ;
+#sed '13c\ ' -i ImageFilter2D.cl ;
+#sed '14c\ ' -i ImageFilter2D.cl ;
+#sed '15c\ ' -i ImageFilter2D.cl ;
+#sed "3c float kernelWeights[9] = { 1.0f, 2.0f, 1.0f, 2.0f, 4.0f, 2.0f,1.0f, 2.0f, 1.0f }; \ " -i ImageFilter2D.cl ;
+cp ${abs_top_srcdir}/examples/opencl-book-samples/ImageFilter2D.cl ./
+sed '418cclFinish(commandQueue);' -i ImageFilter2D.cpp ;
 cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/build/src/Chapter_8/ImageFilter2D ;
 make]
 , 0, [ignore], [ignore])
