@@ -123,6 +123,8 @@ GenerateHeader::runOnModule(Module &M)
   return changed;
 }
 
+#include <iostream>
+
 
 void
 GenerateHeader::ProcessPointers(Function *F,
@@ -134,12 +136,17 @@ GenerateHeader::ProcessPointers(Function *F,
       
   bool is_pointer[num_args];
   bool is_local[num_args];
+  bool is_image[num_args];
+  bool is_sampler[num_args];
     
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(),
          ee = F->arg_end();
        ii != ee; ++ii) {
     Type *t = ii->getType();
+  
+    is_image[i] = false;
+    is_sampler[i] = false;
     
     if (const PointerType *p = dyn_cast<PointerType> (t)) {
       is_pointer[i] = true;
@@ -152,6 +159,22 @@ GenerateHeader::ProcessPointers(Function *F,
     } else {
       is_pointer[i] = false;
       is_local[i] = false;
+    }
+  
+    if( t->isPointerTy() ) {
+      if( t->getPointerElementType()->isStructTy() ) {
+        string name = t->getPointerElementType()->getStructName().str();
+        if( name == "struct.image2d_t_" ) { // TODO image3d?
+          is_image[i] = true;
+          is_pointer[i] = false;
+          is_local[i] = false;
+        }
+        if( name == "struct.sampler_t_" ) {
+          is_sampler[i] = true;
+          is_pointer[i] = false;
+          is_local[i] = false;
+        }
+      }
     }
     
     ++i;
@@ -170,6 +193,22 @@ GenerateHeader::ProcessPointers(Function *F,
     out << is_local[0];
     for (i = 1; i < num_args; ++i)
       out << ", " << is_local[i];
+  }
+  out << "}\n";
+  
+  out << "#define _" << F->getName() << "_ARG_IS_IMAGE {";
+  if (num_args != 0) {
+    out << is_image[0];
+    for (i = 1; i < num_args; ++i)
+      out << ", " << is_image[i];
+  }
+  out << "}\n";
+  
+  out << "#define _" << F->getName() << "_ARG_IS_SAMPLER {";
+  if (num_args != 0) {
+    out << is_sampler[0];
+    for (i = 1; i < num_args; ++i)
+      out << ", " << is_sampler[i];
   }
   out << "}\n";
 }

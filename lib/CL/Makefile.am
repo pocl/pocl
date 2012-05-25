@@ -37,9 +37,9 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clGetCommandQueueInfo.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
-		       	   clEnqueueReadBuffer.c	\
-				   clEnqueueReadBufferRect.c	\
-	    	   	   clEnqueueMapBuffer.c	\
+                   clEnqueueReadBuffer.c	\
+                   clEnqueueReadBufferRect.c	\
+                   clEnqueueMapBuffer.c	\
                    clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\
@@ -88,23 +88,24 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueTask.c		\
                    clCreateImage2D.c		\
                    clCreateImage3D.c		\
-                   clEnqueueReadImage.c		\
-                   clEnqueueWriteImage.c		\
+                   clEnqueueReadImage.c	\
+                   clEnqueueWriteImage.c	\
+                   clCreateSampler.c	\
+                   clReleaseSampler.c	\
+                   clRetainSampler.c \
+                   clGetSamplerInfo.c \
                    clEnqueueCopyImage.c		\
-                   clEnqueueMapImage.c		\
-                   clGetSupportedImageFormats.c		\
+                   clEnqueueMapImage.c		\	\
                    clGetImageInfo.c		\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
+                   clGetSupportedImageFormats.c	\
                    clGetExtensionFunctionAddress.c \
                    clIcdGetPlatformIDsKHR.c \
-                   clCreateSampler.c \
-                   clReleaseSampler.c \
-                   clRetainSampler.c \
-                   clGetSamplerInfo.c \
-                   pocl_cl.h			\
-                   pocl_util.c pocl_util.h 
+                   pocl_cl.h \
+                   pocl_util.c pocl_util.h \
+                   pocl_image_util.c pocl_image_util.h 
 
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__

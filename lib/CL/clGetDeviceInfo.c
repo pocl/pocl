@@ -62,8 +62,7 @@ clGetDeviceInfo(cl_device_id   device,
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT: 
-    /* Return CL_FALSE until the APIs are implemented. */
-    POCL_RETURN_DEVICE_INFO(cl_bool, CL_FALSE);
+    POCL_RETURN_DEVICE_INFO(cl_bool, CL_TRUE);
   case CL_DEVICE_TYPE:
     POCL_RETURN_DEVICE_INFO(cl_device_type, device->type);   
   case CL_DEVICE_VENDOR_ID:
@@ -196,7 +195,7 @@ clGetDeviceInfo(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
 
   case CL_DEVICE_EXTENSIONS                        : 
-    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16");
+    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16,cl_khr_local_int32_base_atomics");
   case CL_DEVICE_PLATFORM                          : break;
   case CL_DEVICE_DOUBLE_FP_CONFIG                  : break;
   case CL_DEVICE_HALF_FP_CONFIG                    : break;

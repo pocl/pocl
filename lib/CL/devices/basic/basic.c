@@ -113,6 +113,22 @@ pocl_basic_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
   memcpy (device_ptr, host_ptr, cb);
 }
 
+
+typedef struct dev_sampler_t {
+  cl_int normalized; // 0 false, 1 true
+  cl_int addressing_mode;
+  cl_int filter_mode;
+} sampler_t_;
+
+typedef struct dev_image2d_t {
+  cl_int width;
+  cl_int height;
+  cl_int rowpitch;
+  cl_int order;
+  cl_int data_type;
+  void* data;
+} image2d_t_;
+
 void
 pocl_basic_run 
 (void *data, const char *tmpdir,
@@ -231,6 +247,24 @@ pocl_basic_run
         {
           arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
         }
+      /*else if (kernel->arg_is_image[i])
+        {
+          dev_image2d_t di;      
+          cl_mem mem = *(cl_mem*)al->value;
+          di.data = mem->device_ptrs[ta->device];
+          di.width = mem->image_width;
+          di.width = mem->image_height;
+          di.rowpitch = mem->image_row_pitch;
+          di.order = mem->image_channel_order;
+          di.data_type = mem->image_channel_data_type;
+          arguments[i] = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image2d_t), &di); 
+        }
+      else if (kernel->arg_is_sampler[i])
+        {
+          dev_sampler_t ds;
+          arguments[i] = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), &ds); 
+           
+        }*/
       else
         {
           arguments[i] = p->value;

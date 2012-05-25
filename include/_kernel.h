@@ -1772,3 +1772,39 @@ __IF_FP16(_CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(half));
 _CL_DECLARE_ASYNC_COPY_FUNCS(float);
 __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
+// Image support
+
+typedef int sampler_t;
+
+#define CLK_ADDRESS_NONE                0x00
+#define CLK_ADDRESS_MIRRORED_REPEAT     0x01
+#define CLK_ADDRESS_REPEAT              0x02
+#define CLK_ADDRESS_CLAMP_TO_EDGE       0x03
+#define CLK_ADDRESS_CLAMP               0x04
+
+#define CLK_NORMALIZED_COORDS_FALSE     0x00
+#define CLK_NORMALIZED_COORDS_TRUE      0x08
+
+#define CLK_FILTER_NEAREST              0x00
+#define CLK_FILTER_LINEAR               0x10
+
+typedef struct image2d_t_* image2d_t;
+
+float4 _cl_overloadable read_imagef( image2d_t image,
+        sampler_t sampler,
+        int2 coord);
+
+float4 _cl_overloadable read_imagef( image2d_t image,
+        sampler_t sampler,
+        float2 coord);
+
+void _cl_overloadable write_imagef( image2d_t image,
+        int2 coord,
+        float4 color);
+
+void _cl_overloadable write_imagei( image2d_t image,
+        int2 coord,
+        int4 color);
+
+int get_image_width (image2d_t image);
+int get_image_height (image2d_t image);

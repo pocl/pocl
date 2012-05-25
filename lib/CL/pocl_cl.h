@@ -303,6 +303,15 @@ struct _cl_mem {
   /* in case this is a sub buffer, this points to the parent
      buffer */
   cl_mem_t *parent;
+  /* Image flags */
+  cl_bool                 is_image;
+  cl_channel_order        image_channel_order;
+  cl_channel_type         image_channel_data_type;
+  size_t                  image_width;
+  size_t                  image_height;
+  /*size_t                  image_depth;*/
+  size_t                  image_row_pitch;
+  /*size_t                  image_slice_pitch;*/
 };
 
 struct _cl_program {
@@ -337,6 +346,8 @@ struct _cl_kernel {
   lt_dlhandle dlhandle;
   cl_int *arg_is_pointer;
   cl_int *arg_is_local;
+  cl_int *arg_is_image;
+  cl_int *arg_is_sampler;
   cl_uint num_locals;
   struct pocl_argument *arguments;
   struct _cl_kernel *next;
@@ -348,8 +359,13 @@ struct _cl_event {
   cl_command_queue queue;
 };
 
+typedef struct _cl_sampler cl_sampler_t;
+
 struct _cl_sampler {
-  POCL_ICD_OBJECT
+  POCL_ICD_OBJECT;
+  cl_bool             normalized_coords;
+  cl_addressing_mode  addressing_mode;
+  cl_filter_mode      filter_mode;
 };
 
 #endif /* POCL_CL_H */
