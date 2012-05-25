@@ -110,7 +110,14 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
-libpocl_la_LDFLAGS = -lltdl -Wl,-Bsymbolic @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+
+if INSTALL_ICD
+# In case ICD is wanted, libpocl.so should be built as a plugin module.
+# Plugins are not the same as dynamic libraries on some platforms.
+libpocl_la_LDFLAGS += -module
+endif
+
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
