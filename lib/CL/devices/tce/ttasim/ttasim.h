@@ -54,7 +54,7 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG  , /* preferred_vector_width_long */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT , /* preferred_vector_width_float */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
-  0, /* max_clock_frequency */						\
+  100, /* max_clock_frequency */						\
   0, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
   CL_FALSE, /* image_support */						\
@@ -107,6 +107,7 @@ extern size_t pocl_ttasim_max_work_item_sizes[];
   pocl_tce_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_tce_run, /* run */                         \
+  pocl_ttasim_get_timer_value,                \
   NULL, /* data */                               \
   "tce", /* kernel_lib_target (forced kernel library dir) */    \
   "tce-tut-llvm", /* llvm_target_triplet */               \

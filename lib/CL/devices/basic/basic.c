@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -113,11 +114,11 @@ pocl_basic_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
   memcpy (device_ptr, host_ptr, cb);
 }
 
+
 void
 pocl_basic_run 
-(void *data, const char *tmpdir,
- cl_kernel kernel,
- struct pocl_context *pc)
+(void *data, 
+ _cl_command_node* cmd)
 {
   struct data *d;
   int error;
@@ -131,6 +132,9 @@ pocl_basic_run
   size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
+  char* tmpdir = cmd->command.run.tmp_dir;
+  cl_kernel kernel = cmd->command.run.kernel;
+  struct pocl_context *pc = &cmd->command.run.pc;
 
   assert (data != NULL);
   d = (struct data *) data;
@@ -388,4 +392,12 @@ pocl_basic_uninit (cl_device_id device)
   struct data *d = (struct data*)device->data;
   free (d);
   device->data = NULL;
+}
+
+uint64_t
+pocl_basic_get_timer_value (void *data) 
+{
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  return (time.tv_sec * 1000000 + time.tv_usec) * 1000;
 }

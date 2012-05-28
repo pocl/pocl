@@ -101,6 +101,7 @@ typedef struct
   _cl_command_t command;
   _cl_command_en type;
   void *next; // for linked-list storage
+  cl_event event;
 } _cl_command_node;
 
 #endif /* POCL_H */

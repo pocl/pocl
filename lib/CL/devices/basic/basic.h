@@ -101,6 +101,7 @@ extern size_t pocl_basic_max_work_item_sizes[];
   pocl_basic_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_basic_run, /* run */                         \
+  pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* data */                                      \
   NULL,  /* kernel_lib_target (forced kernel library dir) */    \
   NULL, /* llvm_target_triplet */                           \

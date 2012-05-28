@@ -59,11 +59,11 @@
                                size_t src_slice_pitch,                  \
                                size_t dst_row_pitch,                    \
                                size_t dst_slice_pitch);                 \
-  void pocl_##__DRV__##_run (void *data, const char *bytecode,              \
-                         cl_kernel kernel,                              \
-                         struct pocl_context *pc);                      \
+  void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
   void*                                                                 \
   pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
-                        size_t offset, size_t size, void *host_ptr); 
+                        size_t offset, size_t size, void *host_ptr); \
+  uint64_t pocl_##__DRV__##_get_timer_value(void *data); 
+
 
 

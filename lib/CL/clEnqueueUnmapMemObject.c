@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include "utlist.h"
 #include <assert.h>
 
@@ -65,6 +66,29 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc (sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POCL_INIT_ICD_OBJECT(*event);
+      clRetainCommandQueue (command_queue);
+      (*event)->status = CL_QUEUED;
+      if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        (*event)->time_queue = 
+          command_queue->device->get_timer_value(command_queue->device->data);
+    }
+
+  if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE && 
+      event != NULL)
+    {
+      (*event)->status = CL_SUBMITTED;
+      (*event)->time_submit = (*event)->time_start =
+        command_queue->device->get_timer_value(command_queue->device->data);
+    }
+
   if (memobj->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
     {
       /* TODO: should we ensure the device global region is updated from
@@ -76,11 +100,20 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
     } else 
     {
       /* TODO: fixme. The offset computation must be done at the device driver. */
-      if (device_id->unmap_mem != NULL)
+      if (device_id->unmap_mem != NULL)        
         device_id->unmap_mem
           (device_id->data, mapping->host_ptr, memobj->device_ptrs[device_id->dev_id] + mapping->offset, 
            mapping->size);
     }
+
+  if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE && 
+      event != NULL)
+    {
+      (*event)->status = CL_COMPLETE;
+      (*event)->time_end = 
+        command_queue->device->get_timer_value(command_queue->device->data);
+    }
+
 
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;

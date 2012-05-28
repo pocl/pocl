@@ -61,6 +61,9 @@ class TCEDevice {
   virtual void writeWordToDevice(uint32_t dest_addr, uint32_t word);
   virtual uint32_t readWordFromDevice(uint32_t addr);
 
+  /* Read the device time stamp for the profiling queue. */
+  virtual uint64_t timeStamp() = 0;
+
   /* The bufalloc memory regions for device memory allocation book 
      keeping. */
   struct memory_region local_mem;
@@ -122,9 +125,8 @@ pocl_tce_free (void *data, cl_mem_flags flags, void *ptr);
 
 void
 pocl_tce_run 
-(void *data, const char *tmpdir,
- cl_kernel kernel,
- struct pocl_context *pc);
+(void *data, 
+ _cl_command_node* cmd);
 
 void *
 pocl_tce_map_mem (void *data, void *buf_ptr, 

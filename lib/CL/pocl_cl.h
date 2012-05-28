@@ -229,9 +229,9 @@ struct _cl_device_id {
   void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
 
-  void (*run) (void *data, const char *bytecode,
-	       cl_kernel kernel,
-	       struct pocl_context *pc);
+  void (*run) (void *data, _cl_command_node* cmd);
+
+  uint64_t (*get_timer_value) (void *data); /* The current device timer value in nanoseconds. */
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
@@ -346,6 +346,17 @@ struct _cl_event {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   cl_command_queue queue;
+  _cl_command_node* command;
+
+  /* The execution status of the command this event is monitoring. */
+  cl_int status;
+
+  /* Profiling data: time stamps of the different phases of execution. */
+  cl_ulong time_queue;  /* the enqueue time */
+  cl_ulong time_submit; /* the time the command was submitted to the device */
+  cl_ulong time_start;  /* the time the command actually started executing */
+  cl_ulong time_end;    /* the finish time of the command */   
+
 };
 
 struct _cl_sampler {

@@ -113,32 +113,94 @@ main(void)
         kernel.setArg(3, b);
 
         // Create command queue
-        cl::CommandQueue queue(context, devices[0], 0);
+        cl::CommandQueue queue(context, devices[0], CL_QUEUE_PROFILING_ENABLE);
  
+        cl::Event enqEvent;
+
         // Do the work
         queue.enqueueNDRangeKernel(
             kernel, 
             cl::NullRange, 
             cl::NDRange(1),
-            cl::NullRange);
+            cl::NullRange,
+            NULL, &enqEvent);
  
+        cl::Event mapEvent;
         (int *) queue.enqueueMapBuffer(
             outputBuffer,
             CL_TRUE, // block 
             CL_MAP_READ,
-            0, OUTPUT_SIZE);
-
+            0, OUTPUT_SIZE, NULL, &mapEvent);
        
         if (std::string(output) == "PONG") 
             std::cout << "OK\n";
         else
             std::cerr << "FAIL, received: " << output << "\n";
 
+        cl::Event unmapEvent;
         // Finally release our hold on accessing the memory
         queue.enqueueUnmapMemObject(
             outputBuffer,
-            (void *) &output[0]);
- 
+            (void *) &output[0],
+            NULL,
+            &unmapEvent);
+
+        queue.finish();
+
+        assert (enqEvent.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() == CL_COMPLETE);
+        assert (mapEvent.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() == CL_COMPLETE);
+        assert (unmapEvent.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() == CL_COMPLETE);
+
+
+        assert (
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>() <=
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>());
+
+        assert (
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>() <=
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>());
+
+        assert (
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>() <
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
+
+#if 0
+        std::cerr << "exec time: " 
+                  << enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+            enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+#endif
+
+        assert (
+            mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>() <=
+            mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>());
+
+        assert (
+            mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>() <=
+            mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>());
+
+
+        assert (
+            mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>() <=
+            mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
+
+        assert (
+            unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>() <=
+            unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>());
+
+        assert (
+            unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>() <=
+            unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>());
+
+        assert (
+            unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>() <=
+            unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
+
+        assert (enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() <
+                mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
+
+        assert (mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() <
+                unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
+
     } 
     catch (cl::Error err) {
          std::cerr
