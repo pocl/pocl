@@ -175,7 +175,7 @@ fi
 
 # Checks for programs.
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
-AC_ARG_VAR([CLFLAGS], [Flags to be uused when compiling CL sources])
+AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
 AC_PATH_PROG([CLANG], [clang])
 test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])

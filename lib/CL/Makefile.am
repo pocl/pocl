@@ -25,7 +25,12 @@
 
 SUBDIRS = devices
 
-lib_LTLIBRARIES = libpocl.la
+lib_LTLIBRARIES = libpocl-icd.la libpocl.la
+
+# Actually the "source" should be the libpocl.so which is relinked
+# to the plugin. 
+libpocl_icd_la_SOURCES = dummy.c
+libpocl_icd_la_DEPENDENCIES = libpocl.la
 
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
@@ -108,10 +113,16 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_image_util.c pocl_image_util.h 
 
 
+
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
+
+libpocl_icd_la_LIBADD = libpocl.la
+
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
-libpocl_la_LDFLAGS = -lltdl -Wl,-Bsymbolic @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+
+libpocl_icd_la_LDFLAGS = ${libpocl_la_LDFLAGS} -module
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE

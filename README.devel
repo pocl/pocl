@@ -28,7 +28,7 @@ The configure script will use the following special environment variables,
 if present or passed in the command line:
 
   CLANG       Program to compile kernels to bytecode
-  CLFLAGS     Flags to be uused when compiling CL sources
+  CLFLAGS     Flags to be used when compiling CL sources
   TARGET_CLANG_FLAGS
               Parameters to for target compilation.
   HOST_CLANG_FLAGS
