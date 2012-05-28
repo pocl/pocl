@@ -36,7 +36,7 @@
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
-#include <../x86_image.h>
+#include <../dev_image.h>
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 

@@ -51,6 +51,8 @@ typedef struct {
     unsigned short alocal_sizes[MAX_KERNEL_ARGS];
     char arg_is_local[MAX_KERNEL_ARGS];
     char arg_is_pointer[MAX_KERNEL_ARGS];
+    char arg_is_image[MAX_KERNEL_ARGS];
+    char arg_is_sampler[MAX_KERNEL_ARGS];
     pocl_workgroup work_group_func;
 } __kernel_metadata;
 

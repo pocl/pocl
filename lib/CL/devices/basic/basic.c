@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <../x86_image.h>
+#include <../dev_image.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
