@@ -88,14 +88,6 @@ cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/build/src/Chapter_8/I
 make]
 , 0, [ignore], [ignore])
 
-AT_CHECK([sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs/CLHelper.h; \
-rm -f ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs/bfs ;
-make \
-OPENCL_INC="${abs_top_srcdir}/include" \
-CC_FLAGS="-I${abs_top_srcdir}/include -L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpocl -lpthread" \
--sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs 2>&1 | egrep -v "^make" | grep . ], 1,
-[ignore])
-
 AT_CHECK_UNQUOTED([
 cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_8/ImageFilter2D
 ./ImageFilter2D ../../../../src/Chapter_19/oclFlow/data/minicooper/frame10.png output.png
