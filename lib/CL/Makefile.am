@@ -27,7 +27,9 @@ SUBDIRS = devices
 
 lib_LTLIBRARIES = libpocl-icd.la libpocl.la
 
-libpocl_icd_la_SOURCES =
+# Actually the "source" should be the libpocl.so which is relinked
+# to the plugin. 
+libpocl_icd_la_SOURCES = dummy.c
 
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
