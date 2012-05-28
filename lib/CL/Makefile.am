@@ -30,6 +30,7 @@ lib_LTLIBRARIES = libpocl-icd.la libpocl.la
 # Actually the "source" should be the libpocl.so which is relinked
 # to the plugin. 
 libpocl_icd_la_SOURCES = dummy.c
+libpocl_icd_la_DEPENDENCIES = libpocl.la
 
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
