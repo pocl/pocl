@@ -481,9 +481,8 @@ get_max_thread_count()
 
 void
 pocl_pthread_run 
-(void *data, const char *tmpdir,
- cl_kernel kernel,
- struct pocl_context *pc)
+(void *data, 
+ _cl_command_node* cmd)
 {
   struct data *d;
   int error;
@@ -496,6 +495,9 @@ pocl_pthread_run
   size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
+  char* tmpdir = cmd->command.run.tmp_dir;
+  cl_kernel kernel = cmd->command.run.kernel;
+  struct pocl_context *pc = &cmd->command.run.pc;
 
   d = (struct data *) data;
 

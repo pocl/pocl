@@ -64,11 +64,21 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           clReleaseMemObject (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_TYPE_RUN:
-          command_queue->device->run
-            (node->command.run.data,
-             node->command.run.tmp_dir,
-             node->command.run.kernel,
-             &node->command.run.pc);
+          if (node->event != NULL &&
+              command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
+            {
+              node->event->time_submit = 
+                command_queue->device->get_timer_value(command_queue->device->data);
+              node->event->status = CL_SUBMITTED;
+            }
+          command_queue->device->run(node->command.run.data, node);
+          if (node->event != NULL &&
+              command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
+            {
+              node->event->time_end = 
+                command_queue->device->get_timer_value(command_queue->device->data);
+              node->event->status = CL_COMPLETE;
+            }
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];

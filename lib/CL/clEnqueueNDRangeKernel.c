@@ -261,6 +261,15 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);
       clRetainCommandQueue (command_queue);
+      (*event)->status = CL_QUEUED;
+      (*event)->command = command_node;
+      (*event)->command->event = *event;
+
+      assert (*event == (*event)->command->event);
+
+      if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        (*event)->time_queue = 
+          command_queue->device->get_timer_value(command_queue->device->data);
     }
 
   pc.work_dim = work_dim;

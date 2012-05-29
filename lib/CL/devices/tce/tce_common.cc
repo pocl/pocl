@@ -119,6 +119,8 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
      parent->global_mem_size);
 }
 
+
+
 void *
 pocl_tce_malloc (void *device_data, cl_mem_flags flags,
                  size_t size, void *host_ptr)
@@ -191,12 +193,11 @@ pocl_tce_free (void *data, cl_mem_flags flags, void *ptr)
   free_chunk ((chunk_info_t*) ptr);
 }
 
-void
+void 
 pocl_tce_run 
-(void *data, const char *tmpdir,
- cl_kernel kernel,
- struct pocl_context *pc)
-{
+(void *data, 
+ _cl_command_node* cmd) {
+
   TCEDevice *d = (TCEDevice*)data;
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
@@ -205,22 +206,23 @@ pocl_tce_run
 
   assert (data != NULL);
 
-  std::string assemblyFileName(tmpdir);
+  std::string assemblyFileName(cmd->command.run.tmp_dir);
   assemblyFileName += "/parallel.tpef";
 
   std::string kernelMdSymbolName = "_";
-  kernelMdSymbolName += kernel->name;
+  kernelMdSymbolName += cmd->command.run.kernel->name;
   kernelMdSymbolName += "_md";
 
   if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/linked.bc", tmpdir);
+                        "%s/linked.bc", cmd->command.run.tmp_dir);
       assert (error >= 0);
       
       error = snprintf (command, COMMAND_LENGTH,
 			LLVM_LD " -link-as-library -o %s %s/%s",
-                        bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
+                        bytecode, cmd->command.run.tmp_dir, 
+                        POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
       error = system(command);
@@ -234,7 +236,7 @@ pocl_tce_run
         POCL_ABORT_UNIMPLEMENTED();
      
       std::string kernelObjSrc = "";
-      kernelObjSrc += tmpdir;
+      kernelObjSrc += cmd->command.run.tmp_dir;
       kernelObjSrc += "/../descriptor.so.kernel_obj.c";
 
       /* TODO: add the launcher code + main */
@@ -275,8 +277,8 @@ pocl_tce_run
     POCL_ABORT ("Could not find the shared data structures from the device binary.");
   }
 
-  __kernel_exec_cmd cmd;
-  cmd.kernel = byteswap_uint32_t (kernelAddr, d->needsByteSwap);
+  __kernel_exec_cmd dev_cmd;
+  dev_cmd.kernel = byteswap_uint32_t (kernelAddr, d->needsByteSwap);
 
   struct pocl_argument *al;  
 
@@ -284,10 +286,10 @@ pocl_tce_run
   /* Chunks to be freed after the kernel finishes. */
   ChunkVector tempChunks;
 
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
-      if (kernel->arg_is_local[i])
+      al = &(cmd->command.run.kernel->arguments[i]);
+      if (cmd->command.run.kernel->arg_is_local[i])
         {
           //cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
           /* Allocate the local memory buffer and pass a pointer to it directly. 
@@ -296,16 +298,16 @@ pocl_tce_run
           if (local_chunk == NULL)
             POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
 
-          cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
+          dev_cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
 #ifdef DEBUG_TTA_DRIVER
           printf ("host: allocated %d bytes of local memory for arg %d @ %d\n", 
                   al->size, i, local_chunk->start_address);
 #endif
           tempChunks.push_back(local_chunk);
         }
-      else if (kernel->arg_is_pointer[i])
+      else if (cmd->command.run.kernel->arg_is_pointer[i])
         {
-          cmd.args[i] = byteswap_uint32_t 
+          dev_cmd.args[i] = byteswap_uint32_t 
             (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, d->needsByteSwap);
         }
       else /* The scalar values should be byteswapped by the user. */
@@ -318,38 +320,38 @@ pocl_tce_run
 #ifdef DEBUG_TTA_DRIVER
           printf ("host: copied value from %x to global argument memory\n", al->value);
 #endif
-          cmd.args[i] = byteswap_uint32_t (arg_space->start_address, d->needsByteSwap);
+          dev_cmd.args[i] = byteswap_uint32_t (arg_space->start_address, d->needsByteSwap);
           tempChunks.push_back(arg_space);
         }
     }
 
   /* Allocate the automatic local buffers. */
-  for (std::size_t i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
+  for (std::size_t i = cmd->command.run.kernel->num_args;
+       i < cmd->command.run.kernel->num_args + cmd->command.run.kernel->num_locals;
        ++i) 
     {
-      al = &(kernel->arguments[i]);
+      al = &(cmd->command.run.kernel->arguments[i]);
       chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
       if (local_chunk == NULL)
         POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
 
-      cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
+      dev_cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
 #ifdef DEBUG_TTA_DRIVER
       printf ("host: allocated %d bytes of local memory for automated local arg %d @ %d\n", 
               al->size, i, local_chunk->start_address);
 #endif      
       tempChunks.push_back(local_chunk);
     }
-  cmd.work_dim = byteswap_uint32_t (pc->work_dim, d->needsByteSwap);
-  cmd.num_groups[0] = byteswap_uint32_t (pc->num_groups[0], d->needsByteSwap);
-  cmd.num_groups[1] = byteswap_uint32_t (pc->num_groups[1], d->needsByteSwap);
-  cmd.num_groups[2] = byteswap_uint32_t (pc->num_groups[2], d->needsByteSwap);
+  dev_cmd.work_dim = byteswap_uint32_t (cmd->command.run.pc.work_dim, d->needsByteSwap);
+  dev_cmd.num_groups[0] = byteswap_uint32_t (cmd->command.run.pc.num_groups[0], d->needsByteSwap);
+  dev_cmd.num_groups[1] = byteswap_uint32_t (cmd->command.run.pc.num_groups[1], d->needsByteSwap);
+  dev_cmd.num_groups[2] = byteswap_uint32_t (cmd->command.run.pc.num_groups[2], d->needsByteSwap);
 
-  cmd.global_offset[0] = byteswap_uint32_t (pc->global_offset[0], d->needsByteSwap);
-  cmd.global_offset[1] = byteswap_uint32_t (pc->global_offset[1], d->needsByteSwap);
-  cmd.global_offset[2] = byteswap_uint32_t (pc->global_offset[2], d->needsByteSwap);
+  dev_cmd.global_offset[0] = byteswap_uint32_t (cmd->command.run.pc.global_offset[0], d->needsByteSwap);
+  dev_cmd.global_offset[1] = byteswap_uint32_t (cmd->command.run.pc.global_offset[1], d->needsByteSwap);
+  dev_cmd.global_offset[2] = byteswap_uint32_t (cmd->command.run.pc.global_offset[2], d->needsByteSwap);
 
-  cmd.status = byteswap_uint32_t (POCL_KST_FREE, d->needsByteSwap);
+  dev_cmd.status = byteswap_uint32_t (POCL_KST_FREE, d->needsByteSwap);
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: waiting for the device command queue (@ %x) to get room.\n",
@@ -364,7 +366,7 @@ pocl_tce_run
 #ifdef DEBUG_TTA_DRIVER
   printf( "host: writing the command.\n");
 #endif
-  d->copyHostToDevice (&cmd, commandQueueAddr, sizeof(__kernel_exec_cmd) );
+  d->copyHostToDevice (&dev_cmd, commandQueueAddr, sizeof(__kernel_exec_cmd) );
 
   /* Ensure the READY status is written the last so the device doesn't
      start executing before all the cmd data has been written. We 
@@ -372,6 +374,13 @@ pocl_tce_run
      been really written, in case the data transfers are not guaranteed
      to be ordered. */
   d->writeWordToDevice(commandQueueAddr, POCL_KST_READY);
+
+  if (cmd->event != NULL &&
+      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+  {
+      cmd->event->status = CL_RUNNING;
+      cmd->event->time_start = d->timeStamp();
+  }
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: commmand queue status: %x\n",
@@ -382,6 +391,13 @@ pocl_tce_run
   /* Wait until the command has executed. */
   do {} 
   while (d->readWordFromDevice(commandQueueAddr) != POCL_KST_FINISHED);
+
+  if (cmd->event != NULL &&
+      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+  {
+      cmd->event->status = CL_COMPLETE;
+      cmd->event->time_end = d->timeStamp();
+  }
 
 #ifdef DEBUG_TTA_DRIVER
   printf( "host: done. Freeing the command queue entry.\n");

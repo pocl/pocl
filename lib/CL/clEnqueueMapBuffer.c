@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include "utlist.h"
 #include <assert.h>
 
@@ -79,9 +80,39 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
       clFinish (command_queue);
     }
 
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc (sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POCL_INIT_ICD_OBJECT(*event);
+      clRetainCommandQueue (command_queue);
+      (*event)->status = CL_QUEUED;
+      if ((*event) != NULL && 
+          command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        (*event)->time_queue = 
+          command_queue->device->get_timer_value(command_queue->device->data);
+    }
+
+  if (event != NULL && 
+      command_queue->properties & CL_QUEUE_PROFILING_ENABLE) {
+      (*event)->status = CL_SUBMITTED;
+      (*event)->time_submit = (*event)->time_start = 
+          command_queue->device->get_timer_value(command_queue->device->data);
+  }
+
   host_ptr = device->map_mem 
       (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
        buffer->mem_host_ptr);
+
+  if (event != NULL && 
+      command_queue->properties & CL_QUEUE_PROFILING_ENABLE) {
+      (*event)->status = CL_COMPLETE;
+      (*event)->time_end = 
+          command_queue->device->get_timer_value(command_queue->device->data);
+  }
 
   if (host_ptr == NULL)
       POCL_ERROR (CL_MAP_FAILURE);

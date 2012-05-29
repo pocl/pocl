@@ -32,6 +32,11 @@ clGetEventProfilingInfo(cl_event event,
                         size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   size_t const value_size = sizeof(cl_ulong);
+
+  if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE == 0 ||
+      event->status != CL_COMPLETE)
+    return CL_PROFILING_INFO_NOT_AVAILABLE;    
+
   if (param_value)
   {
     if (param_value_size < value_size) return CL_INVALID_VALUE;
@@ -39,16 +44,16 @@ clGetEventProfilingInfo(cl_event event,
     switch (param_name)
     {
     case CL_PROFILING_COMMAND_QUEUED:
-      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      *(cl_ulong*)param_value = event->time_queue;
       break;
     case CL_PROFILING_COMMAND_SUBMIT:
-      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      *(cl_ulong*)param_value = event->time_submit;
       break;
     case CL_PROFILING_COMMAND_START:
-      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      *(cl_ulong*)param_value = event->time_start;
       break;
     case CL_PROFILING_COMMAND_END:
-      *(cl_ulong*)param_value = 0; /* TODO: return correct value */
+      *(cl_ulong*)param_value = event->time_end;
       break;
     default:
       return CL_INVALID_VALUE;

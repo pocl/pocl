@@ -12,8 +12,8 @@ float4 _cl_overloadable read_imagef ( image2d_t image,
     coord.y=0;
   if( coord.x>=image->width )
     coord.x=image->width-1;
-  if( coord.x>=image->height )
-    coord.x=image->height-1;
+  if( coord.y>=image->height )
+    coord.y=image->height-1;
 
   float4 color = ((float4*)image->data)[ coord.x + coord.y*image->rowpitch ];
 

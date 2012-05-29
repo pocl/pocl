@@ -27,10 +27,6 @@ SUBDIRS = devices
 
 lib_LTLIBRARIES = libpocl-icd.la libpocl.la
 
-# Actually the "source" should be the libpocl.so which is relinked
-# to the plugin. 
-libpocl_icd_la_SOURCES = dummy.c
-libpocl_icd_la_DEPENDENCIES = libpocl.la
 
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
@@ -115,13 +111,11 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
 
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
-
-libpocl_icd_la_LIBADD = libpocl.la
+libpocl_icd_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
 
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
 libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
-
 libpocl_icd_la_LDFLAGS = ${libpocl_la_LDFLAGS} -module
 
 if TCE_AVAILABLE
@@ -131,6 +125,11 @@ libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
 libpocl_la_LIBADD = devices/libpocl-devices.la 
+
+# Actually the "source" should be the libpocl.so which is relinked
+# to the plugin. 
+libpocl_icd_la_SOURCES = ${libpocl_la_SOURCES}
+libpocl_icd_la_LIBADD = ${libpocl_la_LIBADD}
 
 all-local: ${pkglib_LTLIBRARIES}
 # Create a link from libpocl.so to libOpenCL.so so the make check tests

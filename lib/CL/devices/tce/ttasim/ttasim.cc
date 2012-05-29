@@ -120,6 +120,11 @@ public:
     currentProgram = &simulator.program();
   }
 
+  virtual uint64_t timeStamp() {
+    if (currentProgram == NULL) return 0;
+    return (uint64_t)(simulator.cycleCount() * 1000.0f / parent->max_clock_frequency);
+  }
+
   virtual void restartProgram() {
     pthread_cond_signal (&simulation_start_cond);
   }
@@ -350,4 +355,9 @@ pocl_ttasim_read_rect (void */*data*/,
               region[0]);
 }
 
-
+uint64_t
+pocl_ttasim_get_timer_value (void *data) 
+{
+  TTASimDevice *d = (TTASimDevice*)data;
+  return d->timeStamp();
+}
