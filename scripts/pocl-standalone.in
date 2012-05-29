@@ -97,7 +97,20 @@ then
     pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
 fi
 
-EXTRA_OPTS="-O3 -wi-vectorize -instcombine"
+OPT_SWITCH="-O3"
+
+if test "x$POCL_KERNEL_COMPILER_OPT_SWITCH" != "x";
+then
+OPT_SWITCH=$POCL_KERNEL_COMPILER_OPT_SWITCH
+fi
+
+EXTRA_OPTS=""
+if ! test "x$POCL_VECTORIZE_WORK_GROUPS" = "x0";
+then
+OPT_SWITCH="-O3"
+EXTRA_OPTS="-wi-vectorize -instcombine"
+fi
+
 if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
 then
 EXTRA_OPTS+=" -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
@@ -106,5 +119,6 @@ fi
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
     -globaldce -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
-    -workgroup -local-size=1 1 1 ${EXTRA_OPTS} -header=/dev/null -o ${output_file} ${linked_bc}
+    -workgroup -local-size=1 1 1 ${OPT_SWITCH} ${EXTRA_OPTS} \
+    -header=/dev/null -o ${output_file} ${linked_bc}
 rm -fr ${tempdir}
