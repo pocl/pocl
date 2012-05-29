@@ -80,6 +80,7 @@ public:
 
     initMemoryManagement(simulator.machine());
 
+    pthread_mutex_init (&lock, NULL);
     pthread_cond_init (&simulation_start_cond, NULL);
     pthread_create (&ttasim_thread, NULL, pocl_ttasim_thread, this);
   }

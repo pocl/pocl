@@ -252,6 +252,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
 #endif
     }
 
+  command_node->event = NULL;
   if (event != NULL)
     {
       *event = (cl_event)malloc (sizeof(struct _cl_event));
