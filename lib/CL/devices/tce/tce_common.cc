@@ -245,7 +245,7 @@ pocl_tce_run
         std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
         kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
-        " -g -O3 -o " + assemblyFileName;
+        " -g -O0 -o " + assemblyFileName;
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
@@ -356,8 +356,8 @@ pocl_tce_run
 #ifdef DEBUG_TTA_DRIVER
   printf("host: waiting for the device command queue (@ %x) to get room.\n",
          commandQueueAddr);
-  printf("host: commmand queue status: %d\n",
-         pocl_ttasim_read_device (d, commandQueueAddr));
+  printf("host: command queue status: %d\n",
+         d->readWordFromDevice (commandQueueAddr));
 #endif
   /* Wait until the device command queue has room. */
   do {} 
@@ -384,13 +384,18 @@ pocl_tce_run
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: commmand queue status: %x\n",
-         pocl_ttasim_read_device (d, commandQueueAddr));
+         d->readWordFromDevice(commandQueueAddr));
 
   printf("host: waiting for the command to get executed.\n");
 #endif
   /* Wait until the command has executed. */
-  do {} 
-  while (d->readWordFromDevice(commandQueueAddr) != POCL_KST_FINISHED);
+  do {
+#ifdef DEBUG_TTA_DRIVER
+      printf("host: commmand queue status: %x\n",
+             d->readWordFromDevice(commandQueueAddr));
+      sleep(1);
+#endif
+  } while (d->readWordFromDevice(commandQueueAddr) != POCL_KST_FINISHED);
 
   if (cmd->event != NULL &&
       cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
@@ -404,8 +409,6 @@ pocl_tce_run
 #endif
   /* We are done with this kernel, free the command queue entry. */
   d->writeWordToDevice(commandQueueAddr, POCL_KST_FREE);
-  // delete:
-  //  pocl_ttasim_write_device (d, commandQueueAddr, byteswap_uint32_t (POCL_KST_FREE, swap));
 
   for (ChunkVector::iterator i = tempChunks.begin(); 
        i != tempChunks.end(); ++i) 

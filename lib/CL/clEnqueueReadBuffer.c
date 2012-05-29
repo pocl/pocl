@@ -62,6 +62,10 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);
+      
+      clRetainCommandQueue (command_queue);
+
+      POCL_PROFILE_QUEUED;      
     }
 
 
@@ -83,7 +87,13 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
         }
       /* TODO: offset computation doesn't work in case the ptr is not 
          a direct pointer */
+      POCL_PROFILE_SUBMITTED;
+      POCL_PROFILE_RUNNING;
+
       device->read(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
+
+      POCL_PROFILE_COMPLETE;
+
       clReleaseMemObject (buffer);
     }
   else

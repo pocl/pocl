@@ -70,6 +70,9 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);
+      clRetainCommandQueue (command_queue);
+
+      POCL_PROFILE_QUEUED;
     }
 
   /* enqueue the write, or execute directly */
@@ -87,8 +90,21 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
           clRetainMemObject (buffer);
           clFinish (command_queue);
         }
+
+      POCL_PROFILE_SUBMITTED;
+      POCL_PROFILE_RUNNING;
       /* TODO: fixme. The offset computation must be done at the device driver. */
       device_id->write(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id]+offset, cb);
+      POCL_PROFILE_COMPLETE;
+
+      if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE && 
+          event != NULL)
+      {
+          (*event)->status = CL_COMPLETE;
+          (*event)->time_end = 
+              command_queue->device->get_timer_value(command_queue->device->data);
+      }
+
       clReleaseMemObject (buffer);
     }
   else
@@ -97,7 +113,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     if (cmd == NULL)
       return CL_OUT_OF_HOST_MEMORY;
     
-    cmd->type=CL_COMMAND_TYPE_WRITE;
+    cmd->type = CL_COMMAND_TYPE_WRITE;
     cmd->command.write.data = device_id->data;
     cmd->command.write.host_ptr = ptr;
     cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
