@@ -30,6 +30,9 @@
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)
 
+#include "prototypes.inc"
+GEN_PROTOTYPES (basic)
+
 extern size_t pocl_pthread_max_work_item_sizes[];
 
 #define POCL_DEVICES_PTHREAD {	 					\
@@ -106,5 +109,6 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   NULL, /* llvm_target_triplet */                         \
   0     /* dev_id */                                    \
 }
+
 
 #endif /* POCL_PTHREAD_H */

@@ -51,7 +51,8 @@ using namespace TTAMachine;
 //#define DEBUG_TTA_DRIVER
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
-  local_as(NULL), global_as(NULL), machine_file(adfName), parent(dev) {
+  local_as(NULL), global_as(NULL), machine_file(adfName), parent(dev),
+  globalCycleCount(0) {
   parent->data = this;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;
@@ -265,7 +266,7 @@ pocl_tce_run
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
-        std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
+        std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
         kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
         " -g -O3 -o " + assemblyFileName;
@@ -380,6 +381,13 @@ pocl_tce_run
 #endif
   d->copyHostToDevice (&dev_cmd, d->commandQueueAddr, sizeof(__kernel_exec_cmd) );
 
+  if (cmd->event != NULL &&
+      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+  {
+      cmd->event->status = CL_RUNNING;
+      cmd->event->time_start = d->timeStamp();
+  }
+
   /* Ensure the READY status is written the last so the device doesn't
      start executing before all the cmd data has been written. We 
      need a flush or similar mechanism to ensure all the data has 
@@ -387,12 +395,6 @@ pocl_tce_run
      to be ordered. */
   d->writeWordToDevice(d->commandQueueAddr, POCL_KST_READY);
 
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
-      cmd->event->status = CL_RUNNING;
-      cmd->event->time_start = d->timeStamp();
-  }
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: commmand queue status: %x\n",

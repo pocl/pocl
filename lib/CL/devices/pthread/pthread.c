@@ -647,6 +647,13 @@ pocl_pthread_run
 #endif
   }
 
+  if (cmd->event != NULL &&
+      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+  {
+      cmd->event->status = CL_COMPLETE;
+      cmd->event->time_end = pocl_basic_get_timer_value(d);
+  }
+
   free(threads);
   free(arguments);
 }

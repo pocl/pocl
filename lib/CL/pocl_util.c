@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "pocl_util.h"
 #include "pocl_cl.h"
@@ -40,14 +41,25 @@ remove_directory (const char *path_name)
   free (cmd);
 }
 
+#define POCL_TEMPDIR_ENV "POCL_TEMP_DIR"
+
 char*
 pocl_create_temp_dir() 
 {  
   struct temp_dir *td; 
-  char *path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
-  assert (path_name != NULL);
-  strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
-  mkdtemp (path_name);  
+  char *path_name; 
+  if (getenv(POCL_TEMPDIR_ENV) != NULL &&
+      access (getenv(POCL_TEMPDIR_ENV), F_OK) == 0) 
+    {
+      path_name = (char*)malloc (strlen(getenv(POCL_TEMPDIR_ENV)) + 1);
+      strcpy (path_name, getenv(POCL_TEMPDIR_ENV));
+    }
+  else 
+    {
+      path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
+      strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+      mkdtemp (path_name);  
+    }
   return path_name;
 }
 

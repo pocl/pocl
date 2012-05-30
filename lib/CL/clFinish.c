@@ -72,8 +72,8 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           break;
         case CL_COMMAND_TYPE_RUN:
           POCL_PROFILE_SUBMITTED;
+          assert (*event == node->event);
           command_queue->device->run(node->command.run.data, node);
-          POCL_PROFILE_COMPLETE;
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];

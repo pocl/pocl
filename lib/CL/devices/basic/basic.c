@@ -419,10 +419,10 @@ pocl_basic_uninit (cl_device_id device)
   device->data = NULL;
 }
 
-uint64_t
+cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
-  struct timeval time;
-  gettimeofday(&time, NULL);
-  return (time.tv_sec * 1000000 + time.tv_usec) * 1000;
+  struct timeval current;
+  gettimeofday(&current, NULL);  
+  return (current.tv_sec * 1000000 + current.tv_usec)*1000;
 }

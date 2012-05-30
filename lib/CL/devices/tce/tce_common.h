@@ -90,6 +90,8 @@ class TCEDevice {
 
   uint32_t commandQueueAddr;
 
+  uint64_t globalCycleCount;
+
 };
 
 #endif
