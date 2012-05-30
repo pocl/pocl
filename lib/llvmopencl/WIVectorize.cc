@@ -96,6 +96,10 @@ static cl::opt<bool>
 MemOpsOnly("wi-vectorize-mem-ops-only", cl::init(false), cl::Hidden,
   cl::desc("Try to vectorize loads and stores only"));
 
+static cl::opt<bool>
+NoFP("wi-vectorize-no-fp", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize floating-point operations"));
+
 #ifndef NDEBUG
 static cl::opt<bool>
 DebugInstructionExamination("wi-vectorize-debug-instruction-examination",
@@ -713,7 +717,11 @@ namespace {
     if (T1->getPrimitiveSizeInBits() > (VectorWidth*32)/2 ||
         T2->getPrimitiveSizeInBits() > (VectorWidth*32)/2)
       return false;
-
+    
+    // Floating point vectorization can be dissabled
+    if (I->getType()->isFloatingPointTy() && NoFP)
+        return false;
+    
     return true;
   }
     // This function returns true if the two provided instructions are compatible

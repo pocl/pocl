@@ -379,4 +379,50 @@ struct _cl_sampler {
   cl_filter_mode      filter_mode;
 };
 
+#define POCL_PROFILE_QUEUED                                             \
+  do {                                                                  \
+    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
+        event != NULL && (*event) != NULL)                              \
+      {                                                                 \
+        (*event)->status = CL_QUEUED;                                   \
+        (*event)->time_queue =                                          \
+          command_queue->device->get_timer_value(command_queue->device->data); \
+      }                                                                 \
+  } while (0)                                                           \
+
+
+#define POCL_PROFILE_SUBMITTED                                          \
+  do {                                                                  \
+    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
+        event != NULL && (*event) != NULL)                              \
+      {                                                                 \
+        (*event)->status = CL_SUBMITTED;                                \
+        (*event)->time_submit =                                         \
+          command_queue->device->get_timer_value(command_queue->device->data); \
+      }                                                                 \
+  } while (0)                                                           \
+
+#define POCL_PROFILE_RUNNING                                            \
+  do {                                                                  \
+    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
+        event != NULL && (*event) != NULL)                              \
+      {                                                                 \
+        (*event)->status = CL_RUNNING;                                  \
+        (*event)->time_start =                                          \
+          command_queue->device->get_timer_value(command_queue->device->data); \
+      }                                                                 \
+  } while (0)                                                           \
+
+#define POCL_PROFILE_COMPLETE                                           \
+  do {                                                                  \
+    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
+        event != NULL && (*event) != NULL)                              \
+      {                                                                 \
+        (*event)->status = CL_COMPLETE;                                 \
+        (*event)->time_end =                                            \
+          command_queue->device->get_timer_value(command_queue->device->data); \
+      }                                                                 \
+  } while (0)                                                           \
+    
+
 #endif /* POCL_CL_H */

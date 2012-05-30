@@ -45,6 +45,6 @@ pocl_read_image     (cl_mem               image,
 extern void
 pocl_get_image_information (cl_mem        image,
                           int* host_channels,
-                          size_t* host_elem_size);
+                          int* host_elem_size);
                    
 #endif

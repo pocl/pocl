@@ -89,30 +89,18 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);
       clRetainCommandQueue (command_queue);
-      (*event)->status = CL_QUEUED;
-      if ((*event) != NULL && 
-          command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        (*event)->time_queue = 
-          command_queue->device->get_timer_value(command_queue->device->data);
+
+      POCL_PROFILE_QUEUED;
     }
 
-  if (event != NULL && 
-      command_queue->properties & CL_QUEUE_PROFILING_ENABLE) {
-      (*event)->status = CL_SUBMITTED;
-      (*event)->time_submit = (*event)->time_start = 
-          command_queue->device->get_timer_value(command_queue->device->data);
-  }
+  POCL_PROFILE_SUBMITTED;
+  POCL_PROFILE_RUNNING;
 
   host_ptr = device->map_mem 
       (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
        buffer->mem_host_ptr);
 
-  if (event != NULL && 
-      command_queue->properties & CL_QUEUE_PROFILING_ENABLE) {
-      (*event)->status = CL_COMPLETE;
-      (*event)->time_end = 
-          command_queue->device->get_timer_value(command_queue->device->data);
-  }
+  POCL_PROFILE_COMPLETE;
 
   if (host_ptr == NULL)
       POCL_ERROR (CL_MAP_FAILURE);

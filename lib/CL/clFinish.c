@@ -36,49 +36,44 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   /* Step through the list of commands in-order */  
   LL_FOREACH (command_queue->root, node)
     {
+      cl_event *event = &node->event;
       switch (node->type)
         {
         case CL_COMMAND_TYPE_READ:
+          POCL_PROFILE_SUBMITTED;
           command_queue->device->read
             (node->command.read.data, 
              node->command.read.host_ptr, 
              node->command.read.device_ptr, 
              node->command.read.cb); 
+          POCL_PROFILE_COMPLETE;
           clReleaseMemObject (node->command.read.buffer);
           break;
         case CL_COMMAND_TYPE_WRITE:
+          POCL_PROFILE_SUBMITTED;
           command_queue->device->write
             (node->command.write.data, 
              node->command.write.host_ptr, 
              node->command.write.device_ptr, 
              node->command.write.cb);
+          POCL_PROFILE_COMPLETE;
           clReleaseMemObject (node->command.write.buffer);
           break;
         case CL_COMMAND_TYPE_COPY:
+          POCL_PROFILE_SUBMITTED;
           command_queue->device->copy
             (node->command.copy.data, 
              node->command.copy.src_ptr, 
              node->command.copy.dst_ptr,
              node->command.copy.cb);
+          POCL_PROFILE_COMPLETE;
           clReleaseMemObject (node->command.copy.src_buffer);
           clReleaseMemObject (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_TYPE_RUN:
-          if (node->event != NULL &&
-              command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
-            {
-              node->event->time_submit = 
-                command_queue->device->get_timer_value(command_queue->device->data);
-              node->event->status = CL_SUBMITTED;
-            }
+          POCL_PROFILE_SUBMITTED;
           command_queue->device->run(node->command.run.data, node);
-          if (node->event != NULL &&
-              command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
-            {
-              node->event->time_end = 
-                command_queue->device->get_timer_value(command_queue->device->data);
-              node->event->status = CL_COMPLETE;
-            }
+          POCL_PROFILE_COMPLETE;
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];

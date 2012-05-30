@@ -39,6 +39,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <vector>
 
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
@@ -269,8 +270,8 @@ WorkitemReplication::ProcessFunction(Function &F)
   SmallVector<BarrierBlock *, 4> exit_blocks;
   K->getExitBlocks(exit_blocks);
 
-  ValueToValueMapTy reference_map[workitem_count - 1];
-  SmallVector<ParallelRegion *, 8> parallel_regions[workitem_count];
+  ValueToValueMapTy *const reference_map = new ValueToValueMapTy[workitem_count - 1];
+  std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
   // We need to keep track of traversed barriers to detect back edges.
   SmallPtrSet<BarrierBlock *, 8> found_barriers;
 
@@ -520,6 +521,8 @@ WorkitemReplication::ProcessFunction(Function &F)
       (ConstantInt::get
        (IntegerType::get(M->getContext(), size_t_width),
         LocalSizeZ), gv);
+
+  delete [] reference_map;
 
   return true;
 }

@@ -5,12 +5,12 @@
 extern void
 pocl_get_image_information (cl_mem        image,
                           int* channels_out,
-                          size_t* elem_size_out)
+                          int* elem_size_out)
   {
     cl_channel_order order = image->image_channel_order;
     cl_channel_type type = image->image_channel_data_type;
     
-    size_t host_elem_size;
+    int host_elem_size;
     if (type == CL_FLOAT)
       host_elem_size=4;
     else if (type==CL_UNORM_INT8)
@@ -54,7 +54,7 @@ pocl_write_image    (cl_mem               image,
     size_t dev_elem_size = sizeof(cl_float);
     int dev_channels = 4;
     
-    size_t host_elem_size;
+    int host_elem_size;
     int host_channels;
     pocl_get_image_information (image, &host_channels, &host_elem_size);
     
@@ -168,7 +168,7 @@ pocl_read_image   (cl_mem               image,
     if (temp == NULL)
       return CL_OUT_OF_HOST_MEMORY;
       
-    size_t host_channels, host_elem_size;
+    int host_channels, host_elem_size;
       
     pocl_get_image_information(image, &host_channels, &host_elem_size);
       
@@ -211,7 +211,7 @@ pocl_read_image   (cl_mem               image,
           {
             for (k=0; k<host_channels; k++)
               {
-                assert(0);
+                POCL_ABORT_UNIMPLEMENTED();
                 ((cl_float*)ptr)[i*host_channels + j*host_row_pitch + k] 
                   = elem[k];
               }

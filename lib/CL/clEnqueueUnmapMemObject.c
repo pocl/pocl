@@ -75,19 +75,12 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);
       clRetainCommandQueue (command_queue);
-      (*event)->status = CL_QUEUED;
-      if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        (*event)->time_queue = 
-          command_queue->device->get_timer_value(command_queue->device->data);
+
+      POCL_PROFILE_QUEUED;
     }
 
-  if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE && 
-      event != NULL)
-    {
-      (*event)->status = CL_SUBMITTED;
-      (*event)->time_submit = (*event)->time_start =
-        command_queue->device->get_timer_value(command_queue->device->data);
-    }
+  POCL_PROFILE_SUBMITTED;
+  POCL_PROFILE_RUNNING;
 
   if (memobj->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
     {
@@ -106,14 +99,7 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
            mapping->size);
     }
 
-  if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE && 
-      event != NULL)
-    {
-      (*event)->status = CL_COMPLETE;
-      (*event)->time_end = 
-        command_queue->device->get_timer_value(command_queue->device->data);
-    }
-
+  POCL_PROFILE_COMPLETE;
 
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;
