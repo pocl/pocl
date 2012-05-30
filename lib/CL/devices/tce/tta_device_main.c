@@ -124,13 +124,8 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 
 extern __kernel_metadata _test_kernel_md;
 
-
 /* The shared kernel_command object using which the device is controlled. */
 kernel_exec_cmd kernel_command;
-
-static void init_command_objects() {
-    kernel_command.status = POCL_KST_FREE;
-}
 
 static kernel_exec_cmd* wait_for_command() {
     while (kernel_command.status != POCL_KST_READY) 
@@ -151,8 +146,6 @@ int main() {
     lwpr_print_str("tta: Hello from a TTA device\n");
     lwpr_print_str("tta: initializing the command objects\n");
 #endif
-
-    init_command_objects();
 
     do {
 

@@ -119,6 +119,7 @@ public:
       ;
     simulator.loadProgram(asmFile);
     currentProgram = &simulator.program();
+    initDataMemory();
   }
 
   virtual uint64_t timeStamp() {
@@ -139,6 +140,7 @@ public:
   pthread_t ttasim_thread;
   pthread_cond_t simulation_start_cond;
   pthread_mutex_t lock;
+
 private:
 
   /**
