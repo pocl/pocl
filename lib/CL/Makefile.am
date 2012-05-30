@@ -116,7 +116,7 @@ libpocl_icd_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
 libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
-libpocl_icd_la_LDFLAGS = ${libpocl_la_LDFLAGS} -module
+libpocl_icd_la_LDFLAGS = ${libpocl_la_LDFLAGS} @ICD_LD_FLAGS@
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE

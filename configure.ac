@@ -225,8 +225,13 @@ case $host_os in
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
     HOST_LD_FLAGS="-bundle -w"  
+    ICD_LD_FLAGS="-single_module"
     ;;
+  *gnu )
+    ICD_LD_FLAGS="-Wl,-Bsymbolic"
+    ;;  
 esac
+AC_SUBST([ICD_LD_FLAGS])
 case $host_cpu in
   arm*)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
