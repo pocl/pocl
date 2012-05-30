@@ -8,6 +8,7 @@
  */ 
 extern struct _cl_platform_id _platforms[1];
 
+#ifdef BUILD_ICD
 CL_API_ENTRY cl_int CL_API_CALL
 clIcdGetPlatformIDsKHR(cl_uint           num_entries,
                        cl_platform_id *  platforms,
@@ -15,3 +16,5 @@ clIcdGetPlatformIDsKHR(cl_uint           num_entries,
 {	
   return clGetPlatformIDs( num_entries, platforms, num_platforms );
 }
+#endif
+
