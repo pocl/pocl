@@ -36,6 +36,7 @@
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
+#include <../dev_image.h>
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
@@ -651,6 +652,15 @@ pocl_pthread_run
 }
 
 void *
+pocl_pthread_map_mem (void *data, void *buf_ptr, 
+                      size_t offset, size_t size, void* host_ptr) 
+{
+  /* All global pointers of the pthread/CPU device are in 
+     the host address space already, and up to date. */     
+  return buf_ptr + offset;
+}
+
+void *
 workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;
@@ -669,6 +679,30 @@ workgroup_thread (void *p)
         }
       else if (kernel->arg_is_pointer[i])
         arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+      else if (kernel->arg_is_image[i])
+        {
+          dev_image2d_t di;      
+          cl_mem mem = *(cl_mem*)al->value;
+          di.data = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+          di.data = ((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+          di.width = mem->image_width;
+          di.height = mem->image_height;
+          di.rowpitch = mem->image_row_pitch;
+          di.order = mem->image_channel_order;
+          di.data_type = mem->image_channel_data_type;
+          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image2d_t), NULL);
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = devptr; 
+          pocl_pthread_write( ta->data, &di, devptr, sizeof(dev_image2d_t) );
+        }
+      else if (kernel->arg_is_sampler[i])
+        {
+          dev_sampler_t ds;
+          
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
+          pocl_pthread_write( ta->data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t) );
+        }
       else
         arguments[i] = al->value;
     }
@@ -699,9 +733,13 @@ workgroup_thread (void *p)
 
   for (i = 0; i < kernel->num_args; ++i)
     {
-      if (kernel->arg_is_local[i])
+      if (kernel->arg_is_local[i] )
         {
           pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
+          free(arguments[i]);
+        }
+      else if( kernel->arg_is_sampler[i] || kernel->arg_is_image[i] ) 
+        {
           free(arguments[i]);
         }
     }

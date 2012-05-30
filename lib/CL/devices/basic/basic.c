@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <../dev_image.h>
 #include <sys/time.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -234,6 +235,30 @@ pocl_basic_run
       else if (kernel->arg_is_pointer[i])
         {
           arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+        }
+      else if (kernel->arg_is_image[i])
+        {
+          dev_image2d_t di;      
+          cl_mem mem = *(cl_mem*)p->value;
+          di.data = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+          di.data = ((*(cl_mem *) (p->value))->device_ptrs[device]);
+          di.width = mem->image_width;
+          di.height = mem->image_height;
+          di.rowpitch = mem->image_row_pitch;
+          di.order = mem->image_channel_order;
+          di.data_type = mem->image_channel_data_type;
+          void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image2d_t), NULL);
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = devptr; 
+          pocl_basic_write( data, &di, devptr, sizeof(dev_image2d_t) );
+        }
+      else if (kernel->arg_is_sampler[i])
+        {
+          dev_sampler_t ds;
+          
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, sizeof(dev_sampler_t), NULL);
+          pocl_basic_write( data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t) );
         }
       else
         {

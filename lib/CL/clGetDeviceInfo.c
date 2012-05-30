@@ -62,8 +62,7 @@ clGetDeviceInfo(cl_device_id   device,
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT: 
-    /* Return CL_FALSE until the APIs are implemented. */
-    POCL_RETURN_DEVICE_INFO(cl_bool, CL_FALSE);
+    POCL_RETURN_DEVICE_INFO(cl_bool, CL_TRUE);
   case CL_DEVICE_TYPE:
     POCL_RETURN_DEVICE_INFO(cl_device_type, device->type);   
   case CL_DEVICE_VENDOR_ID:

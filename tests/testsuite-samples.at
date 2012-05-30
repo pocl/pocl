@@ -73,6 +73,32 @@ cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_7/Sim
           
 AT_CLEANUP
 
+AT_SETUP([Run Chapter 8: ImageFilter2D])
+AT_KEYWORDS([booksamples imagefilter2d])
+AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+AT_CHECK_UNQUOTED([ 
+cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/src/Chapter_8/ImageFilter2D ;
+#sed '13c\ ' -i ImageFilter2D.cl ;
+#sed '14c\ ' -i ImageFilter2D.cl ;
+#sed '15c\ ' -i ImageFilter2D.cl ;
+#sed "3c float kernelWeights[9] = { 1.0f, 2.0f, 1.0f, 2.0f, 4.0f, 2.0f,1.0f, 2.0f, 1.0f }; \ " -i ImageFilter2D.cl ;
+cp ${abs_top_srcdir}/examples/opencl-book-samples/ImageFilter2D.cl ./
+sed '418cclFinish(commandQueue);' -i ImageFilter2D.cpp ;
+cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/build/src/Chapter_8/ImageFilter2D ;
+make]
+, 0, [ignore], [ignore])
+
+AT_CHECK_UNQUOTED([
+cd $abs_top_srcdir/examples/opencl-book-samples/checkout/build/src/Chapter_8/ImageFilter2D
+./ImageFilter2D ../../../../src/Chapter_19/oclFlow/data/minicooper/frame10.png output.png
+], 0, 
+[Could not create GPU context, trying CPU...
+
+Executed program succesfully.
+], [ignore])
+          
+AT_CLEANUP
+
 AT_SETUP([Run Chapter 12: VectorAdd (C++ bindings)])
 AT_KEYWORDS([booksamples])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])

@@ -130,7 +130,11 @@ libkernel_a_SOURCES = templates.h		\
                       vload_half.cl		\
                       vstore_half.cl 	\
                       async_work_group_copy.cl \
-                      wait_group_events.cl
+                      wait_group_events.cl      \
+                      read_image.cl      \
+                      write_image.cl     \
+                      get_image_width.cl      \
+                      get_image_height.cl     
 
 
 

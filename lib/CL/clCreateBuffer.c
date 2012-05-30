@@ -49,6 +49,7 @@ clCreateBuffer(cl_context context,
   mem->map_count = 0;
   mem->mappings = NULL;
   mem->flags = flags;
+  mem->is_image = CL_FALSE;
   POCL_INIT_ICD_OBJECT(mem);
 
   /* Store the per device buffer pointers always to a known

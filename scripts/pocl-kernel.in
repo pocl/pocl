@@ -60,6 +60,8 @@ fi
 unsigned _num_args = _${kernel}_NUM_ARGS;
 int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
 int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
+int _arg_is_image[] = _${kernel}_ARG_IS_IMAGE;
+int _arg_is_sampler[] = _${kernel}_ARG_IS_SAMPLER;
 unsigned _num_locals = _${kernel}_NUM_LOCALS;
 #if _${kernel}_NUM_LOCALS != 0
 unsigned _local_sizes[_${kernel}_NUM_LOCALS] = _${kernel}_LOCAL_SIZE;
@@ -93,6 +95,8 @@ __kernel_metadata _${kernel}_md = {
 #endif
     _${kernel}_ARG_IS_LOCAL,
     _${kernel}_ARG_IS_POINTER,
+    _${kernel}_ARG_IS_IMAGE,
+    _${kernel}_ARG_IS_SAMPLER,
     _${kernel}_workgroup_fast
 };
 EOF

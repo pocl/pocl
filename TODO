@@ -49,15 +49,12 @@ missing APIs have been encountered in the test cases.
 * 5.2.1 Creating buffer objects
 * 5.2.4 Mapping buffer objects
 * 5.3 Image objects
-  * clCreateImage2D (deprecated in OpenCL 1.2) (*, R[gaussian, leukocyte, nn])
 * 5.3.3 Reading, Writing and Copying Image Objects
-  * clEnqueueReadImage (*, R[nn])
 * 5.4 Querying, Umapping, Migrating, ... Mem objects
 * 5.4.1 Retaining and Releasing Memory Objects
 * 5.4.2 Unmapping Mapped Memory Objects
 * 5.5 Sampler objects
 * 5.5.1 Creating Sampler Objects
-  * clCreateSampler (*)
 * 5.6.1 Creating Program Objects
 * 5.7.1 Creating Kernel Objects
 * 5.9 Event objects

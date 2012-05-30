@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include <assert.h>
+#include <stdio.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueReadBufferRect(cl_command_queue command_queue,
@@ -78,6 +79,7 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
                        buffer_origin, host_origin, region,
                        buffer_row_pitch, buffer_slice_pitch,
                        host_row_pitch, host_slice_pitch);
+  
 
   return CL_SUCCESS;
 }

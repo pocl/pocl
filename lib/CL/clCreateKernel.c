@@ -143,6 +143,8 @@ clCreateKernel(cl_program program,
   kernel->dlhandle = dlhandle; /* TODO: why is this stored? */
   kernel->arg_is_pointer = lt_dlsym(dlhandle, "_arg_is_pointer");
   kernel->arg_is_local = lt_dlsym(dlhandle, "_arg_is_local");
+  kernel->arg_is_image = lt_dlsym(dlhandle, "_arg_is_image");
+  kernel->arg_is_sampler = lt_dlsym(dlhandle, "_arg_is_sampler");
   kernel->num_locals = *(cl_uint *) lt_dlsym(dlhandle, "_num_locals");
   kernel->arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
