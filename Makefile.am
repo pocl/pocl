@@ -34,3 +34,5 @@ icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 endif
 
+dist_data_DATA = config/xclang doc/envs.txt
+

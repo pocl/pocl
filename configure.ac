@@ -45,7 +45,6 @@ AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
-LLVM_UNSTABLE="no"
 
 case "$LLVM_VERSION" in
      3.1*)
@@ -415,19 +414,6 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  ])
-# lib/kernel/bgp/Makefile
-# lib/kernel/ppc/Makefile
 
 AC_OUTPUT
-
-if test "$LLVM_UNSTABLE" == "yes";
-then  
-AC_MSG_NOTICE(
-   [ 
-     Warning: You are using an LLVM version with an unstable OpenCL C 
-     support that includes major OpenCL C miscompilation issues.  
-     Please upgrade to the latest LLVM version (3.1 or later) 
-     for more robust OpenCL C compilation.
-   ])
-fi
 

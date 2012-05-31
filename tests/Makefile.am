@@ -46,7 +46,8 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	} >'$(srcdir)/package.m4'
 
 EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at \
-	testsuite-tce.at testsuite-llvmopencl.at $(srcdir)/package.m4 $(TESTSUITE) atlocal.in
+	testsuite-rodinia.at testsuite-tce.at testsuite-llvmopencl.at $(srcdir)/package.m4 $(TESTSUITE) \
+	atlocal.in
 TESTSUITE = $(srcdir)/testsuite
 
 check-local: atconfig atlocal $(TESTSUITE)

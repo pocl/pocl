@@ -32,7 +32,7 @@ targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @top_srcdir@/lib/kernel/@TARGET_CPU@:@top_srcdir@/lib/kernel
 vpath %.c @top_srcdir@/lib/kernel/@TARGET_CPU@:@top_srcdir@/lib/kernel
-vpath %.ll @top_srcdir@/lib/kernel/@TARGET_CPU@:@top_srcdir@/lib/kernel
+vpath %.llvm @top_srcdir@/lib/kernel/@TARGET_CPU@:@top_srcdir@/lib/kernel
 
 include $(top_srcdir)/lib/kernel/sources.mk
 
@@ -47,5 +47,5 @@ CLANGFLAGS = -ccc-host-triple @TARGET@
 .c.o:
 	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/@TARGET@/types.h -o $@ $<
 
-barrier.o: barrier.ll
+.llvm.o:
 	$(LLVM_AS) -o $@ $<

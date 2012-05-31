@@ -41,6 +41,7 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 #undef VERSION
+#undef SIZEOF_DOUBLE
 
 #include <SimpleSimulatorFrontend.hh>
 #include <Machine.hh>

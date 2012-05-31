@@ -33,6 +33,7 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 #undef VERSION
+#undef SIZEOF_DOUBLE
 
 #include <Machine.hh>
 #include <Program.hh>
