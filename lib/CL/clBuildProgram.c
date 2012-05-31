@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 #define COMMAND_LENGTH 1024
@@ -115,7 +116,7 @@ clBuildProgram(cl_program program,
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          if (stat(BUILDDIR "/scripts/" POCL_BUILD, &buf) == 0)
+          if (access(BUILDDIR "/scripts/" POCL_BUILD, X_OK) == 0)
             pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
           else
             pocl_build_script = POCL_BUILD;
@@ -123,14 +124,14 @@ clBuildProgram(cl_program program,
           if (real_device_list[device_i]->llvm_target_triplet != NULL)
             {
               error = snprintf(command, COMMAND_LENGTH,
-                               BUILDDIR "/scripts/" POCL_BUILD " -t %s -o %s %s",
+                               "%s -t %s -o %s %s", pocl_build_script,
                                real_device_list[device_i]->llvm_target_triplet,                               
                                binary_file_name, source_file_name);
             }
           else 
             {
               error = snprintf(command, COMMAND_LENGTH,
-                               BUILDDIR "/scripts/" POCL_BUILD " -o %s %s",
+                               "%s -o %s %s", pocl_build_script,
                                binary_file_name, source_file_name);
             }
           

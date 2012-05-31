@@ -27,7 +27,6 @@ SUBDIRS = devices
 
 lib_LTLIBRARIES = libpocl-icd.la libpocl.la
 
-
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
                    clRetainContext.c		\
@@ -106,9 +105,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clIcdGetPlatformIDsKHR.c \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
-                   pocl_image_util.c pocl_image_util.h 
-
-
+                   pocl_image_util.c pocl_image_util.h \
+                   pocl_icd.h
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
 libpocl_icd_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}

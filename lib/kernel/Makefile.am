@@ -22,4 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = tce x86_64 arm @TARGET@ @HOST@ # ppc
+DIST_SUBDIRS = tce x86_64 arm
+SUBDIRS = ${DIST_SUBDIRS} @TARGET@ @HOST@ # ppc
+
+
+include sources.mk
+
+# The source files in this dir are not built directly
+# but are used with the target specific subdirs as
+# fallback implementations. Include them in the
+# dist once here.
+EXTRA_DIST = ${nodist_libkernel_a_SOURCES} \
+	Makefile.target.am Makefile.host.am \
+	Makefile.target.in Makefile.host.in 

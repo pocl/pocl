@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-library_includedir = $(includedir)/CL
+library_includedir = $(includedir)/OpenCL
 library_include_HEADERS = cl.h cl_ext.h			\
                           cl_gl.h cl_gl_ext.h		\
                           cl_platform.h opencl.h cl.hpp

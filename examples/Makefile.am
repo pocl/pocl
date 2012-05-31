@@ -22,4 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a barriers forloops standalone trig scalarwave loopbarriers kernel
+SUBDIRS = example1 example2 example2a barriers forloops standalone trig scalarwave loopbarriers kernel \
+	opencl-book-samples 
+
+

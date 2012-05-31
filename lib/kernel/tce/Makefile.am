@@ -31,7 +31,8 @@ targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@:@srcdir@/..
 vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+vpath %.h @srcdir@:@srcdir@/..
+vpath %.llvm @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
@@ -46,8 +47,9 @@ CLANGFLAGS = -ccc-host-triple tce-tut-llvm
 .c.o:
 	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/tce/types.h -o $@ $<
 
-barrier.o: barrier.ll
+.llvm.o:
 	$(LLVM_AS) -o $@ $<
+
 
 # # TODO: This misses the dependency on the device-specific include files
 # # TODO: Dependencies should be generated automatically

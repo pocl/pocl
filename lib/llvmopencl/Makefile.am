@@ -34,9 +34,9 @@ llvmopencl_la_SOURCES = Barrier.h						\
                         ParallelRegion.h ParallelRegion.cc			\
                         CanonicalizeBarriers.h CanonicalizeBarriers.cc		\
                         LoopBarriers.h LoopBarriers.cc				\
-                        GenerateHeader.cc Workgroup.cc				\
+                        GenerateHeader.cc Workgroup.h Workgroup.cc				\
 						BarrierTailReplication.h BarrierTailReplication.cc	\
-                        Flatten.cc IsolateRegions.cc \
+                        Flatten.cc IsolateRegions.h IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
 						WorkItemAliasAnalysis.cc WIVectorize.cc
