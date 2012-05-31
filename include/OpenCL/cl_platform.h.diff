@@ -1,0 +1,33 @@
+=== modified file 'include/CL/cl_platform.h'
+--- include/CL/cl_platform.h	2012-01-18 11:21:39 +0000
++++ include/CL/cl_platform.h	2012-01-19 16:25:31 +0000
+@@ -58,10 +58,26 @@
+     #define CL_EXT_SUFFIX__VERSION_1_0
+     #define CL_API_SUFFIX__VERSION_1_1
+     #define CL_EXT_SUFFIX__VERSION_1_1
+-    #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
++/*    #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED */
+     #define CL_API_SUFFIX__VERSION_1_2
+     #define CL_EXT_SUFFIX__VERSION_1_2
+-    #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
++/*    #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED */
++
++/* FROM POCL START */
++/* TODO: try to somehow define these without modifying
++   this header copied from the OpenCL site. */
++#ifdef __GNUC__
++# define __DEPRECATED_ATTR \
++  __attribute__((__deprecated__))
++#else
++# define __DEPRECATED_ATTR
++#endif
++
++#define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED __DEPRECATED_ATTR
++#define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED __DEPRECATED_ATTR
++
++/* FROM POCL END */
++
+ #endif
+ 
+ #if (defined (_WIN32) && defined(_MSC_VER))
+
