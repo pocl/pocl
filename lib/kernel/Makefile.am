@@ -32,6 +32,6 @@ include sources.mk
 # but are used with the target specific subdirs as
 # fallback implementations. Include them in the
 # dist once here.
-dist_data_DATA = ${nodist_libkernel_a_SOURCES} \
+EXTRA_DIST = ${nodist_libkernel_a_SOURCES} \
 	Makefile.target.am Makefile.host.am \
 	Makefile.target.in Makefile.host.in 

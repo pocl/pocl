@@ -30,7 +30,6 @@
 #include <iostream>
 
 #include "poclu.h"
-#include "pocl_util.h"
 
 #define WINDOW_SIZE 32
 #define WORK_ITEMS 2

@@ -36,7 +36,6 @@ nobase_pkginclude_HEADERS = $(sort 				\
 
 include_HEADERS = poclu.h
 
-dist_data_DATA = types.host.in types.target.in
+EXTRA_DIST = types.host.in types.target.in
 
 SUBDIRS = CL OpenCL
-
