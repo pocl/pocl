@@ -34,6 +34,7 @@ icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 endif
 
-EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf
+EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf \
+  CHANGES
 
 
