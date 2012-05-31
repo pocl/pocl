@@ -1,4 +1,4 @@
-0.6 (unreleased)
+0.6   June 2012
 ===============
 
 Kernel library 
@@ -31,7 +31,9 @@ Kernel compiler
   
 Miscellaneous  
 -------------
-- Installable Client Driver support
+- Installable Client Driver (icd) support.
+- Event profiling support (incomplete, works only for kernel and
+  buffer read/write/map/unmap events).
 
 Known issues
 ------------
