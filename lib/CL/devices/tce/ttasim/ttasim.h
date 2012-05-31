@@ -37,15 +37,13 @@ extern "C" {
 
 GEN_PROTOTYPES (ttasim)
 
-extern size_t pocl_ttasim_max_work_item_sizes[];
-
 #define POCL_DEVICES_TTASIM {						\
   POCL_DEVICE_ICD_DISPATCH     						\
   CL_DEVICE_TYPE_GPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
-  pocl_ttasim_max_work_item_sizes, /* max_work_item_sizes */		\
+  {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX}, /* max_work_item_sizes */		\
   1024, /* max_work_group_size */					\
   8, /* preferred_wg_size_multiple */                                \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \

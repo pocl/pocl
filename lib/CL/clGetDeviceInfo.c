@@ -101,7 +101,11 @@ clGetDeviceInfo(cl_device_id   device,
       POCL_RETURN_DEVICE_INFO(cl_uint, max_wg_size);
     }
   case CL_DEVICE_MAX_WORK_ITEM_SIZES:
-    POCL_RETURN_DEVICE_INFO(size_t, device->max_work_item_sizes);
+    {
+      /* We allocate a 3-elementa array for this in pthread.c */
+      typedef struct { size_t size[3]; } size_t_3;
+      POCL_RETURN_DEVICE_INFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
+    }
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
     POCL_RETURN_DEVICE_INFO(cl_uint, device->preferred_vector_width_char);   

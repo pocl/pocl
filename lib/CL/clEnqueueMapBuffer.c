@@ -84,7 +84,7 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
     {
       *event = (cl_event)malloc (sizeof(struct _cl_event));
       if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
+        return (void*)CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);

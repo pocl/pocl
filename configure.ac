@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.61])
-AC_INIT([pocl], [0.6], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.7-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -368,7 +368,9 @@ CFLAGS="$old_CFLAGS"
 AC_C_BIGENDIAN
 
 # The libtool library version string to use (passed to --version-info).
-AC_SUBST([LIB_VERSION], ["0:0:0"])
+# 0:0:0 == 0.6
+# 1:0:0 == 0.7
+AC_SUBST([LIB_VERSION], ["1:0:0"])
 AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
