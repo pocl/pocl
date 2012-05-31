@@ -173,6 +173,13 @@ else
 	CXXFLAGS="-O0 -g"
 fi
 
+AC_DEFINE([HAVE_GL_GL_H], [], [OpenGL])
+AC_DEFINE([HAVE_OPENGL_OPENGL_H], [], [OpenGL on Apple])
+
+AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
+
+test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+
 # Checks for programs.
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
@@ -369,6 +376,7 @@ AC_CONFIG_FILES([Makefile
                  pocl.icd
                  include/Makefile
                  include/CL/Makefile
+                 include/OpenCL/Makefile
                  lib/Makefile
                  lib/CL/Makefile
                  lib/CL/devices/Makefile
