@@ -1,5 +1,7 @@
 #include "pocl_cl.h"
 
+#include <string.h>
+
 /* Note - this is deprecated in 1.1, but (some of) the ICD loaders are built
  * against OCL 1.1, so we need it.
  */ 

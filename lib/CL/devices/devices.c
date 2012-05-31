@@ -28,7 +28,7 @@
 #include "devices.h"
 #include "common.h"
 #include "basic/basic.h"
-#include "pthread/pthread.h"
+#include "pthread/pocl-pthread.h"
 
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
@@ -47,18 +47,17 @@ int pocl_num_devices = 0;
 /* all device types available to the pocl */
 static struct _cl_device_id pocl_device_types[POCL_NUM_DEVICE_TYPES] = {
   POCL_DEVICES_PTHREAD,
-  POCL_DEVICES_BASIC
+  POCL_DEVICES_BASIC,
 #if defined(TCE_AVAILABLE)
-    ,
-    POCL_DEVICES_TTASIM
+  POCL_DEVICES_TTASIM,
 #endif
 };
 
 void 
 pocl_init_devices()
 {
-  const char *device_list, *device_list2;
-  char *token, *saveptr, *saveptr2, *ptr;
+  const char *device_list;
+  char *ptr, *tofree, *token, *saveptr, *saveptr2;
   int i, devcount;
   if (pocl_num_devices > 0)
     return;
@@ -72,22 +71,17 @@ pocl_init_devices()
       device_list = "pthread";
     }
   
-  ptr = strdup(device_list);
-
-  /* strtok_r is a braindead function that modifies the ptr so
-     we have to copy the original for later use. */
-  device_list2 = strdup (device_list);
+  ptr = tofree = strdup(device_list);
   while ((token = strtok_r (ptr, " ", &saveptr)) != NULL)
     {
       ++pocl_num_devices;
       ptr = NULL;
     }
+  free (tofree);
 
-  pocl_devices = (struct _cl_device_id*) 
-    malloc (sizeof(struct _cl_device_id) * pocl_num_devices);
+  pocl_devices = malloc (pocl_num_devices * sizeof *pocl_devices);
 
-  ptr = device_list2;
-
+  ptr = tofree = strdup(device_list);
   devcount = 0;
   while ((token = strtok_r (ptr, " ", &saveptr2)) != NULL)
     {
@@ -112,10 +106,9 @@ pocl_init_devices()
               break;
             }
         }
-      if (device_type == NULL)
-        POCL_ABORT("device type not found\n");
+      if (device_type == NULL) 
+          POCL_ABORT("device type not found\n");
       ptr = NULL;
     }
-  free (device_list2);
-  free (ptr);
+  free (tofree);
 }

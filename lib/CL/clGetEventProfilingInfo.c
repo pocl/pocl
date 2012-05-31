@@ -33,7 +33,7 @@ clGetEventProfilingInfo(cl_event event,
 {
   size_t const value_size = sizeof(cl_ulong);
 
-  if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE == 0 ||
+  if ((event->queue->properties & CL_QUEUE_PROFILING_ENABLE) == 0 ||
       event->status != CL_COMPLETE)
     return CL_PROFILING_INFO_NOT_AVAILABLE;    
 

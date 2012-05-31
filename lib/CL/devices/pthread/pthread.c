@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#include "pthread.h"
+#include "pocl-pthread.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
@@ -89,12 +89,8 @@ struct data {
 
 };
 
+static int get_max_thread_count();
 static void * workgroup_thread (void *p);
-
-/* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice,
-   and may avoid errors in user code that uses int instead of
-   size_t */
-size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
 pocl_pthread_init (cl_device_id device, const char* parameters)
@@ -389,6 +385,7 @@ pocl_pthread_copy_rect (void *data,
  * Return an estimate for the maximum thread count that should produce
  * the maximum parallelism without extra threading overheads.
  */
+static
 int 
 get_max_thread_count() 
 {

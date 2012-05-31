@@ -22,6 +22,7 @@
    THE SOFTWARE.
 */
 
+#include <string.h>
 #include <unistd.h>
 
 #include "pocl_cl.h"
