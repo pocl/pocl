@@ -96,8 +96,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clRetainSampler.c \
                    clGetSamplerInfo.c \
                    clEnqueueCopyImage.c		\
-                   clEnqueueMapImage.c		\	\
-                   clGetImageInfo.c		\
+                   clEnqueueMapImage.c		\
+				   clGetImageInfo.c		\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\

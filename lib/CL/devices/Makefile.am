@@ -26,7 +26,7 @@ SUBDIRS = pthread basic
 
 noinst_LTLIBRARIES = libpocl-devices.la
 
-libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c bufalloc.h
+libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c 
 libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
 	basic/libpocl-devices-basic.la
 
