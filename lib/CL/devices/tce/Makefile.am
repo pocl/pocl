@@ -36,3 +36,6 @@ libpocl_devices_tce_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/incl
 libpocl_devices_tce_ladir = ${datadir}
 libpocl_devices_tce_la_DATA = tta_device_main.c
 dist_data_DATA = tta_device_main.c
+
+datadir = @POCL_INSTALLED_DATA@
+

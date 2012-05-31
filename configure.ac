@@ -295,6 +295,13 @@ AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
 
+if test x"$prefix" = xNONE; then
+  prefix=/usr/local
+fi
+AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
+AC_DEFINE_UNQUOTED([POCL_INSTALLED_DATA],["$prefix/share/pocl"],[The installation directory])
+AC_SUBST([POCL_INSTALLED_DATA], $prefix/share/pocl)
+
 # Checks for libraries.
 
 # Checks for header files.

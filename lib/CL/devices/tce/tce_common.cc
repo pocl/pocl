@@ -258,7 +258,7 @@ pocl_tce_run
       if (access (BUILDDIR "/lib/CL/devices/tce/tta_device_main.c", R_OK) == 0)
         deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
       else
-        POCL_ABORT_UNIMPLEMENTED();
+        deviceMainSrc = POCL_INSTALLED_DATA "/tta_device_main.c";
      
       std::string kernelObjSrc = "";
       kernelObjSrc += cmd->command.run.tmp_dir;
