@@ -29,8 +29,7 @@ targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@:@srcdir@/..
 vpath %.c @srcdir@:@srcdir@/..
-vpath %.h @srcdir@:@srcdir@/..
-vpath %.llvm @srcdir@:@srcdir@/..
+vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
@@ -46,9 +45,6 @@ CLANGFLAGS = -ccc-host-triple x86_64-unknown-linux-gnu
 
 .c.o:
 	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/x86_64/types.h -o $@ $<
-
-.llvm.o:
-	$(LLVM_AS) -o $@ $<
 
 # # TODO: This misses the dependency on the device-specific include files
 # # TODO: Dependencies should be generated automatically

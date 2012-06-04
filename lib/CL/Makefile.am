@@ -129,13 +129,20 @@ libpocl_la_LIBADD = devices/libpocl-devices.la
 libpocl_icd_la_SOURCES = ${libpocl_la_SOURCES}
 libpocl_icd_la_LIBADD = ${libpocl_la_LIBADD}
 
-all-local: ${pkglib_LTLIBRARIES}
+all-local:
 # Create a link from libpocl.so to libOpenCL.so so the make check tests
 # find them if they do not link to libpocl.so directly (e.g. some Rodinia
 # tests).
-	ln -sf libpocl.so ./.libs/libOpenCL.so
+	-cd .libs && $(LN_S) libpocl.so libOpenCL.so
 
 install-exec-local:
 # In case there is no libOpenCL.so (the ICD loader), link the pocl as
-# one for  using it in the non-icd mode.
-	test -e ${libdir}/libOpenCL.so || ln -s libpocl.so ${libdir}/libOpenCL.so
+# one for  using it in the non-icd mode.(cd /x && $(LN_S) foo bar)
+	test -e ${libdir}/libOpenCL.so ||	\
+	cd ${DESTDIR}/${libdir} &&		\
+	$(LN_S) libpocl.so libOpenCL.so
+
+uninstall-local:
+	test -h ${DESTDIR}/${libdir}/libOpenCL.so &&	\
+	test ! -e ${DESTDIR}/${libdir}/libOpenCL.so && 	\
+	rm ${DESTDIR}/${libdir}/libOpenCL.so
