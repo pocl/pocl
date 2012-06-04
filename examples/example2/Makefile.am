@@ -28,4 +28,4 @@ example2_SOURCES = example2.c example2.cl
 example2_LDADD = ../../lib/CL/libpocl.la @PTHREAD_LIBS@
 example2_CFLAGS = @PTHREAD_CFLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

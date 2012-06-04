@@ -108,7 +108,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_image_util.c pocl_image_util.h \
                    pocl_icd.h
 
-libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices
 libpocl_icd_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
 
 # libtool versions:
