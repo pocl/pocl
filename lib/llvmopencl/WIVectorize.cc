@@ -160,6 +160,8 @@ namespace {
     
     bool vectorizePhiNodes(BasicBlock &BB);
     
+    bool removeDuplicates(BasicBlock &BB);
+    
     bool getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
@@ -317,7 +319,7 @@ namespace {
     
       if (changed)
         vectorizePhiNodes(BB);
-      
+      removeDuplicates(BB);
       DEBUG(dbgs() << "WIV: done!\n");
       return changed;
     }
@@ -477,6 +479,51 @@ namespace {
       return false;
     }
   };
+  // In some cases, instructions did not get combined correctly by previous passes.
+  // For example with large number of replicated work items, scalar load of constant
+  // happened for first work item and then exactly same load in 15 and 30th work item. 
+  // The work items in between reused the previous value.
+  // Also, the vectorization vectorization leads to situations where scalar value
+  // needs to be replicated to create vector, however, separate vectors were
+  // created each time the value was to be used.
+  // This fixes that by search for exactly same Instructions, with same type
+  // and exactly same parameters and removing later one of them, replacing
+  // all uses with former.
+    bool WIVectorize::removeDuplicates(BasicBlock &BB) {
+        BasicBlock::iterator Start = BB.getFirstInsertionPt();
+        BasicBlock::iterator End = BB.end();
+        for (BasicBlock::iterator I = Start; I != End; ++I) {
+            BasicBlock::iterator J = llvm::next(I);
+            
+            for ( ; J != End; ) {
+                
+                if (!(I->isSameOperationAs(J) &&
+                    I->getType() == J->getType())) {
+                    J = llvm::next(J);
+                    continue;
+                } else {
+                    bool identicalOperands = true;
+                    for (unsigned int i = 0; i < I->getNumOperands(); i++) {
+                        if (I->getOperand(i) != J->getOperand(i)) {
+                            identicalOperands = false;
+                        }
+                    }
+                    if (identicalOperands) {
+                        J->replaceAllUsesWith(I);
+                        AA->replaceWithNewValue(J, I);  
+                        SE->forgetValue(J);
+                        BasicBlock::iterator K = llvm::next(J);
+                        J->eraseFromParent();
+                        J = K;
+                    } else {
+                        J = llvm::next(J);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
     // Replace phi nodes of individual valiables with vector they originated 
     // from.
     bool WIVectorize::vectorizePhiNodes(BasicBlock &BB) {
@@ -933,18 +980,21 @@ namespace {
         for (unsigned j = 0; j < tmpVec->size()/2; j++) {
             Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
             Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
+
             if (!areInstsCompatibleFromDifferentWi(I,J)) continue;
             bool IsSimpleLoadStore;
+
             if (!isInstVectorizable(I, IsSimpleLoadStore)) {
                 continue;            
             }
+
             if (!areInstsCompatible(I, J, IsSimpleLoadStore)) { 
                 continue;
             }            
             // Determine if J uses I, if so, exit the loop.
             bool UsesI = trackUsesOfI(Users, WriteSet, I, J, !FastDep);            
             if (UsesI) break;            
-            
+
             if (!PairableInsts.size() ||
                 PairableInsts[PairableInsts.size()-1] != I) {
                 PairableInsts.push_back(I);
