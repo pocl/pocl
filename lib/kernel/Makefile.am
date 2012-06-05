@@ -25,7 +25,6 @@
 DIST_SUBDIRS = tce x86_64 arm
 SUBDIRS = ${DIST_SUBDIRS} @TARGET@ @HOST@ # ppc
 
-
 include sources.mk
 
 # The source files in this dir are not built directly
@@ -35,3 +34,7 @@ include sources.mk
 EXTRA_DIST = ${nodist_libkernel_a_SOURCES} \
 	Makefile.target.am Makefile.host.am \
 	Makefile.target.in Makefile.host.in 
+
+distclean-local:
+	$(MAKE) -C @TARGET@ distclean
+	-$(MAKE) -C @HOST@ distclean

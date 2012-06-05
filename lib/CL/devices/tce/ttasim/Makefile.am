@@ -29,6 +29,6 @@ libpocl_devices_tce_ttasim_ladir = ${datadir}
 
 libpocl_devices_tce_ttasim_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL -U__APPLE__
+-I$(top_srcdir)/lib/CL
 libpocl_devices_tce_ttasim_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 

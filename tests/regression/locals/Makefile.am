@@ -27,5 +27,5 @@ host_SOURCES = host.cpp
 host_LDADD = ../../../lib/CL/libpocl.la ../../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
 host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -U__APPLE__ \
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL \
 	-DSRCDIR='"$(abs_srcdir)"'

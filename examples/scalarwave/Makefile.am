@@ -28,4 +28,4 @@ scalarwave_SOURCES = scalarwave.c scalarwave.cl
 scalarwave_LDADD = ../../lib/CL/libpocl.la -lm @PTHREAD_LIBS@
 scalarwave_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

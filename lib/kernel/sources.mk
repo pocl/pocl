@@ -2,7 +2,7 @@
 # to the distribution only once, from the root kernel
 # makefile.
 nodist_libkernel_a_SOURCES = templates.h		\
-                      barrier.llvm	                \
+                      barrier.ll	                \
 					  image.h \
                       get_work_dim.c		\
                       get_global_size.c		\
@@ -140,5 +140,5 @@ nodist_libkernel_a_SOURCES = templates.h		\
                       get_image_width.cl      \
                       get_image_height.cl     
 
-
-
+barrier.o: barrier.ll
+	$(LLVM_AS) -o $@ $<

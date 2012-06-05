@@ -36,7 +36,7 @@ LT_INIT
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-
+AC_PROG_LN_S
 
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
