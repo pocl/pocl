@@ -42,7 +42,7 @@ AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
 AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build custom-context 2>&1 | grep 'Built target' | cut -c8-], 0,
 [Built target custom-context
 ])
-AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/custom-context 2>&1 | egrep -v "context|basic|pthread"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/custom-context 2>&1 | egrep -v "context|basic|pthread|incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/custom-context.stdout`
 ])
 AT_CLEANUP
