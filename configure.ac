@@ -325,8 +325,10 @@ AC_LANG([C])
 old_CC="$CC"
 old_CPPFLAGS="$CPPFLAGS"
 old_CFLAGS="$CFLAGS"
+old_LDFLAGS="$LDFLAGS"
 CC=$srcdir/config/xclang
 CPPFLAGS=""
+LDFLAGS=""
 
 AC_CONFIG_FILES([include/arm/types.h
                  include/tce/types.h
@@ -383,6 +385,7 @@ AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vect
 CC="$old_CC"
 CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
+LDFLAGS="$old_LDFLAGS"
 
 AC_C_BIGENDIAN
 
