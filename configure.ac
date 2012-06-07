@@ -74,8 +74,12 @@ AC_ARG_ENABLE([region-allocator],
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
               [AS_HELP_STRING([--disable-icd], [Do not build pocl with the ICD extensions])],
-              [icd="no"],
-              [AC_DEFINE([BUILD_ICD], [], "Build with ICD")])
+              [icd="$enableval"],
+              [icd="yes"])
+if test x"$icd" != xno; then :
+  AC_DEFINE([BUILD_ICD], [], "Build with ICD")
+fi
+
 AC_SUBST(icd)
 AM_CONDITIONAL(INSTALL_ICD, test "$icd" != "no")
 
