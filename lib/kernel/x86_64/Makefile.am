@@ -33,8 +33,8 @@ vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
-RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
-AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
+RANLIB = @LLVM_RANLIB@
+AR = @LLVM_AR@
 
 libkernel_a_SOURCES = abs.cl ceil.cl copysign.cl fabs.cl floor.cl max.cl min.cl signbit.cl sqrt.cl
 

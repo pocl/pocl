@@ -37,8 +37,8 @@ vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
-RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
-AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
+RANLIB = @LLVM_RANLIB@
+AR = @LLVM_AR@
 
 CLANGFLAGS = -ccc-host-triple armv4t-unknown-linux-gnueabihf
 
