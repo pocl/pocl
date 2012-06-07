@@ -41,10 +41,12 @@ AC_PROG_LN_S
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
 
+AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
 AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
+LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 
 case "$LLVM_VERSION" in
      3.1*)
@@ -181,22 +183,29 @@ test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementati
 
 # Checks for programs.
 AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
-AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
-
-AC_PATH_PROG([CLANG], [clang])
+AC_PATH_PROG([CLANG], [clang], , [$LLVM_BINDIR:$PATH])
 test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
+
+AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
-AC_PATH_PROG([OPT], [opt])
-AC_PATH_PROG([LLVM_LD], [llvm-ld])
-AC_PATH_PROG([LLC], [llc])
-AC_PATH_PROG([LLVM_AS], [llvm-as])
+AC_ARG_VAR([OPT], [LLVM optimizer])
+AC_PATH_PROG([OPT], [opt], , ["$LLVM_BINDIR:$PATH"])
+AC_ARG_VAR([LLVM_LD], [LLVM linker])
+AC_PATH_PROG([LLVM_LD], [llvm-ld], , ["$LLVM_BINDIR:$PATH"])
+AC_ARG_VAR([LLC], [LLVM static compiler])
+AC_PATH_PROG([LLC], [llc], , ["$LLVM_BINDIR:$PATH"])
+AC_ARG_VAR([LLVM_AS], [LLVM assembler])
+AC_PATH_PROG([LLVM_AS], [llvm-as], , ["$LLVM_BINDIR:$PATH"])
 test -z "$OPT" || \
 test -z "$LLVM_LD" || \
 test -z "$LLC" || \
-test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH])
+test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in $LLVM_BINDIR nor \$PATH])
+# $CLANG and $LLC are needed by config/xclang
+export CLANG
+export LLC
 
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
