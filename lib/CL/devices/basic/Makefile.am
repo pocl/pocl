@@ -28,4 +28,4 @@ libpocl_devices_basic_la_SOURCES = basic.h basic.c
 
 libpocl_devices_basic_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL
 libpocl_devices_basic_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
-
+libpocl_devices_basic_la_LIBADD = ../topology/libpocl-devices-topology.la

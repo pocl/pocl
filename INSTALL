@@ -21,6 +21,7 @@ tools:
   * GNU make
   * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
+  * hwloc
 
 You can get the LLVM 3.1 branch from the LLVM svn as follows:
 
