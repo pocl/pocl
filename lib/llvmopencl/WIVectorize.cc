@@ -666,7 +666,6 @@ namespace {
 
       std::multimap<ValuePair, ValuePair> ConnectedPairs;
       computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
-      if (ConnectedPairs.empty() && !MemOpsOnly) return false;
 
       // Build the pairable-instruction dependency map
       DenseSet<ValuePair> PairableInstUsers;
