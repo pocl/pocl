@@ -1,6 +1,4 @@
-Regression tests for fixed bugs.
+Regression tests for fixed bugs or known broken bugs (XFAIL).
 
-Each test subdir should contain a Makefile.am that builds a binary
-called 'host' which is exected and outputs only "OK\n" (without quotes)
-in case of a valid run.
-
+Each test should return EXIT_SUCCESS on success and EXIT_FAILURE on
+failure.
