@@ -3,77 +3,47 @@ AT_BANNER([Regression tests])
 
 AT_SETUP([phi nodes not replicated - lp:#927573])
 AT_KEYWORDS([regression])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/loop-phi-replication/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_loop_phi_replication], 0)
 AT_CLEANUP
 
 AT_SETUP([issues with local pointers - lp:#918801])
 AT_KEYWORDS([regression locals tce])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/locals/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_locals], 0)
 AT_CLEANUP
 
 AT_SETUP([barrier between two for loops])
 AT_KEYWORDS([regression tce])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/barrier-between-for-loops/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/./test_barrier_between_for_loops], 0)
 AT_CLEANUP
 
 AT_SETUP([simple for-loop with a barrier inside])
 AT_KEYWORDS([regression])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/simple-for-with-a-barrier/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_simple_for_with_a_barrier], 0)
 AT_CLEANUP
 
 AT_SETUP([for-loop with computation after the brexit - lp:#938123])
-#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/multi-level-loops-with-barriers/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_multi_level_loops_with_barriers], 0)
 AT_CLEANUP
 
 AT_SETUP([for-loop with a variable iteration count - lp:#938883])
 #AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/for-with-var-iteration-count/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
 
 AT_SETUP([early return before a barrier region - lp:#940248])
-#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/early-return/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_early_return], 0)
 AT_CLEANUP
 
 AT_SETUP([id-dependent computation before kernel exit - lp:#940549])
-#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/id-dependent-computation/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/test_id_dependent_computation], 0)
 AT_CLEANUP
 
 AT_SETUP([struct kernel arguments - lp:##987905])
 AT_XFAIL_IF(true)
 AT_KEYWORDS([regression struct])
-AT_DATA([expout],
-[OK
-])
-AT_CHECK([$abs_top_builddir/tests/regression/structs-as-args/host], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/regression/structs-as-args/host], 0)
 AT_CLEANUP

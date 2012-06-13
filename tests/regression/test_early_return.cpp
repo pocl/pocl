@@ -1,4 +1,4 @@
-/* Tests multi-level for-loops with barriers inside.
+/* Tests a kernel with an early return before a barriered region.
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -30,25 +30,18 @@
 #include <iostream>
 
 #define WINDOW_SIZE 32
-#define WORK_ITEMS 1
+#define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
 
-// without -loop-barriers the BTR result seems more sensible
 static char
 kernelSourceCode[] = 
 "kernel \n"
 "void test_kernel(__global float *input, \n"
-"                 __global int *result,\n"
-"                 int a) {\n"
-" int gid = get_global_id(0);\n"
-" int i, j;\n"
-" for (i = 0; i < 32; ++i) {\n"
-"   result[gid] = input[gid];\n"
-"   for (j = 0; j < i; ++j) {\n"
-"      result[gid] = input[gid] * input[gid + j];\n"  
-"      barrier(CLK_GLOBAL_MEM_FENCE);\n"
-"   }\n"
-" }\n"
+"                 __global int *result) {\n"
+" if (input[0] == 0.0f) return;\n"
+" size_t gid = get_global_id(0);\n"
+" barrier(CLK_GLOBAL_MEM_FENCE);\n"
+" result[gid] = input[gid];\n"
 "}\n";
 
 int
@@ -57,7 +50,6 @@ main(void)
     float A[BUFFER_SIZE];
     int R[WORK_ITEMS];
     cl_int err;
-    int a = 2;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -108,7 +100,6 @@ main(void)
         // Set kernel args
         kernel.setArg(0, aBuffer);
         kernel.setArg(1, cBuffer);
-        kernel.setArg(2, a);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
@@ -131,25 +122,19 @@ main(void)
             WORK_ITEMS * sizeof(int));
 
         bool ok = true;
-        // TODO: validate results
-        for (int gid = 0; gid < WORK_ITEMS; gid++) {
-
-            float result;
-            int i, j;
-            for (i = 0; i < 32; ++i) {
-                result = A[gid];
-                for (j = 0; j < 32; ++j) {
-                    result = A[gid] * A[gid + j];
-                }
-            }
-            if ((int)result != R[gid]) {
+        for (int i = 0; i < WORK_ITEMS; i++) {
+            int correct = i;
+            if ((int)R[i] != correct) {
                 std::cout 
-                    << "F(" << gid << ": " << (int)result << " != " << R[gid] 
+                    << "F(" << i << ": " << R[i] << " != " << correct 
                     << ") ";
                 ok = false;
             }
         }
-        if (ok) std::cout << "OK" << std::endl;
+        if (ok) 
+            return EXIT_SUCCESS; 
+        else 
+            return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(
