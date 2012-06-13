@@ -439,6 +439,7 @@ AC_CONFIG_FILES([Makefile
                  tests/regression/early-return/Makefile
                  tests/regression/id-dependent-computation/Makefile
                  tests/regression/structs-as-args/Makefile
+                 tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  ])
