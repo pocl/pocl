@@ -53,7 +53,7 @@ using namespace TTAMachine;
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   local_as(NULL), global_as(NULL), machine_file(adfName), parent(dev),
-  globalCycleCount(0) {
+  currentProgram(NULL), globalCycleCount(0) {
   parent->data = this;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;

@@ -186,27 +186,27 @@ AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
 test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
 
 # Checks for programs.
-AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
-AC_PATH_PROG([CLANG], [clang], , [$LLVM_BINDIR:$PATH])
-test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
+AC_DEFUN([LLVM_PROG], [
+  AC_ARG_VAR([$1], [$3])
+  AC_PATH_PROG([$1], [$2], , [$LLVM_BINDIR:$PATH])
+  AS_IF([test "x$1" = x], [
+    AC_MSG_FAILURE([cannot find LLVM binary '$2' in '$LLVM_BINDIR' nor \$PATH])
+  ])
+])
+
+LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
-AC_ARG_VAR([OPT], [LLVM optimizer])
-AC_PATH_PROG([OPT], [opt], , ["$LLVM_BINDIR:$PATH"])
-AC_ARG_VAR([LLVM_LD], [LLVM linker])
-AC_PATH_PROG([LLVM_LD], [llvm-ld], , ["$LLVM_BINDIR:$PATH"])
-AC_ARG_VAR([LLC], [LLVM static compiler])
-AC_PATH_PROG([LLC], [llc], , ["$LLVM_BINDIR:$PATH"])
-AC_ARG_VAR([LLVM_AS], [LLVM assembler])
-AC_PATH_PROG([LLVM_AS], [llvm-as], , ["$LLVM_BINDIR:$PATH"])
-test -z "$OPT" || \
-test -z "$LLVM_LD" || \
-test -z "$LLC" || \
-test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in $LLVM_BINDIR nor \$PATH])
+LLVM_PROG([OPT], [opt], [LLVM optimizer])
+LLVM_PROG([LLVM_LD], [llvm-ld], [LLVM linker])
+LLVM_PROG([LLC], [llc], [LLVM static compiler])
+LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
+LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
+LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
 # $CLANG and $LLC are needed by config/xclang
 export CLANG
 export LLC
@@ -427,15 +427,6 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  tests/atlocal
                  tests/regression/Makefile
-                 tests/regression/loop-phi-replication/Makefile
-                 tests/regression/locals/Makefile
-                 tests/regression/barrier-between-for-loops/Makefile
-                 tests/regression/simple-for-with-a-barrier/Makefile
-                 tests/regression/multi-level-loops-with-barriers/Makefile
-                 tests/regression/for-with-var-iteration-count/Makefile
-                 tests/regression/early-return/Makefile
-                 tests/regression/id-dependent-computation/Makefile
-                 tests/regression/structs-as-args/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  ])

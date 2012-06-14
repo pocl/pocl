@@ -22,15 +22,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = loop-phi-replication locals barrier-between-for-loops \
-	simple-for-with-a-barrier multi-level-loops-with-barriers \
-	for-with-var-iteration-count early-return id-dependent-computation \
-	structs-as-args
+noinst_PROGRAMS = test_barrier_between_for_loops test_early_return \
+	test_for_with_var_iteration_count test_id_dependent_computation \
+	test_locals test_loop_phi_replication test_multi_level_loops_with_barriers \
+	test_simple_for_with_a_barrier test_structs_as_args \
+	test_barrier_before_return
 
+AM_DEFAULT_SOURCE_EXT = .cpp
 
-
-
-
+AM_LDFLAGS = ../../lib/CL/libpocl.la ../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
+AM_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
 
 
 

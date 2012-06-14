@@ -56,7 +56,7 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#define COMMAND_LENGTH 256
+#define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))

@@ -26,6 +26,8 @@
 #ifndef __CL_PLATFORM_H
 #define __CL_PLATFORM_H
 
+#define __POCL__
+
 #ifdef __APPLE__
     /* Contains #defines for AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER below */
     #include <AvailabilityMacros.h>

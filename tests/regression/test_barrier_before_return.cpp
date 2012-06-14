@@ -1,4 +1,4 @@
-/* Tests the bug that caused the phi nodes not be replicated (launchpad #927573).
+/* Tests a kernel with a barrier as the last statement.
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -29,41 +29,39 @@
 #include <cstdlib>
 #include <iostream>
 
-#define WINDOW_SIZE 16
-#define WORK_ITEMS 16
+#define WINDOW_SIZE 32
+#define WORK_ITEMS 4
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
 
-float A[BUFFER_SIZE];
-int R[WORK_ITEMS];
+// adding before the first for-loop produces another crash
+// " if (result[gid] == 0) return; \n"
+
+// increasing the loop counter to 32 produces yet another crash
+
+/* Only the first work item gets executed in this case: */
 
 static char
 kernelSourceCode[] = 
 "kernel \n"
 "void test_kernel(__global float *input, \n"
 "                 __global int *result) {\n"
-"  int gid = get_global_id(0);\n"
-"  float global_sum = 0.0f;\n"
-"  int i;\n"
-"\n"
-" for (i=0; i < 16; ++i) {\n"
-"   float value = input[gid+i];\n"
-"   global_sum += value;\n"
-"   barrier(CLK_LOCAL_MEM_FENCE);\n"
-" }\n"
-" result[gid] = global_sum;\n"
+"   result[get_local_id(0)] = input[get_local_id(0)]; \n"
+"   barrier(CLK_GLOBAL_MEM_FENCE);\n"
 "}\n";
 
 int
 main(void)
 {
+    float A[BUFFER_SIZE];
+    int R[WORK_ITEMS];
     cl_int err;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
-        A[i] = i;
+        A[i] = i + 1;
     }
 
     for (int i = 0; i < WORK_ITEMS; i++) {
-        R[i] = i;
+        R[i] = 0;
     }
 
     try {
@@ -130,17 +128,18 @@ main(void)
 
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
-            float global_sum = 0.0f;
-            for (int j=0; j < 16; ++j) {
-                float value = A[i + j];
-                global_sum += value;
-            }
-            if ((int)global_sum != R[i]) {
-                std::cout << "F";
+
+            if ((int)R[i] != i + 1) {
+                std::cout 
+                    << "F(" << i << ": " << i + i << " != " << (int)R[i] 
+                    << ") ";
                 ok = false;
             }
         }
-        if (ok) std::cout << "OK" << std::endl;
+        if (ok) 
+          return EXIT_SUCCESS;
+        else
+          return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(

@@ -1,4 +1,4 @@
-/* Tests a kernel with WI id dependent computation just before function exit.
+/* Tests a for-loops with variable iteration count with a barriers inside.
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -30,38 +30,25 @@
 #include <iostream>
 
 #define WINDOW_SIZE 32
-#define WORK_ITEMS 32
+#define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
-
-/* This is an interesting case because of the
-   barrier "all WIs or none" semantics.
-   This is a case of a conditional barrier.
-   
-   The first if, due to the barrier, can be
-   assumed to be "all WIs or none" because
-   if it's not, the kernel execution becomes
-   undefined as the barrier region is entered
-   by only a subset of the WIs. 
-
-   The second if should be replicated normally
-   by chaining. The problem here seems to be that
-   the else branches to the exit so the PR formation
-   gets confused.
-*/
 
 static char
 kernelSourceCode[] = 
 "kernel \n"
 "void test_kernel(__global float *input, \n"
-"                 __global int *result) {\n"
+"                 __global int *result,\n"
+"                 int a) {\n"
 " size_t gid = get_global_id(0);\n"
-" if (input[0] > 2) return;\n"
-" result[gid] = 0;\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
-" if (gid == 1) {\n"
-"    result[gid] = 43;\n"
-" } else \n"
-"    result[gid] += input[gid];\n"
+" size_t i;\n"
+" float sum = 0.0f;\n"
+" for (i = 0; i < a; ++i) {\n"
+"   sum += input[i]; \n"
+//"   printf(\"[gid=%d, i=%d, input=%f, sum=%f] \", gid, i, input[i], sum);\n"
+"   barrier(CLK_GLOBAL_MEM_FENCE);\n"
+" }\n"
+//" printf(\"final sum for gid %d is %f\\n\", gid, sum);\n"
+" result[gid] = sum;\n"
 "}\n";
 
 int
@@ -70,6 +57,7 @@ main(void)
     float A[BUFFER_SIZE];
     int R[WORK_ITEMS];
     cl_int err;
+    int a = 3;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -120,6 +108,7 @@ main(void)
         // Set kernel args
         kernel.setArg(0, aBuffer);
         kernel.setArg(1, cBuffer);
+        kernel.setArg(2, a);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
@@ -143,11 +132,7 @@ main(void)
 
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
-            int correct = i;
-            if (i == 1)
-                correct = 43;
-            else 
-                correct = i;
+            int correct = 3;
             if ((int)R[i] != correct) {
                 std::cout 
                     << "F(" << i << ": " << R[i] << " != " << correct 
@@ -155,7 +140,10 @@ main(void)
                 ok = false;
             }
         }
-        if (ok) std::cout << "OK" << std::endl;
+        if (ok) 
+          return EXIT_SUCCESS;
+        else
+          return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(

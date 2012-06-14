@@ -116,9 +116,9 @@ AT_CHECK_UNQUOTED([$abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build/ex
 ])
 AT_CLEANUP
 
-AT_SETUP([vector-test long])
+AT_SETUP([vector-test])
 AT_XFAIL_IF(true)
-AT_KEYWORDS([viennacl vector-test])
+AT_KEYWORDS([viennacl vector-test long])
 AT_SKIP_IF([! test -e $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src])
 AT_CHECK([make -sC $abs_top_srcdir/examples/ViennaCL/ViennaCL-1.2.0-src/build vector-test 2>&1 | grep 'Built target' | cut -c8-], 0,
 [Built target vector-test
