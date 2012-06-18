@@ -180,7 +180,7 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             : 
     POCL_RETURN_DEVICE_INFO(cl_ulong, device->global_mem_cache_size);
   case CL_DEVICE_GLOBAL_MEM_SIZE:
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->global_mem_size);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->global_mem_size);
   case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_constant_buffer_size);
   case CL_DEVICE_MAX_CONSTANT_ARGS                 : 

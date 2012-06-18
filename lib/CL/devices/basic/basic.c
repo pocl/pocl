@@ -54,6 +54,9 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
 
+  pocl_topology_set_global_mem_size(device);
+  pocl_topology_set_max_mem_alloc_size(device);
+
   device->data = d;
 }
 

@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/devices.
+# Makefile.am for tests/regression.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Cyril Roelandt and Pekka Jääskeläinen
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = topology pthread basic
+noinst_PROGRAMS= test_clGetDeviceInfo
 
-noinst_LTLIBRARIES = libpocl-devices.la
-
-libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c dev_image.h \
-	prototypes.inc common.h
-libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
-	basic/libpocl-devices-basic.la topology/libpocl-devices-topology.la
-
-libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
--I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL
-
-if TCE_AVAILABLE
-SUBDIRS += tce
-libpocl_devices_la_LIBADD += tce/libpocl-devices-tce.la
-endif
+AM_LDFLAGS = ../../lib/CL/libpocl.la @PTHREAD_LIBS@ @LD_FLAGS_BIN@
+AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

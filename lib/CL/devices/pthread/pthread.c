@@ -114,6 +114,9 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   BA_INIT_LOCK (d->mem_regions_lock);
   d->mem_regions = NULL;
 #endif  
+
+  pocl_topology_set_global_mem_size(device);
+  pocl_topology_set_max_mem_alloc_size(device);
 }
 
 void

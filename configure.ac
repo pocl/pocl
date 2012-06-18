@@ -33,6 +33,8 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 
+AC_SEARCH_LIBS([hwloc_topology_init], [hwloc], [], [AC_MSG_ERROR([hwloc is required])])
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
@@ -408,6 +410,7 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/basic/Makefile
                  lib/CL/devices/tce/Makefile
                  lib/CL/devices/tce/ttasim/Makefile
+                 lib/CL/devices/topology/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  lib/poclu/Makefile
@@ -427,6 +430,7 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  tests/atlocal
                  tests/regression/Makefile
+                 tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  ])
