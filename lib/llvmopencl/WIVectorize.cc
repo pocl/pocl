@@ -1709,7 +1709,7 @@ namespace {
                 // This is the case where both sources come from same value and
                 // are in order. e.g. 0,1,2,3,4,5,6,7, as produced when
                 // replacing outputs of vector operation.
-                if (continous && VArgType->getVectorNumElements() == elems) {
+                if (continous && VArgType->getVectorNumElements() == elems*2) {
                     return LSV->getOperand(0);
                 }
                 // This is case where single value of input vector is replicated
