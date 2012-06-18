@@ -116,7 +116,7 @@ clGetDeviceInfo(cl_device_id   device,
           cl_uint from_env = atoi (getenv ("POCL_MAX_WORK_GROUP_SIZE"));
           if (from_env < max_wg_size) max_wg_size = from_env;
         }
-      POCL_RETURN_DEVICE_INFO(cl_uint, max_wg_size);
+      POCL_RETURN_DEVICE_INFO(size_t, max_wg_size);
     }
   case CL_DEVICE_MAX_WORK_ITEM_SIZES:
     {
