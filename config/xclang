@@ -36,7 +36,7 @@ if [ "$mode" = -c ]
 then
     $CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
     $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
-    exec $CLANG -c $output $tmpdir/xclang.s
+    exec $CLANG -ccc-host-triple $build -c $output $tmpdir/xclang.s
 fi
 
 if [ "$mode" = -S ]
@@ -52,4 +52,4 @@ fi
 
 $CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
 $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
-exec $CLANG $output $tmpdir/xclang.s
+exec $CLANG -ccc-host-triple $build $output $tmpdir/xclang.s
