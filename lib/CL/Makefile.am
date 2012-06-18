@@ -133,20 +133,28 @@ all-local:
 # Create a link from libpocl.so to libOpenCL.so so the make check tests
 # find them if they do not link to libpocl.so directly (e.g. some Rodinia
 # tests).
-	test -h .libs/libOpenCL.so ||	\
-	(cd .libs && $(LN_S) libpocl.so libOpenCL.so)
+	test -e .libs/libOpenCL.so || test -e .libs/libOpenCL.dylib ||	\
+	(cd .libs && (test -e libpocl.so &&				\
+	              $(LN_S) libpocl.so libOpenCL.so) ||		\
+	             (test -e libpocl.dylib &&				\
+                      $(LN_S) libpocl.dylib libOpenCL.dylib))
 
 clean-local:
-	-rm .libs/libOpenCL.so
+	rm -rf .libs/libOpenCL.so .libs/libOpenCL.dylib
 
 install-exec-local:
 # In case there is no libOpenCL.so (the ICD loader), link the pocl as
 # one for  using it in the non-icd mode.(cd /x && $(LN_S) foo bar)
-	test -e ${libdir}/libOpenCL.so ||	\
-	(cd ${DESTDIR}/${libdir} &&		\
-	$(LN_S) libpocl.so libOpenCL.so)
+	test -e ${libdir}/libOpenCL.so || test -e ${libdir}/libOpenCL.dylib	\
+	(cd ${DESTDIR}/${libdir} && (test -e libpocl.so &&			\
+	                             $(LN_S) libpocl.so libOpenCL.so)) ||	\
+	                            (test -e libpocl.dylib &&			\
+	                             $(LN_S) libpocl.dylib libOpenCL.dylib))
 
 uninstall-local:
 	test -h ${DESTDIR}/${libdir}/libOpenCL.so &&	\
 	test ! -e ${DESTDIR}/${libdir}/libOpenCL.so && 	\
 	rm ${DESTDIR}/${libdir}/libOpenCL.so
+	test -h ${DESTDIR}/${libdir}/libOpenCL.dylib &&		\
+	test ! -e ${DESTDIR}/${libdir}/libOpenCL.dylib &&	\
+	rm ${DESTDIR}/${libdir}/libOpenCL.dylib
