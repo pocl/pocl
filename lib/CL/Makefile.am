@@ -133,8 +133,11 @@ all-local:
 # Create a link from libpocl.so to libOpenCL.so so the make check tests
 # find them if they do not link to libpocl.so directly (e.g. some Rodinia
 # tests).
-	test -e .libs/libOpenCL.so ||	\
+	test -h .libs/libOpenCL.so ||	\
 	(cd .libs && $(LN_S) libpocl.so libOpenCL.so)
+
+clean-local:
+	-rm .libs/libOpenCL.so
 
 install-exec-local:
 # In case there is no libOpenCL.so (the ICD loader), link the pocl as
