@@ -730,7 +730,7 @@ namespace {
       Type *DestTy = C->getDestTy();
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy())
         return false;
-    } else if (!(I->isBinaryOp())) {/* || isa<ShuffleVectorInst>(I) ||
+    } else if (!(I->isBinaryOp() || isa<SelectInst>(I))) {/* || isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
       return false;
     }
@@ -1737,12 +1737,16 @@ namespace {
                 }
               }
           }
+#if 0 
+    // This was made obsolete by test for continuity of shuffle indexes above
+    // and should be removed after futher tests for performance degradation.
           Value* res = CommonShuffleSource(LSV, HSV);
           if (res && 
               res->getType()->getVectorNumElements() == 
                 VArgType->getVectorNumElements()) {
               return res;         
           }
+#endif          
       }
       InsertElementInst *LIN
         = dyn_cast<InsertElementInst>(L->getOperand(o));
@@ -1961,25 +1965,31 @@ namespace {
             storedSources.insert(ValuePair(K2,K)); 
             flippedStoredSources.insert(ValuePair(K, K1));
             flippedStoredSources.insert(ValuePair(K, K2));
+            Instruction* L = I;
+            Instruction* H = J;
+            if (FlipMemInputs) {
+                L = J;
+                H = I;
+            }
             VPIteratorPair v1 = 
-                flippedStoredSources.equal_range(I);
+                flippedStoredSources.equal_range(L);
             for (std::multimap<Value*, Value*>::iterator ii = v1.first;
                  ii != v1.second; ii++) {        
                 storedSources.erase((*ii).second);            
                 storedSources.insert(ValuePair((*ii).second,K));
                 flippedStoredSources.insert(ValuePair(K, (*ii).second));
-                storedSources.erase(I);
+                storedSources.erase(L);
             }
-            flippedStoredSources.erase(I);              
-            VPIteratorPair v2 = flippedStoredSources.equal_range(J);
+            flippedStoredSources.erase(L);              
+            VPIteratorPair v2 = flippedStoredSources.equal_range(H);
             for (std::multimap<Value*, Value*>::iterator ji = v2.first;
                  ji != v2.second; ji++) {        
                 storedSources.erase((*ji).second);
                 storedSources.insert(ValuePair((*ji).second,K));
                 flippedStoredSources.insert(ValuePair(K, (*ji).second));            
-                storedSources.erase(J);
+                storedSources.erase(H);
             }
-            flippedStoredSources.erase(J);                        
+            flippedStoredSources.erase(H);                        
       } else {
         K1 = ExtractElementInst::Create(K, FlipMemInputs ? CV1 : CV0,
                                           getReplacementName(K, false, 1));
