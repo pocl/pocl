@@ -325,7 +325,7 @@ regenerate_kernel_metadata(Module &M, KernelPairVector &kernels)
               // operands except the first one to a new MDNode
               SmallVector<Value*, 8> operands;
               operands.push_back(new_kernel);
-              for (int opr = 1; opr < wgsizeMD->getNumOperands(); ++opr)
+              for (unsigned opr = 1; opr < wgsizeMD->getNumOperands(); ++opr)
                 {
                   operands.push_back(wgsizeMD->getOperand(opr));
                 }

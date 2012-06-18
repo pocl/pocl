@@ -49,7 +49,6 @@ AT_CHECK([$abs_top_builddir/tests/regression/test_structs_as_args], 0)
 AT_CLEANUP
 
 AT_SETUP([barrier just before return - lp:##1012030])
-AT_XFAIL_IF(true)
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_barrier_before_return], 0)
 AT_CLEANUP
