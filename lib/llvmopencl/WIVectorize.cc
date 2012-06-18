@@ -160,6 +160,8 @@ namespace {
     
     bool vectorizePhiNodes(BasicBlock &BB);
     
+    bool removeDuplicates(BasicBlock &BB);
+    
     bool getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
@@ -317,7 +319,7 @@ namespace {
     
       if (changed)
         vectorizePhiNodes(BB);
-      
+      removeDuplicates(BB);
       DEBUG(dbgs() << "WIV: done!\n");
       return changed;
     }
@@ -477,6 +479,51 @@ namespace {
       return false;
     }
   };
+  // In some cases, instructions did not get combined correctly by previous passes.
+  // For example with large number of replicated work items, scalar load of constant
+  // happened for first work item and then exactly same load in 15 and 30th work item. 
+  // The work items in between reused the previous value.
+  // Also, the vectorization vectorization leads to situations where scalar value
+  // needs to be replicated to create vector, however, separate vectors were
+  // created each time the value was to be used.
+  // This fixes that by search for exactly same Instructions, with same type
+  // and exactly same parameters and removing later one of them, replacing
+  // all uses with former.
+    bool WIVectorize::removeDuplicates(BasicBlock &BB) {
+        BasicBlock::iterator Start = BB.getFirstInsertionPt();
+        BasicBlock::iterator End = BB.end();
+        for (BasicBlock::iterator I = Start; I != End; ++I) {
+            BasicBlock::iterator J = llvm::next(I);
+            
+            for ( ; J != End; ) {
+                
+                if (!(I->isSameOperationAs(J) &&
+                    I->getType() == J->getType())) {
+                    J = llvm::next(J);
+                    continue;
+                } else {
+                    bool identicalOperands = true;
+                    for (unsigned int i = 0; i < I->getNumOperands(); i++) {
+                        if (I->getOperand(i) != J->getOperand(i)) {
+                            identicalOperands = false;
+                        }
+                    }
+                    if (identicalOperands) {
+                        J->replaceAllUsesWith(I);
+                        AA->replaceWithNewValue(J, I);  
+                        SE->forgetValue(J);
+                        BasicBlock::iterator K = llvm::next(J);
+                        J->eraseFromParent();
+                        J = K;
+                    } else {
+                        J = llvm::next(J);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
     // Replace phi nodes of individual valiables with vector they originated 
     // from.
     bool WIVectorize::vectorizePhiNodes(BasicBlock &BB) {
@@ -619,7 +666,6 @@ namespace {
 
       std::multimap<ValuePair, ValuePair> ConnectedPairs;
       computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
-      if (ConnectedPairs.empty() && !MemOpsOnly) return false;
 
       // Build the pairable-instruction dependency map
       DenseSet<ValuePair> PairableInstUsers;
@@ -684,7 +730,7 @@ namespace {
       Type *DestTy = C->getDestTy();
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy())
         return false;
-    } else if (!(I->isBinaryOp())) {/* || isa<ShuffleVectorInst>(I) ||
+    } else if (!(I->isBinaryOp() || isa<SelectInst>(I))) {/* || isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
       return false;
     }
@@ -933,18 +979,21 @@ namespace {
         for (unsigned j = 0; j < tmpVec->size()/2; j++) {
             Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
             Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
+
             if (!areInstsCompatibleFromDifferentWi(I,J)) continue;
             bool IsSimpleLoadStore;
+
             if (!isInstVectorizable(I, IsSimpleLoadStore)) {
                 continue;            
             }
+
             if (!areInstsCompatible(I, J, IsSimpleLoadStore)) { 
                 continue;
             }            
             // Determine if J uses I, if so, exit the loop.
             bool UsesI = trackUsesOfI(Users, WriteSet, I, J, !FastDep);            
             if (UsesI) break;            
-            
+
             if (!PairableInsts.size() ||
                 PairableInsts[PairableInsts.size()-1] != I) {
                 PairableInsts.push_back(I);
@@ -1660,7 +1709,7 @@ namespace {
                 // This is the case where both sources come from same value and
                 // are in order. e.g. 0,1,2,3,4,5,6,7, as produced when
                 // replacing outputs of vector operation.
-                if (continous && VArgType->getVectorNumElements() == elems) {
+                if (continous && VArgType->getVectorNumElements() == elems*2) {
                     return LSV->getOperand(0);
                 }
                 // This is case where single value of input vector is replicated
@@ -1688,12 +1737,16 @@ namespace {
                 }
               }
           }
+#if 0 
+    // This was made obsolete by test for continuity of shuffle indexes above
+    // and should be removed after futher tests for performance degradation.
           Value* res = CommonShuffleSource(LSV, HSV);
           if (res && 
               res->getType()->getVectorNumElements() == 
                 VArgType->getVectorNumElements()) {
               return res;         
           }
+#endif          
       }
       InsertElementInst *LIN
         = dyn_cast<InsertElementInst>(L->getOperand(o));
@@ -1912,25 +1965,31 @@ namespace {
             storedSources.insert(ValuePair(K2,K)); 
             flippedStoredSources.insert(ValuePair(K, K1));
             flippedStoredSources.insert(ValuePair(K, K2));
+            Instruction* L = I;
+            Instruction* H = J;
+            if (FlipMemInputs) {
+                L = J;
+                H = I;
+            }
             VPIteratorPair v1 = 
-                flippedStoredSources.equal_range(I);
+                flippedStoredSources.equal_range(L);
             for (std::multimap<Value*, Value*>::iterator ii = v1.first;
                  ii != v1.second; ii++) {        
                 storedSources.erase((*ii).second);            
                 storedSources.insert(ValuePair((*ii).second,K));
                 flippedStoredSources.insert(ValuePair(K, (*ii).second));
-                storedSources.erase(I);
+                storedSources.erase(L);
             }
-            flippedStoredSources.erase(I);              
-            VPIteratorPair v2 = flippedStoredSources.equal_range(J);
+            flippedStoredSources.erase(L);              
+            VPIteratorPair v2 = flippedStoredSources.equal_range(H);
             for (std::multimap<Value*, Value*>::iterator ji = v2.first;
                  ji != v2.second; ji++) {        
                 storedSources.erase((*ji).second);
                 storedSources.insert(ValuePair((*ji).second,K));
                 flippedStoredSources.insert(ValuePair(K, (*ji).second));            
-                storedSources.erase(J);
+                storedSources.erase(H);
             }
-            flippedStoredSources.erase(J);                        
+            flippedStoredSources.erase(H);                        
       } else {
         K1 = ExtractElementInst::Create(K, FlipMemInputs ? CV1 : CV0,
                                           getReplacementName(K, false, 1));
