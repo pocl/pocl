@@ -145,9 +145,9 @@ clean-local:
 install-exec-local:
 # In case there is no libOpenCL.so (the ICD loader), link the pocl as
 # one for  using it in the non-icd mode.(cd /x && $(LN_S) foo bar)
-	test -e ${libdir}/libOpenCL.so || test -e ${libdir}/libOpenCL.dylib	\
+	test -e ${libdir}/libOpenCL.so || test -e ${libdir}/libOpenCL.dylib	|| \
 	(cd ${DESTDIR}/${libdir} && (test -e libpocl.so &&			\
-	                             $(LN_S) libpocl.so libOpenCL.so)) ||	\
+	                             $(LN_S) libpocl.so libOpenCL.so) ||	\
 	                            (test -e libpocl.dylib &&			\
 	                             $(LN_S) libpocl.dylib libOpenCL.dylib))
 
