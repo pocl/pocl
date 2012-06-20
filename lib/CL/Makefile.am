@@ -154,7 +154,8 @@ install-exec-hook:
 uninstall-local:
 	test -h ${DESTDIR}/${libdir}/libOpenCL.so &&	\
 	test ! -e ${DESTDIR}/${libdir}/libOpenCL.so && 	\
-	rm ${DESTDIR}/${libdir}/libOpenCL.so
+	rm ${DESTDIR}/${libdir}/libOpenCL.so || true
 	test -h ${DESTDIR}/${libdir}/libOpenCL.dylib &&		\
 	test ! -e ${DESTDIR}/${libdir}/libOpenCL.dylib &&	\
-	rm ${DESTDIR}/${libdir}/libOpenCL.dylib
+	rm ${DESTDIR}/${libdir}/libOpenCL.dylib || true
+
