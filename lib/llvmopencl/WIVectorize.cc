@@ -730,7 +730,7 @@ namespace {
       Type *DestTy = C->getDestTy();
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy())
         return false;
-    } else if (!(I->isBinaryOp() || isa<SelectInst>(I))) {/* || isa<ShuffleVectorInst>(I) ||
+    } else if (!(I->isBinaryOp())) {/* || isa<SelectInst>(I))) {/* || isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
       return false;
     }
