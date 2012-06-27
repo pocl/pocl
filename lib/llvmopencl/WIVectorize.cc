@@ -708,18 +708,22 @@ namespace {
     IsSimpleLoadStore = false;
 
     if (CallInst *C = dyn_cast<CallInst>(I)) {
-      if (!isVectorizableIntrinsic(C))
+      if (!isVectorizableIntrinsic(C)) {
         return false;
+
+      }
     } else if (LoadInst *L = dyn_cast<LoadInst>(I)) {
       // Vectorize simple loads if possbile:
       IsSimpleLoadStore = L->isSimple();
-      if (!IsSimpleLoadStore || NoMemOps)
+      if (!IsSimpleLoadStore || NoMemOps) {
         return false;
+      }
     } else if (StoreInst *S = dyn_cast<StoreInst>(I)) {
       // Vectorize simple stores if possbile:
       IsSimpleLoadStore = S->isSimple();
-      if (!IsSimpleLoadStore || NoMemOps)
+      if (!IsSimpleLoadStore || NoMemOps) {
         return false;
+      }
     } else if (CastInst *C = dyn_cast<CastInst>(I)) {
       // We can vectorize casts, but not casts of pointer types, etc.
 
@@ -730,7 +734,7 @@ namespace {
       Type *DestTy = C->getDestTy();
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy())
         return false;
-    } else if (!(I->isBinaryOp() || isa<SelectInst>(I))) {/* || isa<ShuffleVectorInst>(I) ||
+    } else if (!(I->isBinaryOp())) {/* || isa<SelectInst>(I))) {/* || isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
       return false;
     }
@@ -776,13 +780,15 @@ namespace {
     // in the use tree of I.
     bool WIVectorize::areInstsCompatibleFromDifferentWi(Instruction *I, 
                                                         Instruction *J) {
+        
         if (I->getMetadata("wi") == NULL || J->getMetadata("wi") == NULL) {
           return false;
         }
         if (MemOpsOnly && 
             !((isa<LoadInst>(I) && isa<LoadInst>(J)) ||
-              (isa<StoreInst>(I) && isa<StoreInst>(J)))) 
+              (isa<StoreInst>(I) && isa<StoreInst>(J)))) {
             return false;
+        }
         MDNode* mi = I->getMetadata("wi");
         MDNode* mj = J->getMetadata("wi");
         assert(mi->getNumOperands() == 6);
@@ -959,15 +965,26 @@ namespace {
       
       MDNode* md = I->getMetadata("wi");
       unsigned CI = cast<ConstantInt>(md->getOperand(5))->getZExtValue();
+      unsigned RI = cast<ConstantInt>(md->getOperand(1))->getZExtValue();
       
-      std::multimap<int,ValueVector*>::iterator it = temporary.find(CI);
-      ValueVector* tmpVec = NULL;      
-      if (it == temporary.end() || 
-          !I->isSameOperationAs(cast<Instruction>((*(*it).second)[0]))) {
+      std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
+      std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
+      ValueVector* tmpVec = NULL;   
+      while(itb != ite) {
+          if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
+              // Test also if instructions are from same region.
+              MDNode* tmpMD = 
+                cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
+              unsigned tmpRI = 
+                cast<ConstantInt>(tmpMD->getOperand(1))->getZExtValue();                
+              if (RI == tmpRI)
+                tmpVec = (*itb).second;
+          }
+          itb++;
+      }
+      if (tmpVec == NULL) {
           tmpVec = new ValueVector;
-          temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));
-      } else {
-          tmpVec = (*it).second;
+          temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
       }
       tmpVec->push_back(I);
     }
@@ -979,7 +996,6 @@ namespace {
         for (unsigned j = 0; j < tmpVec->size()/2; j++) {
             Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
             Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
-
             if (!areInstsCompatibleFromDifferentWi(I,J)) continue;
             bool IsSimpleLoadStore;
 
