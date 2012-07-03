@@ -65,7 +65,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(2), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(1), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -771,6 +771,18 @@ namespace {
     // Floating point vectorization can be dissabled
     if (I->getType()->isFloatingPointTy() && NoFP)
         return false;
+
+    // Check if the loop can be loop counter, we do not vectorize those
+    // since they have to be same for all work items we are vectorizing
+    // and computations of load/store indexes usually depenends on them.
+    // Instruction combiner pass will remove duplicates.
+    if (SE->isSCEVable(I->getType())) {
+        const SCEV* sc = SE->getSCEV(I);
+        if (const SCEVAddRecExpr* S = dyn_cast<SCEVAddRecExpr>(sc)) {
+            // This instruction is loop counter
+            return false;
+        }
+    }
     
     return true;
   }
