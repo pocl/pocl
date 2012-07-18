@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = topology pthread basic
+SUBDIRS = hwloc topology pthread basic
 
 noinst_LTLIBRARIES = libpocl-devices.la
 
@@ -33,7 +33,7 @@ libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
 
 libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL
+-I$(top_srcdir)/lib/CL -Ihwloc/config
 
 if TCE_AVAILABLE
 SUBDIRS += tce
