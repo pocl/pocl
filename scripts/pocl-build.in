@@ -45,7 +45,7 @@ case $target in
   tce-*)    target_dir="tce"
 esac
 
-CLANG_FLAGS="$CLANG_FLAGS -ccc-host-triple $target"
+CLANG_FLAGS="$CLANG_FLAGS -fasm -ccc-host-triple $target"
 
 preprocessed_file=${output_file}.i
 
