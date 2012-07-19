@@ -34,7 +34,7 @@ AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 
 # check: hwloc version must be 1.0+
-AC_SEARCH_LIBS([hwloc_get_api_version], [hwloc], [], [AC_MSG_ERROR([hwloc 1.0+ is required])])
+AC_SEARCH_LIBS([hwloc_topology_init], [hwloc], [], [AC_MSG_ERROR([hwloc 1.0+ is required])])
 AC_CHECKING([that hwloc API version is 1.0+])
 AC_PREPROC_IFELSE(
   [AC_LANG_PROGRAM([[#include <hwloc.h>]
