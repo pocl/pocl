@@ -1,4 +1,4 @@
-/* pocl_topology.c - retrieving the topology of OpenCL devices using the hwloc
+/* pocl_topology.c - retrieving the topology of OpenCL devices
 
    Copyright (c) 2012 Cyril Roelandt
    
@@ -21,8 +21,8 @@
    THE SOFTWARE.
 */
 
-#include <hwloc.h>
 #include <pocl_cl.h>
+#include <hwloc.h>
 
 /* We may want to protect these with a mutex, but it's probably not needed for
  * now. */
@@ -34,10 +34,10 @@ pocl_topology_init(void)
 {
   int ret;
 
-  ret = pocl_hwloc_topology_init(&pocl_topology);
+  ret = hwloc_topology_init(&pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot initialize the topology.\n");
-  ret = pocl_hwloc_topology_load(pocl_topology);
+  ret = hwloc_topology_load(pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot load the topology.\n");
 
@@ -51,8 +51,7 @@ pocl_topology_set_global_mem_size(cl_device_id device)
   if (!init)
     pocl_topology_init();
 
-  device->global_mem_size = 
-    pocl_hwloc_get_root_obj(pocl_topology)->memory.total_memory;
+  device->global_mem_size = hwloc_get_root_obj(pocl_topology)->memory.total_memory;
 }
 
 void

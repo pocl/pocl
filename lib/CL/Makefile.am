@@ -122,12 +122,12 @@ if TCE_AVAILABLE
 libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
-libpocl_la_LIBADD = $(HWLOC_EMBEDDED_LDADD) $(HWLOC_EMBEDDED_LIBS) devices/libpocl-devices.la 
+libpocl_la_LIBADD = devices/libpocl-devices.la 
 
 # Actually the "source" should be the libpocl.so which is relinked
 # to the plugin. 
 libpocl_icd_la_SOURCES = ${libpocl_la_SOURCES}
-libpocl_icd_la_LIBADD = ${libpocl_la_LIBADD} 
+libpocl_icd_la_LIBADD = ${libpocl_la_LIBADD}
 
 all-local:
 # Create a link from libpocl.so to libOpenCL.so so the make check tests

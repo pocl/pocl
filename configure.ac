@@ -1,8 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
-#                         Tampere University of Technology
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +30,19 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_TESTDIR([tests])
 AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
-AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign])
 LT_INIT
+
+# check: hwloc version must be 1.0+
+AC_SEARCH_LIBS([hwloc_get_api_version], [hwloc], [], [AC_MSG_ERROR([hwloc 1.0+ is required])])
+AC_CHECKING([that hwloc API version is 1.0+])
+AC_PREPROC_IFELSE(
+  [AC_LANG_PROGRAM([[#include <hwloc.h>]
+                   [#if !(defined(HWLOC_API_VERSION) && HWLOC_API_VERSION >= 0x00010000)]
+                   [#error Too old hwloc API version]
+                   [#endif]], [])],
+  [AC_MSG_RESULT([OK])],
+  [AC_MSG_ERROR([too old version])])
 
 # Checks for programs.
 AC_PROG_CC
@@ -434,17 +443,6 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  ])
-
-# Setup the embedded hwloc lib in dir lib/CL/devices/hwloc.
-# According to http://www.open-mpi.org/projects/hwloc/doc/v1.4.2/a00010.php
-HWLOC_SET_SYMBOL_PREFIX(pocl_)
-HWLOC_SETUP_CORE([lib/CL/devices/hwloc], [hwloc_happy=yes], [hwloc_happy=no], [true])
-HWLOC_DO_AM_CONDITIONALS()
-
-if test x"$hwloc_happy" = x"no"
-then
-AC_MSG_ERROR([Error configuring the hwloc library.])
-fi 
 
 AC_OUTPUT
 
