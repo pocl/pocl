@@ -1,4 +1,5 @@
-/* Tests a kernel with an infinite loop.
+/* Tests a kernel with a constant array passed to a function with an infinite 
+   loop.
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -31,9 +32,11 @@
 
 #define WORK_ITEMS 1
 
+/* This causes a crash due to the GEP argument to a non-inlined 
+   test_arrays_float call. */
 static char
 kernelSourceCode[] =
-"void test_arrays_float(global int* data, int const ndata)\n"
+"void test_arrays_float(int const *const data, int const ndata)\n"
 "{\n"
 "  float s = 0.0f;\n"
 "  for (int i=0; i<ndata; ++i) {\n"
@@ -45,7 +48,9 @@ kernelSourceCode[] =
 "\n"
 "kernel void test_kernel(global int *input, global int* output)\n"
 "{\n"
-"  test_arrays_float(input, 2);\n"
+"  int const data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11};\n"
+"  int const ndata = sizeof(data) / sizeof(*data);\n"
+"  test_arrays_float(data, ndata);\n"
 "}\n";
 
 int
