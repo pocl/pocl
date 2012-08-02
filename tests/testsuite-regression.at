@@ -52,3 +52,9 @@ AT_SETUP([barrier just before return - lp:##1012030])
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_barrier_before_return], 0)
 AT_CLEANUP
+
+AT_SETUP([infinite loop - lp:##941558])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression infinite-loop])
+AT_CHECK([$abs_top_builddir/tests/regression/test_infinite_loop], 0)
+AT_CLEANUP
