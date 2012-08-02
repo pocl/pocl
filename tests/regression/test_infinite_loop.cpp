@@ -68,7 +68,7 @@ kernelSourceCode[] =
 #endif 
 
 #if 1
-/* This causes a crash during WI replication. */
+/* This caused a crash during WI replication. */
 
 static char
 kernelSourceCode[] =
