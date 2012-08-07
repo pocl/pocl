@@ -119,7 +119,8 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
 #ifdef DEBUG_BARRIER_REPL
     std::cerr << "### block " << bb->getName().str() << " has barrier, RJS" << std::endl;
 #endif
-    changed = ReplicateJoinedSubgraphs(bb, bb);
+    BasicBlockSet processed_bbs_rjs;
+    changed = ReplicateJoinedSubgraphs(bb, bb, processed_bbs_rjs);
   }
 
   TerminatorInst *t = bb->getTerminator();
@@ -137,7 +138,8 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
 // (and confusing) code replication.
 bool
 BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
-                                                 BasicBlock *subgraph_entry)
+                                                 BasicBlock *subgraph_entry,
+                                                 BasicBlockSet &processed_bbs)
 {
   bool changed = false;
 
@@ -152,6 +154,16 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
     std::cerr << "### traversing from " << subgraph_entry->getName().str() 
               << " to " << b->getName().str() << std::endl;
 #endif
+
+    // Check if we already handled this BB and all its branches.
+    if (processed_bbs.count(b) != 0) 
+      {
+#ifdef DEBUG_BARRIER_REPL
+        std::cerr << "### already processed " << std::endl;
+#endif
+        continue;
+      }
+
     const bool isBackedge = DT->dominates(b, subgraph_entry);
     if (isBackedge) {
       // This is a loop backedge. Do not find subgraphs across
@@ -167,7 +179,7 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
         std::cerr << "### " << dominator->getName().str() << " dominates "
                   << b->getName().str() << std::endl;
 #endif
-        changed |= ReplicateJoinedSubgraphs(dominator, b);
+        changed |= ReplicateJoinedSubgraphs(dominator, b, processed_bbs);
       } 
     else           
       {
@@ -179,13 +191,17 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
           ReplicateSubgraph(b, f);
         t->setSuccessor(i, replicated_subgraph_entry);
         changed = true;
+      }
+
+    if (changed) 
+      {
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
         DT->runOnFunction(*f);
         LI->getBase().Calculate(DT->getBase());
       }
   }
-
+  processed_bbs.insert(subgraph_entry);
   return changed;
 }
 
@@ -285,11 +301,8 @@ BarrierTailReplication::FindSubgraph(BasicBlockVector &subgraph,
   Loop *l = LI->getLoopFor(entry);
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *successor = t->getSuccessor(i);
-    if ((l != NULL)  && (l->getHeader() == successor)) {
-      // This is a loop backedge. Do not find subgraphs across
-      // those.
-      continue;
-    }
+    const bool isBackedge = DT->dominates(successor, entry);
+    if (isBackedge) continue;
     FindSubgraph(subgraph, successor);
   }
 }

@@ -87,7 +87,7 @@ if [ -f @abs_top_builddir@/lib/kernel/${target}/libkernel.a ]
 then
     @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${target} -lkernel
 else
-    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir/@${target}} -lkernel
+    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir@/${target} -lkernel
 fi
 rm ${linked_out}
 
