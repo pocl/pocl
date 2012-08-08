@@ -63,7 +63,10 @@
   void*                                                                 \
   pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
                         size_t offset, size_t size, void *host_ptr); \
-  cl_ulong pocl_##__DRV__##_get_timer_value(void *data); 
+  cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
+  int pocl_##__DRV__##_build_program (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);\
+
+
 
 
 

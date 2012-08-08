@@ -1,7 +1,8 @@
 #!/bin/sh
 # pocl-build - Compile a OpenCL kernel to bytecode usign clang.
 #
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011 Universidad Rey Juan Carlos and
+#               2012 Pekka Jääskeläinen / TUT
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,9 +52,9 @@ preprocessed_file=${output_file}.i
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${EXTRA_CPPFLAGS} ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 else
-    @CLANG@ ${CLANGFLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${EXTRA_CPPFLAGS} ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
 fi
 
 substituted_file=${preprocessed_file}.cl

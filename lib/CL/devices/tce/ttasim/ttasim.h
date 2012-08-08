@@ -106,6 +106,7 @@ GEN_PROTOTYPES (ttasim)
   NULL, /* unmap_mem is a NOP */                    \
   pocl_tce_run, /* run */                         \
   pocl_ttasim_get_timer_value,                \
+  pocl_tce_build_program, \
   NULL, /* data */                               \
   "tce", /* kernel_lib_target (forced kernel library dir) */    \
   "tce-tut-llvm", /* llvm_target_triplet */               \

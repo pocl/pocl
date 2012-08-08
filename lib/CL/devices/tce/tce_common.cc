@@ -458,3 +458,36 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
   pocl_tce_read (data, target, chunk, size);
   return target;
 }
+
+int 
+pocl_tce_build_program (void *data, char *source_fn, char *binary_fn, 
+                        char *default_cmd, char *dev_tmpdir) 
+{
+  TCEDevice *tce_dev = (TCEDevice*)data;
+
+  int error = 0;
+  /* Generate the vendor extensions header to provide explicit
+     access to the (custom) hardware operations. */
+  std::string tceopgenCmd = 
+    std::string("tceopgen > ") + std::string(dev_tmpdir) + "/tceops.h";
+  
+  error = system (tceopgenCmd.c_str());
+  if (error == -1) return error;
+
+  std::string devextHeaderFn =
+    std::string(dev_tmpdir) + std::string("/_devext.h");
+
+  std::string extgenCmd = 
+    std::string("tceoclextgen ") + tce_dev->machine_file + 
+    std::string(" > ") + devextHeaderFn;
+
+  error = system (extgenCmd.c_str());
+  if (error == -1) return error;
+
+  std::string buildCmd = 
+    std::string("EXTRA_CPPFLAGS=\"-include ") + devextHeaderFn +
+    std::string("\" ") + std::string(default_cmd);
+
+  return system (buildCmd.c_str());
+}
+

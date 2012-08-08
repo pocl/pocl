@@ -104,6 +104,7 @@ GEN_PROTOTYPES (basic)
   NULL, /* unmap_mem is a NOP */                    \
   pocl_pthread_run, /* run */                         \
   pocl_basic_get_timer_value,  /* get_timer_value */    \
+  NULL, /* build_program */ \
   NULL, /* data */                                  \
   NULL,  /* kernel_lib_target (forced kernel library dir) */  \
   NULL, /* llvm_target_triplet */                         \

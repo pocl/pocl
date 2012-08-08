@@ -232,6 +232,10 @@ struct _cl_device_id {
   void (*run) (void *data, _cl_command_node* cmd);
 
   cl_ulong (*get_timer_value) (void *data); /* The current device timer value in nanoseconds. */
+
+  /* Can be used to override the default action for initial .cl to .bc build. */
+  int (*build_program) (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);
+
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
