@@ -815,13 +815,27 @@ void barrier (cl_mem_fence_flags flags);
 
 /* Move built-in declarations out of the way. (There should be a
    better way of doing so.) These five functions are built-in math
-   functions for all Clang languages; see Clang's "Builtin.def".
+   functions for all Clang languages; see Clang's "Builtins.def".
    */
 #define cos _cl_cos
 #define fma _cl_fma
 #define pow _cl_pow
 #define sin _cl_sin
 #define sqrt _cl_sqrt
+
+#if __clang_major__ >= 3 && __clang_minor__ >=2
+#define acos _cl_acos
+#define asin _cl_asin
+#define atan _cl_atan
+#define atan2 _cl_atan2
+#define ceil _cl_ceil
+#define exp _cl_exp
+#define floor _cl_floor
+#define fabs _cl_fabs
+#define log _cl_log
+#define round _cl_round
+#define tan _cl_tan
+#endif
 
 _CL_DECLARE_FUNC_V_V(acos)
 _CL_DECLARE_FUNC_V_V(acosh)

@@ -24,7 +24,12 @@
 
 #include "ParallelRegion.h"
 #include "Barrier.h"
+#include "config.h"
+#ifdef LLVM_3_2
+#include "llvm/IRBuilder.h"
+#else
 #include "llvm/Support/IRBuilder.h"
+#endif
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/ValueSymbolTable.h"

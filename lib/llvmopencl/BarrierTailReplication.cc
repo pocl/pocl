@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "config.h"
 #include "BarrierTailReplication.h"
 #include "Barrier.h"
 #include "Workgroup.h"
@@ -182,7 +183,13 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
         DT->runOnFunction(*f);
+        #ifdef LLVM_3_2
+        // The algorithm has changed - Calculate is removed, Analyze used in stead.
+        // See LLVM commit c9b1e25493b393013b28e5d457f2fb2845a4dd9f
+        LI->getBase().Analyze(DT->getBase());
+        #else
         LI->getBase().Calculate(DT->getBase());
+        #endif
       }
   }
 
