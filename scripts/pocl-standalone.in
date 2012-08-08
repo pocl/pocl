@@ -87,7 +87,7 @@ if [ -f @abs_top_builddir@/lib/kernel/${target}/libkernel.a ]
 then
     @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${target} -lkernel
 else
-    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir/@${target}} -lkernel
+    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir@/${target} -lkernel
 fi
 rm ${linked_out}
 
@@ -122,7 +122,7 @@ EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-no-fp"
 fi
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
-    -globaldce -loop-simplify -isolate-regions -loop-barriers \
+    -globaldce -simplifycfg -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
     -workgroup -local-size=1 1 1 ${OPT_SWITCH} ${EXTRA_OPTS} \
     -header=/dev/null -o ${output_file} ${linked_bc}

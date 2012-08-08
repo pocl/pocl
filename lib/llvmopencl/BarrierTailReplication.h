@@ -56,7 +56,9 @@ namespace pocl {
     bool FindBarriersDFS(llvm::BasicBlock *bb,
                          BasicBlockSet &processed_bbs);
     bool ReplicateJoinedSubgraphs(llvm::BasicBlock *dominator,
-                                  llvm::BasicBlock *subgraph_entry);
+                                  llvm::BasicBlock *subgraph_entry,
+                                  BasicBlockSet &processed_bbs);
+
     llvm::BasicBlock* ReplicateSubgraph(llvm::BasicBlock *entry,
                                         llvm::Function *f);
     void FindSubgraph(BasicBlockVector &subgraph,

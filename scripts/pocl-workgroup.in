@@ -114,7 +114,7 @@ fi
 #set -x
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
-    -globaldce -loop-simplify -isolate-regions -loop-barriers \
+    -globaldce -simplifycfg -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem -workgroup \
     -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
     ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}

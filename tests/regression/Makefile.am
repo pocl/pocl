@@ -26,7 +26,7 @@ noinst_PROGRAMS = test_barrier_between_for_loops test_early_return \
 	test_for_with_var_iteration_count test_id_dependent_computation \
 	test_locals test_loop_phi_replication test_multi_level_loops_with_barriers \
 	test_simple_for_with_a_barrier test_structs_as_args \
-	test_barrier_before_return
+	test_barrier_before_return test_infinite_loop test_constant_array
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 
