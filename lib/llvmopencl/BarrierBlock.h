@@ -22,6 +22,9 @@
 
 #include "llvm/BasicBlock.h"
 
+#ifndef _POCL_BARRIER_BLOCK_H
+#define _POCL_BARRIER_BLOCK_H
+
 namespace pocl {
 
   class BarrierBlock : public llvm::BasicBlock {
@@ -32,3 +35,5 @@ namespace pocl {
   };
 
 }
+
+#endif

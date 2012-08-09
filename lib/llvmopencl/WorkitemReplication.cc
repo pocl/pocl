@@ -1,4 +1,5 @@
-// LLVM function pass to replicate kernel body for several workitems.
+// LLVM function pass to replicate the kernel body for all work items 
+// in a work group.
 // 
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
 //                         Pekka Jääskeläinen / TUT
@@ -43,7 +44,6 @@
 
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
-//#define DEBUG_PR_CREATION
 //#define DEBUG_PR_REPLICATION
 //#define DEBUG_REFERENCE_FIXING
 
@@ -265,103 +265,20 @@ WorkitemReplication::ProcessFunction(Function &F)
       original_bbs.push_back(i);
   }
 
+
   Kernel *K = cast<Kernel> (&F);
+  ParallelRegion::ParallelRegionVector* original_parallel_regions =
+    K->getParallelRegions(LI);
 
-  SmallVector<BarrierBlock *, 4> exit_blocks;
-  K->getExitBlocks(exit_blocks);
-
-  ValueToValueMapTy *const reference_map = new ValueToValueMapTy[workitem_count - 1];
   std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
-  // We need to keep track of traversed barriers to detect back edges.
-  SmallPtrSet<BarrierBlock *, 8> found_barriers;
 
-  // First find all the ParallelRegions in the Function.
-  while (!exit_blocks.empty()) {
-    
-    // We start on an exit block and process the parallel regions upwards
-    // (finding an execution trace).
-    BarrierBlock *exit = exit_blocks.back();
-    exit_blocks.pop_back();
-
-    while (ParallelRegion *PR = K->createParallelRegionBefore(exit)) {
-      assert(PR != NULL && !PR->empty() && 
-             "Empty parallel region in kernel (contiguous barriers)!");
-
-      found_barriers.insert(exit);
-      exit = NULL;
-      parallel_regions[0].push_back(PR);
-      BasicBlock *entry = PR->entryBB();
-      int found_predecessors = 0;
-      BarrierBlock *loop_barrier = NULL;
-      for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
-           i != e; ++i) {
-        BarrierBlock *barrier = cast<BarrierBlock> (*i);
-        if (!found_barriers.count(barrier)) {
-          /* If this is a loop header block we might have edges from two 
-             unprocessed barriers. The one inside the loop (coming from a 
-             computation block after a branch block) should be processed 
-             first. */
-          std::string bbName = "";
-          const bool IS_IN_THE_SAME_LOOP = 
-              LI->getLoopFor(barrier) != NULL &&
-              LI->getLoopFor(entry) != NULL &&
-              LI->getLoopFor(entry) == LI->getLoopFor(barrier);
-
-          if (IS_IN_THE_SAME_LOOP)
-            {
-#ifdef DEBUG_PR_CREATION
-              std::cout << "### found a barrier inside the loop:" << std::endl;
-              std::cout << barrier->getName().str() << std::endl;
-#endif
-              loop_barrier = barrier;
-            }
-          else
-            {
-#ifdef DEBUG_PR_CREATION
-              std::cout << "### found a barrier:" << std::endl;
-              std::cout << barrier->getName().str() << std::endl;
-#endif
-              exit = barrier;
-            }
-          ++found_predecessors;
-        }
-      }
-
-      if (loop_barrier != NULL)
-        {
-          /* The secondary barrier to process in case it was a loop
-             header. Push it for later processing. */
-          if (exit != NULL) 
-            exit_blocks.push_back(exit);
-          /* always process the inner loop regions first */
-          if (!found_barriers.count(loop_barrier))
-            exit = loop_barrier; 
-        }
-
-#ifdef DEBUG_PR_CREATION
-      std::cout << "### created a ParallelRegion:" << std::endl;
-      PR->dumpNames();
-      std::cout << std::endl;
-#endif
-
-      if (found_predecessors == 0)
-        {
-          /* This path has been traversed and we encountered no more
-             unprocessed regions. It means we have either traversed all
-             paths from the exit or have transformed a loop and thus 
-             encountered only a barrier that was seen (and thus
-             processed) before. */
-          break;
-        }
-      assert ((exit != NULL) && "Parallel region without entry barrier!");
-    }
-  }
-
+  parallel_regions[0] = *original_parallel_regions;
+  
   // Measure the required context (variables alive in more than one region).
   TargetData &TD = getAnalysis<TargetData>();
 
   for (SmallVector<ParallelRegion *, 8>::iterator
-         i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+         i = original_parallel_regions->begin(), e = original_parallel_regions->end();
        i != e; ++i) {
     ParallelRegion *pr = (*i);
     
@@ -378,7 +295,7 @@ WorkitemReplication::ProcessFunction(Function &F)
           
           if (find (pr->begin(), pr->end(), user->getParent()) ==
               pr->end()) {
-            // User is no in the defining region.
+            // User is not in the defining region.
             ++ContextValues;
             ContextSize += TD.getTypeAllocSize(i3->getType());
             break;
@@ -389,6 +306,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   }
 
   // Then replicate the ParallelRegions.  
+  ValueToValueMapTy *const reference_map = new ValueToValueMapTy[workitem_count - 1];
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {
       for (int x = 0; x < LocalSizeX ; ++x) {
@@ -401,7 +319,8 @@ WorkitemReplication::ProcessFunction(Function &F)
 	  
         std::size_t regionCounter = 0;
         for (SmallVector<ParallelRegion *, 8>::iterator
-               i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+               i = original_parallel_regions->begin(), 
+               e = original_parallel_regions->end();
              i != e; ++i) {
           ParallelRegion *original = (*i);
           ParallelRegion *replicated =
@@ -423,7 +342,8 @@ WorkitemReplication::ProcessFunction(Function &F)
   if (AddWIMetadata) {
     std::size_t regionCounter = 0;
     for (SmallVector<ParallelRegion *, 8>::iterator
-          i = parallel_regions[0].begin(), e = parallel_regions[0].end();
+          i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
         i != e; ++i) {
       ParallelRegion *original = (*i);  
       original->setID(M->getContext(), 0,0,0, regionCounter);
@@ -477,9 +397,6 @@ WorkitemReplication::ProcessFunction(Function &F)
           entry->dump();
 #endif
           movePhiNodes(entry, pred);
-          // TODO: -simplifycfg does this, use it instead 
-          // to modularize further
-          //MergeBlockIntoPredecessor(entry, this);
         }
       }
     }
