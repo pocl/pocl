@@ -38,6 +38,8 @@ namespace pocl {
     ParallelRegion::ParallelRegionVector* 
       getParallelRegions(llvm::LoopInfo *LI);
 
+    void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ);
+
     static bool classof(const Kernel *) { return true; }
     // We assume any function can be a kernel. This could be used
     // to check for metadata (but would need to be overrideable somehow

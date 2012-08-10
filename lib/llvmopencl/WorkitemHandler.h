@@ -1,6 +1,7 @@
-// Header for Workgroup.cc module pass.
+// Header for WorkitemHandler, a parent class for all implementations of
+// work item handling.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,23 +21,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKGROUP_H
-#define _POCL_WORKGROUP_H
+#ifndef _POCL_WORKITEM_HANDLER_H
+#define _POCL_WORKITEM_HANDLER_H
 
-#include "llvm/Module.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 
 namespace pocl {
-  class Workgroup : public llvm::ModulePass {
-  
+  class Workgroup;
+  class Kernel;
+
+  class WorkitemHandler : public llvm::FunctionPass {
   public:
-    static char ID;
 
-  Workgroup() : ModulePass(ID) {}
+  WorkitemHandler(char ID) : FunctionPass(ID) {}
 
-    virtual bool runOnModule(llvm::Module &M);
+    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
+    virtual bool runOnFunction(llvm::Function &F) = 0;
 
-    static bool isKernelToProcess(const llvm::Function &F);
+    virtual void CheckLocalSize(pocl::Kernel *K);
+
+  protected:
+    int LocalSizeX, LocalSizeY, LocalSizeZ;
+
   };
 }
 

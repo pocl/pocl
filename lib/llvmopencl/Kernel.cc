@@ -1,6 +1,7 @@
-// Class for kernels, a special kind of function.
+// Class for kernels, llvm::Functions that represent OpenCL C kernels.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2011 Universidad Rey Juan Carlos and
+//               2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +24,8 @@
 #include "Kernel.h"
 #include "Barrier.h"
 #include <iostream>
+
+#include "llvm/Support/IRBuilder.h"
 
 //#define DEBUG_PR_CREATION
 
@@ -256,3 +259,40 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
   return parallel_regions;
 
 }
+
+void
+Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ) {
+  
+  IRBuilder<> builder(getEntryBlock().getFirstNonPHI());
+
+  GlobalVariable *gv;
+
+  llvm::Module* M = getParent();
+
+  int size_t_width = 32;
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+
+  gv = M->getGlobalVariable("_local_size_x");
+  if (gv != NULL)
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeX), gv);
+  gv = M->getGlobalVariable("_local_size_y");
+
+  if (gv != NULL)
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeY), gv);
+  gv = M->getGlobalVariable("_local_size_z");
+
+  if (gv != NULL)
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeZ), gv);
+
+}
+

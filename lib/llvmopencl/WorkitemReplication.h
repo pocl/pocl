@@ -1,4 +1,4 @@
-// Header for WorkitemReplication.cc function pass.
+// Header for WorkitemReplication function pass.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
 //               2012 Pekka Jääskeläinen / TUT
@@ -21,67 +21,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef _POCL_WORKITEM_REPLICATION_H
+#define _POCL_WORKITEM_REPLICATION_H
+
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <map>
 #include <vector>
+#include "WorkitemHandler.h"
 
 namespace pocl {
   class Workgroup;
 
-  class WorkitemReplication : public llvm::FunctionPass {
+  class WorkitemReplication : public pocl::WorkitemHandler {
 
   public:
     static char ID;
 
-  WorkitemReplication(): FunctionPass(ID) {}
+  WorkitemReplication() : pocl::WorkitemHandler(ID) {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnFunction(llvm::Function &F);
 
+
   private:
-    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
-    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
-    BasicBlockSet ProcessedBarriers;
+    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
+    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
-    // This stores the reference substitution map for each workitem.
-    // Even when some basic blocks are replicated more than once (due
-    // to barriers creating several execution paths), blocks are
-    // always processed from dominator to function end, making last
-    // added reference the correct one, thus no need for more
-    // complex bookeeping.
-    llvm::ValueToValueMapTy *ReferenceMap;
-
-    int LocalSizeX, LocalSizeY, LocalSizeZ;
-    llvm::GlobalVariable *LocalX, *LocalY, *LocalZ;
-
-    bool ProcessFunction(llvm::Function &F);
-    void CheckLocalSize(llvm::Function *F);
-    llvm::BasicBlock *FindBarriersDFS(llvm::BasicBlock *bb,
-				      llvm::BasicBlock *entry,
-				      BasicBlockVector &bbs_to_replicate);
-    bool FindSubgraph(BasicBlockVector &subgraph,
-                      llvm::BasicBlock *entry,
-                      llvm::BasicBlock *exit);
-    void SetBasicBlockNames(BasicBlockVector &subgraph);
-    void replicateWorkitemSubgraph(BasicBlockVector subgraph,
-				   llvm::BasicBlock *entry,
-				   llvm::BasicBlock *exit);
-    void replicateBasicblocks(BasicBlockVector &new_graph,
-			      ValueValueMap &reference_map,
-			      const BasicBlockVector &graph);
-    void updateReferences(const BasicBlockVector &graph,
-			  const ValueValueMap &reference_map);
-    bool isReplicable(const llvm::Instruction *i);
+    virtual bool ProcessFunction(llvm::Function &F);
 
     void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
 
@@ -92,3 +66,5 @@ namespace pocl {
     friend class pocl::Workgroup;
   };
 }
+
+#endif

@@ -61,7 +61,7 @@ static void createWorkgroupFast(Module &M, Function *F);
 // extern cl::list<int> LocalSize;
 
 cl::opt<string>
-Kernel("kernel",
+KernelName("kernel",
        cl::desc("Kernel function name"),
        cl::value_desc("kernel"),
        cl::init(""));
@@ -184,9 +184,9 @@ Workgroup::isKernelToProcess(const Function &F)
 
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
   if (kernels == NULL) {
-    if (Kernel == "")
+    if (KernelName == "")
       return true;
-    if (F.getName() == Kernel)
+    if (F.getName() == KernelName)
       return true;
 
     return false;

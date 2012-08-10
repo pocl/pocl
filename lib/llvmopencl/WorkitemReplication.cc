@@ -54,8 +54,6 @@
 using namespace llvm;
 using namespace pocl;
 
-static bool block_has_barrier(const BasicBlock *bb);
-
 STATISTIC(ContextValues, "Number of SSA values which have to be context-saved");
 STATISTIC(ContextSize, "Context size per workitem in bytes");
 
@@ -64,10 +62,6 @@ namespace {
   RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
 }
 
-cl::list<int>
-LocalSize("local-size",
-	  cl::desc("Local size (x y z)"),
-	  cl::multi_val(3));
 static cl::opt<bool>
 AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
   cl::desc("Adds a work item identifier to each of the instruction in work items."));
@@ -253,7 +247,8 @@ WorkitemReplication::ProcessFunction(Function &F)
 {
   Module *M = F.getParent();
 
-  CheckLocalSize(&F);
+  Kernel *K = cast<Kernel> (&F);
+  CheckLocalSize(K);
 
   // Allocate space for workitem reference maps. Workitem 0 does
   // not need it.
@@ -261,12 +256,11 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   BasicBlockVector original_bbs;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    if (!block_has_barrier(i))
-      original_bbs.push_back(i);
+      if (!Barrier::hasBarrier(i))
+        original_bbs.push_back(i);
   }
 
 
-  Kernel *K = cast<Kernel> (&F);
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
 
@@ -408,36 +402,9 @@ WorkitemReplication::ProcessFunction(Function &F)
        i != e; ++i)
     (*i)->setName((*i)->getName() + ".wi_0_0_0");
 
-  // Initialize local size (done at the end to avoid unnecessary
+  // Initialize local size variables (done at the end to avoid unnecessary
   // replication).
-  IRBuilder<> builder(F.getEntryBlock().getFirstNonPHI());
-
-  GlobalVariable *gv;
-
-  int size_t_width = 32;
-  if (M->getPointerSize() == llvm::Module::Pointer64)
-    size_t_width = 64;
-
-  gv = M->getGlobalVariable("_local_size_x");
-  if (gv != NULL)
-    builder.CreateStore
-      (ConstantInt::get
-       (IntegerType::get(M->getContext(), size_t_width),
-        LocalSizeX), gv);
-  gv = M->getGlobalVariable("_local_size_y");
-
-  if (gv != NULL)
-    builder.CreateStore
-      (ConstantInt::get
-       (IntegerType::get(M->getContext(), size_t_width),
-        LocalSizeY), gv);
-  gv = M->getGlobalVariable("_local_size_z");
-
-  if (gv != NULL)
-    builder.CreateStore
-      (ConstantInt::get
-       (IntegerType::get(M->getContext(), size_t_width),
-        LocalSizeZ), gv);
+  K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
   delete [] reference_map;
 
@@ -458,35 +425,3 @@ WorkitemReplication::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst)
     PN->moveBefore(dst->getFirstNonPHI());
 }
 
-void
-WorkitemReplication::CheckLocalSize(Function *F)
-{
-  Module *M = F->getParent();
-  
-  LocalSizeX = LocalSize[0];
-  LocalSizeY = LocalSize[1];
-  LocalSizeZ = LocalSize[2];
-  
-  NamedMDNode *size_info = M->getNamedMetadata("opencl.kernel_wg_size_info");
-  if (size_info) {
-    for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
-      MDNode *KernelSizeInfo = size_info->getOperand(i);
-      if (KernelSizeInfo->getOperand(0) == F) {
-        LocalSizeX = (cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-        LocalSizeY = (cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-        LocalSizeZ = (cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-      }
-    }
-  }
-}
-
-static bool
-block_has_barrier(const BasicBlock *bb)
-{
-  for (BasicBlock::const_iterator i = bb->begin(), e = bb->end();
-       i != e; ++i) {
-    if (isa<Barrier>(i))
-      return true;
-  }
-  return false;
-}
