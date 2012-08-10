@@ -1,8 +1,7 @@
-// LLVM function pass to replicate the kernel body for all work items 
+// LLVM function pass to create a loop that runs all the work items 
 // in a work group.
 // 
-// Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-//                         Pekka Jääskeläinen / TUT
+// Copyright (c) 2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#define DEBUG_TYPE "workitem"
+#define DEBUG_TYPE "workitem-loops"
 
-#include "WorkitemReplication.h"
+#include "WorkitemLoops.h"
 #include "Workgroup.h"
 #include "Barrier.h"
 #include "Kernel.h"
@@ -42,10 +41,6 @@
 #include <sstream>
 #include <vector>
 
-//#define DEBUG_BB_MERGING
-//#define DUMP_RESULT_CFG
-//#define DEBUG_PR_REPLICATION
-
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
 #endif
@@ -53,18 +48,15 @@
 using namespace llvm;
 using namespace pocl;
 
-STATISTIC(ContextValues, "Number of SSA values which have to be context-saved");
-STATISTIC(ContextSize, "Context size per workitem in bytes");
-
 namespace {
   static
-  RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
+  RegisterPass<WorkitemLoops> X("workitemloops", "Workitem loop generation pass");
 }
 
-char WorkitemReplication::ID = 0;
+char WorkitemLoops::ID = 0;
 
 void
-WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
+WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addRequired<LoopInfo>();
@@ -72,7 +64,7 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 }
 
 bool
-WorkitemReplication::runOnFunction(Function &F)
+WorkitemLoops::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
     return false;
@@ -91,10 +83,8 @@ WorkitemReplication::runOnFunction(Function &F)
 }
 
 bool
-WorkitemReplication::ProcessFunction(Function &F)
+WorkitemLoops::ProcessFunction(Function &F)
 {
-  Module *M = F.getParent();
-
   Kernel *K = cast<Kernel> (&F);
   CheckLocalSize(K);
 
@@ -108,45 +98,15 @@ WorkitemReplication::ProcessFunction(Function &F)
         original_bbs.push_back(i);
   }
 
-
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
 
   std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
 
+  assert (false && "Unimplemented.");
+#if 0
   parallel_regions[0] = *original_parallel_regions;
   
-  // Measure the required context (variables alive in more than one region).
-  TargetData &TD = getAnalysis<TargetData>();
-
-  for (SmallVector<ParallelRegion *, 8>::iterator
-         i = original_parallel_regions->begin(), e = original_parallel_regions->end();
-       i != e; ++i) {
-    ParallelRegion *pr = (*i);
-    
-    for (ParallelRegion::iterator i2 = pr->begin(), e2 = pr->end();
-         i2 != e2; ++i2) {
-      BasicBlock *bb = (*i2);
-      
-      for (BasicBlock::iterator i3 = bb->begin(), e3 = bb->end();
-           i3 != e3; ++i3) {
-        for (Value::use_iterator i4 = i3->use_begin(), e4 = i3->use_end();
-             i4 != e4; ++i4) {
-          // Instructions can only be used by instructions.
-          Instruction *user = cast<Instruction> (*i4);
-          
-          if (find (pr->begin(), pr->end(), user->getParent()) ==
-              pr->end()) {
-            // User is not in the defining region.
-            ++ContextValues;
-            ContextSize += TD.getTypeAllocSize(i3->getType());
-            break;
-          }
-        }
-      }
-    }
-  }
-
   // Then replicate the ParallelRegions.  
   ValueToValueMapTy *const reference_map = new ValueToValueMapTy[workitem_count - 1];
   for (int z = 0; z < LocalSizeZ; ++z) {
@@ -169,8 +129,6 @@ WorkitemReplication::ProcessFunction(Function &F)
             original->replicate
             (reference_map[index - 1],
              (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
-          if (AddWIMetadata)
-            replicated->setID(M->getContext(), x, y, z, regionCounter);
           regionCounter++;
           parallel_regions[index].push_back(replicated);
 #ifdef DEBUG_PR_REPLICATION
@@ -181,17 +139,6 @@ WorkitemReplication::ProcessFunction(Function &F)
       }
     }
   }
-  if (AddWIMetadata) {
-    std::size_t regionCounter = 0;
-    for (SmallVector<ParallelRegion *, 8>::iterator
-          i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-        i != e; ++i) {
-      ParallelRegion *original = (*i);  
-      original->setID(M->getContext(), 0,0,0, regionCounter);
-      regionCounter++;
-    }
-  }  
   
   for (int z = 0; z < LocalSizeZ; ++z) {
     for (int y = 0; y < LocalSizeY; ++y) {
@@ -255,7 +202,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
   delete [] reference_map;
-
+#endif
   return true;
 }
 

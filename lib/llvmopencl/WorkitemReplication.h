@@ -56,14 +56,6 @@ namespace pocl {
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     virtual bool ProcessFunction(llvm::Function &F);
-
-    void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
-
-    bool fixUndominatedVariableUses(llvm::Function &F);
-
-    bool dominatesUse(llvm::Instruction &I, unsigned i);
-
-    friend class pocl::Workgroup;
   };
 }
 

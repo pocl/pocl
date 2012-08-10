@@ -1,5 +1,4 @@
-// Header for WorkitemHandler, a parent class for all implementations of
-// work item handling.
+// Header for WorkitemLoops function pass.
 // 
 // Copyright (c) 2012 Pekka Jääskeläinen / TUT
 // 
@@ -21,42 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_HANDLER_H
-#define _POCL_WORKITEM_HANDLER_H
+#ifndef _POCL_WORKITEM_LOOPS_H
+#define _POCL_WORKITEM_LOOPS_H
 
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-
-namespace llvm {
-  class DominatorTree;
-}
+#include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
+#include <map>
+#include <vector>
+#include "WorkitemHandler.h"
 
 namespace pocl {
   class Workgroup;
-  class Kernel;
 
-  class WorkitemHandler : public llvm::FunctionPass {
+  class WorkitemLoops : public pocl::WorkitemHandler {
+
   public:
+    static char ID;
 
-  WorkitemHandler(char ID) : FunctionPass(ID) {}
+  WorkitemLoops() : pocl::WorkitemHandler(ID) {}
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
-    virtual bool runOnFunction(llvm::Function &F) = 0;
+    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
+    virtual bool runOnFunction(llvm::Function &F);
 
-    virtual void CheckLocalSize(pocl::Kernel *K);
+  private:
 
-  protected:
-    
-    void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
-    bool fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Function &F);
-    bool dominatesUse(llvm::DominatorTree *DT, llvm::Instruction &I, unsigned i);
+    llvm::DominatorTree *DT;
+    llvm::LoopInfo *LI;
 
-    int LocalSizeX, LocalSizeY, LocalSizeZ;
+    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
+    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
+    virtual bool ProcessFunction(llvm::Function &F);
   };
-
-  extern llvm::cl::opt<bool> AddWIMetadata;
 }
 
 #endif
