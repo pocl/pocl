@@ -186,7 +186,7 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_MAX_CONSTANT_ARGS                 : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_constant_args);
   case CL_DEVICE_LOCAL_MEM_TYPE                    :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->local_mem_size);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->local_mem_type);
   case CL_DEVICE_LOCAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->local_mem_size);
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          :
