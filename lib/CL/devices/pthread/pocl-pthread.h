@@ -50,6 +50,15 @@ GEN_PROTOTYPES (basic)
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG  , /* preferred_vector_width_long */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT , /* preferred_vector_width_float */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF,   /* preferred_vector_width_half */ \
+  /* TODO: figure out what the difference between preferred and native widths are. */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT   , /* preferred_vector_width_int */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG  , /* preferred_vector_width_long */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT , /* preferred_vector_width_float */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
+  POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF  , /* preferred_vector_width_half */ \
   0, /* max_clock_frequency */						\
   0, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
