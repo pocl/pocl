@@ -314,6 +314,8 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       }
   }
 
+  command_node->event = event ? *event : NULL;
+
   LL_APPEND(command_queue->root, command_node);
 
   return CL_SUCCESS;

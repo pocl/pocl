@@ -37,7 +37,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
                      const cl_event *event_wait_list,
                      cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
-  cl_device_id device_id;
+  cl_device_id device;
   unsigned i;
 
   if (command_queue == NULL)
@@ -53,13 +53,13 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
       (offset + cb > buffer->size))
     return CL_INVALID_VALUE;
 
-  device_id = command_queue->device;
+  device = command_queue->device;
+
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
-      if (command_queue->context->devices[i] == device_id)
-	break;
+        if (command_queue->context->devices[i] == device)
+            break;
     }
-
   assert(i < command_queue->context->num_devices);
 
   if (event != NULL)
@@ -76,6 +76,8 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     }
 
   /* enqueue the write, or execute directly */
+  /* TODO: why do we implement both? direct execution seems
+     unnecessary. */
   if (blocking_write)
     {
       if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
@@ -94,16 +96,8 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
       POCL_PROFILE_SUBMITTED;
       POCL_PROFILE_RUNNING;
       /* TODO: fixme. The offset computation must be done at the device driver. */
-      device_id->write(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id]+offset, cb);
+      device->write(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
       POCL_PROFILE_COMPLETE;
-
-      if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE && 
-          event != NULL)
-      {
-          (*event)->status = CL_COMPLETE;
-          (*event)->time_end = 
-              command_queue->device->get_timer_value(command_queue->device->data);
-      }
 
       clReleaseMemObject (buffer);
     }
@@ -112,14 +106,15 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
     _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
     if (cmd == NULL)
       return CL_OUT_OF_HOST_MEMORY;
-    
+
     cmd->type = CL_COMMAND_TYPE_WRITE;
-    cmd->command.write.data = device_id->data;
+    cmd->command.write.data = device->data;
     cmd->command.write.host_ptr = ptr;
     cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
     cmd->command.write.cb = cb;
-    cmd->next = NULL;
     cmd->command.write.buffer = buffer;
+    cmd->next = NULL;
+    cmd->event = event ? *event : NULL;
     clRetainMemObject (buffer);
 
     LL_APPEND(command_queue->root, cmd);
