@@ -41,6 +41,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
         {
         case CL_COMMAND_TYPE_READ:
           POCL_PROFILE_SUBMITTED;
+          POCL_PROFILE_RUNNING;
           command_queue->device->read
             (node->command.read.data, 
              node->command.read.host_ptr, 
@@ -51,6 +52,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           break;
         case CL_COMMAND_TYPE_WRITE:
           POCL_PROFILE_SUBMITTED;
+          POCL_PROFILE_RUNNING;
           command_queue->device->write
             (node->command.write.data, 
              node->command.write.host_ptr, 
@@ -61,6 +63,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           break;
         case CL_COMMAND_TYPE_COPY:
           POCL_PROFILE_SUBMITTED;
+          POCL_PROFILE_RUNNING;
           command_queue->device->copy
             (node->command.copy.data, 
              node->command.copy.src_ptr, 
@@ -71,9 +74,11 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           clReleaseMemObject (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_TYPE_RUN:
-          POCL_PROFILE_SUBMITTED;
           assert (*event == node->event);
+          POCL_PROFILE_SUBMITTED;
+          POCL_PROFILE_RUNNING;
           command_queue->device->run(node->command.run.data, node);
+          POCL_PROFILE_COMPLETE;
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];
