@@ -175,6 +175,7 @@ struct _cl_device_id {
   cl_uint mem_base_addr_align;
   cl_uint min_data_type_align_size;
   cl_device_fp_config single_fp_config;
+  cl_device_fp_config double_fp_config;
   cl_device_mem_cache_type global_mem_cache_type;
   cl_uint global_mem_cacheline_size;
   cl_ulong global_mem_cache_size;

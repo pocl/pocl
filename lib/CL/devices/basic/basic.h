@@ -71,6 +71,7 @@ GEN_PROTOTYPES (basic)
   0, /* mem_base_addr_align */						\
   0, /* min_data_type_align_size */					\
   CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN, /* single_fp_config */	\
+  CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN, /* double_fp_config */	\
   CL_NONE, /* global_mem_cache_type */					\
   0, /* global_mem_cacheline_size */					\
   0, /* global_mem_cache_size */					\
