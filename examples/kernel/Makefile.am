@@ -28,4 +28,4 @@ kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_hadd.cl test_rotat
 kernel_LDADD = ../../lib/CL/libpocl.la -lm @PTHREAD_LIBS@
 kernel_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

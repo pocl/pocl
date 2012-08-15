@@ -26,14 +26,14 @@ SUBDIRS = pthread basic
 
 noinst_LTLIBRARIES = libpocl-devices.la
 
-libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c bufalloc.h
+libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c dev_image.h \
+	prototypes.inc common.h
 libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
 	basic/libpocl-devices-basic.la
 
 libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL \
--U__APPLE__
+-I$(top_srcdir)/lib/CL
 
 if TCE_AVAILABLE
 SUBDIRS += tce

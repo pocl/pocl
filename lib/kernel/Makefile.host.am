@@ -36,8 +36,8 @@ vpath %.ll @top_srcdir@/lib/kernel/@HOST_CPU@:@top_srcdir@/lib/kernel
 
 include $(top_srcdir)/lib/kernel/sources.mk
 
-RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
-AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
+RANLIB = @LLVM_RANLIB@
+AR = @LLVM_AR@
 
 CLANGFLAGS = -ccc-host-triple @HOST@
 
@@ -46,6 +46,3 @@ CLANGFLAGS = -ccc-host-triple @HOST@
 
 .c.o:
 	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/@HOST@/types.h -o $@ $<
-
-barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<

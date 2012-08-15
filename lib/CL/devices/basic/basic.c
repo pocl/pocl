@@ -32,7 +32,7 @@
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#define COMMAND_LENGTH 256
+#define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
@@ -43,8 +43,6 @@ struct data {
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
 };
-
-size_t pocl_basic_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
 pocl_basic_init (cl_device_id device, const char* parameters)
@@ -419,10 +417,10 @@ pocl_basic_uninit (cl_device_id device)
   device->data = NULL;
 }
 
-uint64_t
+cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
-  struct timeval time;
-  gettimeofday(&time, NULL);
-  return (time.tv_sec * 1000000 + time.tv_usec) * 1000;
+  struct timeval current;
+  gettimeofday(&current, NULL);  
+  return (current.tv_sec * 1000000 + current.tv_usec)*1000;
 }

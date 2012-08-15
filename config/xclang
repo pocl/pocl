@@ -12,32 +12,44 @@ do
 done
 shift $((${OPTIND}-1))
 
+# CLANG and llc should be defined and exported in configure script
+# but in case of direct call, do something not too bad
+CLANG="${CLANG:-clang}"
+LLC="${LLC:-llc}"
+
 if [ "x$host" = x ]
 then
-    exec clang $mode $output $1
+    exec $CLANG $mode $output $1
 fi
 
 config=`dirname $0`
 build=`$config/config.guess`
 
+if [ -z $TMPDIR ]
+then
+    TMPDIR=/tmp
+fi
+tmpdir=$TMPDIR/xclang$PPID
+mkdir $tmpdir
+
 if [ "$mode" = -c ]
 then
-    clang -ccc-host-triple $host -c -emit-llvm -o _xclang.bc $@
-    llc -mtriple=$build -o _xclang.s _xclang.bc
-    exec clang -c $output _xclang.s
+    $CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+    $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
+    exec $CLANG -ccc-host-triple $build -c $output $tmpdir/xclang.s
 fi
 
 if [ "$mode" = -S ]
 then
-    clang -ccc-host-triple $host -c -emit-llvm -o _xclang.bc $@
-    exec llc -mtriple=$build $output _xclang.bc
+    $CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+    exec $LLC -mtriple=$build $output $tmpdir/xclang.bc
 fi
 
 if [ "$mode" = -E ]
 then
-    exec clang -E $output $1
+    exec $CLANG -E $output $1
 fi
 
-clang -ccc-host-triple $host -c -emit-llvm -o _xclang.bc $@
-llc -mtriple=$build -o _xclang.s _xclang.bc
-exec clang $output _xclang.s
+$CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+$LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
+exec $CLANG -ccc-host-triple $build $output $tmpdir/xclang.s

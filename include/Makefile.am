@@ -22,7 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h
+pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h utlist.h bufalloc.h \
+	poclu.h
 # The sort command (also) removes duplicate entries which might appear 
 # due to @TARGET@ and/or @HOST@ being one of the manually defined 
 # targets. 
@@ -35,4 +36,6 @@ nobase_pkginclude_HEADERS = $(sort 				\
 
 include_HEADERS = poclu.h
 
-SUBDIRS = CL
+EXTRA_DIST = types.host.in types.target.in
+
+SUBDIRS = CL OpenCL

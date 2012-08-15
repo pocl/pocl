@@ -1,4 +1,4 @@
-/* Tests a kernel with an early return before a barriered region.
+/* Issues with __local pointers (lp:918801)
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -29,35 +29,38 @@
 #include <cstdlib>
 #include <iostream>
 
-#define WINDOW_SIZE 32
+#include "poclu.h"
+
 #define WORK_ITEMS 2
-#define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
+#define BUFFER_SIZE (WORK_ITEMS)
+
 
 static char
 kernelSourceCode[] = 
-"kernel \n"
-"void test_kernel(__global float *input, \n"
-"                 __global int *result) {\n"
-" if (input[0] == 0.0f) return;\n"
-" size_t gid = get_global_id(0);\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
-" result[gid] = input[gid];\n"
+"kernel void test_kernel (global float *a, local int *local_buf, private int scalar)\n"
+"{\n"
+"   int gid = get_local_id(0); \n"
+"   local int automatic_local_scalar; \n"
+"   local int automatic_local_buf[2];\n"
+"\n"
+"   __local int *p;\n"
+"\n"
+"   p = automatic_local_buf;\n"
+"   p[gid] = gid + scalar;\n"
+"   p = local_buf;\n"
+"   p[gid] = a[gid];\n"
+"   automatic_local_scalar = scalar;\n"
+"   barrier(CLK_LOCAL_MEM_FENCE);\n"
+"   a[gid] = automatic_local_buf[gid] + local_buf[gid] + automatic_local_scalar;\n"
+"   \n"
 "}\n";
 
 int
 main(void)
 {
     float A[BUFFER_SIZE];
-    int R[WORK_ITEMS];
+
     cl_int err;
-
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        A[i] = i;
-    }
-
-    for (int i = 0; i < WORK_ITEMS; i++) {
-        R[i] = i;
-    }
 
     try {
         std::vector<cl::Platform> platformList;
@@ -68,7 +71,7 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_CPU, cprops);
+        cl::Context context(CL_DEVICE_TYPE_CPU|CL_DEVICE_TYPE_GPU, cprops);
 
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -77,29 +80,32 @@ main(void)
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
         cl::Program program(context, sources);
 
+        cl_device_id dev_id = devices.at(0)();
+
+        int scalar = poclu_bswap_cl_int (dev_id, 4);
+
+        for (int i = 0; i < BUFFER_SIZE; ++i)
+            A[i] = poclu_bswap_cl_float(dev_id, i);
+
         // Build program
         program.build(devices);
 
-        // Create buffer for A and copy host contents
         cl::Buffer aBuffer = cl::Buffer(
             context, 
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+            CL_MEM_COPY_HOST_PTR,
             BUFFER_SIZE * sizeof(float), 
             (void *) &A[0]);
 
-        // Create buffer for that uses the host ptr C
-        cl::Buffer cBuffer = cl::Buffer(
-            context, 
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
-            WORK_ITEMS * sizeof(int), 
-            (void *) &R[0]);
+        cl::Buffer localBuffer = cl::Buffer(
+            context, 0, BUFFER_SIZE * sizeof(int), NULL);
 
         // Create kernel object
         cl::Kernel kernel(program, "test_kernel");
 
         // Set kernel args
         kernel.setArg(0, aBuffer);
-        kernel.setArg(1, cBuffer);
+        kernel.setArg(1, localBuffer);
+        kernel.setArg(2, scalar);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
@@ -111,32 +117,29 @@ main(void)
             cl::NDRange(WORK_ITEMS),
             cl::NullRange);
  
-
-        // Map cBuffer to host pointer. This enforces a sync with 
+        // Map aBuffer to host pointer. This enforces a sync with 
         // the host backing space, remember we choose GPU device.
-        int * output = (int *) queue.enqueueMapBuffer(
-            cBuffer,
+        float * res = (float *) queue.enqueueMapBuffer(
+            aBuffer,
             CL_TRUE, // block 
             CL_MAP_READ,
             0,
-            WORK_ITEMS * sizeof(int));
+            BUFFER_SIZE * sizeof(float));
 
-        bool ok = true;
-        for (int i = 0; i < WORK_ITEMS; i++) {
-            int correct = i;
-            if ((int)R[i] != correct) {
-                std::cout 
-                    << "F(" << i << ": " << R[i] << " != " << correct 
-                    << ") ";
-                ok = false;
-            }
+        res[0] = poclu_bswap_cl_float (dev_id, res[0]);
+        res[1] = poclu_bswap_cl_float (dev_id, res[1]);
+        bool ok = res[0] == 8 && res[1] == 10;
+        if (ok) {
+            return EXIT_SUCCESS;
+        } else {
+            std::cout << "NOK " << res[0] << " " << res[1] << std::endl;
+            std::cout << "res@" << std::hex << res << std::endl;
+            return EXIT_FAILURE;
         }
-        if (ok) std::cout << "OK" << std::endl;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(
-            cBuffer,
-            (void *) output);
+            aBuffer, (void *) res);
  
         // There is no need to perform a finish on the final unmap
         // or release any objects as this all happens implicitly with

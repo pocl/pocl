@@ -36,16 +36,17 @@ LT_INIT
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-
+AC_PROG_LN_S
 
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
 
+AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
 AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
-LLVM_UNSTABLE="no"
+LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 
 case "$LLVM_VERSION" in
      3.1*)
@@ -73,8 +74,12 @@ AC_ARG_ENABLE([region-allocator],
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
               [AS_HELP_STRING([--disable-icd], [Do not build pocl with the ICD extensions])],
-              [icd="no"],
-              [AC_DEFINE([BUILD_ICD], [], "Build with ICD")])
+              [icd="$enableval"],
+              [icd="yes"])
+if test x"$icd" != xno; then :
+  AC_DEFINE([BUILD_ICD], [], "Build with ICD")
+fi
+
 AC_SUBST(icd)
 AM_CONDITIONAL(INSTALL_ICD, test "$icd" != "no")
 
@@ -173,24 +178,38 @@ else
 	CXXFLAGS="-O0 -g"
 fi
 
-# Checks for programs.
-AC_ARG_VAR([CLANG], [Program to compile kernels to bytecode])
-AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
+AC_DEFINE([HAVE_GL_GL_H], [], [OpenGL])
+AC_DEFINE([HAVE_OPENGL_OPENGL_H], [], [OpenGL on Apple])
 
-AC_PATH_PROG([CLANG], [clang])
-test -z "$CLANG" && AC_MSG_FAILURE([no clang found in \$PATH])
+AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
+
+test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+
+# Checks for programs.
+AC_DEFUN([LLVM_PROG], [
+  AC_ARG_VAR([$1], [$3])
+  AC_PATH_PROG([$1], [$2], , [$LLVM_BINDIR:$PATH])
+  AS_IF([test "x$1" = x], [
+    AC_MSG_FAILURE([cannot find LLVM binary '$2' in '$LLVM_BINDIR' nor \$PATH])
+  ])
+])
+
+LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
+
+AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
-AC_PATH_PROG([OPT], [opt])
-AC_PATH_PROG([LLVM_LD], [llvm-ld])
-AC_PATH_PROG([LLC], [llc])
-AC_PATH_PROG([LLVM_AS], [llvm-as])
-test -z "$OPT" || \
-test -z "$LLVM_LD" || \
-test -z "$LLC" || \
-test -z "$LLVM_AS" && AC_MSG_FAILURE([no llvm required binaries found in \$PATH])
+LLVM_PROG([OPT], [opt], [LLVM optimizer])
+LLVM_PROG([LLVM_LD], [llvm-ld], [LLVM linker])
+LLVM_PROG([LLC], [llc], [LLVM static compiler])
+LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
+LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
+LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
+# $CLANG and $LLC are needed by config/xclang
+export CLANG
+export LLC
 
 AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
@@ -225,8 +244,13 @@ case $host_os in
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
     HOST_LD_FLAGS="-bundle -w"  
+    ICD_LD_FLAGS="-single_module"
     ;;
+  *gnu )
+    ICD_LD_FLAGS="-Wl,-Bsymbolic"
+    ;;  
 esac
+AC_SUBST([ICD_LD_FLAGS])
 case $host_cpu in
   arm*)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
@@ -284,6 +308,13 @@ AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
 
+if test x"$prefix" = xNONE; then
+  prefix=/usr/local
+fi
+AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
+AC_DEFINE_UNQUOTED([POCL_INSTALLED_DATA],["$prefix/share/pocl"],[The installation directory])
+AC_SUBST([POCL_INSTALLED_DATA], $prefix/share/pocl)
+
 # Checks for libraries.
 
 # Checks for header files.
@@ -294,8 +325,10 @@ AC_LANG([C])
 old_CC="$CC"
 old_CPPFLAGS="$CPPFLAGS"
 old_CFLAGS="$CFLAGS"
+old_LDFLAGS="$LDFLAGS"
 CC=$srcdir/config/xclang
 CPPFLAGS=""
+LDFLAGS=""
 
 AC_CONFIG_FILES([include/arm/types.h
                  include/tce/types.h
@@ -352,6 +385,7 @@ AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vect
 CC="$old_CC"
 CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
+LDFLAGS="$old_LDFLAGS"
 
 AC_C_BIGENDIAN
 
@@ -364,6 +398,7 @@ AC_CONFIG_FILES([Makefile
                  pocl.icd
                  include/Makefile
                  include/CL/Makefile
+                 include/OpenCL/Makefile
                  lib/Makefile
                  lib/CL/Makefile
                  lib/CL/devices/Makefile
@@ -390,31 +425,9 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  tests/atlocal
                  tests/regression/Makefile
-                 tests/regression/loop-phi-replication/Makefile
-                 tests/regression/locals/Makefile
-                 tests/regression/barrier-between-for-loops/Makefile
-                 tests/regression/simple-for-with-a-barrier/Makefile
-                 tests/regression/multi-level-loops-with-barriers/Makefile
-                 tests/regression/for-with-var-iteration-count/Makefile
-                 tests/regression/early-return/Makefile
-                 tests/regression/id-dependent-computation/Makefile
-                 tests/regression/structs-as-args/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  ])
-# lib/kernel/bgp/Makefile
-# lib/kernel/ppc/Makefile
 
 AC_OUTPUT
-
-if test "$LLVM_UNSTABLE" == "yes";
-then  
-AC_MSG_NOTICE(
-   [ 
-     Warning: You are using an LLVM version with an unstable OpenCL C 
-     support that includes major OpenCL C miscompilation issues.  
-     Please upgrade to the latest LLVM version (3.1 or later) 
-     for more robust OpenCL C compilation.
-   ])
-fi
 

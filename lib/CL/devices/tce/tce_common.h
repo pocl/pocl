@@ -64,6 +64,15 @@ class TCEDevice {
   /* Read the device time stamp for the profiling queue. */
   virtual uint64_t timeStamp() = 0;
 
+  /* Finds the global data memory addresses needed for device->host
+     communication from the loaded program. */
+  virtual void findDataMemoryAddresses();
+
+  /* Initializes the global communication structures in the device's
+     global memory. Should be called once after loading the program to
+     the device.*/
+  virtual void initDataMemory();
+
   /* The bufalloc memory regions for device memory allocation book 
      keeping. */
   struct memory_region local_mem;
@@ -78,6 +87,10 @@ class TCEDevice {
   bool needsByteSwap;
 
   const TTAProgram::Program* currentProgram;
+
+  uint32_t commandQueueAddr;
+
+  uint64_t globalCycleCount;
 
 };
 

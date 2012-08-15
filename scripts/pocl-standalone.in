@@ -87,7 +87,7 @@ if [ -f @abs_top_builddir@/lib/kernel/${target}/libkernel.a ]
 then
     @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${target} -lkernel
 else
-    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir/@${target}} -lkernel
+    @LLVM_LD@ -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir@/${target} -lkernel
 fi
 rm ${linked_out}
 
@@ -113,16 +113,16 @@ fi
 
 if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
 then
-EXTRA_OPTS+=" -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
+EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
 fi
 
 if test "x$POCL_VECTORIZE_NO_FP" = "x1";
 then
-EXTRA_OPTS+=" -wi-vectorize-no-fp"
+EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-no-fp"
 fi
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
-    -globaldce -loop-simplify -isolate-regions -loop-barriers \
+    -globaldce -simplifycfg -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem \
     -workgroup -local-size=1 1 1 ${OPT_SWITCH} ${EXTRA_OPTS} \
     -header=/dev/null -o ${output_file} ${linked_bc}

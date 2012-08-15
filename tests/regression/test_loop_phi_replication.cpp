@@ -1,4 +1,4 @@
-/* Tests a for-loops with variable iteration count with a barriers inside.
+/* Tests the bug that caused the phi nodes not be replicated (launchpad #927573).
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -29,35 +29,34 @@
 #include <cstdlib>
 #include <iostream>
 
-#define WINDOW_SIZE 32
-#define WORK_ITEMS 2
+#define WINDOW_SIZE 16
+#define WORK_ITEMS 16
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
+
+float A[BUFFER_SIZE];
+int R[WORK_ITEMS];
 
 static char
 kernelSourceCode[] = 
 "kernel \n"
 "void test_kernel(__global float *input, \n"
-"                 __global int *result,\n"
-"                 int a) {\n"
-" size_t gid = get_global_id(0);\n"
-" size_t i;\n"
-" float sum = 0.0f;\n"
-" for (i = 0; i < a; ++i) {\n"
-"   sum += input[i]; \n"
-//"   printf(\"[gid=%d, i=%d, input=%f, sum=%f] \", gid, i, input[i], sum);\n"
-"   barrier(CLK_GLOBAL_MEM_FENCE);\n"
+"                 __global int *result) {\n"
+"  int gid = get_global_id(0);\n"
+"  float global_sum = 0.0f;\n"
+"  int i;\n"
+"\n"
+" for (i=0; i < 16; ++i) {\n"
+"   float value = input[gid+i];\n"
+"   global_sum += value;\n"
+"   barrier(CLK_LOCAL_MEM_FENCE);\n"
 " }\n"
-//" printf(\"final sum for gid %d is %f\\n\", gid, sum);\n"
-" result[gid] = sum;\n"
+" result[gid] = global_sum;\n"
 "}\n";
 
 int
 main(void)
 {
-    float A[BUFFER_SIZE];
-    int R[WORK_ITEMS];
     cl_int err;
-    int a = 3;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -108,7 +107,6 @@ main(void)
         // Set kernel args
         kernel.setArg(0, aBuffer);
         kernel.setArg(1, cBuffer);
-        kernel.setArg(2, a);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
@@ -132,15 +130,20 @@ main(void)
 
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
-            int correct = 3;
-            if ((int)R[i] != correct) {
-                std::cout 
-                    << "F(" << i << ": " << R[i] << " != " << correct 
-                    << ") ";
+            float global_sum = 0.0f;
+            for (int j=0; j < 16; ++j) {
+                float value = A[i + j];
+                global_sum += value;
+            }
+            if ((int)global_sum != R[i]) {
+                std::cout << "F";
                 ok = false;
             }
         }
-        if (ok) std::cout << "OK" << std::endl;
+        if (ok) 
+            return EXIT_SUCCESS;
+        else
+            return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(

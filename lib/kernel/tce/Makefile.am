@@ -35,8 +35,8 @@ vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
-RANLIB = `@LLVM_CONFIG@ --bindir`/llvm-ranlib
-AR = `@LLVM_CONFIG@ --bindir`/llvm-ar
+RANLIB = @LLVM_RANLIB@
+AR = @LLVM_AR@
 
 CLANGFLAGS = -ccc-host-triple tce-tut-llvm
 
@@ -45,9 +45,6 @@ CLANGFLAGS = -ccc-host-triple tce-tut-llvm
 
 .c.o:
 	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/tce/types.h -o $@ $<
-
-barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<
 
 # # TODO: This misses the dependency on the device-specific include files
 # # TODO: Dependencies should be generated automatically

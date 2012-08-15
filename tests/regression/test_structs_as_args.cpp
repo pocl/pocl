@@ -127,9 +127,10 @@ main(void)
                 ok = false;
             }
         }
-        if (ok) std::cout << "OK" << std::endl;
-
- 
+        if (ok) 
+          return EXIT_SUCCESS;
+        else
+          return EXIT_FAILURE;
         // There is no need to perform a finish on the final unmap
         // or release any objects as this all happens implicitly with
         // the C++ Wrapper API.

@@ -141,7 +141,7 @@ struct _cl_device_id {
   cl_uint vendor_id;
   cl_uint max_compute_units;
   cl_uint max_work_item_dimensions;
-  size_t *max_work_item_sizes;
+  size_t max_work_item_sizes[3];
   size_t max_work_group_size;
   size_t preferred_wg_size_multiple;
   cl_uint preferred_vector_width_char;
@@ -231,7 +231,7 @@ struct _cl_device_id {
 
   void (*run) (void *data, _cl_command_node* cmd);
 
-  uint64_t (*get_timer_value) (void *data); /* The current device timer value in nanoseconds. */
+  cl_ulong (*get_timer_value) (void *data); /* The current device timer value in nanoseconds. */
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
@@ -424,5 +424,4 @@ struct _cl_sampler {
       }                                                                 \
   } while (0)                                                           \
     
-
 #endif /* POCL_CL_H */

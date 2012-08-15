@@ -22,6 +22,7 @@
    THE SOFTWARE.
 */
 
+#include <string.h>
 #include <unistd.h>
 
 #include "pocl_cl.h"
@@ -57,7 +58,8 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
       free (program->binary_sizes);
 
       env = getenv ("POCL_LEAVE_TEMP_DIRS");
-      if (!(env != NULL && strlen (env) == 1 && env[0] == '1'))
+      if (!(env != NULL && strlen (env) == 1 && env[0] == '1') &&
+          getenv("POCL_TEMP_DIR") == NULL)
         {
           remove_directory (program->temp_dir);
         }

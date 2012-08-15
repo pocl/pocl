@@ -31,17 +31,15 @@
 #include "prototypes.inc"
 GEN_PROTOTYPES (basic)
 
-extern size_t pocl_basic_max_work_item_sizes[];
-
 #define POCL_DEVICES_BASIC {						\
   POCL_DEVICE_ICD_DISPATCH     						\
   CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
-  pocl_basic_max_work_item_sizes, /* max_work_item_sizes */		\
+  {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX}, /* max_work_item_sizes */       \
   1024, /* max_work_group_size */					\
-  8, /* preferred_wg_size_multiple */                                \
+  8, /* preferred_wg_size_multiple */                                   \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT   , /* preferred_vector_width_int */ \

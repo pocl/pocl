@@ -49,6 +49,16 @@ The maximum number of threads created for work group execution in the
 pthread device driver. The default is to determine this from the number of
 hardware threads available in the CPU.
 
+POCL_TEMP_DIR
+
+If this is set to an existing directory, pocl uses it as the temporary
+directory for all compilation results. This allows reusing compilation
+results between pocl invocations. If this env is non-NULL, the temp
+directory is not deleted after the Program is freed. Note: the same
+temp dir will be used for all OpenCL programs thus programs
+containing kernels with the same name might use the wrong kernels
+when using this env. 
+
 POCL_VECTORIZE_WORK_GROUPS
 
 If set to 0, disables the (experimental) work group vectorizer that builds 

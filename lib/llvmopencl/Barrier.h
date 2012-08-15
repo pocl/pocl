@@ -84,6 +84,16 @@ namespace pocl {
         }
       return false;
     }
+
+    // returns true in case the given basic block ends with a barrier,
+    // that is, contains only a branch instruction after a barrier call
+    static bool endsWithBarrier(const llvm::BasicBlock *bb) 
+    {
+      const llvm::TerminatorInst *t = bb->getTerminator();
+      if (t == NULL) return false;
+      return bb->size() > 1 && t->getPrevNode() != NULL && 
+          llvm::isa<Barrier>(t->getPrevNode());
+    }
   };
 
 }

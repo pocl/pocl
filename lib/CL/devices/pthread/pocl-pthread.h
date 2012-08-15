@@ -30,7 +30,8 @@
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)
 
-extern size_t pocl_pthread_max_work_item_sizes[];
+#include "prototypes.inc"
+GEN_PROTOTYPES (basic)
 
 #define POCL_DEVICES_PTHREAD {	 					\
   POCL_DEVICE_ICD_DISPATCH     						\
@@ -38,9 +39,11 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
-  pocl_pthread_max_work_item_sizes, /* max_work_item_sizes */		\
+  /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */ \
+  /* and may avoid errors in user code that uses int instead of size_t */ \
+  {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX}, /* max_work_item_sizes */       \
   1024, /* max_work_group_size */					\
-  8, /* preferred_wg_size_multiple */                                \
+  8, /* preferred_wg_size_multiple */                                   \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT   , /* preferred_vector_width_int */ \
@@ -106,5 +109,6 @@ extern size_t pocl_pthread_max_work_item_sizes[];
   NULL, /* llvm_target_triplet */                         \
   0     /* dev_id */                                    \
 }
+
 
 #endif /* POCL_PTHREAD_H */

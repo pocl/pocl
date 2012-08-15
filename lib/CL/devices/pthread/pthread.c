@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#include "pthread.h"
+#include "pocl-pthread.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
@@ -56,7 +56,7 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#define COMMAND_LENGTH 256
+#define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
@@ -89,12 +89,8 @@ struct data {
 
 };
 
+static int get_max_thread_count();
 static void * workgroup_thread (void *p);
-
-/* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice,
-   and may avoid errors in user code that uses int instead of
-   size_t */
-size_t pocl_pthread_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 void
 pocl_pthread_init (cl_device_id device, const char* parameters)
@@ -389,6 +385,7 @@ pocl_pthread_copy_rect (void *data,
  * Return an estimate for the maximum thread count that should produce
  * the maximum parallelism without extra threading overheads.
  */
+static
 int 
 get_max_thread_count() 
 {
@@ -645,6 +642,13 @@ pocl_pthread_run
 #ifdef DEBUG_MT       
     printf("### thread %u finished\n", (unsigned)threads[i]);
 #endif
+  }
+
+  if (cmd->event != NULL &&
+      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+  {
+      cmd->event->status = CL_COMPLETE;
+      cmd->event->time_end = pocl_basic_get_timer_value(d);
   }
 
   free(threads);

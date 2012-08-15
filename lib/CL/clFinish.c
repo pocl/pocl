@@ -30,7 +30,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   int i;
   _cl_command_node *node;
   
-  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE != 0)
+  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     POCL_ABORT_UNIMPLEMENTED();
   
   /* Step through the list of commands in-order */  
@@ -72,8 +72,8 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           break;
         case CL_COMMAND_TYPE_RUN:
           POCL_PROFILE_SUBMITTED;
+          assert (*event == node->event);
           command_queue->device->run(node->command.run.data, node);
-          POCL_PROFILE_COMPLETE;
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];

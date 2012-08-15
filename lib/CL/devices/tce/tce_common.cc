@@ -33,6 +33,7 @@
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 #undef VERSION
+#undef SIZEOF_DOUBLE
 
 #include <Machine.hh>
 #include <Program.hh>
@@ -51,7 +52,8 @@ using namespace TTAMachine;
 //#define DEBUG_TTA_DRIVER
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
-  local_as(NULL), global_as(NULL), machine_file(adfName), parent(dev) {
+  local_as(NULL), global_as(NULL), machine_file(adfName), parent(dev),
+  currentProgram(NULL), globalCycleCount(0) {
   parent->data = this;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;
@@ -75,6 +77,29 @@ TCEDevice::readWordFromDevice(uint32_t addr) {
   uint32_t result;
   copyDeviceToHost(addr, &result, sizeof(result));
   return byteswap_uint32_t(result, needsByteSwap);
+}
+
+void
+TCEDevice::findDataMemoryAddresses() {
+  /* Figure out the locations of the shared data structures in
+     the device memories from the fully-linked program. 
+  */
+  const TTAProgram::Program* prog = currentProgram;
+  assert (prog != NULL);
+
+  const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
+  
+  try {
+    commandQueueAddr = globalScope.dataLabel("kernel_command").address().location();
+  } catch (const KeyNotFound& e) {
+    POCL_ABORT ("Could not find the shared data structures from the device binary.");
+  }    
+}
+
+void
+TCEDevice::initDataMemory() {
+  findDataMemoryAddresses();
+  writeWordToDevice(commandQueueAddr, POCL_KST_FREE); 
 }
 
 void
@@ -170,7 +195,7 @@ pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 }
 
 void *
-pocl_tce_create_sub_buffer (void *device_data, void* buffer, size_t origin, size_t size)
+pocl_tce_create_sub_buffer (void */*device_data*/, void* buffer, size_t origin, size_t size)
 {
 #ifdef DEBUG_TTA_DRIVER
   printf("host: create sub buffer %d (buf start) + %d size: %d\n", 
@@ -188,7 +213,7 @@ pocl_tce_malloc_local (void *device_data, size_t size)
 }
 
 void
-pocl_tce_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_tce_free (void */*data*/, cl_mem_flags /*flags*/, void *ptr)
 {
   free_chunk ((chunk_info_t*) ptr);
 }
@@ -233,7 +258,7 @@ pocl_tce_run
       if (access (BUILDDIR "/lib/CL/devices/tce/tta_device_main.c", R_OK) == 0)
         deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
       else
-        POCL_ABORT_UNIMPLEMENTED();
+        deviceMainSrc = POCL_INSTALLED_DATA "/tta_device_main.c";
      
       std::string kernelObjSrc = "";
       kernelObjSrc += cmd->command.run.tmp_dir;
@@ -242,10 +267,10 @@ pocl_tce_run
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
-        std::string("tcecc -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
+        std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
         kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
-        " -g -O0 -o " + assemblyFileName;
+        " -g -O3 -o " + assemblyFileName;
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
@@ -257,25 +282,17 @@ pocl_tce_run
   d->loadProgramToDevice(assemblyFileName);
   d->restartProgram();
 
-  /* Figure out the locations of the shared data structures in
-     the device memories from the fully-linked program. 
-     
-     TODO: load both the ADF and the TPEF objects only once and use the
-     object interface of the simulator instead of the file name interface.  
-  */
   const TTAProgram::Program* prog = d->currentProgram;
   assert (prog != NULL);
 
   const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
-  
+
   uint32_t kernelAddr;
-  uint32_t commandQueueAddr;
   try {
     kernelAddr = globalScope.dataLabel(kernelMdSymbolName).address().location();
-    commandQueueAddr = globalScope.dataLabel("kernel_command").address().location();
   } catch (const KeyNotFound& e) {
     POCL_ABORT ("Could not find the shared data structures from the device binary.");
-  }
+  }    
 
   __kernel_exec_cmd dev_cmd;
   dev_cmd.kernel = byteswap_uint32_t (kernelAddr, d->needsByteSwap);
@@ -291,9 +308,6 @@ pocl_tce_run
       al = &(cmd->command.run.kernel->arguments[i]);
       if (cmd->command.run.kernel->arg_is_local[i])
         {
-          //cmd.dynamic_local_arg_sizes[i] = byteswap_uint32_t(al->size, swap);
-          /* Allocate the local memory buffer and pass a pointer to it directly. 
-             TODO: remember to free it after finishing.  */
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
           if (local_chunk == NULL)
             POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
@@ -355,25 +369,18 @@ pocl_tce_run
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: waiting for the device command queue (@ %x) to get room.\n",
-         commandQueueAddr);
+         d->commandQueueAddr);
   printf("host: command queue status: %d\n",
-         d->readWordFromDevice (commandQueueAddr));
+         d->readWordFromDevice (d->commandQueueAddr));
 #endif
   /* Wait until the device command queue has room. */
   do {} 
-  while (d->readWordFromDevice (commandQueueAddr) != POCL_KST_FREE);
+  while (d->readWordFromDevice (d->commandQueueAddr) != POCL_KST_FREE);
 
 #ifdef DEBUG_TTA_DRIVER
   printf( "host: writing the command.\n");
 #endif
-  d->copyHostToDevice (&dev_cmd, commandQueueAddr, sizeof(__kernel_exec_cmd) );
-
-  /* Ensure the READY status is written the last so the device doesn't
-     start executing before all the cmd data has been written. We 
-     need a flush or similar mechanism to ensure all the data has 
-     been really written, in case the data transfers are not guaranteed
-     to be ordered. */
-  d->writeWordToDevice(commandQueueAddr, POCL_KST_READY);
+  d->copyHostToDevice (&dev_cmd, d->commandQueueAddr, sizeof(__kernel_exec_cmd) );
 
   if (cmd->event != NULL &&
       cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
@@ -382,9 +389,17 @@ pocl_tce_run
       cmd->event->time_start = d->timeStamp();
   }
 
+  /* Ensure the READY status is written the last so the device doesn't
+     start executing before all the cmd data has been written. We 
+     need a flush or similar mechanism to ensure all the data has 
+     been really written, in case the data transfers are not guaranteed
+     to be ordered. */
+  d->writeWordToDevice(d->commandQueueAddr, POCL_KST_READY);
+
+
 #ifdef DEBUG_TTA_DRIVER
   printf("host: commmand queue status: %x\n",
-         d->readWordFromDevice(commandQueueAddr));
+         d->readWordFromDevice(d->commandQueueAddr));
 
   printf("host: waiting for the command to get executed.\n");
 #endif
@@ -392,10 +407,10 @@ pocl_tce_run
   do {
 #ifdef DEBUG_TTA_DRIVER
       printf("host: commmand queue status: %x\n",
-             d->readWordFromDevice(commandQueueAddr));
+             d->readWordFromDevice(d->commandQueueAddr));
       sleep(1);
 #endif
-  } while (d->readWordFromDevice(commandQueueAddr) != POCL_KST_FINISHED);
+  } while (d->readWordFromDevice(d->commandQueueAddr) != POCL_KST_FINISHED);
 
   if (cmd->event != NULL &&
       cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
@@ -408,7 +423,7 @@ pocl_tce_run
   printf( "host: done. Freeing the command queue entry.\n");
 #endif
   /* We are done with this kernel, free the command queue entry. */
-  d->writeWordToDevice(commandQueueAddr, POCL_KST_FREE);
+  d->writeWordToDevice(d->commandQueueAddr, POCL_KST_FREE);
 
   for (ChunkVector::iterator i = tempChunks.begin(); 
        i != tempChunks.end(); ++i) 
@@ -425,7 +440,7 @@ pocl_tce_run
 
 void *
 pocl_tce_map_mem (void *data, void *buf_ptr, 
-                  size_t offset, size_t size,
+                  size_t /*offset*/, size_t size,
                   void *host_ptr) 
 {
   void *target = NULL;

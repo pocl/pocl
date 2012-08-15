@@ -27,7 +27,6 @@ SUBDIRS = devices
 
 lib_LTLIBRARIES = libpocl-icd.la libpocl.la
 
-
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
                    clRetainContext.c		\
@@ -96,8 +95,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clRetainSampler.c \
                    clGetSamplerInfo.c \
                    clEnqueueCopyImage.c		\
-                   clEnqueueMapImage.c		\	\
-                   clGetImageInfo.c		\
+                   clEnqueueMapImage.c		\
+				   clGetImageInfo.c		\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
@@ -106,17 +105,16 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clIcdGetPlatformIDsKHR.c \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
-                   pocl_image_util.c pocl_image_util.h 
+                   pocl_image_util.c pocl_image_util.h \
+                   pocl_icd.h
 
-
-
-libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -U__APPLE__
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices
 libpocl_icd_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
 
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
 libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
-libpocl_icd_la_LDFLAGS = ${libpocl_la_LDFLAGS} -module
+libpocl_icd_la_LDFLAGS = ${libpocl_la_LDFLAGS} @ICD_LD_FLAGS@
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
@@ -131,13 +129,33 @@ libpocl_la_LIBADD = devices/libpocl-devices.la
 libpocl_icd_la_SOURCES = ${libpocl_la_SOURCES}
 libpocl_icd_la_LIBADD = ${libpocl_la_LIBADD}
 
-all-local: ${pkglib_LTLIBRARIES}
+all-local: ${lib_LTLIBRARIES}
 # Create a link from libpocl.so to libOpenCL.so so the make check tests
 # find them if they do not link to libpocl.so directly (e.g. some Rodinia
 # tests).
-	ln -sf libpocl.so ./.libs/libOpenCL.so
+	test -e .libs/libOpenCL.so || test -e .libs/libOpenCL.dylib ||	\
+	(cd .libs && (test -e libpocl.so &&				\
+	              $(LN_S) libpocl.so libOpenCL.so) ||		\
+	             (test -e libpocl.dylib &&				\
+                      $(LN_S) libpocl.dylib libOpenCL.dylib))
 
-install-exec-local:
+clean-local:
+	rm -rf .libs/libOpenCL.so .libs/libOpenCL.dylib
+
+install-exec-hook: 
 # In case there is no libOpenCL.so (the ICD loader), link the pocl as
-# one for  using it in the non-icd mode.
-	test -e ${libdir}/libOpenCL.so || ln -s libpocl.so ${libdir}/libOpenCL.so
+# one for  using it in the non-icd mode.(cd /x && $(LN_S) foo bar)
+	test -e ${libdir}/libOpenCL.so || test -e ${libdir}/libOpenCL.dylib	|| \
+	(cd ${DESTDIR}/${libdir} && (test -e libpocl.so &&			\
+	                             $(LN_S) libpocl.so libOpenCL.so) ||	\
+	                            (test -e libpocl.dylib &&			\
+	                             $(LN_S) libpocl.dylib libOpenCL.dylib))
+
+uninstall-local:
+	test -h ${DESTDIR}/${libdir}/libOpenCL.so &&	\
+	test ! -e ${DESTDIR}/${libdir}/libOpenCL.so && 	\
+	rm ${DESTDIR}/${libdir}/libOpenCL.so || true
+	test -h ${DESTDIR}/${libdir}/libOpenCL.dylib &&		\
+	test ! -e ${DESTDIR}/${libdir}/libOpenCL.dylib &&	\
+	rm ${DESTDIR}/${libdir}/libOpenCL.dylib || true
+

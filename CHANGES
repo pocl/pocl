@@ -1,5 +1,5 @@
-0.6 (unreleased)
-===============
+0.6   August 2012
+=================
 
 Kernel library 
 --------------
@@ -31,15 +31,15 @@ Kernel compiler
   
 Miscellaneous  
 -------------
-- Installable Client Driver support
+- Installable Client Driver (icd) support.
+- Event profiling support (incomplete, works only for kernel and
+  buffer read/write/map/unmap events).
 
 Known issues
 ------------
 
-- Some cases of work group barriers still crash the
-  kernel compiler
-  * https://bugs.launchpad.net/pocl/+bug/966214
-  * https://bugs.launchpad.net/pocl/+bug/966992
 - Non-pointer struct kernel arguments fail due to varying ABIs
   * https://bugs.launchpad.net/pocl/+bug/987905
-  
+- Produces always "fully unrolled" chains of work items for
+  work groups causing code size explosion for large WGs.
+

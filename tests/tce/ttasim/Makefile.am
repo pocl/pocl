@@ -28,7 +28,7 @@ host_LDADD = ../../../lib/CL/libpocl.la ../../../lib/poclu/libpoclu.la @LD_FLAGS
 host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL \
-	-U__APPLE__ -DSRCDIR='"$(abs_srcdir)"'
+	-DSRCDIR='"$(abs_srcdir)"'
 
 
 run: host

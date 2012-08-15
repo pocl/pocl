@@ -195,10 +195,10 @@ main(void)
             unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>() <=
             unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
 
-        assert (enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() <
+        assert (enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() <=
                 mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
 
-        assert (mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() <
+        assert (mapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>() <=
                 unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
 
     } 

@@ -53,7 +53,7 @@ if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
     @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 else
-    @CLANG@ ${CLANGFLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
 fi
 
 substituted_file=${preprocessed_file}.cl

@@ -1,6 +1,7 @@
 // LLVM function pass to canonicalize barriers.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012 Pekka Jääskeläinen / Tampere University of Technology
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -67,7 +68,20 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     BasicBlock *b = i;
     TerminatorInst *t = b->getTerminator();
     if ((t->getNumSuccessors() == 0) && (!isa<BarrierBlock>(b))) {
-      BasicBlock *exit = SplitBlock(b, t, this);
+      /* In case the bb is already terminated with a barrier,
+         split before the barrier so we dot create an empty
+         parallel region.
+         
+         This is because the assumptions of the other passes in the 
+         compilation that are 
+         a) exit node is a barrier block 
+         b) there are no empty parallel regions (which would be formed 
+         between the explicit barrier and the added one). */
+      BasicBlock *exit; 
+      if (Barrier::endsWithBarrier(b))
+        exit = SplitBlock(b, t->getPrevNode(), this);
+      else
+        exit = SplitBlock(b, t, this);
       exit->setName("exit.barrier");
       Barrier::Create(t);
     }

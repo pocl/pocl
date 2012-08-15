@@ -31,7 +31,11 @@ libpocl_devices_tce_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VE
 
 libpocl_devices_tce_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL -U__APPLE__
+-I$(top_srcdir)/lib/CL
 
 libpocl_devices_tce_ladir = ${datadir}
 libpocl_devices_tce_la_DATA = tta_device_main.c
+dist_data_DATA = tta_device_main.c
+
+datadir = @POCL_INSTALLED_DATA@
+

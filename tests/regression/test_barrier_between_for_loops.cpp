@@ -1,5 +1,4 @@
-/* Tests the simplest possible case of a barrier inside a non-unrolled
-   for-loop.
+/* Tests the crash with a barrier *between* two for-loops.
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -30,6 +29,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "poclu.h"
+
 #define WINDOW_SIZE 32
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS + WINDOW_SIZE)
@@ -44,19 +45,31 @@ kernelSourceCode[] =
 "kernel \n"
 "void test_kernel(__global float *input, \n"
 "                 __global int *result) {\n"
-" int n;\n"
-" for (n=0; n < 64; ++n) {\n"
-"   result[get_global_id(0)] = input[get_global_id(0)] + n; \n"
-"   barrier(CLK_GLOBAL_MEM_FENCE);\n"
+"  int gid = get_global_id(0);\n"
+"  float global_sum = 0.0f;\n"
+"  int i;\n"
+"\n"
+" result[gid] = global_sum;\n"
+" for (i=0; i < 32; ++i) {\n"
+"   float value = input[gid+i];\n"
+"   global_sum += value;\n"
 " }\n"
+" result[gid] = result[gid] + global_sum;\n"
+" barrier(CLK_GLOBAL_MEM_FENCE);\n"
+" \n"
+" for (i=0; i < 32; ++i) {\n"
+"   float value = input[gid+i];\n"
+"   global_sum += value;\n"
+" }\n"
+" result[gid] = result[gid] + global_sum;\n"
 "}\n";
 
 int
 main(void)
 {
-    float A[BUFFER_SIZE];
-    int R[WORK_ITEMS];
-    cl_int err;
+    cl_float A[BUFFER_SIZE];
+    cl_int R[WORK_ITEMS];
+    cl_int err = 0;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -75,7 +88,7 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_CPU, cprops);
+        cl::Context context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -83,6 +96,11 @@ main(void)
         // Create and program from source
         cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
         cl::Program program(context, sources);
+
+        cl_device_id dev_id = devices.at(0)();
+
+        poclu_bswap_cl_float_array(dev_id, A, BUFFER_SIZE);
+        poclu_bswap_cl_int_array(dev_id, R, WORK_ITEMS);
 
         // Build program
         program.build(devices);
@@ -131,20 +149,33 @@ main(void)
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
 
-            int n;
+            float global_sum = 0.0f;
+            int j;
             float result;
-            for (n=0; n < 64; ++n) {
-                result = A[i] + n; 
-            }
 
-            if ((int)result != R[i]) {
+            result = global_sum;
+            for (j=0; j < 32; ++j) {
+                float value = poclu_bswap_cl_float (dev_id, A[i+j]);
+                global_sum += value;
+            }
+            result = result + global_sum;
+            for (j=0; j < 32; ++j) {
+                float value = poclu_bswap_cl_float (dev_id, A[i+j]);
+                global_sum += value;
+            }
+            result = result + global_sum;
+
+            if ((int)result != poclu_bswap_cl_int (dev_id, R[i])) {
                 std::cout 
                     << "F(" << i << ": " << (int)result << " != " << R[i] 
                     << ") ";
                 ok = false;
             }
         }
-        if (ok) std::cout << "OK" << std::endl;
+        if (ok) 
+            return EXIT_SUCCESS; 
+        else
+            return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
         err = queue.enqueueUnmapMemObject(
