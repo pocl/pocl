@@ -65,6 +65,7 @@ missing APIs have been encountered in the test cases.
 
 * 6.12.11 Atomic functions
   * cl_khr_local_int32_base_atomics (Chapter_14/histogram)
+  * atomic_inc (OpenCV)
 
 * 6.12.14.2 Built-in Image Read Functions
   * read_imagef (R[particlefilter])
