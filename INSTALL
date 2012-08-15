@@ -35,7 +35,6 @@ as follows:
   ./configure --enable-shared --prefix=YOUR_INSTALLATION_PREFIX_HERE 
   make REQUIRES_RTTI=1 && make install
 
-
 !!!NOTE: A 64-bit host is at the moment required. See
 https://bugs.launchpad.net/pocl/+bug/911911
 
@@ -44,6 +43,21 @@ follows the usual autotools build+install. If you are using a development
 source tree, you need to generate the autotool build files with 
 
   "./autogen.sh".
+
+Known issues
+------------
+
+There are unsolved issues and bugs in pocl. See the bug listing
+for a complete listing at https://bugs.launchpad.net/pocl
+
+Known issues not related to pocl are listed below.
+
+* Using Clang compiled with gcc 4.7 causes indeterminism in the
+kernel compilation results. See the LLVM bug report: 
+http://llvm.org/bugs/show_bug.cgi?id=12945
+
+
+
 
 
 The standard build installations as provided by FSF are as follows:
