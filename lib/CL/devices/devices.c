@@ -57,7 +57,7 @@ void
 pocl_init_devices()
 {
   const char *device_list;
-  char *ptr, *tofree, *token, *saveptr, *saveptr2;
+  char *ptr, *tofree, *token, *saveptr;
   int i, devcount;
   if (pocl_num_devices > 0)
     return;
@@ -83,7 +83,7 @@ pocl_init_devices()
 
   ptr = tofree = strdup(device_list);
   devcount = 0;
-  while ((token = strtok_r (ptr, " ", &saveptr2)) != NULL)
+  while ((token = strtok_r (ptr, " ", &saveptr)) != NULL)
     {
       struct _cl_device_id* device_type = NULL;
 

@@ -104,6 +104,6 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;
   clReleaseMemObject (memobj);
-  event = NULL;
+
   return CL_SUCCESS;
 }

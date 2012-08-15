@@ -25,6 +25,7 @@
 #define POCL_CL_H
 
 #include "config.h"
+#include <assert.h>
 #include <stdio.h>
 #include <ltdl.h>
 #include <pthread.h>
@@ -150,6 +151,14 @@ struct _cl_device_id {
   cl_uint preferred_vector_width_long;
   cl_uint preferred_vector_width_float;
   cl_uint preferred_vector_width_double;
+  cl_uint preferred_vector_width_half;
+  cl_uint native_vector_width_char;
+  cl_uint native_vector_width_short;
+  cl_uint native_vector_width_int;
+  cl_uint native_vector_width_long;
+  cl_uint native_vector_width_float;
+  cl_uint native_vector_width_double;
+  cl_uint native_vector_width_half;
   cl_uint max_clock_frequency;
   cl_uint address_bits;
   cl_ulong max_mem_alloc_size;
@@ -166,6 +175,7 @@ struct _cl_device_id {
   cl_uint mem_base_addr_align;
   cl_uint min_data_type_align_size;
   cl_device_fp_config single_fp_config;
+  cl_device_fp_config double_fp_config;
   cl_device_mem_cache_type global_mem_cache_type;
   cl_uint global_mem_cacheline_size;
   cl_ulong global_mem_cache_size;
@@ -394,12 +404,12 @@ struct _cl_sampler {
       }                                                                 \
   } while (0)                                                           \
 
-
 #define POCL_PROFILE_SUBMITTED                                          \
   do {                                                                  \
     if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
         event != NULL && (*event) != NULL)                              \
       {                                                                 \
+        assert((*event)->status = CL_QUEUED);                           \
         (*event)->status = CL_SUBMITTED;                                \
         (*event)->time_submit =                                         \
           command_queue->device->get_timer_value(command_queue->device->data); \
@@ -411,6 +421,7 @@ struct _cl_sampler {
     if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
         event != NULL && (*event) != NULL)                              \
       {                                                                 \
+        assert((*event)->status = CL_SUBMITTED);                        \
         (*event)->status = CL_RUNNING;                                  \
         (*event)->time_start =                                          \
           command_queue->device->get_timer_value(command_queue->device->data); \
@@ -422,6 +433,7 @@ struct _cl_sampler {
     if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
         event != NULL && (*event) != NULL)                              \
       {                                                                 \
+        assert((*event)->status = CL_RUNNING);                          \
         (*event)->status = CL_COMPLETE;                                 \
         (*event)->time_end =                                            \
           command_queue->device->get_timer_value(command_queue->device->data); \

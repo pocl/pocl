@@ -30,8 +30,6 @@
 //    ushort   __builtin_ia32_psubusw128
 // Other types don't seem to be supported.
 
-// This could do with some testing
-// This could probably also be optimised (i.e. the ?: operators eliminated)
 DEFINE_EXPR_G_GG(sub_sat,
                  (sgtype)-1 < (sgtype)0 ?
                  /* signed */

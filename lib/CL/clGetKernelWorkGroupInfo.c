@@ -65,7 +65,7 @@ clGetKernelWorkGroupInfo
       POCL_ABORT_UNIMPLEMENTED();
       
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
-      POCL_RETURN_KERNEL_WG_INFO(size_t, device->preferred_wg_size_multiple);        
+      POCL_RETURN_KERNEL_WG_INFO(size_t, device->preferred_wg_size_multiple);
       
     case CL_KERNEL_LOCAL_MEM_SIZE:
       POCL_RETURN_KERNEL_WG_INFO(cl_ulong, device->local_mem_size);

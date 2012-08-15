@@ -1,8 +1,8 @@
 Portable OpenCL (pocl) v0.6 released
 ------------------------------------
 
-Portable OpenCL is an open source (MIT-licensed) implementation of 
-the OpenCL 1.2 standard. 
+Portable OpenCL aims to be an efficient open source (MIT-licensed) 
+implementation of the OpenCL 1.2 standard. 
 
 In addition to producing an easily portable open source OpenCL
 implementation, another major goal of the project is improving 
@@ -21,7 +21,7 @@ the pthread library with multithreading at the work group granularity.
 
 An optimized kernel library is provided for x86_64. The generic
 unoptimized (no instruction set extensions used) version has been 
-successfully used with an ARMv7 CPU under MeeGo, and with several 
+successfully tested with an ARMv7 CPU under MeeGo, and with several 
 application-specific TTA processors designed using the TCE toolset.
 
 Other feature highlights include (experimental) work group 
@@ -36,8 +36,8 @@ samples.
 
 Links
 -----
+Download:          http://launchpad.net/pocl/TODO
 Home page/wiki:    http://pocl.sourceforge.net/
 This announcement: http://launchpad.net/pocl/TODO
-Download:          http://launchpad.net/pocl/TODO
 Change log:        http://luanchpad.net/pocl/TODO
 IRC:               #pocl @ irc.oftc.net

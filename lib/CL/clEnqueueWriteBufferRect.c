@@ -40,7 +40,7 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
                          const cl_event *event_wait_list,
                          cl_event *event) CL_API_SUFFIX__VERSION_1_1
 {
-  cl_device_id device_id;
+  cl_device_id device;
   unsigned i;
 
   if (command_queue == NULL)
@@ -57,43 +57,55 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
       (host_origin == NULL) ||
       (region == NULL))
     return CL_INVALID_VALUE;
-  
+
   if ((region[0]*region[1]*region[2] > 0) &&
       (buffer_origin[0] + region[0]-1 +
        buffer_row_pitch * (buffer_origin[1] + region[1]-1) +
        buffer_slice_pitch * (buffer_origin[2] + region[2]-1) >= buffer->size))
   {
       POCL_ABORT_UNIMPLEMENTED();
-#if 0
-    printf("bo=[%d,%d,%d]\n"
-           "ho=[%d,%d,%d]\n"
-           "re=[%d,%d,%d]\n"
-           "bp=[,%d,%d]\n"
-           "hp=[,%d,%d]\n"
-           "bs=[%d]\n",
-           (int)buffer_origin[0], (int)buffer_origin[1], (int)buffer_origin[2],
-           (int)host_origin[0], (int)host_origin[1], (int)host_origin[2],
-           (int)region[0], (int)region[1], (int)region[2],
-           (int)buffer_row_pitch, (int)buffer_slice_pitch,
-           (int)host_row_pitch, (int)host_slice_pitch,
-           (int)buffer->size);
-#endif
     return CL_INVALID_VALUE;
   }
 
-  device_id = command_queue->device;
+  device = command_queue->device;
+
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
-        if (command_queue->context->devices[i] == device_id)
+        if (command_queue->context->devices[i] == device)
             break;
     }
-
   assert(i < command_queue->context->num_devices);
 
-  device_id->write_rect(device_id->data, ptr, buffer->device_ptrs[device_id->dev_id],
+
+  /* execute directly */
+  /* TODO: enqueue the write_rect if this is a non-blocking read (see
+     clEnqueueWriteBuffer) */
+  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    {
+      /* wait for the event in event_wait_list to finish */
+      POCL_ABORT_UNIMPLEMENTED();
+    }
+  else
+    {
+      /* in-order queue - all previously enqueued commands must 
+       * finish before this read */
+      // ensure our buffer is not freed yet
+      clRetainMemObject (buffer);
+      clFinish(command_queue);
+    }
+  POCL_PROFILE_SUBMITTED;
+  POCL_PROFILE_RUNNING;
+
+  /* TODO: offset computation doesn't work in case the ptr is not 
+     a direct pointer */
+  device->write_rect(device->data, ptr, buffer->device_ptrs[device->dev_id],
                         buffer_origin, host_origin, region,
                         buffer_row_pitch, buffer_slice_pitch,
                         host_row_pitch, host_slice_pitch);
+
+  POCL_PROFILE_COMPLETE;
+
+  clReleaseMemObject (buffer);
 
   return CL_SUCCESS;
 }

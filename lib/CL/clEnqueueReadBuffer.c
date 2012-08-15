@@ -38,6 +38,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
                     cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device;
+  unsigned i;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -54,6 +55,13 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 
   device = command_queue->device;
 
+  for (i = 0; i < command_queue->context->num_devices; ++i)
+    {
+        if (command_queue->context->devices[i] == device)
+            break;
+    }
+  assert(i < command_queue->context->num_devices);
+
   if (event != NULL)
     {
       *event = (cl_event)malloc(sizeof(struct _cl_event));
@@ -62,14 +70,15 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POCL_INIT_ICD_OBJECT(*event);
-      
       clRetainCommandQueue (command_queue);
 
-      POCL_PROFILE_QUEUED;      
+      POCL_PROFILE_QUEUED;
     }
 
 
   /* enqueue the read, or execute directly */
+  /* TODO: why do we implement both? direct execution seems
+     unnecessary. */
   if (blocking_read)
     {
       if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
@@ -101,16 +110,17 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
     _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
     if (cmd == NULL)
       return CL_OUT_OF_HOST_MEMORY;
-    
+
     cmd->type = CL_COMMAND_TYPE_READ;
     cmd->command.read.data = device->data;
     cmd->command.read.host_ptr = ptr;
     cmd->command.read.device_ptr = buffer->device_ptrs[device->dev_id]+offset;
     cmd->command.read.cb = cb;
-    cmd->next = NULL;
     cmd->command.read.buffer = buffer;
+    cmd->next = NULL;
+    cmd->event = event ? *event : NULL;
     clRetainMemObject (buffer);
-    LL_APPEND(command_queue->root, cmd );
+    LL_APPEND(command_queue->root, cmd);
   }
 
   return CL_SUCCESS;
