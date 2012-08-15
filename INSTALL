@@ -35,9 +35,13 @@ as follows:
   ./configure --enable-shared --prefix=YOUR_INSTALLATION_PREFIX_HERE 
   make REQUIRES_RTTI=1 && make install
 
-
 !!!NOTE: A 64-bit host is at the moment required. See
 https://bugs.launchpad.net/pocl/+bug/911911
+
+!!!NOTE: On Mac OS X, you cannot build LLVM with LLVM; you need to
+build using gcc. Use e.g. this command to configure instead:
+
+  ./configure --enable-shared CC=gcc CXX=g++ --prefix=YOUR_INSTALLATION_PREFIX_HERE
 
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
