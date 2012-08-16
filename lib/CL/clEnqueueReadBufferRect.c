@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include <assert.h>
 #include <stdio.h>
 
@@ -41,7 +42,7 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
                         const cl_event *event_wait_list,
                         cl_event *event) CL_API_SUFFIX__VERSION_1_1
 {
-  cl_device_id device_id;
+  cl_device_id device;
   unsigned i;
 
   if (command_queue == NULL)
@@ -58,28 +59,67 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
       (host_origin == NULL) ||
       (region == NULL))
     return CL_INVALID_VALUE;
-  
+
   if ((region[0]*region[1]*region[2] > 0) &&
       (buffer_origin[0] + region[0]-1 +
        buffer_row_pitch * (buffer_origin[1] + region[1]-1) +
        buffer_slice_pitch * (buffer_origin[2] + region[2]-1) >= buffer->size))
     return CL_INVALID_VALUE;
 
-  device_id = command_queue->device;
+  device = command_queue->device;
+
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
-      if (command_queue->context->devices[i] == device_id)
-        break;
+        if (command_queue->context->devices[i] == device)
+            break;
     }
-
   assert(i < command_queue->context->num_devices);
 
-  device_id->read_rect(device_id->data, ptr, 
-                       buffer->device_ptrs[device_id->dev_id],
-                       buffer_origin, host_origin, region,
-                       buffer_row_pitch, buffer_slice_pitch,
-                       host_row_pitch, host_slice_pitch);
-  
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POCL_INIT_ICD_OBJECT(*event);
+
+      clRetainCommandQueue (command_queue);
+
+      POCL_PROFILE_QUEUED;
+    }
+
+
+  /* execute directly */
+  /* TODO: enqueue the read_rect if this is a non-blocking read (see
+     clEnqueueReadBuffer) */
+  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    {
+      /* wait for the event in event_wait_list to finish */
+      POCL_ABORT_UNIMPLEMENTED();
+    }
+  else
+    {
+      /* in-order queue - all previously enqueued commands must 
+       * finish before this read */
+      // ensure our buffer is not freed yet
+      clRetainMemObject (buffer);
+      clFinish(command_queue);
+    }
+  POCL_PROFILE_SUBMITTED;
+  POCL_PROFILE_RUNNING;
+
+  /* TODO: offset computation doesn't work in case the ptr is not 
+     a direct pointer */
+  device->read_rect(device->data, ptr, 
+                    buffer->device_ptrs[device->dev_id],
+                    buffer_origin, host_origin, region,
+                    buffer_row_pitch, buffer_slice_pitch,
+                    host_row_pitch, host_slice_pitch);
+
+  POCL_PROFILE_COMPLETE;
+
+  clReleaseMemObject (buffer);
 
   return CL_SUCCESS;
 }

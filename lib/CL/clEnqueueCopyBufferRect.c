@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -69,20 +70,62 @@ clEnqueueCopyBufferRect(cl_command_queue command_queue,
     return CL_INVALID_VALUE;
 
   device_id = command_queue->device;
+
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
       if (command_queue->context->devices[i] == device_id)
         break;
     }
-
   assert(i < command_queue->context->num_devices);
 
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POCL_INIT_ICD_OBJECT(*event);
+
+      clRetainCommandQueue (command_queue);
+
+      POCL_PROFILE_QUEUED;
+    }
+
+
+  /* execute directly */
+  /* TODO: enqueue the read_rect if this is a non-blocking read (see
+     clEnqueueReadBuffer) */
+  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    {
+      /* wait for the event in event_wait_list to finish */
+      POCL_ABORT_UNIMPLEMENTED();
+    }
+  else
+    {
+      /* in-order queue - all previously enqueued commands must 
+       * finish before this read */
+      // ensure our buffer is not freed yet
+      clRetainMemObject (src_buffer);
+      clRetainMemObject (dst_buffer);
+      clFinish(command_queue);
+    }
+  POCL_PROFILE_SUBMITTED;
+  POCL_PROFILE_RUNNING;
+
+  /* TODO: offset computation doesn't work in case the ptr is not 
+     a direct pointer */
   device_id->copy_rect(device_id->data,
                        src_buffer->device_ptrs[device_id->dev_id], 
                        dst_buffer->device_ptrs[device_id->dev_id],
                        src_origin, dst_origin, region,
                        src_row_pitch, src_slice_pitch,
                        dst_row_pitch, dst_slice_pitch);
+
+  POCL_PROFILE_COMPLETE;
+
+  clReleaseMemObject (src_buffer);
+  clReleaseMemObject (dst_buffer);
 
   return CL_SUCCESS;
 }
