@@ -183,12 +183,12 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
         DT->runOnFunction(*f);
-        #ifdef LLVM_3_2
+        #ifdef LLVM_3_1
+        LI->getBase().Calculate(DT->getBase());
+        #else
         // The algorithm has changed - Calculate is removed, Analyze used in stead.
         // See LLVM commit c9b1e25493b393013b28e5d457f2fb2845a4dd9f
         LI->getBase().Analyze(DT->getBase());
-        #else
-        LI->getBase().Calculate(DT->getBase());
         #endif
       }
   }
