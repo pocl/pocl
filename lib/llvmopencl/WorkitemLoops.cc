@@ -82,14 +82,155 @@ WorkitemLoops::runOnFunction(Function &F)
   return changed;
 }
 
+void
+WorkitemLoops::CreateLoopAround
+(ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim) 
+{
+#if 0
+  std::cerr << "### creating loop around PR:" << std::endl;
+  region->dump();    
+#endif
+  assert (region != NULL);
+  assert (localIdVar != NULL);
+
+  /* TODO: Process the variables: in case the variable is 
+     1) created before the PR, load its value from the WI context
+     data array
+     2) live only inside the PR: do nothing
+     3) created inside the PR and used outside, save its value
+     at the end of the loop to the WI context data array */
+
+  /* TODO: The Conditional barrier case needs the first iteration
+     peeled. Check the case how it's best done. */
+
+  /*
+
+    Generate a structure like this for each loop level (x,y,z):
+
+    for.preheader: 
+    ; initialize the dimension id variable that is used as the iterator
+    store i32 0, i32* %local_id_x, align 4
+    br label %for.cond:
+
+    for.cond:
+    ; loop header, compare the id to the local size
+    %0 = load i32* %_local_id_x, align 4
+    %cmp = icmp ult i32 %0, i32 123
+    br i1 %cmp, label %for.body, label %for.end
+
+    for.body: 
+
+    ; the parallel region code here
+
+    br label %for.inc
+        
+    for.inc:
+    %2 = load i32* %_local_id_x, align 4
+    %inc = add nsw i32 %2, 1
+    store i32 %inc, i32* %_local_id_x, align 4
+    br label %for.cond
+
+    for.end:
+
+    TODO: Use a separate iteration variable across all the loops to iterate the context 
+    data arrays to avoid needing multiplications to find the correct location, and to 
+    enable easy vectorization of loading the context data when there are parallel iterations.
+  */     
+
+  llvm::BasicBlock *preLoopBB = region->entryBB()->getSinglePredecessor();
+  llvm::BasicBlock *loopBodyEntryBB = region->entryBB();
+  llvm::LLVMContext &C = loopBodyEntryBB->getContext();
+  loopBodyEntryBB->setName("pregion.for.body");
+
+  assert (region->exitBB()->getTerminator()->getNumSuccessors() == 1);
+
+  llvm::BasicBlock *oldExit = region->exitBB()->getTerminator()->getSuccessor(0);
+
+  llvm::BasicBlock *preheaderBB =
+    BasicBlock::Create
+    (C, "pregion.for.preheader",
+     loopBodyEntryBB->getParent(), loopBodyEntryBB);
+
+  llvm::BasicBlock *loopEndBB = 
+    BasicBlock::Create
+    (C, "pregion.for.end",
+     region->exitBB()->getParent(), region->exitBB());
+
+  llvm::BasicBlock *forCondBB = 
+    BasicBlock::Create
+    (C, "pregion.for.cond",
+     region->exitBB()->getParent(), loopBodyEntryBB);
+
+  llvm::BasicBlock *forIncBB = 
+    BasicBlock::Create
+    (C, "pregion.for.inc",
+     region->exitBB()->getParent(), loopEndBB);
+
+  preLoopBB->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, preheaderBB);
+
+  IRBuilder<> builder(preheaderBB);
+  builder.CreateBr(forCondBB);
+
+  /* chain region body and loop exit */
+  region->exitBB()->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
+
+  builder.SetInsertPoint(forIncBB);
+  builder.CreateBr(forCondBB);
+
+  builder.SetInsertPoint(loopEndBB);
+  builder.CreateBr(oldExit);
+
+  builder.SetInsertPoint(preheaderBB->getTerminator());
+
+  llvm::Module& M = *preheaderBB->getParent()->getParent();
+
+  int size_t_width;
+
+  if (M.getPointerSize() == llvm::Module::Pointer64)
+    {
+      size_t_width = 64;
+    }
+  else if (M.getPointerSize() == llvm::Module::Pointer32) 
+    {
+      size_t_width = 32;
+    }
+  else 
+    {
+      assert (false && "Target has an unsupported pointer width.");
+    }       
+
+  builder.CreateStore
+    (ConstantInt::get(IntegerType::get(C, size_t_width), 0), 
+     localIdVar);
+
+  builder.SetInsertPoint(forCondBB);
+  llvm::Value *cmpResult = 
+    builder.CreateICmpULT
+    (builder.CreateLoad(localIdVar),
+     (ConstantInt::get
+      (IntegerType::get(C, size_t_width), 
+       LocalSizeForDim)));
+      
+  builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+
+  builder.SetInsertPoint(forIncBB->getTerminator());
+
+  /* Create the iteration variable increment */
+  builder.CreateStore
+    (builder.CreateAdd
+     (builder.CreateLoad(localIdVar),
+      ConstantInt::get(IntegerType::get(C, size_t_width), 1)),
+     localIdVar);
+      
+      
+}
+
 bool
 WorkitemLoops::ProcessFunction(Function &F)
 {
   Kernel *K = cast<Kernel> (&F);
   CheckLocalSize(K);
 
-  // Allocate space for workitem reference maps. Workitem 0 does
-  // not need it.
   unsigned workitem_count = LocalSizeZ * LocalSizeY * LocalSizeX;
 
   BasicBlockVector original_bbs;
@@ -103,106 +244,20 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
 
-  assert (false && "Unimplemented.");
-#if 0
-  parallel_regions[0] = *original_parallel_regions;
-  
-  // Then replicate the ParallelRegions.  
-  ValueToValueMapTy *const reference_map = new ValueToValueMapTy[workitem_count - 1];
-  for (int z = 0; z < LocalSizeZ; ++z) {
-    for (int y = 0; y < LocalSizeY; ++y) {
-      for (int x = 0; x < LocalSizeX ; ++x) {
-              
-        int index = 
-          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
-	  
-        if (index == 0)
-          continue;
-	  
-        std::size_t regionCounter = 0;
-        for (SmallVector<ParallelRegion *, 8>::iterator
-               i = original_parallel_regions->begin(), 
-               e = original_parallel_regions->end();
-             i != e; ++i) {
-          ParallelRegion *original = (*i);
-          ParallelRegion *replicated =
-            original->replicate
-            (reference_map[index - 1],
-             (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
-          regionCounter++;
-          parallel_regions[index].push_back(replicated);
-#ifdef DEBUG_PR_REPLICATION
-          std::cerr << "### new replica:" << std::endl;
-          replicated->dump();
-#endif
-        }
-      }
-    }
-  }
-  
-  for (int z = 0; z < LocalSizeZ; ++z) {
-    for (int y = 0; y < LocalSizeY; ++y) {
-      for (int x = 0; x < LocalSizeX ; ++x) {
-	  
-        int index = 
-          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
-        
-        for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
-          ParallelRegion *region = parallel_regions[index][i];
-          if (index != 0) {
-            region->remap(reference_map[index - 1]);
-            region->chainAfter(parallel_regions[index - 1][i]);
-            region->purge();
-          }
-          region->insertPrologue(x, y, z);
-        }
-      }
-    }
-  }
-    
-  // Try to merge all workitem first block of each region
-  // together (for PHI predecessor correctness).
-  for (int z = LocalSizeZ - 1; z >= 0; --z) {
-    for (int y = LocalSizeY - 1; y >= 0; --y) {
-      for (int x = LocalSizeX - 1; x >= 0; --x) {
-          
-        int index = 
-          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
-
-        if (index == 0)
-          continue;
-          
-        for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
-          ParallelRegion *region = parallel_regions[index][i];
-          BasicBlock *entry = region->entryBB();
-
-          assert (entry != NULL);
-          BasicBlock *pred = entry->getUniquePredecessor();
-          assert (pred != NULL && "No unique predecessor.");
-#ifdef DEBUG_BB_MERGING
-          std::cerr << "### pred before merge into predecessor " << std::endl;
-          pred->dump();
-          std::cerr << "### entry before merge into predecessor " << std::endl;
-          entry->dump();
-#endif
-          movePhiNodes(entry, pred);
-        }
-      }
-    }
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+      ParallelRegion *region = (*i);
+      llvm::Module *M = F.getParent();
+      CreateLoopAround(region, M->getGlobalVariable("_local_id_z"), LocalSizeZ);
+      CreateLoopAround(region, M->getGlobalVariable("_local_id_y"), LocalSizeY);
+      CreateLoopAround(region, M->getGlobalVariable("_local_id_x"), LocalSizeX);
   }
 
-  // Add the suffixes to original (wi_0_0_0) basic blocks.
-  for (BasicBlockVector::iterator i = original_bbs.begin(),
-         e = original_bbs.end();
-       i != e; ++i)
-    (*i)->setName((*i)->getName() + ".wi_0_0_0");
+  //F.viewCFG();
 
-  // Initialize local size variables (done at the end to avoid unnecessary
-  // replication).
-  K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
-
-  delete [] reference_map;
-#endif
   return true;
 }
 

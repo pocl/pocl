@@ -101,7 +101,7 @@ namespace llvm {
      * We compile for various targets with various widths for the size_t
      * type that depends on the pointer type. 
      *
-     * This should be set when the correct type is known. This is hack
+     * This should be set when the correct type is known. This is a hack
      * until a better way is found. It's not thread safe, e.g. if one
      * compiles multiple Modules for multiple different pointer widths in
      * a same process with multiple threads. */

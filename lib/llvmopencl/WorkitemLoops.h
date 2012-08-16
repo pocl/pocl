@@ -33,6 +33,7 @@
 
 namespace pocl {
   class Workgroup;
+  class ParallelRegion;
 
   class WorkitemLoops : public pocl::WorkitemHandler {
 
@@ -54,6 +55,8 @@ namespace pocl {
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     virtual bool ProcessFunction(llvm::Function &F);
+    virtual void CreateLoopAround
+        (ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim);
   };
 }
 
