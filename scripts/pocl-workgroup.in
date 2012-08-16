@@ -111,9 +111,11 @@ then
 EXTRA_OPTS+=" -wi-vectorize-no-fp"
 fi
 
-if test "x$POCL_KERNEL_COMPILER_METHOD" = "x";
+if test "x$POCL_WORK_GROUP_METHOD" = "x";
 then
 METHOD_PASS=workitem
+else
+METHOD_PASS=$POCL_WORK_GROUP_METHOD
 fi
 
 #set -x

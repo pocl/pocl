@@ -50,13 +50,23 @@ namespace pocl {
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
-    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    /* The global variables that store the current local id. */
+    llvm::Value *localIdZ, *localIdY, *localIdX;
+
+    unsigned size_t_width;
+
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
+    typedef std::set<llvm::Instruction* > InstructionIndex;
+    typedef std::vector<llvm::Instruction* > InstructionVec;
 
     virtual bool ProcessFunction(llvm::Function &F);
     virtual void CreateLoopAround
         (ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim);
+
+    void FixMultiRegionVariables(ParallelRegion *region);
+    void AddContextSaveRestore
+        (llvm::Instruction *instruction, 
+         const InstructionIndex& instructionsInRegion);    
   };
 }
 

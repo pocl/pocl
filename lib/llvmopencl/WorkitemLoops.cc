@@ -33,6 +33,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TypeBuilder.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
@@ -44,6 +45,8 @@
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
 #endif
+
+//#define DEBUG_WORK_ITEM_LOOPS
 
 using namespace llvm;
 using namespace pocl;
@@ -72,13 +75,28 @@ WorkitemLoops::runOnFunction(Function &F)
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
+  llvm::Module *M = F.getParent();
+  llvm::Type *localIdType; 
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+  else if (M->getPointerSize() == llvm::Module::Pointer32)
+    size_t_width = 32;
+  else
+    assert (false && "Only 32 and 64 bit size_t widths supported.");
+
+  localIdType = IntegerType::get(F.getContext(), size_t_width);
+
+  localIdZ = M->getOrInsertGlobal("_local_id_z", localIdType);
+  localIdY = M->getOrInsertGlobal("_local_id_y", localIdType);
+  localIdX = M->getOrInsertGlobal("_local_id_x", localIdType);
+
   bool changed = ProcessFunction(F);
 #ifdef DUMP_RESULT_CFG
   FunctionPass* cfgPrinter = createCFGPrinterPass();
   cfgPrinter->runOnFunction(F);
 #endif
 
-  changed |= fixUndominatedVariableUses(DT, F);
+  //  changed |= fixUndominatedVariableUses(DT, F);
   return changed;
 }
 
@@ -86,7 +104,7 @@ void
 WorkitemLoops::CreateLoopAround
 (ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim) 
 {
-#if 0
+#ifdef DEBUG_WORK_ITEM_LOOPS
   std::cerr << "### creating loop around PR:" << std::endl;
   region->dump();    
 #endif
@@ -244,20 +262,160 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
 
+  llvm::Module *M = F.getParent();
+  
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    FixMultiRegionVariables(region);
+  }
+
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
        i != e; ++i) 
   {
       ParallelRegion *region = (*i);
-      llvm::Module *M = F.getParent();
-      CreateLoopAround(region, M->getGlobalVariable("_local_id_z"), LocalSizeZ);
-      CreateLoopAround(region, M->getGlobalVariable("_local_id_y"), LocalSizeY);
-      CreateLoopAround(region, M->getGlobalVariable("_local_id_x"), LocalSizeX);
+      CreateLoopAround(region, localIdZ, LocalSizeZ);
+      CreateLoopAround(region, localIdY, LocalSizeY);
+      CreateLoopAround(region, localIdX, LocalSizeX);
   }
 
-  //F.viewCFG();
+  K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
+
+  //M->dump();
+  //  F.viewCFG();
 
   return true;
 }
 
+/*
+ * Add context save/restore code to variables that are defined in 
+ * the given region and are used outside the region.
+ *
+ * Each such variable gets a slot in the stack frame. The variable
+ * is restored from the stack whenever its used.
+ */
+void
+WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
+{
+  InstructionIndex instructionsInRegion;
+  InstructionVec instructionsToFix;
+
+  /* Construct an index of the region's instructions so it's
+     fast to figure out if the variable uses are all
+     in the region. */
+  for (BasicBlockVector::iterator i = region->begin();
+       i != region->end(); ++i)
+    {
+      llvm::BasicBlock *bb = *i;
+      for (llvm::BasicBlock::iterator instr = bb->begin();
+           instr != bb->end(); ++instr) 
+        {
+          llvm::Instruction *instruction = instr;
+          instructionsInRegion.insert(instruction);
+        }
+    }
+
+  /* Find all the instructions that define new values and
+     check if they need to be context saved. */
+  for (BasicBlockVector::iterator i = region->begin();
+       i != region->end(); ++i)
+    {
+      llvm::BasicBlock *bb = *i;
+      for (llvm::BasicBlock::iterator instr = bb->begin();
+           instr != bb->end(); ++instr) 
+        {
+          llvm::Instruction *instruction = instr;
+          for (Instruction::use_iterator ui = instruction->use_begin(),
+                 ue = instruction->use_end();
+               ui != ue; ++ui) 
+            {
+              Instruction *user;
+              if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
+              if (instructionsInRegion.find(user) == instructionsInRegion.end())
+                {
+                  instructionsToFix.push_back(instruction);
+                  break;
+                }
+            }
+        }
+    }  
+
+  /* Finally, fix the instructions. */
+  for (InstructionVec::iterator i = instructionsToFix.begin();
+       i != instructionsToFix.end(); ++i)
+    {
+#ifdef DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### adding context/save restore for" << std::endl;
+      (*i)->dump();
+#endif      
+      AddContextSaveRestore(*i, instructionsInRegion);
+    }
+}
+
+/**
+ * Adds context save/restore code for the value produced by the
+ * given instruction.
+ */
+void
+WorkitemLoops::AddContextSaveRestore
+(llvm::Instruction *instruction, const InstructionIndex& instructionsInRegion)
+{
+  llvm::Module *M = instruction->getParent()->getParent()->getParent();
+  
+  /* Save the value to stack after its production. */ 
+  IRBuilder<> builder(instruction->getParent()->getParent()->getEntryBlock().getFirstInsertionPt());
+
+  llvm::Type *scalart = instruction->getType();
+  llvm::Type *contextArrayType = 
+    ArrayType::get(ArrayType::get(ArrayType::get(scalart, LocalSizeX), LocalSizeY), LocalSizeZ);
+
+  /* Allocate the context data array for the variable. */
+  llvm::Value *alloca = 
+    builder.CreateAlloca(contextArrayType, 0, instruction->getName() + ".context_array");
+
+  /* Save the produced variable to the array. */
+  BasicBlock::iterator definition = instruction;
+  builder.SetInsertPoint(++definition);
+  std::vector<llvm::Value *> gepArgs;
+  gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+  gepArgs.push_back(builder.CreateLoad(localIdZ));
+  gepArgs.push_back(builder.CreateLoad(localIdY));
+  gepArgs.push_back(builder.CreateLoad(localIdX)); 
+  llvm::Value *theStore = builder.CreateStore(instruction, builder.CreateGEP(alloca, gepArgs));
+
+  InstructionVec uses;
+  /* Restore the produced variable before each use outside the region. */
+
+  /* Find out the uses to fix first as fixing them causes invalidates
+     the iterator. */
+  for (Instruction::use_iterator ui = instruction->use_begin(),
+         ue = instruction->use_end();
+       ui != ue; ++ui) 
+    {
+      Instruction *user;
+      if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
+      if (user == theStore) continue;
+      if (instructionsInRegion.find(user) != instructionsInRegion.end()) continue;
+      uses.push_back(user);
+    }
+
+  for (InstructionVec::iterator i = uses.begin(); i != uses.end(); ++i)
+    {
+      Instruction *user = *i;
+      builder.SetInsertPoint(user);
+
+      std::vector<llvm::Value *> gepArgs;
+      gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+      gepArgs.push_back(builder.CreateLoad(localIdZ));
+      gepArgs.push_back(builder.CreateLoad(localIdY));
+      gepArgs.push_back(builder.CreateLoad(localIdX)); 
+          
+      llvm::Value *loadedValue = builder.CreateLoad(builder.CreateGEP(alloca, gepArgs));
+      user->replaceUsesOfWith(instruction, loadedValue);
+    }
+}
