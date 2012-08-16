@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = include lib scripts examples tests
+SUBDIRS = include lib scripts examples tests tools/llvm-ld
 
 ACLOCAL_AMFLAGS = -I m4
 
