@@ -20,18 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef _POCL_KERNEL_H
+#define _POCL_KERNEL_H
+
 #include "ParallelRegion.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
 
 namespace pocl {
 
   class Kernel : public llvm::Function {
-
   public:
     void getExitBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
     ParallelRegion *createParallelRegionBefore(BarrierBlock *B);
     
+    ParallelRegion::ParallelRegionVector* 
+      getParallelRegions(llvm::LoopInfo *LI);
+
+    void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ);
+
     static bool classof(const Kernel *) { return true; }
     // We assume any function can be a kernel. This could be used
     // to check for metadata (but would need to be overrideable somehow
@@ -40,3 +48,5 @@ namespace pocl {
   };
 
 }
+
+#endif

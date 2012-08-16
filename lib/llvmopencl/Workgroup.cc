@@ -61,7 +61,7 @@ static void createWorkgroupFast(Module &M, Function *F);
 // extern cl::list<int> LocalSize;
 
 cl::opt<string>
-Kernel("kernel",
+KernelName("kernel",
        cl::desc("Kernel function name"),
        cl::value_desc("kernel"),
        cl::init(""));
@@ -101,7 +101,7 @@ namespace llvm {
      * We compile for various targets with various widths for the size_t
      * type that depends on the pointer type. 
      *
-     * This should be set when the correct type is known. This is hack
+     * This should be set when the correct type is known. This is a hack
      * until a better way is found. It's not thread safe, e.g. if one
      * compiles multiple Modules for multiple different pointer widths in
      * a same process with multiple threads. */
@@ -184,9 +184,9 @@ Workgroup::isKernelToProcess(const Function &F)
 
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
   if (kernels == NULL) {
-    if (Kernel == "")
+    if (KernelName == "")
       return true;
-    if (F.getName() == Kernel)
+    if (F.getName() == KernelName)
       return true;
 
     return false;
