@@ -36,8 +36,6 @@ samples.
 
 Links
 -----
-Download:          http://launchpad.net/pocl/TODO
+Download:          https://launchpad.net/pocl/+milestone/0.6.0
 Home page/wiki:    http://pocl.sourceforge.net/
-This announcement: http://launchpad.net/pocl/TODO
-Change log:        http://luanchpad.net/pocl/TODO
 IRC:               #pocl @ irc.oftc.net
