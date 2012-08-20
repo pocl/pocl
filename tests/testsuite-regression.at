@@ -13,7 +13,7 @@ AT_CLEANUP
 
 AT_SETUP([barrier between two for loops])
 AT_KEYWORDS([regression tce])
-AT_CHECK([$abs_top_builddir/tests/regression/./test_barrier_between_for_loops], 0)
+AT_CHECK([$abs_top_builddir/tests/regression/test_barrier_between_for_loops], 0)
 AT_CLEANUP
 
 AT_SETUP([simple for-loop with a barrier inside])
@@ -51,4 +51,15 @@ AT_CLEANUP
 AT_SETUP([barrier just before return - lp:##1012030])
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_barrier_before_return], 0)
+AT_CLEANUP
+
+AT_SETUP([infinite loop - lp:##941558])
+AT_KEYWORDS([regression infinite-loop])
+AT_CHECK([$abs_top_builddir/tests/regression/test_infinite_loop], 0)
+AT_CLEANUP
+
+AT_SETUP([passing a constant array as an arg - lp:##1032203])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression const-array])
+AT_CHECK([$abs_top_builddir/tests/regression/test_constant_array], 0)
 AT_CLEANUP

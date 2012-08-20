@@ -118,11 +118,18 @@ then
 EXTRA_OPTS+=" -wi-vectorize-no-fp"
 fi
 
+if test "x$POCL_WORK_GROUP_METHOD" = "x";
+then
+METHOD_PASS=workitemrepl
+else
+METHOD_PASS=$POCL_WORK_GROUP_METHOD
+fi
+
 #set -x
 
 @OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
-    -globaldce -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitem -workgroup \
+    -globaldce -simplifycfg -loop-simplify -isolate-regions -loop-barriers \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -${METHOD_PASS} -workgroup \
     -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
     ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}
 

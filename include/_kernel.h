@@ -1622,6 +1622,41 @@ _CL_DECLARE_VSTORE_HALF(__private , _rtn)
 #endif
 
 
+/* Atomic operations */
+
+#define _CL_DECLARE_ATOMICS(MOD, TYPE)                                  \
+  _cl_overloadable TYPE atomic_add    (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_sub    (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_xchg   (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_inc    (volatile MOD TYPE *p);           \
+  _cl_overloadable TYPE atomic_dec    (volatile MOD TYPE *p);           \
+  _cl_overloadable TYPE atomic_cmpxchg(volatile MOD TYPE *p, TYPE cmp, TYPE val); \
+  _cl_overloadable TYPE atomic_min    (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_max    (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_and    (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_or     (volatile MOD TYPE *p, TYPE val); \
+  _cl_overloadable TYPE atomic_xor    (volatile MOD TYPE *p, TYPE val);
+_CL_DECLARE_ATOMICS(__global, int )
+_CL_DECLARE_ATOMICS(__global, uint)
+_CL_DECLARE_ATOMICS(__local , int )
+_CL_DECLARE_ATOMICS(__local , uint)
+
+_cl_overloadable float atomic_xchg(volatile __global float *p, float val);
+_cl_overloadable float atomic_xchg(volatile __local  float *p, float val);
+
+#define atom_add     atomic_add
+#define atom_sub     atomic_sub
+#define atom_xchg    atomic_xchg
+#define atom_inc     atomic_inc
+#define atom_dec     atomic_dec
+#define atom_cmpxchg atomic_cmpxchg
+#define atom_min     atomic_min
+#define atom_max     atomic_max
+#define atom_and     atomic_and
+#define atom_or      atomic_or
+#define atom_xor     atomic_xor
+
+
 /* Miscellaneous Vector Functions */
 
 // This code leads to an ICE in Clang

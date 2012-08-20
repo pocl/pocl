@@ -49,6 +49,7 @@ clBuildProgram(cl_program program,
   int device_i;
   unsigned real_num_devices;
   cl_device_id *real_device_list;
+  /* The default build script for .cl files. */
   char *pocl_build_script;
 
   if (program == NULL)
@@ -108,8 +109,9 @@ clBuildProgram(cl_program program,
          devices. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
+          cl_device_id device = real_device_list[device_i];
           snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, real_device_list[device_i]->name);
+                    program->temp_dir, device->name);
           mkdir (device_tmpdir, S_IRWXU);
 
           snprintf 
@@ -120,12 +122,12 @@ clBuildProgram(cl_program program,
             pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
           else
             pocl_build_script = POCL_BUILD;
-
+          
           if (real_device_list[device_i]->llvm_target_triplet != NULL)
             {
               error = snprintf(command, COMMAND_LENGTH,
                                "%s -t %s -o %s %s", pocl_build_script,
-                               real_device_list[device_i]->llvm_target_triplet,                               
+                               device->llvm_target_triplet,                               
                                binary_file_name, source_file_name);
             }
           else 
@@ -138,7 +140,19 @@ clBuildProgram(cl_program program,
           if (error < 0)
             return CL_OUT_OF_HOST_MEMORY;
 
-          error = system(command);
+          /* call the customized build command, if needed for the
+             device driver */
+          if (device->build_program != NULL)
+            {
+              error = device->build_program 
+                (device->data, source_file_name, binary_file_name, 
+                 command, device_tmpdir);
+            }
+          else
+            {
+              error = system(command);
+            }
+
           if (error != 0)
             return CL_BUILD_PROGRAM_FAILURE;
 

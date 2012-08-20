@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_icd.h"
 #include "utlist.h"
 #include <assert.h>
 
@@ -55,13 +56,27 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
     return CL_INVALID_VALUE;
 
   device_id = command_queue->device;
+
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
       if (command_queue->context->devices[i] == device_id)
         break;
     }
-
   assert(i < command_queue->context->num_devices);
+
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+        return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POCL_INIT_ICD_OBJECT(*event);
+      clRetainCommandQueue (command_queue);
+
+      POCL_PROFILE_QUEUED;
+    }
+
 
   _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
   if (cmd == NULL)
@@ -81,8 +96,9 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
   cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[device_id->dev_id] + dst_offset;
   cmd->command.copy.cb = cb;
   cmd->next = NULL;
+  cmd->event = event ? *event : NULL;
 
-  LL_APPEND(command_queue->root, cmd );
+  LL_APPEND(command_queue->root, cmd);
 
   return CL_SUCCESS;
 }

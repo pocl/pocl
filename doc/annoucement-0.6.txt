@@ -1,14 +1,14 @@
 Portable OpenCL (pocl) v0.6 released
 ------------------------------------
 
-Portable OpenCL is an open source (MIT-licensed) implementation of 
-the OpenCL 1.2 standard. 
+Portable OpenCL aims to be an efficient open source (MIT-licensed) 
+implementation of the OpenCL 1.2 standard. 
 
 In addition to producing an easily portable open source OpenCL
 implementation, another major goal of the project is improving 
 performance portability of OpenCL programs with compiler 
 optimizations, reducing the need for target-dependent manual 
-optimizations. An important part of pocl is a set of LLVM passes 
+optimizations. At the core of pocl is a set of LLVM passes 
 used to statically parallelize multiple work-items with the kernel
 compiler, even in the presence of work-group barriers. This enables 
 parallelization of the fine-grained static concurrency in the work 
@@ -21,7 +21,7 @@ the pthread library with multithreading at the work group granularity.
 
 An optimized kernel library is provided for x86_64. The generic
 unoptimized (no instruction set extensions used) version has been 
-successfully used with an ARMv7 CPU under MeeGo, and with several 
+successfully tested with an ARMv7 CPU under MeeGo, and with several 
 application-specific TTA processors designed using the TCE toolset.
 
 Other feature highlights include (experimental) work group 
@@ -29,15 +29,15 @@ autovectorization (create vector instructions out of multiple
 work-items) and a customized kernel buffer allocator.
 
 Even though the OpenCL 1.2 standard is not yet implemented fully and
-contains known bugs, we now consider pocl ready for wider scale testing. 
+it contains known bugs, we now consider pocl ready for wider scale testing. 
 pocl 0.6 compiles and runs successfully most of the Rodinia benchmark, 
 all of ViennaCL test cases, and most of the OpenCL Programming Guide 
 samples. 
 
 Links
 -----
+Download:          http://launchpad.net/pocl/TODO
 Home page/wiki:    http://pocl.sourceforge.net/
 This announcement: http://launchpad.net/pocl/TODO
-Download:          http://launchpad.net/pocl/TODO
 Change log:        http://luanchpad.net/pocl/TODO
 IRC:               #pocl @ irc.oftc.net

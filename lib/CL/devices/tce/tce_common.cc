@@ -195,7 +195,7 @@ pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 }
 
 void *
-pocl_tce_create_sub_buffer (void *device_data, void* buffer, size_t origin, size_t size)
+pocl_tce_create_sub_buffer (void */*device_data*/, void* buffer, size_t origin, size_t size)
 {
 #ifdef DEBUG_TTA_DRIVER
   printf("host: create sub buffer %d (buf start) + %d size: %d\n", 
@@ -213,7 +213,7 @@ pocl_tce_malloc_local (void *device_data, size_t size)
 }
 
 void
-pocl_tce_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_tce_free (void */*data*/, cl_mem_flags /*flags*/, void *ptr)
 {
   free_chunk ((chunk_info_t*) ptr);
 }
@@ -447,7 +447,7 @@ pocl_tce_run
 
 void *
 pocl_tce_map_mem (void *data, void *buf_ptr, 
-                  size_t offset, size_t size,
+                  size_t /*offset*/, size_t size,
                   void *host_ptr) 
 {
   void *target = NULL;
@@ -465,3 +465,36 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
   pocl_tce_read (data, target, chunk, size);
   return target;
 }
+
+int 
+pocl_tce_build_program (void *data, char *source_fn, char *binary_fn, 
+                        char *default_cmd, char *dev_tmpdir) 
+{
+  TCEDevice *tce_dev = (TCEDevice*)data;
+
+  int error = 0;
+  /* Generate the vendor extensions header to provide explicit
+     access to the (custom) hardware operations. */
+  std::string tceopgenCmd = 
+    std::string("tceopgen > ") + std::string(dev_tmpdir) + "/tceops.h";
+  
+  error = system (tceopgenCmd.c_str());
+  if (error == -1) return error;
+
+  std::string devextHeaderFn =
+    std::string(dev_tmpdir) + std::string("/_devext.h");
+
+  std::string extgenCmd = 
+    std::string("tceoclextgen ") + tce_dev->machine_file + 
+    std::string(" > ") + devextHeaderFn;
+
+  error = system (extgenCmd.c_str());
+  if (error == -1) return error;
+
+  std::string buildCmd = 
+    std::string("EXTRA_CPPFLAGS=\"-include ") + devextHeaderFn +
+    std::string("\" ") + std::string(default_cmd);
+
+  return system (buildCmd.c_str());
+}
+

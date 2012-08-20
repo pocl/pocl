@@ -126,23 +126,17 @@ clGetDeviceInfo(cl_device_id   device,
     }
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_char);   
-    
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_char);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_short);
-    
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_int);
-
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_long);
-    
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_float);
-    
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_double);
-
   case CL_DEVICE_MAX_CLOCK_FREQUENCY               :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_clock_frequency);
   case CL_DEVICE_ADDRESS_BITS                      :
@@ -186,7 +180,7 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_MAX_CONSTANT_ARGS                 : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_constant_args);
   case CL_DEVICE_LOCAL_MEM_TYPE                    :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->local_mem_size);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->local_mem_type);
   case CL_DEVICE_LOCAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->local_mem_size);
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          :
@@ -218,28 +212,34 @@ clGetDeviceInfo(cl_device_id   device,
 
   case CL_DEVICE_EXTENSIONS                        : 
     POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16");
-  case CL_DEVICE_PLATFORM                          : break;
-  case CL_DEVICE_DOUBLE_FP_CONFIG                  : break;
+  case CL_DEVICE_PLATFORM                          :
+    {
+      /* Return the first platform id, assuming this is the only
+         platform id (which is currently always the case for pocl) */
+      cl_platform_id platform_id;
+      clGetPlatformIDs(1, &platform_id, NULL);
+      POCL_RETURN_DEVICE_INFO(cl_platform_id, platform_id);
+    }
+  case CL_DEVICE_DOUBLE_FP_CONFIG                  :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->double_fp_config);
   case CL_DEVICE_HALF_FP_CONFIG                    : break;
-  case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       : break;
+  case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_half);
   case CL_DEVICE_HOST_UNIFIED_MEMORY               : break;
-    /* TODO: figure out what the difference between preferred and native
-       widths are. And why there is no struct fields 'native_vector...' */
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR          : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_char);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_char);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT         :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_short);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_short);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_INT           : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_int);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_int);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG          : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_long);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_long);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT         : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_float);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_float);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE        : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_double);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_double);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
-    /* TODO: why is there no preferred_vector_width_half? */
-    POCL_RETURN_DEVICE_INFO(cl_uint, 0);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_DEVICE_INFO_STR("1.2");
   }

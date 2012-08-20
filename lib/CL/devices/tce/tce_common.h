@@ -113,38 +113,9 @@ class TCEDevice {
 extern "C" {
 #endif
 
-void *
-pocl_tce_malloc (void *device_data, cl_mem_flags flags,
-                 size_t size, void *host_ptr);
+#include "prototypes.inc"
 
-void
-pocl_tce_write (void *data, const void *host_ptr, void *device_ptr, 
-                size_t cb);
-
-void
-pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, 
-               size_t cb);
-
-void *
-pocl_tce_create_sub_buffer (void *device_data, void* buffer, size_t origin, 
-                            size_t size);
-
-
-chunk_info_t*
-pocl_tce_malloc_local (void *device_data, size_t size);
-
-void
-pocl_tce_free (void *data, cl_mem_flags flags, void *ptr);
-
-void
-pocl_tce_run 
-(void *data, 
- _cl_command_node* cmd);
-
-void *
-pocl_tce_map_mem (void *data, void *buf_ptr, 
-                     size_t offset, size_t size,
-                  void *host_ptr);
+GEN_PROTOTYPES (tce)
 
 #ifdef __cplusplus
 }

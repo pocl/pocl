@@ -1,0 +1,233 @@
+// LLVM function pass to replicate the kernel body for all work items 
+// in a work group.
+// 
+// Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
+//                         Pekka Jääskeläinen / TUT
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+#include <sstream>
+#include <iostream>
+
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Metadata.h"
+#include "llvm/Constants.h"
+#include "llvm/Module.h"
+#include "llvm/Instructions.h"
+#include "llvm/ValueSymbolTable.h"
+#include "WorkitemHandler.h"
+#include "Kernel.h"
+
+//#define DEBUG_REFERENCE_FIXING
+
+namespace pocl {
+
+using namespace llvm;
+
+llvm::cl::list<int>
+LocalSize("local-size",
+          llvm::cl::desc("Local size (x y z)"),
+          llvm::cl::multi_val(3));
+
+cl::opt<bool>
+AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
+  cl::desc("Adds a work item identifier to each of the instruction in work items."));
+
+void
+WorkitemHandler::CheckLocalSize(Kernel *K)
+{
+  llvm::Module *M = K->getParent();
+  
+  LocalSizeX = LocalSize[0];
+  LocalSizeY = LocalSize[1];
+  LocalSizeZ = LocalSize[2];
+  
+  llvm::NamedMDNode *size_info = M->getNamedMetadata("opencl.kernel_wg_size_info");
+  if (size_info) {
+    for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
+      llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
+      if (KernelSizeInfo->getOperand(0) == K) {
+        LocalSizeX = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+        LocalSizeY = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+        LocalSizeZ = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+      }
+    }
+  }
+}
+
+bool
+WorkitemHandler::dominatesUse
+(llvm::DominatorTree *DT, Instruction &I, unsigned i) {
+  Instruction *Op = cast<Instruction>(I.getOperand(i));
+  BasicBlock *OpBlock = Op->getParent();
+  PHINode *PN = dyn_cast<PHINode>(&I);
+
+  // DT can handle non phi instructions for us.
+  if (!PN) 
+    {
+      // Definition must dominate use unless use is unreachable!
+      return Op->getParent() == I.getParent() ||
+        DT->dominates(Op, &I);
+    }
+
+  // PHI nodes are more difficult than other nodes because they actually
+  // "use" the value in the predecessor basic blocks they correspond to.
+  unsigned j = PHINode::getIncomingValueNumForOperand(i);
+  BasicBlock *PredBB = PN->getIncomingBlock(j);
+  return (PredBB && DT->dominates(OpBlock, PredBB));
+}
+
+/* Fixes the undominated variable uses.
+
+   These appear when a conditional barrier kernel is replicated to
+   form a copy of the *same basic block* in the alternative 
+   "barrier path".
+
+   E.g., from
+
+   A -> [exit], A -> B -> [exit]
+
+   a replicated CFG as follows, is created:
+
+   A1 -> (T) A2 -> [exit1],  A1 -> (F) A2' -> B1, B2 -> [exit2] 
+
+   The regions are correct because of the barrier semantics
+   of "all or none". In case any barrier enters the [exit1]
+   from A1, all must (because there's a barrier in the else
+   branch).
+
+   Here at A2 and A2' one creates the same variables. 
+   However, B2 does not know which copy
+   to refer to, the ones created in A2 or ones in A2' (correct).
+   The mapping data contains only one possibility, the
+   one that was placed there last. Thus, the instructions in B2 
+   might end up referring to the variables defined in A2 
+   which do not nominate them.
+
+   The variable references are fixed by exploiting the knowledge
+   of the naming convention of the cloned variables. 
+
+   One potential alternative way would be to collect the refmaps per BB,
+   not globally. Then as a final phase traverse through the 
+   basic blocks starting from the beginning and propagating the
+   reference data downwards, the data from the new BB overwriting
+   the old one. This should ensure the reachability without 
+   the costly dominance analysis.
+*/
+bool
+WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Function &F) 
+{
+  bool changed = false;
+  DT->runOnFunction(F);
+
+  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) 
+    {
+      llvm::BasicBlock *bb = i;
+      for (llvm::BasicBlock::iterator ins = bb->begin(), inse = bb->end();
+           ins != inse; ++ins)
+        {
+          for (unsigned opr = 0; opr < ins->getNumOperands(); ++opr)
+            {
+              if (!isa<Instruction>(ins->getOperand(opr))) continue;
+              Instruction *operand = cast<Instruction>(ins->getOperand(opr));
+              if (dominatesUse(DT, *ins, opr)) 
+                  continue;
+#ifdef DEBUG_REFERENCE_FIXING
+              std::cout << "### dominance error!" << std::endl;
+              operand->dump();
+              std::cout << "### does not dominate:" << std::endl;
+              ins->dump();
+#endif
+              StringRef baseName;
+              std::pair< StringRef, StringRef > pieces = 
+                operand->getName().rsplit('.');
+              if (pieces.second.startswith("pocl_"))
+                baseName = pieces.first;
+              else
+                baseName = operand->getName();
+              
+              Value *alternative = NULL;
+
+              unsigned int copy_i = 0;
+              do {
+                std::ostringstream alternativeName;
+                alternativeName << baseName.str();
+                if (copy_i > 0)
+                  alternativeName << ".pocl_" << copy_i;
+#ifdef DEBUG_REFERENCE_FIXING
+                std::cout << "### trying to find alternative variable:" 
+                          << alternativeName.str() << std::endl;
+#endif
+
+                alternative = 
+                  F.getValueSymbolTable().lookup(alternativeName.str());
+
+#ifdef DEBUG_REFERENCE_FIXING
+                if (alternative == NULL)
+                  std::cout << "### did not find it!" << std::endl;
+#endif
+                if (alternative != NULL)
+                  {
+                    ins->setOperand(opr, alternative);
+                    if (dominatesUse(DT, *ins, opr))
+                      break;
+                  }
+                     
+                if (copy_i > UINT_MAX && alternative == NULL)
+                  break; /* ran out of possibilities */
+                ++copy_i;
+              } while (true);
+
+              if (alternative != NULL)
+                {
+#ifdef DEBUG_REFERENCE_FIXING
+                  std::cout << "### found the alternative:" << std::endl;
+                  alternative->dump();
+#endif                      
+                  changed |= true;
+                } else {
+#ifdef DEBUG_REFERENCE_FIXING
+                  std::cout << "### didn't found an alternative for" << std::endl;
+                  operand->dump();
+#endif
+                  std::cerr << "Could not find a dominating alternative variable." << std::endl;
+                  abort();
+              }
+            }
+        }
+    }
+  return changed;
+}
+
+/**
+ * Moves the phi nodes in the beginning of the src to the beginning of
+ * the dst. 
+ *
+ * MergeBlockIntoPredecessor function from llvm discards the phi nodes
+ * of the replicated BB because it has only one entry.
+ */
+void
+WorkitemHandler::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst) 
+{
+  while (PHINode *PN = dyn_cast<PHINode>(src->begin())) 
+    PN->moveBefore(dst->getFirstNonPHI());
+}
+
+
+} // namespace pocl

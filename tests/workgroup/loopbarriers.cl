@@ -1,5 +1,5 @@
 __kernel void
-loopbarriers (void)
+test_kernel (void)
 {
   unsigned group_id = get_group_id (0);
   unsigned local_id = get_local_id (0);

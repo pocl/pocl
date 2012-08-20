@@ -1,7 +1,6 @@
-// Header for WorkitemReplication function pass.
+// Header for WorkitemLoops function pass.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012 Pekka Jääskeläinen / TUT
+// Copyright (c) 2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_REPLICATION_H
-#define _POCL_WORKITEM_REPLICATION_H
+#ifndef _POCL_WORKITEM_LOOPS_H
+#define _POCL_WORKITEM_LOOPS_H
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/Dominators.h"
@@ -34,28 +33,40 @@
 
 namespace pocl {
   class Workgroup;
+  class ParallelRegion;
 
-  class WorkitemReplication : public pocl::WorkitemHandler {
+  class WorkitemLoops : public pocl::WorkitemHandler {
 
   public:
     static char ID;
 
-  WorkitemReplication() : pocl::WorkitemHandler(ID) {}
+  WorkitemLoops() : pocl::WorkitemHandler(ID) {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnFunction(llvm::Function &F);
-
 
   private:
 
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
-    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+    /* The global variables that store the current local id. */
+    llvm::Value *localIdZ, *localIdY, *localIdX;
+
+    unsigned size_t_width;
+
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
+    typedef std::set<llvm::Instruction* > InstructionIndex;
+    typedef std::vector<llvm::Instruction* > InstructionVec;
 
     virtual bool ProcessFunction(llvm::Function &F);
+    void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
+                          size_t LocalSizeForDim);
+
+    void FixMultiRegionVariables(ParallelRegion *region);
+    void AddContextSaveRestore
+        (llvm::Instruction *instruction, 
+         const InstructionIndex& instructionsInRegion);    
   };
 }
 

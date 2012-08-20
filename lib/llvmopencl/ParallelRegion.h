@@ -21,22 +21,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef _POCL_PARALLEL_REGION_H
+#define _POCL_PARALLEL_REGION_H
+
 #include "BarrierBlock.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
+
 
 namespace pocl {
 
+class Kernel;
+
   // TODO Cleanup: this should not inherit vector but contain it.
   // It now exposes too much to the clients and leads to hard
-  // to track erros when API is changed.
-  class ParallelRegion : public std::vector<llvm::BasicBlock *> {
-    
+  // to track errors when the API is changed.
+  class ParallelRegion : public std::vector<llvm::BasicBlock *> {    
   public:    
+    typedef llvm::SmallVector<ParallelRegion *, 8> ParallelRegionVector;
+
     /* BarrierBlock *getEntryBarrier(); */
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
                               const llvm::Twine &suffix);
@@ -50,17 +58,15 @@ namespace pocl {
     void setExitBBIndex(std::size_t index) { exitIndex_ = index; }
     llvm::BasicBlock* exitBB() { return at(exitIndex_); }
     llvm::BasicBlock* entryBB() { return at(entryIndex_); }
-    void setID(
-	llvm::LLVMContext& context, 
-	std::size_t x = 0, 
-	std::size_t y = 0, 
-	std::size_t z = 0,
-        std::size_t regionID = 0);
+    void setID(llvm::LLVMContext& context, 
+               std::size_t x = 0, 
+               std::size_t y = 0, 
+               std::size_t z = 0,
+               std::size_t regionID = 0);
 
     static ParallelRegion *
       Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 
              llvm::BasicBlock *entry, llvm::BasicBlock *exit);
-
 
     static void GenerateTempNames(llvm::BasicBlock *bb);
 
@@ -74,3 +80,4 @@ namespace pocl {
     
 }
                               
+#endif

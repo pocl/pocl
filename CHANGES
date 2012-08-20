@@ -1,8 +1,21 @@
 0.7  unreleased
 ===============
 
-0.6   June 2012
-===============
+OpenCL Platform Layer implementations (specs Chapter 4)
+-------------------------------------------------------
+
+- clGetDeviceInfo can now use the hwloc lib for device property
+  queries. Still to exploit fully.
+
+Framework
+---------
+
+- Made it possible to override the .cl -> .bc build command
+  called by clBuildProgram per device. Used it to implement
+  calls to (custom) hardware operations in the TTA devices.
+
+0.6   August 2012
+=================
 
 Kernel library 
 --------------
@@ -41,10 +54,8 @@ Miscellaneous
 Known issues
 ------------
 
-- Some cases of work group barriers still crash the
-  kernel compiler
-  * https://bugs.launchpad.net/pocl/+bug/966214
-  * https://bugs.launchpad.net/pocl/+bug/966992
 - Non-pointer struct kernel arguments fail due to varying ABIs
   * https://bugs.launchpad.net/pocl/+bug/987905
-  
+- Produces always "fully unrolled" chains of work items for
+  work groups causing code size explosion for large WGs.
+
