@@ -60,8 +60,8 @@ namespace pocl {
     typedef std::vector<llvm::Instruction* > InstructionVec;
 
     virtual bool ProcessFunction(llvm::Function &F);
-    virtual void CreateLoopAround
-        (ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim);
+    void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
+                          size_t LocalSizeForDim);
 
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore

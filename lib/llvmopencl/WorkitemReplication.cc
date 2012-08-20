@@ -95,6 +95,8 @@ WorkitemReplication::ProcessFunction(Function &F)
 {
   Module *M = F.getParent();
 
+//  F.viewCFG();
+
   Kernel *K = cast<Kernel> (&F);
   CheckLocalSize(K);
 
@@ -255,6 +257,8 @@ WorkitemReplication::ProcessFunction(Function &F)
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
   delete [] reference_map;
+
+//  F.viewCFG();
 
   return true;
 }

@@ -102,13 +102,13 @@ WorkitemLoops::runOnFunction(Function &F)
 
 void
 WorkitemLoops::CreateLoopAround
-(ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim) 
+(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
+ size_t LocalSizeForDim) 
 {
 #ifdef DEBUG_WORK_ITEM_LOOPS
   std::cerr << "### creating a loop around PR:" << std::endl;
   region->dumpNames();    
 #endif
-  assert (region != NULL);
   assert (localIdVar != NULL);
 
   /* TODO: Process the variables: in case the variable is 
@@ -125,10 +125,11 @@ WorkitemLoops::CreateLoopAround
 
     Generate a structure like this for each loop level (x,y,z):
 
-    for.preheader: 
-    ; initialize the dimension id variable that is used as the iterator
-    store i32 0, i32* %local_id_x, align 4
-    br label %for.cond:
+    for.inc:
+    %2 = load i32* %_local_id_x, align 4
+    %inc = add nsw i32 %2, 1
+    store i32 %inc, i32* %_local_id_x, align 4
+    br label %for.cond
 
     for.cond:
     ; loop header, compare the id to the local size
@@ -142,40 +143,32 @@ WorkitemLoops::CreateLoopAround
 
     br label %for.inc
         
-    for.inc:
-    %2 = load i32* %_local_id_x, align 4
-    %inc = add nsw i32 %2, 1
-    store i32 %inc, i32* %_local_id_x, align 4
-    br label %for.cond
 
     for.end:
 
-    TODO: Use a separate iteration variable across all the loops to iterate the context 
+    OPTIMIZE: Use a separate iteration variable across all the loops to iterate the context 
     data arrays to avoid needing multiplications to find the correct location, and to 
     enable easy vectorization of loading the context data when there are parallel iterations.
   */     
 
 
-  llvm::BasicBlock *loopBodyEntryBB = region->entryBB();
+  llvm::BasicBlock *loopBodyEntryBB = entryBB;
   llvm::LLVMContext &C = loopBodyEntryBB->getContext();
   llvm::Function *F = loopBodyEntryBB->getParent();
   loopBodyEntryBB->setName("pregion.for.body");
 
-  assert (region->exitBB()->getTerminator()->getNumSuccessors() == 1);
+  assert (exitBB->getTerminator()->getNumSuccessors() == 1);
 
-  llvm::BasicBlock *oldExit = region->exitBB()->getTerminator()->getSuccessor(0);
-
-  llvm::BasicBlock *preheaderBB =
-    BasicBlock::Create(C, "pregion.for.preheader", F, loopBodyEntryBB);
+  llvm::BasicBlock *oldExit = exitBB->getTerminator()->getSuccessor(0);
 
   llvm::BasicBlock *loopEndBB = 
-    BasicBlock::Create(C, "pregion.for.end", F, region->exitBB());
+    BasicBlock::Create(C, "pregion.for.end", F, exitBB);
 
   llvm::BasicBlock *forCondBB = 
     BasicBlock::Create(C, "pregion.for.cond", F, loopBodyEntryBB);
 
   llvm::BasicBlock *forIncBB = 
-    BasicBlock::Create(C, "pregion.for.inc", F, loopEndBB);
+    BasicBlock::Create(C, "pregion.for.inc", F, forCondBB);
 
   DT->runOnFunction(*F);
 
@@ -185,8 +178,8 @@ WorkitemLoops::CreateLoopAround
      old basic block so we preserve the old loops. */
   BasicBlockVector preds;
   llvm::pred_iterator PI = 
-    llvm::pred_begin(region->entryBB()), 
-    E = llvm::pred_end(region->entryBB());
+    llvm::pred_begin(entryBB), 
+    E = llvm::pred_end(entryBB);
 
   for (; PI != E; ++PI)
     {
@@ -199,43 +192,17 @@ WorkitemLoops::CreateLoopAround
     {
       llvm::BasicBlock *bb = *i;
       if (DT->dominates(loopBodyEntryBB, bb)) continue;
-      bb->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, preheaderBB);
+      bb->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, forIncBB);
     }
 
-  IRBuilder<> builder(preheaderBB);
-  builder.CreateBr(forCondBB);
-
   /* chain region body and loop exit */
-  region->exitBB()->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
+  exitBB->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
 
-  builder.SetInsertPoint(forIncBB);
+  IRBuilder<> builder(forIncBB);
   builder.CreateBr(forCondBB);
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
-
-  builder.SetInsertPoint(preheaderBB->getTerminator());
-
-  llvm::Module& M = *preheaderBB->getParent()->getParent();
-
-  int size_t_width;
-
-  if (M.getPointerSize() == llvm::Module::Pointer64)
-    {
-      size_t_width = 64;
-    }
-  else if (M.getPointerSize() == llvm::Module::Pointer32) 
-    {
-      size_t_width = 32;
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }       
-
-  builder.CreateStore
-    (ConstantInt::get(IntegerType::get(C, size_t_width), 0), 
-     localIdVar);
 
   builder.SetInsertPoint(forCondBB);
   llvm::Value *cmpResult = 
@@ -300,16 +267,26 @@ WorkitemLoops::ProcessFunction(Function &F)
            e = original_parallel_regions->end();
        i != e; ++i) 
   {
-      ParallelRegion *region = (*i);
-      //      CreateLoopAround(region, localIdZ, LocalSizeZ);
-      //      CreateLoopAround(region, localIdY, LocalSizeY);
-      CreateLoopAround(region, localIdX, LocalSizeX);
+    ValueToValueMapTy reference_map;
+    ParallelRegion *original = (*i);
+    ParallelRegion *replica = 
+      original->replicate(reference_map, ".wi_copy");
+    original->insertPrologue(0, 0, 0);
+    replica->chainAfter(original);
+    replica->purge();
+
+    if (LocalSizeZ > 1)
+      CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdZ, LocalSizeZ);
+    if (LocalSizeY > 1)
+      CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdY, LocalSizeY);
+    if (LocalSizeX > 1)
+      CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdX, LocalSizeX);
   }
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
   //M->dump();
-  //  F.viewCFGOnly();
+  //F.viewCFG();
 
   return true;
 }
