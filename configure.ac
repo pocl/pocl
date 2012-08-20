@@ -427,18 +427,16 @@ AC_CONFIG_FILES([Makefile
                  examples/example1/Makefile
                  examples/example2/Makefile
                  examples/example2a/Makefile
-                 examples/barriers/Makefile
-                 examples/forloops/Makefile
                  examples/standalone/Makefile
                  examples/trig/Makefile
                  examples/scalarwave/Makefile
-                 examples/loopbarriers/Makefile
                  examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/atlocal
                  tests/regression/Makefile
+                 tests/workgroup/Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile

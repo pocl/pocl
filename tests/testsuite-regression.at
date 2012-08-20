@@ -13,7 +13,7 @@ AT_CLEANUP
 
 AT_SETUP([barrier between two for loops])
 AT_KEYWORDS([regression tce])
-AT_CHECK([$abs_top_builddir/tests/regression/./test_barrier_between_for_loops], 0)
+AT_CHECK([$abs_top_builddir/tests/regression/test_barrier_between_for_loops], 0)
 AT_CLEANUP
 
 AT_SETUP([simple for-loop with a barrier inside])

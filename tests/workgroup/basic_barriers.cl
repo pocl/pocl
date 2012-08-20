@@ -1,7 +1,7 @@
 int printf(const char *restrict format, ...);
 
 __kernel void
-barriers (void)
+test_kernel (void)
 {
   int gid = get_global_id (0);
 

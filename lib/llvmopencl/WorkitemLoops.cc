@@ -105,8 +105,8 @@ WorkitemLoops::CreateLoopAround
 (ParallelRegion *region, llvm::Value *localIdVar, size_t LocalSizeForDim) 
 {
 #ifdef DEBUG_WORK_ITEM_LOOPS
-  std::cerr << "### creating loop around PR:" << std::endl;
-  region->dump();    
+  std::cerr << "### creating a loop around PR:" << std::endl;
+  region->dumpNames();    
 #endif
   assert (region != NULL);
   assert (localIdVar != NULL);
@@ -155,9 +155,10 @@ WorkitemLoops::CreateLoopAround
     enable easy vectorization of loading the context data when there are parallel iterations.
   */     
 
-  llvm::BasicBlock *preLoopBB = region->entryBB()->getSinglePredecessor();
+
   llvm::BasicBlock *loopBodyEntryBB = region->entryBB();
   llvm::LLVMContext &C = loopBodyEntryBB->getContext();
+  llvm::Function *F = loopBodyEntryBB->getParent();
   loopBodyEntryBB->setName("pregion.for.body");
 
   assert (region->exitBB()->getTerminator()->getNumSuccessors() == 1);
@@ -165,26 +166,41 @@ WorkitemLoops::CreateLoopAround
   llvm::BasicBlock *oldExit = region->exitBB()->getTerminator()->getSuccessor(0);
 
   llvm::BasicBlock *preheaderBB =
-    BasicBlock::Create
-    (C, "pregion.for.preheader",
-     loopBodyEntryBB->getParent(), loopBodyEntryBB);
+    BasicBlock::Create(C, "pregion.for.preheader", F, loopBodyEntryBB);
 
   llvm::BasicBlock *loopEndBB = 
-    BasicBlock::Create
-    (C, "pregion.for.end",
-     region->exitBB()->getParent(), region->exitBB());
+    BasicBlock::Create(C, "pregion.for.end", F, region->exitBB());
 
   llvm::BasicBlock *forCondBB = 
-    BasicBlock::Create
-    (C, "pregion.for.cond",
-     region->exitBB()->getParent(), loopBodyEntryBB);
+    BasicBlock::Create(C, "pregion.for.cond", F, loopBodyEntryBB);
 
   llvm::BasicBlock *forIncBB = 
-    BasicBlock::Create
-    (C, "pregion.for.inc",
-     region->exitBB()->getParent(), loopEndBB);
+    BasicBlock::Create(C, "pregion.for.inc", F, loopEndBB);
 
-  preLoopBB->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, preheaderBB);
+  DT->runOnFunction(*F);
+
+  //  F->viewCFG();
+  /* Fix the old edges jumping to the region to jump to the basic block
+     that starts the created loop. Back edges should still point to the
+     old basic block so we preserve the old loops. */
+  BasicBlockVector preds;
+  llvm::pred_iterator PI = 
+    llvm::pred_begin(region->entryBB()), 
+    E = llvm::pred_end(region->entryBB());
+
+  for (; PI != E; ++PI)
+    {
+      llvm::BasicBlock *bb = *PI;
+      preds.push_back(bb);
+    }    
+
+  for (BasicBlockVector::iterator i = preds.begin();
+       i != preds.end(); ++i)
+    {
+      llvm::BasicBlock *bb = *i;
+      if (DT->dominates(loopBodyEntryBB, bb)) continue;
+      bb->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, preheaderBB);
+    }
 
   IRBuilder<> builder(preheaderBB);
   builder.CreateBr(forCondBB);
@@ -239,8 +255,10 @@ WorkitemLoops::CreateLoopAround
      (builder.CreateLoad(localIdVar),
       ConstantInt::get(IntegerType::get(C, size_t_width), 1)),
      localIdVar);
-      
-      
+
+
+  //  F->viewCFG();
+           
 }
 
 bool
@@ -249,20 +267,24 @@ WorkitemLoops::ProcessFunction(Function &F)
   Kernel *K = cast<Kernel> (&F);
   CheckLocalSize(K);
 
-  unsigned workitem_count = LocalSizeZ * LocalSizeY * LocalSizeX;
-
-  BasicBlockVector original_bbs;
-  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      if (!Barrier::hasBarrier(i))
-        original_bbs.push_back(i);
-  }
-
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
 
-  std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
-
   llvm::Module *M = F.getParent();
+
+  //  F.viewCFGOnly();
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    std::cerr << "### PR: ";
+    region->dumpNames();    
+  }
+#endif
   
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
@@ -279,15 +301,15 @@ WorkitemLoops::ProcessFunction(Function &F)
        i != e; ++i) 
   {
       ParallelRegion *region = (*i);
-      CreateLoopAround(region, localIdZ, LocalSizeZ);
-      CreateLoopAround(region, localIdY, LocalSizeY);
+      //      CreateLoopAround(region, localIdZ, LocalSizeZ);
+      //      CreateLoopAround(region, localIdY, LocalSizeY);
       CreateLoopAround(region, localIdX, LocalSizeX);
   }
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
   //M->dump();
-  //  F.viewCFG();
+  //  F.viewCFGOnly();
 
   return true;
 }

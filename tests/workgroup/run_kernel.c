@@ -1,6 +1,6 @@
-/* barriers - OpenCL synchronization barriers example.
+/* run_kernel - a generic launcher for a kernel without inputs and outputs
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2012 Pekka Jääskeläinen / TUT
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,23 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 
-#define N 4
-
+/**
+ * The test kernels are assumed to:
+ *
+ * 1) called 'test_kernel'
+ * 2) no inputs or outputs, only work item id printfs to verify the correct 
+ *    workgroup transformations
+ * 3) executable with any local and global dimensions and sizes
+ *
+ * Usage:
+ *
+ * ./run_kernel somekernel.cl 2 2 3 4
+ *
+ * Where the first integer is the number of work groups to execute and the
+ * rest are the local dimensions.
+ */
 int
-main (void)
+main (int argc, char **argv)
 {
   FILE *source_file;
   char *source;
@@ -41,14 +54,13 @@ main (void)
   cl_program program;
   cl_int err;
   cl_kernel kernel;
-  size_t global_work_size[1];
-  size_t local_work_size[1];
+  size_t global_work_size[3];
+  size_t local_work_size[3];
+  char kernel_path[2048];
 
-  source_file = fopen("barriers.cl", "r");
-  if (source_file == NULL) 
-    source_file = fopen (SRCDIR "/barriers.cl", "r");
-
-  assert(source_file != NULL && "barriers.cl not found!");
+  snprintf (kernel_path, 2048,  "%s/%s", SRCDIR, argv[1]);
+  source_file = fopen(kernel_path, "r");
+  assert(source_file != NULL && "Kernel .cl not found.");
 
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
@@ -61,6 +73,14 @@ main (void)
   source[source_size] = '\0';
 
   fclose(source_file);
+
+  local_work_size[0] = atoi(argv[3]);
+  local_work_size[1] = atoi(argv[4]);
+  local_work_size[2] = atoi(argv[5]);
+
+  global_work_size[0] = local_work_size[0] * atoi(argv[2]);
+  global_work_size[1] = local_work_size[1];
+  global_work_size[2] = local_work_size[2];
   
   context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
 				    NULL, NULL, NULL); 
@@ -98,7 +118,7 @@ main (void)
       return -1; 
     } 
  
-  kernel = clCreateKernel(program, "barriers", NULL); 
+  kernel = clCreateKernel(program, "test_kernel", NULL); 
   if (kernel == (cl_kernel)0) 
     { 
       clReleaseProgram(program); 
@@ -107,10 +127,8 @@ main (void)
       return -1; 
     } 
 
-  global_work_size[0] = N; 
-  local_work_size[0]= 2; 
- 
-  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, 
+
+  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 3, NULL, 
 			       global_work_size, local_work_size,  
 			       0, NULL, NULL); 
 

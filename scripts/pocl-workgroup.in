@@ -113,7 +113,7 @@ fi
 
 if test "x$POCL_WORK_GROUP_METHOD" = "x";
 then
-METHOD_PASS=workitem
+METHOD_PASS=workitemrepl
 else
 METHOD_PASS=$POCL_WORK_GROUP_METHOD
 fi

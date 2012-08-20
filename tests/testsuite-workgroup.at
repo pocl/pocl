@@ -26,41 +26,42 @@ AT_BANNER([Workgroup creation tests])
 
 AT_SETUP([Unconditional barriers (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitem $abs_top_builddir/examples/barriers/barriers], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 1 1], 0, stdout)
 AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
 ])
 AT_CLEANUP
 
 AT_SETUP([Unconditional barriers (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/examples/barriers/barriers], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 1 1], 0, stdout)
 AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
 ])
 AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitem $abs_top_builddir/examples/forloops/forloops], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
 AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
 ])
 AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/examples/forloops/forloops], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
 AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
 ])
 AT_CLEANUP
 
 AT_SETUP([Barriered for loops (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitem $abs_top_builddir/examples/loopbarriers/loopbarriers], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
 AT_CHECK([sort -c stdout])
 AT_CLEANUP
 
 AT_SETUP([Barriered for loops (loops)])
 AT_KEYWORDS([workgroup])
+AT_SKIP_IF(true)
 AT_XFAIL_IF(true)
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/examples/loopbarriers/loopbarriers], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
 AT_CHECK([sort -c stdout])
 AT_CLEANUP

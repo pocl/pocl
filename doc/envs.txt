@@ -79,8 +79,6 @@ POCL_WORK_GROUP_METHOD
 The kernel compiler method to produce the work group functions from
 multiple work items. Legal values:
 
-    workitem       -- the default method of chaining all work items
-                      the default
     workitemloops  -- create for-loops that execute the work items
-                      experimental, under construction
-    
+                      (experimental, under construction)
+    workitemrepl   -- replicate and chain all work items (the default)

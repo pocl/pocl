@@ -58,7 +58,7 @@ STATISTIC(ContextSize, "Context size per workitem in bytes");
 
 namespace {
   static
-  RegisterPass<WorkitemReplication> X("workitem", "Workitem replication pass");
+  RegisterPass<WorkitemReplication> X("workitemrepl", "Workitem replication pass");
 }
 
 char WorkitemReplication::ID = 0;
