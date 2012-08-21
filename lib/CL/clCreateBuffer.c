@@ -48,6 +48,7 @@ clCreateBuffer(cl_context context,
   mem->parent = NULL;
   mem->map_count = 0;
   mem->mappings = NULL;
+  mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = flags;
   mem->is_image = CL_FALSE;
   POCL_INIT_ICD_OBJECT(mem);
