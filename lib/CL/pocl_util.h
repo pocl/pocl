@@ -45,4 +45,24 @@ float byteswap_float (float word, char should_swap);
 }
 #endif
 
+/* Common macro for cleaning up "*GetInfo" API call implementations.
+ * All the *GetInfo functions have been specified to look alike, 
+ * and have been implemented to use the same variable names, so this
+ * code can be shared.
+ */
+#define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                \
+  {                                                                 \
+    size_t const value_size = sizeof(__TYPE__);                     \
+    if (param_value)                                                \
+      {                                                             \
+        if (param_value_size < value_size) return CL_INVALID_VALUE; \
+        *(__TYPE__*)param_value = __VALUE__;                        \
+      }                                                             \
+    if (param_value_size_ret)                                       \
+      *param_value_size_ret = value_size;                           \
+    return CL_SUCCESS;                                              \
+  } 
+
+
+
 #endif
