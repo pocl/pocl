@@ -30,6 +30,7 @@ CL_API_SUFFIX__VERSION_1_0
   mem->parent = NULL;
   mem->map_count = 0;
   mem->mappings = NULL;
+  mem->type = CL_MEM_OBJECT_IMAGE2D;
   mem->flags = flags;
   mem->is_image = CL_TRUE;
   
