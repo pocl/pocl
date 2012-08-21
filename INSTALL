@@ -50,6 +50,23 @@ source tree, you need to generate the autotool build files with
 
   "./autogen.sh".
 
+Known issues
+------------
+
+There are unsolved issues and bugs in pocl. See the bug listing
+for a complete listing at https://bugs.launchpad.net/pocl
+
+Known issues not related to pocl are listed below.
+
+* Using Clang compiled with gcc 4.7 causes indeterminism in the
+kernel compilation results. See the LLVM bug report: 
+http://llvm.org/bugs/show_bug.cgi?id=12945
+
+* On Mac OS X, you cannot build LLVM with LLVM; you need to
+build using gcc. Use e.g. this command to configure instead:
+
+  ./configure --enable-shared CC=gcc CXX=g++ --prefix=YOUR_INSTALLATION_PREFIX_HERE
+
 
 It's highly recommended to use the latest development version of LLVM.
 However, as llvm-svn is a moving target, new revisions might break pocl

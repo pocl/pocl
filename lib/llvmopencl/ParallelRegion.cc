@@ -24,7 +24,13 @@
 
 #include "ParallelRegion.h"
 #include "Barrier.h"
+#include "Kernel.h"
+#include "config.h"
+#ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#endif
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/ValueSymbolTable.h"
@@ -44,6 +50,7 @@ using namespace pocl;
 //#define DEBUG_REMAP
 //#define DEBUG_REPLICATE
 //#define DEBUG_PURGE
+//#define DEBUG_PR_CREATION
 
 #include <iostream>
 

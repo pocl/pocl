@@ -25,7 +25,7 @@
 pkglib_LTLIBRARIES = llvmopencl.la
 
 AM_CXXFLAGS = -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags`
-AM_LDFLAGS = -module -export-dynamic `@LLVM_CONFIG@ --ldflags`
+AM_LDFLAGS = -module -export-dynamic --version-info ${LIB_VERSION} `@LLVM_CONFIG@ --ldflags` 
 
 llvmopencl_la_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\
@@ -38,6 +38,8 @@ llvmopencl_la_SOURCES = Barrier.h						\
                         Flatten.cc IsolateRegions.h IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc WIVectorize.cc
+						WorkItemAliasAnalysis.cc WIVectorize.cc \
+						WorkitemHandler.h WorkitemHandler.cc \
+						WorkitemLoops.h WorkitemLoops.cc
 
 #llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

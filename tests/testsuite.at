@@ -47,26 +47,7 @@ AT_SETUP([example2a: matrix transpose (automatic locals)])
 AT_CHECK([$abs_top_builddir/examples/example2a/example2a], 0, [OK
 ])
 AT_CLEANUP
-
-AT_BANNER([Workgroup creation tests])
-
-AT_SETUP([Unconditional barriers])
-AT_CHECK([$abs_top_builddir/examples/barriers/barriers], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
-])
-AT_CLEANUP
-
-AT_SETUP([Unbarriered for loops])
-AT_CHECK([$abs_top_builddir/examples/forloops/forloops], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
-])
-AT_CLEANUP
-
-AT_SETUP([Barriered for loops])
-AT_CHECK([$abs_top_builddir/examples/loopbarriers/loopbarriers], 0, stdout)
-AT_CHECK([sort -c stdout])
-AT_CLEANUP
-          
+        
 AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
@@ -148,6 +129,7 @@ AT_CHECK([$abs_top_builddir/examples/scalarwave/scalarwave], 0, expout)
 AT_CLEANUP
 
 #m4_include(testsuite-llvmopencl.at)
+m4_include(testsuite-workgroup.at)
 m4_include(testsuite-regression.at)
 m4_include(testsuite-tce.at)
 m4_include(testsuite-samples.at)

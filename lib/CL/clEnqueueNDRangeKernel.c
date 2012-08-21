@@ -292,7 +292,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->arguments[i]);
-    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i])
+    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
       ++command_node->command.run.arg_buffer_count;
   }
   
@@ -303,10 +303,12 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->arguments[i]);
-    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i])
+    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
       {
         cl_mem buf;
-        //printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
+#if 0
+        printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
+#endif
         buf = *(cl_mem *) (al->value);
         clRetainMemObject (buf);
         command_node->command.run.arg_buffers[count] = buf;

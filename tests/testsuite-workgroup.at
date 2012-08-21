@@ -1,0 +1,91 @@
+# Testsuite for the kernel compiler's work group function generation functionality.
+#
+# Makefile.am for pocl/lib/kernel.
+# 
+# Copyright (c) 2011 Universidad Rey Juan Carlos
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+AT_BANNER([Workgroup creation tests])
+
+AT_SETUP([Unconditional barriers (full replication)])
+AT_KEYWORDS([workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 1 1], 0, stdout)
+AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
+])
+AT_CLEANUP
+
+AT_SETUP([Unconditional barriers (loops)])
+AT_KEYWORDS([workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 1 1], 0, stdout)
+AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
+])
+AT_CLEANUP
+
+AT_SETUP([Unbarriered for loops (full replication)])
+AT_KEYWORDS([workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
+AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
+])
+AT_CLEANUP
+
+AT_SETUP([Unbarriered for loops (loops)])
+AT_KEYWORDS([workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
+AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
+])
+AT_CLEANUP
+
+AT_SETUP([Barriered for loops (full replication)])
+AT_KEYWORDS([workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
+AT_CHECK([sort -c stdout])
+AT_CLEANUP
+
+AT_SETUP([Barriered for loops (loops)])
+AT_KEYWORDS([workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
+AT_CHECK([sort -c stdout])
+AT_CLEANUP
+
+AT_SETUP([Conditional barrier (full replication)])
+AT_DATA([expout],
+[LOCAL_ID=0 before if
+LOCAL_ID=0 inside if
+LOCAL_ID=1 before if
+LOCAL_ID=1 inside if
+LOCAL_ID=0 after if
+LOCAL_ID=1 after if
+])
+AT_KEYWORDS([condbar workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel conditional_barriers.cl 1 2 1 1], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Conditional barrier (loops)])
+AT_DATA([expout],
+[LOCAL_ID=0 before if
+LOCAL_ID=0 inside if
+LOCAL_ID=1 before if
+LOCAL_ID=1 inside if
+LOCAL_ID=0 after if
+LOCAL_ID=1 after if
+])
+AT_KEYWORDS([condbar workgroup])
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel conditional_barriers.cl 1 2 1 1], 0, expout)
+AT_CLEANUP

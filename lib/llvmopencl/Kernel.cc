@@ -1,6 +1,7 @@
-// Class for kernels, a special kind of function.
+// Class for kernels, llvm::Functions that represent OpenCL C kernels.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2011 Universidad Rey Juan Carlos and
+//               2012 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +25,13 @@
 #include "Barrier.h"
 #include <iostream>
 
+#include "config.h"
+#ifdef LLVM_3_1
+#include "llvm/Support/IRBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#endif
+
 //#define DEBUG_PR_CREATION
 
 using namespace llvm;
@@ -34,10 +42,10 @@ static void add_predecessors(SmallVectorImpl<BasicBlock *> &v,
 static bool verify_no_barriers(const BasicBlock *B);
 
 void
-Kernel::getExitBlocks(SmallVectorImpl<BarrierBlock *> &B)
+Kernel::getExitBlocks(SmallVectorImpl<BarrierBlock *> &B) 
 {
   for (iterator i = begin(), e = end(); i != e; ++i) {
-    TerminatorInst *t = i->getTerminator();
+    const TerminatorInst *t = i->getTerminator();
     if (t->getNumSuccessors() == 0) {
       // All exits must be barrier blocks.
       B.push_back(cast<BarrierBlock>(i));
@@ -46,7 +54,7 @@ Kernel::getExitBlocks(SmallVectorImpl<BarrierBlock *> &B)
 }
 
 ParallelRegion *
-Kernel::createParallelRegionBefore(BarrierBlock *B)
+Kernel::createParallelRegionBefore(BarrierBlock *B) 
 {
   SmallVector<BasicBlock *, 4> pending_blocks;
   SmallPtrSet<BasicBlock *, 8> blocks_in_region;
@@ -160,3 +168,136 @@ verify_no_barriers(const BasicBlock *B)
 
   return true;
 }
+
+ParallelRegion::ParallelRegionVector *
+Kernel::getParallelRegions(llvm::LoopInfo *LI) {
+  ParallelRegion::ParallelRegionVector *parallel_regions =
+    new ParallelRegion::ParallelRegionVector;
+
+  SmallVector<BarrierBlock *, 4> exit_blocks;
+  getExitBlocks(exit_blocks);
+
+  // We need to keep track of traversed barriers to detect back edges.
+  SmallPtrSet<BarrierBlock *, 8> found_barriers;
+
+  // First find all the ParallelRegions in the Function.
+  while (!exit_blocks.empty()) {
+    
+    // We start on an exit block and process the parallel regions upwards
+    // (finding an execution trace).
+    BarrierBlock *exit = exit_blocks.back();
+    exit_blocks.pop_back();
+
+    while (ParallelRegion *PR = createParallelRegionBefore(exit)) {
+      assert(PR != NULL && !PR->empty() && 
+             "Empty parallel region in kernel (contiguous barriers)!");
+
+      found_barriers.insert(exit);
+      exit = NULL;
+      parallel_regions->push_back(PR);
+      BasicBlock *entry = PR->entryBB();
+      int found_predecessors = 0;
+      BarrierBlock *loop_barrier = NULL;
+      for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
+           i != e; ++i) {
+        BarrierBlock *barrier = cast<BarrierBlock> (*i);
+        if (!found_barriers.count(barrier)) {
+          /* If this is a loop header block we might have edges from two 
+             unprocessed barriers. The one inside the loop (coming from a 
+             computation block after a branch block) should be processed 
+             first. */
+          std::string bbName = "";
+          const bool IS_IN_THE_SAME_LOOP = 
+              LI->getLoopFor(barrier) != NULL &&
+              LI->getLoopFor(entry) != NULL &&
+              LI->getLoopFor(entry) == LI->getLoopFor(barrier);
+
+          if (IS_IN_THE_SAME_LOOP)
+            {
+#ifdef DEBUG_PR_CREATION
+              std::cout << "### found a barrier inside the loop:" << std::endl;
+              std::cout << barrier->getName().str() << std::endl;
+#endif
+              loop_barrier = barrier;
+            }
+          else
+            {
+#ifdef DEBUG_PR_CREATION
+              std::cout << "### found a barrier:" << std::endl;
+              std::cout << barrier->getName().str() << std::endl;
+#endif
+              exit = barrier;
+            }
+          ++found_predecessors;
+        }
+      }
+
+      if (loop_barrier != NULL)
+        {
+          /* The secondary barrier to process in case it was a loop
+             header. Push it for later processing. */
+          if (exit != NULL) 
+            exit_blocks.push_back(exit);
+          /* always process the inner loop regions first */
+          if (!found_barriers.count(loop_barrier))
+            exit = loop_barrier; 
+        }
+
+#ifdef DEBUG_PR_CREATION
+      std::cout << "### created a ParallelRegion:" << std::endl;
+      PR->dumpNames();
+      std::cout << std::endl;
+#endif
+
+      if (found_predecessors == 0)
+        {
+          /* This path has been traversed and we encountered no more
+             unprocessed regions. It means we have either traversed all
+             paths from the exit or have transformed a loop and thus 
+             encountered only a barrier that was seen (and thus
+             processed) before. */
+          break;
+        }
+      assert ((exit != NULL) && "Parallel region without entry barrier!");
+    }
+  }
+  return parallel_regions;
+
+}
+
+void
+Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ) {
+  
+  IRBuilder<> builder(getEntryBlock().getFirstNonPHI());
+
+  GlobalVariable *gv;
+
+  llvm::Module* M = getParent();
+
+  int size_t_width = 32;
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+
+  gv = M->getGlobalVariable("_local_size_x");
+  if (gv != NULL)
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeX), gv);
+  gv = M->getGlobalVariable("_local_size_y");
+
+  if (gv != NULL)
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeY), gv);
+  gv = M->getGlobalVariable("_local_size_z");
+
+  if (gv != NULL)
+    builder.CreateStore
+      (ConstantInt::get
+       (IntegerType::get(M->getContext(), size_t_width),
+        LocalSizeZ), gv);
+
+}
+

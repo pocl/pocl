@@ -23,20 +23,7 @@
 
 #include <string.h>
 #include "pocl_cl.h"
-
-// TODO: these two macros are copied from GetDeviceInfo. Share them somewhere
-#define POCL_RETURN_PLATFORM_INFO(__TYPE__, __VALUE__)                \
-  {                                                                 \
-    size_t const value_size = sizeof(__TYPE__);                     \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        *(__TYPE__*)param_value = __VALUE__;                        \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  } 
+#include "pocl_util.h"
 
 #define POCL_RETURN_PLATFORM_INFO_STR(__STR__)                        \
   {                                                                 \

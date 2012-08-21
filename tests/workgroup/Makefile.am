@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples/forloops.
+# Makefile.am for tests/workgroup.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS = forloops
+noinst_PROGRAMS = run_kernel
 
-forloops_SOURCES = forloops.c forloops.cl
-forloops_LDADD = ../../lib/CL/libpocl.la @PTHREAD_LIBS@
-forloops_CFLAGS = @PTHREAD_CFLAGS@
-
-AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
+AM_LDFLAGS = ../../lib/CL/libpocl.la ../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'

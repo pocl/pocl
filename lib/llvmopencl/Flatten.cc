@@ -43,7 +43,7 @@ namespace {
 
 }
 
-extern cl::opt<std::string> Kernel;
+extern cl::opt<std::string> KernelName;
 
 char Flatten::ID = 0;
 static RegisterPass<Flatten> X("flatten", "Kernel function flattening pass");
@@ -71,8 +71,8 @@ Flatten::runOnModule(Module &M)
     {
       llvm::Function *f = i;
       if (f->isDeclaration()) continue;
-      if (Kernel == f->getName() || 
-          (Kernel == "" && pocl::Workgroup::isKernelToProcess(*f)))
+      if (KernelName == f->getName() || 
+          (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f)))
         {
           f->removeFnAttr(Attribute::AlwaysInline);
           f->addFnAttr(Attribute::NoInline);

@@ -1,0 +1,3 @@
+This folder contains the unmodified sources to llvm-ld as it was published in
+LLVM, release 3.1.
+See http://llvm.org for more info.

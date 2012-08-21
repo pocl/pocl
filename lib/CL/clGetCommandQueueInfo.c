@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clGetDeviceInfo()
 
-   Copyright (c) 2012 Erik Schnetter
+   Copyright (c) 2012 Kalle Raiskila
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 
 
@@ -46,17 +47,24 @@ clGetCommandQueueInfo(cl_command_queue      command_queue ,
                       void *                param_value ,
                       size_t *              param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  if (!command_queue)
+  if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
-  switch (param_name) {
-  case CL_QUEUE_CONTEXT:
-    POCL_RETURN_QUEUE_INFO(cl_context, command_queue->context);
-  case CL_QUEUE_DEVICE:
-    POCL_RETURN_QUEUE_INFO(cl_device_id, command_queue->device);
-  case CL_QUEUE_REFERENCE_COUNT:
-    POCL_RETURN_QUEUE_INFO(cl_uint, command_queue->pocl_refcount);
-  case CL_QUEUE_PROPERTIES:
-    POCL_RETURN_QUEUE_INFO(cl_command_queue_properties, command_queue->properties);
+ 
+  switch (param_name)
+  {
+    case CL_QUEUE_CONTEXT:
+      POCL_RETURN_GETINFO( cl_context, command_queue->context );
+      break;
+    case CL_QUEUE_DEVICE:
+      POCL_RETURN_GETINFO( cl_device_id, command_queue->device );
+      break;
+    case CL_QUEUE_REFERENCE_COUNT:
+      POCL_RETURN_GETINFO( cl_uint, (cl_uint)command_queue->pocl_refcount );
+      break;
+    case CL_QUEUE_PROPERTIES:
+      POCL_RETURN_GETINFO( cl_command_queue_properties, 
+                              command_queue->properties );
+      break;
   }
   return CL_INVALID_VALUE;
 }

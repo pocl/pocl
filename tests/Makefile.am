@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = regression runtime
+SUBDIRS = regression runtime workgroup
 if TCE_AVAILABLE
 SUBDIRS += tce
 endif
@@ -47,6 +47,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 
 EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at \
 	testsuite-rodinia.at testsuite-tce.at testsuite-llvmopencl.at testsuite-runtime.at \
+	testsuite-workgroup.at \
 	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in
 DISTCLEANFILES = atconfig
 TESTSUITE = $(srcdir)/testsuite
@@ -66,7 +67,8 @@ AUTOM4TE = $(SHELL) $(top_srcdir)/config/missing --run autom4te
 AUTOTEST = $(AUTOM4TE) --language=autotest
 $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/testsuite-samples.at $(srcdir)/testsuite-regression.at \
 	$(srcdir)/testsuite-tce.at $(srcdir)/testsuite-llvmopencl.at $(srcdir)/testsuite-viennacl.at \
-	$(srcdir)/testsuite-rodinia.at $(srcdir)/testsuite-runtime.at $(srcdir)/package.m4
+	$(srcdir)/testsuite-rodinia.at $(srcdir)/testsuite-runtime.at $(srcdir)/testsuite-workgroup.at \
+	$(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
 

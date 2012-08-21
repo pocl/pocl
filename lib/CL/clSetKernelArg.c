@@ -43,7 +43,7 @@ clSetKernelArg(cl_kernel kernel,
   if (kernel->arguments == NULL)
     return CL_INVALID_KERNEL;
 
-  p = &(kernel->arguments[arg_index]);
+  p = &(kernel->arguments[arg_index]);  
   
   if (arg_value != NULL)
     {
@@ -62,6 +62,12 @@ clSetKernelArg(cl_kernel kernel,
       free (p->value);
       p->value = NULL;
     }
+
+#if 0
+  printf(
+      "### clSetKernelArg for %s arg %d set to %x\n", 
+      kernel->name, arg_index, p->value);
+#endif
 
   p->size = arg_size;
 
