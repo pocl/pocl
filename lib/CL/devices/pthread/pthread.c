@@ -682,6 +682,12 @@ workgroup_thread (void *p)
   struct pocl_argument *al;  
   unsigned i = 0;
 
+  /* TODO: refactor this to share code with basic.c 
+
+     To function 
+     void setup_kernel_arg_array(void **arguments, cl_kernel kernel)
+     or similar
+*/
   cl_kernel kernel = ta->kernel;
   for (i = 0; i < kernel->num_args; ++i)
     {
@@ -692,7 +698,16 @@ workgroup_thread (void *p)
           *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
         }
       else if (kernel->arg_is_pointer[i])
-        arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+      {
+        /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
+           that case we must pass the same NULL forward to the kernel.
+           Otherwise, the user must have created a buffer with per device
+           pointers stored in the cl_mem. */
+        if (al->value == NULL)
+          arguments[i] = NULL;
+        else
+          arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+      }
       else if (kernel->arg_is_image[i])
         {
           dev_image2d_t di;      

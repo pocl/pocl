@@ -131,7 +131,7 @@ pocl_basic_run
   char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
-  struct pocl_argument *p;
+  struct pocl_argument *al;
   size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
@@ -235,22 +235,29 @@ pocl_basic_run
 
   for (i = 0; i < kernel->num_args; ++i)
     {
-      p = &(kernel->arguments[i]);
+      al = &(kernel->arguments[i]);
       if (kernel->arg_is_local[i])
         {
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, p->size, NULL);
+          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
         }
       else if (kernel->arg_is_pointer[i])
         {
-          arguments[i] = &((*(cl_mem *) (p->value))->device_ptrs[device]);
+          /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
+             that case we must pass the same NULL forward to the kernel.
+             Otherwise, the user must have created a buffer with per device
+             pointers stored in the cl_mem. */
+          if (al->value == NULL)
+            arguments[i] = NULL;
+          else
+            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device]);
         }
       else if (kernel->arg_is_image[i])
         {
           dev_image2d_t di;      
-          cl_mem mem = *(cl_mem*)p->value;
-          di.data = &((*(cl_mem *) (p->value))->device_ptrs[device]);
-          di.data = ((*(cl_mem *) (p->value))->device_ptrs[device]);
+          cl_mem mem = *(cl_mem*)al->value;
+          di.data = &((*(cl_mem *) (al->value))->device_ptrs[device]);
+          di.data = ((*(cl_mem *) (al->value))->device_ptrs[device]);
           di.width = mem->image_width;
           di.height = mem->image_height;
           di.rowpitch = mem->image_row_pitch;
@@ -259,7 +266,7 @@ pocl_basic_run
           void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image2d_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
-          pocl_basic_write( data, &di, devptr, sizeof(dev_image2d_t) );
+          pocl_basic_write (data, &di, devptr, sizeof(dev_image2d_t));
         }
       else if (kernel->arg_is_sampler[i])
         {
@@ -267,20 +274,20 @@ pocl_basic_run
           
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_basic_write( data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t) );
+          pocl_basic_write (data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t));
         }
       else
         {
-          arguments[i] = p->value;
+          arguments[i] = al->value;
         }
     }
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      p = &(kernel->arguments[i]);
+      al = &(kernel->arguments[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, p->size, NULL);
+      *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
     }
 
   for (z = 0; z < pc->num_groups[2]; ++z)

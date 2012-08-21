@@ -82,6 +82,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];
+              if (buf == NULL) continue;
               //printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, buf,  node->command.run.kernel->function_name);
               clReleaseMemObject (buf);
             }
