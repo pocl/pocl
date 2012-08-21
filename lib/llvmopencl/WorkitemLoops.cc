@@ -27,13 +27,19 @@
 #include "Workgroup.h"
 #include "Barrier.h"
 #include "Kernel.h"
+#include "config.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
+#ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#include "llvm/TypeBuilder.h"
+#endif
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"

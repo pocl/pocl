@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <../dev_image.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -148,13 +149,20 @@ pocl_basic_run
 
   if ( access (module, F_OK) != 0)
     {
+      char *llvm_ld;
+      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/linked.bc", tmpdir);
       assert (error >= 0);
       
+      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
+        llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
+      else
+        llvm_ld = "pocl-llvm-ld";
+
       error = snprintf (command, COMMAND_LENGTH,
-			LLVM_LD " -link-as-library -o %s %s/%s",
-                        bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
+			"%s -link-as-library -o %s %s/%s",
+                        llvm_ld, bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
       error = system(command);

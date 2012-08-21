@@ -213,7 +213,6 @@ AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
 LLVM_PROG([OPT], [opt], [LLVM optimizer])
-LLVM_PROG([LLVM_LD], [llvm-ld], [LLVM linker])
 LLVM_PROG([LLC], [llc], [LLVM static compiler])
 LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
 LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
@@ -222,7 +221,6 @@ LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
 export CLANG
 export LLC
 
-AC_DEFINE_UNQUOTED([LLVM_LD], ["$LLVM_LD"], [LLVM linker executable.])
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
@@ -322,9 +320,12 @@ AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sour
 if test x"$prefix" = xNONE; then
   prefix=/usr/local
 fi
+
 AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
 AC_DEFINE_UNQUOTED([POCL_INSTALLED_DATA],["$prefix/share/pocl"],[The installation directory])
 AC_SUBST([POCL_INSTALLED_DATA], $prefix/share/pocl)
+AC_DEFINE_UNQUOTED([LLVM_LD], ["pocl-llvm-ld"],[LLVM linker binary])
+AC_SUBST([LLVM_LD], [pocl-llvm-ld])
 
 # Checks for libraries.
 
@@ -440,6 +441,7 @@ AC_CONFIG_FILES([Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
+                 tools/llvm-ld/Makefile
                  ])
 
 AC_OUTPUT

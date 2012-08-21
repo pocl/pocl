@@ -33,7 +33,12 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
+#include "config.h"
+#ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#endif
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"

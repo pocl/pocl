@@ -25,7 +25,12 @@
 #include "Barrier.h"
 #include <iostream>
 
+#include "config.h"
+#ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#endif
 
 //#define DEBUG_PR_CREATION
 
