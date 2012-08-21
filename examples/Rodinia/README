@@ -1,0 +1,10 @@
+Some of the Rodinia test cases are executed as part
+of the test suite in case a directory rodinia_2.0.1
+is found in this directory.
+
+Newer versions of Rodinia are not tested and some of
+the cases do not build as is on all machines due to
+linkage switch order issues etc.
+
+The benchmark can be downloaded here
+http://lava.cs.virginia.edu/Rodinia/download.htm
