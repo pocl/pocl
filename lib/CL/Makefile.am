@@ -86,6 +86,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clCreateUserEvent.c		\
                    clSetUserEventStatus.c		\
                    clEnqueueTask.c		\
+                   clCreateImage.c		\
                    clCreateImage2D.c		\
                    clCreateImage3D.c		\
                    clEnqueueReadImage.c	\
