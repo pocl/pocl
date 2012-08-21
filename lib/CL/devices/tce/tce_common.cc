@@ -25,6 +25,9 @@
 
 #include "config.h"
 
+#include <unistd.h>
+#include <sys/stat.h>
+
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE
 #undef PACKAGE_BUGREPORT
