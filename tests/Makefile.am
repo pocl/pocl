@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = regression runtime
+SUBDIRS = regression runtime workgroup
 if TCE_AVAILABLE
 SUBDIRS += tce
 endif
