@@ -22,20 +22,8 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include <string.h>
-
-#define POCL_RETURN_DEVICE_INFO(__TYPE__, __VALUE__)                \
-  {                                                                 \
-    size_t const value_size = sizeof(__TYPE__);                     \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        *(__TYPE__*)param_value = __VALUE__;                        \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  } 
 
 /* A version for querying the info and in case the device returns 
    a zero, assume the device info query hasn't been implemented 
@@ -80,15 +68,15 @@ clGetDeviceInfo(cl_device_id   device,
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT: 
-    POCL_RETURN_DEVICE_INFO(cl_bool, CL_TRUE);
+    POCL_RETURN_GETINFO(cl_bool, CL_TRUE);
   case CL_DEVICE_TYPE:
-    POCL_RETURN_DEVICE_INFO(cl_device_type, device->type);   
+    POCL_RETURN_GETINFO(cl_device_type, device->type);   
   case CL_DEVICE_VENDOR_ID:
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->vendor_id);
+    POCL_RETURN_GETINFO(cl_uint, device->vendor_id);
   case CL_DEVICE_MAX_COMPUTE_UNITS:
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_compute_units);
+    POCL_RETURN_GETINFO(cl_uint, device->max_compute_units);
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->max_work_item_dimensions);
+    POCL_RETURN_GETINFO(cl_uint, device->max_work_item_dimensions);
   case CL_DEVICE_MAX_WORK_GROUP_SIZE               : 
     /* There is no "preferred WG size" device query, so we probably should
        return something more sensible than the CL_INT_MAX that seems
@@ -116,13 +104,13 @@ clGetDeviceInfo(cl_device_id   device,
           size_t from_env = atoi (getenv ("POCL_MAX_WORK_GROUP_SIZE"));
           if (from_env < max_wg_size) max_wg_size = from_env;
         }
-      POCL_RETURN_DEVICE_INFO(size_t, max_wg_size);
+      POCL_RETURN_GETINFO(size_t, max_wg_size);
     }
   case CL_DEVICE_MAX_WORK_ITEM_SIZES:
     {
       /* We allocate a 3-elementa array for this in pthread.c */
       typedef struct { size_t size[3]; } size_t_3;
-      POCL_RETURN_DEVICE_INFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
+      POCL_RETURN_GETINFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
     }
     
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
@@ -168,11 +156,11 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_SINGLE_FP_CONFIG                  : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->single_fp_config);
   case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE             :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->global_mem_cache_type);
+    POCL_RETURN_GETINFO(cl_uint, device->global_mem_cache_type);
   case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         : 
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->global_mem_cacheline_size);
+    POCL_RETURN_GETINFO(cl_uint, device->global_mem_cacheline_size);
   case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             : 
-    POCL_RETURN_DEVICE_INFO(cl_ulong, device->global_mem_cache_size);
+    POCL_RETURN_GETINFO(cl_ulong, device->global_mem_cache_size);
   case CL_DEVICE_GLOBAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->global_mem_size);
   case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE          : 
@@ -184,19 +172,19 @@ clGetDeviceInfo(cl_device_id   device,
   case CL_DEVICE_LOCAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->local_mem_size);
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->error_correction_support);
+    POCL_RETURN_GETINFO(cl_uint, device->error_correction_support);
   case CL_DEVICE_PROFILING_TIMER_RESOLUTION        :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->profiling_timer_resolution);
+    POCL_RETURN_GETINFO(cl_uint, device->profiling_timer_resolution);
   case CL_DEVICE_ENDIAN_LITTLE                     :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->endian_little);
+    POCL_RETURN_GETINFO(cl_uint, device->endian_little);
   case CL_DEVICE_AVAILABLE                         :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->available);
+    POCL_RETURN_GETINFO(cl_uint, device->available);
   case CL_DEVICE_COMPILER_AVAILABLE                :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->compiler_available);
+    POCL_RETURN_GETINFO(cl_uint, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->execution_capabilities);
+    POCL_RETURN_GETINFO(cl_uint, device->execution_capabilities);
   case CL_DEVICE_QUEUE_PROPERTIES                  :
-    POCL_RETURN_DEVICE_INFO(cl_uint, device->queue_properties);
+    POCL_RETURN_GETINFO(cl_uint, device->queue_properties);
    
   case CL_DEVICE_NAME:
     POCL_RETURN_DEVICE_INFO_STR(device->name);
@@ -218,7 +206,7 @@ clGetDeviceInfo(cl_device_id   device,
          platform id (which is currently always the case for pocl) */
       cl_platform_id platform_id;
       clGetPlatformIDs(1, &platform_id, NULL);
-      POCL_RETURN_DEVICE_INFO(cl_platform_id, platform_id);
+      POCL_RETURN_GETINFO(cl_platform_id, platform_id);
     }
   case CL_DEVICE_DOUBLE_FP_CONFIG                  :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->double_fp_config);
