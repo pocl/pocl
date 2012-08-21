@@ -46,6 +46,8 @@ clGetMemObjectInfo(cl_mem      memobj ,
                    void *      param_value ,
                    size_t *    param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  if (!memobj)
+    return CL_INVALID_MEM_OBJECT;
   switch (param_name) {
   case CL_MEM_TYPE:
     POCL_RETURN_MEM_INFO(cl_mem_object_type, memobj->type);

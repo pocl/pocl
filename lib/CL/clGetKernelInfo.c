@@ -59,6 +59,8 @@ clGetKernelInfo(cl_kernel      kernel ,
                 void *         param_value ,
                 size_t *       param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  if (!kernel)
+    return CL_INVALID_KERNEL;
   switch (param_name) {
   case CL_KERNEL_FUNCTION_NAME:
     POCL_RETURN_KERNEL_INFO_STR(kernel->name);
