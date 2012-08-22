@@ -30,10 +30,10 @@
 #include <map>
 #include <vector>
 #include "WorkitemHandler.h"
+#include "ParallelRegion.h"
 
 namespace pocl {
   class Workgroup;
-  class ParallelRegion;
 
   class WorkitemLoops : public pocl::WorkitemHandler {
 
@@ -53,6 +53,8 @@ namespace pocl {
     /* The global variables that store the current local id. */
     llvm::Value *localIdZ, *localIdY, *localIdX;
 
+    ParallelRegion::ParallelRegionVector *original_parallel_regions;
+
     unsigned size_t_width;
 
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
@@ -66,7 +68,9 @@ namespace pocl {
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore
         (llvm::Instruction *instruction, 
-         const InstructionIndex& instructionsInRegion);    
+         const InstructionIndex& instructionsInRegion);
+
+    ParallelRegion& RegionOfBlock(llvm::BasicBlock *bb);
   };
 }
 

@@ -38,6 +38,7 @@
 #include <set>
 #include <sstream>
 #include <map>
+#include <algorithm>
 
 #define LOCAL_ID_X "_local_id_x"
 #define LOCAL_ID_Y "_local_id_y"
@@ -401,4 +402,41 @@ ParallelRegion::setID(
         ii->setMetadata("wi",md);
       }
     }
+}
+
+
+/**
+ * Inserts a new basic block to the region, before an old basic block in
+ * the region.
+ *
+ * Assumes the inserted block to be before the other block in control
+ * flow, that is, there should be direct CFG edge from the block to the
+ * other.
+ */
+void
+ParallelRegion::AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before)
+{
+    llvm::BasicBlock *oldExit = exitBB();
+    ParallelRegion::iterator beforePos = find(begin(), end(), before);
+    ParallelRegion::iterator oldExitPos = find(begin(), end(), oldExit);
+    assert (beforePos != end());
+
+    /* The old exit node might is now pushed further, at most one position. 
+       Whether this is the case, depends if the node was inserted before or
+       after that node in the vector. That is, if indexof(before) < indexof(oldExit). */
+    if (beforePos < oldExitPos) ++exitIndex_;
+
+    insert(beforePos, block);
+    /* The entryIndex_ should be still correct. In case the 'before' block
+       was an old entry node, the new one replaces it as an entry node at
+       the same index and the old one gets pushed forward. */
+
+       
+}
+
+
+bool 
+ParallelRegion::HasBlock(llvm::BasicBlock *bb)
+{
+    return find(begin(), end(), bb) != end();
 }

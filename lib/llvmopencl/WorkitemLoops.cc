@@ -48,6 +48,8 @@
 #include <sstream>
 #include <vector>
 
+//#define DUMP_RESULT_CFG
+
 #ifdef DUMP_RESULT_CFG
 #include "llvm/Analysis/CFGPrinter.h"
 #endif
@@ -96,13 +98,18 @@ WorkitemLoops::runOnFunction(Function &F)
   localIdY = M->getOrInsertGlobal("_local_id_y", localIdType);
   localIdX = M->getOrInsertGlobal("_local_id_x", localIdType);
 
+  //std::cerr << "### original:" << std::endl;
+  //  F.viewCFGOnly();
   bool changed = ProcessFunction(F);
 #ifdef DUMP_RESULT_CFG
-  FunctionPass* cfgPrinter = createCFGPrinterPass();
+  FunctionPass* cfgPrinter = createCFGOnlyPrinterPass();
   cfgPrinter->runOnFunction(F);
-#endif
+#endif  
+  changed |= fixUndominatedVariableUses(DT, F);
 
-  //  changed |= fixUndominatedVariableUses(DT, F);
+  //std::cerr << "### processed:" << std::endl;
+  //F.viewCFGOnly();
+
   return changed;
 }
 
@@ -111,21 +118,7 @@ WorkitemLoops::CreateLoopAround
 (llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
  size_t LocalSizeForDim) 
 {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-  std::cerr << "### creating a loop around PR:" << std::endl;
-  region->dumpNames();    
-#endif
   assert (localIdVar != NULL);
-
-  /* TODO: Process the variables: in case the variable is 
-     1) created before the PR, load its value from the WI context
-     data array
-     2) live only inside the PR: do nothing
-     3) created inside the PR and used outside, save its value
-     at the end of the loop to the WI context data array */
-
-  /* TODO: The Conditional barrier case needs the first iteration
-     peeled. Check the case how it's best done. */
 
   /*
 
@@ -234,40 +227,55 @@ WorkitemLoops::CreateLoopAround
            
 }
 
+ParallelRegion&
+WorkitemLoops::RegionOfBlock(llvm::BasicBlock *bb)
+{
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    if (region->HasBlock(bb)) return *region;
+  } 
+  assert (false && "Could not find the Region!");
+}
+
 bool
 WorkitemLoops::ProcessFunction(Function &F)
 {
   Kernel *K = cast<Kernel> (&F);
   CheckLocalSize(K);
 
-  ParallelRegion::ParallelRegionVector* original_parallel_regions =
+  original_parallel_regions =
     K->getParallelRegions(LI);
 
   llvm::Module *M = F.getParent();
 
   //  F.viewCFGOnly();
-
+ 
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
 #ifdef DEBUG_WORK_ITEM_LOOPS
-  for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i) 
-  {
-    ParallelRegion *region = (*i);
-    std::cerr << "### PR: ";
+    std::cerr << "### Adding context save/restore for PR: ";
     region->dumpNames();    
-  }
 #endif
-  
-  for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i) 
-  {
-    ParallelRegion *region = (*i);
     FixMultiRegionVariables(region);
   }
 
+  /*
+    TODO: we'd like to peel the prototype iteration only when necessary
+    because it bloats code in the cases when it's needed. What is a
+    safe condition for not peeling? The region start dominates the
+    region end node? In case of conditional barriers there are two
+    parallel regions that contain the basic blocks before the condition,
+    in that case the region begin does not dominate the region end 
+    because of the condition.    
+   */
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
@@ -281,12 +289,20 @@ WorkitemLoops::ProcessFunction(Function &F)
     replica->chainAfter(original);
     replica->purge();
 
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### creating loops around PR:" << std::endl;
+    replica->dumpNames();    
+    //F.viewCFGOnly();
+#endif
+
     if (LocalSizeZ > 1)
       CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdZ, LocalSizeZ);
     if (LocalSizeY > 1)
       CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdY, LocalSizeY);
     if (LocalSizeX > 1)
       CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdX, LocalSizeX);
+
+    //F.viewCFGOnly();
   }
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
@@ -372,7 +388,6 @@ WorkitemLoops::AddContextSaveRestore
 {
   llvm::Module *M = instruction->getParent()->getParent()->getParent();
   
-  /* Save the value to stack after its production. */ 
   IRBuilder<> builder(instruction->getParent()->getParent()->getEntryBlock().getFirstInsertionPt());
 
   llvm::Type *scalart = instruction->getType();
@@ -412,8 +427,35 @@ WorkitemLoops::AddContextSaveRestore
   for (InstructionVec::iterator i = uses.begin(); i != uses.end(); ++i)
     {
       Instruction *user = *i;
-      builder.SetInsertPoint(user);
-
+      Instruction *contextRestoreLocation = user;
+      PHINode* phi = dyn_cast<PHINode>(user);
+      if (phi != NULL)
+        {
+          /* In case of PHI node users, we cannot just insert the context 
+             restore code before it because it is assumed there are no
+             non-phi Instructions before PHIs which the context restore
+             code constitutes to. Instead, let's split the edge between
+             the incoming block to the value use and add the context
+             restore code to this new basic block. */
+#ifdef DEBUG_WORK_ITEM_LOOPS
+          std::cerr << "### adding context restore code before PHI, splitting the edge" << std::endl;
+          user->dump();
+          std::cerr << "### in BB:" << std::endl;
+          user->getParent()->dump();
+#endif
+          for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
+               ++incoming)
+            {
+              Value *val = phi->getIncomingValue(incoming);
+              BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
+              if (val != instruction) continue;
+              BasicBlock *newBB = SplitEdge(incomingBB, phi->getParent(), this);
+              contextRestoreLocation = newBB->getTerminator();
+              RegionOfBlock(phi->getParent()).AddBlockBefore(newBB, phi->getParent());
+            }
+        }
+      builder.SetInsertPoint(contextRestoreLocation);
+          
       std::vector<llvm::Value *> gepArgs;
       gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
       gepArgs.push_back(builder.CreateLoad(localIdZ));
@@ -422,5 +464,10 @@ WorkitemLoops::AddContextSaveRestore
           
       llvm::Value *loadedValue = builder.CreateLoad(builder.CreateGEP(alloca, gepArgs));
       user->replaceUsesOfWith(instruction, loadedValue);
+#ifdef DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### done, the user was converted to:" << std::endl;
+      user->dump();
+#endif
+
     }
 }

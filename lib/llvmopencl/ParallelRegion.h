@@ -56,6 +56,8 @@ class Kernel;
     void dumpNames();
     void setEntryBBIndex(std::size_t index) { entryIndex_ = index; }
     void setExitBBIndex(std::size_t index) { exitIndex_ = index; }
+    void AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before);
+
     llvm::BasicBlock* exitBB() { return at(exitIndex_); }
     llvm::BasicBlock* entryBB() { return at(entryIndex_); }
     void setID(llvm::LLVMContext& context, 
@@ -63,6 +65,8 @@ class Kernel;
                std::size_t y = 0, 
                std::size_t z = 0,
                std::size_t regionID = 0);
+
+    bool HasBlock(llvm::BasicBlock *bb);
 
     static ParallelRegion *
       Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 
