@@ -45,14 +45,6 @@ clCreateContext(const cl_context_properties * properties,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
-	/* Step through the devices ptr - checking they are valid
-  num_devices = 0;
-  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
-    if ((pocl_devices[i].type == device_type) &&
-	(pocl_devices[i].available == CL_TRUE))
-      ++num_devices;
-  }
-	*/
 
   context->num_devices = num_devices;
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
@@ -70,6 +62,7 @@ clCreateContext(const cl_context_properties * properties,
           context->devices[j] = device_ptr;
           ++j;
         }
+      clRetainDevice(device_ptr);
     }   
 
   context->properties = properties;

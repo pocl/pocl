@@ -39,6 +39,7 @@ GEN_PROTOTYPES (ttasim)
 
 #define POCL_DEVICES_TTASIM {						\
   POCL_DEVICE_ICD_DISPATCH     						\
+  POCL_OBJECT_INIT, \
   CL_DEVICE_TYPE_GPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\

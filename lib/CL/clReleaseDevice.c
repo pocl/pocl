@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clReleaseContext()
+/* OpenCL runtime library: clReleaseDevice()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Pekka Jääskeläinen / TUT
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +24,14 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
+clReleaseDevice(cl_device_id device) CL_API_SUFFIX__VERSION_1_2 
 {
-  POCL_RELEASE_OBJECT(context);
-  if (context->pocl_refcount == 0)
+  POCL_RELEASE_OBJECT(device);
+  if (device->pocl_refcount == 0)
     {
-      /* The context holds references to all its devices,
-         memory objects, command-queues etc. Release the
-         references and let the objects to get freed. */
-      /* TODO: call the corresponding clRelease* functions
-         for all the referred objects. */
-      int i;
-      for (i = 0; i < context->num_devices; ++i) 
-        {
-          clReleaseDevice (context->devices[i]);
-        }   
-      free(context);
+      if (device->uninit != NULL)
+        device->uninit(device);
+      free(device);
     }
   return CL_SUCCESS;
 }

@@ -121,6 +121,9 @@ typedef pthread_mutex_t pocl_lock_t;
   pocl_lock_t pocl_lock; \
   int pocl_refcount 
 
+#define POCL_OBJECT_INIT \
+  POCL_LOCK_INITIALIZER, 0
+
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
@@ -137,6 +140,7 @@ struct pocl_argument {
 
 struct _cl_device_id {
   POCL_ICD_OBJECT
+  POCL_OBJECT;
   /* queries */
   cl_device_type type;
   cl_uint vendor_id;

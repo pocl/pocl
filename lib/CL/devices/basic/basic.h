@@ -33,6 +33,7 @@ GEN_PROTOTYPES (basic)
 
 #define POCL_DEVICES_BASIC {						\
   POCL_DEVICE_ICD_DISPATCH     						\
+  POCL_OBJECT_INIT, \
   CL_DEVICE_TYPE_CPU, /* type */					\
   0, /* vendor_id */							\
   1, /* max_compute_units */						\
