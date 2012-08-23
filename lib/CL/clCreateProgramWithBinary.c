@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_icd.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
@@ -58,6 +59,7 @@ clCreateProgramWithBinary(cl_context                     context,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
   
   POCL_INIT_OBJECT(program);
+  POCL_INIT_ICD_OBJECT(program);
   program->binary_sizes = NULL;
   program->binaries = NULL;
 
