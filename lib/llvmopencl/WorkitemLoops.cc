@@ -227,7 +227,7 @@ WorkitemLoops::CreateLoopAround
            
 }
 
-ParallelRegion&
+ParallelRegion*
 WorkitemLoops::RegionOfBlock(llvm::BasicBlock *bb)
 {
   for (ParallelRegion::ParallelRegionVector::iterator
@@ -236,9 +236,9 @@ WorkitemLoops::RegionOfBlock(llvm::BasicBlock *bb)
        i != e; ++i) 
   {
     ParallelRegion *region = (*i);
-    if (region->HasBlock(bb)) return *region;
+    if (region->HasBlock(bb)) return region;
   } 
-  assert (false && "Could not find the Region!");
+  return NULL;
 }
 
 bool
@@ -253,7 +253,10 @@ WorkitemLoops::ProcessFunction(Function &F)
   llvm::Module *M = F.getParent();
 
   //  F.viewCFGOnly();
- 
+
+  //std::cerr << "### Original" << std::endl;
+  //F.viewCFG();
+
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
@@ -267,13 +270,15 @@ WorkitemLoops::ProcessFunction(Function &F)
     FixMultiRegionVariables(region);
   }
 
+  //std::cerr << "### After context code addition:" << std::endl;
+  //F.viewCFG();
   /*
     TODO: we'd like to peel the prototype iteration only when necessary
-    because it bloats code in the cases when it's needed. What is a
-    safe condition for not peeling? The region start dominates the
-    region end node? In case of conditional barriers there are two
+    because it just bloats code in the cases when it's needed. What is a
+    safe condition for not peeling? The region start is postdominated 
+    by the region end node? In case of conditional barriers there are two
     parallel regions that contain the basic blocks before the condition,
-    in that case the region begin does not dominate the region end 
+    in that case the region end does not postdominate the region begin
     because of the condition.    
    */
   for (ParallelRegion::ParallelRegionVector::iterator
@@ -281,19 +286,22 @@ WorkitemLoops::ProcessFunction(Function &F)
            e = original_parallel_regions->end();
        i != e; ++i) 
   {
-    ValueToValueMapTy reference_map;
+
+    llvm::ValueToValueMapTy reference_map;
     ParallelRegion *original = (*i);
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### handling region:" << std::endl;
+    original->dumpNames();    
+//    F.viewCFGOnly();
+#endif
+
     ParallelRegion *replica = 
       original->replicate(reference_map, ".wi_copy");
-    original->insertPrologue(0, 0, 0);
-    replica->chainAfter(original);
-    replica->purge();
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### creating loops around PR:" << std::endl;
-    replica->dumpNames();    
-    //F.viewCFGOnly();
-#endif
+
+    original->insertPrologue(0, 0, 0);
+    replica->chainAfter(original);    
+    replica->purge();
 
     if (LocalSizeZ > 1)
       CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdZ, LocalSizeZ);
@@ -319,6 +327,7 @@ WorkitemLoops::ProcessFunction(Function &F)
  *
  * Each such variable gets a slot in the stack frame. The variable
  * is restored from the stack whenever its used.
+ *
  */
 void
 WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
@@ -357,8 +366,13 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
             {
               Instruction *user;
               if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
-              if (instructionsInRegion.find(user) == instructionsInRegion.end())
+              if (instructionsInRegion.find(user) == instructionsInRegion.end()) 
                 {
+#ifdef DEBUG_WORK_ITEM_LOOPS
+                  std::cerr << "### instr used in another region" << std::endl;
+                  instr->dump();
+                  RegionOfBlock(user->getParent())->dumpNames();
+#endif                  
                   instructionsToFix.push_back(instruction);
                   break;
                 }
@@ -373,21 +387,126 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### adding context/save restore for" << std::endl;
       (*i)->dump();
-#endif      
-      AddContextSaveRestore(*i, instructionsInRegion);
+#endif 
+      llvm::Instruction *instructionToFix = *i;
+#if 0      
+      if (isa<PHINode>(*i) && 
+          RegionOfBlock(instructionToFix->getParent())->entryBB() == 
+          instructionToFix->getParent())
+        {
+          instructionToFix = BreakPHINode(dyn_cast<PHINode>(*i));
+        }
+#endif
+      AddContextSaveRestore(instructionToFix, instructionsInRegion);
     }
 }
 
-/**
- * Adds context save/restore code for the value produced by the
- * given instruction.
- */
-void
-WorkitemLoops::AddContextSaveRestore
-(llvm::Instruction *instruction, const InstructionIndex& instructionsInRegion)
+/* In case of PHI nodes at region entries, we cannot just insert the context 
+   restore code before it because it is assumed there are no
+   non-phi Instructions before PHIs which the context restore
+   code constitutes to. Secondly, in case the PHINode is at a
+   region entry (e.g. a B-Loop) adding a BB before it would break
+   the assumption of single entry regions.
+
+   Instead, let's break the PHI node in such a way that the source BBs 
+   write their value to the context array and the PHINode itself is 
+   converted to a restore from that array. */
+llvm::Instruction *
+WorkitemLoops::BreakPHINode(PHINode* phi) 
 {
-  llvm::Module *M = instruction->getParent()->getParent()->getParent();
+  llvm::Instruction *contextArray = GetContextArray(phi);
+  for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
+       ++incoming)
+    {
+      Value *val = phi->getIncomingValue(incoming);
+      /*
+        In the incoming BB save the incoming val to the
+        context array of the PHINode. 
+      */
+      if (isa<Instruction>(val))
+        {
+          AddContextSave(dyn_cast<Instruction>(val), contextArray);
+        }
+      else
+        {
+          /* It's a constant initialization. We must initialize all the
+             elements in the context array with that value. TODO:
+             this is usually int i = 0 in a B-loop or similar which we should 
+             detect and avoid replicating altogether.
+          */
+          assert (isa<Constant>(val));
+
+          BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
+
+          IRBuilder<> builder(incomingBB->getTerminator());
+          for (size_t x = 0; x < LocalSizeX; ++x)
+            for (size_t y = 0; y < LocalSizeY; ++y)
+              for (size_t z = 0; z < LocalSizeZ; ++z)
+                {
+                  std::vector<llvm::Value *> gepArgs;
+                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), 0));
+                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), z));
+                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), y));
+                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), x));
+#if 0
+                  gepArgs.push_back(builder.CreateLoad(localIdZ));
+                  gepArgs.push_back(builder.CreateLoad(localIdY));
+                  gepArgs.push_back(builder.CreateLoad(localIdX)); 
+#endif
+                  builder.CreateStore(val, builder.CreateGEP(contextArray, gepArgs));
+                }
+        }
+    }  
+  /* The old phi node is converted to a restore from the context array. */
+  llvm::Instruction *loadedValue = AddContextRestore(phi, contextArray);
+  phi->replaceAllUsesWith(loadedValue);
+  phi->eraseFromParent();
+  return loadedValue;
+}
+
+llvm::Instruction *
+WorkitemLoops::AddContextSave
+(llvm::Instruction *instruction, llvm::Instruction *alloca)
+{
+  /* Save the produced variable to the array. */
+  BasicBlock::iterator definition = dyn_cast<Instruction>(instruction);
+
+  IRBuilder<> builder(++definition);
+  std::vector<llvm::Value *> gepArgs;
+  gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+  gepArgs.push_back(builder.CreateLoad(localIdZ));
+  gepArgs.push_back(builder.CreateLoad(localIdY));
+  gepArgs.push_back(builder.CreateLoad(localIdX)); 
+  return builder.CreateStore(instruction, builder.CreateGEP(alloca, gepArgs));
+}
+
+llvm::Instruction *
+WorkitemLoops::AddContextRestore
+(llvm::Instruction *instruction, llvm::Instruction *alloca, llvm::Instruction *before)
+{
+  IRBuilder<> builder(instruction);
+  if (before != NULL) builder.SetInsertPoint(before);
   
+  std::vector<llvm::Value *> gepArgs;
+  gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+  gepArgs.push_back(builder.CreateLoad(localIdZ));
+  gepArgs.push_back(builder.CreateLoad(localIdY));
+  gepArgs.push_back(builder.CreateLoad(localIdX)); 
+          
+  return builder.CreateLoad(builder.CreateGEP(alloca, gepArgs));
+}
+
+/**
+ * Returns the context array (alloca) for the given Value, creates it if not
+ * found.
+ */
+llvm::Instruction *
+WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
+{
+  std::string varName = std::string(instruction->getName().str()) + ".context_array";
+  if (contextArrays.find(varName) != contextArrays.end())
+    return contextArrays[varName];
+
   IRBuilder<> builder(instruction->getParent()->getParent()->getEntryBlock().getFirstInsertionPt());
 
   llvm::Type *scalart = instruction->getType();
@@ -395,18 +514,33 @@ WorkitemLoops::AddContextSaveRestore
     ArrayType::get(ArrayType::get(ArrayType::get(scalart, LocalSizeX), LocalSizeY), LocalSizeZ);
 
   /* Allocate the context data array for the variable. */
-  llvm::Value *alloca = 
+  llvm::Instruction *alloca = 
     builder.CreateAlloca(contextArrayType, 0, instruction->getName() + ".context_array");
 
-  /* Save the produced variable to the array. */
-  BasicBlock::iterator definition = instruction;
-  builder.SetInsertPoint(++definition);
-  std::vector<llvm::Value *> gepArgs;
-  gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
-  gepArgs.push_back(builder.CreateLoad(localIdZ));
-  gepArgs.push_back(builder.CreateLoad(localIdY));
-  gepArgs.push_back(builder.CreateLoad(localIdX)); 
-  llvm::Value *theStore = builder.CreateStore(instruction, builder.CreateGEP(alloca, gepArgs));
+  contextArrays[varName] = alloca;
+  return alloca;
+}
+
+
+/**
+ * Adds context save/restore code for the value produced by the
+ * given instruction.
+ *
+ * TODO: add only one restore per variable per region.
+ * TODO: add only one load of the id variables per region.
+ * TODO: ignore work group variables completely (the iteration variables)
+ * The LLVM should optimize these away but it would improve
+ * the readability of the output during debugging.
+ */
+void
+WorkitemLoops::AddContextSaveRestore
+(llvm::Instruction *instruction, const InstructionIndex& instructionsInRegion)
+{
+  llvm::Module *M = instruction->getParent()->getParent()->getParent();
+  
+  /* Allocate the context data array for the variable. */
+  llvm::Instruction *alloca = GetContextArray(instruction);
+  llvm::Instruction *theStore = AddContextSave(instruction, alloca);
 
   InstructionVec uses;
   /* Restore the produced variable before each use outside the region. */
@@ -428,15 +562,25 @@ WorkitemLoops::AddContextSaveRestore
     {
       Instruction *user = *i;
       Instruction *contextRestoreLocation = user;
+      /* If the user is in a block that doesn't belong to a region,
+         the variable itself must be a "work group variable", that is,
+         not dependent on the work item. Most likely a iteration
+         variable of a for loop with a barrier. */
+      if (RegionOfBlock(user->getParent()) == NULL) continue;
+
       PHINode* phi = dyn_cast<PHINode>(user);
+
+      /* PHINodes at region entries are broken down later. */
       if (phi != NULL)
         {
-          /* In case of PHI node users, we cannot just insert the context 
+          /* In case of PHI nodes, we cannot just insert the context 
              restore code before it because it is assumed there are no
              non-phi Instructions before PHIs which the context restore
-             code constitutes to. Instead, let's split the edge between
-             the incoming block to the value use and add the context
-             restore code to this new basic block. */
+             code constitutes to. Add a new basic block for the context
+             restore. 
+          */          
+          assert ("Cannot add context restore for a PHI node at the region entry!" &&
+                  RegionOfBlock(phi->getParent())->entryBB() != phi->getParent());
 #ifdef DEBUG_WORK_ITEM_LOOPS
           std::cerr << "### adding context restore code before PHI, splitting the edge" << std::endl;
           user->dump();
@@ -448,26 +592,22 @@ WorkitemLoops::AddContextSaveRestore
             {
               Value *val = phi->getIncomingValue(incoming);
               BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
-              if (val != instruction) continue;
               BasicBlock *newBB = SplitEdge(incomingBB, phi->getParent(), this);
-              contextRestoreLocation = newBB->getTerminator();
-              RegionOfBlock(phi->getParent()).AddBlockBefore(newBB, phi->getParent());
+              RegionOfBlock(phi->getParent())->AddBlockBefore(newBB, phi->getParent());
+              llvm::Value *loadedValue = AddContextRestore
+                (dyn_cast<Instruction>(val), alloca, 
+                 dyn_cast<Instruction>(newBB->getTerminator()));
+              user->replaceUsesOfWith(instruction, loadedValue);              
             }
         }
-      builder.SetInsertPoint(contextRestoreLocation);
-          
-      std::vector<llvm::Value *> gepArgs;
-      gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
-      gepArgs.push_back(builder.CreateLoad(localIdZ));
-      gepArgs.push_back(builder.CreateLoad(localIdY));
-      gepArgs.push_back(builder.CreateLoad(localIdX)); 
-          
-      llvm::Value *loadedValue = builder.CreateLoad(builder.CreateGEP(alloca, gepArgs));
-      user->replaceUsesOfWith(instruction, loadedValue);
+      else 
+        {
+          llvm::Value *loadedValue = AddContextRestore(user, alloca);
+          user->replaceUsesOfWith(instruction, loadedValue);
 #ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### done, the user was converted to:" << std::endl;
-      user->dump();
+          std::cerr << "### done, the user was converted to:" << std::endl;
+          user->dump();
 #endif
-
+        }
     }
 }

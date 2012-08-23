@@ -133,6 +133,11 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
      are (possibly) overwritten by another clone of the 
      same BB. */
   new_region->remap(map); 
+
+#ifdef DEBUG_REPLICATE
+  Verify();
+#endif
+
   return new_region;
 }
 
@@ -347,7 +352,8 @@ ParallelRegion::Verify()
 #endif
           assert(0 && "Incoming edges to non-entry block!");
           return false;
-        } else if (!isa<BarrierBlock>(*ii)) {
+        } else if (!Barrier::hasBarrier(*ii)) {
+          (*i)->getParent()->viewCFG();
           assert (0 && "Entry has edges from non-barrier blocks!");
           return false;
         }

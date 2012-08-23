@@ -47,6 +47,12 @@ namespace pocl {
 
   private:
 
+    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
+    typedef std::set<llvm::Instruction* > InstructionIndex;
+    typedef std::vector<llvm::Instruction* > InstructionVec;
+
+    InstructionIndex workGroupVariables;
+
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
@@ -57,9 +63,7 @@ namespace pocl {
 
     unsigned size_t_width;
 
-    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::set<llvm::Instruction* > InstructionIndex;
-    typedef std::vector<llvm::Instruction* > InstructionVec;
+    std::map<std::string, llvm::Instruction*> contextArrays;
 
     virtual bool ProcessFunction(llvm::Function &F);
     void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
@@ -70,7 +74,14 @@ namespace pocl {
         (llvm::Instruction *instruction, 
          const InstructionIndex& instructionsInRegion);
 
-    ParallelRegion& RegionOfBlock(llvm::BasicBlock *bb);
+    llvm::Instruction *BreakPHINode(llvm::PHINode* phi);
+    llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
+    llvm::Instruction *AddContextRestore
+        (llvm::Instruction *instruction, llvm::Instruction *alloca, 
+         llvm::Instruction *before=NULL);
+    llvm::Instruction *GetContextArray(llvm::Instruction *val);
+
+    ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
   };
 }
 
