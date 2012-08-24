@@ -34,6 +34,7 @@ missing APIs have been encountered in the test cases.
 
 (*) == Used by the opencl-book-samples. 
 (R) == Used by the Rodinia benchmark suite.
+(P) == Used by pyopencl
 
   4. THE OPENCL PLATFORM LAYER
   
@@ -54,6 +55,8 @@ missing APIs have been encountered in the test cases.
 * 5.5 Sampler objects
 * 5.5.1 Creating Sampler Objects
 * 5.6.1 Creating Program Objects
+* 5.6.2 Building Program Executables
+  * passing compiler flags, especially the -I switch (P)
 * 5.7.1 Creating Kernel Objects
 * 5.9 Event objects
   * clWaitForEvents (*)
@@ -76,6 +79,11 @@ missing APIs have been encountered in the test cases.
 * 9.7.6 Sharing memory objects that map to GL objects 
   between GL and CL contexts
   * clEnqueueAcquireGLObjects (*)
+
+  Miscellaneous
+
+* Passing structs as values to kernels (P), see
+  https://bugs.launchpad.net/pocl/+bug/987905
 
 Misc/laundry list
 -----------------

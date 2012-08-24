@@ -52,6 +52,9 @@ clBuildProgram(cl_program program,
   /* The default build script for .cl files. */
   char *pocl_build_script;
 
+  if (options != NULL)
+    POCL_WARN_INCOMPLETE();
+
   if (program == NULL)
     return CL_INVALID_PROGRAM;
 
