@@ -331,8 +331,15 @@ pocl_tce_run
         }
       else if (cmd->command.run.kernel->arg_is_pointer[i])
         {
-          dev_cmd.args[i] = byteswap_uint32_t 
-            (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, d->needsByteSwap);
+          /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
+             that case we must pass the same NULL forward to the kernel.
+             Otherwise, the user must have created a buffer with per device
+             pointers stored in the cl_mem. */
+          if (al->value == NULL)
+            dev_cmd.args[i] = 0;
+          else
+            dev_cmd.args[i] = byteswap_uint32_t 
+              (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, d->needsByteSwap);
         }
       else /* The scalar values should be byteswapped by the user. */
         {
