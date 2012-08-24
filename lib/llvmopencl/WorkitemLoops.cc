@@ -263,6 +263,28 @@ WorkitemLoops::ProcessFunction(Function &F)
        i != e; ++i) 
   {
     ParallelRegion *region = (*i);
+    if (!isa<PHINode>(region->entryBB()->front())) continue;
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### Region starts with a PHINode, break them to allocas" << std::endl;;
+    region->dumpNames();    
+#endif
+    while (isa<PHINode>(region->entryBB()->front()))
+      BreakPHIToAllocas(dyn_cast<PHINode>(&region->entryBB()->front()));
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### converted PHINodes to allocas, result: ";
+    region->dump();
+    //F.viewCFG();
+#endif    
+  }
+
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### Adding context save/restore for PR: ";
     region->dumpNames();    
@@ -316,7 +338,7 @@ WorkitemLoops::ProcessFunction(Function &F)
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
   //M->dump();
-  //F.viewCFG();
+  //  F.viewCFG();
 
   return true;
 }
@@ -371,7 +393,8 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
 #ifdef DEBUG_WORK_ITEM_LOOPS
                   std::cerr << "### instr used in another region" << std::endl;
                   instr->dump();
-                  RegionOfBlock(user->getParent())->dumpNames();
+                  ParallelRegion *region = RegionOfBlock(user->getParent());
+                  if (region != NULL) region->dumpNames();
 #endif                  
                   instructionsToFix.push_back(instruction);
                   break;
@@ -389,80 +412,51 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
       (*i)->dump();
 #endif 
       llvm::Instruction *instructionToFix = *i;
-#if 0      
-      if (isa<PHINode>(*i) && 
-          RegionOfBlock(instructionToFix->getParent())->entryBB() == 
-          instructionToFix->getParent())
-        {
-          instructionToFix = BreakPHINode(dyn_cast<PHINode>(*i));
-        }
-#endif
       AddContextSaveRestore(instructionToFix, instructionsInRegion);
     }
 }
 
-/* In case of PHI nodes at region entries, we cannot just insert the context 
-   restore code before it because it is assumed there are no
-   non-phi Instructions before PHIs which the context restore
-   code constitutes to. Secondly, in case the PHINode is at a
-   region entry (e.g. a B-Loop) adding a BB before it would break
-   the assumption of single entry regions.
-
-   Instead, let's break the PHI node in such a way that the source BBs 
-   write their value to the context array and the PHINode itself is 
-   converted to a restore from that array. */
+/**
+ * Convert a PHI to a read from a stack value and all the sources to
+ * writes to the same stack value.
+ *
+ * Used to fix context save/restore issues with regions with PHI nodes in the
+ * entry node (usually due to the use of work group scope variables such as
+ * B-loop iteration variables). In case of PHI nodes at region entries, we cannot 
+ * just insert the context restore code because it is assumed there are no
+ * non-phi Instructions before PHIs which the context restore
+ * code constitutes to. Secondly, in case the PHINode is at a
+ * region entry (e.g. a B-Loop) adding new basic blocks before it would 
+ * break the assumption of single entry regions.
+ */
 llvm::Instruction *
-WorkitemLoops::BreakPHINode(PHINode* phi) 
+WorkitemLoops::BreakPHIToAllocas(PHINode* phi) 
 {
-  llvm::Instruction *contextArray = GetContextArray(phi);
+  std::string allocaName = std::string(phi->getName().str()) + ".ex_phi";
+
+  llvm::Function *function = phi->getParent()->getParent();
+  IRBuilder<> builder(function->getEntryBlock().getFirstInsertionPt());
+
+  llvm::Instruction *alloca = 
+    builder.CreateAlloca(phi->getType(), 0, allocaName);
+
   for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
        ++incoming)
     {
       Value *val = phi->getIncomingValue(incoming);
-      /*
-        In the incoming BB save the incoming val to the
-        context array of the PHINode. 
-      */
-      if (isa<Instruction>(val))
-        {
-          AddContextSave(dyn_cast<Instruction>(val), contextArray);
-        }
-      else
-        {
-          /* It's a constant initialization. We must initialize all the
-             elements in the context array with that value. TODO:
-             this is usually int i = 0 in a B-loop or similar which we should 
-             detect and avoid replicating altogether.
-          */
-          assert (isa<Constant>(val));
+      BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
+      builder.SetInsertPoint(incomingBB->getTerminator());
+      builder.CreateStore(val, alloca);
+    }
 
-          BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
+  builder.SetInsertPoint(phi);
 
-          IRBuilder<> builder(incomingBB->getTerminator());
-          for (size_t x = 0; x < LocalSizeX; ++x)
-            for (size_t y = 0; y < LocalSizeY; ++y)
-              for (size_t z = 0; z < LocalSizeZ; ++z)
-                {
-                  std::vector<llvm::Value *> gepArgs;
-                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), 0));
-                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), z));
-                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), y));
-                  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), x));
-#if 0
-                  gepArgs.push_back(builder.CreateLoad(localIdZ));
-                  gepArgs.push_back(builder.CreateLoad(localIdY));
-                  gepArgs.push_back(builder.CreateLoad(localIdX)); 
-#endif
-                  builder.CreateStore(val, builder.CreateGEP(contextArray, gepArgs));
-                }
-        }
-    }  
-  /* The old phi node is converted to a restore from the context array. */
-  llvm::Instruction *loadedValue = AddContextRestore(phi, contextArray);
+  llvm::Instruction *loadedValue = builder.CreateLoad(alloca);
   phi->replaceAllUsesWith(loadedValue);
   phi->eraseFromParent();
   return loadedValue;
 }
+
 
 llvm::Instruction *
 WorkitemLoops::AddContextSave
@@ -515,7 +509,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
 
   /* Allocate the context data array for the variable. */
   llvm::Instruction *alloca = 
-    builder.CreateAlloca(contextArrayType, 0, instruction->getName() + ".context_array");
+    builder.CreateAlloca(contextArrayType, 0, varName);
 
   contextArrays[varName] = alloca;
   return alloca;

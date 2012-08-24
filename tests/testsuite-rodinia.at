@@ -32,7 +32,7 @@ OPENCL_INC="${abs_top_srcdir}/include" \
 CC_FLAGS="-I${abs_top_srcdir}/include -L${abs_top_builddir}/lib/CL/.libs -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs -lpocl -lpthread" \
 -sC ${abs_top_srcdir}/examples/Rodinia/rodinia_2.0.1/opencl/bfs 2>&1 | egrep -v "^make" | grep . ], 1,
 [])
-AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run | grep .], 0,
+AT_CHECK_UNQUOTED([cd $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run 2>&1|grep -v "incomplete" | grep .], 0,
 [Reading File
 --cambine:passed:-)
 ])

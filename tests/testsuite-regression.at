@@ -38,7 +38,6 @@ AT_CLEANUP
 
 AT_SETUP([simple for-loop with a barrier inside (loops)])
 AT_KEYWORDS([regression])
-AT_XFAIL_IF(true)
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_simple_for_with_a_barrier], 0)
 AT_CLEANUP
 
@@ -54,7 +53,6 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regressio
 AT_CLEANUP
 
 AT_SETUP([for-loop with a variable iteration count (repl) - lp:#938883])
-#AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
@@ -66,12 +64,12 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regressio
 AT_CLEANUP
 
 AT_SETUP([early return before a barrier region (repl) - lp:#940248])
-AT_KEYWORDS([regression])
+AT_KEYWORDS([regression early-return])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_early_return], 0)
 AT_CLEANUP
 
 AT_SETUP([early return before a barrier region (loops) - lp:#940248])
-AT_KEYWORDS([regression])
+AT_KEYWORDS([regression early-return])
 AT_SKIP_IF(true)
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_early_return], 0)
 AT_CLEANUP
