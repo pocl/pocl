@@ -82,6 +82,9 @@ namespace pocl {
     llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
 
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
+
+    std::map<llvm::Instruction*, unsigned> tempInstructionIds;
+    size_t tempInstructionIndex;
   };
 }
 

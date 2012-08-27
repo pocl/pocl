@@ -83,6 +83,8 @@ WorkitemLoops::runOnFunction(Function &F)
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
 
+  tempInstructionIndex = 0;
+
   llvm::Module *M = F.getParent();
   llvm::Type *localIdType; 
   if (M->getPointerSize() == llvm::Module::Pointer64)
@@ -269,8 +271,18 @@ WorkitemLoops::ProcessFunction(Function &F)
     std::cerr << "### Region starts with a PHINode, break them to allocas" << std::endl;;
     region->dumpNames();    
 #endif
-    while (isa<PHINode>(region->entryBB()->front()))
-      BreakPHIToAllocas(dyn_cast<PHINode>(&region->entryBB()->front()));
+    for (BasicBlock::iterator p = region->entryBB()->begin(); 
+         p != region->entryBB()->end(); )
+      {
+        Instruction* instr = p;
+        if (isa<PHINode>(instr))
+          {
+            BreakPHIToAllocas(dyn_cast<PHINode>(instr));
+            p = region->entryBB()->begin();
+            continue;
+          }
+        ++p;
+      }
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### converted PHINodes to allocas, result: ";
@@ -278,6 +290,11 @@ WorkitemLoops::ProcessFunction(Function &F)
     //F.viewCFG();
 #endif    
   }
+
+#if 0
+  std::cerr << "### After PHIs to allocas" << std::endl;
+  F.viewCFG();
+#endif
 
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
@@ -497,7 +514,31 @@ WorkitemLoops::AddContextRestore
 llvm::Instruction *
 WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
 {
-  std::string varName = std::string(instruction->getName().str()) + ".context_array";
+  
+  /*
+   * Unnamed temp instructions need a generated name for the
+   * context array. Create one using a running integer.
+   */
+  std::ostringstream var;
+  var << ".";
+
+  if (std::string(instruction->getName().str()) != "")
+    {
+      var << instruction->getName().str();
+    }
+  else if (tempInstructionIds.find(instruction) != tempInstructionIds.end())
+    {
+      var << tempInstructionIds[instruction];
+    }
+  else
+    {
+      tempInstructionIds[instruction] = tempInstructionIndex++;
+      var << tempInstructionIds[instruction];
+    }
+
+  var << ".pocl_context";
+  std::string varName = var.str();
+
   if (contextArrays.find(varName) != contextArrays.end())
     return contextArrays[varName];
 

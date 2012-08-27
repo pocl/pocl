@@ -48,7 +48,6 @@ AT_CLEANUP
 
 AT_SETUP([for-loop with computation after the brexit (loops) - lp:#938123])
 AT_KEYWORDS([regression])
-AT_XFAIL_IF(true)
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_multi_level_loops_with_barriers], 0)
 AT_CLEANUP
 
@@ -58,7 +57,6 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression
 AT_CLEANUP
 
 AT_SETUP([for-loop with a variable iteration count (loops) - lp:#938883])
-AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
