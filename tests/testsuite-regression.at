@@ -68,7 +68,7 @@ AT_CLEANUP
 
 AT_SETUP([early return before a barrier region (loops) - lp:#940248])
 AT_KEYWORDS([regression early-return])
-AT_SKIP_IF(true)
+#AT_SKIP_IF(true)
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_early_return], 0)
 AT_CLEANUP
 

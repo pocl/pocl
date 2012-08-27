@@ -256,8 +256,8 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   //  F.viewCFGOnly();
 
-  //std::cerr << "### Original" << std::endl;
-  //F.viewCFG();
+  //  std::cerr << "### Original" << std::endl;
+  //  F.viewCFG();
 
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
@@ -338,7 +338,6 @@ WorkitemLoops::ProcessFunction(Function &F)
       original->replicate(reference_map, ".wi_copy");
 
 
-    original->insertPrologue(0, 0, 0);
     replica->chainAfter(original);    
     replica->purge();
 
@@ -350,6 +349,15 @@ WorkitemLoops::ProcessFunction(Function &F)
       CreateLoopAround(replica->entryBB(), replica->exitBB(), localIdX, LocalSizeX);
 
     //F.viewCFGOnly();
+  }
+
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *pr = (*i);
+    pr->insertPrologue(0, 0, 0);
   }
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
