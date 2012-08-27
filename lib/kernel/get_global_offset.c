@@ -21,9 +21,9 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _global_offset_x;
-extern unsigned int _global_offset_y;
-extern unsigned int _global_offset_z;
+extern size_t _global_offset_x;
+extern size_t _global_offset_y;
+extern size_t _global_offset_z;
 
 size_t
 get_global_offset(unsigned int dimindx)
