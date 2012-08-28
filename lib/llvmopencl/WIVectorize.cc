@@ -65,7 +65,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(2), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(1), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -2116,6 +2116,7 @@ namespace {
         K1->setMetadata("wi_counter", I->getMetadata("wi_counter"));
       }
       if (J->getMetadata("wi") != NULL) {
+        K2->setMetadata("wi", J->getMetadata("wi"));          
         K2->setMetadata("wi_counter", J->getMetadata("wi_counter"));
       }
       
