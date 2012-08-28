@@ -319,7 +319,9 @@ namespace {
     
       if (changed)
         vectorizePhiNodes(BB);
-      removeDuplicates(BB);
+      // This seems to breake some tests. 
+      // TODO: re enable once detection mechanism is corrected.
+      //removeDuplicates(BB);
       DEBUG(dbgs() << "WIV: done!\n");
       return changed;
     }
