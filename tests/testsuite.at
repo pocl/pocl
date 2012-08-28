@@ -100,6 +100,7 @@ AT_CLEANUP
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
+AT_KEYWORDS([scalarwave])
 AT_DATA([expout],
 [Initial condition: t=0
 Time step 1: t=0.03125

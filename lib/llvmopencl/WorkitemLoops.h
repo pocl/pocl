@@ -81,10 +81,19 @@ namespace pocl {
     llvm::Instruction *GetContextArray(llvm::Instruction *val);
     llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
 
+    std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
+    CreateLoopAround
+        (llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
+         bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim);
+
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
 
     std::map<llvm::Instruction*, unsigned> tempInstructionIds;
     size_t tempInstructionIndex;
+    // An alloca in the kernel which stores the first iteration to execute
+    // in the inner (dimension 0) loop. This is set to 1 in an peeled iteration
+    // to skip the 0, 0, 0 iteration in the loops.
+    llvm::Value *localIdXFirstVar;
   };
 }
 
