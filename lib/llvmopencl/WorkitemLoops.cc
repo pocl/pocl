@@ -287,12 +287,14 @@ WorkitemLoops::ProcessFunction(Function &F)
   IRBuilder<> builder(F.getEntryBlock().getFirstInsertionPt());
   localIdXFirstVar = 
     builder.CreateAlloca
-    (IntegerType::get(F.getContext(), size_t_width), 0, "_local_id_x_init");
+    (IntegerType::get(F.getContext(), size_t_width), 0, ".pocl.local_id_x_init");
 
   //  F.viewCFGOnly();
 
-  //std::cerr << "### Original" << std::endl;
-  //F.viewCFG();
+#if 0
+  std::cerr << "### Original" << std::endl;
+  F.viewCFG();
+#endif
 
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
@@ -344,8 +346,10 @@ WorkitemLoops::ProcessFunction(Function &F)
     FixMultiRegionVariables(region);
   }
 
-  //std::cerr << "### After context code addition:" << std::endl;
-  //F.viewCFG();
+#if 0
+  std::cerr << "### After context code addition:" << std::endl;
+  F.viewCFG();
+#endif
   /*
     TODO: we'd like to peel the prototype iteration only when necessary
     because it just bloats code in the cases when it's needed. What is a
@@ -534,7 +538,10 @@ WorkitemLoops::AddContextSave
   /* Save the produced variable to the array. */
   BasicBlock::iterator definition = dyn_cast<Instruction>(instruction);
 
-  IRBuilder<> builder(++definition);
+  ++definition;
+  while (isa<PHINode>(definition)) ++definition;
+  
+  IRBuilder<> builder(definition);
   std::vector<llvm::Value *> gepArgs;
   gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
   gepArgs.push_back(builder.CreateLoad(localIdZ));
