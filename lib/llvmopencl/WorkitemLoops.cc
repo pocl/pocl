@@ -100,13 +100,22 @@ WorkitemLoops::runOnFunction(Function &F)
   localIdY = M->getOrInsertGlobal("_local_id_y", localIdType);
   localIdX = M->getOrInsertGlobal("_local_id_x", localIdType);
 
-  //std::cerr << "### original:" << std::endl;
-  //  F.viewCFGOnly();
+#if 0
+  std::cerr << "### original:" << std::endl;
+  F.viewCFGOnly();
+#endif
+
   bool changed = ProcessFunction(F);
 #ifdef DUMP_RESULT_CFG
   FunctionPass* cfgPrinter = createCFGOnlyPrinterPass();
   cfgPrinter->runOnFunction(F);
 #endif  
+
+#if 0
+  std::cerr << "### after:" << std::endl;
+  F.viewCFGOnly();
+#endif
+
   changed |= fixUndominatedVariableUses(DT, F);
 
   //std::cerr << "### processed:" << std::endl;
@@ -678,6 +687,8 @@ WorkitemLoops::AddContextSaveRestore
           std::cerr << "### in BB:" << std::endl;
           user->getParent()->dump();
 #endif
+          /* TODO: if only one incoming value, do not split but convert 
+             all the uses to use the incoming value. */
           for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
                ++incoming)
             {
@@ -687,8 +698,14 @@ WorkitemLoops::AddContextSaveRestore
               RegionOfBlock(phi->getParent())->AddBlockBefore(newBB, phi->getParent());
               llvm::Value *loadedValue = AddContextRestore
                 (dyn_cast<Instruction>(val), alloca, 
-                 dyn_cast<Instruction>(newBB->getTerminator()));
+                 dyn_cast<Instruction>(incomingBB->getTerminator()));
               user->replaceUsesOfWith(instruction, loadedValue);              
+#ifdef DEBUG_WORK_ITEM_LOOPS
+              std::cerr << "### involved BBs:" << std::endl;
+              newBB->dump();
+              incomingBB->dump();
+              phi->getParent()->dump();
+#endif
             }
         }
       else 

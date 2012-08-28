@@ -195,7 +195,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Funct
                   changed |= true;
                 } else {
 #ifdef DEBUG_REFERENCE_FIXING
-                  std::cout << "### didn't found an alternative for" << std::endl;
+                  std::cout << "### didn't fiund an alternative for" << std::endl;
                   operand->dump();
                   std::cerr << "### BB:" << std::endl;
                   operand->getParent()->dump();
