@@ -34,6 +34,20 @@ if present or passed in the command line:
   HOST_CLANG_FLAGS
               Parameters to for host compilation.
 
+TEST SUITE
+
+Before changes are committed to the mainline, all tests in the 'make check'
+suite should pass. As a minimum requirement the short test suite should
+be executed before committing as follows:
+
+ make check TESTSUITEFLAGS="-k \!long"
+
+Under the 'examples' directory there are placeholder directories for external
+OpenCL application projects which are used as test suites for pocl 
+(e.g. ViennaCL). Each directory includes a readme file that provides
+more information on how to setup and download each project so it gets tested 
+within the 'make check' using pocl as the OpenCL implementation.
+
 MULTI-TARGET SUPPORT
 
 By default, pocl build system compiles the kernel libraries for:
