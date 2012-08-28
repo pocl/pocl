@@ -392,20 +392,33 @@ ParallelRegion::setID(
     std::size_t regionID) {
   
     int counter = 1;
+    Value *v1[] = {
+        MDString::get(context, "WI_region"),      
+        ConstantInt::get(Type::getInt32Ty(context), regionID)};      
+    MDNode* mdRegion = MDNode::get(context, v1);  
+    Value *v2[] = {
+        MDString::get(context, "WI_xyz"),      
+        ConstantInt::get(Type::getInt32Ty(context), x),
+        ConstantInt::get(Type::getInt32Ty(context), y),      
+        ConstantInt::get(Type::getInt32Ty(context), z)};      
+    MDNode* mdXYZ = MDNode::get(context, v2);  
+    Value *v[] = {
+        MDString::get(context, "WI_data"),      
+        mdRegion,
+        mdXYZ};
+    MDNode* md = MDNode::get(context, v);              
+    
     for (iterator i = begin(), e = end(); i != e; ++i) {
       BasicBlock* bb= *i;      
       for (BasicBlock::iterator ii = bb->begin();
             ii != bb->end(); ii++) {
-        Value *v[] = {
-            MDString::get(context, "WI_id"),      
-            ConstantInt::get(Type::getInt32Ty(context), regionID),
-            ConstantInt::get(Type::getInt32Ty(context), x),
-            ConstantInt::get(Type::getInt32Ty(context), y),      
-            ConstantInt::get(Type::getInt32Ty(context), z),
+        Value *v3[] = {
+            MDString::get(context, "WI_counter"),      
             ConstantInt::get(Type::getInt32Ty(context), counter)};      
-        MDNode* md = MDNode::get(context, v);  
+        MDNode* mdCounter = MDNode::get(context, v3);  
         counter++;
         ii->setMetadata("wi",md);
+        ii->setMetadata("wi_counter",mdCounter);      
       }
     }
 }
