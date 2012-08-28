@@ -65,7 +65,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(1), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(2), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -736,10 +736,6 @@ namespace {
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy()) {
         return false;
       }
-    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
-      // Currently, vector GEPs exist only with one index.
-      if (G->getNumIndices() != 1)
-        return false;
     } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
