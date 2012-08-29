@@ -561,13 +561,26 @@ WorkitemLoops::AddContextSave
 
 llvm::Instruction *
 WorkitemLoops::AddContextRestore
-(llvm::Instruction *instruction, llvm::Instruction *alloca, llvm::Instruction *before)
+(llvm::Value *val, llvm::Instruction *alloca, llvm::Instruction *before)
 {
-  IRBuilder<> builder(instruction);
-  if (before != NULL) builder.SetInsertPoint(before);
+  assert (val != NULL);
+  IRBuilder<> builder(alloca);
+  if (before != NULL) 
+    {
+      builder.SetInsertPoint(before);
+    }
+  else if (isa<Instruction>(val))
+    {
+      builder.SetInsertPoint(dyn_cast<Instruction>(val));
+    }
+  else 
+    {
+      assert (false && "Unknown context restore location!");
+    }
+
   
   std::vector<llvm::Value *> gepArgs;
-  gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), 0));
   gepArgs.push_back(builder.CreateLoad(localIdZ));
   gepArgs.push_back(builder.CreateLoad(localIdY));
   gepArgs.push_back(builder.CreateLoad(localIdX)); 
@@ -630,7 +643,9 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
  * given instruction.
  *
  * TODO: add only one restore per variable per region.
- * TODO: add only one load of the id variables per region.
+ * TODO: add only one load of the id variables per region. 
+ * Could be done by having a context restore BB in the beginning of the
+ * region and a context save BB at the end.
  * TODO: ignore work group variables completely (the iteration variables)
  * The LLVM should optimize these away but it would improve
  * the readability of the output during debugging.
@@ -646,7 +661,7 @@ WorkitemLoops::AddContextSaveRestore
   InstructionVec uses;
   /* Restore the produced variable before each use outside the region. */
 
-  /* Find out the uses to fix first as fixing them causes invalidates
+  /* Find out the uses to fix first as fixing them invalidates
      the iterator. */
   for (Instruction::use_iterator ui = instruction->use_begin(),
          ue = instruction->use_end();
@@ -662,60 +677,53 @@ WorkitemLoops::AddContextSaveRestore
   for (InstructionVec::iterator i = uses.begin(); i != uses.end(); ++i)
     {
       Instruction *user = *i;
+      Instruction *contextRestoreLocation = user;
       /* If the user is in a block that doesn't belong to a region,
          the variable itself must be a "work group variable", that is,
-         not dependent on the work item. Most likely a iteration
+         not dependent on the work item. Most likely an iteration
          variable of a for loop with a barrier. */
       if (RegionOfBlock(user->getParent()) == NULL) continue;
 
       PHINode* phi = dyn_cast<PHINode>(user);
-
-      /* PHINodes at region entries are broken down later. */
       if (phi != NULL)
         {
           /* In case of PHI nodes, we cannot just insert the context 
-             restore code before it because it is assumed there are no
-             non-phi Instructions before PHIs which the context restore
-             code constitutes to. Add a new basic block for the context
-             restore. 
+             restore code before it in the same basic block because it is 
+             assumed there are no non-phi Instructions before PHIs which 
+             the context restore code constitutes to. Add the context
+             restore to the incomingBB instead.
+
+             There can be values in the PHINode that are incoming
+             from another region even though the decision BB is within the region. 
+             For those values we need to add the context restore code in the 
+             incoming BB (which is known to be inside the region due to the
+             assumption of not having to touch PHI nodes in PRentry BBs).
           */          
+
+          /* PHINodes at region entries are broken down earlier. */
           assert ("Cannot add context restore for a PHI node at the region entry!" &&
                   RegionOfBlock(phi->getParent())->entryBB() != phi->getParent());
 #ifdef DEBUG_WORK_ITEM_LOOPS
-          std::cerr << "### adding context restore code before PHI, splitting the edge" << std::endl;
+          std::cerr << "### adding context restore code before PHI" << std::endl;
           user->dump();
           std::cerr << "### in BB:" << std::endl;
           user->getParent()->dump();
 #endif
-          /* TODO: if only one incoming value, do not split but convert 
-             all the uses to use the incoming value. */
+          BasicBlock *incomingBB; 
           for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
                ++incoming)
             {
               Value *val = phi->getIncomingValue(incoming);
-              BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
-              BasicBlock *newBB = SplitEdge(incomingBB, phi->getParent(), this);
-              RegionOfBlock(phi->getParent())->AddBlockBefore(newBB, phi->getParent());
-              llvm::Value *loadedValue = AddContextRestore
-                (dyn_cast<Instruction>(val), alloca, 
-                 dyn_cast<Instruction>(incomingBB->getTerminator()));
-              user->replaceUsesOfWith(instruction, loadedValue);              
-#ifdef DEBUG_WORK_ITEM_LOOPS
-              std::cerr << "### involved BBs:" << std::endl;
-              newBB->dump();
-              incomingBB->dump();
-              phi->getParent()->dump();
-#endif
+              BasicBlock *bb = phi->getIncomingBlock(incoming);
+              if (val == instruction) incomingBB = bb;
             }
+          contextRestoreLocation = incomingBB->getTerminator();
         }
-      else 
-        {
-          llvm::Value *loadedValue = AddContextRestore(user, alloca);
-          user->replaceUsesOfWith(instruction, loadedValue);
+      llvm::Value *loadedValue = AddContextRestore(user, alloca, contextRestoreLocation);
+      user->replaceUsesOfWith(instruction, loadedValue);
 #ifdef DEBUG_WORK_ITEM_LOOPS
-          std::cerr << "### done, the user was converted to:" << std::endl;
-          user->dump();
+      std::cerr << "### done, the user was converted to:" << std::endl;
+      user->dump();
 #endif
-        }
     }
 }

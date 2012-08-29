@@ -76,7 +76,7 @@ namespace pocl {
 
     llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
     llvm::Instruction *AddContextRestore
-        (llvm::Instruction *instruction, llvm::Instruction *alloca, 
+        (llvm::Value *val, llvm::Instruction *alloca, 
          llvm::Instruction *before=NULL);
     llvm::Instruction *GetContextArray(llvm::Instruction *val);
     llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
