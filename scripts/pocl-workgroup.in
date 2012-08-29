@@ -110,12 +110,17 @@ fi
 
 if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
 then
-EXTRA_OPTS+=" -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
+EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
 fi
 
 if test "x$POCL_VECTORIZE_NO_FP" = "x1";
 then
-EXTRA_OPTS+=" -wi-vectorize-no-fp"
+EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-no-fp"
+fi
+
+if test "x$POCL_VECTORIZE_MEM_ONLY" = "x1";
+then
+EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-mem-ops-only"
 fi
 
 if test "x$POCL_WORK_GROUP_METHOD" = "x";
