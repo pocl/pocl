@@ -10,6 +10,8 @@ Overall
 Kernel Compiler Passes
 ----------------------
 - Multiple bugs fixed from the work group vectorizer.
+- Updated metadata format pocl uses to pass information
+  to vectorization and TCE backend to simplify debuging.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
