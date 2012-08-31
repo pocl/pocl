@@ -24,5 +24,5 @@
 
 noinst_PROGRAMS = run_kernel
 
-AM_LDFLAGS = ../../lib/CL/libpocl.la ../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
+AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"' @OPENCL_CFLAGS@

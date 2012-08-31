@@ -131,6 +131,19 @@ fi
 
 AM_CONDITIONAL(EXPORT_OPENCL_SYMBOLS, test "$oclsym" != "no")
 
+if test x"$oclsym" = xno; then
+  PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], [
+    OCL_ICD_available=yes
+  ], [
+    if test -z "$OPENCL_LIBS"; then
+      OPENCL_LIBS="-lOpenCL"
+    fi
+  ])
+else
+  OPENCL_LIBS='$(top_builddir)/lib/CL/libpocl.la $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
+  OPENCL_CFLAGS='$(PTHREAD_CFLAGS)'
+fi
+
 #AC_LANG([C++])
 ACX_PTHREAD()
 
