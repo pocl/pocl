@@ -32,7 +32,7 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = ../../lib/CL/libpocl.la ../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
 AM_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
 
 
 

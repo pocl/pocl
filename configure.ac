@@ -121,6 +121,19 @@ LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 #LIBS="$old_LIBS"
 #LDFLAGS="$old_LDFLAGS"
 
+# Option to install OpenCL header files
+# By default, do not install them unless none are found in the system include directories
+AC_ARG_ENABLE([install-opencl-headers],
+              [AS_HELP_STRING([--enable-install-opencl-headers], [install OpenCL headers. Ones from Kronos should be installed instead.])],
+              [ioh="$enableval"],
+              [ioh="default"])
+
+if test x"$ioh" = xdefault; then
+  AC_CHECK_HEADER([CL/opencl.h], [ioh=no], [ioh=yes])
+fi
+
+AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
