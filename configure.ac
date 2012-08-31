@@ -81,6 +81,30 @@ AC_ARG_ENABLE([region-allocator],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
+# Option to enable OpenCL book samples as tests
+AC_ARG_ENABLE([test-opencl-book-samples],
+              [AS_HELP_STRING([--enable-test-opencl-book-samples], [checkout OpenCL book sample programs for tests (default no)])],
+              [], [enable_test_opencl_book_samples="no"])
+if test "$enable_test_opencl_book_samples" = "yes"; then
+   AC_CHECK_LIB([glut], [glutInit], [:], [
+     AC_MSG_WARN([disabling tests from OpenCL book as glut library is missing])
+     enable_test_opencl_book_samples="no"
+   ])
+  :
+fi
+if test "$enable_test_opencl_book_samples" = "yes"; then
+  AC_CHECK_HEADER([FreeImage.h], [:], [
+    AC_MSG_WARN([disabling tests from OpenCL book as FreeImage.h header is missing])
+    enable_test_opencl_book_samples="no"
+  ])
+fi
+AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_test_opencl_book_samples" = "yes"])
+if test "$enable_test_opencl_book_samples" = "yes"; then
+  AC_MSG_NOTICE([tests from OpenCL book are enabled])
+else
+  AC_MSG_NOTICE([tests from OpenCL book are disabled])
+fi
+
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
               [AS_HELP_STRING([--enable-icd], [Build pocl with the ICD extensions (default check)])],
