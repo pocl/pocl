@@ -81,29 +81,44 @@ AC_ARG_ENABLE([region-allocator],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
-# Option to enable OpenCL book samples as tests
-AC_ARG_ENABLE([test-opencl-book-samples],
-              [AS_HELP_STRING([--enable-test-opencl-book-samples], [checkout OpenCL book sample programs for tests (default no)])],
-              [], [enable_test_opencl_book_samples="no"])
-if test "$enable_test_opencl_book_samples" = "yes"; then
+####################################################################
+# Manage optional testsuites
+
+# Option to enable the OpenCL book samples testsuite
+AC_ARG_ENABLE([testsuite-opencl-book-samples],
+              [AS_HELP_STRING([--enable-testsuite-opencl-book-samples], [checkout OpenCL book sample programs for tests (default no)])],
+              [], [enable_testsuite_opencl_book_samples="no"])
+if test "$enable_testsuite_opencl_book_samples" = "yes"; then
    AC_CHECK_LIB([glut], [glutInit], [:], [
      AC_MSG_WARN([disabling tests from OpenCL book as glut library is missing])
-     enable_test_opencl_book_samples="no"
+     enable_testsuite_opencl_book_samples="no"
    ])
   :
 fi
-if test "$enable_test_opencl_book_samples" = "yes"; then
+if test "$enable_testsuite_opencl_book_samples" = "yes"; then
   AC_CHECK_HEADER([FreeImage.h], [:], [
     AC_MSG_WARN([disabling tests from OpenCL book as FreeImage.h header is missing])
-    enable_test_opencl_book_samples="no"
+    enable_testsuite_opencl_book_samples="no"
   ])
 fi
-AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_test_opencl_book_samples" = "yes"])
-if test "$enable_test_opencl_book_samples" = "yes"; then
+AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
+
+# Option to enable the ViennaCL testsuite
+AC_ARG_ENABLE([testsuite-viennacl],
+              [AS_HELP_STRING([--enable-testsuite-viennacl], [fetch ViennaCL software for tests (default no)])],
+              [], [enable_testsuite_viennacl="no"])
+
+AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
+
+# Some information for the user
+AC_MSG_NOTICE([internal tests are enabled])
+if test "$enable_testsuite_opencl_book_samples" = "yes"; then
   AC_MSG_NOTICE([tests from OpenCL book are enabled])
-else
-  AC_MSG_NOTICE([tests from OpenCL book are disabled])
 fi
+if test "$enable_testsuite_viennacl" = "yes"; then
+  AC_MSG_NOTICE([tests from ViennaCL are enabled])
+fi
+####################################################################
 
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
@@ -163,10 +178,19 @@ if test x"$oclsym" = xno; then
       OPENCL_LIBS="-lOpenCL"
     fi
   ])
+  OPENCL_CMAKE=''
 else
   OPENCL_LIBS='$(top_builddir)/lib/CL/libpocl.la $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
   OPENCL_CFLAGS='$(PTHREAD_CFLAGS)'
+  OPENCL_CMAKE=' \
+	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
+	-D OPENCL_LIBRARY:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
+	-D CMAKE_EXE_LINKER_FLAGS:STRING='${PTHREAD_CFLAGS}' \
+	-D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include \
+	-D OPENCL_INCLUDE_DIR:PATH=${abs_top_srcdir}/include
+  '
 fi
+AC_SUBST([OPENCL_CMAKE])
 
 #AC_LANG([C++])
 ACX_PTHREAD()
@@ -497,6 +521,10 @@ AC_SUBST([LD_FLAGS_BIN])
 AC_CONFIG_FILES([Makefile
                  pocl.pc
                  pocl.icd
+                 examples/ViennaCL/custom-context.stdout
+                 tests/atlocal
+                 ocl-vendors/pocl-tests.icd
+
                  include/Makefile
                  include/CL/Makefile
                  include/OpenCL/Makefile
@@ -520,16 +548,15 @@ AC_CONFIG_FILES([Makefile
                  examples/scalarwave/Makefile
                  examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
+                 examples/ViennaCL/Makefile
                  scripts/Makefile
                  tests/Makefile
-                 tests/atlocal
                  tests/regression/Makefile
                  tests/workgroup/Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  tools/llvm-ld/Makefile
-                 ocl-vendors/pocl-tests.icd
                  ])
 
 AC_OUTPUT

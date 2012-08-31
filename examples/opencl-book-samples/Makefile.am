@@ -34,16 +34,6 @@ book_samples_dir=${book_samples_base_dir}/checkout
 .PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
 .PHONY: run_SimpleBufferSubBuffer run_spmv run_VectorAdd run_Dijkstra
 
-if EXPORT_OPENCL_SYMBOLS
-OPT_OPENCL=\
-	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
-	-D CMAKE_EXE_LINKER_FLAGS:STRING='${PTHREAD_CFLAGS}' \
-	-D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include
-else
-OPT_OPENCL=
-endif
-
-
 if TEST_SUITE_SAMPLES
 all: $(book_samples_base_dir)/stamp-patched
 endif
@@ -74,7 +64,7 @@ build: check_dir
 	mkdir -p build; cd build; \
 	cmake \
 		-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut ${PTHREAD_CFLAGS}' \
-		$(OPT_OPENCL) \
+		$(OPENCL_CMAKE) \
 		${book_samples_dir} && \
 	make clean all -sk
 

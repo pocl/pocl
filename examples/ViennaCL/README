@@ -1,9 +1,11 @@
 Enable building the ViennaCL suite as a pocl test case. ViennaCL will
 be compiled, if its sources are extracted in this directory.
  
+You can use '--enable-testsuite-viennacl' configure option
+or you can do it yourself:
 Download and unpack the ViennaCL package:
 http://sourceforge.net/projects/viennacl/files/1.2.x/ViennaCL-1.2.0-src.tar.gz
 into this directory.
 
 Then, in pocl toplevel source dir run 'make check' or
-'make TESTSUITE=viennacl check' to run the ViennaCL tests.
+'make TESTSUITEFLAGS="-k viennacl" check' to run the ViennaCL tests.
