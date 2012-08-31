@@ -14,7 +14,9 @@ CL_EXT_SUFFIX__VERSION_1_0
   if( strcmp(func_name, "clIcdGetPlatformIDsKHR")==0 )
     return (void *)&POclIcdGetPlatformIDsKHR;
 #endif
+  if( strcmp(func_name, "clGetPlatformInfo")==0 )
+    return (void *)&POclGetPlatformInfo;
   
   return NULL;
 }
-POsym(clGetExtensionFunctionAddress)
+POsymAlways(clGetExtensionFunctionAddress)
