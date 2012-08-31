@@ -568,5 +568,5 @@ ParallelRegion::InjectRegionPrintF()
 
   CallInst* int32_12 = 
     CallInst::Create
-    (printfFunc, int32_12_params, "", entryBB()->getTerminator());  
+    (printfFunc, int32_12_params, "", exitBB()->getTerminator());  
 }

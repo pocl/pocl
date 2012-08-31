@@ -49,8 +49,12 @@ cl::opt<bool>
 AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
   cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
+WorkitemHandler::WorkitemHandler(char ID) : FunctionPass(ID)
+{
+}
+
 void
-WorkitemHandler::CheckLocalSize(Kernel *K)
+WorkitemHandler::Initialize(Kernel *K)
 {
   llvm::Module *M = K->getParent();
   
@@ -69,6 +73,20 @@ WorkitemHandler::CheckLocalSize(Kernel *K)
       }
     }
   }
+
+  llvm::Type *localIdType; 
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+  else if (M->getPointerSize() == llvm::Module::Pointer32)
+    size_t_width = 32;
+  else
+    assert (false && "Only 32 and 64 bit size_t widths supported.");
+
+  localIdType = IntegerType::get(K->getContext(), size_t_width);
+
+  localIdZ = M->getOrInsertGlobal(POCL_LOCAL_ID_Z_GLOBAL, localIdType);
+  localIdY = M->getOrInsertGlobal(POCL_LOCAL_ID_Y_GLOBAL, localIdType);
+  localIdX = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, localIdType);
 }
 
 bool

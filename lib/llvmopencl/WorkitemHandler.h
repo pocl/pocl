@@ -39,12 +39,12 @@ namespace pocl {
   class WorkitemHandler : public llvm::FunctionPass {
   public:
 
-  WorkitemHandler(char ID) : FunctionPass(ID) {}
+    WorkitemHandler(char ID);
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
     virtual bool runOnFunction(llvm::Function &F) = 0;
 
-    virtual void CheckLocalSize(pocl::Kernel *K);
+    virtual void Initialize(pocl::Kernel *K);
 
   protected:
     
@@ -53,6 +53,11 @@ namespace pocl {
     bool dominatesUse(llvm::DominatorTree *DT, llvm::Instruction &I, unsigned i);
 
     int LocalSizeX, LocalSizeY, LocalSizeZ;
+
+    unsigned size_t_width;
+
+    /* The global variables that store the current local id. */
+    llvm::Value *localIdZ, *localIdY, *localIdX;
 
   };
 

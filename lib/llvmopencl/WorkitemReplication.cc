@@ -103,7 +103,7 @@ WorkitemReplication::ProcessFunction(Function &F)
 //  F.viewCFG();
 
   Kernel *K = cast<Kernel> (&F);
-  CheckLocalSize(K);
+  Initialize(K);
 
   // Allocate space for workitem reference maps. Workitem 0 does
   // not need it.
@@ -122,6 +122,18 @@ WorkitemReplication::ProcessFunction(Function &F)
   std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
 
   parallel_regions[0] = *original_parallel_regions;
+
+  /* Enable to get region identification printouts */
+#if 0
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    region->InjectRegionPrintF();
+  }
+#endif
   
   // Measure the required context (variables alive in more than one region).
   TargetData &TD = getAnalysis<TargetData>();

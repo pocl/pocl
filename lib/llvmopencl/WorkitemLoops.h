@@ -57,12 +57,7 @@ namespace pocl {
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
-    /* The global variables that store the current local id. */
-    llvm::Value *localIdZ, *localIdY, *localIdX;
-
     ParallelRegion::ParallelRegionVector *original_parallel_regions;
-
-    unsigned size_t_width;
 
     StrInstructionMap contextArrays;
 
