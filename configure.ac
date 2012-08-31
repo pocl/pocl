@@ -30,7 +30,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_TESTDIR([tests])
 AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign silent-rules])
 LT_INIT
 
 # check for tools
