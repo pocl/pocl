@@ -55,6 +55,7 @@ CL_API_SUFFIX__VERSION_1_0
   mem->type = CL_MEM_OBJECT_IMAGE2D;
   mem->flags = flags;
   mem->is_image = CL_TRUE;
+  POCL_INIT_ICD_OBJECT(mem);
   
   cl_channel_order order = image_format->image_channel_order;
   cl_channel_type type = image_format->image_channel_data_type;
