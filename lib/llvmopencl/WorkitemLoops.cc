@@ -115,7 +115,7 @@ WorkitemLoops::runOnFunction(Function &F)
 #if 0
   std::cerr << "### after:" << std::endl;
   if (F.getName() == "prod_AA")
-  F.viewCFG();
+      F.viewCFG();
 #endif
 
   changed |= fixUndominatedVariableUses(DT, F);
@@ -779,24 +779,28 @@ WorkitemLoops::AddContextSaveRestore
 bool
 WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
 {
-    /* If the instructions is a load from a global address, we need
-       not context save it but should just (re)load from the global. This
+    /* TODO: rematerialization:
+
+       If the instructions is a load from a scalar global, we need
+       not context save it but should just (re)load. This
        covers loads from the temporary _local_id_x etc. variables. 
+
+       Also rematerialize "cheap" computations.
+    */
+
+    /*
        _local_id_x loads should not be replicated as it leads to
        problems in conditional branch case where the header node
        of the region is shared across the branches and thus the
        header node's ID loads might get context saved which leads
        to egg-chicken problems. 
-
-       Q: Do we need to context save loads *ever*? A: If the address
-       computation is correctly context saved in regions that load
-       the values we should rematerialize the final load to save stack 
-       space.
     */
-
     llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
     if (load != NULL && 
-        isa<GlobalValue>(load->getPointerOperand())) return false;
+        (load->getPointerOperand() == localIdZ ||
+         load->getPointerOperand() == localIdY ||
+         load->getPointerOperand() == localIdX))
+        return false;
     return true;
 }
 
