@@ -38,7 +38,7 @@ CL_API_SUFFIX__VERSION_1_2
   if (image_desc->image_type != CL_MEM_OBJECT_IMAGE2D)
     POCL_ABORT_UNIMPLEMENTED();
   
-  POclCreateImage2D (context,
+  return POclCreateImage2D (context,
                    flags,
                    image_format,
                    image_desc->image_width,
