@@ -33,16 +33,15 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 
+# check for tools
+PKG_PROG_PKG_CONFIG
+
 # check: hwloc version must be 1.0+
-AC_SEARCH_LIBS([hwloc_topology_init], [hwloc], [], [AC_MSG_ERROR([hwloc 1.0+ is required])])
-AC_CHECKING([that hwloc API version is 1.0+])
-AC_PREPROC_IFELSE(
-  [AC_LANG_PROGRAM([[#include <hwloc.h>]
-                   [#if !(defined(HWLOC_API_VERSION) && HWLOC_API_VERSION >= 0x00010000)]
-                   [#error Too old hwloc API version]
-                   [#endif]], [])],
-  [AC_MSG_RESULT([OK])],
-  [AC_MSG_ERROR([too old version])])
+PKG_CHECK_MODULES([HWLOC], [hwloc >= 1.0], [
+  :
+], [
+  AC_MSG_ERROR([hwloc 1.0+ is required])
+])
 
 # Checks for programs.
 AC_PROG_CC
