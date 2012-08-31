@@ -31,7 +31,7 @@ include sources.mk
 # but are used with the target specific subdirs as
 # fallback implementations. Include them in the
 # dist once here.
-EXTRA_DIST = ${nodist_libkernel_a_SOURCES} \
+EXTRA_DIST = ${libkernel_SRCS} \
 	Makefile.target.am Makefile.host.am \
 	Makefile.target.in Makefile.host.in 
 

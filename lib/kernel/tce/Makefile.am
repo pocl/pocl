@@ -35,6 +35,8 @@ vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
+nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
+
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 

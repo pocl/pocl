@@ -1,7 +1,7 @@
 # Nodist here because these files should be included
 # to the distribution only once, from the root kernel
 # makefile.
-nodist_libkernel_a_SOURCES =			\
+libkernel_SRCS =				\
 	templates.h				\
 	barrier.ll				\
 	image.h					\

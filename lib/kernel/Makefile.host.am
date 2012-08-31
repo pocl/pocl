@@ -36,6 +36,8 @@ vpath %.ll @top_srcdir@/lib/kernel/@HOST_CPU@:@top_srcdir@/lib/kernel
 
 include $(top_srcdir)/lib/kernel/sources.mk
 
+nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
+
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
