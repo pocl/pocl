@@ -23,7 +23,6 @@
 
 #include "pocl_cl.h"
 #include "devices.h"
-#include "pocl_icd.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
 POclCreateBuffer(cl_context context,
@@ -51,7 +50,6 @@ POclCreateBuffer(cl_context context,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = flags;
   mem->is_image = CL_FALSE;
-  POCL_INIT_ICD_OBJECT(mem);
 
   /* Store the per device buffer pointers always to a known
      location in the buffer (dev_id), even though the context

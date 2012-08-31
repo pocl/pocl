@@ -115,11 +115,23 @@ typedef pthread_mutex_t pocl_lock_t;
 
 /* The reference counter is initialized to 1,
    when it goes to 0 object can be freed. */
-#define POCL_INIT_OBJECT(__OBJ__)                \
+#define POCL_INIT_OBJECT_NO_ICD(__OBJ__)         \
   do {                                           \
     POCL_INIT_LOCK ((__OBJ__)->pocl_lock);         \
     (__OBJ__)->pocl_refcount = 1;                  \
   } while (0)
+
+#ifdef BUILD_ICD
+/* Most (all?) object must also initialize the ICD field */
+#  define POCL_INIT_OBJECT(__OBJ__)                \
+    do {                                           \
+      POCL_INIT_OBJECT_NO_ICD(__OBJ__);            \
+      POCL_INIT_ICD_OBJECT(__OBJ__);               \
+    } while (0)
+#else
+#  define POCL_INIT_OBJECT(__OBJ__)                \
+      POCL_INIT_OBJECT_NO_ICD(__OBJ__)
+#endif
 
 /* Declares the generic pocl object attributes inside a struct. */
 #define POCL_OBJECT \

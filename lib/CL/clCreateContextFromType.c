@@ -23,7 +23,6 @@
 
 #include "devices/devices.h"
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
@@ -45,7 +44,6 @@ POclCreateContextFromType(const cl_context_properties *properties,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
-  POCL_INIT_ICD_OBJECT(context);
 
   num_devices = 0;
   for (i = 0; i < pocl_num_devices; ++i) {

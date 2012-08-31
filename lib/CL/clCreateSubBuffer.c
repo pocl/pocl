@@ -22,7 +22,6 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include "devices.h"
 
 /* NOTE: this function is untested! */
@@ -58,7 +57,6 @@ POclCreateSubBuffer(cl_mem                   buffer,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(mem);
-  POCL_INIT_ICD_OBJECT(mem);
   mem->parent = buffer;
 
   mem->type = CL_MEM_OBJECT_BUFFER;

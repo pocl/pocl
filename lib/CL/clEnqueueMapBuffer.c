@@ -22,7 +22,6 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include "utlist.h"
 #include <assert.h>
 
@@ -87,7 +86,6 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
         return (void*)CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POCL_INIT_ICD_OBJECT(*event);
       POclRetainCommandQueue (command_queue);
 
       POCL_PROFILE_QUEUED;

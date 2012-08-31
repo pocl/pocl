@@ -23,7 +23,6 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -150,7 +149,6 @@ POclCreateKernel(cl_program program,
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
-  POCL_INIT_ICD_OBJECT(kernel);
 
   /* Initialize kernel arguments (in case the user doesn't). */
   for (i = 0; i < kernel->num_args; ++i)
