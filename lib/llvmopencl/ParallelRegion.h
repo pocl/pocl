@@ -48,7 +48,7 @@ class Kernel;
   public:    
     typedef llvm::SmallVector<ParallelRegion *, 8> ParallelRegionVector;
 
-    ParallelRegion();
+    ParallelRegion(int forcedRegionId=-1);
 
     /* BarrierBlock *getEntryBarrier(); */
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
@@ -73,6 +73,8 @@ class Kernel;
 
     bool HasBlock(llvm::BasicBlock *bb);
 
+    void InjectRegionPrintF();
+
     static ParallelRegion *
       Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 
              llvm::BasicBlock *entry, llvm::BasicBlock *exit);
@@ -93,6 +95,11 @@ class Kernel;
     /// replicated PRs too.
     std::size_t exitIndex_;
     std::size_t entryIndex_;
+
+    /// Identifier for the parallel region.
+    int pRegionId;
+    static int idGen;
+
   };
     
 }

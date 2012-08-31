@@ -51,11 +51,16 @@ using namespace pocl;
 
 #include <iostream>
 
-ParallelRegion::ParallelRegion() : 
+int ParallelRegion::idGen = 0;
+
+
+ParallelRegion::ParallelRegion(int forcedRegionId) : 
   std::vector<llvm::BasicBlock *>(), 
   LocalIDXLoadInstr(NULL), LocalIDYLoadInstr(NULL), LocalIDZLoadInstr(NULL),
-  exitIndex_(0), entryIndex_(0)
+  exitIndex_(0), entryIndex_(0), pRegionId(forcedRegionId)
 {
+  if (forcedRegionId == -1)
+    pRegionId = idGen++;
 }
 
 /**
@@ -94,8 +99,8 @@ ParallelRegion *
 ParallelRegion::replicate(ValueToValueMapTy &map,
                           const Twine &suffix = "")
 {
-  ParallelRegion *new_region = new ParallelRegion();
-
+  ParallelRegion *new_region = new ParallelRegion(pRegionId);
+  
   /* Because ParallelRegions are all replicated before they
      are attached to the function, it can happen that
      the same BB is replicated multiple times and it gets
@@ -490,3 +495,78 @@ ParallelRegion::LocalIDXLoad()
     (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL));
 }
 
+/**
+ * Adds a printf to the end of the parallel region that prints the
+ * region ID and the work item ID. 
+ *
+ * Useful for debugging control flow bugs.
+ */
+void
+ParallelRegion::InjectRegionPrintF()
+{
+  llvm::Module *M = entryBB()->getParent()->getParent();
+
+  const char* FORMAT_STR_VAR = ".pocl.pRegion_debug_str";
+  llvm::Value *stringArg = M->getGlobalVariable(FORMAT_STR_VAR);
+  if (stringArg == NULL)
+    {
+      IRBuilder<> builder(entryBB());
+      stringArg = builder.CreateGlobalString("PR %d WI %u %u %u\n", FORMAT_STR_VAR);
+    }
+    
+  /* generated with help from http://llvm.org/demo/index.cgi */
+  Function* printfFunc = M->getFunction("printf");
+  if (printfFunc == NULL) {
+    PointerType* PointerTy_4 = PointerType::get(IntegerType::get(M->getContext(), 8), 0);
+ 
+    std::vector<Type*> FuncTy_6_args;
+    FuncTy_6_args.push_back(PointerTy_4);
+    
+    FunctionType* FuncTy_6 = 
+      FunctionType::get
+      (/*Result=*/IntegerType::get(M->getContext(), 32),
+       /*Params=*/FuncTy_6_args,
+       /*isVarArg=*/true);
+
+    printfFunc = 
+      Function::Create
+      (/*Type=*/FuncTy_6,
+       /*Linkage=*/GlobalValue::ExternalLinkage,
+       /*Name=*/"printf", M); 
+    printfFunc->setCallingConv(CallingConv::C);
+
+    AttrListPtr func_printf_PAL;
+    {
+      SmallVector<AttributeWithIndex, 4> Attrs;
+      AttributeWithIndex PAWI;
+      PAWI.Index = 1U; 
+      PAWI.Attrs = Attribute::NoCapture;
+      Attrs.push_back(PAWI);
+      PAWI.Index = 4294967295U; 
+      PAWI.Attrs = Attribute::NoUnwind;
+      Attrs.push_back(PAWI);
+      func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+    }
+    printfFunc->setAttributes(func_printf_PAL);
+  }
+
+  std::vector<Constant*> const_ptr_8_indices;
+
+  ConstantInt* const_int64_9 = ConstantInt::get(M->getContext(), APInt(64, StringRef("0"), 10));
+  const_ptr_8_indices.push_back(const_int64_9);
+  const_ptr_8_indices.push_back(const_int64_9);
+  assert (isa<Constant>(stringArg));
+  Constant* const_ptr_8 = ConstantExpr::getGetElementPtr(cast<Constant>(stringArg), const_ptr_8_indices);
+
+  ConstantInt* pRID = ConstantInt::get(M->getContext(), APInt(32, pRegionId, 10));
+  std::vector<Value*> int32_12_params;
+  int32_12_params.push_back(const_ptr_8);
+  int32_12_params.push_back(pRID);
+  int32_12_params.push_back(LocalIDXLoad());
+  int32_12_params.push_back(LocalIDYLoad());
+  int32_12_params.push_back(LocalIDZLoad());
+
+  CallInst* int32_12 = 
+    CallInst::Create
+    (printfFunc, int32_12_params, "", entryBB()->getTerminator());  
+}

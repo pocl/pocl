@@ -102,7 +102,6 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   std::cerr << "### original:" << std::endl;
-  if (F.getName() == "prod_AA")
   F.viewCFG();
 #endif
 
@@ -114,8 +113,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   std::cerr << "### after:" << std::endl;
-  if (F.getName() == "prod_AA")
-      F.viewCFG();
+  F.viewCFG();
 #endif
 
   changed |= fixUndominatedVariableUses(DT, F);
@@ -379,6 +377,7 @@ WorkitemLoops::ProcessFunction(Function &F)
     region->dumpNames();    
 #endif
     FixMultiRegionVariables(region);
+    //region->InjectRegionPrintF();
   }
 
 #if 0
@@ -438,9 +437,9 @@ WorkitemLoops::ProcessFunction(Function &F)
     ParallelRegion *pr = (*i);
     pr->insertPrologue(0, 0, 0);
     builder.SetInsertPoint(pr->entryBB()->getFirstInsertionPt());
-      builder.CreateStore
-        (ConstantInt::get(IntegerType::get(F.getContext(), size_t_width), 1), 
-         localIdXFirstVar);
+    builder.CreateStore
+      (ConstantInt::get(IntegerType::get(F.getContext(), size_t_width), 1), 
+       localIdXFirstVar);       
   }
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
@@ -577,8 +576,8 @@ WorkitemLoops::AddContextSave
 
   ++definition;
   while (isa<PHINode>(definition)) ++definition;
-  
-  IRBuilder<> builder(definition);
+
+  IRBuilder<> builder(definition); 
   std::vector<llvm::Value *> gepArgs;
   gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
 
