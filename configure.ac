@@ -529,6 +529,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
                  tools/llvm-ld/Makefile
+                 ocl-vendors/pocl-tests.icd
                  ])
 
 AC_OUTPUT

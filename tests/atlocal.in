@@ -1,0 +1,4 @@
+
+OCL_ICD_VENDORS="@abs_top_builddir@/ocl-vendors"
+export OCL_ICD_VENDORS
+
