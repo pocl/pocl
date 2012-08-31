@@ -28,7 +28,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
-clCreateProgramWithSource(cl_context context,
+POclCreateProgramWithSource(cl_context context,
                           cl_uint count,
                           const char **strings,
                           const size_t *lengths,
@@ -107,3 +107,4 @@ clCreateProgramWithSource(cl_context context,
     *errcode_ret = CL_SUCCESS;
   return program;
 }
+POsym(clCreateProgramWithSource)

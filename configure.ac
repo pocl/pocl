@@ -83,15 +83,53 @@ AC_ARG_ENABLE([region-allocator],
 
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
-              [AS_HELP_STRING([--disable-icd], [Do not build pocl with the ICD extensions])],
+              [AS_HELP_STRING([--enable-icd], [Build pocl with the ICD extensions (default check)])],
               [icd="$enableval"],
-              [icd="yes"])
+              [icd="check"])
+OCL_ICD_available=no
 if test x"$icd" != xno; then :
+  PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3], [
+    OCL_ICD_available=yes ], [:])
+fi
+
+AS_CASE(["$icd,$OCL_ICD_available"],
+  [no,*], [ AC_MSG_NOTICE([disabling ICD extension build as requested]) ],
+  [*,yes], [ icd=yes
+    AC_MSG_NOTICE([enabling ICD extension build]) ],
+  [check,no], [ icd=no
+    AC_MSG_NOTICE([disabling ICD extension build (ocd-icd not available)]) ],
+  [yes,no], [ AC_MSG_ERROR([cannot build ICD extension without ocd-icd])],
+  [AC_MSG_ERROR([Invalid value for --enable-icd])]) 
+
+if test x"$icd" = xyes; then
   AC_DEFINE([BUILD_ICD], [], "Build with ICD")
 fi
 
-AC_SUBST(icd)
-AM_CONDITIONAL(INSTALL_ICD, test "$icd" != "no")
+AM_CONDITIONAL(BUILD_ICD, test "$icd" != "no")
+
+# Option to allow to link a OpenCL program directly against libpocl
+# instead of going through an ICD Loader
+AC_ARG_ENABLE([direct-linkage],
+              [AS_HELP_STRING([--enable-direct-linkage], [Allow OpenCL programs to be linked directly against the pocl library instead of using a ICD Loader (OpenCL library)])],
+              [oclsym="$enableval"],
+              [oclsym="default"])
+
+AS_CASE(["$oclsym,$icd"],
+  [no,no], [ AC_MSG_ERROR([at least, one of ICD or direct-linkage must be enabled]) ],
+  [no,yes], [ AC_MSG_NOTICE([disabling direct linkage as requested]) ],
+  [default,yes], [ oclsym=no
+    AC_MSG_NOTICE([disabling direct linkage as ICD extension is built]) ],
+  [default,no], [ oclsym=yes
+    AC_MSG_NOTICE([enabling direct linkage as ICD extension is not build]) ],
+  [yes,*], [ 
+    AC_MSG_NOTICE([enabling direct linkage as requested]) ],
+  [AC_MSG_ERROR([Invalid value for --enable-direct-linkage])]) 
+
+if test x"$oclsym" = xyes; then
+  AC_DEFINE([DIRECT_LINKAGE], [], "Export OpenCL symbols")
+fi
+
+AM_CONDITIONAL(EXPORT_OPENCL_SYMBOLS, test "$oclsym" != "no")
 
 #AC_LANG([C++])
 ACX_PTHREAD()

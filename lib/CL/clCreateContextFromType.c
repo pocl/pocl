@@ -27,7 +27,7 @@
 #include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
-clCreateContextFromType(const cl_context_properties *properties,
+POclCreateContextFromType(const cl_context_properties *properties,
                         cl_device_type device_type,
                         void (*pfn_notify)(const char *, const void *, size_t, void *),
                         void *user_data,
@@ -65,7 +65,7 @@ clCreateContextFromType(const cl_context_properties *properties,
     if ((pocl_devices[i].type & device_type) &&
 	(pocl_devices[i].available == CL_TRUE)) {
       context->devices[j] = &pocl_devices[i];
-      clRetainDevice(&pocl_devices[i]);
+      POclRetainDevice(&pocl_devices[i]);
       ++j;
     }
   }   
@@ -76,3 +76,4 @@ clCreateContextFromType(const cl_context_properties *properties,
     *errcode_ret = CL_SUCCESS;
   return context;
 }
+POsym(clCreateContextFromType)

@@ -29,7 +29,7 @@ ACLOCAL_AMFLAGS = -I m4
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pocl.pc
 
-if INSTALL_ICD
+if BUILD_ICD
 icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 endif

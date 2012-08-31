@@ -26,7 +26,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clSetKernelArg(cl_kernel kernel,
+POclSetKernelArg(cl_kernel kernel,
                cl_uint arg_index,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0
@@ -73,3 +73,4 @@ clSetKernelArg(cl_kernel kernel,
 
   return CL_SUCCESS;
 }
+POsym(clSetKernelArg)

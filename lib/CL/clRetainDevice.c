@@ -23,8 +23,9 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clRetainDevice(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
+POclRetainDevice(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
 {
   POCL_RETAIN_OBJECT (device);
   return CL_SUCCESS;
 }
+POsym(clRetainDevice)

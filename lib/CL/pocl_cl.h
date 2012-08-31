@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <ltdl.h>
 #include <pthread.h>
+
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#ifdef BUILD_ICD
+#  include "pocl_icd.h"
+#endif
 #include "pocl.h"
 
 #define POCL_FILENAME_LENGTH 1024
@@ -124,14 +129,31 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_OBJECT_INIT \
   POCL_LOCK_INITIALIZER, 0
 
+#define POdeclsym(name) \
+  typeof(name) PO##name __attribute__((visibility("hidden")));
+
+#ifdef DIRECT_LINKAGE
+#  define POsym(name) \
+     typeof(name) name __attribute__ ((alias ("PO" #name), \
+                                       visibility("default")));
+#else
+#  define POsym(name)
+#endif
+
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
-#define POCL_ICD_OBJECT\
-  struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT\
+     struct _cl_icd_dispatch *dispatch;
+#  define POsymICD(name) POsym(name)
+#  define POdeclsymICD(name) POdeclsym(name)
 #else
-#define POCL_ICD_OBJECT
+#  define POCL_ICD_OBJECT
+#  define POsymICD(name)
+#  define POdeclsymICD(name)
 #endif
+
+#include "pocl_intfn.h"
 
 struct pocl_argument {
   size_t size;

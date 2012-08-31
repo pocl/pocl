@@ -1,6 +1,6 @@
 #include "pocl_cl.h"
 extern CL_API_ENTRY cl_sampler CL_API_CALL
-clCreateSampler(cl_context          context,
+POclCreateSampler(cl_context          context,
                 cl_bool             normalized_coords, 
                 cl_addressing_mode  addressing_mode, 
                 cl_filter_mode      filter_mode,
@@ -31,3 +31,4 @@ CL_API_SUFFIX__VERSION_1_0
   
   return sampler;
 }
+POsym(clCreateSampler)

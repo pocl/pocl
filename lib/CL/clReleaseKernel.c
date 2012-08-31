@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
+POclReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel *pk;
 
@@ -50,7 +50,7 @@ clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           /* Remove the kernel from the program's linked list of
              kernels */
           *pk = (*pk)->next;
-          clReleaseProgram (kernel->program);
+          POclReleaseProgram (kernel->program);
         }
       
       free ((char*)kernel->function_name);
@@ -60,3 +60,4 @@ clReleaseKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   
   return CL_SUCCESS;
 }
+POsym(clReleaseKernel)

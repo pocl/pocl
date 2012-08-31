@@ -25,7 +25,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
+POclReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;
@@ -69,3 +69,4 @@ clReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
     }
   return CL_SUCCESS;
 }
+POsym(clReleaseMemObject)

@@ -26,7 +26,7 @@
 #include "pocl_icd.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
-clCreateBuffer(cl_context context,
+POclCreateBuffer(cl_context context,
                cl_mem_flags flags,
                size_t size,
                void *host_ptr,
@@ -69,7 +69,7 @@ clCreateBuffer(cl_context context,
   for (i = 0; i < context->num_devices; ++i)
     {
       if (i > 0)
-        clRetainMemObject (mem);
+        POclRetainMemObject (mem);
       device = context->devices[i];
       device_ptr = device->malloc(device->data, flags, size, host_ptr);
       if (device_ptr == NULL)
@@ -98,3 +98,4 @@ clCreateBuffer(cl_context context,
     *errcode_ret = CL_SUCCESS;
   return mem;
 }
+POsym(clCreateBuffer)

@@ -23,7 +23,7 @@
 #include "pocl_cl.h"
 
 extern CL_API_ENTRY cl_mem CL_API_CALL
-clCreateImage(cl_context              context,
+POclCreateImage(cl_context              context,
               cl_mem_flags            flags,
               const cl_image_format * image_format,
               const cl_image_desc *   image_desc, 
@@ -38,7 +38,7 @@ CL_API_SUFFIX__VERSION_1_2
   if (image_desc->image_type != CL_MEM_OBJECT_IMAGE2D)
     POCL_ABORT_UNIMPLEMENTED();
   
-  clCreateImage2D (context,
+  POclCreateImage2D (context,
                    flags,
                    image_format,
                    image_desc->image_width,
@@ -47,3 +47,4 @@ CL_API_SUFFIX__VERSION_1_2
                    host_ptr,
                    errcode_ret);
 }
+POsym(clCreateImage)

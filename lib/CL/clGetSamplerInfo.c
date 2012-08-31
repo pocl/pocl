@@ -2,7 +2,7 @@
 
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetSamplerInfo(cl_sampler          sampler ,
+POclGetSamplerInfo(cl_sampler          sampler ,
                  cl_sampler_info     param_name ,
                  size_t              param_value_size ,
                  void *              param_value ,
@@ -12,3 +12,4 @@ clGetSamplerInfo(cl_sampler          sampler ,
   return CL_SUCCESS;
 }
 
+POsym(clGetSamplerInfo)

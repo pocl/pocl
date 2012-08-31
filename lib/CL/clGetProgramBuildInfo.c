@@ -25,7 +25,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetProgramBuildInfo(cl_program            program,
+POclGetProgramBuildInfo(cl_program            program,
                       cl_device_id          device,
                       cl_program_build_info param_name,
                       size_t                param_value_size,
@@ -77,3 +77,4 @@ clGetProgramBuildInfo(cl_program            program,
   
   return CL_INVALID_VALUE;
 }
+POsym(clGetProgramBuildInfo)
