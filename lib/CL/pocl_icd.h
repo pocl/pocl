@@ -26,7 +26,10 @@
 #error CL_USE_DEPRECATED_OPENCL_1_1_APIS not in use
 #endif
 
+#pragma GCC visibility push(hidden)
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
+#pragma GCC visibility pop
+
 #define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
 #define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
 

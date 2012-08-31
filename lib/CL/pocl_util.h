@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 
+#pragma GCC visibility push(hidden)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,6 +45,7 @@ float byteswap_float (float word, char should_swap);
 #ifdef __cplusplus
 }
 #endif
+#pragma GCC visibility pop
 
 /* Common macro for cleaning up "*GetInfo" API call implementations.
  * All the *GetInfo functions have been specified to look alike, 
