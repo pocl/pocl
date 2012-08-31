@@ -40,10 +40,6 @@
 #include <map>
 #include <algorithm>
 
-#define LOCAL_ID_X "_local_id_x"
-#define LOCAL_ID_Y "_local_id_y"
-#define LOCAL_ID_Z "_local_id_z"
-
 using namespace std;
 using namespace llvm;
 using namespace pocl;
@@ -54,6 +50,13 @@ using namespace pocl;
 //#define DEBUG_PR_CREATION
 
 #include <iostream>
+
+ParallelRegion::ParallelRegion() : 
+  std::vector<llvm::BasicBlock *>(), 
+  LocalIDXLoadInstr(NULL), LocalIDYLoadInstr(NULL), LocalIDZLoadInstr(NULL),
+  exitIndex_(0), entryIndex_(0)
+{
+}
 
 /**
  * Ensure all variables are named so they will be replicated and renamed
@@ -264,19 +267,19 @@ ParallelRegion::insertPrologue(unsigned x,
   if (M->getPointerSize() == llvm::Module::Pointer64)
     size_t_width = 64;
 
-  GlobalVariable *gvx = M->getGlobalVariable(LOCAL_ID_X);
+  GlobalVariable *gvx = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
   if (gvx != NULL)
       builder.CreateStore(ConstantInt::get(IntegerType::
                                            get(M->getContext(), size_t_width), 
                                            x), gvx);
 
-  GlobalVariable *gvy = M->getGlobalVariable(LOCAL_ID_Y);
+  GlobalVariable *gvy = M->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
   if (gvy != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(), size_t_width),
                                          y), gvy);
 
-  GlobalVariable *gvz = M->getGlobalVariable(LOCAL_ID_Z);
+  GlobalVariable *gvz = M->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
   if (gvz != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(), size_t_width),
@@ -435,9 +438,7 @@ ParallelRegion::AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before
     insert(beforePos, block);
     /* The entryIndex_ should be still correct. In case the 'before' block
        was an old entry node, the new one replaces it as an entry node at
-       the same index and the old one gets pushed forward. */
-
-       
+       the same index and the old one gets pushed forward. */      
 }
 
 
@@ -446,3 +447,46 @@ ParallelRegion::HasBlock(llvm::BasicBlock *bb)
 {
     return find(begin(), end(), bb) != end();
 }
+
+/**
+ * Find the instruction that loads the Z dimension of the work item
+ * in the beginning of the parallel region, if not found, creates it.
+ */
+llvm::Instruction*
+ParallelRegion::LocalIDZLoad()
+{
+  if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
+  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  return LocalIDZLoadInstr = 
+    builder.CreateLoad
+    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL));
+}
+
+/**
+ * Find the instruction that loads the Y dimension of the work item
+ * in the beginning of the parallel region, if not found, creates it.
+ */
+llvm::Instruction*
+ParallelRegion::LocalIDYLoad()
+{
+  if (LocalIDYLoadInstr != NULL) return LocalIDYLoadInstr;
+  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  return LocalIDYLoadInstr = 
+    builder.CreateLoad
+    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL));
+}
+
+/**
+ * Find the instruction that loads the X dimension of the work item
+ * in the beginning of the parallel region, if not found, creates it.
+ */
+llvm::Instruction*
+ParallelRegion::LocalIDXLoad()
+{
+  if (LocalIDXLoadInstr != NULL) return LocalIDXLoadInstr;
+  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  return LocalIDXLoadInstr = 
+    builder.CreateLoad
+    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL));
+}
+

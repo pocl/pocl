@@ -33,8 +33,11 @@
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
 
-
 namespace pocl {
+
+#define POCL_LOCAL_ID_X_GLOBAL "_local_id_x"
+#define POCL_LOCAL_ID_Y_GLOBAL "_local_id_y"
+#define POCL_LOCAL_ID_Z_GLOBAL "_local_id_z"
 
 class Kernel;
 
@@ -44,6 +47,8 @@ class Kernel;
   class ParallelRegion : public std::vector<llvm::BasicBlock *> {    
   public:    
     typedef llvm::SmallVector<ParallelRegion *, 8> ParallelRegionVector;
+
+    ParallelRegion();
 
     /* BarrierBlock *getEntryBarrier(); */
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
@@ -74,7 +79,15 @@ class Kernel;
 
     static void GenerateTempNames(llvm::BasicBlock *bb);
 
+    llvm::Instruction* LocalIDXLoad();
+    llvm::Instruction* LocalIDYLoad();
+    llvm::Instruction* LocalIDZLoad();
+
   private:
+    llvm::Instruction* LocalIDXLoadInstr;
+    llvm::Instruction* LocalIDYLoadInstr;
+    llvm::Instruction* LocalIDZLoadInstr;
+
     bool Verify();
     /// The indices of entry and exit, not pointers, for finding the BBs in the
     /// replicated PRs too.

@@ -50,6 +50,7 @@ namespace pocl {
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
     typedef std::set<llvm::Instruction* > InstructionIndex;
     typedef std::vector<llvm::Instruction* > InstructionVec;
+    typedef std::map<std::string, llvm::Instruction*> StrInstructionMap;
 
     InstructionIndex workGroupVariables;
 
@@ -63,7 +64,7 @@ namespace pocl {
 
     unsigned size_t_width;
 
-    std::map<std::string, llvm::Instruction*> contextArrays;
+    StrInstructionMap contextArrays;
 
     virtual bool ProcessFunction(llvm::Function &F);
     void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
@@ -87,6 +88,8 @@ namespace pocl {
          bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim);
 
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
+
+    bool ShouldBeContextSaved(llvm::Instruction *instr);
 
     std::map<llvm::Instruction*, unsigned> tempInstructionIds;
     size_t tempInstructionIndex;

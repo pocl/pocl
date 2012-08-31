@@ -96,13 +96,14 @@ WorkitemLoops::runOnFunction(Function &F)
 
   localIdType = IntegerType::get(F.getContext(), size_t_width);
 
-  localIdZ = M->getOrInsertGlobal("_local_id_z", localIdType);
-  localIdY = M->getOrInsertGlobal("_local_id_y", localIdType);
-  localIdX = M->getOrInsertGlobal("_local_id_x", localIdType);
+  localIdZ = M->getOrInsertGlobal(POCL_LOCAL_ID_Z_GLOBAL, localIdType);
+  localIdY = M->getOrInsertGlobal(POCL_LOCAL_ID_Y_GLOBAL, localIdType);
+  localIdX = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, localIdType);
 
 #if 0
   std::cerr << "### original:" << std::endl;
-  F.viewCFGOnly();
+  if (F.getName() == "prod_AA")
+  F.viewCFG();
 #endif
 
   bool changed = ProcessFunction(F);
@@ -113,13 +114,38 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   std::cerr << "### after:" << std::endl;
-  F.viewCFGOnly();
+  if (F.getName() == "prod_AA")
+  F.viewCFG();
 #endif
 
   changed |= fixUndominatedVariableUses(DT, F);
 
+#ifdef DEBUG_WORK_ITEM_LOOPS
   //std::cerr << "### processed:" << std::endl;
   //F.viewCFGOnly();
+  TargetData &TD = getAnalysis<TargetData>();
+
+  size_t totalContext = 0;
+  for (StrInstructionMap::iterator i = contextArrays.begin();
+       i != contextArrays.end(); ++i)
+  {
+      llvm::AllocaInst *a = dyn_cast<llvm::AllocaInst>((*i).second);
+      llvm::Value *s = a->getArraySize();
+      assert (a != NULL);
+      assert (isa<ConstantInt>(s));
+      llvm::ConstantInt *size = dyn_cast<llvm::ConstantInt>(s);
+      totalContext += size->getZExtValue() * TD.getTypeAllocSize(a->getAllocatedType());
+  }
+  std::cerr << "### total context data needed " << totalContext << " bytes" 
+            << std::endl;
+#endif
+
+#if 0
+  if (F.getName() == "prod_AA")
+      F.dump();
+#endif
+
+  //F.viewCFG();
 
   return changed;
 }
@@ -464,6 +490,8 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
            instr != bb->end(); ++instr) 
         {
           llvm::Instruction *instruction = instr;
+          if (!ShouldBeContextSaved(instruction)) continue;
+
           for (Instruction::use_iterator ui = instruction->use_begin(),
                  ue = instruction->use_end();
                ui != ue; ++ui) 
@@ -553,9 +581,17 @@ WorkitemLoops::AddContextSave
   IRBuilder<> builder(definition);
   std::vector<llvm::Value *> gepArgs;
   gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
-  gepArgs.push_back(builder.CreateLoad(localIdZ));
-  gepArgs.push_back(builder.CreateLoad(localIdY));
-  gepArgs.push_back(builder.CreateLoad(localIdX)); 
+
+  /* Reuse the id loads earlier in the region, if possible, to
+     avoid messy output with lots of redundant loads. */
+  ParallelRegion *region = RegionOfBlock(instruction->getParent());
+  assert ("Adding context save outside any region produces illegal code." && 
+          region != NULL);
+
+  gepArgs.push_back(region->LocalIDZLoad());
+  gepArgs.push_back(region->LocalIDYLoad());
+  gepArgs.push_back(region->LocalIDXLoad());
+
   return builder.CreateStore(instruction, builder.CreateGEP(alloca, gepArgs));
 }
 
@@ -572,6 +608,7 @@ WorkitemLoops::AddContextRestore
   else if (isa<Instruction>(val))
     {
       builder.SetInsertPoint(dyn_cast<Instruction>(val));
+      before = dyn_cast<Instruction>(val);
     }
   else 
     {
@@ -581,9 +618,16 @@ WorkitemLoops::AddContextRestore
   
   std::vector<llvm::Value *> gepArgs;
   gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), 0));
-  gepArgs.push_back(builder.CreateLoad(localIdZ));
-  gepArgs.push_back(builder.CreateLoad(localIdY));
-  gepArgs.push_back(builder.CreateLoad(localIdX)); 
+
+  /* Reuse the id loads earlier in the region, if possible, to
+     avoid messy output with lots of redundant loads. */
+  ParallelRegion *region = RegionOfBlock(before->getParent());
+  assert ("Adding context save outside any region produces illegal code." && 
+          region != NULL);
+
+  gepArgs.push_back(region->LocalIDZLoad());
+  gepArgs.push_back(region->LocalIDYLoad());
+  gepArgs.push_back(region->LocalIDXLoad());
           
   return builder.CreateLoad(builder.CreateGEP(alloca, gepArgs));
 }
@@ -649,6 +693,9 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
  * TODO: ignore work group variables completely (the iteration variables)
  * The LLVM should optimize these away but it would improve
  * the readability of the output during debugging.
+ * TODO: rematerialize some values such as extended values of global 
+ * variables or kernel argument values instead of allocating stack
+ * space for them
  */
 void
 WorkitemLoops::AddContextSaveRestore
@@ -709,7 +756,7 @@ WorkitemLoops::AddContextSaveRestore
           std::cerr << "### in BB:" << std::endl;
           user->getParent()->dump();
 #endif
-          BasicBlock *incomingBB; 
+          BasicBlock *incomingBB = NULL;
           for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
                ++incoming)
             {
@@ -717,6 +764,7 @@ WorkitemLoops::AddContextSaveRestore
               BasicBlock *bb = phi->getIncomingBlock(incoming);
               if (val == instruction) incomingBB = bb;
             }
+          assert (incomingBB != NULL);
           contextRestoreLocation = incomingBB->getTerminator();
         }
       llvm::Value *loadedValue = AddContextRestore(user, alloca, contextRestoreLocation);
@@ -727,3 +775,28 @@ WorkitemLoops::AddContextSaveRestore
 #endif
     }
 }
+
+bool
+WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
+{
+    /* If the instructions is a load from a global address, we need
+       not context save it but should just (re)load from the global. This
+       covers loads from the temporary _local_id_x etc. variables. 
+       _local_id_x loads should not be replicated as it leads to
+       problems in conditional branch case where the header node
+       of the region is shared across the branches and thus the
+       header node's ID loads might get context saved which leads
+       to egg-chicken problems. 
+
+       Q: Do we need to context save loads *ever*? A: If the address
+       computation is correctly context saved in regions that load
+       the values we should rematerialize the final load to save stack 
+       space.
+    */
+
+    llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
+    if (load != NULL && 
+        isa<GlobalValue>(load->getPointerOperand())) return false;
+    return true;
+}
+
