@@ -26,3 +26,5 @@ noinst_PROGRAMS = run_kernel
 
 AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"' @OPENCL_CFLAGS@
+
+EXTRA_DIST=basic_barriers.cl conditional_barriers.cl forloops.cl loopbarriers.cl
