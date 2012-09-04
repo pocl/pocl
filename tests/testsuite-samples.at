@@ -1,6 +1,6 @@
 
 m4_define([POAT_SAMPLES_SKIP], [
-  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" samples "*],[],[false])])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" samples "*],[false],[:])])
 ])
 
 AT_BANNER([OpenCL Programming Guide Samples])

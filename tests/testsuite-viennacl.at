@@ -3,7 +3,7 @@ dnl POAT_VCL_SETUP(name, extra_keywords)
 m4_define([POAT_VCL_SETUP],[
   AT_SETUP([$1])
   AT_KEYWORDS([viennacl $1 $2])
-  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" ViennaCL "*],[],[false])])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" viennacl "*],[false],[:])])
 ])
 dnl POAT_VCL_CHECK_BUILD(name)
 m4_define([POAT_VCL_CHECK_BUILD],[
@@ -16,7 +16,7 @@ AT_BANNER([ViennaCL 1.2.0 tests])
 
 AT_SETUP([Initialize the build with cmake])
 AT_KEYWORDS([viennacl build])
-AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" ViennaCL "*],[],[false])])
+AT_SKIP_IF([AS_CASE([" POAT_TESTSUITES "],[*" ViennaCL "*],[],[false])])
 AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ build], ignore, ignore, ignore)
 AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build kernels], ignore, ignore, ignore)
 AT_CLEANUP
