@@ -299,7 +299,15 @@ AC_ARG_ENABLE([install-opencl-headers],
               [ioh="default"])
 
 if test x"$ioh" = xdefault; then
-  AC_CHECK_HEADER([CL/opencl.h], [ioh=no], [ioh=yes])
+  ioh=yes
+  case $host_os in
+    darwin* )
+      AC_CHECK_HEADER([OpenCL/opencl.h],[ioh=no])
+      ;;
+    * )
+      AC_CHECK_HEADER([CL/opencl.h],[ioh=no])
+      ;;
+  esac
 fi
 
 AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
