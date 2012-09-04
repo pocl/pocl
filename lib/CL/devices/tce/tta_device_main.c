@@ -21,6 +21,8 @@
    THE SOFTWARE.
 */
 
+/* Note: Most of the debug code is broken because lwpr_print_str() only works
+ *       with char* to local address space */
 //#define DEBUG_TTA_DEVICE
 
 #include <malloc.h>
@@ -39,6 +41,7 @@
 #define __constant__ __attribute__((address_space(3)))
 
 typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;
+typedef __global__ __kernel_metadata kernel_metadata;
 
 /**
  * Executes the work groups of the kernel command.
@@ -48,7 +51,7 @@ static void tta_opencl_wg_execute(
     void** args,
     int first_gidx, int last_gidx) {
 
-    __kernel_metadata *kernel = (__kernel_metadata*)cmd->kernel;
+    kernel_metadata *kernel = (kernel_metadata*)cmd->kernel;
 
     const int num_groups_x = cmd->num_groups[0];
     const int num_groups_y = (cmd->work_dim >= 2) ? (cmd->num_groups[1]) : 1;
@@ -92,7 +95,7 @@ static void tta_opencl_wg_execute(
 static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 
     void* args[MAX_KERNEL_ARGS];
-    __kernel_metadata *kernel = (__kernel_metadata*)cmd->kernel;
+    kernel_metadata *kernel = (kernel_metadata*)cmd->kernel;
 
     int num_groups_x = cmd->num_groups[0];
     int i, first_gid_x, last_gid_x;
@@ -122,7 +125,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 #endif
 }
 
-extern __kernel_metadata _test_kernel_md;
+extern kernel_metadata _test_kernel_md;
 
 /* The shared kernel_command object using which the device is controlled. */
 kernel_exec_cmd kernel_command;
@@ -136,7 +139,7 @@ static kernel_exec_cmd* wait_for_command() {
 
 int main() {
     kernel_exec_cmd *next_command;
-    __kernel_metadata *next_kernel;
+    kernel_metadata *next_kernel;
     size_t dynamic_local_arg_sizes[MAX_KERNEL_ARGS];
     int work_dim = 1;
     size_t local_work_sizes[3] = {1, 0, 0};
@@ -155,7 +158,7 @@ int main() {
 
         next_command = wait_for_command();
 
-        next_kernel = (__kernel_metadata*)next_command->kernel;
+        next_kernel = (kernel_metadata*)next_command->kernel;
 
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("tta: got a command to execute: ");

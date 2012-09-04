@@ -82,34 +82,40 @@ AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_id_dependent_computation], 0)
 AT_CLEANUP
 
-AT_SETUP([struct kernel arguments - lp:##987905])
+AT_SETUP([struct kernel arguments - lp:#987905])
 AT_XFAIL_IF(true)
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_structs_as_args], 0)
 AT_CLEANUP
 
-AT_SETUP([barrier just before return (repl) - lp:##1012030])
+AT_SETUP([barrier just before return (repl) - lp:#1012030])
 AT_KEYWORDS([regression struct])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_barrier_before_return], 0)
 AT_CLEANUP
 
-AT_SETUP([barrier just before return (loops) - lp:##1012030])
+AT_SETUP([barrier just before return (loops) - lp:#1012030])
 AT_KEYWORDS([regression struct])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_barrier_before_return], 0)
 AT_CLEANUP
 
-AT_SETUP([infinite loop (repl) - lp:##941558])
+AT_SETUP([infinite loop (repl) - lp:#941558])
 AT_KEYWORDS([regression infinite-loop])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_infinite_loop], 0)
 AT_CLEANUP
 
-AT_SETUP([infinite loop (loops) - lp:##941558])
+AT_SETUP([infinite loop (loops) - lp:#941558])
 AT_KEYWORDS([regression infinite-loop])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_infinite_loop], 0)
 AT_CLEANUP
 
-AT_SETUP([passing a constant array as an arg - lp:##1032203])
+AT_SETUP([passing a constant array as an arg - lp:#1032203])
 AT_XFAIL_IF(true)
 AT_KEYWORDS([regression const-array])
 AT_CHECK([$abs_top_builddir/tests/regression/test_constant_array], 0)
+AT_CLEANUP
+
+AT_SETUP([undominated variable from conditional barrier handling - lp:#1045835])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([regression undominated])
+AT_CHECK([$abs_top_builddir/tests/regression/test_undominated_variable], 0)
 AT_CLEANUP
