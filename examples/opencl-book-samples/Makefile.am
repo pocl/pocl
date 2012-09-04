@@ -22,32 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# Usage:
-#
-# svn checkout http://opencl-book-samples.googlecode.com/svn/trunk/ checkout
-# make build
-# make run_all
-
+if TEST_SUITE_SAMPLES
 book_samples_base_dir=${abs_top_srcdir}/examples/opencl-book-samples
 book_samples_dir=${book_samples_base_dir}/checkout
 
 .PHONY: build run_all run_working check_dir run_HelloWorld run_OpenCLInfo run_OpenCLConvolutionChap3
 .PHONY: run_SimpleBufferSubBuffer run_spmv run_VectorAdd run_Dijkstra
 
-if TEST_SUITE_SAMPLES
 all: $(book_samples_base_dir)/stamp-patched
-endif
 
 $(book_samples_dir):
-if TEST_SUITE_SAMPLES
 	cd $(book_samples_base_dir) && \
 	svn checkout http://opencl-book-samples.googlecode.com/svn/trunk/ checkout
-else
-	@echo 'use --enable-test-opencl-book-samples in configure options'
-	@echo 'or checkout the svn repository yourself'
-	@echo 'Aborting'
-	@false
-endif
 
 $(book_samples_base_dir)/stamp-patched: $(book_samples_dir)
 	(cd ${book_samples_dir}; \
@@ -65,8 +51,9 @@ build: check_dir
 	cmake \
 		-D CMAKE_CXX_FLAGS:STRING='-g -O3 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -lGL -lglut ${PTHREAD_CFLAGS}' \
 		$(OPENCL_CMAKE) \
-		${book_samples_dir} && \
-	make clean all -sk
+		${book_samples_dir}
+	$(MAKE) clean -sk -C build
+	$(MAKE) all -sk -C build
 
 run_HelloWorld: 
 	@(cd build/src/Chapter_2/HelloWorld; ./HelloWorld)
@@ -124,7 +111,6 @@ run_all: run_working run_OpenCLInfo run_Dijkstra run_spmv
 clean-local:
 	rm -fr build
 
-if TEST_SUITE_SAMPLES
 distclean-local: clean-local
 	$(RM) -r $(book_samples_dir)
 	$(RM) $(book_samples_base_dir)/stamp-patched

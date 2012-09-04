@@ -84,50 +84,89 @@ AC_ARG_ENABLE([region-allocator],
 ####################################################################
 # Manage optional testsuites
 
-# Option to enable the OpenCL book samples testsuite
-AC_ARG_ENABLE([testsuite-opencl-book-samples],
-              [AS_HELP_STRING([--enable-testsuite-opencl-book-samples], [checkout OpenCL book sample programs for tests (default no)])],
-              [], [enable_testsuite_opencl_book_samples="no"])
-if test "$enable_testsuite_opencl_book_samples" = "yes"; then
-   AC_CHECK_LIB([glut], [glutInit], [:], [
-     AC_MSG_WARN([disabling tests from OpenCL book as glut library is missing])
-     enable_testsuite_opencl_book_samples="no"
-   ])
-  :
+# Option to choose external testsuites
+AC_ARG_ENABLE([testsuites],
+	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],[choose testsuites using external software to use (all,opencl-book-samples,ViennaCL,Rodinia)])],
+	      [],[enable_testsuites=check])
+
+enable_testsuite_opencl_book_samples=no
+enable_testsuite_viennacl=no
+enable_testsuite_rodinia=no
+if test x"$enable_testsuites" = xcheck ; then
+  if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
+    enable_testsuite_opencl_book_samples=yes
+  fi
+  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.2.0-src.tar.gz" ; then
+    enable_testsuite_viennacl=yes
+  fi
+  if test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
+    enable_testsuite_rodinia=yes
+  fi
 fi
+AS_CASE([,"$enable_testsuites",],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia"],
+  [*,no,*], [enable_testsuites=""]
+)
+AS_CASE([,"$enable_testsuites",],
+  [*,opencl-book-samples,*|*,samples,*], [
+    enable_testsuite_opencl_book_samples=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,ViennaCL,*|*,viennacl,*], [
+    enable_testsuite_viennacl=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,Rodinia,*|*,rodinia,*], [
+    enable_testsuite_rodinia=yes
+  ])
+
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
+  # Check for software required for opencl book samples
+  AC_CHECK_LIB([glut], [glutInit], [:], [
+    AC_MSG_WARN([disabling tests from OpenCL book as glut library is missing])
+    enable_testsuite_opencl_book_samples="no"
+  ])
+  :
   AC_CHECK_HEADER([FreeImage.h], [:], [
     AC_MSG_WARN([disabling tests from OpenCL book as FreeImage.h header is missing])
     enable_testsuite_opencl_book_samples="no"
   ])
 fi
+
+if test "$enable_testsuite_rodinia" = "yes" ; then
+  # Check for software and sources for Rodinia
+  if ! test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
+    AC_MSG_WARN([disabling Rodinia testsuite as rodinia_2.0.1.tar.gz in not in '$srcdir/examples/Rodinia'. You must download it yourself from http://lava.cs.virginia.edu/Rodinia/download.htm after registration.])
+    enable_testsuite_rodinia=no
+  fi
+fi
+
 AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
-
-# Option to enable the ViennaCL testsuite
-AC_ARG_ENABLE([testsuite-viennacl],
-              [AS_HELP_STRING([--enable-testsuite-viennacl], [fetch ViennaCL software for tests (default no)])],
-              [], [enable_testsuite_viennacl="no"])
-
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
-
-# Option to enable the Rodinia testsuite
-AC_ARG_ENABLE([testsuite-rodinia],
-              [AS_HELP_STRING([--enable-testsuite-rodinia], [extract Rodinia software for tests (default no)])],
-              [], [enable_testsuite_rodinia="no"])
-
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
+POAT_TESTSUITES=""
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
   AC_MSG_NOTICE([tests from OpenCL book are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES samples"
+else
+  AC_MSG_NOTICE([tests from OpenCL book are disabled])
 fi
 if test "$enable_testsuite_viennacl" = "yes"; then
   AC_MSG_NOTICE([tests from ViennaCL are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES viennacl"
+else
+  AC_MSG_NOTICE([tests from ViennaCL are disabled])
 fi
 if test "$enable_testsuite_rodinia" = "yes"; then
   AC_MSG_NOTICE([tests from Rodinia are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES rodinia"
+else
+  AC_MSG_NOTICE([tests from Rodinia are disabled])
 fi
+AC_SUBST([POAT_TESTSUITES])
 ####################################################################
 
 # Option to build as an ICD
@@ -223,6 +262,7 @@ fi
 AC_SUBST([OPENCL_CMAKE])
 AC_SUBST([OPENCL_EXTLIBS])
 
+####################################################################
 #AC_LANG([C++])
 ACX_PTHREAD()
 

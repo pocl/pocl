@@ -1,9 +1,13 @@
 
+m4_define([POAT_SAMPLES_SKIP], [
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" samples "*],[],[false])])
+])
+
 AT_BANNER([OpenCL Programming Guide Samples])
 
 AT_SETUP([Building the sources against pocl])
 AT_KEYWORDS([booksamples buildsamples])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 AT_DATA([expout],
 [Built target HelloWorld
 Built target OpenCLInfo
@@ -23,7 +27,7 @@ AT_CLEANUP
 
 AT_SETUP([Run Chapter 2: Hello World])
 AT_KEYWORDS([booksamples helloworld])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 
 AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/opencl-book-samples/build/src/Chapter_2/HelloWorld; ./HelloWorld | grep -v "Could not create GPU context, trying CPU"], 0, 
 [`cat $abs_top_srcdir/examples/opencl-book-samples/HelloWorld.stdout`
@@ -33,7 +37,7 @@ AT_CLEANUP
 
 AT_SETUP([Run Chapter 3: OpenCLConvolution])
 AT_KEYWORDS([booksamples])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 
 AT_CHECK_UNQUOTED([
 cd $abs_top_builddir/examples/opencl-book-samples/build/src/Chapter_3/OpenCLConvolution
@@ -47,7 +51,7 @@ AT_CLEANUP
 
 AT_SETUP([Run Chapter 6: HelloBinaryWorld])
 AT_KEYWORDS([booksamples hellobinaryworld])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 
 AT_CHECK_UNQUOTED([
 cd $abs_top_builddir/examples/opencl-book-samples/build/src/Chapter_6/HelloBinaryWorld
@@ -62,7 +66,7 @@ AT_CLEANUP
 
 AT_SETUP([Run Chapter 7: SimpleBufferSubBuffer])
 AT_KEYWORDS([booksamples simplebuffersubbuffer])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 
 AT_CHECK_UNQUOTED([
 cd $abs_top_builddir/examples/opencl-book-samples/build/src/Chapter_7/SimpleBufferSubBuffer
@@ -75,7 +79,7 @@ AT_CLEANUP
 
 AT_SETUP([Run Chapter 8: ImageFilter2D])
 AT_KEYWORDS([booksamples imagefilter2d])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 AT_CHECK_UNQUOTED([ 
 cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/src/Chapter_8/ImageFilter2D ;
 cp ${abs_top_srcdir}/examples/opencl-book-samples/ImageFilter2D.cl ./
@@ -97,7 +101,7 @@ AT_CLEANUP
 
 AT_SETUP([Run Chapter 12: VectorAdd (C++ bindings)])
 AT_KEYWORDS([booksamples])
-AT_SKIP_IF([! test -e $abs_top_srcdir/examples/opencl-book-samples/checkout])
+POAT_SAMPLES_SKIP
 
 AT_CHECK_UNQUOTED([
 cd $abs_top_builddir/examples/opencl-book-samples/build/src/Chapter_12/VectorAdd

@@ -23,15 +23,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+if TEST_SUITE_RODINIA
 testsuite_pocl_dir=${abs_top_srcdir}/examples/Rodinia
 testsuite_src_dir=${testsuite_pocl_dir}/rodinia_2.0.1
 tarfile=rodinia_2.0.1.tar.gz
 
 .PHONY: build
 
-if TEST_SUITE_RODINIA
 all: $(testsuite_src_dir)
-endif
 
 $(srcdir)/$(tarfile):
 	@echo 'You need to go download $(tarfile) in $(srcfile)'
@@ -39,16 +38,9 @@ $(srcdir)/$(tarfile):
 	exit 1
 
 $(testsuite_src_dir):
-if TEST_SUITE_RODINIA
 	$(MAKE) $(srcdir)/$(tarfile)
 	cd $(testsuite_pocl_dir) && \
 	tar xvzf $(tarfile)
-else
-	@echo 'use --enable-test-rodinia in configure options'
-	@echo 'or get and extract sources yourself'
-	@echo 'Aborting'
-	@false
-endif
 
 # Rodinia are build in place and its source tree is modified.
 # So, copying the source tree in our build tree if required
@@ -132,7 +124,6 @@ build: build-backprop build-bfs build-cfd build-lud build-hotspot build-kmeans\
 clean-local:
 	$(RM) -r rodinia_2.0.1
 
-if TEST_SUITE_RODINIA
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
 	$(RM) $(testsuite_pocl_dir)/rodinia_2.0.1.tar.gz

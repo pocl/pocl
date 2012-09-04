@@ -23,30 +23,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+if TEST_SUITE_VIENNACL
 testsuite_pocl_dir=${abs_top_srcdir}/examples/ViennaCL
 testsuite_src_dir=${testsuite_pocl_dir}/ViennaCL-1.2.0-src
 
 .PHONY: build
 
-if TEST_SUITE_VIENNACL
 all: $(testsuite_src_dir)
-endif
 
 $(srcdir)/ViennaCL-1.2.0-src.tar.gz:
 	cd $(srcdir) && \
 	wget http://sourceforge.net/projects/viennacl/files/1.2.x/ViennaCL-1.2.0-src.tar.gz
 
 $(testsuite_src_dir):
-if TEST_SUITE_VIENNACL
 	$(MAKE) $(srcdir)/ViennaCL-1.2.0-src.tar.gz
 	cd $(testsuite_pocl_dir) && \
 	tar xvzf ViennaCL-1.2.0-src.tar.gz
-else
-	@echo 'use --enable-test-viennacl in configure options'
-	@echo 'or get and extract sources yourself'
-	@echo 'Aborting'
-	@false
-endif
 
 # ViennaCL must be built in the subdirectory build/ of the extracted source
 # (it does not work elsewhere) and its source tree is modified.
@@ -65,7 +57,6 @@ build:
 clean-local:
 	rm -fr ViennaCL-1.2.0-src
 
-if TEST_SUITE_VIENNACL
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
 	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.2.0-src.tar.gz

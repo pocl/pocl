@@ -44,9 +44,13 @@ be executed before committing as follows:
 
 Under the 'examples' directory there are placeholder directories for external
 OpenCL application projects which are used as test suites for pocl 
-(e.g. ViennaCL). Each directory includes a readme file that provides
-more information on how to setup and download each project so it gets tested 
-within the 'make check' using pocl as the OpenCL implementation.
+(e.g. ViennaCL). These test suites can be enabled at configure time
+with --enable-testsuites (you can specify a list of test suites if you do not
+want to enabled all of them, see configure help for the available list).
+Note that these additionnal test suites require additionnal software (tools and
+libraries). The configure script check some of them but the check is not
+exhautive (patch welcome). Test suites are disabled if their requirement is not
+available.
 
 MULTI-TARGET SUPPORT
 

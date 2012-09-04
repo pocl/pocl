@@ -3,7 +3,7 @@ dnl POAT_ROD_SETUP(name, extra_keywords)
 m4_define([POAT_ROD_SETUP],[
   AT_SETUP([$1])
   AT_KEYWORDS([rodinia $1 $2])
-  AT_SKIP_IF([! test -e $abs_top_srcdir/examples/Rodinia/rodinia_2.0.1])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" Rodinia "*],[],[false])])
 ])
 dnl POAT_ROD_CHECK_BUILD(name, extra build cmd)
 m4_define([POAT_ROD_CHECK_BUILD],[

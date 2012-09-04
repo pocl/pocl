@@ -43,6 +43,8 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo '  [$(PACKAGE_BUGREPORT)])'; \
 	  echo 'm4_define([AT_PACKAGE_URL],' && \
 	  echo '  [$(PACKAGE_URL)])'; \
+	  echo 'm4_define([POAT_TESTSUITES],' && \
+	  echo '  [$(POAT_TESTSUITES)])'; \
 	} >'$(srcdir)/package.m4'
 
 EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at \
