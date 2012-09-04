@@ -75,32 +75,38 @@ build-backprop: build-prepare
 	sed -i "s/log2(HEIGHT)/log2((float)HEIGHT)/g" $(src)/backprop/backprop_kernel.cl
 	sed -i 's/pow(2, i)/pow(2.0f, i)/g' $(src)/backprop/backprop_kernel.cl
 	sed -i 's/ use_gpu = 1/ use_gpu = 0/g' $(src)/backprop/backprop_ocl.cpp
-	$(MAKE) clean backprop $(MAKE_OPTS) -C $(src)/backprop
+	$(MAKE) clean $(MAKE_OPTS) -C $(src)/backprop
+	$(MAKE) backprop $(MAKE_OPTS) -C $(src)/backprop
 
 build-bfs: build-prepare
 	@echo "  [Building Rodinia bfs]"
 	sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' $(src)/bfs/CLHelper.h
-	$(MAKE) clean release $(MAKE_OPTS) -C $(src)/bfs
+	$(MAKE) clean $(MAKE_OPTS) -C $(src)/bfs
+	$(MAKE) release $(MAKE_OPTS) -C $(src)/bfs
 
 build-cfd: build-prepare
 	@echo "  [Building Rodinia cfd]"
 	sed  -i 's/t gpu/t cpu/g' $(src)/cfd/run
-	$(MAKE) clean release $(MAKE_OPTS) -C $(src)/cfd
+	$(MAKE) clean $(MAKE_OPTS) -C $(src)/cfd
+	$(MAKE) release $(MAKE_OPTS) -C $(src)/cfd
 
 build-lud: build-prepare
 	@echo "  [Building Rodinia lud]"
 	sed -i 's/ use_gpu = 1/ use_gpu = 0/g' $(src)/lud/ocl/lud.cpp
-	$(MAKE) clean lud $(MAKE_OPTS) -C $(src)/lud
+	$(MAKE) clean $(MAKE_OPTS) -C $(src)/lud
+	$(MAKE) lud $(MAKE_OPTS) -C $(src)/lud
 
 build-hotspot: build-prepare
 	@echo "  [Building Rodinia hotspot]"
 	sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g' $(src)/hotspot/hotspot.c
-	$(MAKE) clean hotspot $(MAKE_OPTS) -C $(src)/hotspot
+	$(MAKE) clean $(MAKE_OPTS) -C $(src)/hotspot
+	$(MAKE) hotspot $(MAKE_OPTS) -C $(src)/hotspot
 
 build-kmeans: build-prepare
 	@echo "  [Building Rodinia kmeans]"
 	sed -i 's/ use_gpu = 1/ use_gpu = 0/g' $(src)/kmeans/kmeans.cpp
-	$(MAKE) clean kmeans $(MAKE_OPTS) -C $(src)/kmeans
+	$(MAKE) clean $(MAKE_OPTS) -C $(src)/kmeans
+	$(MAKE) kmeans $(MAKE_OPTS) -C $(src)/kmeans
 
 build-lavaMD: build-prepare
 	@echo "  [Building Rodinia lavaMD]"
@@ -124,10 +130,10 @@ build: build-backprop build-bfs build-cfd build-lud build-hotspot build-kmeans\
 	build-lavaMD build-pathfinder build-srad
 
 clean-local:
-	rm -fr ViennaCL-1.2.0-src
+	$(RM) -r rodinia_2.0.1
 
-if TEST_SUITE_SAMPLES
+if TEST_SUITE_RODINIA
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
-	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.2.0-src.tar.gz
+	$(RM) $(testsuite_pocl_dir)/rodinia_2.0.1.tar.gz
 endif

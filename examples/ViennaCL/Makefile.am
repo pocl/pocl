@@ -65,7 +65,7 @@ build:
 clean-local:
 	rm -fr ViennaCL-1.2.0-src
 
-if TEST_SUITE_SAMPLES
+if TEST_SUITE_VIENNACL
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
 	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.2.0-src.tar.gz
