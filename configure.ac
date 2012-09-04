@@ -132,11 +132,14 @@ fi
 
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
-              [AS_HELP_STRING([--enable-icd], [Build pocl with the ICD extensions (default check)])],
+              [AS_HELP_STRING([--enable-icd], [Build pocl with the ICD extensions (default yes)])],
               [icd="$enableval"],
-              [icd="check"])
+              [icd="yes"])
 OCL_ICD_available=no
 if test x"$icd" != xno; then :
+  # In fact, ocl-icd >= 1.4 is required. However, Debian wheezy will
+  # have ocl-icd 1.3 *with the required fixes*
+  # So, lets keep ocl-icd >= 1.3 in this check
   PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3], [
     OCL_ICD_available=yes ], [:])
 fi
@@ -154,7 +157,7 @@ if test x"$icd" = xyes; then
   AC_DEFINE([BUILD_ICD], [], "Build with ICD")
 fi
 
-AM_CONDITIONAL(BUILD_ICD, test "$icd" != "no")
+AM_CONDITIONAL(BUILD_ICD, test "$icd" = "yes")
 
 # Option to allow to link a OpenCL program directly against libpocl
 # instead of going through an ICD Loader
@@ -166,10 +169,8 @@ AC_ARG_ENABLE([direct-linkage],
 AS_CASE(["$oclsym,$icd"],
   [no,no], [ AC_MSG_ERROR([at least, one of ICD or direct-linkage must be enabled]) ],
   [no,yes], [ AC_MSG_NOTICE([disabling direct linkage as requested]) ],
-  [default,yes], [ oclsym=no
-    AC_MSG_NOTICE([disabling direct linkage as ICD extension is built]) ],
-  [default,no], [ oclsym=yes
-    AC_MSG_NOTICE([enabling direct linkage as ICD extension is not build]) ],
+  [default,*], [ oclsym=yes
+    AC_MSG_NOTICE([enabling direct linkage in pocl library]) ],
   [yes,*], [ 
     AC_MSG_NOTICE([enabling direct linkage as requested]) ],
   [AC_MSG_ERROR([Invalid value for --enable-direct-linkage])]) 
@@ -178,12 +179,29 @@ if test x"$oclsym" = xyes; then
   AC_DEFINE([DIRECT_LINKAGE], [], "Export OpenCL symbols")
 fi
 
-AM_CONDITIONAL(EXPORT_OPENCL_SYMBOLS, test "$oclsym" != "no")
+AM_CONDITIONAL(EXPORT_OPENCL_SYMBOLS, test "$oclsym" = "yes")
 
-if test x"$oclsym" = xno; then
+# Option to run tests through the OpenCL ICD loader
+# Note that running test *in tree* requires the ocl-icd loader, not any ICD
+# loader
+AC_ARG_ENABLE([tests-with-icd],
+              [AS_HELP_STRING([--enable-tests-with-icd], [run tests through the ICD Loader (requires the ocl-icd loader)])],
+              [tests_with_icd="$enableval"],
+              [tests_with_icd="default"])
+AS_CASE(["$tests_with_icd,$icd,$oclsym"],
+  [yes,no,*], [ AC_MSG_ERROR([Cannot use ICD for tests when not building it]) ],
+  [no,*,no], [ AC_MSG_ERROR([Cannot avoid ICD for tests when direct-linkage is disabled]) ],
+  [default,yes,*], [ tests_with_icd=yes
+    AC_MSG_NOTICE([tests will be run through the ICD]) ],
+  [default,*,yes], [ tests_with_icd=no
+    AC_MSG_NOTICE([tests will use POCL library directly]) ],
+  [AC_MSG_ERROR([Invalid value for --enable-tests-with-icd])]) 
+
+if test x"$tests_with_icd" = xyes; then
   PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], [
     OCL_ICD_available=yes
   ], [
+    AC_MSG_WARN([Tests through ICD loaded enabled but OpenCL.pc file installed by ocl-icd seems missing])
     if test -z "$OPENCL_LIBS"; then
       OPENCL_LIBS="-lOpenCL"
     fi
