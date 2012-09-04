@@ -110,6 +110,13 @@ AC_ARG_ENABLE([testsuite-viennacl],
 
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
 
+# Option to enable the Rodinia testsuite
+AC_ARG_ENABLE([testsuite-rodinia],
+              [AS_HELP_STRING([--enable-testsuite-rodinia], [extract Rodinia software for tests (default no)])],
+              [], [enable_testsuite_rodinia="no"])
+
+AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
+
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -117,6 +124,9 @@ if test "$enable_testsuite_opencl_book_samples" = "yes"; then
 fi
 if test "$enable_testsuite_viennacl" = "yes"; then
   AC_MSG_NOTICE([tests from ViennaCL are enabled])
+fi
+if test "$enable_testsuite_rodinia" = "yes"; then
+  AC_MSG_NOTICE([tests from Rodinia are enabled])
 fi
 ####################################################################
 
@@ -179,8 +189,10 @@ if test x"$oclsym" = xno; then
     fi
   ])
   OPENCL_CMAKE=''
+  OPENCL_EXTLIBS="$OPENCL_LIBS"
 else
-  OPENCL_LIBS='$(top_builddir)/lib/CL/libpocl.la $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
+  OPENCL_LIBS='$(abs_top_builddir)/lib/CL/libpocl.la $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
+  OPENCL_EXTLIBS='-L$(abs_top_builddir)/lib/CL/.libs -lpocl -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
   OPENCL_CFLAGS='$(PTHREAD_CFLAGS)'
   OPENCL_CMAKE=' \
 	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
@@ -191,6 +203,7 @@ else
   '
 fi
 AC_SUBST([OPENCL_CMAKE])
+AC_SUBST([OPENCL_EXTLIBS])
 
 #AC_LANG([C++])
 ACX_PTHREAD()
@@ -548,6 +561,7 @@ AC_CONFIG_FILES([Makefile
                  examples/scalarwave/Makefile
                  examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
+                 examples/Rodinia/Makefile
                  examples/ViennaCL/Makefile
                  scripts/Makefile
                  tests/Makefile
