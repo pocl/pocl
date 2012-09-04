@@ -126,11 +126,33 @@ WorkitemLoops::runOnFunction(Function &F)
 #endif
 
 #if 0
-  if (F.getName() == "prod_AA")
-      F.dump();
-#endif
+  /* Split large BBs so we can print the Dot without it crashing. */
+  bool fchanged = false;
+  const int MAX_INSTRUCTIONS_PER_BB = 70;
+  do {
+    fchanged = false;
+    for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
+      BasicBlock *b = i;
+      
+      if (b->size() > MAX_INSTRUCTIONS_PER_BB + 1)
+        {
+          int count = 0;
+          BasicBlock::iterator splitPoint = b->begin();
+          while (count < MAX_INSTRUCTIONS_PER_BB || isa<PHINode>(splitPoint))
+            {
+              ++splitPoint;
+              ++count;
+            }
+          SplitBlock(b, splitPoint, this);
+          fchanged = true;
+          break;
+        }
+    }  
 
-  //F.viewCFG();
+  } while (fchanged);
+
+  F.viewCFG();
+#endif
 
   return changed;
 }
@@ -316,6 +338,18 @@ WorkitemLoops::ProcessFunction(Function &F)
   F.viewCFG();
 #endif
 
+#if 0
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    region->InjectRegionPrintF();
+    region->InjectVariablePrintouts();
+  }
+#endif
+
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
@@ -351,19 +385,6 @@ WorkitemLoops::ProcessFunction(Function &F)
 #if 0
   std::cerr << "### After PHIs to allocas" << std::endl;
   F.viewCFG();
-#endif
-
-#if 0
-  for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i) 
-  {
-    ParallelRegion *region = (*i);
-    region->InjectRegionPrintF();
-    region->InjectVariablePrintouts();
-
-  }
 #endif
 
   for (ParallelRegion::ParallelRegionVector::iterator
@@ -443,7 +464,6 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
-  //M->dump();
   //F.viewCFG();
 
   return true;
@@ -488,7 +508,14 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
            instr != bb->end(); ++instr) 
         {
           llvm::Instruction *instruction = instr;
-          if (!ShouldBeContextSaved(instruction)) continue;
+          if (!ShouldBeContextSaved(instruction)) 
+            {
+#ifdef DEBUG_WORK_ITEM_LOOPS
+              std::cerr << "### can be rematerialized, not context saving:" << std::endl;
+              instruction->dump();
+#endif
+              continue;
+            }
 
           for (Instruction::use_iterator ui = instruction->use_begin(),
                  ue = instruction->use_end();
@@ -496,7 +523,11 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
             {
               Instruction *user;
               if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
-              if (instructionsInRegion.find(user) == instructionsInRegion.end()) 
+              // if the instruction is used outside this region inside another
+              // region (not in a regionless BB like the B-loop construct BBs),
+              // need to context save it.
+              if (instructionsInRegion.find(user) == instructionsInRegion.end() &&
+                  RegionOfBlock(user->getParent()) != NULL)
                 {
 #ifdef DEBUG_WORK_ITEM_LOOPS
                   std::cerr << "### instr used in another region" << std::endl;
@@ -787,18 +818,18 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
     */
 
     /*
-       _local_id_x loads should not be replicated as it leads to
-       problems in conditional branch case where the header node
-       of the region is shared across the branches and thus the
-       header node's ID loads might get context saved which leads
-       to egg-chicken problems. 
+      Loads from non-indexed "scalar" addresses are known not to be 
+      ID-dependent.
+
+      Especially _local_id_x loads should not be replicated as it leads to
+      problems in conditional branch case where the header node
+      of the region is shared across the branches and thus the
+      header node's ID loads might get context saved which leads
+      to egg-chicken problems. 
     */
     llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
-    if (load != NULL && 
-        (load->getPointerOperand() == localIdZ ||
-         load->getPointerOperand() == localIdY ||
-         load->getPointerOperand() == localIdX))
-        return false;
+    if (load != NULL && !isa<GetElementPtrInst>(load->getPointerOperand()))
+      return false;
     return true;
 }
 
