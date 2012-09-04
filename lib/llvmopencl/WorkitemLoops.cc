@@ -353,6 +353,19 @@ WorkitemLoops::ProcessFunction(Function &F)
   F.viewCFG();
 #endif
 
+#if 0
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    region->InjectRegionPrintF();
+    region->InjectVariablePrintouts();
+
+  }
+#endif
+
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
@@ -364,7 +377,6 @@ WorkitemLoops::ProcessFunction(Function &F)
     region->dumpNames();    
 #endif
     FixMultiRegionVariables(region);
-    //region->InjectRegionPrintF();
   }
 
 #if 0

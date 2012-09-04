@@ -495,24 +495,16 @@ ParallelRegion::LocalIDXLoad()
     (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL));
 }
 
-/**
- * Adds a printf to the end of the parallel region that prints the
- * region ID and the work item ID. 
- *
- * Useful for debugging control flow bugs.
- */
 void
-ParallelRegion::InjectRegionPrintF()
+ParallelRegion::InjectPrintF
+(llvm::Instruction *before, std::string formatStr, 
+ std::vector<Value*>& params)
 {
-  llvm::Module *M = entryBB()->getParent()->getParent();
+  IRBuilder<> builder(before);
+  llvm::Module *M = before->getParent()->getParent()->getParent();
 
-  const char* FORMAT_STR_VAR = ".pocl.pRegion_debug_str";
-  llvm::Value *stringArg = M->getGlobalVariable(FORMAT_STR_VAR);
-  if (stringArg == NULL)
-    {
-      IRBuilder<> builder(entryBB());
-      stringArg = builder.CreateGlobalString("PR %d WI %u %u %u\n", FORMAT_STR_VAR);
-    }
+  llvm::Value *stringArg = 
+    builder.CreateGlobalString(formatStr);
     
   /* generated with help from http://llvm.org/demo/index.cgi */
   Function* printfFunc = M->getFunction("printf");
@@ -556,17 +548,76 @@ ParallelRegion::InjectRegionPrintF()
   const_ptr_8_indices.push_back(const_int64_9);
   const_ptr_8_indices.push_back(const_int64_9);
   assert (isa<Constant>(stringArg));
-  Constant* const_ptr_8 = ConstantExpr::getGetElementPtr(cast<Constant>(stringArg), const_ptr_8_indices);
+  Constant* const_ptr_8 = 
+    ConstantExpr::getGetElementPtr
+    (cast<Constant>(stringArg), const_ptr_8_indices);
+
+  std::vector<Value*> args;
+  args.push_back(const_ptr_8);
+  args.insert(args.end(), params.begin(), params.end());
+
+  llvm::Instruction* newInstr =
+    CallInst::Create(printfFunc, args, "", before);
+}
+
+/**
+ * Adds a printf to the end of the parallel region that prints the
+ * region ID and the work item ID. 
+ *
+ * Useful for debugging control flow bugs.
+ */
+void
+ParallelRegion::InjectRegionPrintF()
+{
+  llvm::Module *M = entryBB()->getParent()->getParent();
+
+#if 0
+  // it should reuse equal strings anyways
+  const char* FORMAT_STR_VAR = ".pocl.pRegion_debug_str";
+  llvm::Value *stringArg = M->getGlobalVariable(FORMAT_STR_VAR);
+  if (stringArg == NULL)
+    {
+      IRBuilder<> builder(entryBB());
+      stringArg = builder.CreateGlobalString("PR %d WI %u %u %u\n", FORMAT_STR_VAR);
+    }
+#endif
 
   ConstantInt* pRID = ConstantInt::get(M->getContext(), APInt(32, pRegionId, 10));
-  std::vector<Value*> int32_12_params;
-  int32_12_params.push_back(const_ptr_8);
-  int32_12_params.push_back(pRID);
-  int32_12_params.push_back(LocalIDXLoad());
-  int32_12_params.push_back(LocalIDYLoad());
-  int32_12_params.push_back(LocalIDZLoad());
+  std::vector<Value*> params;
+  params.push_back(pRID);
+  params.push_back(LocalIDXLoad());
+  params.push_back(LocalIDYLoad());
+  params.push_back(LocalIDZLoad());
 
-  CallInst* int32_12 = 
-    CallInst::Create
-    (printfFunc, int32_12_params, "", exitBB()->getTerminator());  
+  InjectPrintF(exitBB()->getTerminator(), "PR %d WI %u %u %u\n", params);
+
+}
+
+/**
+ * Adds a printf to the end of the parallel region that prints the
+ * hex contents of all named non-pointer variables.
+ *
+ * Useful for debugging data flow bugs.
+ */
+void
+ParallelRegion::InjectVariablePrintouts()
+{
+  for (ParallelRegion::iterator i = begin();
+       i != end(); ++i)
+    {
+      llvm::BasicBlock *bb = *i;
+      for (llvm::BasicBlock::iterator instr = bb->begin();
+           instr != bb->end(); ++instr) 
+        {
+          llvm::Instruction *instruction = instr;
+          if (isa<PointerType>(instruction->getType()) ||
+              !instruction->hasName()) continue;
+          std::string name = instruction->getName().str();
+          std::vector<Value*> args;
+          IRBuilder<> builder(exitBB()->getTerminator());
+          args.push_back(builder.CreateGlobalString(name));
+          args.push_back(instruction);
+          InjectPrintF(instruction->getParent()->getTerminator(), "variable %s == %x\n", args);
+        }
+    }
 }

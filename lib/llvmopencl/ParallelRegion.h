@@ -74,6 +74,11 @@ class Kernel;
     bool HasBlock(llvm::BasicBlock *bb);
 
     void InjectRegionPrintF();
+    void InjectVariablePrintouts();
+
+    void InjectPrintF
+        (llvm::Instruction *before, std::string formatStr, 
+         std::vector<llvm::Value*>& params);
 
     static ParallelRegion *
       Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 

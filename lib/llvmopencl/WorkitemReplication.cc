@@ -132,6 +132,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   {
     ParallelRegion *region = (*i);
     region->InjectRegionPrintF();
+    region->InjectVariablePrintouts();
   }
 #endif
   
