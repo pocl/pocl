@@ -64,8 +64,7 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
   add_predecessors(pending_blocks, B);
 
 #ifdef DEBUG_PR_CREATION
-  std::cerr << "createParallelRegionBefore:" << std::endl;
-  B->dump();
+  std::cerr << "createParallelRegionBefore " << B->getName().str() << std::endl;
 #endif
   
   while (!pending_blocks.empty()) {
@@ -76,8 +75,7 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     std::cerr << "considering " << current->getName().str() << std::endl;
 #endif
     
-    // If this block is already in the region, continue
-    // (avoid infinite recursion of loops).
+    // avoid infinite recursion of loops
     if (blocks_in_region.count(current) != 0)
       {
 #ifdef DEBUG_PR_CREATION
@@ -91,16 +89,6 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     if (isa<BarrierBlock>(current)) {
       if (region_entry_barrier == NULL)
         region_entry_barrier = cast<BarrierBlock>(current);
-
-#if 0
-      // This should be legal in case the barriers preceed the same
-      // entry block.
-      else {        
-        B->getParent()->viewCFG();
-        assert((region_entry_barrier == current) &&
-               "Barrier is dominated by more than one barrier! (forgot BTR?)");
-      }
-#endif
 #ifdef DEBUG_PR_CREATION
       std::cerr << "### it's a barrier!" << std::endl;        
 #endif     
@@ -151,7 +139,8 @@ add_predecessors(SmallVectorImpl<BasicBlock *> &v, BasicBlock *b)
   for (pred_iterator i = pred_begin(b), e = pred_end(b);
        i != e; ++i) {
     if ((isa<BarrierBlock> (*i)) && isa<BarrierBlock> (b)) {
-      // Ignore barrier-to-barrier edges
+      // Ignore barrier-to-barrier edges * Why? --Pekka
+      add_predecessors(v, *i);
       continue;
     }
     v.push_back(*i);

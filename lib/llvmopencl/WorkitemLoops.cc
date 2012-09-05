@@ -356,43 +356,6 @@ WorkitemLoops::ProcessFunction(Function &F)
        i != e; ++i) 
   {
     ParallelRegion *region = (*i);
-    if (!isa<PHINode>(region->entryBB()->front())) continue;
-
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### Region starts with a PHINode, break them to allocas" << std::endl;;
-    region->dumpNames();    
-#endif
-    for (BasicBlock::iterator p = region->entryBB()->begin(); 
-         p != region->entryBB()->end(); )
-      {
-        Instruction* instr = p;
-        if (isa<PHINode>(instr))
-          {
-            BreakPHIToAllocas(dyn_cast<PHINode>(instr));
-            p = region->entryBB()->begin();
-            continue;
-          }
-        ++p;
-      }
-
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### converted PHINodes to allocas, result: ";
-    region->dump();
-    //F.viewCFG();
-#endif    
-  }
-
-#if 0
-  std::cerr << "### After PHIs to allocas" << std::endl;
-  F.viewCFG();
-#endif
-
-  for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i) 
-  {
-    ParallelRegion *region = (*i);
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### Adding context save/restore for PR: ";
     region->dumpNames();    
@@ -554,48 +517,6 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
       AddContextSaveRestore(instructionToFix, instructionsInRegion);
     }
 }
-
-/**
- * Convert a PHI to a read from a stack value and all the sources to
- * writes to the same stack value.
- *
- * Used to fix context save/restore issues with regions with PHI nodes in the
- * entry node (usually due to the use of work group scope variables such as
- * B-loop iteration variables). In case of PHI nodes at region entries, we cannot 
- * just insert the context restore code because it is assumed there are no
- * non-phi Instructions before PHIs which the context restore
- * code constitutes to. Secondly, in case the PHINode is at a
- * region entry (e.g. a B-Loop) adding new basic blocks before it would 
- * break the assumption of single entry regions.
- */
-llvm::Instruction *
-WorkitemLoops::BreakPHIToAllocas(PHINode* phi) 
-{
-  std::string allocaName = std::string(phi->getName().str()) + ".ex_phi";
-
-  llvm::Function *function = phi->getParent()->getParent();
-  IRBuilder<> builder(function->getEntryBlock().getFirstInsertionPt());
-
-  llvm::Instruction *alloca = 
-    builder.CreateAlloca(phi->getType(), 0, allocaName);
-
-  for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
-       ++incoming)
-    {
-      Value *val = phi->getIncomingValue(incoming);
-      BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
-      builder.SetInsertPoint(incomingBB->getTerminator());
-      builder.CreateStore(val, alloca);
-    }
-
-  builder.SetInsertPoint(phi);
-
-  llvm::Instruction *loadedValue = builder.CreateLoad(alloca);
-  phi->replaceAllUsesWith(loadedValue);
-  phi->eraseFromParent();
-  return loadedValue;
-}
-
 
 llvm::Instruction *
 WorkitemLoops::AddContextSave
@@ -818,7 +739,7 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
     */
 
     /*
-      Loads from non-indexed "scalar" addresses are known not to be 
+      Loads from non-indexed scalar global addresses are known not to be 
       ID-dependent.
 
       Especially _local_id_x loads should not be replicated as it leads to
@@ -828,7 +749,10 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
       to egg-chicken problems. 
     */
     llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
-    if (load != NULL && !isa<GetElementPtrInst>(load->getPointerOperand()))
+    if (load != NULL &&
+        (load->getPointerOperand() == localIdZ ||
+         load->getPointerOperand() == localIdY ||
+         load->getPointerOperand() == localIdX))
       return false;
     return true;
 }

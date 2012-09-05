@@ -40,6 +40,7 @@ llvmopencl_la_SOURCES = Barrier.h						\
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
 						WorkItemAliasAnalysis.cc WIVectorize.cc \
 						WorkitemHandler.h WorkitemHandler.cc \
-						WorkitemLoops.h WorkitemLoops.cc
+						WorkitemLoops.h WorkitemLoops.cc \
+						PHIsToAllocas.h PHIsToAllocas.cc
 
 #llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

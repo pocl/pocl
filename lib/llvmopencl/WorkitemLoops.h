@@ -75,7 +75,6 @@ namespace pocl {
         (llvm::Value *val, llvm::Instruction *alloca, 
          llvm::Instruction *before=NULL);
     llvm::Instruction *GetContextArray(llvm::Instruction *val);
-    llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
     CreateLoopAround
