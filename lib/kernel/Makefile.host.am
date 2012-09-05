@@ -41,10 +41,5 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-CLANGFLAGS = -ccc-host-triple @HOST@
-
-.cl.o:
-	$(CLANG) $(CLANGFLAGS) $(CLFLAGS) -c -emit-llvm -include $(top_builddir)/include/@HOST@/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-.c.o:
-	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/@HOST@/types.h -o $@ $<
+CLANGFLAGS += -ccc-host-triple @HOST@
+CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/@HOST@/types.h

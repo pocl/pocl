@@ -1,3 +1,9 @@
+# include clang support
+include $(top_srcdir)/lib/kernel/clang.mk
+
+CLANGFLAGS = -emit-llvm
+AM_CLANG_CLFLAGS = -include $(top_srcdir)/include/_kernel.h
+
 # Nodist here because these files should be included
 # to the distribution only once, from the root kernel
 # makefile.
@@ -142,5 +148,6 @@ libkernel_SRCS =				\
 	get_image_width.cl			\
 	get_image_height.cl     
 
+# We need an explicitly rule to overwrite automake guess about LEX file :-(
 barrier.o: barrier.ll
-	$(LLVM_AS) -o $@ $<
+	$(AM_V_LLAS)$(LLAS_COMPILE) -o $@ $<
