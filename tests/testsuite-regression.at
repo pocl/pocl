@@ -58,7 +58,6 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression
 AT_CLEANUP
 
 AT_SETUP([for-loop with a variable iteration count (loops) - lp:#938883])
-AT_XFAIL_IF(true)
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
@@ -116,8 +115,14 @@ AT_KEYWORDS([regression const-array])
 AT_CHECK([$abs_top_builddir/tests/regression/test_constant_array], 0)
 AT_CLEANUP
 
-AT_SETUP([undominated variable from conditional barrier handling - lp:#1045835])
+AT_SETUP([undominated variable from conditional barrier handling (repl) - lp:#1045835])
+AT_KEYWORDS([regression undominated])
+AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_undominated_variable], 0)
+AT_CLEANUP
+
+AT_SETUP([undominated variable from conditional barrier handling (loops) - lp:#1045835])
 AT_XFAIL_IF(true)
 AT_KEYWORDS([regression undominated])
-AT_CHECK([$abs_top_builddir/tests/regression/test_undominated_variable], 0)
+AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_undominated_variable], 0)
 AT_CLEANUP
+
