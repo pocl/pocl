@@ -65,7 +65,7 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(2), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(1), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -95,10 +95,6 @@ MemOpsOnly("wi-vectorize-mem-ops-only", cl::init(false), cl::Hidden,
 static cl::opt<bool>
 NoFP("wi-vectorize-no-fp", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point operations"));
-
-static cl::opt<bool>
-NoOverflow("wi-vectorize-no-overflow", cl::init(true), cl::Hidden,
-  cl::desc("Don't try to vectorize arithmetic operations that can overflow, typicaly work item id computations"));
 
 #ifndef NDEBUG
 static cl::opt<bool>
@@ -148,6 +144,7 @@ namespace {
     ScalarEvolution *SE;
     TargetData *TD;
     DenseMap<Value*, Value*> storedSources;
+    DenseMap<std::pair<int,int>, ValueVector*> stridedOps;    
     std::multimap<Value*, Value*> flippedStoredSources;
     // FIXME: const correct?
 
@@ -156,6 +153,8 @@ namespace {
     bool vectorizePhiNodes(BasicBlock &BB);
     
     bool removeDuplicates(BasicBlock &BB);
+
+    void dropUnused(BasicBlock& BB);
     
     bool getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
@@ -305,22 +304,61 @@ namespace {
       // Iterate a sufficient number of times to merge types of size 1 bit,
       // then 2 bits, then 4, etc. up to half of the target vector width of the
       // target vector register.
+      bool vectorizeTwice = false;
+      
+
+      // There are 3 possible cases of vectorization in regards to memory
+      // operations:
+      // 1: Explicitly forbid vectorization of mem ops (NoMemOps)
+      // 2: Allow only vectorization of mem ops (MemOpsOnly)
+      // 3: Vectorize mem ops as well as everything else
+      // In cases 1 and 2, following test makes sure vectorization is
+      // run only once.
+      // For case 3, we first run vectorization of memory operations only
+      // and then we run vectorization of everything else. In between
+      // we remove unused operations, which are typicaly memory
+      // access computations that are not needed anymore and their vectorization
+      // is waste of resources. Instruction combiner is not able to get rid
+      // of those on it's own once they are in vectors.
+      if (!MemOpsOnly && !NoMemOps) {
+          MemOpsOnly = true;
+          vectorizeTwice = true;
+      }
       for (unsigned v = 2, n = 1; v <= VectorWidth;
           v *= 2, ++n) {
-          DEBUG(dbgs() << "WIV: fusing loop #" << n << 
+          DEBUG(dbgs() << "WIV: fusing memm only in loop #" << n << 
               " for " << BB.getName() << " in " <<
               BB.getParent()->getName() << "...\n");
-          if (vectorizePairs(BB))
+          if (vectorizePairs(BB)) {
+            dropUnused(BB);
             changed = true;
+          }
           else
             break;
       }
-    
+      if (vectorizeTwice) {
+          MemOpsOnly = false;
+          for (unsigned v = 2, n = 1; v <= VectorWidth;
+               v *= 2, ++n) {
+              DEBUG(dbgs() << "WIV: fusing loop #" << n <<
+                    " for " << BB.getName() << " in " <<
+                    BB.getParent()->getName() << "...\n");
+              if (vectorizePairs(BB)) {
+                  dropUnused(BB);                  
+                  changed = true;
+              }
+              else
+                  break;
+          }
+      } 
+
       if (changed)
         vectorizePhiNodes(BB);
+
       // This seems to breake some tests. 
       // TODO: re enable once detection mechanism is corrected.
-      //removeDuplicates(BB);
+      removeDuplicates(BB);
+        
       DEBUG(dbgs() << "WIV: done!\n");
       return changed;
     }
@@ -503,27 +541,17 @@ namespace {
             
             for ( ; J != End; ) {
                 
-                if (!(I->isSameOperationAs(J) &&
-                    I->getType() == J->getType())) {
+                if (!(I->isIdenticalTo(J)                    
+                    && areInstsCompatibleFromDifferentWi(I,J))) {
                     J = llvm::next(J);
                     continue;
                 } else {
-                    bool identicalOperands = true;
-                    for (unsigned int i = 0; i < I->getNumOperands(); i++) {
-                        if (I->getOperand(i) != J->getOperand(i)) {
-                            identicalOperands = false;
-                        }
-                    }
-                    if (identicalOperands) {
-                        J->replaceAllUsesWith(I);
-                        AA->replaceWithNewValue(J, I);  
-                        SE->forgetValue(J);
-                        BasicBlock::iterator K = llvm::next(J);
-                        J->eraseFromParent();
-                        J = K;
-                    } else {
-                        J = llvm::next(J);
-                    }
+                    J->replaceAllUsesWith(I);
+                    AA->replaceWithNewValue(J, I);  
+                    SE->forgetValue(J);
+                    BasicBlock::iterator K = llvm::next(J);
+                    J->eraseFromParent();
+                    J = K;
                 }
             }
         }
@@ -746,11 +774,6 @@ namespace {
     } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
-    } else if (NoOverflow && I->isBinaryOp() && isa<OverflowingBinaryOperator>(I)) {
-        OverflowingBinaryOperator *B = cast<OverflowingBinaryOperator>(I); 
-        if (B != NULL && (B->hasNoSignedWrap() || B->hasNoUnsignedWrap())) {
-            return false;
-        }
     } 
     // We can't vectorize memory operations without target data
     if (TD == 0 && IsSimpleLoadStore)
@@ -915,6 +938,33 @@ namespace {
                 return false;
             }
             }
+      } else if(abs64(OffsetInElmts)>1){
+          // Collect information on memory accesses with stride.
+          // This is not usefull for anything, just to analyze code a bit.
+          if (I->getMetadata("wi") != NULL) {
+              MDNode* md = I->getMetadata("wi");
+              MDNode* mdCounter = I->getMetadata("wi_counter");
+              MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
+      
+              unsigned CI = 
+                cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
+              unsigned RI = 
+                cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
+              std::pair<int, int> index = std::pair<int,int>(RI,CI);
+              DenseMap<std::pair<int,int>, ValueVector*>::iterator it = 
+                stridedOps.find(index);
+              ValueVector* v = NULL;
+              if (it != stridedOps.end()) {
+                  v = (*it).second;
+              } else {
+                  v = new ValueVector;
+              }
+              v->push_back(I);
+              v->push_back(J);
+              stridedOps.insert(
+                  std::pair< std::pair<int, int>, ValueVector*>(index, v));
+          }
+          return false;
       } else {
         return false;
       }
@@ -1656,7 +1706,12 @@ namespace {
       FlipMemInputs = true;
       VPtr = JPtr;
     }
-
+    
+    // If pointer source is another bitcast, go directly to original
+    // instruction.
+    if (isa<BitCastInst>(VPtr)) {
+        VPtr = cast<BitCastInst>(VPtr)->getOperand(0);
+    }
     Type *ArgType = cast<PointerType>(IPtr->getType())->getElementType();
     Type *VArgType = getVecTypeForPair(ArgType);
     Type *VArgPtrType = PointerType::get(VArgType,
@@ -2339,6 +2394,39 @@ namespace {
 
     DEBUG(dbgs() << "WIV: final: \n" << BB << "\n");
   }
+  void WIVectorize::dropUnused(BasicBlock& BB) {
+    bool changed;
+    do{
+        BasicBlock::iterator J = BB.end();        
+        BasicBlock::iterator I = llvm::prior(J);
+        changed = false;
+        while (I != BB.begin()) {
+        
+        if (isa<ShuffleVectorInst>(*I) ||
+            isa<ExtractElementInst>(*I) ||
+            isa<InsertElementInst>(*I) ||
+            isa<BitCastInst>(*I)) {
+            
+            Value* V = dyn_cast<Value>(&(*I));
+            
+            if (V && V->use_empty()) {
+                SE->forgetValue(&(*I));
+                (*I).eraseFromParent();
+                // removed instruction could have messed up things
+                // start again from the end
+                I = BB.end();
+                J = llvm::prior(I);
+                changed = true;
+            } else {
+                J = llvm::prior(I);      		
+            }	  
+        } else {
+            J = llvm::prior(I);      		
+        }
+        I = J;      
+        }
+    } while (changed);
+  };
     
 }
 char WIVectorize::ID = 0;
