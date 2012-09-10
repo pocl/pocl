@@ -33,9 +33,9 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
 #define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
 
-// Get the structure struct _cl_icd_dispatch from the OCL-ICD project
-// (that provides a free OCL ICD Loader)
-#include <ocl_icd.h>
+struct _cl_icd_dispatch {
+	void *funcptr[73];
+};
 
 /* The "implementation" of the _cl_device_id struct. 
  * Instantiated in clGetPlatformIDs.c
