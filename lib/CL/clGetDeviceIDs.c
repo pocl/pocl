@@ -26,7 +26,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetDeviceIDs(cl_platform_id   platform, 
+POclGetDeviceIDs(cl_platform_id   platform, 
                cl_device_type   device_type, 
                cl_uint          num_entries, 
                cl_device_id *   devices, 
@@ -62,3 +62,4 @@ clGetDeviceIDs(cl_platform_id   platform,
   else
     return CL_DEVICE_NOT_FOUND;
 }
+POsym(clGetDeviceIDs)

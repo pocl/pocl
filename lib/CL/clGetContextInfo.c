@@ -26,7 +26,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetContextInfo(cl_context context, 
+POclGetContextInfo(cl_context context, 
                  cl_context_info param_name,
                  size_t param_value_size,
                  void *param_value,
@@ -57,3 +57,4 @@ clGetContextInfo(cl_context context,
   POCL_WARN_INCOMPLETE();
   return CL_INVALID_VALUE;
 }
+POsym(clGetContextInfo)

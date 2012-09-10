@@ -23,7 +23,6 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -31,7 +30,7 @@
 #define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_kernel CL_API_CALL
-clCreateKernel(cl_program program,
+POclCreateKernel(cl_program program,
                const char *kernel_name,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
@@ -64,7 +63,7 @@ clCreateKernel(cl_program program,
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       if (device_i > 0)
-        clRetainKernel (kernel);
+        POclRetainKernel (kernel);
 
       snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
                 program->temp_dir, program->devices[device_i]->name);
@@ -150,7 +149,6 @@ clCreateKernel(cl_program program,
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
-  POCL_INIT_ICD_OBJECT(kernel);
 
   /* Initialize kernel arguments (in case the user doesn't). */
   for (i = 0; i < kernel->num_args; ++i)
@@ -177,3 +175,4 @@ clCreateKernel(cl_program program,
     *errcode_ret = CL_SUCCESS;
   return kernel;
 }
+POsym(clCreateKernel)

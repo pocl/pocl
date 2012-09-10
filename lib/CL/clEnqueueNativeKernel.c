@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueNativeKernel(cl_command_queue   command_queue ,
+POclEnqueueNativeKernel(cl_command_queue   command_queue ,
 					  void (CL_CALLBACK * user_func)(void *), 
                       void *             args ,
                       size_t             cb_args , 
@@ -15,4 +15,4 @@ clEnqueueNativeKernel(cl_command_queue   command_queue ,
   POCL_ABORT_UNIMPLEMENTED();
   return CL_SUCCESS;
 }
-
+POsym(clEnqueueNativeKernel)

@@ -22,7 +22,7 @@
 */
 #include "pocl_cl.h"
 CL_API_ENTRY cl_mem CL_API_CALL
-clCreateImage3D(cl_context              context,
+POclCreateImage3D(cl_context              context,
                 cl_mem_flags            flags,
                 const cl_image_format * image_format,
                 size_t                  image_width, 
@@ -37,4 +37,4 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_ABORT_UNIMPLEMENTED();
   return CL_SUCCESS;
 }
-
+POsym(clCreateImage3D)

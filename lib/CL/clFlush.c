@@ -25,10 +25,11 @@
 #include "utlist.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clFlush(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+POclFlush(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
   /* "clFlush only guarantees that all queued commands to command_queue
      will eventually be submitted to the appropriate device. There is no guarantee 
      that they will be complete after clFlush returns." */
   return CL_SUCCESS;
 }
+POsym(clFlush)

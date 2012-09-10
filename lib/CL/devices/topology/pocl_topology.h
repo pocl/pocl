@@ -24,6 +24,9 @@
 #ifndef POCL_TOPOLOGY_H
 #define POCL_TOPOLOGY_H
 
+#pragma GCC visibility push(hidden)
 void pocl_topology_set_global_mem_size(cl_device_id device);
 void pocl_topology_set_max_mem_alloc_size(cl_device_id device);
+#pragma GCC visibility pop
+
 #endif /* POCL_TOPOLOGY_H */

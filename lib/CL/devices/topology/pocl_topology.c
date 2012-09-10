@@ -24,6 +24,8 @@
 #include <pocl_cl.h>
 #include <hwloc.h>
 
+#include "pocl_topology.h"
+
 /* We may want to protect these with a mutex, but it's probably not needed for
  * now. */
 static int init = 0;

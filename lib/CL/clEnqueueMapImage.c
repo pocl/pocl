@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY void * CL_API_CALL
-clEnqueueMapImage(cl_command_queue   command_queue ,
+POclEnqueueMapImage(cl_command_queue   command_queue ,
                   cl_mem             image , 
                   cl_bool            blocking_map , 
                   cl_map_flags       map_flags , 
@@ -17,4 +17,4 @@ clEnqueueMapImage(cl_command_queue   command_queue ,
   POCL_ABORT_UNIMPLEMENTED();
   return CL_SUCCESS;
 }
-
+POsym(clEnqueueMapImage)

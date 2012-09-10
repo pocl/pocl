@@ -22,7 +22,7 @@
 */
 #include "pocl_cl.h"
 CL_API_ENTRY cl_mem CL_API_CALL
-clCreateFromGLTexture3D(cl_context      context,
+POclCreateFromGLTexture3D(cl_context      context,
                         cl_mem_flags    flags,
                         cl_GLenum       target,
                         cl_GLint        miplevel,
@@ -33,4 +33,4 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_ABORT_UNIMPLEMENTED();
   return CL_SUCCESS;
 }
-
+POsym(clCreateFromGLTexture3D)

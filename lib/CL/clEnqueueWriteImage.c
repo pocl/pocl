@@ -2,7 +2,7 @@
 #include "pocl_image_util.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueWriteImage(cl_command_queue    command_queue,
+POclEnqueueWriteImage(cl_command_queue    command_queue,
                     cl_mem              image,
                     cl_bool             blocking_write, 
                     const size_t *      origin, /*[3]*/
@@ -22,4 +22,4 @@ clEnqueueWriteImage(cl_command_queue    command_queue,
                             host_slice_pitch, 
                             ptr);
   }
-
+POsym(clEnqueueWriteImage)

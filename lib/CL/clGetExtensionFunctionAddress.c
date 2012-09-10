@@ -6,15 +6,17 @@
  * against OCL 1.1, so we need it.
  */ 
 CL_API_ENTRY void * CL_API_CALL 
-clGetExtensionFunctionAddress(const char * func_name ) 
+POclGetExtensionFunctionAddress(const char * func_name ) 
 CL_EXT_SUFFIX__VERSION_1_0
 {
 
 #ifdef BUILD_ICD
   if( strcmp(func_name, "clIcdGetPlatformIDsKHR")==0 )
-    return (void *)&clIcdGetPlatformIDsKHR;
+    return (void *)&POclIcdGetPlatformIDsKHR;
 #endif
+  if( strcmp(func_name, "clGetPlatformInfo")==0 )
+    return (void *)&POclGetPlatformInfo;
   
   return NULL;
 }
-
+POsymAlways(clGetExtensionFunctionAddress)

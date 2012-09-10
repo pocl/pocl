@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
+POclReleaseContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RELEASE_OBJECT(context);
   if (context->pocl_refcount == 0)
@@ -37,9 +37,10 @@ clReleaseContext(cl_context context) CL_API_SUFFIX__VERSION_1_0
       int i;
       for (i = 0; i < context->num_devices; ++i) 
         {
-          clReleaseDevice (context->devices[i]);
+          POclReleaseDevice (context->devices[i]);
         }   
       free(context);
     }
   return CL_SUCCESS;
 }
+POsym(clReleaseContext)
