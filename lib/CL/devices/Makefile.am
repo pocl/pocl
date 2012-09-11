@@ -36,7 +36,8 @@ libpocl_devices_la_CPPFLAGS = \
   -I$(top_srcdir)/include \
   -I$(top_srcdir)/lib/CL/devices \
   -I$(top_srcdir)/lib/CL/devices/tce \
-  -I$(top_srcdir)/lib/CL
+  -I$(top_srcdir)/lib/CL \
+  $(OCL_ICD_CFLAGS)
 
 if TCE_AVAILABLE
 SUBDIRS += tce

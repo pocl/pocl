@@ -179,9 +179,11 @@ OCL_ICD_available=no
 if test x"$icd" != xno; then :
   # In fact, ocl-icd >= 1.4 is required. However, Debian wheezy will
   # have ocl-icd 1.3 *with the required fixes*
-  # So, lets keep ocl-icd >= 1.3 in this check
-  PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3], [
-    OCL_ICD_available=yes ], [:])
+  # So, lets hope Debian wheezy adds a minor version number to the bugfixed ocl-icd.
+  PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3.1], 
+    [ OCL_ICD_available=yes 
+      AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
+    [:])
 fi
 
 AS_CASE(["$icd,$OCL_ICD_available"],
@@ -510,6 +512,10 @@ AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sour
 
 if test x"$prefix" = xNONE; then
   prefix=/usr/local
+  #this check is "if user did not override sysconfdir"
+  if test x"$sysconfdir" = x'${prefix}/etc'; then
+    sysconfdir=/etc
+  fi
 fi
 
 AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
@@ -641,4 +647,44 @@ AC_CONFIG_FILES([Makefile
                  ])
 
 AC_OUTPUT
+
+
+#Print a summary of selected options:
+echo
+echo "                  SUMMARY"
+echo =======================================================================
+echo
+echo Using LLVM version $LLVM_VERSION from $($LLVM_CONFIG --prefix)
+echo
+echo -n ICD extension:
+if test x"$icd" == xno;
+then
+echo " disabled"
+else
+ echo " enabled"
+ if test x"$OCL_ICD_available" != xyes; 
+ then
+  echo  Warning: ocl-icd not found.
+  if test x"$sysconfdir" != x/etc;
+  then
+   echo "Not installing pocl.icd to /etc/OpenCL/vendors. This means that"
+   echo "your ICD loader probably will not find pocl. See README for details."
+  else
+   echo "'make check' will fail if it is run before 'make install'" 
+  fi
+ else
+  echo "Using ocl-icd to run checks inside build tree."
+ fi
+fi
+echo
+
+if test x"$oclsym" == xyes;
+then
+ echo "Enabling direct linking with libpocl."
+else
+ echo "Linking directly with libpocl will not work."
+fi
+echo
+echo
+
 

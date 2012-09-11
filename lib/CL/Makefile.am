@@ -97,7 +97,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clGetSamplerInfo.c \
                    clEnqueueCopyImage.c		\
                    clEnqueueMapImage.c		\
-				   clGetImageInfo.c		\
+                   clGetImageInfo.c		\
                    clCreateFromGLTexture2D.c	\
                    clCreateFromGLTexture3D.c	\
                    clUnloadCompiler.c		\
@@ -112,7 +112,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_icd.h \
                    pocl_intfn.h
 
-libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
 
 # libtool versions:
 # 0:0.0        The (unreleased) first alpha release.
