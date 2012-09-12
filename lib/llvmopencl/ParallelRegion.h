@@ -57,6 +57,10 @@ class Kernel;
     void purge();
     void chainAfter(ParallelRegion *region);
     void insertPrologue(unsigned x, unsigned y, unsigned z);
+    static void insertLocalIdInit(llvm::BasicBlock* entry,
+                                  unsigned x,
+                                  unsigned y,
+                                  unsigned z);
     void dump();
     void dumpNames();
     void setEntryBBIndex(std::size_t index) { entryIndex_ = index; }

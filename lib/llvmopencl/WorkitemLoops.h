@@ -32,6 +32,10 @@
 #include "WorkitemHandler.h"
 #include "ParallelRegion.h"
 
+namespace llvm {
+  class PostDominatorTree;
+}
+
 namespace pocl {
   class Workgroup;
 
@@ -56,6 +60,7 @@ namespace pocl {
 
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
+    llvm::PostDominatorTree *PDT;
 
     ParallelRegion::ParallelRegionVector *original_parallel_regions;
 

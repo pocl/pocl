@@ -1,7 +1,7 @@
 // LLVM function pass to create a loop that runs all the work items 
 // in a work group.
 // 
-// Copyright (c) 2012 Pekka Jääskeläinen / TUT
+// Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,7 @@
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
 #endif
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
@@ -70,6 +71,7 @@ void
 WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
+  AU.addRequired<PostDominatorTree>();
   AU.addRequired<LoopInfo>();
   AU.addRequired<TargetData>();
 }
@@ -82,6 +84,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
+  PDT = &getAnalysis<PostDominatorTree>();
 
   tempInstructionIndex = 0;
 
@@ -151,7 +154,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
   } while (fchanged);
 
-  F.viewCFG();
+  //F.viewCFG();
 #endif
 
   return changed;
@@ -255,7 +258,10 @@ WorkitemLoops::CreateLoopAround
        i != preds.end(); ++i)
     {
       llvm::BasicBlock *bb = *i;
-      if (DT->dominates(loopBodyEntryBB, bb)) continue;
+      /* Do not fix loop edges inside the region. The loop
+         is replicated as a whole to the body of the wi-loop.*/
+      if (DT->dominates(loopBodyEntryBB, bb))
+        continue;
       bb->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, forInitBB);
     }
 
@@ -322,6 +328,14 @@ WorkitemLoops::ProcessFunction(Function &F)
 {
   Kernel *K = cast<Kernel> (&F);
   Initialize(K);
+  unsigned workItemCount = LocalSizeX*LocalSizeY*LocalSizeZ;
+
+  if (workItemCount == 1)
+    {
+      K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
+      ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
+      return true;
+    }
 
   original_parallel_regions =
     K->getParallelRegions(LI);
@@ -367,20 +381,11 @@ WorkitemLoops::ProcessFunction(Function &F)
   std::cerr << "### After context code addition:" << std::endl;
   F.viewCFG();
 #endif
-  /*
-    TODO: we'd like to peel the prototype iteration only when necessary
-    because it just bloats code in the cases when it's needed. What is a
-    safe condition for not peeling? The region start is postdominated 
-    by the region end node? In case of conditional barriers there are two
-    parallel regions that contain the basic blocks before the condition,
-    in that case the region end does not postdominate the region begin
-    because of the condition.    
-   */
+  std::map<ParallelRegion*, bool> peeledRegion;
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
-       LocalSizeX*LocalSizeY*LocalSizeX > 1 && i != e; 
-       ++i) 
+       i != e;  ++i) 
   {
 
     llvm::ValueToValueMapTy reference_map;
@@ -388,36 +393,92 @@ WorkitemLoops::ProcessFunction(Function &F)
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### handling region:" << std::endl;
     original->dumpNames();    
-//    F.viewCFGOnly();
+    //F.viewCFGOnly();
 #endif
 
-    ParallelRegion *replica = 
-      original->replicate(reference_map, ".wi_copy");
+    /* In case of conditional barriers, the first iteration
+       has to be peeled so we know which branch to execute
+       (with the loop). We know it's such a region in case
+       the region exit does not post dominate the entry.
+       That is, there will be two branches from the same
+       entry. */
+    bool peelFirst = !PDT->dominates(original->exitBB(), original->entryBB());
+    peeledRegion[original] = peelFirst;
 
-    replica->chainAfter(original);    
-    replica->purge();
+    std::pair<llvm::BasicBlock *, llvm::BasicBlock *> l;
+    // the original predecessor nodes of which successor
+    // should be fixed if not peeling
+    BasicBlockVector preds;
 
-    std::pair<llvm::BasicBlock *, llvm::BasicBlock *> l =
-      std::make_pair(replica->entryBB(), replica->exitBB());
+    if (peelFirst) 
+      {
+#ifdef DEBUG_WORK_ITEM_LOOPS
+        std::cerr << "### conditional region, peeling the first iteration" << std::endl;
+#endif
+        ParallelRegion *replica = 
+          original->replicate(reference_map, ".wi_copy");
+        
+        replica->chainAfter(original);    
+        replica->purge();
+        
+        l = std::make_pair(replica->entryBB(), replica->exitBB());
+      }
+    else
+      {
+        l = std::make_pair(original->entryBB(), original->exitBB());
+        llvm::pred_iterator PI = 
+          llvm::pred_begin(original->entryBB()), 
+          E = llvm::pred_end(original->entryBB());
+
+        for (; PI != E; ++PI)
+          {
+            llvm::BasicBlock *bb = *PI;
+            if (DT->dominates(original->entryBB(), bb) &&
+                (RegionOfBlock(original->entryBB()) == 
+                 RegionOfBlock(bb)))
+              continue;
+            preds.push_back(bb);
+          }
+      }
 
     if (LocalSizeX > 1)
-      l = CreateLoopAround(l.first, l.second, true, localIdX, LocalSizeX);
+      l = CreateLoopAround(l.first, l.second, peelFirst, localIdX, LocalSizeX);
 
     if (LocalSizeY > 1)
       l = CreateLoopAround(l.first, l.second, false, localIdY, LocalSizeY);
 
     if (LocalSizeZ > 1)
-      CreateLoopAround(l.first, l.second, false, localIdZ, LocalSizeZ);
+      l = CreateLoopAround(l.first, l.second, false, localIdZ, LocalSizeZ);
+
+    /* Loop edges coming from another region mean B-loops which means 
+       we have to fix the loop edge to jump to the beginning of the wi-loop 
+       structure, not its body. This has to be done only for non-peeled
+       blocks as the semantics is correct in the other case (the jump is
+       to the beginning of the peeled iteration). */
+    if (!peelFirst)
+      {
+        for (BasicBlockVector::iterator i = preds.begin();
+             i != preds.end(); ++i)
+          {
+            llvm::BasicBlock *bb = *i;
+            bb->getTerminator()->replaceUsesOfWith
+              (original->entryBB(), l.first);
+          }
+      }
 
     //F.viewCFGOnly();
   }
 
+  // for the peeled regions we need to add a prologue
+  // that initializes the local ids and the first iteration
+  // counter
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
        i != e; ++i) 
   {
     ParallelRegion *pr = (*i);
+    if (!peeledRegion[pr]) continue;
     pr->insertPrologue(0, 0, 0);
     builder.SetInsertPoint(pr->entryBB()->getFirstInsertionPt());
     builder.CreateStore
@@ -427,7 +488,9 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
 
-  //F.viewCFG();
+#if 0
+  F.viewCFG();
+#endif
 
   return true;
 }

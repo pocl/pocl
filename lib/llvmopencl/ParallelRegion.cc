@@ -258,12 +258,11 @@ ParallelRegion::purge()
 }
 
 void
-ParallelRegion::insertPrologue(unsigned x,
-                               unsigned y,
-                               unsigned z)
+ParallelRegion::insertLocalIdInit(llvm::BasicBlock* entry,
+                                  unsigned x,
+                                  unsigned y,
+                                  unsigned z)
 {
-  BasicBlock *entry = entryBB();
-
   IRBuilder<> builder(entry, entry->getFirstInsertionPt());
 
   Module *M = entry->getParent()->getParent();
@@ -289,6 +288,15 @@ ParallelRegion::insertPrologue(unsigned x,
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(), size_t_width),
                                          z), gvz);
+}
+
+void
+ParallelRegion::insertPrologue(unsigned x,
+                               unsigned y,
+                               unsigned z)
+{
+  BasicBlock *entry = entryBB();
+  ParallelRegion::insertLocalIdInit(entry, x, y, z);
 }
 
 void
