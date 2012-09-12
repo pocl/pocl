@@ -62,7 +62,8 @@ using namespace pocl;
 
 namespace {
   static
-  RegisterPass<WorkitemLoops> X("workitemloops", "Workitem loop generation pass");
+  RegisterPass<WorkitemLoops> X("workitemloops", 
+                                "Workitem loop generation pass");
 }
 
 char WorkitemLoops::ID = 0;
@@ -163,7 +164,8 @@ WorkitemLoops::runOnFunction(Function &F)
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
 WorkitemLoops::CreateLoopAround
 (llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
- bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim) 
+ bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
+ bool addIncBlock) 
 {
   assert (localIdVar != NULL);
 
@@ -206,7 +208,6 @@ WorkitemLoops::CreateLoopAround
     %0 = load i32* %_local_id_x, align 4
     %cmp = icmp ult i32 %0, i32 123
     br i1 %cmp, label %for.body, label %for.end
-        
 
     for.end:
 
@@ -214,7 +215,6 @@ WorkitemLoops::CreateLoopAround
     data arrays to avoid needing multiplications to find the correct location, and to 
     enable easy vectorization of loading the context data when there are parallel iterations.
   */     
-
 
   llvm::BasicBlock *loopBodyEntryBB = entryBB;
   llvm::LLVMContext &C = loopBodyEntryBB->getContext();
@@ -233,9 +233,6 @@ WorkitemLoops::CreateLoopAround
 
   llvm::BasicBlock *forCondBB = 
     BasicBlock::Create(C, "pregion.for.cond", F, exitBB);
-
-  llvm::BasicBlock *forIncBB = 
-    BasicBlock::Create(C, "pregion.for.inc", F, forCondBB);
 
   DT->runOnFunction(*F);
 
@@ -272,7 +269,6 @@ WorkitemLoops::CreateLoopAround
       builder.CreateStore(builder.CreateLoad(localIdXFirstVar), localIdVar);
       builder.CreateStore
         (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdXFirstVar);
-
     }
   else
     {
@@ -282,16 +278,11 @@ WorkitemLoops::CreateLoopAround
 
   builder.CreateBr(loopBodyEntryBB);
 
-  exitBB->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
-
-  builder.SetInsertPoint(forIncBB);
-  /* Create the iteration variable increment */
-  builder.CreateStore
-    (builder.CreateAdd
-     (builder.CreateLoad(localIdVar),
-      ConstantInt::get(IntegerType::get(C, size_t_width), 1)),
-     localIdVar);
-  builder.CreateBr(forCondBB);
+  exitBB->getTerminator()->replaceUsesOfWith(oldExit, forCondBB);
+  if (addIncBlock)
+    {
+      AppendIncBlock(exitBB, localIdVar);
+    }
 
   builder.SetInsertPoint(forCondBB);
   llvm::Value *cmpResult = 
@@ -410,13 +401,14 @@ WorkitemLoops::ProcessFunction(Function &F)
     // should be fixed if not peeling
     BasicBlockVector preds;
 
+    bool unrolled = false;
     if (peelFirst) 
       {
 #ifdef DEBUG_WORK_ITEM_LOOPS
         std::cerr << "### conditional region, peeling the first iteration" << std::endl;
 #endif
         ParallelRegion *replica = 
-          original->replicate(reference_map, ".wi_copy");
+          original->replicate(reference_map, ".peeled_wi");
         
         replica->chainAfter(original);    
         replica->purge();
@@ -425,7 +417,6 @@ WorkitemLoops::ProcessFunction(Function &F)
       }
     else
       {
-        l = std::make_pair(original->entryBB(), original->exitBB());
         llvm::pred_iterator PI = 
           llvm::pred_begin(original->entryBB()), 
           E = llvm::pred_end(original->entryBB());
@@ -439,10 +430,39 @@ WorkitemLoops::ProcessFunction(Function &F)
               continue;
             preds.push_back(bb);
           }
+
+        int unrollCount = 32;
+        /* Find a two's exponent unroll count, if available. */
+        while (unrollCount >= 1)
+          {
+            if (LocalSizeX % unrollCount == 0 &&
+                unrollCount <= LocalSizeX)
+              {
+                break;
+              }
+            unrollCount /= 2;
+          }
+
+        ParallelRegion *prev = original;
+        llvm::BasicBlock *lastBB = 
+          AppendIncBlock(original->exitBB(), localIdX);
+        original->AddBlockAfter(lastBB, original->exitBB());
+        original->setExitBBIndex(original->size()-1);
+
+        for (int c = 1; c < unrollCount; ++c) 
+          {
+            ParallelRegion *unrolled = 
+              original->replicate(reference_map, ".unrolled_wi");
+            unrolled->chainAfter(prev);
+            prev = unrolled;
+            lastBB = unrolled->exitBB();
+        }
+        unrolled = true;
+        l = std::make_pair(original->entryBB(), lastBB);
       }
 
     if (LocalSizeX > 1)
-      l = CreateLoopAround(l.first, l.second, peelFirst, localIdX, LocalSizeX);
+      l = CreateLoopAround(l.first, l.second, peelFirst, localIdX, LocalSizeX, !unrolled);
 
     if (LocalSizeY > 1)
       l = CreateLoopAround(l.first, l.second, false, localIdY, LocalSizeY);
@@ -487,6 +507,7 @@ WorkitemLoops::ProcessFunction(Function &F)
   }
 
   K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
+  ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
 
 #if 0
   F.viewCFG();
@@ -820,3 +841,31 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
     return true;
 }
 
+llvm::BasicBlock *
+WorkitemLoops::AppendIncBlock
+(llvm::BasicBlock* after, llvm::Value *localIdVar)
+{
+  llvm::LLVMContext &C = after->getContext();
+
+  llvm::BasicBlock *oldExit = after->getTerminator()->getSuccessor(0);
+  assert (oldExit != NULL);
+
+  llvm::BasicBlock *forIncBB = 
+    BasicBlock::Create(C, "pregion.for.inc", after->getParent());
+
+  after->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
+
+  IRBuilder<> builder(oldExit);
+
+  builder.SetInsertPoint(forIncBB);
+  /* Create the iteration variable increment */
+  builder.CreateStore
+    (builder.CreateAdd
+     (builder.CreateLoad(localIdVar),
+      ConstantInt::get(IntegerType::get(C, size_t_width), 1)),
+     localIdVar);
+
+  builder.CreateBr(oldExit);
+
+  return forIncBB;
+}

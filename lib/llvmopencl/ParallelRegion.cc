@@ -468,6 +468,22 @@ ParallelRegion::AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before
 }
 
 
+void
+ParallelRegion::AddBlockAfter(llvm::BasicBlock *block, llvm::BasicBlock *after)
+{
+    llvm::BasicBlock *oldExit = exitBB();
+    ParallelRegion::iterator afterPos = find(begin(), end(), after);
+    ParallelRegion::iterator oldExitPos = find(begin(), end(), oldExit);
+    assert (afterPos != end());
+
+    /* The old exit node might be pushed further, at most one position. 
+       Whether this is the case, depends if the node was inserted before or
+       after that node in the vector. That is, if indexof(before) < indexof(oldExit). */
+    if (afterPos < oldExitPos) ++exitIndex_;
+    afterPos++;
+    insert(afterPos, block);
+}
+
 bool 
 ParallelRegion::HasBlock(llvm::BasicBlock *bb)
 {

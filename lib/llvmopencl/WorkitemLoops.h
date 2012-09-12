@@ -67,8 +67,6 @@ namespace pocl {
     StrInstructionMap contextArrays;
 
     virtual bool ProcessFunction(llvm::Function &F);
-    void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
-                          size_t LocalSizeForDim);
 
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore
@@ -84,7 +82,13 @@ namespace pocl {
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
     CreateLoopAround
         (llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
-         bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim);
+         bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
+         bool addIncBlock=true);
+
+    llvm::BasicBlock *
+      AppendIncBlock
+      (llvm::BasicBlock* after, 
+       llvm::Value *localIdVar);
 
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
 

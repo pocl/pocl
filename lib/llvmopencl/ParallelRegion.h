@@ -66,6 +66,7 @@ class Kernel;
     void setEntryBBIndex(std::size_t index) { entryIndex_ = index; }
     void setExitBBIndex(std::size_t index) { exitIndex_ = index; }
     void AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before);
+    void AddBlockAfter(llvm::BasicBlock *block, llvm::BasicBlock *after);
 
     llvm::BasicBlock* exitBB() { return at(exitIndex_); }
     llvm::BasicBlock* entryBB() { return at(entryIndex_); }
