@@ -25,7 +25,7 @@
 noinst_PROGRAMS = kernel
 
 kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_hadd.cl test_rotate.cl
-kernel_LDADD = ../../lib/CL/libpocl.la -lm @PTHREAD_LIBS@
-kernel_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
+kernel_LDADD = -lm @OPENCL_LIBS@
+kernel_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

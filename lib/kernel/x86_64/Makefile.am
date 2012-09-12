@@ -33,20 +33,13 @@ vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
 
+nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
+
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
 libkernel_a_SOURCES = abs.cl ceil.cl copysign.cl fabs.cl floor.cl max.cl min.cl signbit.cl sqrt.cl
 
-CLANGFLAGS = -ccc-host-triple x86_64-unknown-linux-gnu
+CLANGFLAGS += -ccc-host-triple x86_64-unknown-linux-gnu
+CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/x86_64/types.h
 
-.cl.o:
-	$(CLANG) $(CLANGFLAGS) $(CLFLAGS) -c -emit-llvm -include $(top_builddir)/include/x86_64/types.h -include $(top_srcdir)/include/_kernel.h -o $@ $<
-
-.c.o:
-	$(CLANG) $(CLANGFLAGS) -c -emit-llvm -include $(top_builddir)/include/x86_64/types.h -o $@ $<
-
-# # TODO: This misses the dependency on the device-specific include files
-# # TODO: Dependencies should be generated automatically
-# $(patsubst %.c, %.o, $(filter %.c, $(libkernel_a_SOURCES))): $(top_srcdir)/include/x86_64/types.h
-# $(patsubst %.cl, %.o, $(filter %.cl, $(libkernel_a_SOURCES))): $(top_srcdir)/include/types.h $(top_srcdir)/include/x86_64/types.h $(top_srcdir)/include/_kernel.h ../templates.h

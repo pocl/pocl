@@ -27,6 +27,8 @@
 
 #include "../pocl_cl.h"
 
+#pragma GCC visibility push(hidden)
+
 /* The number of available devices. */
 extern int pocl_num_devices;
 /* The enabled devices. */
@@ -40,6 +42,8 @@ extern struct _cl_device_id* pocl_devices;
  * management internally also across multiple contexts.
  */
 void pocl_init_devices();
+
+#pragma GCC visibility pop
 
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"

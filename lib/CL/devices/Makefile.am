@@ -27,13 +27,17 @@ SUBDIRS = topology pthread basic
 noinst_LTLIBRARIES = libpocl-devices.la
 
 libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c dev_image.h \
-	prototypes.inc common.h
+	prototypes.inc common.h bufalloc.h
 libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
 	basic/libpocl-devices-basic.la topology/libpocl-devices-topology.la
 
-libpocl_devices_la_CPPFLAGS = -I$(top_srcdir)/include \
--I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL
+libpocl_devices_la_CPPFLAGS = \
+  -I$(top_srcdir)/fix-include \
+  -I$(top_srcdir)/include \
+  -I$(top_srcdir)/lib/CL/devices \
+  -I$(top_srcdir)/lib/CL/devices/tce \
+  -I$(top_srcdir)/lib/CL \
+  $(OCL_ICD_CFLAGS)
 
 if TCE_AVAILABLE
 SUBDIRS += tce

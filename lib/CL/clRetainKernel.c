@@ -24,8 +24,9 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clRetainKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
+POclRetainKernel(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RETAIN_OBJECT (kernel);
   return CL_SUCCESS;
 }
+POsym(clRetainKernel)

@@ -23,10 +23,9 @@
 
 #include "pocl_cl.h"
 #include "devices.h"
-#include "pocl_icd.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
-clCreateBuffer(cl_context context,
+POclCreateBuffer(cl_context context,
                cl_mem_flags flags,
                size_t size,
                void *host_ptr,
@@ -51,7 +50,6 @@ clCreateBuffer(cl_context context,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = flags;
   mem->is_image = CL_FALSE;
-  POCL_INIT_ICD_OBJECT(mem);
 
   /* Store the per device buffer pointers always to a known
      location in the buffer (dev_id), even though the context
@@ -69,7 +67,7 @@ clCreateBuffer(cl_context context,
   for (i = 0; i < context->num_devices; ++i)
     {
       if (i > 0)
-        clRetainMemObject (mem);
+        POclRetainMemObject (mem);
       device = context->devices[i];
       device_ptr = device->malloc(device->data, flags, size, host_ptr);
       if (device_ptr == NULL)
@@ -98,3 +96,4 @@ clCreateBuffer(cl_context context,
     *errcode_ret = CL_SUCCESS;
   return mem;
 }
+POsym(clCreateBuffer)

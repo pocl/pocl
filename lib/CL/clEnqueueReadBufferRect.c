@@ -22,12 +22,11 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include <assert.h>
 #include <stdio.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueReadBufferRect(cl_command_queue command_queue,
+POclEnqueueReadBufferRect(cl_command_queue command_queue,
                         cl_mem buffer,
                         cl_bool blocking_read,
                         const size_t *buffer_origin,
@@ -82,9 +81,8 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POCL_INIT_ICD_OBJECT(*event);
 
-      clRetainCommandQueue (command_queue);
+      POclRetainCommandQueue (command_queue);
 
       POCL_PROFILE_QUEUED;
     }
@@ -103,8 +101,8 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
       /* in-order queue - all previously enqueued commands must 
        * finish before this read */
       // ensure our buffer is not freed yet
-      clRetainMemObject (buffer);
-      clFinish(command_queue);
+      POclRetainMemObject (buffer);
+      POclFinish(command_queue);
     }
   POCL_PROFILE_SUBMITTED;
   POCL_PROFILE_RUNNING;
@@ -119,7 +117,8 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
 
   POCL_PROFILE_COMPLETE;
 
-  clReleaseMemObject (buffer);
+  POclReleaseMemObject (buffer);
 
   return CL_SUCCESS;
 }
+POsym(clEnqueueReadBufferRect)

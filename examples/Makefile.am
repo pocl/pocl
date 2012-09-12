@@ -23,6 +23,6 @@
 # THE SOFTWARE.
 
 SUBDIRS = example1 example2 example2a  standalone trig scalarwave kernel \
-	opencl-book-samples 
+	opencl-book-samples ViennaCL Rodinia
 
 

@@ -31,18 +31,18 @@ AC_CONFIG_TESTDIR([tests])
 AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
+AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
 LT_INIT
 
+# check for tools
+PKG_PROG_PKG_CONFIG
+
 # check: hwloc version must be 1.0+
-AC_SEARCH_LIBS([hwloc_topology_init], [hwloc], [], [AC_MSG_ERROR([hwloc 1.0+ is required])])
-AC_CHECKING([that hwloc API version is 1.0+])
-AC_PREPROC_IFELSE(
-  [AC_LANG_PROGRAM([[#include <hwloc.h>]
-                   [#if !(defined(HWLOC_API_VERSION) && HWLOC_API_VERSION >= 0x00010000)]
-                   [#error Too old hwloc API version]
-                   [#endif]], [])],
-  [AC_MSG_RESULT([OK])],
-  [AC_MSG_ERROR([too old version])])
+PKG_CHECK_MODULES([HWLOC], [hwloc >= 1.0], [
+  :
+], [
+  AC_MSG_ERROR([hwloc 1.0+ is required])
+])
 
 # Checks for programs.
 AC_PROG_CC
@@ -82,18 +82,190 @@ AC_ARG_ENABLE([region-allocator],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
+####################################################################
+# Manage optional testsuites
+
+# Option to choose external testsuites
+AC_ARG_ENABLE([testsuites],
+	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],[choose testsuites using external software to use (all,opencl-book-samples,ViennaCL,Rodinia)])],
+	      [],[enable_testsuites=check])
+
+enable_testsuite_opencl_book_samples=no
+enable_testsuite_viennacl=no
+enable_testsuite_rodinia=no
+if test x"$enable_testsuites" = xcheck ; then
+  if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
+    enable_testsuite_opencl_book_samples=yes
+  fi
+  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.2.0-src.tar.gz" ; then
+    enable_testsuite_viennacl=yes
+  fi
+  if test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
+    enable_testsuite_rodinia=yes
+  fi
+fi
+AS_CASE([,"$enable_testsuites",],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia"],
+  [*,no,*], [enable_testsuites=""]
+)
+AS_CASE([,"$enable_testsuites",],
+  [*,opencl-book-samples,*|*,samples,*], [
+    enable_testsuite_opencl_book_samples=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,ViennaCL,*|*,viennacl,*], [
+    enable_testsuite_viennacl=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,Rodinia,*|*,rodinia,*], [
+    enable_testsuite_rodinia=yes
+  ])
+
+if test "$enable_testsuite_opencl_book_samples" = "yes"; then
+  # Check for software required for opencl book samples
+  AC_CHECK_LIB([glut], [glutInit], [:], [
+    AC_MSG_WARN([disabling tests from OpenCL book as glut library is missing])
+    enable_testsuite_opencl_book_samples="no"
+  ])
+  :
+  AC_CHECK_HEADER([FreeImage.h], [:], [
+    AC_MSG_WARN([disabling tests from OpenCL book as FreeImage.h header is missing])
+    enable_testsuite_opencl_book_samples="no"
+  ])
+fi
+
+if test "$enable_testsuite_rodinia" = "yes" ; then
+  # Check for software and sources for Rodinia
+  if ! test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
+    AC_MSG_WARN([disabling Rodinia testsuite as rodinia_2.0.1.tar.gz in not in '$srcdir/examples/Rodinia'. You must download it yourself from http://lava.cs.virginia.edu/Rodinia/download.htm after registration.])
+    enable_testsuite_rodinia=no
+  fi
+fi
+
+AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
+
+# Some information for the user
+AC_MSG_NOTICE([internal tests are enabled])
+POAT_TESTSUITES=""
+if test "$enable_testsuite_opencl_book_samples" = "yes"; then
+  AC_MSG_NOTICE([tests from OpenCL book are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES samples"
+else
+  AC_MSG_NOTICE([tests from OpenCL book are disabled])
+fi
+if test "$enable_testsuite_viennacl" = "yes"; then
+  AC_MSG_NOTICE([tests from ViennaCL are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES viennacl"
+else
+  AC_MSG_NOTICE([tests from ViennaCL are disabled])
+fi
+if test "$enable_testsuite_rodinia" = "yes"; then
+  AC_MSG_NOTICE([tests from Rodinia are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES rodinia"
+else
+  AC_MSG_NOTICE([tests from Rodinia are disabled])
+fi
+AC_SUBST([POAT_TESTSUITES])
+####################################################################
+
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
-              [AS_HELP_STRING([--disable-icd], [Do not build pocl with the ICD extensions])],
+              [AS_HELP_STRING([--enable-icd], [Build pocl with the ICD extensions (default yes)])],
               [icd="$enableval"],
               [icd="yes"])
+OCL_ICD_available=no
 if test x"$icd" != xno; then :
+  # In fact, ocl-icd >= 1.4 is required. However, Debian wheezy will
+  # have ocl-icd 1.3 *with the required fixes*
+  # So, lets hope Debian wheezy adds a minor version number to the bugfixed ocl-icd.
+  PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3.1], 
+    [ OCL_ICD_available=yes 
+      AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
+    [:])
+fi
+
+AS_CASE(["$icd,$OCL_ICD_available"],
+  [no,*], [ AC_MSG_NOTICE([disabling ICD extension build as requested]) ],
+  [*,yes], [ icd=yes
+    AC_MSG_NOTICE([enabling ICD extension build]) ],
+  [check,no], [ icd=no
+    AC_MSG_NOTICE([disabling ICD extension build (ocd-icd not available)]) ],
+  [yes,no], [AC_MSG_WARN([enabling ICD, but the testsuite will not work! (ocl-icd not available)])],
+  [AC_MSG_ERROR([Invalid value for --enable-icd])]) 
+
+if test x"$icd" = xyes; then
   AC_DEFINE([BUILD_ICD], [], "Build with ICD")
 fi
 
-AC_SUBST(icd)
-AM_CONDITIONAL(INSTALL_ICD, test "$icd" != "no")
+AM_CONDITIONAL(BUILD_ICD, test "$icd" = "yes")
 
+# Option to allow to link a OpenCL program directly against libpocl
+# instead of going through an ICD Loader
+AC_ARG_ENABLE([direct-linkage],
+              [AS_HELP_STRING([--enable-direct-linkage], [Allow OpenCL programs to be linked directly against the pocl library instead of using a ICD Loader (OpenCL library)])],
+              [oclsym="$enableval"],
+              [oclsym="default"])
+
+AS_CASE(["$oclsym,$icd"],
+  [no,no], [ AC_MSG_ERROR([at least, one of ICD or direct-linkage must be enabled]) ],
+  [no,yes], [ AC_MSG_NOTICE([disabling direct linkage as requested]) ],
+  [default,*], [ oclsym=yes
+    AC_MSG_NOTICE([enabling direct linkage in pocl library]) ],
+  [yes,*], [ 
+    AC_MSG_NOTICE([enabling direct linkage as requested]) ],
+  [AC_MSG_ERROR([Invalid value for --enable-direct-linkage])]) 
+
+if test x"$oclsym" = xyes; then
+  AC_DEFINE([DIRECT_LINKAGE], [], "Export OpenCL symbols")
+fi
+
+AM_CONDITIONAL(EXPORT_OPENCL_SYMBOLS, test "$oclsym" = "yes")
+
+# Option to run tests through the OpenCL ICD loader
+# Note that running test *in tree* requires the ocl-icd loader, not any ICD
+# loader
+AC_ARG_ENABLE([tests-with-icd],
+              [AS_HELP_STRING([--enable-tests-with-icd], [run tests through the ICD Loader (requires the ocl-icd loader)])],
+              [tests_with_icd="$enableval"],
+              [tests_with_icd="default"])
+AS_CASE(["$tests_with_icd,$icd,$oclsym"],
+  [yes,no,*], [ AC_MSG_ERROR([Cannot use ICD for tests when not building it]) ],
+  [no,*,no], [ AC_MSG_ERROR([Cannot avoid ICD for tests when direct-linkage is disabled]) ],
+  [default,yes,*], [ tests_with_icd=yes
+    AC_MSG_NOTICE([tests will be run through the ICD]) ],
+  [default,*,yes], [ tests_with_icd=no
+    AC_MSG_NOTICE([tests will use POCL library directly]) ],
+  [AC_MSG_ERROR([Invalid value for --enable-tests-with-icd])]) 
+
+if test x"$tests_with_icd" = xyes; then
+  PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], [
+    OCL_ICD_available=yes
+  ], [
+    AC_MSG_WARN([Tests through ICD loaded enabled but OpenCL.pc file installed by ocl-icd seems missing])
+    if test -z "$OPENCL_LIBS"; then
+      OPENCL_LIBS="-lOpenCL"
+    fi
+  ])
+  OPENCL_CMAKE=''
+  OPENCL_EXTLIBS="$OPENCL_LIBS"
+else
+  OPENCL_LIBS='$(abs_top_builddir)/lib/CL/libpocl.la $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
+  OPENCL_EXTLIBS='-L$(abs_top_builddir)/lib/CL/.libs -lpocl -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
+  OPENCL_CFLAGS='$(PTHREAD_CFLAGS)'
+  OPENCL_CMAKE=' \
+	-D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
+	-D OPENCL_LIBRARY:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
+	-D CMAKE_EXE_LINKER_FLAGS:STRING='${PTHREAD_CFLAGS}' \
+	-D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include \
+	-D OPENCL_INCLUDE_DIR:PATH=${abs_top_srcdir}/include
+  '
+fi
+AC_SUBST([OPENCL_CMAKE])
+AC_SUBST([OPENCL_EXTLIBS])
+
+####################################################################
 #AC_LANG([C++])
 ACX_PTHREAD()
 
@@ -121,6 +293,27 @@ LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 #  AC_MSG_FAILURE([Unable to link with LLVM libraries])
 #LIBS="$old_LIBS"
 #LDFLAGS="$old_LDFLAGS"
+
+# Option to install OpenCL header files
+# By default, do not install them unless none are found in the system include directories
+AC_ARG_ENABLE([install-opencl-headers],
+              [AS_HELP_STRING([--enable-install-opencl-headers], [install OpenCL headers. Ones from Kronos should be installed instead.])],
+              [ioh="$enableval"],
+              [ioh="default"])
+
+if test x"$ioh" = xdefault; then
+  ioh=yes
+  case $host_os in
+    darwin* )
+      AC_CHECK_HEADER([OpenCL/opencl.h],[ioh=no])
+      ;;
+    * )
+      AC_CHECK_HEADER([CL/opencl.h],[ioh=no])
+      ;;
+  esac
+fi
+
+AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 
 # Checks for header files.
 
@@ -319,6 +512,10 @@ AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sour
 
 if test x"$prefix" = xNONE; then
   prefix=/usr/local
+  #this check is "if user did not override sysconfdir"
+  if test x"$sysconfdir" = x'${prefix}/etc'; then
+    sysconfdir=/etc
+  fi
 fi
 
 AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
@@ -410,6 +607,10 @@ AC_SUBST([LD_FLAGS_BIN])
 AC_CONFIG_FILES([Makefile
                  pocl.pc
                  pocl.icd
+                 examples/ViennaCL/custom-context.stdout
+                 tests/atlocal
+                 ocl-vendors/pocl-tests.icd
+
                  include/Makefile
                  include/CL/Makefile
                  include/OpenCL/Makefile
@@ -433,9 +634,10 @@ AC_CONFIG_FILES([Makefile
                  examples/scalarwave/Makefile
                  examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
+                 examples/Rodinia/Makefile
+                 examples/ViennaCL/Makefile
                  scripts/Makefile
                  tests/Makefile
-                 tests/atlocal
                  tests/regression/Makefile
                  tests/workgroup/Makefile
                  tests/runtime/Makefile
@@ -445,4 +647,44 @@ AC_CONFIG_FILES([Makefile
                  ])
 
 AC_OUTPUT
+
+
+#Print a summary of selected options:
+echo
+echo "                  SUMMARY"
+echo =======================================================================
+echo
+echo Using LLVM version $LLVM_VERSION from $($LLVM_CONFIG --prefix)
+echo
+echo -n ICD extension:
+if test x"$icd" == xno;
+then
+echo " disabled"
+else
+ echo " enabled"
+ if test x"$OCL_ICD_available" != xyes; 
+ then
+  echo  Warning: ocl-icd not found.
+  if test x"$sysconfdir" != x/etc;
+  then
+   echo "Not installing pocl.icd to /etc/OpenCL/vendors. This means that"
+   echo "your ICD loader probably will not find pocl. See README for details."
+  else
+   echo "'make check' will fail if it is run before 'make install'" 
+  fi
+ else
+  echo "Using ocl-icd to run checks inside build tree."
+ fi
+fi
+echo
+
+if test x"$oclsym" == xyes;
+then
+ echo "Enabling direct linking with libpocl."
+else
+ echo "Linking directly with libpocl will not work."
+fi
+echo
+echo
+
 

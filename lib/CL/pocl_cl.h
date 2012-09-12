@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <ltdl.h>
 #include <pthread.h>
+
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#ifdef BUILD_ICD
+#  include "pocl_icd.h"
+#endif
 #include "pocl.h"
 
 #define POCL_FILENAME_LENGTH 1024
@@ -110,11 +115,23 @@ typedef pthread_mutex_t pocl_lock_t;
 
 /* The reference counter is initialized to 1,
    when it goes to 0 object can be freed. */
-#define POCL_INIT_OBJECT(__OBJ__)                \
+#define POCL_INIT_OBJECT_NO_ICD(__OBJ__)         \
   do {                                           \
     POCL_INIT_LOCK ((__OBJ__)->pocl_lock);         \
     (__OBJ__)->pocl_refcount = 1;                  \
   } while (0)
+
+#ifdef BUILD_ICD
+/* Most (all?) object must also initialize the ICD field */
+#  define POCL_INIT_OBJECT(__OBJ__)                \
+    do {                                           \
+      POCL_INIT_OBJECT_NO_ICD(__OBJ__);            \
+      POCL_INIT_ICD_OBJECT(__OBJ__);               \
+    } while (0)
+#else
+#  define POCL_INIT_OBJECT(__OBJ__)                \
+      POCL_INIT_OBJECT_NO_ICD(__OBJ__)
+#endif
 
 /* Declares the generic pocl object attributes inside a struct. */
 #define POCL_OBJECT \
@@ -124,14 +141,35 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_OBJECT_INIT \
   POCL_LOCK_INITIALIZER, 0
 
+#define POdeclsym(name) \
+  typeof(name) PO##name __attribute__((visibility("hidden")));
+
+#define POCL_ALIAS_OPENCL_SYMBOL(name) \
+  typeof(name) name __attribute__ ((alias ("PO" #name), \
+                                    visibility("default")));
+
+#define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
+
+#ifdef DIRECT_LINKAGE
+#  define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
+#else
+#  define POsym(name)
+#endif
+
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
-#define POCL_ICD_OBJECT\
-  struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT\
+     struct _cl_icd_dispatch *dispatch;
+#  define POsymICD(name) POsym(name)
+#  define POdeclsymICD(name) POdeclsym(name)
 #else
-#define POCL_ICD_OBJECT
+#  define POCL_ICD_OBJECT
+#  define POsymICD(name)
+#  define POdeclsymICD(name)
 #endif
+
+#include "pocl_intfn.h"
 
 struct pocl_argument {
   size_t size;
@@ -391,7 +429,7 @@ struct _cl_event {
 typedef struct _cl_sampler cl_sampler_t;
 
 struct _cl_sampler {
-  POCL_ICD_OBJECT;
+  POCL_ICD_OBJECT
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;
   cl_filter_mode      filter_mode;

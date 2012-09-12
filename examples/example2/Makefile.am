@@ -25,7 +25,7 @@
 noinst_PROGRAMS = example2
 
 example2_SOURCES = example2.c example2.cl
-example2_LDADD = ../../lib/CL/libpocl.la @PTHREAD_LIBS@
-example2_CFLAGS = @PTHREAD_CFLAGS@
+example2_LDADD = @OPENCL_LIBS@
+example2_CFLAGS = @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

@@ -39,7 +39,7 @@
   }                                                                 \
     
 CL_API_ENTRY cl_int CL_API_CALL 
-clGetPlatformInfo(cl_platform_id   platform,
+POclGetPlatformInfo(cl_platform_id   platform,
                   cl_platform_info param_name,
                   size_t           param_value_size, 
                   void *           param_value,
@@ -60,7 +60,7 @@ clGetPlatformInfo(cl_platform_id   platform,
       POCL_RETURN_PLATFORM_INFO_STR("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
-      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2");
+      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2 POCL " PACKAGE_VERSION);
 
     case CL_PLATFORM_NAME:
       POCL_RETURN_PLATFORM_INFO_STR("Portable OpenCL");
@@ -70,6 +70,7 @@ clGetPlatformInfo(cl_platform_id   platform,
 
     case CL_PLATFORM_EXTENSIONS:
       // TODO: do we want to list all suppoted extensions *here*, or in some header?.
+      // TODO: yes, it is better here: available through ICD Loader and headers can be the ones from Khronos
       #ifdef BUILD_ICD
       POCL_RETURN_PLATFORM_INFO_STR("cl_khr_icd");
       #else
@@ -77,7 +78,7 @@ clGetPlatformInfo(cl_platform_id   platform,
       #endif
 
     case CL_PLATFORM_ICD_SUFFIX_KHR:
-      POCL_RETURN_PLATFORM_INFO_STR("pocl_dont_support_extenstions_via_ICD_yet");
+      POCL_RETURN_PLATFORM_INFO_STR("POCL");
 
     default: 
       return CL_INVALID_VALUE;
@@ -99,3 +100,4 @@ clGetPlatformInfo(cl_platform_id   platform,
 	
   return CL_SUCCESS;
 }
+POsym(clGetPlatformInfo)

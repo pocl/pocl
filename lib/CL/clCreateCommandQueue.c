@@ -22,10 +22,9 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
-clCreateCommandQueue(cl_context context, 
+POclCreateCommandQueue(cl_context context, 
                      cl_device_id device, 
                      cl_command_queue_properties properties,
                      cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
@@ -44,9 +43,9 @@ clCreateCommandQueue(cl_context context,
   command_queue->device = device;
   command_queue->properties = properties;
   command_queue->root = NULL;
-  POCL_INIT_ICD_OBJECT(command_queue);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return command_queue;
 }
+POsym(clCreateCommandQueue)

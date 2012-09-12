@@ -25,7 +25,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetCommandQueueInfo(cl_command_queue       command_queue ,
+POclGetCommandQueueInfo(cl_command_queue       command_queue ,
                       cl_command_queue_info  param_name ,
                       size_t                 param_value_size ,
                       void *                 param_value ,
@@ -52,4 +52,4 @@ clGetCommandQueueInfo(cl_command_queue       command_queue ,
   }
   return CL_INVALID_VALUE;
 }
-
+POsym(clGetCommandQueueInfo)

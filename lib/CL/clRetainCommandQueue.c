@@ -24,8 +24,9 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clRetainCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+POclRetainCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RETAIN_OBJECT(command_queue);
   return CL_SUCCESS;
 }
+POsym(clRetainCommandQueue)

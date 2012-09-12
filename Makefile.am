@@ -22,19 +22,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = include lib scripts examples tests tools/llvm-ld
+SUBDIRS = include lib scripts tools/llvm-ld examples tests
 
 ACLOCAL_AMFLAGS = -I m4
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pocl.pc
 
-if INSTALL_ICD
+if BUILD_ICD
 icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 endif
 
 EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf \
-  CHANGES
+  CHANGES fix-include
 
 

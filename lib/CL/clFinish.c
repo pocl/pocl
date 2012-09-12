@@ -25,7 +25,7 @@
 #include "utlist.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
   int i;
   _cl_command_node *node;
@@ -48,7 +48,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.read.device_ptr, 
              node->command.read.cb); 
           POCL_PROFILE_COMPLETE;
-          clReleaseMemObject (node->command.read.buffer);
+          POclReleaseMemObject (node->command.read.buffer);
           break;
         case CL_COMMAND_TYPE_WRITE:
           POCL_PROFILE_SUBMITTED;
@@ -59,7 +59,7 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.write.device_ptr, 
              node->command.write.cb);
           POCL_PROFILE_COMPLETE;
-          clReleaseMemObject (node->command.write.buffer);
+          POclReleaseMemObject (node->command.write.buffer);
           break;
         case CL_COMMAND_TYPE_COPY:
           POCL_PROFILE_SUBMITTED;
@@ -70,8 +70,8 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
              node->command.copy.dst_ptr,
              node->command.copy.cb);
           POCL_PROFILE_COMPLETE;
-          clReleaseMemObject (node->command.copy.src_buffer);
-          clReleaseMemObject (node->command.copy.dst_buffer);
+          POclReleaseMemObject (node->command.copy.src_buffer);
+          POclReleaseMemObject (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_TYPE_RUN:
           assert (*event == node->event);
@@ -84,11 +84,11 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
               cl_mem buf = node->command.run.arg_buffers[i];
               if (buf == NULL) continue;
               //printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, buf,  node->command.run.kernel->function_name);
-              clReleaseMemObject (buf);
+              POclReleaseMemObject (buf);
             }
           free (node->command.run.arg_buffers);
           free (node->command.run.tmp_dir);
-          clReleaseKernel(node->command.run.kernel);
+          POclReleaseKernel(node->command.run.kernel);
           break;  
         default:
           POCL_ABORT_UNIMPLEMENTED();
@@ -109,3 +109,4 @@ clFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 
   return CL_SUCCESS;
 }
+POsym(clFinish)
