@@ -400,17 +400,16 @@ ParallelRegion::Verify()
 }
 
 void
-ParallelRegion::setID(
+ParallelRegion::AddIDMetadata(
     llvm::LLVMContext& context, 
     std::size_t x, 
     std::size_t y, 
-    std::size_t z,
-    std::size_t regionID) {
+    std::size_t z) {
   
     int counter = 1;
     Value *v1[] = {
         MDString::get(context, "WI_region"),      
-        ConstantInt::get(Type::getInt32Ty(context), regionID)};      
+        ConstantInt::get(Type::getInt32Ty(context), pRegionId)};      
     MDNode* mdRegion = MDNode::get(context, v1);  
     Value *v2[] = {
         MDString::get(context, "WI_xyz"),      
@@ -433,8 +432,8 @@ ParallelRegion::setID(
             ConstantInt::get(Type::getInt32Ty(context), counter)};      
         MDNode* mdCounter = MDNode::get(context, v3);  
         counter++;
-        ii->setMetadata("wi",md);
-        ii->setMetadata("wi_counter",mdCounter);      
+        ii->setMetadata("wi", md);
+        ii->setMetadata("wi_counter", mdCounter);
       }
     }
 }

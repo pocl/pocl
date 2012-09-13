@@ -60,7 +60,7 @@ AT_CLEANUP
 
 AT_SETUP([Barriered for loops (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops POCL_VECTORIZE_WORK_GROUPS=1 $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
 AT_CHECK([sort -c stdout])
 AT_CLEANUP
 

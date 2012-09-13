@@ -449,6 +449,9 @@ WorkitemLoops::ProcessFunction(Function &F)
         original->AddBlockAfter(lastBB, original->exitBB());
         original->setExitBBIndex(original->size()-1);
 
+        if (AddWIMetadata)
+          original->AddIDMetadata(F.getContext(), 0);
+
         for (int c = 1; c < unrollCount; ++c) 
           {
             ParallelRegion *unrolled = 
@@ -456,6 +459,8 @@ WorkitemLoops::ProcessFunction(Function &F)
             unrolled->chainAfter(prev);
             prev = unrolled;
             lastBB = unrolled->exitBB();
+            if (AddWIMetadata)
+              unrolled->AddIDMetadata(F.getContext(), c);
         }
         unrolled = true;
         l = std::make_pair(original->entryBB(), lastBB);
