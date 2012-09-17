@@ -87,12 +87,14 @@ AC_ARG_ENABLE([region-allocator],
 
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
-	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],[choose testsuites using external software to use (all,opencl-book-samples,ViennaCL,Rodinia)])],
+	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil)])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
 enable_testsuite_viennacl=no
 enable_testsuite_rodinia=no
+enable_testsuite_parboil=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -103,9 +105,15 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
     enable_testsuite_rodinia=yes
   fi
+  if test -f "$srcdir/examples/Parboil/pb2.5benchmarks.tgz" -a \
+          -f "$srcdir/examples/Parboil/pb2.5datasets_standard.tgz" -a \
+          -f "$srcdir/examples/Parboil/pb2.5driver.tgz"; then
+    enable_testsuite_parboil=yes
+  fi
+
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -119,6 +127,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,Rodinia,*|*,rodinia,*], [
     enable_testsuite_rodinia=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,Parboil,*|*,parboil,*], [
+    enable_testsuite_parboil=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -137,14 +149,25 @@ fi
 if test "$enable_testsuite_rodinia" = "yes" ; then
   # Check for software and sources for Rodinia
   if ! test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
-    AC_MSG_WARN([disabling Rodinia testsuite as rodinia_2.0.1.tar.gz in not in '$srcdir/examples/Rodinia'. You must download it yourself from http://lava.cs.virginia.edu/Rodinia/download.htm after registration.])
+    AC_MSG_WARN([disabling Rodinia testsuite as rodinia_2.0.1.tar.gz is not in '$srcdir/examples/Rodinia'. You must download it yourself from http://lava.cs.virginia.edu/Rodinia/download.htm after registration.])
     enable_testsuite_rodinia=no
+  fi
+fi
+
+if test "$enable_testsuite_parboil" = "yes" ; then
+  # Check for software and sources for Parboil
+  if ! test -f "$srcdir/examples/Parboil/pb2.5benchmarks.tgz" -a \
+          -f "$srcdir/examples/Parboil/pb2.5datasets_standard.tgz" -a \
+          -f "$srcdir/examples/Parboil/pb2.5driver.tgz"; then
+    AC_MSG_WARN([disabling Parboil testsuite as one of the required packages not in '$srcdir/examples/Parboil'. You must download it yourself from http://impact.crhc.illinois.edu/parboil.aspx.])
+    enable_testsuite_parboil=no
   fi
 fi
 
 AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -167,6 +190,13 @@ if test "$enable_testsuite_rodinia" = "yes"; then
 else
   AC_MSG_NOTICE([tests from Rodinia are disabled])
 fi
+if test "$enable_testsuite_parboil" = "yes"; then
+  AC_MSG_NOTICE([tests from Parboil are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES parboil"
+else
+  AC_MSG_NOTICE([tests from Parboil are disabled])
+fi
+
 AC_SUBST([POAT_TESTSUITES])
 ####################################################################
 
@@ -635,6 +665,7 @@ AC_CONFIG_FILES([Makefile
                  examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
                  examples/Rodinia/Makefile
+                 examples/Parboil/Makefile
                  examples/ViennaCL/Makefile
                  scripts/Makefile
                  tests/Makefile

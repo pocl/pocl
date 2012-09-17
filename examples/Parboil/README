@@ -1,0 +1,8 @@
+The Parboil benchmark can be downloaded here
+http://impact.crhc.illinois.edu/parboil.aspx
+
+You need to download the benchmark, the driver and
+the dataset packages. 
+
+The packages named pb2.5{benchmarks,datasets_standard,driver}.tgz should
+be placed (or symlinked) to this directory.
