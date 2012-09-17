@@ -352,13 +352,11 @@ namespace {
           }
       } 
 
-      if (changed)
+      if (changed) {
         vectorizePhiNodes(BB);
+        removeDuplicates(BB);      
+      }
 
-      // This seems to breake some tests. 
-      // TODO: re enable once detection mechanism is corrected.
-      removeDuplicates(BB);
-        
       DEBUG(dbgs() << "WIV: done!\n");
       return changed;
     }
@@ -649,7 +647,27 @@ namespace {
             // leaving direct use of vector.
             LLVMContext& Context = BB.getContext();
             BasicBlock::iterator toFill = BB.getFirstInsertionPt();
-            Value *X = ConstantInt::get(Type::getInt32Ty(Context), 0);       
+            int index = 0;
+            
+            // Find from the user of original phi node in which position it
+            // is inserted to the vector before being used by vector instruction.
+            // We have to extract it from same position of the vector phi node.
+            Instruction::use_iterator useiter = orig->use_begin();            
+            while (useiter != orig->use_end()) {
+                llvm::User* tmp = *useiter;
+                if (isa<InsertElementInst>(tmp)) {
+                    Value* in = tmp->getOperand(2);
+                    if (isa<ConstantInt>(in)) {
+                        index =
+                            cast<ConstantInt>(in)->getZExtValue();      
+                            break;
+                    }
+                }
+                useiter++;                
+            }
+                    
+            //}
+            Value *X = ConstantInt::get(Type::getInt32Ty(Context), index);       
             Instruction* other = ExtractElementInst::Create(phi, X,
                                             getReplacementName(phi, false, 0));
             other->insertAfter(toFill);
@@ -659,11 +677,28 @@ namespace {
             orig->eraseFromParent();
             Instruction* ins = other;
             for (unsigned int i = 0; i < v.size(); i++) {
-                X = ConstantInt::get(Type::getInt32Ty(Context), i+1);            
-                Instruction* other = ExtractElementInst::Create(phi, X,
-                                            getReplacementName(phi, false, i+1));
-                other->insertAfter(ins);
                 Instruction* tmp = cast<Instruction>(v[i]);            
+                // Find from the user of original phi node in which position it
+                // is inserted to the vector before being used by vector instruction.
+                // We have to extract it from same position of the vector phi node.                
+                Instruction::use_iterator ui = tmp->use_begin();                
+                while (ui != tmp->use_end()) {
+                    llvm::User* user = *ui;
+                    if (isa<InsertElementInst>(user)) {
+                        Value* in = user->getOperand(2);
+                        if (isa<ConstantInt>(in)) {
+                            index =
+                                cast<ConstantInt>(in)->getZExtValue();  
+                                break;
+                        }
+                    }
+                    ui++;                
+                }
+                X = ConstantInt::get(Type::getInt32Ty(Context), index);            
+                Instruction* other = ExtractElementInst::Create(phi, X,
+                                            getReplacementName(phi, false, index));
+                other->insertAfter(ins);
+
                 tmp->replaceAllUsesWith(other);
                 AA->replaceWithNewValue(tmp, other);  
                 SE->forgetValue(tmp);
@@ -771,6 +806,10 @@ namespace {
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy()) {
         return false;
       }
+    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
+      // Currently, vector GEPs exist only with one index.
+      if (G->getNumIndices() != 1)
+        return false;         
     } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
@@ -808,7 +847,11 @@ namespace {
     // Floating point vectorization can be dissabled
     if (I->getType()->isFloatingPointTy() && NoFP)
         return false;
-
+    
+     // Do not vectorizer pointer types. Currently do not work with LLVM 3.1.
+    if (T1->getScalarType()->isPointerTy() ||
+         T2->getScalarType()->isPointerTy())
+       return false;  
     // Check if the instruction can be loop counter, we do not vectorize those
     // since they have to be same for all work items we are vectorizing
     // and computations of load/store indexes usually depenends on them.
@@ -2122,10 +2165,10 @@ namespace {
                                        ConstantVector::get(
                                          FlipMemInputs ? Mask1 : Mask2),
                                        getReplacementName(K, false, 2));
-            storedSources.insert(ValuePair(K1,K));
-            storedSources.insert(ValuePair(K2,K)); 
-            flippedStoredSources.insert(ValuePair(K, K1));
-            flippedStoredSources.insert(ValuePair(K, K2));
+            storedSources.insert(ValuePair(FlipMemInputs ? K1 : K2, K));
+            storedSources.insert(ValuePair(FlipMemInputs ? K2 : K1, K)); 
+            flippedStoredSources.insert(ValuePair(K, FlipMemInputs ? K1 : K2));
+            flippedStoredSources.insert(ValuePair(K, FlipMemInputs ? K2 : K1));
             Instruction* L = I;
             Instruction* H = J;
             if (FlipMemInputs) {
@@ -2426,7 +2469,7 @@ namespace {
         I = J;      
         }
     } while (changed);
-  };
+  }
     
 }
 char WIVectorize::ID = 0;

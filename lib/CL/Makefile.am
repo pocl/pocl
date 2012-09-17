@@ -27,6 +27,17 @@ SUBDIRS = devices
 
 lib_LTLIBRARIES = libpocl.la
 
+if ! BUILD_ICD
+
+# If we do not build with the ICD enabled, the final .so and its soname
+# should be libOpenCL.so for direct linkage. Some benchmarks such as
+# Parboil require the soname to be libOpenCL.so (check with ldd) so
+# symlinking is not enough.
+
+lib_LTLIBRARIES += libOpenCL.la
+
+endif
+
 libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clReleaseContext.c		\
                    clRetainContext.c		\
@@ -112,10 +123,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_icd.h \
                    pocl_intfn.h
 
-libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
 
-# libtool versions:
-# 0:0.0        The (unreleased) first alpha release.
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
 libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 libpocl_la_LDFLAGS += -Wl,-z,defs 
 
@@ -127,3 +136,11 @@ endif
 
 libpocl_la_LIBADD = devices/libpocl-devices.la 
 
+if ! BUILD_ICD
+
+libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}
+libOpenCL_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
+libOpenCL_la_LDFLAGS = ${libpocl_la_LDFLAGS}
+libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
+
+endif
