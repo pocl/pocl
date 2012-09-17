@@ -35,6 +35,7 @@ missing APIs have been encountered in the test cases.
 (*) == Used by the opencl-book-samples. 
 (R) == Used by the Rodinia benchmark suite.
 (P) == Used by pyopencl
+(B) == Used by the Parboil benchmarks
 
   4. THE OPENCL PLATFORM LAYER
   
@@ -56,12 +57,12 @@ missing APIs have been encountered in the test cases.
 * 5.5.1 Creating Sampler Objects
 * 5.6.1 Creating Program Objects
 * 5.6.2 Building Program Executables
-  * passing compiler flags, especially the -I switch (P)
+  * passing compiler flags, especially the -I switch (P, B)
 * 5.7.1 Creating Kernel Objects
 * 5.9 Event objects
   * clWaitForEvents (*)
 * 5.10 Markers, Barriers and Waiting for Events
-  * clEnqueueMarker (deprecated in OpenCL 1.2) (*)
+  * clEnqueueMarker (deprecated in OpenCL 1.2) (*, B)
 * 5.12 Profiling 
 
   6. THE OPENCL C PROGRAMMING LANGUAGE
