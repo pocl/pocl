@@ -1,7 +1,7 @@
 0.7  unreleased
 ===============
 
-[changes updated up to 2012-08-28]
+[changes updated from bzr log up to 2012-08-28]
 
 Overall
 -------
@@ -12,6 +12,8 @@ Kernel Compiler Passes
 - Multiple bugs fixed from the work group vectorizer.
 - Updated metadata format pocl uses to pass information
   to vectorization and TCE backend to simplify debuging.
+- Kernel pointer arguments are not always marked 'noalias' (restricted).
+  This probably was a specs misunderstanding.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
