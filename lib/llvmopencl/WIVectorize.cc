@@ -806,6 +806,10 @@ namespace {
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy()) {
         return false;
       }
+    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
+      // Currently, vector GEPs exist only with one index.
+      if (G->getNumIndices() != 1)
+        return false;         
     } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
@@ -843,7 +847,11 @@ namespace {
     // Floating point vectorization can be dissabled
     if (I->getType()->isFloatingPointTy() && NoFP)
         return false;
-
+    
+     // Do not vectorizer pointer types. Currently do not work with LLVM 3.1.
+    if (T1->getScalarType()->isPointerTy() ||
+         T2->getScalarType()->isPointerTy())
+       return false;  
     // Check if the instruction can be loop counter, we do not vectorize those
     // since they have to be same for all work items we are vectorizing
     // and computations of load/store indexes usually depenends on them.
