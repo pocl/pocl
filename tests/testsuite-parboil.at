@@ -41,11 +41,9 @@ AT_CLEANUP
 
 POAT_PB_SETUP([cutcp])
 POAT_PB_CHECK_BUILD([cutcp])
-AT_CHECK_UNQUOTED([make run-cutcp -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=0 make run-cutcp -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
 ])
-# undefined symbol: _Z5rsqrtf
-AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([mri-gridding], [long])
