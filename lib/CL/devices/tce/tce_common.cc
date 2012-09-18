@@ -241,6 +241,10 @@ pocl_tce_run
   kernelMdSymbolName += cmd->command.run.kernel->name;
   kernelMdSymbolName += "_md";
 
+  std::string userProgramBuildOptions;
+  if (cmd->command.run.kernel->program->compiler_options != NULL)
+      userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
+
   if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       char *llvm_ld;
@@ -278,7 +282,7 @@ pocl_tce_run
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
         std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
-        kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
+        userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
         " -g -O3 -o " + assemblyFileName;
 #ifdef DEBUG_TTA_DRIVER

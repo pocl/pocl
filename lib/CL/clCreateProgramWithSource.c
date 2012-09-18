@@ -66,6 +66,7 @@ POclCreateProgramWithSource(cl_context context,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   program->source = source;
+  program->compiler_options = NULL;
 
   for (i = 0; i < count; ++i)
     {

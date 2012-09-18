@@ -26,6 +26,10 @@ OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 - clRetainDevice
 - Proper freeing of devices in clReleaseContext
 
+The OpenCL Runtime Implementations (OpenCL 1.2 Chapter 5)
+---------------------------------------------------------
+- clBuildProgram: support for passing options to the compiler.
+
 OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 -------------------------------------------------------------------
 - Atomic Functions (6.12.11)

@@ -56,8 +56,6 @@ missing APIs have been encountered in the test cases.
 * 5.5 Sampler objects
 * 5.5.1 Creating Sampler Objects
 * 5.6.1 Creating Program Objects
-* 5.6.2 Building Program Executables
-  * passing compiler flags, especially the -I switch (P, B)
 * 5.7.1 Creating Kernel Objects
 * 5.9 Event objects
   * clWaitForEvents (*)
