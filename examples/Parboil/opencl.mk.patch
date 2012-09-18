@@ -1,0 +1,13 @@
+--- /home/visit0r/Downloads/parboil/parboil/common/mk/opencl.mk	2012-03-01 05:00:37.000000000 +0200
++++ parboil/common/mk/opencl.mk	2012-09-18 17:49:40.000000000 +0300
+@@ -64,8 +64,8 @@
+ 
+ run:
+ 	@echo "Resolving OpenCL library..."
+-	@$(shell echo $(RUNTIME_ENV)) LD_LIBRARY_PATH=$(OPENCL_LIB_PATH) ldd $(BIN) | grep OpenCL
+-	@$(shell echo $(RUNTIME_ENV)) LD_LIBRARY_PATH=$(OPENCL_LIB_PATH) $(BIN) $(ARGS)
++	@$(shell echo $(RUNTIME_ENV)) LD_LIBRARY_PATH=$(OPENCL_LIB_PATH):$(LD_LIBRARY_PATH) ldd $(BIN) | grep OpenCL
++	@$(shell echo $(RUNTIME_ENV)) LD_LIBRARY_PATH=$(OPENCL_LIB_PATH):$(LD_LIBRARY_PATH) $(BIN) $(ARGS)
+ 
+ debug:
+ 	@echo "Resolving OpenCL library..."

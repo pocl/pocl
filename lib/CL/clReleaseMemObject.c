@@ -31,6 +31,9 @@ POclReleaseMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   unsigned i;
   mem_mapping_t *mapping, *temp;
 
+  if (memobj == NULL)
+    return CL_INVALID_MEM_OBJECT;
+
   POCL_RELEASE_OBJECT(memobj);
 
   /* OpenCL 1.2 Page 118:

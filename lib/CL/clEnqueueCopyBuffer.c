@@ -86,7 +86,7 @@ POclEnqueueCopyBuffer(cl_command_queue command_queue,
   POclRetainMemObject(src_buffer);
   POclRetainMemObject(dst_buffer);
 
-  cmd->type = CL_COMMAND_TYPE_COPY;
+  cmd->type = CL_COMMAND_COPY_BUFFER;
   cmd->command.copy.data = device_id->data;
   /* TODO: call device->buf_offset() or similar as device_ptrs might not be
      actual buffer pointers but pointers to a book keeping structure. */

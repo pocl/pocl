@@ -70,6 +70,7 @@ missing APIs have been encountered in the test cases.
 
 * 6.12.14.2 Built-in Image Read Functions
   * read_imagef (R[particlefilter])
+  * read_imageui (B[sad])
 
   OpenCL 1.2 Extensions
 
@@ -84,16 +85,3 @@ missing APIs have been encountered in the test cases.
 * Passing structs as values to kernels (P), see
   https://bugs.launchpad.net/pocl/+bug/987905
 
-Misc/laundry list
------------------
-
-* The objects that increment/decrement the ref count
-  of the parent objects should call the respective
-  retain/destroy functions instead of incrementing
-  the counters directly to ensure the objects get freed
-  in case the object was the last referred. 
-
-  Now if a (sub)object is the last holder of a reference, the 
-  references of the parent object do not get freed. 
-
-  

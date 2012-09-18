@@ -33,7 +33,7 @@ datasets_tarfile=pb2.5datasets_standard.tgz
 
 .PHONY: build
 
-all: $(testsuite_src_dir)
+all: $(testsuite_src_dir) build
 
 ${srcdir}/${driver_tarfile}:
 	@echo 'You need to download $@ to "$(srcdir)"'
@@ -69,6 +69,7 @@ build-prepare: $(testsuite_src_dir)
 	find -name "*.c" -o -name "*.cc" -o -name "*.cpp" | \
 	grep opencl | \
 	xargs sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g'
+	cd ${testsuite_pocl_dir} && patch -sNp0 < opencl.mk.patch || true
 	echo -e "OPENCL_PATH=${abs_top_srcdir}/include\nOPENCL_LIB_PATH=${abs_top_builddir}/lib/CL/.libs" > ${testsuite_src_dir}/common/Makefile.conf
 
 src=rodinia_2.0.1/opencl
