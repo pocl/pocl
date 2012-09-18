@@ -1,1 +1,1 @@
-@prefix@/lib/libpocl-icd.so
+@libdir@/libpocl-icd.so

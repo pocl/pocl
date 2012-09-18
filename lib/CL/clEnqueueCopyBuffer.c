@@ -23,12 +23,11 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include "utlist.h"
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueCopyBuffer(cl_command_queue command_queue,
+POclEnqueueCopyBuffer(cl_command_queue command_queue,
                     cl_mem src_buffer,
                     cl_mem dst_buffer,
                     size_t src_offset,
@@ -71,8 +70,7 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POCL_INIT_ICD_OBJECT(*event);
-      clRetainCommandQueue (command_queue);
+      POclRetainCommandQueue (command_queue);
 
       POCL_PROFILE_QUEUED;
     }
@@ -85,8 +83,8 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
   cmd->command.copy.src_buffer = src_buffer;
   cmd->command.copy.dst_buffer = dst_buffer;
   
-  clRetainMemObject(src_buffer);
-  clRetainMemObject(dst_buffer);
+  POclRetainMemObject(src_buffer);
+  POclRetainMemObject(dst_buffer);
 
   cmd->type = CL_COMMAND_TYPE_COPY;
   cmd->command.copy.data = device_id->data;
@@ -102,3 +100,4 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
 
   return CL_SUCCESS;
 }
+POsym(clEnqueueCopyBuffer)

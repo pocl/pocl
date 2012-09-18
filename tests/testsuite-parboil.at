@@ -1,0 +1,92 @@
+
+dnl POAT_PB_SETUP(name, extra_keywords) 
+m4_define([POAT_PB_SETUP],[
+  AT_SETUP([$1])
+  AT_KEYWORDS([parboil $1 $2])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" parboil "*],[false],[:])])
+])
+dnl POAT_PB_CHECK_BUILD(name, extra build cmd)
+m4_define([POAT_PB_CHECK_BUILD],[
+  AT_CHECK([make build-$1 -sC ${abs_top_builddir}/examples/Parboil 2>&1 | grep "Parboil" | grep . $2 ], 0, 
+[Parboil parallel benchmark suite, version 0.2
+])
+])
+
+AT_BANNER([Parboil tests])
+
+POAT_PB_SETUP([spmv])
+POAT_PB_CHECK_BUILD([spmv])
+AT_CHECK_UNQUOTED([make run-spmv -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([stencil])
+POAT_PB_CHECK_BUILD([stencil])
+AT_CHECK_UNQUOTED([make run-stencil -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([tpacf])
+POAT_PB_CHECK_BUILD([tpacf])
+AT_CHECK_UNQUOTED([make run-tpacf -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([cutcp])
+POAT_PB_CHECK_BUILD([cutcp])
+AT_CHECK_UNQUOTED([make run-cutcp -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([mri-gridding])
+POAT_PB_CHECK_BUILD([mri-gridding])
+AT_CHECK_UNQUOTED([make run-mri-gridding -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([sad])
+POAT_PB_CHECK_BUILD([sad])
+AT_CHECK_UNQUOTED([make run-sad -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([bfs])
+POAT_PB_CHECK_BUILD([bfs])
+AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([histo])
+POAT_PB_CHECK_BUILD([histo])
+AT_CHECK_UNQUOTED([make run-histo -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([sgemm])
+POAT_PB_CHECK_BUILD([sgemm])
+AT_CHECK_UNQUOTED([make run-sgemm -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([mri-q])
+POAT_PB_CHECK_BUILD([mri-q])
+AT_CHECK_UNQUOTED([make run-mri-q -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+POAT_PB_SETUP([lbm])
+POAT_PB_CHECK_BUILD([lbm])
+AT_CHECK_UNQUOTED([make run-lbm -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+[])
+AT_XFAIL_IF(true)
+AT_CLEANUP

@@ -38,6 +38,7 @@
 #include <set>
 #include <sstream>
 #include <map>
+#include <algorithm>
 
 #define LOCAL_ID_X "_local_id_x"
 #define LOCAL_ID_Y "_local_id_y"
@@ -132,6 +133,11 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
      are (possibly) overwritten by another clone of the 
      same BB. */
   new_region->remap(map); 
+
+#ifdef DEBUG_REPLICATE
+  Verify();
+#endif
+
   return new_region;
 }
 
@@ -346,7 +352,8 @@ ParallelRegion::Verify()
 #endif
           assert(0 && "Incoming edges to non-entry block!");
           return false;
-        } else if (!isa<BarrierBlock>(*ii)) {
+        } else if (!Barrier::hasBarrier(*ii)) {
+          (*i)->getParent()->viewCFG();
           assert (0 && "Entry has edges from non-barrier blocks!");
           return false;
         }
@@ -385,20 +392,70 @@ ParallelRegion::setID(
     std::size_t regionID) {
   
     int counter = 1;
+    Value *v1[] = {
+        MDString::get(context, "WI_region"),      
+        ConstantInt::get(Type::getInt32Ty(context), regionID)};      
+    MDNode* mdRegion = MDNode::get(context, v1);  
+    Value *v2[] = {
+        MDString::get(context, "WI_xyz"),      
+        ConstantInt::get(Type::getInt32Ty(context), x),
+        ConstantInt::get(Type::getInt32Ty(context), y),      
+        ConstantInt::get(Type::getInt32Ty(context), z)};      
+    MDNode* mdXYZ = MDNode::get(context, v2);  
+    Value *v[] = {
+        MDString::get(context, "WI_data"),      
+        mdRegion,
+        mdXYZ};
+    MDNode* md = MDNode::get(context, v);              
+    
     for (iterator i = begin(), e = end(); i != e; ++i) {
       BasicBlock* bb= *i;      
       for (BasicBlock::iterator ii = bb->begin();
             ii != bb->end(); ii++) {
-        Value *v[] = {
-            MDString::get(context, "WI_id"),      
-            ConstantInt::get(Type::getInt32Ty(context), regionID),
-            ConstantInt::get(Type::getInt32Ty(context), x),
-            ConstantInt::get(Type::getInt32Ty(context), y),      
-            ConstantInt::get(Type::getInt32Ty(context), z),
+        Value *v3[] = {
+            MDString::get(context, "WI_counter"),      
             ConstantInt::get(Type::getInt32Ty(context), counter)};      
-        MDNode* md = MDNode::get(context, v);  
+        MDNode* mdCounter = MDNode::get(context, v3);  
         counter++;
         ii->setMetadata("wi",md);
+        ii->setMetadata("wi_counter",mdCounter);      
       }
     }
+}
+
+
+/**
+ * Inserts a new basic block to the region, before an old basic block in
+ * the region.
+ *
+ * Assumes the inserted block to be before the other block in control
+ * flow, that is, there should be direct CFG edge from the block to the
+ * other.
+ */
+void
+ParallelRegion::AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before)
+{
+    llvm::BasicBlock *oldExit = exitBB();
+    ParallelRegion::iterator beforePos = find(begin(), end(), before);
+    ParallelRegion::iterator oldExitPos = find(begin(), end(), oldExit);
+    assert (beforePos != end());
+
+    /* The old exit node might is now pushed further, at most one position. 
+       Whether this is the case, depends if the node was inserted before or
+       after that node in the vector. That is, if indexof(before) < indexof(oldExit). */
+    if (beforePos < oldExitPos) ++exitIndex_;
+
+    insert(beforePos, block);
+    /* The entryIndex_ should be still correct. In case the 'before' block
+       was an old entry node, the new one replaces it as an entry node at
+       the same index and the old one gets pushed forward. */
+
+       
+}
+
+
+bool 
+ParallelRegion::HasBlock(llvm::BasicBlock *bb)
+{
+    return find(begin(), end(), bb) != end();
 }

@@ -40,7 +40,7 @@
 
 
 CL_API_ENTRY cl_int CL_API_CALL
-clGetMemObjectInfo(cl_mem      memobj ,
+POclGetMemObjectInfo(cl_mem      memobj ,
                    cl_mem_info param_name , 
                    size_t      param_value_size ,
                    void *      param_value ,
@@ -66,3 +66,4 @@ clGetMemObjectInfo(cl_mem      memobj ,
   }
   return CL_INVALID_VALUE;
 }
+POsym(clGetMemObjectInfo)

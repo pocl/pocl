@@ -25,7 +25,7 @@
 noinst_PROGRAMS = scalarwave
 
 scalarwave_SOURCES = scalarwave.c scalarwave.cl
-scalarwave_LDADD = ../../lib/CL/libpocl.la -lm @PTHREAD_LIBS@
-scalarwave_CFLAGS = -std=c99 @PTHREAD_CFLAGS@
+scalarwave_LDADD = -lm @OPENCL_LIBS@
+scalarwave_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

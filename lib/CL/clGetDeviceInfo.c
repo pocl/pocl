@@ -59,7 +59,7 @@
 
   
 CL_API_ENTRY cl_int CL_API_CALL
-clGetDeviceInfo(cl_device_id   device,
+POclGetDeviceInfo(cl_device_id   device,
                 cl_device_info param_name, 
                 size_t         param_value_size, 
                 void *         param_value,
@@ -205,7 +205,7 @@ clGetDeviceInfo(cl_device_id   device,
       /* Return the first platform id, assuming this is the only
          platform id (which is currently always the case for pocl) */
       cl_platform_id platform_id;
-      clGetPlatformIDs(1, &platform_id, NULL);
+      POclGetPlatformIDs(1, &platform_id, NULL);
       POCL_RETURN_GETINFO(cl_platform_id, platform_id);
     }
   case CL_DEVICE_DOUBLE_FP_CONFIG                  :
@@ -233,3 +233,4 @@ clGetDeviceInfo(cl_device_id   device,
   }
   return CL_INVALID_VALUE;
 }
+POsym(clGetDeviceInfo)

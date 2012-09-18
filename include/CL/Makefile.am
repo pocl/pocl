@@ -22,7 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+if INSTALL_OPENCL_HEADERS
 library_includedir = $(includedir)/CL
 library_include_HEADERS = cl.h cl_ext.h			\
                           cl_gl.h cl_gl_ext.h		\
                           cl_platform.h opencl.h cl.hpp
+endif

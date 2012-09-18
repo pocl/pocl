@@ -34,6 +34,8 @@ missing APIs have been encountered in the test cases.
 
 (*) == Used by the opencl-book-samples. 
 (R) == Used by the Rodinia benchmark suite.
+(P) == Used by pyopencl
+(B) == Used by the Parboil benchmarks
 
   4. THE OPENCL PLATFORM LAYER
   
@@ -58,7 +60,7 @@ missing APIs have been encountered in the test cases.
 * 5.9 Event objects
   * clWaitForEvents (*)
 * 5.10 Markers, Barriers and Waiting for Events
-  * clEnqueueMarker (deprecated in OpenCL 1.2) (*)
+  * clEnqueueMarker (deprecated in OpenCL 1.2) (*, B)
 * 5.12 Profiling 
 
   6. THE OPENCL C PROGRAMMING LANGUAGE
@@ -76,6 +78,11 @@ missing APIs have been encountered in the test cases.
 * 9.7.6 Sharing memory objects that map to GL objects 
   between GL and CL contexts
   * clEnqueueAcquireGLObjects (*)
+
+  Miscellaneous
+
+* Passing structs as values to kernels (P), see
+  https://bugs.launchpad.net/pocl/+bug/987905
 
 Misc/laundry list
 -----------------

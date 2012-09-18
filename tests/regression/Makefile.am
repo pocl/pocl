@@ -26,13 +26,14 @@ noinst_PROGRAMS = test_barrier_between_for_loops test_early_return \
 	test_for_with_var_iteration_count test_id_dependent_computation \
 	test_locals test_loop_phi_replication test_multi_level_loops_with_barriers \
 	test_simple_for_with_a_barrier test_structs_as_args \
-	test_barrier_before_return test_infinite_loop test_constant_array
+	test_barrier_before_return test_infinite_loop test_constant_array \
+	test_undominated_variable
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-AM_LDFLAGS = ../../lib/CL/libpocl.la ../../lib/poclu/libpoclu.la @PTHREAD_LIBS@
-AM_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
+AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
+AM_CXXFLAGS = @OPENCL_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
 
 
 

@@ -24,11 +24,10 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
-#include "pocl_icd.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
-clCreateProgramWithSource(cl_context context,
+POclCreateProgramWithSource(cl_context context,
                           cl_uint count,
                           const char **strings,
                           const size_t *lengths,
@@ -67,7 +66,7 @@ clCreateProgramWithSource(cl_context context,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   program->source = source;
-  POCL_INIT_ICD_OBJECT(program);
+  program->compiler_options = NULL;
 
   for (i = 0; i < count; ++i)
     {
@@ -107,3 +106,4 @@ clCreateProgramWithSource(cl_context context,
     *errcode_ret = CL_SUCCESS;
   return program;
 }
+POsym(clCreateProgramWithSource)

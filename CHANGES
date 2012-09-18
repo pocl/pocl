@@ -1,18 +1,58 @@
 0.7  unreleased
 ===============
 
-OpenCL Platform Layer implementations (specs Chapter 4)
--------------------------------------------------------
+[changes updated from bzr log up to 2012-08-28]
 
+Overall
+-------
+- Support for LLVM 3.2 (svn). 
+
+Kernel Compiler Passes
+----------------------
+- Multiple bugs fixed from the work group vectorizer.
+- Updated metadata format pocl uses to pass information
+  to vectorization and TCE backend to simplify debuging.
+- Kernel pointer arguments are not always marked 'noalias' (restricted).
+  This probably was a specs misunderstanding.
+
+OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
+-------------------------------------------------------
 - clGetDeviceInfo can now use the hwloc lib for device property
   queries. Still to exploit fully.
+- clGetKernelInfo (initial implementation)
+- clGetMemObjectInfo (initial implementation)
+- clGetCommandQueueInfo (initial implementation)
+- clReleaseDevice
+- clRetainDevice
+- Proper freeing of devices in clReleaseContext
+
+The OpenCL Runtime Implementations (OpenCL 1.2 Chapter 5)
+---------------------------------------------------------
+- clBuildProgram: support for passing options to the compiler.
+
+OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+-------------------------------------------------------------------
+- Atomic Functions (6.12.11)
+- get_global_offset() was not linked correctly
 
 Framework
 ---------
 
 - Made it possible to override the .cl -> .bc build command
-  called by clBuildProgram per device. Used it to implement
-  calls to (custom) hardware operations in the TTA devices.
+  called by clBuildProgram per device. 
+
+Device Drivers
+--------------
+
+- tce: support for explicitly calling custom/special operations 
+  through the vendor extensions API
+
+Misc.
+-----
+
+- Fixes for MacOSX builds.
+- Fixed passing NULL as a buffer argument to clSetKernelArguments
+- ICD fixes 
 
 0.6   August 2012
 =================

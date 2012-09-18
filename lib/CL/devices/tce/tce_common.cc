@@ -241,6 +241,10 @@ pocl_tce_run
   kernelMdSymbolName += cmd->command.run.kernel->name;
   kernelMdSymbolName += "_md";
 
+  std::string userProgramBuildOptions;
+  if (cmd->command.run.kernel->program->compiler_options != NULL)
+      userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
+
   if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       char *llvm_ld;
@@ -278,7 +282,7 @@ pocl_tce_run
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
         std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
-        kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
+        userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
         " -g -O3 -o " + assemblyFileName;
 #ifdef DEBUG_TTA_DRIVER
@@ -331,8 +335,15 @@ pocl_tce_run
         }
       else if (cmd->command.run.kernel->arg_is_pointer[i])
         {
-          dev_cmd.args[i] = byteswap_uint32_t 
-            (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, d->needsByteSwap);
+          /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
+             that case we must pass the same NULL forward to the kernel.
+             Otherwise, the user must have created a buffer with per device
+             pointers stored in the cl_mem. */
+          if (al->value == NULL)
+            dev_cmd.args[i] = 0;
+          else
+            dev_cmd.args[i] = byteswap_uint32_t 
+              (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, d->needsByteSwap);
         }
       else /* The scalar values should be byteswapped by the user. */
         {

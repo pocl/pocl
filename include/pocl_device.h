@@ -62,8 +62,8 @@ typedef struct {
 typedef struct {
     /* The execution status of this queue slot. */
     uint32_t status ALIGN4;
-    /* The kernel to execute. Points to the metadata in the global scope
-       of the device local memory. It will be casted to a __kernel_metadata* */
+    /* The kernel to execute. Points to the metadata in the device global
+       memory. It will be casted to a __kernel_metadata* */
     uint32_t kernel ALIGN4;
     /* Pointers to the kernel arguments in the global memory. Will be
        casted to 32 bit void* */

@@ -26,8 +26,6 @@
 #ifndef __CL_PLATFORM_H
 #define __CL_PLATFORM_H
 
-#define __POCL__
-
 #ifdef __APPLE__
     /* Contains #defines for AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER below */
     #include <AvailabilityMacros.h>
@@ -47,9 +45,7 @@ extern "C" {
     #define CL_CALLBACK
 #endif
 
-
-/* #ifdef __APPLE__ */
-#if 0
+#ifdef __APPLE__
     #define CL_EXTENSION_WEAK_LINK                  __attribute__((weak_import))       
     #define CL_API_SUFFIX__VERSION_1_0              AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
     #define CL_EXT_SUFFIX__VERSION_1_0              CL_EXTENSION_WEAK_LINK AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
@@ -62,26 +58,11 @@ extern "C" {
     #define CL_EXT_SUFFIX__VERSION_1_0
     #define CL_API_SUFFIX__VERSION_1_1
     #define CL_EXT_SUFFIX__VERSION_1_1
-/*    #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED */
+    #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED __attribute__((deprecated))
     #define CL_API_SUFFIX__VERSION_1_2
     #define CL_EXT_SUFFIX__VERSION_1_2
-/*    #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED */
+    #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED __attribute__((deprecated))
 #endif
-
-/* FROM POCL START */
-/* TODO: try to somehow define these without modifying
-   this header copied from the OpenCL site. */
-#ifdef __GNUC__
-# define __DEPRECATED_ATTR \
-  __attribute__((__deprecated__))
-#else
-# define __DEPRECATED_ATTR
-#endif
-
-#define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED __DEPRECATED_ATTR
-#define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED __DEPRECATED_ATTR
-
-/* FROM POCL END */
 
 #if (defined (_WIN32) && defined(_MSC_VER))
 

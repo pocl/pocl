@@ -170,18 +170,10 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Funct
                 alternativeName << baseName.str();
                 if (copy_i > 0)
                   alternativeName << ".pocl_" << copy_i;
-#ifdef DEBUG_REFERENCE_FIXING
-                std::cout << "### trying to find alternative variable:" 
-                          << alternativeName.str() << std::endl;
-#endif
 
                 alternative = 
                   F.getValueSymbolTable().lookup(alternativeName.str());
 
-#ifdef DEBUG_REFERENCE_FIXING
-                if (alternative == NULL)
-                  std::cout << "### did not find it!" << std::endl;
-#endif
                 if (alternative != NULL)
                   {
                     ins->setOperand(opr, alternative);
@@ -189,7 +181,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Funct
                       break;
                   }
                      
-                if (copy_i > UINT_MAX && alternative == NULL)
+                if (copy_i > 10000 && alternative == NULL)
                   break; /* ran out of possibilities */
                 ++copy_i;
               } while (true);
@@ -205,6 +197,10 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Funct
 #ifdef DEBUG_REFERENCE_FIXING
                   std::cout << "### didn't found an alternative for" << std::endl;
                   operand->dump();
+                  std::cerr << "### BB:" << std::endl;
+                  operand->getParent()->dump();
+                  std::cerr << "### the user BB:" << std::endl;
+                  ins->getParent()->dump();
 #endif
                   std::cerr << "Could not find a dominating alternative variable." << std::endl;
                   abort();

@@ -23,11 +23,10 @@
 
 #include "devices/devices.h"
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
-clCreateContext(const cl_context_properties * properties,
+POclCreateContext(const cl_context_properties * properties,
                 cl_uint                       num_devices,
                 const cl_device_id *          devices,
                 void (CL_CALLBACK * pfn_notify)(const char *, const void *, size_t, void *),
@@ -45,18 +44,9 @@ clCreateContext(const cl_context_properties * properties,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
-	/* Step through the devices ptr - checking they are valid
-  num_devices = 0;
-  for (i = 0; i < POCL_NUM_DEVICES; ++i) {
-    if ((pocl_devices[i].type == device_type) &&
-	(pocl_devices[i].available == CL_TRUE))
-      ++num_devices;
-  }
-	*/
 
   context->num_devices = num_devices;
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
-  POCL_INIT_ICD_OBJECT(context);
   
   j = 0;
   for (i = 0; i < num_devices; ++i) 
@@ -70,6 +60,7 @@ clCreateContext(const cl_context_properties * properties,
           context->devices[j] = device_ptr;
           ++j;
         }
+      POclRetainDevice(device_ptr);
     }   
 
   context->properties = properties;
@@ -78,3 +69,4 @@ clCreateContext(const cl_context_properties * properties,
     *errcode_ret = CL_SUCCESS;
   return context;
 }
+POsym(clCreateContext)

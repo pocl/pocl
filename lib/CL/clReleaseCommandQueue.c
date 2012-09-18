@@ -24,9 +24,9 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+POclReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  clFinish(command_queue);
+  POclFinish(command_queue);
   POCL_RELEASE_OBJECT(command_queue);
   if (command_queue->pocl_refcount == 0)
     {
@@ -35,3 +35,4 @@ clReleaseCommandQueue(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
     }
   return CL_SUCCESS;
 }
+POsym(clReleaseCommandQueue)

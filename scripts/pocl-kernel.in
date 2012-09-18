@@ -84,7 +84,7 @@ cat >> ${output_file}.kernel_obj.c <<EOF
 void _${kernel}_workgroup(void** args, struct pocl_context*);
 void _${kernel}_workgroup_fast(void** args, struct pocl_context*);
 
-__kernel_metadata _${kernel}_md = {
+__attribute__((address_space(3))) __kernel_metadata _${kernel}_md = {
     "${kernel}", /* name */
     _${kernel}_NUM_ARGS, /* num_args */
     _${kernel}_NUM_LOCALS, /* num_locals */

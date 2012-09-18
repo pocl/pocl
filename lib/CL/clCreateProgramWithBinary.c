@@ -26,7 +26,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
-clCreateProgramWithBinary(cl_context                     context,
+POclCreateProgramWithBinary(cl_context                     context,
                           cl_uint                        num_devices,
                           const cl_device_id *           device_list,
                           const size_t *                 lengths,
@@ -60,6 +60,7 @@ clCreateProgramWithBinary(cl_context                     context,
   POCL_INIT_OBJECT(program);
   program->binary_sizes = NULL;
   program->binaries = NULL;
+  program->compiler_options = NULL;
 
   /* Allocate a continuous chunk of memory for all the binaries. */
   if ((program->binary_sizes = 
@@ -108,3 +109,4 @@ clCreateProgramWithBinary(cl_context                     context,
     *errcode_ret = CL_SUCCESS;
   return program;
 }
+POsym(clCreateProgramWithBinary)

@@ -22,12 +22,11 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include "utlist.h"
 #include <assert.h>
 
 CL_API_ENTRY void * CL_API_CALL
-clEnqueueMapBuffer(cl_command_queue command_queue,
+POclEnqueueMapBuffer(cl_command_queue command_queue,
                    cl_mem           buffer,
                    cl_bool          blocking_map, 
                    cl_map_flags     map_flags,
@@ -70,14 +69,14 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   /* Ensure the parent buffer is not freed prematurely. */
-  clRetainMemObject (buffer);
+  POclRetainMemObject (buffer);
   if (blocking_map != CL_TRUE)
     {
       POCL_ABORT_UNIMPLEMENTED();
     }
   else
     {
-      clFinish (command_queue);
+      POclFinish (command_queue);
     }
 
   if (event != NULL)
@@ -87,8 +86,7 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
         return (void*)CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POCL_INIT_ICD_OBJECT(*event);
-      clRetainCommandQueue (command_queue);
+      POclRetainCommandQueue (command_queue);
 
       POCL_PROFILE_QUEUED;
     }
@@ -115,3 +113,4 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
   POCL_SUCCESS ();
   return host_ptr;
 }
+POsym(clEnqueueMapBuffer)

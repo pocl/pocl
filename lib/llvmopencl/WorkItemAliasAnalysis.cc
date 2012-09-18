@@ -115,31 +115,37 @@ WorkItemAliasAnalysis::alias(const Location &LocA,
         if (valA->getMetadata("wi") && valB->getMetadata("wi")) {
             const MDNode* mdA = valA->getMetadata("wi");
             const MDNode* mdB = valB->getMetadata("wi");
-
             // Compare region ID. If they are same, different work items
             // imply no aliasing. If regions are different or work items
             // are same anything can happen.
             // Fall back to other AAs.
-            ConstantInt* C1 = dyn_cast<ConstantInt>(mdA->getOperand(1));
-            ConstantInt* C2 = dyn_cast<ConstantInt>(mdB->getOperand(1));
+            const MDNode* mdRegionA = dyn_cast<MDNode>(mdA->getOperand(1));
+            const MDNode* mdRegionB = dyn_cast<MDNode>(mdB->getOperand(1)); 
+            ConstantInt* C1 = dyn_cast<ConstantInt>(mdRegionA->getOperand(1));
+            ConstantInt* C2 = dyn_cast<ConstantInt>(mdRegionB->getOperand(1));
             if (C1->getValue() == C2->getValue()) {
                 // Now we have both locations from same region. Check for different
                 // work items.
-                int differs = 0;
-                for (unsigned int i = 2; i < mdA->getNumOperands() -1; i++) {
-                    // Last operand stores the line number in original bitcode
-                    // which is of no use to us here.
-                    ConstantInt *CA = dyn_cast<ConstantInt>(mdA->getOperand(i));
-                    ConstantInt *CB = dyn_cast<ConstantInt>(mdB->getOperand(i));
-                    if (CA->getValue() != CB->getValue()) {
-                        differs ++;
-                    }
-                }
-                if (differs != 0) {
+                MDNode* iXYZ= dyn_cast<MDNode>(mdA->getOperand(2));
+                MDNode* jXYZ= dyn_cast<MDNode>(mdB->getOperand(2));
+                assert(iXYZ->getNumOperands() == 4);
+                assert(jXYZ->getNumOperands() == 4);
+                
+                ConstantInt *CIX = dyn_cast<ConstantInt>(iXYZ->getOperand(1));
+                ConstantInt *CJX = dyn_cast<ConstantInt>(jXYZ->getOperand(1));
+                
+                ConstantInt *CIY = dyn_cast<ConstantInt>(iXYZ->getOperand(2));
+                ConstantInt *CJY = dyn_cast<ConstantInt>(jXYZ->getOperand(2));
+                
+                ConstantInt *CIZ = dyn_cast<ConstantInt>(iXYZ->getOperand(3));
+                ConstantInt *CJZ = dyn_cast<ConstantInt>(jXYZ->getOperand(3));
+                
+                if ( !(CIX->getValue() == CJX->getValue()
+                    && CIY->getValue() == CJY->getValue()
+                    && CIZ->getValue() == CJZ->getValue())) {
                     return NoAlias;
-                }
-            }
-        
+                }                
+            }        
         }
     }
   

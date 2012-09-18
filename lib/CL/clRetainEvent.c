@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clRetainEvent(cl_event  event ) CL_API_SUFFIX__VERSION_1_0
+POclRetainEvent(cl_event  event ) CL_API_SUFFIX__VERSION_1_0
 {
   if (event == NULL || event->queue == NULL)
     return CL_INVALID_EVENT;
@@ -11,3 +11,4 @@ clRetainEvent(cl_event  event ) CL_API_SUFFIX__VERSION_1_0
   return CL_SUCCESS;
 }
 
+POsym(clRetainEvent)

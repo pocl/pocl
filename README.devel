@@ -1,6 +1,6 @@
 This file contains documentation for pocl developers. It is not meant
-to be read by users (even from those buildign from source) so do not
-put here information thy might need.
+to be read by users (even from those building from source) so do not
+put here information they might need.
 THIS FILE IS NOT DISTRIBUTED.
 
 CONFIGURING
@@ -24,8 +24,8 @@ This will build pocl without optimization, which simplifies debugging.
 (This does not influence whether pocl will optimize the code that it
 generates from OpenCL source files.)
 
-The configure script will use the following special environment variables,
-if present or passed in the command line:
+The configure script will use special environment variables, if present or
+passed in the command line such as:
 
   CLANG       Program to compile kernels to bytecode
   CLFLAGS     Flags to be used when compiling CL sources
@@ -33,6 +33,46 @@ if present or passed in the command line:
               Parameters to for target compilation.
   HOST_CLANG_FLAGS
               Parameters to for host compilation.
+  ...
+
+All such special environment variables can be seen with the --help option
+of the configure script.
+
+TEST SUITE
+
+Before changes are committed to the mainline, all tests in the 'make check'
+suite should pass. As a minimum requirement the short test suite should
+be executed before committing as follows:
+
+ make check TESTSUITEFLAGS="-k \!long"
+
+Under the 'examples' directory there are placeholder directories for external
+OpenCL application projects which are used as test suites for pocl 
+(e.g. ViennaCL). These test suites can be enabled at configure time
+with --enable-testsuites (you can specify a list of test suites if you do not
+want to enabled all of them, see configure help for the available list).
+Note that these additionnal test suites require additionnal software (tools and
+libraries). The configure script check some of them but the check is not
+exhautive (patch welcome). Test suites are disabled if their requirement is not
+available.
+
+The pocl OpenCL implementation can be used directly or through an ICD loader.
+The --enable-tests-with-icd configure option allows to choose how tests are
+linked to pocl when running the 'make check' target. By default, if the ICD is
+built, tests are done through the ICD loader.
+
+IMPORTANT: using the ICD for in tree 'make check' requires the ocl-icd loader.
+Other ICD loaders wont be able to work in tree (they require the ICD config
+file to be installed in the system)
+
+To test as much as possible link options, it is recommended to configure
+pocl two times and run "make check" with both. One should be configurated with:
+
+  $src/configure --enable-icd --disable-direct-linkage ...
+
+And the second one with:
+
+  $src/configure --disable-icd --enable-direct-linkage ...
 
 MULTI-TARGET SUPPORT
 

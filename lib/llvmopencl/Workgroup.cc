@@ -165,7 +165,6 @@ Workgroup::runOnModule(Module &M)
     Function *L = createLauncher(M, i);
       
     L->addFnAttr(Attribute::NoInline);
-    noaliasArguments(L);
 
     privatizeContext(M, L);
 

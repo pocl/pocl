@@ -29,7 +29,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
+POclReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel k;
   char *env = NULL;
@@ -69,3 +69,4 @@ clReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
   return CL_SUCCESS;
 }
+POsym(clReleaseProgram)

@@ -30,10 +30,10 @@
 #include <map>
 #include <vector>
 #include "WorkitemHandler.h"
+#include "ParallelRegion.h"
 
 namespace pocl {
   class Workgroup;
-  class ParallelRegion;
 
   class WorkitemLoops : public pocl::WorkitemHandler {
 
@@ -47,17 +47,23 @@ namespace pocl {
 
   private:
 
+    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
+    typedef std::set<llvm::Instruction* > InstructionIndex;
+    typedef std::vector<llvm::Instruction* > InstructionVec;
+
+    InstructionIndex workGroupVariables;
+
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
 
     /* The global variables that store the current local id. */
     llvm::Value *localIdZ, *localIdY, *localIdX;
 
+    ParallelRegion::ParallelRegionVector *original_parallel_regions;
+
     unsigned size_t_width;
 
-    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::set<llvm::Instruction* > InstructionIndex;
-    typedef std::vector<llvm::Instruction* > InstructionVec;
+    std::map<std::string, llvm::Instruction*> contextArrays;
 
     virtual bool ProcessFunction(llvm::Function &F);
     void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
@@ -66,7 +72,16 @@ namespace pocl {
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore
         (llvm::Instruction *instruction, 
-         const InstructionIndex& instructionsInRegion);    
+         const InstructionIndex& instructionsInRegion);
+
+    llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
+    llvm::Instruction *AddContextRestore
+        (llvm::Instruction *instruction, llvm::Instruction *alloca, 
+         llvm::Instruction *before=NULL);
+    llvm::Instruction *GetContextArray(llvm::Instruction *val);
+    llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
+
+    ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
   };
 }
 
