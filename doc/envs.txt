@@ -75,11 +75,8 @@ If set to 1, indicates the vectorization of floating point operations is
 forbidden.
 
 POCL_VECTORIZE_MEM_ONLY                                                                                                                 
-
 If set to 1, indicates that only the memory access operations should be
 vectorized.
-
-
 
 POCL_WORK_GROUP_METHOD
 
@@ -87,5 +84,6 @@ The kernel compiler method to produce the work group functions from
 multiple work items. Legal values:
 
     workitemloops  -- create for-loops that execute the work items
-                      (experimental, under construction)
-    workitemrepl   -- replicate and chain all work items (the default)
+                      (default, under stabilization)
+    workitemrepl   -- replicate and chain all work items (deprecated)
+
