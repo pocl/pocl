@@ -52,6 +52,7 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/
 AT_CLEANUP
 
 POAT_VCL_SETUP([matrix_range-test], [long])
+AT_XFAIL_IF(true)
 POAT_VCL_CHECK_BUILD([matrix_range-test])
 AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/matrix_range-test 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/matrix_range-test.stdout`
@@ -111,6 +112,7 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/
 AT_CLEANUP
 
 POAT_VCL_SETUP([blas3], [long])
+AT_XFAIL_IF(true)
 POAT_VCL_CHECK_BUILD([blas3-test])
 AT_CHECK([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/blas3-test 2>&1 | grep passed | grep -v "incomplete" | wc -l], 0, 
 [121

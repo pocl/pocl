@@ -87,19 +87,11 @@ typedef union
   _cl_command_copy copy;
 } _cl_command_t;
 
-typedef enum
-{
-  CL_COMMAND_TYPE_READ,
-  CL_COMMAND_TYPE_WRITE,
-  CL_COMMAND_TYPE_RUN,
-  CL_COMMAND_TYPE_COPY
-} _cl_command_en;
-
 // one item in the command queue
 typedef struct
 {
   _cl_command_t command;
-  _cl_command_en type;
+  cl_command_type type;
   void *next; // for linked-list storage
   cl_event event;
 } _cl_command_node;

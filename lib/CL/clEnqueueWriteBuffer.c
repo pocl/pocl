@@ -105,7 +105,7 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
     if (cmd == NULL)
       return CL_OUT_OF_HOST_MEMORY;
 
-    cmd->type = CL_COMMAND_TYPE_WRITE;
+    cmd->type = CL_COMMAND_WRITE_BUFFER;
     cmd->command.write.data = device->data;
     cmd->command.write.host_ptr = ptr;
     cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;

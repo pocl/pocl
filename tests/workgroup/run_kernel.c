@@ -132,6 +132,7 @@ main (int argc, char **argv)
 			       global_work_size, local_work_size,  
 			       0, NULL, NULL); 
 
+  clFinish(cmd_queue);
   clReleaseKernel(kernel); 
   clReleaseProgram(program); 
   clReleaseCommandQueue(cmd_queue); 
