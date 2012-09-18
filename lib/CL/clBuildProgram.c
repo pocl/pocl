@@ -51,19 +51,28 @@ POclBuildProgram(cl_program program,
   cl_device_id *real_device_list;
   /* The default build script for .cl files. */
   char *pocl_build_script;
-
-  if (options != NULL)
-    POCL_WARN_INCOMPLETE();
+  char *user_options = "";
 
   if (program == NULL)
     return CL_INVALID_PROGRAM;
+
+  if (options != NULL)
+    {
+      user_options = options;
+      program->compiler_options = strdup(options);
+    }
+  else
+    {
+      free(program->compiler_options);
+      program->compiler_options = NULL;        
+    }
 
   if (program->source == NULL && program->binaries == NULL)
     return CL_INVALID_PROGRAM;
 
   if ((num_devices > 0 && device_list == NULL) ||
       (num_devices == 0 && device_list != NULL))
-      return CL_INVALID_VALUE;
+    return CL_INVALID_VALUE;
       
   if (num_devices == 0)
     {
@@ -129,14 +138,18 @@ POclBuildProgram(cl_program program,
           if (real_device_list[device_i]->llvm_target_triplet != NULL)
             {
               error = snprintf(command, COMMAND_LENGTH,
-                               "%s -t %s -o %s %s", pocl_build_script,
+                               "USER_OPTIONS=\"%s\" %s -t %s -o %s %s", 
+                               user_options,
+                               pocl_build_script,
                                device->llvm_target_triplet,                               
                                binary_file_name, source_file_name);
             }
           else 
             {
               error = snprintf(command, COMMAND_LENGTH,
-                               "%s -o %s %s", pocl_build_script,
+                               "USER_OPTIONS=\"%s\" %s -o %s %s", 
+                               user_options,
+                               pocl_build_script,
                                binary_file_name, source_file_name);
             }
           

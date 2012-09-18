@@ -60,6 +60,7 @@ POclCreateProgramWithBinary(cl_context                     context,
   POCL_INIT_OBJECT(program);
   program->binary_sizes = NULL;
   program->binaries = NULL;
+  program->compiler_options = NULL;
 
   /* Allocate a continuous chunk of memory for all the binaries. */
   if ((program->binary_sizes = 

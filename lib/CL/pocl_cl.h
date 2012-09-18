@@ -379,6 +379,8 @@ struct _cl_program {
   cl_device_id *devices;
   /* all the program sources appended together, terminated with a zero */
   char *source;
+  /* The options in the last clBuildProgram call for this Program. */
+  char *compiler_options;
   /* The binaries for each device. Currently the binary is directly the
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 

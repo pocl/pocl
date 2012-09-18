@@ -28,7 +28,7 @@ AT_CLEANUP
 
 POAT_ROD_SETUP([bfs])
 POAT_ROD_CHECK_BUILD([bfs], [ | egrep -v "^CLHelper.h:|^In file included from bfs.cpp:" ])
-AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run 2>&1|grep -v "incomplete" | grep .], 0,
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run 2>&1|grep -v "incomplete" | grep -v "argument unused" | grep .], 0,
 [Reading File
 --cambine:passed:-)
 ])
