@@ -235,6 +235,7 @@ ParallelRegion::purge()
         // This successor is not on the parallel region, purge.
         iterator next_block = i;
         ++next_block;
+        assert ((*i)->getParent() != NULL && *next_block != NULL);
         BasicBlock *unreachable =
           BasicBlock::Create((*i)->getContext(),
                              (*i)->getName() + ".unreachable",
@@ -314,11 +315,10 @@ ParallelRegion::dumpNames()
     {
       std::cout << (*i)->getName().str();
       if (entryBB() == (*i)) 
-        std::cout << "(EN) ";
-      else if (exitBB() == (*i))
-        std::cout << "(EX) ";
-      else
-        std::cout << " ";
+        std::cout << "(EN)";
+      if (exitBB() == (*i))
+        std::cout << "(EX)";
+      std::cout << " ";
     }
   std::cout << std::endl;
 }

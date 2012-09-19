@@ -158,7 +158,8 @@ WorkitemLoops::runOnFunction(Function &F)
   //F.viewCFG();
 #endif
 
-  pocl::WorkitemHandler::runOnFunction(F);
+  // this breaks cutcp/Parboil
+  //pocl::WorkitemHandler::runOnFunction(F);
   return changed;
 }
 

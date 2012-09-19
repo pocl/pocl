@@ -539,8 +539,7 @@ namespace {
             
             for ( ; J != End; ) {
                 
-                if (!(I->isIdenticalTo(J)                    
-                    && areInstsCompatibleFromDifferentWi(I,J))) {
+                if (isa<AllocaInst>(I) || !I->isIdenticalTo(J)) {
                     J = llvm::next(J);
                     continue;
                 } else {

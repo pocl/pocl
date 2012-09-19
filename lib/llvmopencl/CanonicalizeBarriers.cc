@@ -44,8 +44,6 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
-  AU.addPreserved<DominatorTree>();
-  AU.addPreserved<LoopInfo>();
 }
 
 bool
@@ -175,6 +173,34 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
     b->setName(new_b->getName() + ".prebarrier");
     changed = true;
   }
+
+  /* Prune empty regions. That is, if there are two successive
+     barriers, remove the other one. */
+  bool emptyRegionDeleted = false;  
+  do {
+    emptyRegionDeleted = false;
+    for (Function::iterator i = F.begin(), e = F.end();
+         i != e; ++i) 
+      {
+        BasicBlock *b = i;
+        llvm::TerminatorInst *t = b->getTerminator();
+        if (!Barrier::endsWithBarrier(b) || t->getNumSuccessors() != 1) continue;
+
+        BasicBlock *successor = t->getSuccessor(0);
+
+        if (Barrier::hasOnlyBarrier(successor) && 
+            successor->getSinglePredecessor() == b &&
+            successor->getTerminator()->getNumSuccessors() == 1)
+          {
+            b->getTerminator()->setSuccessor(0, successor->getTerminator()->getSuccessor(0));
+            successor->eraseFromParent();
+            emptyRegionDeleted = true;
+            changed = true;
+            break;
+          }
+      }
+  } while (emptyRegionDeleted);
+  
 
   return changed;
 }
