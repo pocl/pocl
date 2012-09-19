@@ -109,7 +109,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
   //std::cerr << "### processed:" << std::endl;
   //F.viewCFGOnly();
-  pocl::WorkitemHandler::runOnFunction(F);
+  changed |= pocl::WorkitemHandler::runOnFunction(F);
   return changed;
 }
 
