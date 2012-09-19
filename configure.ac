@@ -270,9 +270,9 @@ AS_CASE(["$tests_with_icd,$icd,$oclsym"],
   [AC_MSG_ERROR([Invalid value for --enable-tests-with-icd])]) 
 
 if test x"$tests_with_icd" = xyes; then
-  PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], [
-    OCL_ICD_available=yes
-  ], [
+  PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], 
+  [], 
+  [
     AC_MSG_WARN([Tests through ICD loaded enabled but OpenCL.pc file installed by ocl-icd seems missing])
     if test -z "$OPENCL_LIBS"; then
       OPENCL_LIBS="-lOpenCL"
