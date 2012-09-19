@@ -7,30 +7,30 @@ m4_define([POAT_VCL_SETUP],[
 ])
 dnl POAT_VCL_CHECK_BUILD(name)
 m4_define([POAT_VCL_CHECK_BUILD],[
-  AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build $1 2>&1 | grep 'Built target' | sed -e 's/^.*Built/Built/' ], 0,
+  AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build $1 2>&1 | grep 'Built target' | sed -e 's/^.*Built/Built/' ], 0,
 [Built target $1
 ])
 ])
 
-AT_BANNER([ViennaCL 1.2.0 tests])
+AT_BANNER([ViennaCL 1.3.1 tests])
 
 AT_SETUP([Initialize the build with cmake])
 AT_KEYWORDS([viennacl build])
 AT_SKIP_IF([AS_CASE([" POAT_TESTSUITES "],[*" ViennaCL "*],[],[false])])
 AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ build], ignore, ignore, ignore)
-AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build kernels], ignore, ignore, ignore)
+AT_CHECK([make -sC $abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build kernels], ignore, ignore, ignore)
 AT_CLEANUP
 
 POAT_VCL_SETUP([fft])
 POAT_VCL_CHECK_BUILD([fft])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/fft 2>&1| grep SUCCESS], 0,
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/examples/tutorial/fft 2>&1| grep SUCCESS], 0,
 [$(cat $abs_top_srcdir/examples/ViennaCL/fft.stdout)
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([iterators-test])
 POAT_VCL_CHECK_BUILD([iterators-test])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/iterators-test 2>&1 | grep -v "incomplete"], 0,
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/iterators-test 2>&1 | grep -v "incomplete"], 0,
 [$(cat $abs_top_srcdir/examples/ViennaCL/iterators-test.stdout)
 
 ])
@@ -38,15 +38,14 @@ AT_CLEANUP
 
 POAT_VCL_SETUP([custom-context])
 POAT_VCL_CHECK_BUILD([custom-context])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/custom-context 2>&1 | egrep -v "context|basic|pthread|incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/examples/tutorial/custom-context 2>&1 | egrep -v "context|basic|pthread|incomplete"], 0, 
 [`cat $abs_top_builddir/examples/ViennaCL/custom-context.stdout`
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([matrix-test], [long])
-AT_SKIP_IF([true])
 POAT_VCL_CHECK_BUILD([matrix-test])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/matrix-test 2>&1 | grep passed | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/matrix-test 2>&1 | grep passed | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/matrix-test.stdout`
 ])
 AT_CLEANUP
@@ -54,14 +53,14 @@ AT_CLEANUP
 POAT_VCL_SETUP([matrix_range-test], [long])
 AT_XFAIL_IF(true)
 POAT_VCL_CHECK_BUILD([matrix_range-test])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/matrix_range-test 2>&1 | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/matrix_range-test 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/matrix_range-test.stdout`
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([scalar-test])
 POAT_VCL_CHECK_BUILD([scalar-test])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/scalar-test 2>&1 | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/scalar-test 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/scalar-test.stdout`
 
 ])
@@ -69,14 +68,14 @@ AT_CLEANUP
 
 POAT_VCL_SETUP([sparse-test])
 POAT_VCL_CHECK_BUILD([sparse-test])
-AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests; ./sparse-test 2>&1 | grep passed | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests; ./sparse-test 2>&1 | grep passed | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/sparse-test.stdout`
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([structured-matrices-test])
 POAT_VCL_CHECK_BUILD([structured-matrices-test])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/structured-matrices-test 2>&1 | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/structured-matrices-test 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/structured-matrices-test.stdout`
 
 ])
@@ -84,7 +83,7 @@ AT_CLEANUP
 
 POAT_VCL_SETUP([vectorbench])
 POAT_VCL_CHECK_BUILD([vectorbench])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/benchmarks/vectorbench 2>&1 | grep Vector], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/examples/benchmarks/vectorbench 2>&1 | grep Vector], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/vectorbench.stdout`
 ])
 AT_CLEANUP
@@ -92,36 +91,37 @@ AT_CLEANUP
 POAT_VCL_SETUP([vector-test])
 AT_XFAIL_IF(true)
 POAT_VCL_CHECK_BUILD([vector-test])
-AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/; ./vector-test], 0, 
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/; ./vector-test], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/vector-test.stdout`
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([vector_range-test], [long])
+AT_XFAIL_IF(true)
 POAT_VCL_CHECK_BUILD([vector_range-test])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/vector_range-test 2>&1 | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/vector_range-test 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/vector_range-test.stdout`
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([blas1], [long])
 POAT_VCL_CHECK_BUILD([blas1])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/tutorial/blas1 2>&1 | grep -v "incomplete"], 0, 
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/examples/tutorial/blas1 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/blas1.stdout`
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([blas3], [long])
-AT_XFAIL_IF(true)
+AT_XFAIL_IF([true])
 POAT_VCL_CHECK_BUILD([blas3-test])
-AT_CHECK([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/tests/blas3-test 2>&1 | grep passed | grep -v "incomplete" | wc -l], 0, 
+AT_CHECK([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/blas3-test 2>&1 | grep passed | grep -v "incomplete" | wc -l], 0, 
 [121
 ])
 AT_CLEANUP
 
 POAT_VCL_SETUP([openclbench])
 POAT_VCL_CHECK_BUILD([openclbench])
-AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.2.0-src/build/examples/benchmarks/openclbench 2>&1| grep "Result of operation"], 0,
+AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/examples/benchmarks/openclbench 2>&1| grep "Result of operation"], 0,
 [Result of operation on host: 104839
 Result of operation via OpenCL: 104839
 ])

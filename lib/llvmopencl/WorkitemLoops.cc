@@ -159,7 +159,7 @@ WorkitemLoops::runOnFunction(Function &F)
 #endif
 
   // this breaks cutcp/Parboil
-  //pocl::WorkitemHandler::runOnFunction(F);
+  //changed |= pocl::WorkitemHandler::runOnFunction(F);
   return changed;
 }
 
