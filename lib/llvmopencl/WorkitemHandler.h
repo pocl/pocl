@@ -42,7 +42,7 @@ namespace pocl {
   WorkitemHandler(char ID) : FunctionPass(ID) {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
-    virtual bool runOnFunction(llvm::Function &F) = 0;
+    virtual bool runOnFunction(llvm::Function &F);
 
     virtual void CheckLocalSize(pocl::Kernel *K);
 

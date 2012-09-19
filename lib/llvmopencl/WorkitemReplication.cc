@@ -92,6 +92,7 @@ WorkitemReplication::runOnFunction(Function &F)
 #endif
 
   changed |= fixUndominatedVariableUses(DT, F);
+  pocl::WorkitemHandler::runOnFunction(F);
   return changed;
 }
 

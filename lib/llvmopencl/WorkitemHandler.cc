@@ -49,6 +49,29 @@ cl::opt<bool>
 AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
   cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
+bool
+WorkitemHandler::runOnFunction(Function &F)
+{
+   // Move all allocate instruction of the function to the 
+   // beginning of the first basic block of the function.
+   // This solves problem with dynamic stack objects that are 
+   // not supported by the TCE target.
+   Function::iterator I                   = F.begin();
+   Instruction *firstInsertionPt = (I++)->getFirstInsertionPt();
+    
+   bool changed = false;
+   for (Function::iterator E = F.end(); I != E; ++I) {
+     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
+       AllocaInst *allocaInst = dyn_cast<AllocaInst>(BI++);
+       if (allocaInst && isa<ConstantInt>(allocaInst->getArraySize())) {
+         allocaInst->moveBefore(firstInsertionPt);
+         changed = true;
+       }
+     }
+   }
+    return changed;
+}
+
 void
 WorkitemHandler::CheckLocalSize(Kernel *K)
 {
