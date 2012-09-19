@@ -52,17 +52,10 @@ preprocessed_file=${output_file}.i
 
 if [ -f @abs_top_srcdir@/include/_kernel.h ]
 then 
-    @CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 else
-    @CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -D__global=__pocl_global -Dglobal=__pocl_global -D__constant=__pocl_constant -Dconstant=__pocl_constant -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
+    @CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
 fi
 
-substituted_file=${preprocessed_file}.cl
-
-cat ${preprocessed_file} | \
-sed 's/__pocl_global/__attribute__ ((address_space(3)))/g' |							\
-sed 's/__pocl_constant/__attribute__ ((address_space(5)))/g'							\
-> ${substituted_file}
-
-@CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${substituted_file}
+@CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
 

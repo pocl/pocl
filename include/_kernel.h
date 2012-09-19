@@ -65,17 +65,23 @@
 /* A static assert statement to catch inconsistencies at build time */
 #define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
 
-/* Let's try to make things easier for post-preprocessing pass. */
-#define kernel __kernel
-#define local __local
+/* Use fixed address space id for all but local address space.
 
-/* #define __global __attribute__ ((address_space(3))) */
-/* #define __local __attribute__ ((address_space(4))) */
-/* #define __constant __attribute__ ((address_space(5))) */
+   This is to ensure we do not lose the information of the
+   OpenCL address space in the Clang for targets (basically regular CPUs)
+   that map all them to 0. 
 
-/* #define global __attribute__ ((address_space(3))) */
-/* #define local __attribute__ ((address_space(4))) */
-/* #define constant __attribute__ ((address_space(5))) */
+   local is left as is because it needs special handling in Clang.
+   Automated local variables must be converted by it to special global
+   variables which are handled by pocl kernel compiler passes.
+
+   This mess will be cleaned up at latest when SPIR and its standard
+   address space numbers gets finished and implemented in Clang. */
+#define __global __attribute__ ((address_space(3))) 
+#define __constant __attribute__ ((address_space(5))) 
+
+#define global __attribute__ ((address_space(3)))
+#define constant __attribute__ ((address_space(5))) 
 
 typedef enum {
   CLK_LOCAL_MEM_FENCE = 0x1,
