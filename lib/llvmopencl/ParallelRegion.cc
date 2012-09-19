@@ -51,7 +51,6 @@ using namespace pocl;
 //#define DEBUG_REMAP
 //#define DEBUG_REPLICATE
 //#define DEBUG_PURGE
-//#define DEBUG_PR_CREATION
 
 #include <iostream>
 
@@ -184,9 +183,11 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   if (t->getNumSuccessors() != 1)
     {
       std::cout << "!!! trying to chain region" << std::endl;
-      this->dump();
+      this->dumpNames();
       std::cout << "!!! after region" << std::endl;
-      region->dump();
+      region->dumpNames();
+      t->getParent()->dump();
+      
       assert (t->getNumSuccessors() == 1);
     }
   
@@ -226,6 +227,7 @@ ParallelRegion::purge()
         // This successor is not on the parallel region, purge.
         iterator next_block = i;
         ++next_block;
+        assert ((*i)->getParent() != NULL && *next_block != NULL);
         BasicBlock *unreachable =
           BasicBlock::Create((*i)->getContext(),
                              (*i)->getName() + ".unreachable",
@@ -294,7 +296,14 @@ void
 ParallelRegion::dumpNames()
 {
   for (iterator i = begin(), e = end(); i != e; ++i)
-    std::cout << (*i)->getName().str() << " ";
+    {
+      std::cout << (*i)->getName().str();
+      if (entryBB() == (*i)) 
+        std::cout << "(EN)";
+      if (exitBB() == (*i))
+        std::cout << "(EX)";
+      std::cout << " ";
+    }
   std::cout << std::endl;
 }
 
@@ -453,9 +462,22 @@ ParallelRegion::AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before
        
 }
 
-
 bool 
 ParallelRegion::HasBlock(llvm::BasicBlock *bb)
 {
     return find(begin(), end(), bb) != end();
+}
+
+void
+ParallelRegion::SetExitBB(llvm::BasicBlock *block)
+{
+  for (size_t i = 0; i < size(); ++i)
+    {
+      if (at(i) == block) 
+        {
+          setExitBBIndex(i);
+          return;
+        }
+    }
+  assert (false && "The block was not found in the PRegion!");
 }

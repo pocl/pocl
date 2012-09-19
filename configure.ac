@@ -682,7 +682,6 @@ AC_OUTPUT
 
 #Print a summary of selected options:
 echo
-echo "                  SUMMARY"
 echo =======================================================================
 echo
 echo Using LLVM version $LLVM_VERSION from $($LLVM_CONFIG --prefix)
@@ -716,6 +715,12 @@ else
  echo "Linking directly with libpocl will not work."
 fi
 echo
-echo
 
+if test ! -z $TCE_AVAILABLE;
+then
+ echo "Enabling the TCE device driver."
+fi
+
+echo
+echo =======================================================================
 

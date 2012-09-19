@@ -1,1 +1,1 @@
-./configure --enable-testsuites=all --disable-icd
+./configure --enable-testsuites=all --disable-icd --enable-debug
