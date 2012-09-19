@@ -65,13 +65,12 @@ AT_CHECK_UNQUOTED([make run-sad -sC $abs_top_builddir/examples/Parboil | grep Pa
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
-POAT_PB_SETUP([bfs])
+POAT_PB_SETUP([bfs], [bfs-parboil long])
+#AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([bfs])
-AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil 2>&1 | grep Pass], 0,
 [Pass
 ])
-# Requires atomic_min for a AS3 (global) pointer
-AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([histo])

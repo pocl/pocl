@@ -114,7 +114,7 @@ build-bfs: build-prepare
 	cd ${testsuite_src_dir} ; ./parboil compile bfs opencl_base 
 
 run-bfs: 
-	cd ${testsuite_src_dir} ; ./parboil run bfs opencl_base 1M
+	cd ${testsuite_src_dir} ; ./parboil run bfs opencl_base NY
 
 build-histo: build-prepare
 	cd ${testsuite_src_dir} ; ./parboil compile histo opencl_base 
