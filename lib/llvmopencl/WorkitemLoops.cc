@@ -447,7 +447,7 @@ WorkitemLoops::ProcessFunction(Function &F)
         llvm::BasicBlock *lastBB = 
           AppendIncBlock(original->exitBB(), localIdX);
         original->AddBlockAfter(lastBB, original->exitBB());
-        original->setExitBBIndex(original->size()-1);
+        original->SetExitBB(lastBB);
 
         if (AddWIMetadata)
           original->AddIDMetadata(F.getContext(), 0);

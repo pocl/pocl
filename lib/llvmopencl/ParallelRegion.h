@@ -65,6 +65,7 @@ class Kernel;
     void dumpNames();
     void setEntryBBIndex(std::size_t index) { entryIndex_ = index; }
     void setExitBBIndex(std::size_t index) { exitIndex_ = index; }
+    void SetExitBB(llvm::BasicBlock *block);
     void AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before);
     void AddBlockAfter(llvm::BasicBlock *block, llvm::BasicBlock *after);
 

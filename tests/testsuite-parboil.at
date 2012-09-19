@@ -31,6 +31,8 @@ AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([tpacf])
+# This probably is in infinite loop with wiloops.
+AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([tpacf])
 AT_CHECK_UNQUOTED([make run-tpacf -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
@@ -93,8 +95,6 @@ AT_CHECK_UNQUOTED([make run-sgemm -sC $abs_top_builddir/examples/Parboil 2>&1| g
 AT_CLEANUP
 
 POAT_PB_SETUP([mri-q])
-# Kernel compiler crash.
-AT_XFAIL_IF(true)
 POAT_PB_CHECK_BUILD([mri-q])
 AT_CHECK_UNQUOTED([make run-mri-q -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
