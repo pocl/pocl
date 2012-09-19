@@ -99,7 +99,7 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
   fi
-  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.2.0-src.tar.gz" ; then
+  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.3.1-src.tar.gz" ; then
     enable_testsuite_viennacl=yes
   fi
   if test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
@@ -719,8 +719,8 @@ echo
 if test ! -z $TCE_AVAILABLE;
 then
  echo "Enabling the TCE device driver."
+ echo
 fi
-
+echo Enabled testsuites: $POAT_TESTSUITES
 echo
-echo =======================================================================
 
