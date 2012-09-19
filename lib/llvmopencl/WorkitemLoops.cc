@@ -158,6 +158,7 @@ WorkitemLoops::runOnFunction(Function &F)
   //F.viewCFG();
 #endif
 
+  pocl::WorkitemHandler::runOnFunction(F);
   return changed;
 }
 
