@@ -110,7 +110,6 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regressio
 AT_CLEANUP
 
 AT_SETUP([passing a constant array as an arg - lp:#1032203])
-AT_XFAIL_IF(true)
 AT_KEYWORDS([regression const-array])
 AT_CHECK([$abs_top_builddir/tests/regression/test_constant_array], 0)
 AT_CLEANUP

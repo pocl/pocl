@@ -49,9 +49,9 @@ rm -f ${header}
 
 if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
 then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+    @OPT@ -load=@pkglibdir@/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 fi
 
 @CLANG@ -c -o ${output_file}.o -x c - <<EOF

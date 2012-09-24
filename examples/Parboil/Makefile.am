@@ -33,7 +33,7 @@ datasets_tarfile=pb2.5datasets_standard.tgz
 
 .PHONY: build
 
-all: $(testsuite_src_dir) build
+all: build-prepare
 
 ${srcdir}/${driver_tarfile}:
 	@echo 'You need to download $@ to "$(srcdir)"'
@@ -59,18 +59,15 @@ $(testsuite_src_dir):
 	tar xvzf ../${benchmarks_tarfile} && \
 	tar xvzf ../${datasets_tarfile}
 
-# Parboil tests are built in place and its source tree is modified.
-# So, copying the source tree in our build tree if required
-# (ie if $(srcdir) is not $(CURDIR) )
 build-prepare: $(testsuite_src_dir)
 # The OpenCL benchmarks want GPU devices. Change to CPU devices using
 # sed.
-	cd $(testsuite_src_dir) && \
+	@cd $(testsuite_src_dir) && \
 	find -name "*.c" -o -name "*.cc" -o -name "*.cpp" | \
 	grep opencl | \
 	xargs sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g'
-	cd ${testsuite_pocl_dir} && patch -sNp0 < opencl.mk.patch || true
-	echo -e "OPENCL_PATH=${abs_top_srcdir}/include\nOPENCL_LIB_PATH=${abs_top_builddir}/lib/CL/.libs" > ${testsuite_src_dir}/common/Makefile.conf
+	@cd ${testsuite_pocl_dir} && patch -sNp0 < opencl.mk.patch > /dev/null || true
+	@echo -e "OPENCL_PATH=${abs_top_srcdir}/include\nOPENCL_LIB_PATH=${abs_top_builddir}/lib/CL/.libs" > ${testsuite_src_dir}/common/Makefile.conf
 
 src=rodinia_2.0.1/opencl
 
@@ -145,6 +142,8 @@ build: build-spmv build-stencil build-tpacf build-cutcp build-mri-gridding build
 
 clean-local:
 	$(RM) -r parboil
+
+check-local: build
 
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
