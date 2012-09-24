@@ -1,0 +1,67 @@
+diff -x '*~' -ur /home/visit0r/Downloads/parboil/benchmarks//histo/src/opencl_base/histo_main.cl benchmarks//histo/src/opencl_base/histo_main.cl
+--- /home/visit0r/Downloads/parboil/benchmarks//histo/src/opencl_base/histo_main.cl	2012-03-01 04:44:29.000000000 +0200
++++ benchmarks//histo/src/opencl_base/histo_main.cl	2012-09-18 18:26:49.000000000 +0300
+@@ -39,7 +39,7 @@
+ 
+ void testIncrementLocal (
+         __global unsigned int *global_overflow,
+-        __local unsigned int smem[KB][256],
++        __local unsigned int* smem,
+         const unsigned int myRange,
+         const uchar4 sm)
+ {
+@@ -97,7 +97,7 @@
+         }
+ }
+ 
+-void clearMemory (__local unsigned int smem[KB][256])
++void clearMemory (__local unsigned int* smem)
+ {
+         for (int i = get_local_id(0), blockDimx = get_local_size(0); i < BINS_PER_BLOCK / 4; i += blockDimx)
+         {
+@@ -105,7 +105,7 @@
+         }
+ }
+ 
+-void copyMemory (__global unsigned int *dst, __local unsigned int src[KB][256])
++void copyMemory (__global unsigned int *dst, __local unsigned int* src)
+ {
+         for (int i = get_local_id(0), blockDimx = get_local_size(0); i < BINS_PER_BLOCK/4; i += blockDimx)
+         {
+@@ -139,7 +139,7 @@
+         unsigned int local_scan_range = sm_range_min + get_group_id(1);
+         unsigned int local_scan_load = get_group_id(0) * blockDimx + get_local_id(0);
+ 
+-        clearMemory (sub_histo);
++        clearMemory (&sub_histo[0][0]);
+         barrier(CLK_LOCAL_MEM_FENCE); //mem_fence(CLK_GLOBAL_MEM_FENCE);//        __syncthreads();
+ 
+         if (get_group_id(1) == 0 )
+diff -x '*~' -ur /home/visit0r/Downloads/parboil/benchmarks//mri-gridding/src/opencl_base/scanLargeArray.cl benchmarks//mri-gridding/src/opencl_base/scanLargeArray.cl
+--- /home/visit0r/Downloads/parboil/benchmarks//mri-gridding/src/opencl_base/scanLargeArray.cl	2012-03-01 04:44:35.000000000 +0200
++++ benchmarks//mri-gridding/src/opencl_base/scanLargeArray.cl	2012-09-20 18:56:34.000000000 +0300
+@@ -13,7 +13,7 @@
+ 
+ //#define CONFLICT_FREE_OFFSET(index) ((index) >> LOG_NUM_BANKS + (index) >> (2*LOG_NUM_BANKS))
+ #define LNB LOG_NUM_BANKS
+-#define CONFLICT_FREE_OFFSET(index) (((unsigned int)(index) >> min((unsigned int)(LNB)+(index), (unsigned int)(32-(2*LNB))))>>(2*LNB))
++#define CONFLICT_FREE_OFFSET(index) (((unsigned int)(index) >> min((unsigned int)((LNB)+(index)), (unsigned int)((32-(2*LNB))))>>(2*LNB)))
+ #define EXPANDED_SIZE(__x) (__x+(__x>>LOG_NUM_BANKS)+(__x>>(2*LOG_NUM_BANKS)))
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+diff -x '*~' -ur /home/visit0r/Downloads/parboil/benchmarks//mri-gridding/src/opencl_base/sort.cl benchmarks//mri-gridding/src/opencl_base/sort.cl
+--- /home/visit0r/Downloads/parboil/benchmarks//mri-gridding/src/opencl_base/sort.cl	2012-03-01 04:44:34.000000000 +0200
++++ benchmarks//mri-gridding/src/opencl_base/sort.cl	2012-09-21 13:24:35.000000000 +0300
+@@ -15,10 +15,10 @@
+ #define SORT_BS 256
+ 
+ //#define CONFLICT_FREE_OFFSET(index) ((index) >> LNB + (index) >> (2*LNB))
+-#define CONFLICT_FREE_OFFSET(index) (((unsigned int)(index) >> min((unsigned int)(LNB)+(index), (unsigned int)(32-(2*LNB))))>>(2*LNB))
++#define CONFLICT_FREE_OFFSET(index) (((unsigned int)(index) >> min((unsigned int)((LNB)+(index)), (unsigned int)((32-(2*LNB))))>>(2*LNB)))
+ #define BLOCK_P_OFFSET (4*SORT_BS+1+(4*SORT_BS+1)/16+(4*SORT_BS+1)/64)
+ 
+-void scan (__local unsigned int s_data[BLOCK_P_OFFSET]){
++void scan (__local unsigned int *s_data){
+   unsigned int thid = get_local_id(0);
+ 
+   barrier(CLK_LOCAL_MEM_FENCE ); //__syncthreads();

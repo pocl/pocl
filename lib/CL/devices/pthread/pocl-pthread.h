@@ -42,7 +42,7 @@ GEN_PROTOTYPES (basic)
   3, /* max_work_item_dimensions */					\
   /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */ \
   /* and may avoid errors in user code that uses int instead of size_t */ \
-  {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX}, /* max_work_item_sizes */       \
+  {1024, 1024, 1024}, /* max_work_item_sizes */       \
   1024, /* max_work_group_size */					\
   8, /* preferred_wg_size_multiple */                                   \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \

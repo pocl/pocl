@@ -15,6 +15,9 @@ Kernel Compiler Passes
   to vectorization and TCE backend to simplify debuging.
 - Kernel pointer arguments are not always marked 'noalias' (restricted).
   Doing this previously was a specs misunderstanding.
+- ConstantGEPs to static variables generated from automated
+  locals caused problems. Now converting them to normal GEPs
+  using a pass from the SAFECode project.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
