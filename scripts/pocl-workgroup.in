@@ -130,10 +130,17 @@ else
 METHOD_PASS=$POCL_WORK_GROUP_METHOD
 fi
 
+if test "x$METHOD_PASS" = "xworkitemloops";
+then
+PHITOALLOCA="-phistoallocas"
+else
+PHITOALLOCA=""
+fi
+
 #set -x
 
 @OPT@ -load=${pocl_lib} -break-constgeps -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
+    -globaldce -simplifycfg -loop-simplify ${PHITOALLOCA} -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -${METHOD_PASS} -workgroup \
     -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
     ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}

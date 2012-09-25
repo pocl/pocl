@@ -57,7 +57,7 @@ WorkitemHandler::WorkitemHandler(char ID) : FunctionPass(ID)
 bool
 WorkitemHandler::runOnFunction(Function &F)
 {
-  // Move all allocate instruction of the function to the 
+  // Move all alloca instruction of the function to the 
   // beginning of the first basic block of the function.
   // This solves problem with dynamic stack objects that are 
   // not supported by the TCE target.

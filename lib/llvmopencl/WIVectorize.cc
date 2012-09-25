@@ -32,6 +32,14 @@
 
 #define WIV_NAME "wi-vectorize"
 #define DEBUG_TYPE WIV_NAME
+#include "config.h"
+#ifdef LLVM_3_1
+#include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TypeBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#include "llvm/TypeBuilder.h"
+#endif
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -152,6 +160,15 @@ namespace {
     
     bool vectorizePhiNodes(BasicBlock &BB);
     
+    bool vectorizeAllocas(BasicBlock& BB);
+    
+    void replaceUses(BasicBlock& BB,
+                     AllocaInst& oldAlloca, 
+                     AllocaInst& newAlloca, 
+                     int indx);
+    
+    Type* newAllocaType(Type* start, unsigned int width);
+    
     bool removeDuplicates(BasicBlock &BB);
 
     void dropUnused(BasicBlock& BB);
@@ -160,6 +177,9 @@ namespace {
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts);
+    
+    bool getCandidateAllocas(BasicBlock &BB,
+                       std::multimap<int, ValueVector *>& candidateAllocas);
 
     void computeConnectedPairs(std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts,
@@ -301,6 +321,9 @@ namespace {
     virtual bool runOnBasicBlock(BasicBlock &BB) {
 
       bool changed = false;
+      
+      // First try to create vectors of all allocas, if there are any
+      changed |= vectorizeAllocas(BB);      
       // Iterate a sufficient number of times to merge types of size 1 bit,
       // then 2 bits, then 4, etc. up to half of the target vector width of the
       // target vector register.
@@ -1094,41 +1117,41 @@ namespace {
     std::multimap<int, ValueVector*> temporary;
     for (BasicBlock::iterator I = Start++; I != E; ++I) {
 
-      if (I->getMetadata("wi") == NULL)
-          continue;
-      bool IsSimpleLoadStore;
-      if (!isInstVectorizable(I, IsSimpleLoadStore)) {
-          continue;          
-      }
-      
-      MDNode* md = I->getMetadata("wi");
-      MDNode* mdCounter = I->getMetadata("wi_counter");
-      MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
-      
-      unsigned CI = cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
-      unsigned RI = cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
-      
-      std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
-      std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
-      ValueVector* tmpVec = NULL;   
-      while(itb != ite) {
-          if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
-              // Test also if instructions are from same region.
-              MDNode* tmpMD = 
-                cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
-              MDNode* tmpRINode = dyn_cast<MDNode>(tmpMD->getOperand(1));
-              unsigned tmpRI = 
-                cast<ConstantInt>(tmpRINode->getOperand(1))->getZExtValue();                
-              if (RI == tmpRI)
-                tmpVec = (*itb).second;
-          }
-          itb++;
-      }
-      if (tmpVec == NULL) {
-          tmpVec = new ValueVector;
-          temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
-      }
-      tmpVec->push_back(I);
+        if (I->getMetadata("wi") == NULL)
+            continue;
+        bool IsSimpleLoadStore;
+        if (!isInstVectorizable(I, IsSimpleLoadStore)) {          
+            continue;          
+        }
+        
+        MDNode* md = I->getMetadata("wi");
+        MDNode* mdCounter = I->getMetadata("wi_counter");
+        MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
+        
+        unsigned CI = cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
+        unsigned RI = cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
+        
+        std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
+        std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
+        ValueVector* tmpVec = NULL;   
+        while(itb != ite) {
+            if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
+                // Test also if instructions are from same region.
+                MDNode* tmpMD = 
+                    cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
+                MDNode* tmpRINode = dyn_cast<MDNode>(tmpMD->getOperand(1));
+                unsigned tmpRI = 
+                    cast<ConstantInt>(tmpRINode->getOperand(1))->getZExtValue();                
+                if (RI == tmpRI)
+                    tmpVec = (*itb).second;
+            }
+            itb++;
+        }
+        if (tmpVec == NULL) {
+            tmpVec = new ValueVector;
+            temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
+        }
+        tmpVec->push_back(I);
     }
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);    
@@ -2469,7 +2492,253 @@ namespace {
         }
     } while (changed);
   }
-    
+  
+  void WIVectorize::replaceUses(BasicBlock& BB,
+                                AllocaInst& oldAlloca, 
+                                AllocaInst& newAlloca, 
+                                int indx) {
+      
+    LLVMContext& Context = BB.getContext();          
+    Instruction::use_iterator useiter = oldAlloca.use_begin();                
+
+    while (useiter != oldAlloca.use_end()) {
+        llvm::User* tmp = *useiter;
+        if (isa<BitCastInst>(tmp)) {
+
+            BitCastInst* bitCast = cast<BitCastInst>(tmp);
+            IRBuilder<> builder(bitCast);               
+            BitCastInst* newBitcast = 
+                cast<BitCastInst>(builder.CreateBitCast(
+                    &newAlloca, bitCast->getDestTy()));
+                
+            bitCast->replaceAllUsesWith(newBitcast);
+            AA->replaceWithNewValue(bitCast, newBitcast);      
+            SE->forgetValue(bitCast);
+            bitCast->eraseFromParent();                            
+            
+            useiter = oldAlloca.use_begin();
+            continue;
+        }
+        
+        if (isa<GetElementPtrInst>(tmp)) {
+            
+            GetElementPtrInst* gep = cast<GetElementPtrInst>(tmp);
+            std::vector<llvm::Value *> gepArgs;            
+            for (unsigned int i = 1; i <= gep->getNumIndices(); i++) {
+                gepArgs.push_back(gep->getOperand(i));
+            }
+            Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
+            gepArgs.push_back(V);
+            IRBuilder<> builder(gep);   
+            GetElementPtrInst* newGep = 
+                cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+            newGep->setIsInBounds(gep->isInBounds());
+            
+            gep->replaceAllUsesWith(newGep);
+            AA->replaceWithNewValue(gep, newGep);      
+            SE->forgetValue(gep);
+            gep->eraseFromParent();            
+            useiter = oldAlloca.use_begin();
+            continue;
+        }
+        if (isa<StoreInst>(tmp)) {
+
+            StoreInst* store = cast<StoreInst>(tmp);
+            std::vector<llvm::Value *> gepArgs;            
+            Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
+            gepArgs.push_back(V);
+            IRBuilder<> builder(store);   
+            GetElementPtrInst* newGep = 
+                cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+
+                for (unsigned int i = 0; i < store->getNumOperands(); i++) {
+                if (store->getOperand(i) == &oldAlloca) {
+                    IRBuilder<> builder(store);               
+                    BitCastInst* newBitcast = 
+                    cast<BitCastInst>(builder.CreateBitCast(
+                        newGep, store->getOperand(i)->getType()));                    
+                    store->setOperand(i, newBitcast);
+                }
+            }
+            useiter = oldAlloca.use_begin();
+            continue;            
+        }
+        if (isa<LoadInst>(tmp)) {
+
+            LoadInst* load = cast<LoadInst>(tmp);
+            std::vector<llvm::Value *> gepArgs;            
+            Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
+            gepArgs.push_back(V);
+            IRBuilder<> builder(load);   
+            GetElementPtrInst* newGep = 
+                cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+
+                for (unsigned int i = 0; i < load->getNumOperands(); i++) {
+                if (load->getOperand(i) == &oldAlloca) {
+                    IRBuilder<> builder(load);               
+                    BitCastInst* newBitcast = 
+                    cast<BitCastInst>(builder.CreateBitCast(
+                        newGep, load->getOperand(i)->getType()));                    
+                    load->setOperand(i, newBitcast);
+                }
+            }
+            useiter = oldAlloca.use_begin();
+            continue;            
+        }
+        
+        useiter++;
+    }      
+  }
+  
+  Type* WIVectorize::newAllocaType(Type* start, unsigned int width) {
+      if (start->isArrayTy()) {
+          int numElm = cast<ArrayType>(start)->getNumElements();
+          return ArrayType::get(
+                    newAllocaType(
+                        cast<SequentialType>(start)->getElementType(),
+                        width)
+                    , numElm);
+      } else if (start->isFirstClassType() && !start->isPointerTy()) {
+          return ArrayType::get(start, width);
+      } else {
+          return start;
+      }
+  }
+  
+  bool WIVectorize::vectorizeAllocas(BasicBlock& BB) {
+
+    std::multimap<int, ValueVector*> allocas;
+    getCandidateAllocas(BB, allocas);
+    bool changed = false;
+    for (std::multimap<int, ValueVector*>::iterator insIt = allocas.begin();
+         insIt != allocas.end(); insIt++) {
+        IRBuilder<> builder(
+            BB.getParent()->getEntryBlock().getFirstInsertionPt());    
+        
+        ValueVector* tmpVec = (*insIt).second;
+        // Create as 'wide' alloca as number of elements found
+        // could be smaller then vector width or larger.
+        // Should be same as work group dimensions.
+        unsigned int allocaWidth = tmpVec->size();
+        if (allocaWidth <= 1)
+            continue;
+        
+        AllocaInst* I = cast<AllocaInst>((*tmpVec)[0]);
+        Type* startType = I->getAllocatedType();
+        Type* newType = newAllocaType(startType, allocaWidth);
+
+        if (newType == startType)
+            continue;
+        changed = true;
+        llvm::AllocaInst *alloca = 
+            builder.CreateAlloca(newType, 0, I->getName().str() + "_allocamix");
+        alloca->setAlignment(I->getAlignment());
+        if (I->getMetadata("wi") != NULL) {
+            alloca->setMetadata("wi", I->getMetadata("wi"));
+            alloca->setMetadata("wi_counter", I->getMetadata("wi_counter"));
+        }
+        
+        replaceUses(BB, *I, *alloca, 0);
+
+        SE->forgetValue(I);
+        I->eraseFromParent();
+        for (int i = 1; i < allocaWidth; i++) {
+            AllocaInst* J = cast<AllocaInst>((*tmpVec)[i]);
+            replaceUses(BB, *J, *alloca, i);
+            SE->forgetValue(J);
+            J->eraseFromParent();            
+        }
+    }
+    return changed;
+  } 
+  
+  bool WIVectorize::getCandidateAllocas(BasicBlock &BB,
+                std::multimap<int, ValueVector*>& temporary) {
+      
+    BasicBlock::iterator Start = BB.getFirstInsertionPt();      
+    BasicBlock::iterator E = BB.end();
+    for (BasicBlock::iterator I = Start++; I != E; ++I) {
+
+        if (!isa<AllocaInst>(I)) 
+        continue;
+#if 0
+            std::cerr << "ALLOCA" << std::endl;
+            I->dump();
+            std::cerr << cast<ConstantInt>(cast<AllocaInst>(I)->getArraySize())->getZExtValue() << std::endl;
+            std::cerr << " Is array " << cast<AllocaInst>(I)->isArrayAllocation() << std::endl;
+            cast<AllocaInst>(I)->getAllocatedType()->dump();
+            std::cerr << std::endl;
+            cast<AllocaInst>(I)->getType()->dump();              
+            std::cerr << " is static alloca " << cast<AllocaInst>(I)->isStaticAlloca() << std::endl;
+            std::cerr << " is aggragate type " << cast<AllocaInst>(I)->getType()->isAggregateType() << std::endl;
+            std::cerr << " is array type " << cast<AllocaInst>(I)->getType()->isArrayTy() << std::endl;
+            std::cerr << " is vector type " << cast<AllocaInst>(I)->getType()->isVectorTy() << std::endl;
+            std::cerr << " is struct type " << cast<AllocaInst>(I)->getType()->isStructTy() << std::endl;
+            std::cerr << " is first class type " << cast<AllocaInst>(I)->getType()->isFirstClassType() << std::endl;
+            std::cerr << " is aggragate type " << cast<AllocaInst>(I)->getAllocatedType()->isAggregateType() << std::endl;
+            std::cerr << " is array type " << cast<AllocaInst>(I)->getAllocatedType()->isArrayTy() << std::endl;
+            std::cerr << " is vector type " << cast<AllocaInst>(I)->getAllocatedType()->isVectorTy() << std::endl;
+            std::cerr << " is struct type " << cast<AllocaInst>(I)->getAllocatedType()->isStructTy() << std::endl;
+            std::cerr << " is first class type " << cast<AllocaInst>(I)->getAllocatedType()->isFirstClassType() << std::endl;
+            if (cast<AllocaInst>(I)->getAllocatedType()->isArrayTy()) {
+                std::cerr << " get element type " ;
+                cast<SequentialType>(cast<AllocaInst>(I)->getAllocatedType())->getElementType()->dump(); 
+                ArrayType* a = cast<ArrayType>(cast<AllocaInst>(I)->getAllocatedType());
+                std::cerr << " num elements " << a->getNumElements() << std::endl;
+                if (isa<ArrayType>(cast<SequentialType>(a)->getElementType())) {
+                    ArrayType* b = cast<ArrayType>(cast<SequentialType>(a)->getElementType());
+                    std::cerr << " get element type2 " ;
+                    b->getElementType()->dump();
+                    std::cerr << " num elements " << b->getNumElements() << std::endl;                    
+                }
+            }
+            std::cerr << std::endl;
+#endif            
+        if (I->getMetadata("wi") == NULL)
+            continue;
+        
+        MDNode* md = I->getMetadata("wi");
+        MDNode* mdCounter = I->getMetadata("wi_counter");
+        MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
+        
+        unsigned CI = cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
+        unsigned RI = cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
+        
+        std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
+        std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
+        ValueVector* tmpVec = NULL;   
+        while(itb != ite) {
+            if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
+                // Test also if instructions are from same region.
+                MDNode* tmpMD = 
+                    cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
+                MDNode* tmpRINode = dyn_cast<MDNode>(tmpMD->getOperand(1));
+                unsigned tmpRI = 
+                    cast<ConstantInt>(tmpRINode->getOperand(1))->getZExtValue();                
+                if (RI == tmpRI)
+                    tmpVec = (*itb).second;
+            }
+            itb++;
+        }
+        if (tmpVec == NULL) {
+            tmpVec = new ValueVector;
+            temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
+        }
+        tmpVec->push_back(I);
+    }
+    for (std::multimap<int, ValueVector*>::iterator insIt = temporary.begin();
+         insIt != temporary.end(); insIt++) {
+        ValueVector* tmpVec = (*insIt).second;
+        for (unsigned j = 0; j < tmpVec->size()/2; j++) {
+            Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
+            Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
+            if (!areInstsCompatibleFromDifferentWi(I,J))
+                continue;
+        }
+    }
+    return true;
+  }
+  
 }
 char WIVectorize::ID = 0;
 RegisterPass<WIVectorize>
