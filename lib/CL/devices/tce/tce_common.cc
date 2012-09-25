@@ -281,7 +281,7 @@ pocl_tce_run
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
-        std::string("tcecc --enable-loop-scheduler -v -d --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
+        std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
         userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
         " -g -O3 -o " + assemblyFileName;
