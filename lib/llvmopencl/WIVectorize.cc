@@ -2493,6 +2493,10 @@ namespace {
     } while (changed);
   }
   
+  // Replace uses of alloca with new alloca.
+  // This includes getelementpointer, bitcast, load and store only
+  // atm.
+  // In case original alloca was array, the getelementpointer and bitcast apply.
   void WIVectorize::replaceUses(BasicBlock& BB,
                                 AllocaInst& oldAlloca, 
                                 AllocaInst& newAlloca, 
@@ -2503,13 +2507,22 @@ namespace {
 
     while (useiter != oldAlloca.use_end()) {
         llvm::User* tmp = *useiter;
+        
         if (isa<BitCastInst>(tmp)) {
-
+            // Create new bitcast from new alloca to same type
+            // as old bitcast had. This is situation where the 
+            // alloca is casted to i8* followed by
+            //  call void @llvm.lifetime.start(i64 -1, i8* %XYZ) nounwind
             BitCastInst* bitCast = cast<BitCastInst>(tmp);
             IRBuilder<> builder(bitCast);               
             BitCastInst* newBitcast = 
                 cast<BitCastInst>(builder.CreateBitCast(
                     &newAlloca, bitCast->getDestTy()));
+                
+            if (bitCast->getMetadata("wi") != NULL) {
+                newBitcast->setMetadata("wi", bitCast->getMetadata("wi"));
+                newBitcast->setMetadata("wi_counter", bitCast->getMetadata("wi_counter"));
+            }
                 
             bitCast->replaceAllUsesWith(newBitcast);
             AA->replaceWithNewValue(bitCast, newBitcast);      
@@ -2521,18 +2534,37 @@ namespace {
         }
         
         if (isa<GetElementPtrInst>(tmp)) {
+            // Original getelementpointer contains number of indexes
+            // that indicate how to access element of allocated
+            // memory. Since we changed the most inner type to
+            // array, we add index to that array such as:
+            // Original alloca:
+            // %A = alloca [20 x [8 x i32]], align 4
+            // Original getelementpointer:
+            // %68 = getelementptr inbounds [20 x [8 x i32]]]* %A, i32 0, i32 %X, i32 0
+            // New alloca:
+            // %A = alloca [20 x [8 x [2 x i32]]], align 4
+            // new getelementpointer:
+            // %68 = getelementptr inbounds [20 x [8 x [2 x i32]]]* %A, i32 0, i32 %X, i32 0, i32 0
             
             GetElementPtrInst* gep = cast<GetElementPtrInst>(tmp);
             std::vector<llvm::Value *> gepArgs;            
+            // Collect original indexes of getelementpointer
             for (unsigned int i = 1; i <= gep->getNumIndices(); i++) {
                 gepArgs.push_back(gep->getOperand(i));
             }
+            // Add index to the newly created array
             Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
             gepArgs.push_back(V);
             IRBuilder<> builder(gep);   
             GetElementPtrInst* newGep = 
                 cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
             newGep->setIsInBounds(gep->isInBounds());
+            
+            if (gep->getMetadata("wi") != NULL) {
+                newGep->setMetadata("wi", gep->getMetadata("wi"));
+                newGep->setMetadata("wi_counter", gep->getMetadata("wi_counter"));
+            }
             
             gep->replaceAllUsesWith(newGep);
             AA->replaceWithNewValue(gep, newGep);      
@@ -2542,7 +2574,9 @@ namespace {
             continue;
         }
         if (isa<StoreInst>(tmp)) {
-
+            // This is tricky, original alloca was for base type such 
+            // as i32 or float so the variable was used directly.
+            // Now this is array so we have to add getelementpointer.
             StoreInst* store = cast<StoreInst>(tmp);
             std::vector<llvm::Value *> gepArgs;            
             Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
@@ -2550,13 +2584,24 @@ namespace {
             IRBuilder<> builder(store);   
             GetElementPtrInst* newGep = 
                 cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+            if (store->getMetadata("wi") != NULL) {
+                newGep->setMetadata("wi", store->getMetadata("wi"));
+                newGep->setMetadata("wi_counter", store->getMetadata("wi_counter"));
+            }
 
-                for (unsigned int i = 0; i < store->getNumOperands(); i++) {
+            for (unsigned int i = 0; i < store->getNumOperands(); i++) {
+                // Either of store operands could be alloca, we either
+                // store to allocated memory, or we are storing the pointer 
+                // of the memory (this is rather dumb thing to do).
                 if (store->getOperand(i) == &oldAlloca) {
                     IRBuilder<> builder(store);               
                     BitCastInst* newBitcast = 
-                    cast<BitCastInst>(builder.CreateBitCast(
-                        newGep, store->getOperand(i)->getType()));                    
+                        cast<BitCastInst>(builder.CreateBitCast(
+                            newGep, store->getOperand(i)->getType()));                    
+                    if (store->getMetadata("wi") != NULL) {
+                        newBitcast->setMetadata("wi", store->getMetadata("wi"));
+                        newBitcast->setMetadata("wi_counter", store->getMetadata("wi_counter"));
+                    }                    
                     store->setOperand(i, newBitcast);
                 }
             }
@@ -2564,6 +2609,9 @@ namespace {
             continue;            
         }
         if (isa<LoadInst>(tmp)) {
+            // This is tricky, original alloca was for base type such 
+            // as i32 or float so the variable was used directly.
+            // Now this is array so we have to add getelementpointer.
 
             LoadInst* load = cast<LoadInst>(tmp);
             std::vector<llvm::Value *> gepArgs;            
@@ -2572,26 +2620,39 @@ namespace {
             IRBuilder<> builder(load);   
             GetElementPtrInst* newGep = 
                 cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+            if (load->getMetadata("wi") != NULL) {
+                newGep->setMetadata("wi", load->getMetadata("wi"));
+                newGep->setMetadata("wi_counter", load->getMetadata("wi_counter"));
+            }
 
-                for (unsigned int i = 0; i < load->getNumOperands(); i++) {
+            for (unsigned int i = 0; i < load->getNumOperands(); i++) {
+                // Find operand of load that was old alloca and 
+                // use bitcast to point to to getelementpointer result.
+                // There must be better way how to do this.
                 if (load->getOperand(i) == &oldAlloca) {
                     IRBuilder<> builder(load);               
                     BitCastInst* newBitcast = 
                     cast<BitCastInst>(builder.CreateBitCast(
                         newGep, load->getOperand(i)->getType()));                    
+                    if (load->getMetadata("wi") != NULL) {
+                        newBitcast->setMetadata("wi", load->getMetadata("wi"));
+                        newBitcast->setMetadata("wi_counter", load->getMetadata("wi_counter"));
+                    }                    
                     load->setOperand(i, newBitcast);
                 }
             }
             useiter = oldAlloca.use_begin();
             continue;            
-        }
-        
+        }        
         useiter++;
     }      
   }
   
+  // Find new type for the vector alloca instruction
   Type* WIVectorize::newAllocaType(Type* start, unsigned int width) {
+      
       if (start->isArrayTy()) {
+          // If type is still array check what is allocated type
           int numElm = cast<ArrayType>(start)->getNumElements();
           return ArrayType::get(
                     newAllocaType(
@@ -2599,49 +2660,90 @@ namespace {
                         width)
                     , numElm);
       } else if (start->isFirstClassType() && !start->isPointerTy()) {
+          // Recursion stopping point
+          // This should convert i32 to [width x i32] as base type of 
+          // array
           return ArrayType::get(start, width);
       } else {
+          // Not recognized type, just return it, alloca won't be replaced
           return start;
       }
   }
+  
+  // In case there is private variable in the kernel that does not fit into
+  // register (multidimensional array for example), there are alloca 
+  // defined to create necessary memory space for variable.
+  // Those are defined then for each of the work items replicated.
+  // This pass attempts to combine those allocas to create 'interleaved'
+  // memory allocation that then can be accessed by vector loads and stores
+  // as described bellow:
+  //
+  // __kernel xyz() {
+  //
+  // int A[100][100][100][100];
+  // ...
+  //}
+  // Will become after replication with 2 work items:
+  //
+  // %A = alloca  [100 x [100 x [100 x i32]]], align 4
+  // %A_wi_1_0_0 = alloca  [100 x [100 x [100 x i32]]], align 4  
+  //
+  // This in will be converted here to :
+  // %A = alloca  [100 x [100 x [100 x [2 x i32]]]], align 4
+  // And respective getelementpointer instruction will
+  // be added additional paramter to select correct member from the pair.
+  //
+  // NOTE: This does work only for arrays ATM, the scalar type allocas
+  // as produced by phistoallocas pass required for the work loops
+  // are skipped for now.
   
   bool WIVectorize::vectorizeAllocas(BasicBlock& BB) {
 
     std::multimap<int, ValueVector*> allocas;
     getCandidateAllocas(BB, allocas);
     bool changed = false;
+    
     for (std::multimap<int, ValueVector*>::iterator insIt = allocas.begin();
          insIt != allocas.end(); insIt++) {
         IRBuilder<> builder(
             BB.getParent()->getEntryBlock().getFirstInsertionPt());    
         
         ValueVector* tmpVec = (*insIt).second;
-        // Create as 'wide' alloca as number of elements found
+        // Create as 'wide' alloca as number of elements found,
         // could be smaller then vector width or larger.
-        // Should be same as work group dimensions.
+        // Should be same as work group dimensions for work item replicas or
+        // same as number of unrolled loops with work item loops.
         unsigned int allocaWidth = tmpVec->size();
+        // No point vectorizing one alloca only
         if (allocaWidth <= 1)
             continue;
         
         AllocaInst* I = cast<AllocaInst>((*tmpVec)[0]);
         Type* startType = I->getAllocatedType();
+        // Find new type for alloca by recursively searching through multiple
+        // dimensions of array
         Type* newType = newAllocaType(startType, allocaWidth);
 
+        // No new type was found, alloca type not supported.
         if (newType == startType)
             continue;
+        
         changed = true;
         llvm::AllocaInst *alloca = 
             builder.CreateAlloca(newType, 0, I->getName().str() + "_allocamix");
         alloca->setAlignment(I->getAlignment());
+        
         if (I->getMetadata("wi") != NULL) {
             alloca->setMetadata("wi", I->getMetadata("wi"));
             alloca->setMetadata("wi_counter", I->getMetadata("wi_counter"));
         }
         
+        // Replace uses of first alloca with newly created one
         replaceUses(BB, *I, *alloca, 0);
-
         SE->forgetValue(I);
         I->eraseFromParent();
+        
+        // Replaces uses of other allocas with newly created one
         for (int i = 1; i < allocaWidth; i++) {
             AllocaInst* J = cast<AllocaInst>((*tmpVec)[i]);
             replaceUses(BB, *J, *alloca, i);
@@ -2652,6 +2754,9 @@ namespace {
     return changed;
   } 
   
+  // Pass closely repated to getCandidatePairs, except this one only
+  // picks AllocaInst and makes sure they are from different work items.
+  // It also returns all instances of AllocaInst at the same time.
   bool WIVectorize::getCandidateAllocas(BasicBlock &BB,
                 std::multimap<int, ValueVector*>& temporary) {
       
@@ -2694,6 +2799,8 @@ namespace {
             }
             std::cerr << std::endl;
 #endif            
+        // TODO: This is bit tricky, should it be possible
+        // to create vector of allocas that do not have metadata?
         if (I->getMetadata("wi") == NULL)
             continue;
         
