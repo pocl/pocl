@@ -2720,6 +2720,8 @@ namespace {
         
         AllocaInst* I = cast<AllocaInst>((*tmpVec)[0]);
         Type* startType = I->getAllocatedType();
+        if (!startType->isArrayTy())
+            continue;
         // Find new type for alloca by recursively searching through multiple
         // dimensions of array
         Type* newType = newAllocaType(startType, allocaWidth);
@@ -2739,14 +2741,29 @@ namespace {
         }
         
         // Replace uses of first alloca with newly created one
-        replaceUses(BB, *I, *alloca, 0);
+        MDNode* mi = I->getMetadata("wi");
+        assert(mi->getNumOperands() == 3);
+        // Second operand of MDNode contains MDNode with XYZ tripplet.
+        MDNode* iXYZ= dyn_cast<MDNode>(mi->getOperand(2));
+        assert(iXYZ->getNumOperands() == 4);
+        
+        int index = dyn_cast<ConstantInt>(iXYZ->getOperand(1))->getZExtValue();        
+        
+        replaceUses(BB, *I, *alloca, index);
         SE->forgetValue(I);
         I->eraseFromParent();
         
         // Replaces uses of other allocas with newly created one
         for (int i = 1; i < allocaWidth; i++) {
             AllocaInst* J = cast<AllocaInst>((*tmpVec)[i]);
-            replaceUses(BB, *J, *alloca, i);
+            MDNode* mj = J->getMetadata("wi");
+            assert(mj->getNumOperands() == 3);
+            MDNode* jXYZ= dyn_cast<MDNode>(mj->getOperand(2));
+            assert(jXYZ->getNumOperands() == 4);            
+            int index = 
+                dyn_cast<ConstantInt>(jXYZ->getOperand(1))->getZExtValue();        
+            
+            replaceUses(BB, *J, *alloca, index);
             SE->forgetValue(J);
             J->eraseFromParent();            
         }
