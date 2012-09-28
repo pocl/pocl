@@ -2517,7 +2517,7 @@ namespace {
             IRBuilder<> builder(bitCast);               
             BitCastInst* newBitcast = 
                 cast<BitCastInst>(builder.CreateBitCast(
-                    &newAlloca, bitCast->getDestTy()));
+                    &newAlloca, bitCast->getDestTy(), bitCast->getName()));
                 
             if (bitCast->getMetadata("wi") != NULL) {
                 newBitcast->setMetadata("wi", bitCast->getMetadata("wi"));
@@ -2558,7 +2558,8 @@ namespace {
             gepArgs.push_back(V);
             IRBuilder<> builder(gep);   
             GetElementPtrInst* newGep = 
-                cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+                cast<GetElementPtrInst>(
+                    builder.CreateGEP(&newAlloca, gepArgs, gep->getName()));
             newGep->setIsInBounds(gep->isInBounds());
             
             if (gep->getMetadata("wi") != NULL) {
