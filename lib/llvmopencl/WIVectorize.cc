@@ -790,6 +790,7 @@ namespace {
     // passes should coalesce the build/extract combinations.
 
     fuseChosenPairs(BB, AllPairableInsts, AllChosenPairs);
+    
     return true;
   }
   
@@ -832,7 +833,7 @@ namespace {
       // Currently, vector GEPs exist only with one index.
       if (G->getNumIndices() != 1)
         return false;         
-    } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
+    } else if (!(I->isBinaryOp() || isa<CmpInst>(I))){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
     } 
