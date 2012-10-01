@@ -2785,39 +2785,6 @@ namespace {
 
         if (!isa<AllocaInst>(I)) 
         continue;
-#if 0
-            std::cerr << "ALLOCA" << std::endl;
-            I->dump();
-            std::cerr << cast<ConstantInt>(cast<AllocaInst>(I)->getArraySize())->getZExtValue() << std::endl;
-            std::cerr << " Is array " << cast<AllocaInst>(I)->isArrayAllocation() << std::endl;
-            cast<AllocaInst>(I)->getAllocatedType()->dump();
-            std::cerr << std::endl;
-            cast<AllocaInst>(I)->getType()->dump();              
-            std::cerr << " is static alloca " << cast<AllocaInst>(I)->isStaticAlloca() << std::endl;
-            std::cerr << " is aggragate type " << cast<AllocaInst>(I)->getType()->isAggregateType() << std::endl;
-            std::cerr << " is array type " << cast<AllocaInst>(I)->getType()->isArrayTy() << std::endl;
-            std::cerr << " is vector type " << cast<AllocaInst>(I)->getType()->isVectorTy() << std::endl;
-            std::cerr << " is struct type " << cast<AllocaInst>(I)->getType()->isStructTy() << std::endl;
-            std::cerr << " is first class type " << cast<AllocaInst>(I)->getType()->isFirstClassType() << std::endl;
-            std::cerr << " is aggragate type " << cast<AllocaInst>(I)->getAllocatedType()->isAggregateType() << std::endl;
-            std::cerr << " is array type " << cast<AllocaInst>(I)->getAllocatedType()->isArrayTy() << std::endl;
-            std::cerr << " is vector type " << cast<AllocaInst>(I)->getAllocatedType()->isVectorTy() << std::endl;
-            std::cerr << " is struct type " << cast<AllocaInst>(I)->getAllocatedType()->isStructTy() << std::endl;
-            std::cerr << " is first class type " << cast<AllocaInst>(I)->getAllocatedType()->isFirstClassType() << std::endl;
-            if (cast<AllocaInst>(I)->getAllocatedType()->isArrayTy()) {
-                std::cerr << " get element type " ;
-                cast<SequentialType>(cast<AllocaInst>(I)->getAllocatedType())->getElementType()->dump(); 
-                ArrayType* a = cast<ArrayType>(cast<AllocaInst>(I)->getAllocatedType());
-                std::cerr << " num elements " << a->getNumElements() << std::endl;
-                if (isa<ArrayType>(cast<SequentialType>(a)->getElementType())) {
-                    ArrayType* b = cast<ArrayType>(cast<SequentialType>(a)->getElementType());
-                    std::cerr << " get element type2 " ;
-                    b->getElementType()->dump();
-                    std::cerr << " num elements " << b->getNumElements() << std::endl;                    
-                }
-            }
-            std::cerr << std::endl;
-#endif            
         // TODO: This is bit tricky, should it be possible
         // to create vector of allocas that do not have metadata?
         if (I->getMetadata("wi") == NULL)

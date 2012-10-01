@@ -130,11 +130,25 @@ else
 METHOD_PASS=$POCL_WORK_GROUP_METHOD
 fi
 
+if test "x$POCL_MAX_WORK_GROUP_SIZE_REPL" != "x";
+then
+MAX_SPACE=$POCL_MAX_WORK_GROUP_SIZE_REPL
+else
+MAX_SPACE=32
+fi
+
 if test "x$METHOD_PASS" = "xworkitemloops";
 then
-PHITOALLOCA="-phistoallocas"
-else
+space=`expr $size_x \* $size_y \* $size_z`
+
+if [ `expr $space \<= $MAX_SPACE` = 1 ];
+then
+METHOD_PASS=workitemrepl
 PHITOALLOCA=""
+else
+PHITOALLOCA="-phistoallocas"
+fi
+
 fi
 
 #set -x
