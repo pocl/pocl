@@ -835,12 +835,17 @@ void barrier (cl_mem_fence_flags flags);
 #define atan _cl_atan
 #define atan2 _cl_atan2
 #define ceil _cl_ceil
+#define copysign _cl_copysign
 #define exp _cl_exp
+#define exp2 _cl_exp2
 #define floor _cl_floor
 #define fabs _cl_fabs
 #define log _cl_log
+#define log2 _cl_log2
+#define rint _cl_rint
 #define round _cl_round
 #define tan _cl_tan
+#define trunc _cl_trunc
 #endif
 
 _CL_DECLARE_FUNC_V_V(acos)
