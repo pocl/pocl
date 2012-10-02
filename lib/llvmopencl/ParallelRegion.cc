@@ -356,7 +356,7 @@ ParallelRegion::Verify()
           std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
           std::cerr << "the entry is: " << entryBB()->getName().str() << std::endl;
 
-#if 1
+#if 0
           (*i)->getParent()->viewCFG();
 #endif
           assert(0 && "Incoming edges to non-entry block!");
