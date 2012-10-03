@@ -51,8 +51,6 @@ POAT_ROD_CHECK_BUILD([lud],[ | egrep -v "^lud.cpp:|^../common/common.c:" ])
 AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/lud/ocl; ./run | grep "Time con" | cut -c -18 | grep .], 0,
 [Time consumed(ms):
 ])
-# A segfault in execution.
-AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_ROD_SETUP([hotspot],[long])

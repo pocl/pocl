@@ -74,7 +74,8 @@ POCL_VECTORIZE_NO_FP
 If set to 1, indicates the vectorization of floating point operations is
 forbidden.
 
-POCL_VECTORIZE_MEM_ONLY                                                                                                                 
+POCL_VECTORIZE_MEM_ONLY
+
 If set to 1, indicates that only the memory access operations should be
 vectorized.
 
@@ -83,7 +84,19 @@ POCL_WORK_GROUP_METHOD
 The kernel compiler method to produce the work group functions from
 multiple work items. Legal values:
 
-    workitemloops  -- create for-loops that execute the work items
-                      (default, under stabilization)
-    workitemrepl   -- replicate and chain all work items (deprecated)
+    auto   -- Choose the best available method depending on the
+              kernel and the work group size (default). Use
+              POCL_FULL_REPLICATION_THRESHOLD=N to set the
+              maximum local size for a work group to be
+              replicated fully with 'workitemrepl'. Otherwise,  
+             'workitemloops' is used.
+
+    loops  -- Create for-loops that execute the work items
+              (under stabilization). The drawback is the
+               need to save the thread contexts in arrays.
+
+    repl   -- Replicate and chain all work items. This results
+              in more easily scalarizable private variables.
+              However, the code bloat is increased with larger
+              local sizes.
 

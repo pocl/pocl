@@ -42,6 +42,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
+#include "WorkitemHandlerChooser.h"
+
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -74,12 +76,17 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTree>();
   AU.addRequired<LoopInfo>();
   AU.addRequired<TargetData>();
+  AU.addRequired<pocl::WorkitemHandlerChooser>();
 }
 
 bool
 WorkitemReplication::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
+    return false;
+
+  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
+      pocl::WorkitemHandlerChooser::POCL_WIH_FULL_REPLICATION)
     return false;
 
   DT = &getAnalysis<DominatorTree>();

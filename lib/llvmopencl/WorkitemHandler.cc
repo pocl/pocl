@@ -50,7 +50,7 @@ AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
   cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
 
-WorkitemHandler::WorkitemHandler(char ID) : FunctionPass(ID)
+WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID)
 {
 }
 
