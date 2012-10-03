@@ -48,7 +48,8 @@ PKG_CHECK_MODULES([HWLOC], [hwloc >= 1.0], [
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LN_S
-AM_PROG_AR
+
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
