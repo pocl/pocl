@@ -39,7 +39,7 @@ namespace pocl {
   class WorkitemHandler : public llvm::FunctionPass {
   public:
 
-  WorkitemHandler(char ID) : FunctionPass(ID) {}
+  WorkitemHandler(char &ID) : FunctionPass(ID) {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
     virtual bool runOnFunction(llvm::Function &F);
