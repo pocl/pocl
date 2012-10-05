@@ -32,7 +32,6 @@ AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
-LT_INIT
 
 # check for tools
 PKG_PROG_PKG_CONFIG
@@ -51,11 +50,13 @@ AC_PROG_LN_S
 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
+LT_INIT
+
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
 
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.1])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -410,8 +411,8 @@ if test "x$debug" = "xno"
 then
 	CXXFLAGS="$CXXFLAGS"
 else
-	CFLAGS="-O0 -g"
-	CXXFLAGS="-O0 -g"
+	CFLAGS="$CXXFLAGS -O0 -g"
+	CXXFLAGS="$CXXFLAGS -O0 -g"
 fi
 
 AC_DEFINE([HAVE_GL_GL_H], [], [OpenGL])

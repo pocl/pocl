@@ -1,0 +1,53 @@
+Notes on compiling pocl in Debian Sid/Cell/Playstation 3.
+
+status
+------
+It builds when the 32bit mode is forced. example1 of
+the test suite passes and many of the smaller test cases. 
+
+The 32bitness produces the warnings from the use of 
+doubles which makes a couple of the test cases fail.
+
+powerpc64
+---------
+Compiling in powerpc64 mode compiles the pocl but dlopening
+the kernels fail. The problem is likely the combination of
+32bit pocl libraries and the libtool dlopen library and
+the kernels which are compiled in 64bit mode by Clang.
+
+Forcing the build to use the 64bit mode by passing 
+CXXFLAGS=-m64 CFLAGS=-m64 fails at configure time because
+the libltdl lib is 32-bit only in this env and does not
+get detected.
+
+powerpc32
+---------
+Configure with:
+./configure --host=powerpc-linux-gnu --target=powerpc-linux-gnu
+
+This makes pocl to use the 32bit mode for the
+kernel compilation.
+
+to do
+-----
+* Fix the 64bit build. 
+
+It requires forcing pocl to be built in the 64 bit mode
+(-m64) and all the required libraries (at least the 
+libltdl) to be found as 64 bit versions by configure.
+
+* A device layer implementation for the SPEs. 
+
+The SPEs have local memories and no random access to 
+a shared memory (AFAIK) so implementing the global buffers 
+across SPEs is problematic. Therefore, at least the
+first version could present one device per SPE thus require 
+one command queue per SPE to utilize fully.
+
+* The load balancing of multiple work groups from a single
+kernel execution across all the SPEs. 
+
+Might require changing the global accesses in the LLVM 
+bitcode to DMA transfer calls which possibly ruins
+the performance, but could be provided as an option.
+

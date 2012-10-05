@@ -6,6 +6,8 @@
 Overall
 -------
 - Support for LLVM 3.2 (svn). 
+- First steps towards Cell support. Runs with
+  the PPE as a device. See README.Cell.
 
 Kernel Compiler Passes
 ----------------------

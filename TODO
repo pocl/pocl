@@ -85,3 +85,9 @@ missing APIs have been encountered in the test cases.
 * Passing structs as values to kernels (P), see
   https://bugs.launchpad.net/pocl/+bug/987905
 
+Other
+-----
+* configure should check for 'clang'
+* build system should use $(CXX) everywhere,
+  now some parts assume g++ and it fails if 
+  only c++ is installed
