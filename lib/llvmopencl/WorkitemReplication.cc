@@ -42,6 +42,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
+#include "WorkitemHandlerChooser.h"
+
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -74,12 +76,17 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTree>();
   AU.addRequired<LoopInfo>();
   AU.addRequired<TargetData>();
+  AU.addRequired<pocl::WorkitemHandlerChooser>();
 }
 
 bool
 WorkitemReplication::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
+    return false;
+
+  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
+      pocl::WorkitemHandlerChooser::POCL_WIH_FULL_REPLICATION)
     return false;
 
   DT = &getAnalysis<DominatorTree>();
@@ -104,7 +111,7 @@ WorkitemReplication::ProcessFunction(Function &F)
 //  F.viewCFG();
 
   Kernel *K = cast<Kernel> (&F);
-  CheckLocalSize(K);
+  Initialize(K);
 
   // Allocate space for workitem reference maps. Workitem 0 does
   // not need it.
@@ -116,13 +123,25 @@ WorkitemReplication::ProcessFunction(Function &F)
         original_bbs.push_back(i);
   }
 
-
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
 
   std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
 
   parallel_regions[0] = *original_parallel_regions;
+
+  /* Enable to get region identification printouts */
+#if 0
+  for (ParallelRegion::ParallelRegionVector::iterator
+           i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
+       i != e; ++i) 
+  {
+    ParallelRegion *region = (*i);
+    region->InjectRegionPrintF();
+    region->InjectVariablePrintouts();
+  }
+#endif
   
   // Measure the required context (variables alive in more than one region).
   TargetData &TD = getAnalysis<TargetData>();
@@ -167,7 +186,6 @@ WorkitemReplication::ProcessFunction(Function &F)
         if (index == 0)
           continue;
 	  
-        std::size_t regionCounter = 0;
         for (SmallVector<ParallelRegion *, 8>::iterator
                i = original_parallel_regions->begin(), 
                e = original_parallel_regions->end();
@@ -178,8 +196,7 @@ WorkitemReplication::ProcessFunction(Function &F)
             (reference_map[index - 1],
              (".wi_" + Twine(x) + "_" + Twine(y) + "_" + Twine(z)));
           if (AddWIMetadata)
-            replicated->setID(M->getContext(), x, y, z, regionCounter);
-          regionCounter++;
+            replicated->AddIDMetadata(M->getContext(), x, y, z);
           parallel_regions[index].push_back(replicated);
 #ifdef DEBUG_PR_REPLICATION
           std::cerr << "### new replica:" << std::endl;
@@ -190,14 +207,12 @@ WorkitemReplication::ProcessFunction(Function &F)
     }
   }
   if (AddWIMetadata) {
-    std::size_t regionCounter = 0;
     for (SmallVector<ParallelRegion *, 8>::iterator
           i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
         i != e; ++i) {
       ParallelRegion *original = (*i);  
-      original->setID(M->getContext(), 0,0,0, regionCounter);
-      regionCounter++;
+      original->AddIDMetadata(M->getContext(), 0, 0, 0);
     }
   }  
   

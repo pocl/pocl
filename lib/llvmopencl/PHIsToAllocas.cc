@@ -22,6 +22,8 @@
 
 #include "PHIsToAllocas.h"
 #include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
+#include "WorkitemLoops.h"
 
 #include "config.h"
 
@@ -48,12 +50,21 @@ using namespace llvm;
 void
 PHIsToAllocas::getAnalysisUsage(AnalysisUsage &AU) const
 {
+  AU.addRequired<pocl::WorkitemHandlerChooser>();
+  AU.addPreserved<pocl::WorkitemHandlerChooser>();
 }
 
 bool
 PHIsToAllocas::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
+    return false;
+
+  /* Skip PHIsToAllocas when we are not creating the work item loops,
+     as leads to worse code without benefits for the full replication method.
+  */
+  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
+      pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
     return false;
 
   typedef std::vector<llvm::Instruction* > InstructionVec;
@@ -73,12 +84,15 @@ PHIsToAllocas::runOnFunction(Function &F)
 
   }
 
+  bool changed = false;
   for (InstructionVec::iterator i = PHIs.begin(); i != PHIs.end();
        ++i) 
     {
       Instruction *instr = *i;
       BreakPHIToAllocas(dyn_cast<PHINode>(instr));
+      changed = true;
     }  
+  return changed;
 
 }
 

@@ -5,7 +5,11 @@
 
 Overall
 -------
-- Support for LLVM 3.2 (svn). 
+- Support for LLVM 3.2 (svn).
+- Multi-WI work group functions can be now generated
+  using loops which are only partially unrolled. Reduces
+  code size explosion with large WGs in comparison to
+  the full replication method.
 - First steps towards Cell support. Runs with
   the PPE as a device. See README.Cell.
 

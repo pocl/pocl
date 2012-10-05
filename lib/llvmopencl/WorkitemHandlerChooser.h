@@ -1,5 +1,4 @@
-// Header for WorkitemHandler, a parent class for all implementations of
-// work item handling.
+// Header for WorkitemHandlerChooser function pass.
 // 
 // Copyright (c) 2012 Pekka Jääskeläinen / TUT
 // 
@@ -21,47 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_HANDLER_H
-#define _POCL_WORKITEM_HANDLER_H
+#ifndef _POCL_WORKITEM_HANDLER_CHOOSER_H
+#define _POCL_WORKITEM_HANDLER_CHOOSER_H
 
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-
-namespace llvm {
-  class DominatorTree;
-}
+#include "WorkitemHandler.h"
 
 namespace pocl {
   class Workgroup;
-  class Kernel;
 
-  class WorkitemHandler : public llvm::FunctionPass {
+  class WorkitemHandlerChooser : public pocl::WorkitemHandler {
   public:
-
-    WorkitemHandler(char& ID);
-
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
-    virtual bool runOnFunction(llvm::Function &F);
-
-    virtual void Initialize(pocl::Kernel *K);
-
-  protected:
+    static char ID;
     
-    void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
-    bool fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Function &F);
-    bool dominatesUse(llvm::DominatorTree *DT, llvm::Instruction &I, unsigned i);
+    enum WorkitemHandlerType {
+      POCL_WIH_FULL_REPLICATION,
+      POCL_WIH_LOOPS
+    };
 
-    int LocalSizeX, LocalSizeY, LocalSizeZ;
+  WorkitemHandlerChooser() : pocl::WorkitemHandler(ID), 
+      chosenHandler_(POCL_WIH_LOOPS) {}
 
-    unsigned size_t_width;
-
-    /* The global variables that store the current local id. */
-    llvm::Value *localIdZ, *localIdY, *localIdX;
-
+    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
+    virtual bool runOnFunction(llvm::Function &F);
+    
+    WorkitemHandlerType chosenHandler() { return chosenHandler_; }
+  private:
+    WorkitemHandlerType chosenHandler_;
   };
-
-  extern llvm::cl::opt<bool> AddWIMetadata;
 }
 
 #endif

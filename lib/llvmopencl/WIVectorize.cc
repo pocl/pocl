@@ -32,6 +32,14 @@
 
 #define WIV_NAME "wi-vectorize"
 #define DEBUG_TYPE WIV_NAME
+#include "config.h"
+#ifdef LLVM_3_1
+#include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TypeBuilder.h"
+#else
+#include "llvm/IRBuilder.h"
+#include "llvm/TypeBuilder.h"
+#endif
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -152,6 +160,15 @@ namespace {
     
     bool vectorizePhiNodes(BasicBlock &BB);
     
+    bool vectorizeAllocas(BasicBlock& BB);
+    
+    void replaceUses(BasicBlock& BB,
+                     AllocaInst& oldAlloca, 
+                     AllocaInst& newAlloca, 
+                     int indx);
+    
+    Type* newAllocaType(Type* start, unsigned int width);
+    
     bool removeDuplicates(BasicBlock &BB);
 
     void dropUnused(BasicBlock& BB);
@@ -160,6 +177,9 @@ namespace {
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts);
+    
+    bool getCandidateAllocas(BasicBlock &BB,
+                       std::multimap<int, ValueVector *>& candidateAllocas);
 
     void computeConnectedPairs(std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts,
@@ -301,6 +321,9 @@ namespace {
     virtual bool runOnBasicBlock(BasicBlock &BB) {
 
       bool changed = false;
+      
+      // First try to create vectors of all allocas, if there are any
+      changed |= vectorizeAllocas(BB);      
       // Iterate a sufficient number of times to merge types of size 1 bit,
       // then 2 bits, then 4, etc. up to half of the target vector width of the
       // target vector register.
@@ -767,6 +790,7 @@ namespace {
     // passes should coalesce the build/extract combinations.
 
     fuseChosenPairs(BB, AllPairableInsts, AllChosenPairs);
+    
     return true;
   }
   
@@ -809,7 +833,7 @@ namespace {
       // Currently, vector GEPs exist only with one index.
       if (G->getNumIndices() != 1)
         return false;         
-    } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
+    } else if (!(I->isBinaryOp() || isa<CmpInst>(I))){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
     } 
@@ -1094,41 +1118,41 @@ namespace {
     std::multimap<int, ValueVector*> temporary;
     for (BasicBlock::iterator I = Start++; I != E; ++I) {
 
-      if (I->getMetadata("wi") == NULL)
-          continue;
-      bool IsSimpleLoadStore;
-      if (!isInstVectorizable(I, IsSimpleLoadStore)) {
-          continue;          
-      }
-      
-      MDNode* md = I->getMetadata("wi");
-      MDNode* mdCounter = I->getMetadata("wi_counter");
-      MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
-      
-      unsigned CI = cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
-      unsigned RI = cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
-      
-      std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
-      std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
-      ValueVector* tmpVec = NULL;   
-      while(itb != ite) {
-          if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
-              // Test also if instructions are from same region.
-              MDNode* tmpMD = 
-                cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
-              MDNode* tmpRINode = dyn_cast<MDNode>(tmpMD->getOperand(1));
-              unsigned tmpRI = 
-                cast<ConstantInt>(tmpRINode->getOperand(1))->getZExtValue();                
-              if (RI == tmpRI)
-                tmpVec = (*itb).second;
-          }
-          itb++;
-      }
-      if (tmpVec == NULL) {
-          tmpVec = new ValueVector;
-          temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
-      }
-      tmpVec->push_back(I);
+        if (I->getMetadata("wi") == NULL)
+            continue;
+        bool IsSimpleLoadStore;
+        if (!isInstVectorizable(I, IsSimpleLoadStore)) {          
+            continue;          
+        }
+        
+        MDNode* md = I->getMetadata("wi");
+        MDNode* mdCounter = I->getMetadata("wi_counter");
+        MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
+        
+        unsigned CI = cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
+        unsigned RI = cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
+        
+        std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
+        std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
+        ValueVector* tmpVec = NULL;   
+        while(itb != ite) {
+            if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
+                // Test also if instructions are from same region.
+                MDNode* tmpMD = 
+                    cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
+                MDNode* tmpRINode = dyn_cast<MDNode>(tmpMD->getOperand(1));
+                unsigned tmpRI = 
+                    cast<ConstantInt>(tmpRINode->getOperand(1))->getZExtValue();                
+                if (RI == tmpRI)
+                    tmpVec = (*itb).second;
+            }
+            itb++;
+        }
+        if (tmpVec == NULL) {
+            tmpVec = new ValueVector;
+            temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
+        }
+        tmpVec->push_back(I);
     }
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);    
@@ -2469,7 +2493,345 @@ namespace {
         }
     } while (changed);
   }
+  
+  // Replace uses of alloca with new alloca.
+  // This includes getelementpointer, bitcast, load and store only
+  // atm.
+  // In case original alloca was array, the getelementpointer and bitcast apply.
+  void WIVectorize::replaceUses(BasicBlock& BB,
+                                AllocaInst& oldAlloca, 
+                                AllocaInst& newAlloca, 
+                                int indx) {
+      
+    LLVMContext& Context = BB.getContext();          
+    Instruction::use_iterator useiter = oldAlloca.use_begin();                
+
+    while (useiter != oldAlloca.use_end()) {
+        llvm::User* tmp = *useiter;
+        
+        if (isa<BitCastInst>(tmp)) {
+            // Create new bitcast from new alloca to same type
+            // as old bitcast had. This is situation where the 
+            // alloca is casted to i8* followed by
+            //  call void @llvm.lifetime.start(i64 -1, i8* %XYZ) nounwind
+            BitCastInst* bitCast = cast<BitCastInst>(tmp);
+            IRBuilder<> builder(bitCast);               
+            BitCastInst* newBitcast = 
+                cast<BitCastInst>(builder.CreateBitCast(
+                    &newAlloca, bitCast->getDestTy(), bitCast->getName()));
+                
+            if (bitCast->getMetadata("wi") != NULL) {
+                newBitcast->setMetadata("wi", bitCast->getMetadata("wi"));
+                newBitcast->setMetadata("wi_counter", bitCast->getMetadata("wi_counter"));
+            }
+                
+            bitCast->replaceAllUsesWith(newBitcast);
+            AA->replaceWithNewValue(bitCast, newBitcast);      
+            SE->forgetValue(bitCast);
+            bitCast->eraseFromParent();                            
+            
+            useiter = oldAlloca.use_begin();
+            continue;
+        }
+        
+        if (isa<GetElementPtrInst>(tmp)) {
+            // Original getelementpointer contains number of indexes
+            // that indicate how to access element of allocated
+            // memory. Since we changed the most inner type to
+            // array, we add index to that array such as:
+            // Original alloca:
+            // %A = alloca [20 x [8 x i32]], align 4
+            // Original getelementpointer:
+            // %68 = getelementptr inbounds [20 x [8 x i32]]]* %A, i32 0, i32 %X, i32 0
+            // New alloca:
+            // %A = alloca [20 x [8 x [2 x i32]]], align 4
+            // new getelementpointer:
+            // %68 = getelementptr inbounds [20 x [8 x [2 x i32]]]* %A, i32 0, i32 %X, i32 0, i32 0
+            
+            GetElementPtrInst* gep = cast<GetElementPtrInst>(tmp);
+            std::vector<llvm::Value *> gepArgs;            
+            // Collect original indexes of getelementpointer
+            for (unsigned int i = 1; i <= gep->getNumIndices(); i++) {
+                gepArgs.push_back(gep->getOperand(i));
+            }
+            // Add index to the newly created array
+            Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
+            gepArgs.push_back(V);
+            IRBuilder<> builder(gep);   
+            GetElementPtrInst* newGep = 
+                cast<GetElementPtrInst>(
+                    builder.CreateGEP(&newAlloca, gepArgs, gep->getName()));
+            newGep->setIsInBounds(gep->isInBounds());
+            
+            if (gep->getMetadata("wi") != NULL) {
+                newGep->setMetadata("wi", gep->getMetadata("wi"));
+                newGep->setMetadata("wi_counter", gep->getMetadata("wi_counter"));
+            }
+            
+            gep->replaceAllUsesWith(newGep);
+            AA->replaceWithNewValue(gep, newGep);      
+            SE->forgetValue(gep);
+            gep->eraseFromParent();            
+            useiter = oldAlloca.use_begin();
+            continue;
+        }
+        if (isa<StoreInst>(tmp)) {
+            // This is tricky, original alloca was for base type such 
+            // as i32 or float so the variable was used directly.
+            // Now this is array so we have to add getelementpointer.
+            StoreInst* store = cast<StoreInst>(tmp);
+            std::vector<llvm::Value *> gepArgs;            
+            Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
+            gepArgs.push_back(V);
+            IRBuilder<> builder(store);   
+            GetElementPtrInst* newGep = 
+                cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+            if (store->getMetadata("wi") != NULL) {
+                newGep->setMetadata("wi", store->getMetadata("wi"));
+                newGep->setMetadata("wi_counter", store->getMetadata("wi_counter"));
+            }
+
+            for (unsigned int i = 0; i < store->getNumOperands(); i++) {
+                // Either of store operands could be alloca, we either
+                // store to allocated memory, or we are storing the pointer 
+                // of the memory (this is rather dumb thing to do).
+                if (store->getOperand(i) == &oldAlloca) {
+                    IRBuilder<> builder(store);               
+                    BitCastInst* newBitcast = 
+                        cast<BitCastInst>(builder.CreateBitCast(
+                            newGep, store->getOperand(i)->getType()));                    
+                    if (store->getMetadata("wi") != NULL) {
+                        newBitcast->setMetadata("wi", store->getMetadata("wi"));
+                        newBitcast->setMetadata("wi_counter", store->getMetadata("wi_counter"));
+                    }                    
+                    store->setOperand(i, newBitcast);
+                }
+            }
+            useiter = oldAlloca.use_begin();
+            continue;            
+        }
+        if (isa<LoadInst>(tmp)) {
+            // This is tricky, original alloca was for base type such 
+            // as i32 or float so the variable was used directly.
+            // Now this is array so we have to add getelementpointer.
+
+            LoadInst* load = cast<LoadInst>(tmp);
+            std::vector<llvm::Value *> gepArgs;            
+            Value *V = ConstantInt::get(Type::getInt32Ty(Context), indx);
+            gepArgs.push_back(V);
+            IRBuilder<> builder(load);   
+            GetElementPtrInst* newGep = 
+                cast<GetElementPtrInst>(builder.CreateGEP(&newAlloca, gepArgs));
+            if (load->getMetadata("wi") != NULL) {
+                newGep->setMetadata("wi", load->getMetadata("wi"));
+                newGep->setMetadata("wi_counter", load->getMetadata("wi_counter"));
+            }
+
+            for (unsigned int i = 0; i < load->getNumOperands(); i++) {
+                // Find operand of load that was old alloca and 
+                // use bitcast to point to to getelementpointer result.
+                // There must be better way how to do this.
+                if (load->getOperand(i) == &oldAlloca) {
+                    IRBuilder<> builder(load);               
+                    BitCastInst* newBitcast = 
+                    cast<BitCastInst>(builder.CreateBitCast(
+                        newGep, load->getOperand(i)->getType()));                    
+                    if (load->getMetadata("wi") != NULL) {
+                        newBitcast->setMetadata("wi", load->getMetadata("wi"));
+                        newBitcast->setMetadata("wi_counter", load->getMetadata("wi_counter"));
+                    }                    
+                    load->setOperand(i, newBitcast);
+                }
+            }
+            useiter = oldAlloca.use_begin();
+            continue;            
+        }        
+        useiter++;
+    }      
+  }
+  
+  // Find new type for the vector alloca instruction
+  Type* WIVectorize::newAllocaType(Type* start, unsigned int width) {
+      
+      if (start->isArrayTy()) {
+          // If type is still array check what is allocated type
+          int numElm = cast<ArrayType>(start)->getNumElements();
+          return ArrayType::get(
+                    newAllocaType(
+                        cast<SequentialType>(start)->getElementType(),
+                        width)
+                    , numElm);
+      } else if (start->isFirstClassType() && !start->isPointerTy()) {
+          // Recursion stopping point
+          // This should convert i32 to [width x i32] as base type of 
+          // array
+          return ArrayType::get(start, width);
+      } else {
+          // Not recognized type, just return it, alloca won't be replaced
+          return start;
+      }
+  }
+  
+  // In case there is private variable in the kernel that does not fit into
+  // register (multidimensional array for example), there are alloca 
+  // defined to create necessary memory space for variable.
+  // Those are defined then for each of the work items replicated.
+  // This pass attempts to combine those allocas to create 'interleaved'
+  // memory allocation that then can be accessed by vector loads and stores
+  // as described bellow:
+  //
+  // __kernel xyz() {
+  //
+  // int A[100][100][100][100];
+  // ...
+  //}
+  // Will become after replication with 2 work items:
+  //
+  // %A = alloca  [100 x [100 x [100 x i32]]], align 4
+  // %A_wi_1_0_0 = alloca  [100 x [100 x [100 x i32]]], align 4  
+  //
+  // This in will be converted here to :
+  // %A = alloca  [100 x [100 x [100 x [2 x i32]]]], align 4
+  // And respective getelementpointer instruction will
+  // be added additional paramter to select correct member from the pair.
+  //
+  // NOTE: This does work only for arrays ATM, the scalar type allocas
+  // as produced by phistoallocas pass required for the work loops
+  // are skipped for now.
+  
+  bool WIVectorize::vectorizeAllocas(BasicBlock& BB) {
+
+    std::multimap<int, ValueVector*> allocas;
+    getCandidateAllocas(BB, allocas);
+    bool changed = false;
     
+    for (std::multimap<int, ValueVector*>::iterator insIt = allocas.begin();
+         insIt != allocas.end(); insIt++) {
+        IRBuilder<> builder(
+            BB.getParent()->getEntryBlock().getFirstInsertionPt());    
+        
+        ValueVector* tmpVec = (*insIt).second;
+        // Create as 'wide' alloca as number of elements found,
+        // could be smaller then vector width or larger.
+        // Should be same as work group dimensions for work item replicas or
+        // same as number of unrolled loops with work item loops.
+        unsigned int allocaWidth = tmpVec->size();
+        // No point vectorizing one alloca only
+        if (allocaWidth <= 1)
+            continue;
+        
+        AllocaInst* I = cast<AllocaInst>((*tmpVec)[0]);
+        Type* startType = I->getAllocatedType();
+        if (!startType->isArrayTy())
+            continue;
+        // Find new type for alloca by recursively searching through multiple
+        // dimensions of array
+        Type* newType = newAllocaType(startType, allocaWidth);
+
+        // No new type was found, alloca type not supported.
+        if (newType == startType)
+            continue;
+        
+        changed = true;
+        llvm::AllocaInst *alloca = 
+            builder.CreateAlloca(newType, 0, I->getName().str() + "_allocamix");
+        alloca->setAlignment(I->getAlignment());
+        
+        if (I->getMetadata("wi") != NULL) {
+            alloca->setMetadata("wi", I->getMetadata("wi"));
+            alloca->setMetadata("wi_counter", I->getMetadata("wi_counter"));
+        }
+        
+        // Replace uses of first alloca with newly created one
+        MDNode* mi = I->getMetadata("wi");
+        assert(mi->getNumOperands() == 3);
+        // Second operand of MDNode contains MDNode with XYZ tripplet.
+        MDNode* iXYZ= dyn_cast<MDNode>(mi->getOperand(2));
+        assert(iXYZ->getNumOperands() == 4);
+        
+        int index = dyn_cast<ConstantInt>(iXYZ->getOperand(1))->getZExtValue();        
+        
+        replaceUses(BB, *I, *alloca, index);
+        SE->forgetValue(I);
+        I->eraseFromParent();
+        
+        // Replaces uses of other allocas with newly created one
+        for (int i = 1; i < allocaWidth; i++) {
+            AllocaInst* J = cast<AllocaInst>((*tmpVec)[i]);
+            MDNode* mj = J->getMetadata("wi");
+            assert(mj->getNumOperands() == 3);
+            MDNode* jXYZ= dyn_cast<MDNode>(mj->getOperand(2));
+            assert(jXYZ->getNumOperands() == 4);            
+            int index = 
+                dyn_cast<ConstantInt>(jXYZ->getOperand(1))->getZExtValue();        
+            
+            replaceUses(BB, *J, *alloca, index);
+            SE->forgetValue(J);
+            J->eraseFromParent();            
+        }
+    }
+    return changed;
+  } 
+  
+  // Pass closely repated to getCandidatePairs, except this one only
+  // picks AllocaInst and makes sure they are from different work items.
+  // It also returns all instances of AllocaInst at the same time.
+  bool WIVectorize::getCandidateAllocas(BasicBlock &BB,
+                std::multimap<int, ValueVector*>& temporary) {
+      
+    BasicBlock::iterator Start = BB.getFirstInsertionPt();      
+    BasicBlock::iterator E = BB.end();
+    for (BasicBlock::iterator I = Start++; I != E; ++I) {
+
+        if (!isa<AllocaInst>(I)) 
+        continue;
+        // TODO: This is bit tricky, should it be possible
+        // to create vector of allocas that do not have metadata?
+        if (I->getMetadata("wi") == NULL)
+            continue;
+        
+        MDNode* md = I->getMetadata("wi");
+        MDNode* mdCounter = I->getMetadata("wi_counter");
+        MDNode* mdRegion = dyn_cast<MDNode>(md->getOperand(1));
+        
+        unsigned CI = cast<ConstantInt>(mdCounter->getOperand(1))->getZExtValue();
+        unsigned RI = cast<ConstantInt>(mdRegion->getOperand(1))->getZExtValue();
+        
+        std::multimap<int,ValueVector*>::iterator itb = temporary.lower_bound(CI);
+        std::multimap<int,ValueVector*>::iterator ite = temporary.upper_bound(CI);
+        ValueVector* tmpVec = NULL;   
+        while(itb != ite) {
+            if (I->isSameOperationAs(cast<Instruction>((*(*itb).second)[0]))) {
+                // Test also if instructions are from same region.
+                MDNode* tmpMD = 
+                    cast<Instruction>((*(*itb).second)[0])->getMetadata("wi");
+                MDNode* tmpRINode = dyn_cast<MDNode>(tmpMD->getOperand(1));
+                unsigned tmpRI = 
+                    cast<ConstantInt>(tmpRINode->getOperand(1))->getZExtValue();                
+                if (RI == tmpRI)
+                    tmpVec = (*itb).second;
+            }
+            itb++;
+        }
+        if (tmpVec == NULL) {
+            tmpVec = new ValueVector;
+            temporary.insert(std::pair<int, ValueVector*>(CI, tmpVec));          
+        }
+        tmpVec->push_back(I);
+    }
+    for (std::multimap<int, ValueVector*>::iterator insIt = temporary.begin();
+         insIt != temporary.end(); insIt++) {
+        ValueVector* tmpVec = (*insIt).second;
+        for (unsigned j = 0; j < tmpVec->size()/2; j++) {
+            Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
+            Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
+            if (!areInstsCompatibleFromDifferentWi(I,J))
+                continue;
+        }
+    }
+    return true;
+  }
+  
 }
 char WIVectorize::ID = 0;
 RegisterPass<WIVectorize>

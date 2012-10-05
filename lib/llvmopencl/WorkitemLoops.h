@@ -32,6 +32,10 @@
 #include "WorkitemHandler.h"
 #include "ParallelRegion.h"
 
+namespace llvm {
+  class PostDominatorTree;
+}
+
 namespace pocl {
   class Workgroup;
 
@@ -50,24 +54,19 @@ namespace pocl {
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
     typedef std::set<llvm::Instruction* > InstructionIndex;
     typedef std::vector<llvm::Instruction* > InstructionVec;
+    typedef std::map<std::string, llvm::Instruction*> StrInstructionMap;
 
     InstructionIndex workGroupVariables;
 
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
-
-    /* The global variables that store the current local id. */
-    llvm::Value *localIdZ, *localIdY, *localIdX;
+    llvm::PostDominatorTree *PDT;
 
     ParallelRegion::ParallelRegionVector *original_parallel_regions;
 
-    unsigned size_t_width;
-
-    std::map<std::string, llvm::Instruction*> contextArrays;
+    StrInstructionMap contextArrays;
 
     virtual bool ProcessFunction(llvm::Function &F);
-    void CreateLoopAround(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, llvm::Value *localIdVar, 
-                          size_t LocalSizeForDim);
 
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore
@@ -76,12 +75,31 @@ namespace pocl {
 
     llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
     llvm::Instruction *AddContextRestore
-        (llvm::Instruction *instruction, llvm::Instruction *alloca, 
+        (llvm::Value *val, llvm::Instruction *alloca, 
          llvm::Instruction *before=NULL);
     llvm::Instruction *GetContextArray(llvm::Instruction *val);
-    llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
+
+    std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
+    CreateLoopAround
+        (llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
+         bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
+         bool addIncBlock=true);
+
+    llvm::BasicBlock *
+      AppendIncBlock
+      (llvm::BasicBlock* after, 
+       llvm::Value *localIdVar);
 
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
+
+    bool ShouldBeContextSaved(llvm::Instruction *instr);
+
+    std::map<llvm::Instruction*, unsigned> tempInstructionIds;
+    size_t tempInstructionIndex;
+    // An alloca in the kernel which stores the first iteration to execute
+    // in the inner (dimension 0) loop. This is set to 1 in an peeled iteration
+    // to skip the 0, 0, 0 iteration in the loops.
+    llvm::Value *localIdXFirstVar;
   };
 }
 

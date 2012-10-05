@@ -49,31 +49,36 @@ cl::opt<bool>
 AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
   cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
+
+WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID)
+{
+}
+
 bool
 WorkitemHandler::runOnFunction(Function &F)
 {
-   // Move all allocate instruction of the function to the 
-   // beginning of the first basic block of the function.
-   // This solves problem with dynamic stack objects that are 
-   // not supported by the TCE target.
-   Function::iterator I                   = F.begin();
-   Instruction *firstInsertionPt = (I++)->getFirstInsertionPt();
+  // Move all alloca instruction of the function to the 
+  // beginning of the first basic block of the function.
+  // This solves problem with dynamic stack objects that are 
+  // not supported by the TCE target.
+  Function::iterator I                   = F.begin();
+  Instruction *firstInsertionPt = (I++)->getFirstInsertionPt();
     
-   bool changed = false;
-   for (Function::iterator E = F.end(); I != E; ++I) {
-     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
-       AllocaInst *allocaInst = dyn_cast<AllocaInst>(BI++);
-       if (allocaInst && isa<ConstantInt>(allocaInst->getArraySize())) {
-         allocaInst->moveBefore(firstInsertionPt);
-         changed = true;
-       }
-     }
-   }
-    return changed;
+  bool changed = false;
+  for (Function::iterator E = F.end(); I != E; ++I) {
+    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
+      AllocaInst *allocaInst = dyn_cast<AllocaInst>(BI++);
+      if (allocaInst && isa<ConstantInt>(allocaInst->getArraySize())) {
+        allocaInst->moveBefore(firstInsertionPt);
+        changed = true;
+      }
+    }
+  }
+  return changed;
 }
 
 void
-WorkitemHandler::CheckLocalSize(Kernel *K)
+WorkitemHandler::Initialize(Kernel *K)
 {
   llvm::Module *M = K->getParent();
   
@@ -92,6 +97,20 @@ WorkitemHandler::CheckLocalSize(Kernel *K)
       }
     }
   }
+
+  llvm::Type *localIdType; 
+  if (M->getPointerSize() == llvm::Module::Pointer64)
+    size_t_width = 64;
+  else if (M->getPointerSize() == llvm::Module::Pointer32)
+    size_t_width = 32;
+  else
+    assert (false && "Only 32 and 64 bit size_t widths supported.");
+
+  localIdType = IntegerType::get(K->getContext(), size_t_width);
+
+  localIdZ = M->getOrInsertGlobal(POCL_LOCAL_ID_Z_GLOBAL, localIdType);
+  localIdY = M->getOrInsertGlobal(POCL_LOCAL_ID_Y_GLOBAL, localIdType);
+  localIdX = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, localIdType);
 }
 
 bool
@@ -218,7 +237,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Funct
                   changed |= true;
                 } else {
 #ifdef DEBUG_REFERENCE_FIXING
-                  std::cout << "### didn't found an alternative for" << std::endl;
+                  std::cout << "### didn't fiund an alternative for" << std::endl;
                   operand->dump();
                   std::cerr << "### BB:" << std::endl;
                   operand->getParent()->dump();
