@@ -582,7 +582,11 @@ ParallelRegion::InjectPrintF
       PAWI.Index = 4294967295U; 
       PAWI.Attrs = Attribute::NoUnwind;
       Attrs.push_back(PAWI);
+#ifdef LLVM_3_1
       func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+#else
+      func_printf_PAL = AttrListPtr::get(Attrs);
+#endif
     }
     printfFunc->setAttributes(func_printf_PAL);
   }

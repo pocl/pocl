@@ -34,11 +34,11 @@
     STYPE##4 b;                                                         \
     tmp = a.s0;                                                         \
     b.s0 = tmp & halfmask;                                              \
-    tmp = tmp >> halfbits + a.s1;                                       \
+    tmp = tmp >> (halfbits + a.s1);                                     \
     b.s1 = tmp & halfmask;                                              \
-    tmp = tmp >> halfbits + a.s2;                                       \
+    tmp = tmp >> (halfbits + a.s2);                                     \
     b.s2 = tmp & halfmask;                                              \
-    tmp = tmp >> halfbits + a.s3;                                       \
+    tmp = tmp >> (halfbits + a.s3);                                     \
     b.s3 = tmp;                                                         \
     return b;                                                           \
   }                                                                     \
