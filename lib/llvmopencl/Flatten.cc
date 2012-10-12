@@ -74,8 +74,14 @@ Flatten::runOnModule(Module &M)
       if (KernelName == f->getName() || 
           (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f)))
         {
+#ifdef LLVM_3_1
           f->removeFnAttr(Attribute::AlwaysInline);
           f->addFnAttr(Attribute::NoInline);
+#else
+          f->removeFnAttr(Attributes(Attributes::AlwaysInline));
+          f->addFnAttr(Attributes::NoInline);
+#endif
+
           f->setLinkage(llvm::GlobalValue::ExternalLinkage);
           changed = true;
 #ifdef DEBUG_FLATTEN
@@ -84,8 +90,14 @@ Flatten::runOnModule(Module &M)
         } 
       else
         {
+#ifdef LLVM_3_1
           f->removeFnAttr(Attribute::NoInline);
           f->addFnAttr(Attribute::AlwaysInline);
+#else
+          f->removeFnAttr(Attributes(Attributes::NoInline));
+          f->addFnAttr(Attributes::AlwaysInline);
+#endif
+
           f->setLinkage(llvm::GlobalValue::InternalLinkage);
           changed = true;
 #ifdef DEBUG_FLATTEN

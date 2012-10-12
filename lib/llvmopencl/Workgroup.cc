@@ -164,7 +164,11 @@ Workgroup::runOnModule(Module &M)
     if (!isKernelToProcess(*i)) continue;
     Function *L = createLauncher(M, i);
       
+#ifdef LLVM_3_1
     L->addFnAttr(Attribute::NoInline);
+#else
+    L->addFnAttr(Attributes::NoInline);
+#endif
 
     privatizeContext(M, L);
 
