@@ -28,6 +28,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "config.h"
 
 using namespace llvm;
 
