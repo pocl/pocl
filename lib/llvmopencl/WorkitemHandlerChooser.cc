@@ -32,7 +32,6 @@
 
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Target/TargetData.h"
 
 #include <iostream>
 

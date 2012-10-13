@@ -36,12 +36,13 @@
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
+#include "llvm/Target/TargetData.h"
 #else
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
+#include "llvm/DataLayout.h"
 #endif
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
 
@@ -77,7 +78,11 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTree>();
   AU.addRequired<PostDominatorTree>();
   AU.addRequired<LoopInfo>();
+#ifdef LLVM_3_1
   AU.addRequired<TargetData>();
+#else
+  AU.addRequired<DataLayout>();
+#endif
   AU.addRequired<pocl::WorkitemHandlerChooser>();
 }
 

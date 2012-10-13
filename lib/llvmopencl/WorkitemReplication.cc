@@ -36,10 +36,11 @@
 #include "config.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Target/TargetData.h"
 #else
 #include "llvm/IRBuilder.h"
+#include "llvm/DataLayout.h"
 #endif
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ValueSymbolTable.h"
 #include "WorkitemHandlerChooser.h"
@@ -75,7 +76,11 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addRequired<LoopInfo>();
+#ifdef LLVM_3_1
   AU.addRequired<TargetData>();
+#else
+  AU.addRequired<DataLayout>();
+#endif
   AU.addRequired<pocl::WorkitemHandlerChooser>();
 }
 
@@ -144,7 +149,11 @@ WorkitemReplication::ProcessFunction(Function &F)
 #endif
   
   // Measure the required context (variables alive in more than one region).
+#ifdef LLVM_3_1
   TargetData &TD = getAnalysis<TargetData>();
+#else
+  DataLayout &TD = getAnalysis<DataLayout>();
+#endif
 
   for (SmallVector<ParallelRegion *, 8>::iterator
          i = original_parallel_regions->begin(), e = original_parallel_regions->end();

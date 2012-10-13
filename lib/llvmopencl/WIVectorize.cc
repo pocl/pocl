@@ -36,9 +36,11 @@
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
+#include "llvm/Target/TargetData.h"
 #else
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
+#include "llvm/DataLayout.h"
 #endif
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -64,7 +66,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Metadata.h"
 #include <algorithm>
@@ -150,7 +151,11 @@ namespace {
 
     AliasAnalysis *AA;
     ScalarEvolution *SE;
+#ifdef LLVM_3_1
     TargetData *TD;
+#else
+    DataLayout *TD;
+#endif
     DenseMap<Value*, Value*> storedSources;
     DenseMap<std::pair<int,int>, ValueVector*> stridedOps;    
     std::multimap<Value*, Value*> flippedStoredSources;
@@ -308,7 +313,11 @@ namespace {
     virtual bool runOnFunction(Function &Func) {
       AA = &getAnalysis<AliasAnalysis>();
       SE = &getAnalysis<ScalarEvolution>();
+#ifdef LLVM_3_1
       TD = getAnalysisIfAvailable<TargetData>();
+#else
+      TD = getAnalysisIfAvailable<DataLayout>();
+#endif
       
       bool changed = false;      
       for (Function::iterator i = Func.begin();

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
+#include "config.h"
 #include "pocl.h"
 #include "Workgroup.h"
 #include "llvm/Argument.h"
@@ -35,8 +35,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#ifdef LLVM_3_1
+#include "llvm/Target/TargetData.h"
+#else
+#include "llvm/DataLayout.h"
+#endif
 
 using namespace std;
 using namespace llvm;
@@ -75,7 +79,11 @@ static RegisterPass<GenerateHeader> X("generate-header",
 void
 GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
 {
+#ifdef LLVM_3_1
   AU.addRequired<TargetData>();
+#else
+  AU.addRequired<DataLayout>();
+#endif
 }
 
 bool
@@ -219,8 +227,11 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
                                        raw_fd_ostream &out)
 {
   Module *M = F->getParent();
+#ifdef LLVM_3_1
   TargetData &TD = getAnalysis<TargetData>();
-  
+#else
+  DataLayout &TD = getAnalysis<DataLayout>();
+#endif
   
   SmallVector<GlobalVariable *, 8> locals;
 
