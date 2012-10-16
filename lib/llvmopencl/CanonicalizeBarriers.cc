@@ -193,6 +193,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F)
             successor->getTerminator()->getNumSuccessors() == 1)
           {
             b->getTerminator()->setSuccessor(0, successor->getTerminator()->getSuccessor(0));
+            successor->replaceAllUsesWith(b);
             successor->eraseFromParent();
             emptyRegionDeleted = true;
             changed = true;
