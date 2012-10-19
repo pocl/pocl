@@ -55,7 +55,7 @@ using namespace TTAMachine;
 //#define DEBUG_TTA_DRIVER
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
-  local_as(NULL), global_as(NULL), machine_file(adfName), parent(dev),
+  local_as(NULL), global_as(NULL), private_as(NULL), machine_file(adfName), parent(dev),
   currentProgram(NULL), globalCycleCount(0) {
   parent->data = this;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
@@ -112,11 +112,12 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   Machine::AddressSpaceNavigator nav = mach.addressSpaceNavigator();
   for (int i = 0; i < nav.count(); ++i) {
     AddressSpace *as = nav.item(i);
-    if (as->hasNumericalId(TTA_ASID_PRIVATE) &&
-        as->hasNumericalId(TTA_ASID_LOCAL)) {
+    if (as->hasNumericalId(TTA_ASID_LOCAL)) {
       local_as = as;
-      continue;
     } 
+    if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
+      private_as = as;
+    }
     if (as->hasNumericalId(TTA_ASID_GLOBAL) &&
         as->hasNumericalId(TTA_ASID_CONSTANT)) {
       global_as = as;
@@ -124,7 +125,14 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   }
   if (local_as == NULL) 
     POCL_ABORT("local address space not found in the ADF. "
-               "Mark it by adding numerical ids 0 and 4 to the AS.\n");
+               "Mark it by adding numerical ids 4 to the AS.\n"
+	       "Local address space can be same as private AS.\n");
+
+  if (private_as == NULL) 
+    POCL_ABORT("private address space not found in the ADF. "
+               "Mark it by adding numerical ids 0 to the AS.\n"
+	       "Private address space can be same as local AS.\n");
+
   if (global_as == NULL) 
     POCL_ABORT("global address space not found in the ADF. "
                "Mark it by adding numerical ids 3 and 5 to the AS.\n");
