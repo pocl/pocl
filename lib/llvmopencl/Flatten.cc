@@ -79,7 +79,9 @@ Flatten::runOnModule(Module &M)
           f->removeFnAttr(Attribute::AlwaysInline);
           f->addFnAttr(Attribute::NoInline);
 #else
-          f->removeFnAttr(Attributes(Attributes::AlwaysInline));
+          AttrBuilder b;
+          f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::AlwaysInline)));
+          AttrBuilder c;
           f->addFnAttr(Attributes::NoInline);
 #endif
 
@@ -95,7 +97,8 @@ Flatten::runOnModule(Module &M)
           f->removeFnAttr(Attribute::NoInline);
           f->addFnAttr(Attribute::AlwaysInline);
 #else
-          f->removeFnAttr(Attributes(Attributes::NoInline));
+          AttrBuilder b;
+          f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::NoInline)));
           f->addFnAttr(Attributes::AlwaysInline);
 #endif
 

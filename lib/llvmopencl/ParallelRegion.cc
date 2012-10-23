@@ -585,8 +585,8 @@ ParallelRegion::InjectPrintF
       Attrs.push_back(PAWI);
       func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 #else
-      Attrs.push_back(AttributeWithIndex::get( 1U, Attributes::NoCapture));
-      Attrs.push_back(AttributeWithIndex::get( 4294967295U, Attributes::NoUnwind));
+      Attrs.push_back(AttributeWithIndex::get( M->getContext(), 1U, Attributes::NoCapture));
+      Attrs.push_back(AttributeWithIndex::get( M->getContext(), 4294967295U, Attributes::NoUnwind));
       func_printf_PAL = AttrListPtr::get(Attrs);
 #endif
     }
