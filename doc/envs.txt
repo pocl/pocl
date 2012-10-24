@@ -88,8 +88,8 @@ multiple work items. Legal values:
               kernel and the work group size (default). Use
               POCL_FULL_REPLICATION_THRESHOLD=N to set the
               maximum local size for a work group to be
-              replicated fully with 'workitemrepl'. Otherwise,  
-             'workitemloops' is used.
+              replicated fully with 'repl'. Otherwise,  
+              'loops' is used.
 
     loops  -- Create for-loops that execute the work items
               (under stabilization). The drawback is the
