@@ -11,7 +11,7 @@ delete_memobjs(cl_mem *memobjs, int n)
  
 int 
 exec_dot_product_kernel(const char *program_source, 
-                        int n, void *srcA, void *srcB, void *dst) 
+                        int n, cl_float4 *srcA, cl_float4 *srcB, cl_float4 *dst) 
 { 
   cl_context  context; 
   cl_command_queue cmd_queue; 
@@ -23,6 +23,7 @@ exec_dot_product_kernel(const char *program_source,
   size_t       local_work_size[1]; 
   size_t       cb; 
   cl_int       err; 
+  int          i;
  
   // create the OpenCL context on a GPU device 
   context = clCreateContextFromType(
@@ -45,7 +46,13 @@ exec_dot_product_kernel(const char *program_source,
       free(devices); 
       return -1; 
     } 
-  free(devices); 
+
+  for (i = 0; i < n; ++i)
+    {
+       poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcA[i], 4);
+       poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcB[i], 4);
+    }
+
  
   // allocate the buffer memory objects 
   memobjs[0] = clCreateBuffer(context, 
@@ -162,7 +169,15 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseContext(context); 
       return -1; 
     } 
- 
+  for (i = 0; i < n; ++i)
+    {
+      poclu_bswap_cl_float_array(devices[0], (cl_float*)&dst[i], 4);
+      poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcA[i], 4);
+      poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcB[i], 4);
+    }
+  free(devices); 
+
+
   // release kernel, program, and memory objects 
   delete_memobjs(memobjs, 3); 
   clReleaseKernel(kernel); 
