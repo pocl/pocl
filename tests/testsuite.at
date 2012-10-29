@@ -52,6 +52,7 @@ AT_CLEANUP
 AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_bitselect...
 OK
@@ -60,6 +61,7 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_bitselect], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_fabs...
 OK
@@ -68,6 +70,7 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
@@ -76,6 +79,7 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_rotate...
 OK

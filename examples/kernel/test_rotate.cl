@@ -117,7 +117,7 @@
 
 
 #define is_signed(T)   ((T)-1 < (T)+1)
-#define is_floating(T) ((T)0.1 > (T)0.0)
+#define is_floating(T) ((T)0.1f > (T)0.0f)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))
 
 DEFINE_BODY_G

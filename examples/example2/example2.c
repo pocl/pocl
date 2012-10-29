@@ -80,7 +80,7 @@ main (void)
 	input[i * WIDTH + j] = drand48();
     }
   
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
+  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_ALL, 
 				    NULL, NULL, NULL); 
   if (context == (cl_context)0) 
     return -1; 
