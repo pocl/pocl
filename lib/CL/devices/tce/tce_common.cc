@@ -220,7 +220,7 @@ chunk_info_t*
 pocl_tce_malloc_local (void *device_data, size_t size) 
 {
   TCEDevice *d = (TCEDevice*)device_data;
-  return alloc_buffer (&d->global_mem, size);
+  return alloc_buffer (&d->local_mem, size);
 }
 
 void
