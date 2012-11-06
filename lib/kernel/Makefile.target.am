@@ -41,5 +41,5 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-CLANGFLAGS += -ccc-host-triple @TARGET@
+CLANGFLAGS += -target @TARGET@
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/@TARGET@/types.h

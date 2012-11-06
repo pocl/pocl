@@ -40,6 +40,6 @@ AR = @LLVM_AR@
 
 libkernel_a_SOURCES = abs.cl ceil.cl copysign.cl fabs.cl floor.cl max.cl min.cl signbit.cl sqrt.cl
 
-CLANGFLAGS += -ccc-host-triple x86_64-unknown-linux-gnu
+CLANGFLAGS += -target x86_64-unknown-linux-gnu
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/x86_64/types.h
 

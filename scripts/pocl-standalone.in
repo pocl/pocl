@@ -52,7 +52,7 @@ case $target in
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
 esac
 
-CLANG_FLAGS="$CLANG_FLAGS -ccc-host-triple $target"
+CLANG_FLAGS="$CLANG_FLAGS -target $target"
 
 if test -z "$CLANGFLAGS"
 then
