@@ -105,6 +105,18 @@ static cl::opt<bool>
 NoFP("wi-vectorize-no-fp", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point operations"));
 
+static cl::opt<bool>
+NoCMP("wi-vectorize-no-cmp", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize comparison operations"));
+
+static cl::opt<bool>
+NoCount("wi-vectorize-no-counters", cl::init(true), cl::Hidden,
+  cl::desc("Forbid vectorization based no loop counter "
+          "arithmetic"));
+static cl::opt<bool>
+NoGEP("wi-vectorize-no-GEP", cl::init(true), cl::Hidden,
+  cl::desc("Don't try to vectorize getelementpointer operations"));
+
 #ifndef NDEBUG
 static cl::opt<bool>
 DebugInstructionExamination("wi-vectorize-debug-instruction-examination",
@@ -311,6 +323,7 @@ namespace {
       return false;
     }
     virtual bool runOnFunction(Function &Func) {
+        
       AA = &getAnalysis<AliasAnalysis>();
       SE = &getAnalysis<ScalarEvolution>();
 #ifdef LLVM_3_1
@@ -352,6 +365,11 @@ namespace {
       // access computations that are not needed anymore and their vectorization
       // is waste of resources. Instruction combiner is not able to get rid
       // of those on it's own once they are in vectors.
+      
+      // Store original values of two variables. They can be changed bellow
+      // but have to be restored before calling this for next BB.
+      bool originalMemOpsOnly = MemOpsOnly;
+      bool originalNoMemOps = NoMemOps;
       if (!MemOpsOnly && !NoMemOps) {
           MemOpsOnly = true;
           vectorizeTwice = true;
@@ -370,6 +388,7 @@ namespace {
       }
       if (vectorizeTwice) {
           MemOpsOnly = false;
+          NoMemOps = true;
           for (unsigned v = 2, n = 1; v <= VectorWidth;
                v *= 2, ++n) {
               DEBUG(dbgs() << "WIV: fusing loop #" << n <<
@@ -390,6 +409,8 @@ namespace {
       }
 
       DEBUG(dbgs() << "WIV: done!\n");
+      MemOpsOnly = originalMemOpsOnly;
+      NoMemOps = originalNoMemOps;
       return changed;
     }
 
@@ -477,13 +498,29 @@ namespace {
         JPtr = cast<LoadInst>(J)->getPointerOperand();
         IAlignment = cast<LoadInst>(I)->getAlignment();
         JAlignment = cast<LoadInst>(J)->getAlignment();
+      } else if (isa<GetElementPtrInst>(I)) {
+        Instruction::op_iterator it = cast<GetElementPtrInst>(I)->idx_begin();
+        IPtr = *it;
+        Instruction::op_iterator jt = cast<GetElementPtrInst>(J)->idx_begin();
+        JPtr = *jt;
+        if (!IPtr || !JPtr)
+            return false;
+        IAlignment = 0;
+        JAlignment = 0;        
       } else {
         IPtr = cast<StoreInst>(I)->getPointerOperand();
         JPtr = cast<StoreInst>(J)->getPointerOperand();
         IAlignment = cast<StoreInst>(I)->getAlignment();
         JAlignment = cast<StoreInst>(J)->getAlignment();
       }
-
+      if ((isa<GetElementPtrInst>(I) && !SE->isSCEVable(IPtr->getType())) 
+          || (isa<GetElementPtrInst>(J) && !SE->isSCEVable(JPtr->getType()))) {
+          // Asume, the getelementpointer is already vector, so the pointer
+          // operand is also the vector and LLVM scalar evaluation can
+          // not understand it.
+          OffsetInElmts = 2;
+          return true;
+      }
       const SCEV *IPtrSCEV = SE->getSCEV(IPtr);
       const SCEV *JPtrSCEV = SE->getSCEV(JPtr);
 
@@ -495,7 +532,10 @@ namespace {
             dyn_cast<SCEVConstant>(OffsetSCEV)) {
         ConstantInt *IntOff = ConstOffSCEV->getValue();
         int64_t Offset = IntOff->getSExtValue();
-
+        if (isa<GetElementPtrInst>(I)) {
+            OffsetInElmts = Offset;
+            return (abs64(Offset)) > 1;
+        }
         Type *VTy = cast<PointerType>(IPtr->getType())->getElementType();
         int64_t VTyTSS = (int64_t) TD->getTypeStoreSize(VTy);
 
@@ -592,7 +632,7 @@ namespace {
     bool WIVectorize::vectorizePhiNodes(BasicBlock &BB) {
         BasicBlock::iterator Start = BB.begin();
         BasicBlock::iterator End = BB.getFirstInsertionPt();
-        //BB.dump();
+
         ValueVectorMap valueMap;
         for (BasicBlock::iterator I = Start; I != End; ++I) {
             PHINode* node = dyn_cast<PHINode>(I);
@@ -810,6 +850,10 @@ namespace {
                                          bool &IsSimpleLoadStore) {
     IsSimpleLoadStore = false;
 
+    if (MemOpsOnly && 
+        !(isa<LoadInst>(I) || isa<StoreInst>(I) || isa<GetElementPtrInst>(I)))
+        return false;
+    
     if (CallInst *C = dyn_cast<CallInst>(I)) {
       if (!isVectorizableIntrinsic(C)) {
         return false;
@@ -840,9 +884,12 @@ namespace {
       }
     } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
       // Currently, vector GEPs exist only with one index.
-      if (G->getNumIndices() != 1)
+      if (G->getNumIndices() != 1 || NoMemOps || NoGEP)
         return false;         
-    } else if (!(I->isBinaryOp() || isa<CmpInst>(I))){ /*|| isa<ShuffleVectorInst>(I) ||
+    } else if (isa<CmpInst>(I)) {
+        if (NoCMP)
+            return false;
+    } else if (!(I->isBinaryOp())){ /*|| isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {*/
         return false;
     } 
@@ -881,8 +928,9 @@ namespace {
         return false;
     
      // Do not vectorizer pointer types. Currently do not work with LLVM 3.1.
-    if (T1->getScalarType()->isPointerTy() ||
-         T2->getScalarType()->isPointerTy())
+    if (!isa<GetElementPtrInst>(I) && 
+         (T1->getScalarType()->isPointerTy() ||
+         T2->getScalarType()->isPointerTy()))
        return false;  
     // Check if the instruction can be loop counter, we do not vectorize those
     // since they have to be same for all work items we are vectorizing
@@ -891,10 +939,27 @@ namespace {
     if (SE->isSCEVable(I->getType())) {
         const SCEV* sc = SE->getSCEV(I);
         if (const SCEVAddRecExpr* S = dyn_cast<SCEVAddRecExpr>(sc)) {
-            // This instruction is loop counter
-            return false;
+            if (I->hasNUses(2)) {
+                // Loop counter instruction is used in the comparison
+                // operation before branch and with the phi node.
+                // Any more uses indicates that the instruction is also
+                // used as part of some computation and possibly needs
+                // to get vectorize.
+                bool compare = false;
+                bool phi = false;
+                for (Value::use_iterator it = I->use_begin();
+                     it != I->use_end();
+                     it++) {
+                    if (isa<CmpInst>(*it))
+                        compare = true;
+                    if (isa<PHINode>(*it))                    
+                        phi = true;
+                }   
+                if (compare && phi)
+                    return false;
+            }
         }
-    }    
+    } 
     return true;
   }
     // This function returns true if the two provided instructions are compatible
@@ -909,7 +974,8 @@ namespace {
         }
         if (MemOpsOnly && 
             !((isa<LoadInst>(I) && isa<LoadInst>(J)) ||
-              (isa<StoreInst>(I) && isa<StoreInst>(J)))) {
+              (isa<StoreInst>(I) && isa<StoreInst>(J)) ||
+              (isa<GetElementPtrInst>(I) && isa<GetElementPtrInst>(J)))) {
             return false;
         }
         MDNode* mi = I->getMetadata("wi");
@@ -991,12 +1057,13 @@ namespace {
     }
     // FIXME: handle addsub-type operations!
 
-    if (IsSimpleLoadStore) {
+    if (IsSimpleLoadStore || isa<GetElementPtrInst>(I)) {
       Value *IPtr, *JPtr;
       unsigned IAlignment, JAlignment;
       int64_t OffsetInElmts = 0;
-      if (getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
-            OffsetInElmts) && abs64(OffsetInElmts) == 1) {         
+      bool foundPointer = 
+          getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment, OffsetInElmts);
+      if ( foundPointer && abs64(OffsetInElmts) == 1) {         
             if (AlignedOnly) {
             Type *aType = isa<StoreInst>(I) ?
                 cast<StoreInst>(I)->getValueOperand()->getType() : I->getType();
@@ -1013,7 +1080,10 @@ namespace {
                 return false;
             }
             }
-      } else if(abs64(OffsetInElmts)>1){
+      } else if(foundPointer && abs64(OffsetInElmts)>1){
+          if (isa<GetElementPtrInst>(I)) {
+              return true;
+          }            
           // Collect information on memory accesses with stride.
           // This is not usefull for anything, just to analyze code a bit.
           if (I->getMetadata("wi") != NULL) {
@@ -1122,6 +1192,8 @@ namespace {
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts) {
     BasicBlock::iterator E = BB.end();
+    LLVMContext& context = BB.getContext();
+    
     if (Start == E) return false;
 
     std::multimap<int, ValueVector*> temporary;
@@ -1168,6 +1240,107 @@ namespace {
     for (std::multimap<int, ValueVector*>::iterator insIt = temporary.begin();
          insIt != temporary.end(); insIt++) {
         ValueVector* tmpVec = (*insIt).second;
+            
+        if (tmpVec->size() % 2 != 0 && !MemOpsOnly) {
+
+            // Ok, this is extremely ugly, however this code is specific for
+            // for situation where the base address of some array is computed
+            // one way and the addresses for the rest of the work items are
+            // computed other way. E.g.
+            // id_0 = x*y*z
+            // id_1 = id_0 + const
+            // id_2 = id_0 + const + const
+            // ...
+            // Therefore only applicable to add operation.
+            // It should bring some performance improvements when targetting TTA.
+            
+            // NOTE: results are opposide of what is expected.
+            // With NoCount set to true, the vectorization of loop counter arithmetic
+            // operations is actually prevented. The ProgramPartitioner is assigning
+            // them to the lanes. This seems to provide better performance.
+            // With NoCount set to false, the vectorization of loop counter
+            // arithmetic is allowed, creating better bitcode, but when mapped
+            // to TTA, performance is much worse.
+            
+            Instruction* tmp = cast<Instruction>((*tmpVec)[0]);                        
+            if ( !(tmpVec->size() == 1 || 
+                tmp->getType()->isVectorTy() ||
+                tmp->getOpcode() != Instruction::Add)) {                
+                Instruction* K = tmp->clone();
+                if ((*tmpVec)[0]->hasName()) {
+                    std::string name = (*tmpVec)[0]->getName().str() + "_temp_0";
+                    K->setName(name);
+                }
+                  
+                if (tmp->getMetadata("wi") != NULL) {                                                
+                    MDNode* md = tmp->getMetadata("wi");
+                    MDNode* xyz = dyn_cast<MDNode>(md->getOperand(2));
+                    MDNode* region = dyn_cast<MDNode>(md->getOperand(1));
+                    ConstantInt *CIX = 
+                        dyn_cast<ConstantInt>(xyz->getOperand(1));    
+                    ConstantInt *CIY = 
+                        dyn_cast<ConstantInt>(xyz->getOperand(2));        
+                    ConstantInt *CIZ = 
+                        dyn_cast<ConstantInt>(xyz->getOperand(3));
+                    if (CIX->getValue() == 1) {
+                        Value *v2[] = {
+                            MDString::get(context, "WI_xyz"),      
+                            ConstantInt::get(Type::getInt32Ty(context), 0),
+                            CIY,      
+                            CIZ};                 
+                        MDNode* newXYZ = MDNode::get(context, v2);
+                        Value *v[] = {
+                            MDString::get(context, "WI_data"),      
+                            region,
+                            newXYZ};
+                        MDNode* mdNew = MDNode::get(context, v);              
+                        K->setMetadata("wi", mdNew);
+                        K->setMetadata("wi_counter", tmp->getMetadata("wi_counter"));
+                    }
+                }
+                for (unsigned o = 0; o < K->getNumOperands(); ++o) {
+                    if (isa<ConstantInt>(K->getOperand(o))) {
+                        K->setOperand(o, 
+                              ConstantInt::get(K->getOperand(o)->getType(), 0));
+                    }
+                }
+                Instruction* original = NULL;
+                for (unsigned o = 0; o < K->getNumOperands(); ++o) {
+                    if (!isa<ConstantInt>(K->getOperand(o))) {
+                        original = cast<Instruction>(K->getOperand(o));
+                    }
+                }
+                if (original != NULL) {
+                    K->insertAfter(original);                                    
+                    bool changed = false;
+                    std::vector<User*> usesToReplace;
+                    for (Value::use_iterator it = original->use_begin();
+                         it != original->use_end();
+                         it++) {
+                        bool usedInVec = false;                            
+                        if (*it != K) {
+                            if (!NoCount) {
+                                for (unsigned int j = 0; j < tmpVec->size(); j++) {
+                                    if ((*it) == (*tmpVec)[j]) {
+                                        usedInVec = true;
+                                        break;
+                                    }
+                                }                                       
+                            }
+                            if (!usedInVec) {                                                     
+                                usesToReplace.push_back(*it);
+                            }
+                        }
+                    }
+                    for (unsigned int j = 0; j < usesToReplace.size(); j++) {
+                       usesToReplace[j]->replaceUsesOfWith(original, K);
+                    }
+                }                
+                tmpVec->insert(tmpVec->begin(), K);
+            }
+        }
+        
+        // Create actual candidate pairs
         for (unsigned j = 0; j < tmpVec->size()/2; j++) {
             Instruction* I = cast<Instruction>((*tmpVec)[2*j]);
             Instruction* J = cast<Instruction>((*tmpVec)[2*j+1]);
@@ -1175,16 +1348,18 @@ namespace {
             bool IsSimpleLoadStore;
 
             if (!isInstVectorizable(I, IsSimpleLoadStore)) {
-                continue;            
+                break;            
             }            
 
             if (!areInstsCompatible(I, J, IsSimpleLoadStore)) { 
-                continue;
+                break;
             }            
             
             // Determine if J uses I, if so, exit the loop.
             bool UsesI = trackUsesOfI(Users, WriteSet, I, J, true);            
-            if (UsesI) break;            
+            if (UsesI) {
+                break;
+            }
 
             if (!PairableInsts.size() ||
                 PairableInsts[PairableInsts.size()-1] != I) {
@@ -2147,16 +2322,17 @@ namespace {
       Instruction *I = cast<Instruction>(P->first);
       Instruction *J = cast<Instruction>(P->second);
 
-      if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
+      if (!isa<LoadInst>(I) && !isa<StoreInst>(I) && !isa<GetElementPtrInst>(I))
         continue;
 
       Value *IPtr, *JPtr;
       unsigned IAlignment, JAlignment;
       int64_t OffsetInElmts;
       if (!getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
-                          OffsetInElmts) || abs64(OffsetInElmts) != 1)
-        llvm_unreachable("Pre-fusion pointer analysis failed");
-
+                          OffsetInElmts) || abs64(OffsetInElmts) != 1) {
+          if (!isa<GetElementPtrInst>(I))
+            llvm_unreachable("Pre-fusion pointer analysis failed");
+      }
       Value *LowPI = (OffsetInElmts > 0) ? I : J;
       LowPtrInsts.insert(LowPI);
     }
@@ -2382,7 +2558,7 @@ namespace {
       ChosenPairs.erase(P);
 
       bool FlipMemInputs = false;
-      if (isa<LoadInst>(I) || isa<StoreInst>(I))
+      if (isa<LoadInst>(I) || isa<StoreInst>(I) || isa<GetElementPtrInst>(I))
         FlipMemInputs = (LowPtrInsts.find(I) == LowPtrInsts.end());
       unsigned NumOperands = I->getNumOperands();
       SmallVector<Value *, 3> ReplacedOperands(NumOperands);
@@ -2390,7 +2566,7 @@ namespace {
         FlipMemInputs);
 
       // Make a copy of the original operation, change its type to the vector
-      // type and replace its operands with the vector operands.
+      // type and replace its operands with the vector operands.      
       Instruction *K = I->clone();
       if (I->hasName()) K->takeName(I);
       
@@ -2765,7 +2941,7 @@ namespace {
         I->eraseFromParent();
         
         // Replaces uses of other allocas with newly created one
-        for (int i = 1; i < allocaWidth; i++) {
+        for (unsigned int i = 1; i < allocaWidth; i++) {
             AllocaInst* J = cast<AllocaInst>((*tmpVec)[i]);
             MDNode* mj = J->getMetadata("wi");
             assert(mj->getNumOperands() == 3);
