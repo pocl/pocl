@@ -36,6 +36,9 @@ AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
 # check for tools
 PKG_PROG_PKG_CONFIG
 
+#Exit if pkg-config is not found.
+PKG_CHECK_EXISTS([pkg-config],[],[AC_MSG_ERROR([pkg-config not found])])
+
 # check: hwloc version must be 1.0+
 PKG_CHECK_MODULES([HWLOC], [hwloc >= 1.0], [
   :
