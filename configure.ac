@@ -429,7 +429,7 @@ test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementati
 AC_DEFUN([LLVM_PROG], [
   AC_ARG_VAR([$1], [$3])
   AC_PATH_PROGS([$1], [$2 $2-$LLVM_VERSION], , [$LLVM_BINDIR:$PATH])
-  AS_IF([test -z "x$$1"], [
+  AS_IF([test -z "$$1"], [
     AC_MSG_FAILURE([cannot find LLVM binary '$2' in '$LLVM_BINDIR' nor \$PATH])
   ])
 ])
