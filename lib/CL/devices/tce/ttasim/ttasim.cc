@@ -95,10 +95,10 @@ public:
 
   virtual void copyHostToDevice(const void *host_ptr, uint32_t dest_addr, size_t count) {
     MemorySystem &mems = simulator.memorySystem();
-    Memory& globalMem = mems.memory (*global_as);
+    MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
     for (std::size_t i = 0; i < count; ++i) {
       unsigned char val = ((char*)host_ptr)[i];
-      globalMem.write (dest_addr + i, (Memory::MAU)(val));
+      globalMem->write (dest_addr + i, (Memory::MAU)(val));
     }
   }
 
@@ -106,9 +106,9 @@ public:
                                 size_t count) {
     /* Find the simulation model for the global address space. */
     MemorySystem &mems = simulator.memorySystem();
-    Memory& globalMem = mems.memory (*global_as);
+    MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
     for (std::size_t i = 0; i < count; ++i) {
-      ((char*)host_ptr)[i] = globalMem.read (src_addr + i);
+      ((char*)host_ptr)[i] = globalMem->read (src_addr + i);
       //    printf("host: read byte %u from %d to %x\n",  ((char*)dst_ptr)[i], src_addr + i, &((char*)dst_ptr)[i]);
     }
   }
