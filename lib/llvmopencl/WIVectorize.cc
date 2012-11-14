@@ -106,7 +106,7 @@ NoFP("wi-vectorize-no-fp", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point operations"));
 
 static cl::opt<bool>
-NoCMP("wi-vectorize-no-cmp", cl::init(false), cl::Hidden,
+NoCMP("wi-vectorize-no-cmp", cl::init(true), cl::Hidden,
   cl::desc("Don't try to vectorize comparison operations"));
 
 static cl::opt<bool>
