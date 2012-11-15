@@ -642,7 +642,6 @@ AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc
-                 pocl.icd
                  examples/ViennaCL/custom-context.stdout
                  tests/atlocal
                  ocl-vendors/pocl-tests.icd
