@@ -454,6 +454,7 @@ AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
+		 lib/kernel/powerpc64/Makefile
                  lib/kernel/x86_64/Makefile])
 
 AC_ARG_ENABLE([arm-cortex-a8],
@@ -503,6 +504,10 @@ case $host_cpu in
     ;;
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    ;;
+  powerpc64)
+    AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
   *)
