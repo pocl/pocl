@@ -1,8 +1,10 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel.
+# Makefile.am for pocl/lib/kernel/tce. 
+#
+# The PowerPC64 target.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2012 Pekka Jääskeläinen
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +24,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DIST_SUBDIRS = tce x86_64 powerpc64
-SUBDIRS = ${DIST_SUBDIRS} # @TARGET@ @HOST@ # ppc
+LEX =
 
-include sources.mk
+targetpkglibdir = $(pkglibdir)/powerpc64
+targetpkglib_LIBRARIES = libkernel.a
 
-# The source files in this dir are not built directly
-# but are used with the target specific subdirs as
-# fallback implementations. Include them in the
-# dist once here.
-EXTRA_DIST = ${libkernel_SRCS} \
-	Makefile.target.am Makefile.host.am \
-	Makefile.target.in Makefile.host.in 
+vpath %.cl @srcdir@:@srcdir@/..
+vpath %.c @srcdir@:@srcdir@/..
+vpath %.ll @srcdir@:@srcdir@/..
 
-distclean-local:
-	$(MAKE) -C @TARGET@ distclean
-	-$(MAKE) -C @HOST@ distclean
+include ../sources.mk
+
+nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
+
+RANLIB = @LLVM_RANLIB@
+AR = @LLVM_AR@
+
+CLANGFLAGS += -target powerpc64-unknown-linux-gnu
+CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/powerpc64/types.h
+
