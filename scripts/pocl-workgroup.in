@@ -67,7 +67,10 @@ linked_out="${linked_bc}.out"
 
 target_dir=${target}
 case $target in
-  tce-*)    target_dir="tce"
+  tce-*) target_dir="tce"
+  ;;
+  powerpc64-*) target_dir="powerpc64"
+  ;;
 esac
 
 llvm_ld="pocl-llvm-ld"
@@ -79,9 +82,9 @@ fi
 
 if [ -f @abs_top_builddir@/lib/kernel/${target_dir}/libkernel.a ]
 then
-    ${llvm_ld} -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target_dir} -lkernel
+    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target_dir} -lkernel
 else
-    ${llvm_ld} -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target_dir} -lkernel
+    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target_dir} -lkernel
 fi
 rm ${linked_out}
 
