@@ -1,4 +1,5 @@
 #!/bin/sh
+
 while getopts h:o:cSE o
 do
     case "$o" in
@@ -34,14 +35,14 @@ mkdir $tmpdir
 
 if [ "$mode" = -c ]
 then
-    $CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+    $CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
     $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
-    exec $CLANG -ccc-host-triple $build -c $output $tmpdir/xclang.s
+    exec $CLANG -target $build -c $output $tmpdir/xclang.s
 fi
 
 if [ "$mode" = -S ]
 then
-    $CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+    $CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
     exec $LLC -mtriple=$build $output $tmpdir/xclang.bc
 fi
 
@@ -50,6 +51,6 @@ then
     exec $CLANG -E $output $1
 fi
 
-$CLANG -ccc-host-triple $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+$CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
 $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
-exec $CLANG -ccc-host-triple $build $output $tmpdir/xclang.s
+exec $CLANG -target $build $output $tmpdir/xclang.s
