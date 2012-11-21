@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel/powerpc64. 
+# Makefile.am for pocl/lib/kernel/cellspu. 
 #
-# The PowerPC64 target.
+# The Cell SPU target.
 # 
 # Copyright (c) 2012 Pekka Jääskeläinen
 # 
@@ -26,7 +26,7 @@
 
 LEX =
 
-targetpkglibdir = $(pkglibdir)/powerpc64
+targetpkglibdir = $(pkglibdir)/cellspu
 targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@:@srcdir@/..
@@ -40,6 +40,5 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-CLANGFLAGS += -target powerpc64-unknown-linux-gnu
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/powerpc64/types.h
-
+CLANGFLAGS += -target cellspu-v0
+CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/cellspu/types.h

@@ -455,6 +455,7 @@ AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
 		 lib/kernel/powerpc64/Makefile
+                 lib/kernel/cellspu/Makefile
                  lib/kernel/x86_64/Makefile])
 
 AC_ARG_ENABLE([arm-cortex-a8],
@@ -583,6 +584,7 @@ LDFLAGS=""
 AC_CONFIG_FILES([include/arm/types.h
                  include/tce/types.h
                  include/powerpc64/types.h
+                 include/cellspu/types.h
                  include/x86_64/types.h])
 
 AC_MSG_NOTICE([Checking target compiler characteristics])
