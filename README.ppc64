@@ -1,13 +1,8 @@
 status 2012-11-21
 -----------------
 
-Works and many tests run successfully on a Debian Sid with PowerPC 64 
+All pocl basic tests run successfully on a Debian Sid with PowerPC 64 
 in a 64 bit userland with LLVM 3.2. Tested using the Cell of PlayStation 3.
-
-All OpenCL specification tests pass.
-The first kennel runtime library test fails (abs bitselect ...).
-All Workgroup creation tests fail.
-All Regression tests pass.
 
 Did not yet test the external OpenCL project tests.
 
