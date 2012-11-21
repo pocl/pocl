@@ -520,7 +520,7 @@ pocl_pthread_run
       else
         llvm_ld = "pocl-llvm-ld";
       error = snprintf (command, COMMAND_LENGTH,
-			"%s -link-as-library -o %s %s/%s",
+			"%s --disable-opt -link-as-library -o %s %s/%s",
                         llvm_ld, bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
