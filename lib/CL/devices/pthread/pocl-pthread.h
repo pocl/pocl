@@ -26,6 +26,11 @@
 
 #include "pocl_cl.h"
 #include "pocl_icd.h"
+#include "config.h"
+
+#ifndef WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN 0
+#endif
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)
@@ -87,7 +92,7 @@ GEN_PROTOTYPES (basic)
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_TRUE, /* endian_little: TODO: check from CPU id */						\
+  !(WORDS_BIGENDIAN), /* endian_little */				\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\

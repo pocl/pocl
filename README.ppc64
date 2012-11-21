@@ -1,0 +1,15 @@
+status 2012-11-21
+-----------------
+
+All pocl basic tests run successfully on a Debian Sid with PowerPC 64 
+in a 64 bit userland with LLVM 3.2. Tested using the Cell of PlayStation 3.
+
+Did not yet test the external OpenCL project tests.
+
+to do
+-----
+
+- The threshold for wirepl is too large. The PowerPC of the Cell PPU 
+  supports AltiVec which is capable of 4-wide f32 vectorization only. 
+  Thus, a sensible threshold is probably at most 8 or so. This should be
+  sniffed from the device driver somehow.
