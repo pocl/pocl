@@ -69,7 +69,7 @@ case "$LLVM_VERSION" in
      3.1)
      AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
    ;;
-     3.2)
+     3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
    ;;
      3.3svn)
