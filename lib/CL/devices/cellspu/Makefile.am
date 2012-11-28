@@ -1,5 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
+# Makefile.am for pocl/lib/CL/devices/cellspu
 # 
 # Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
@@ -21,15 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS = host
+noinst_LTLIBRARIES = libpocl-devices-cellspu.la
 
-host_SOURCES = host.cpp 
-host_LDADD = ../../../lib/CL/libpocl.la ../../../lib/poclu/libpoclu.la @LD_FLAGS_BIN@
-host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+libpocl_devices_cellspu_la_SOURCES = cellspu.h cellspu.c
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL \
-	-DSRCDIR='"$(abs_srcdir)"'
-
-
-run: host
-	@POCL_DEVICES="cellspu" ./host
+libpocl_devices_cellspu_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS)
+libpocl_devices_cellspu_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}

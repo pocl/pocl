@@ -667,6 +667,7 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/tce/Makefile
                  lib/CL/devices/tce/ttasim/Makefile
                  lib/CL/devices/topology/Makefile
+                 lib/CL/devices/cellspu/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  lib/poclu/Makefile
@@ -689,6 +690,8 @@ AC_CONFIG_FILES([Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
+                 tests/cell/Makefile
+                 tests/cell/hello/Makefile
                  tools/llvm-ld/Makefile
                  ])
 

@@ -37,8 +37,8 @@ extern struct _cl_device_id* pocl_devices;
 /**
  * Populates the pocl_devices with the wanted device types.
  *
- * Should be before accessing the device list. Can be called repeatedly.
- * The devices are shared across contexts, thus implement resource
+ * Should be called before accessing the device list. Can be called repeatedly.
+ * The devices are shared across contexts, thus must implement resource
  * management internally also across multiple contexts.
  */
 void pocl_init_devices();

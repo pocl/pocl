@@ -42,7 +42,7 @@ kernelSourceCode[] =
 "    constant char* pos = input; \n"
 "    __global char *outpos = output;\n"
 "    while (*pos) {\n"
-"        (outpos++)* = *(pos++);\n"
+"        *(outpos++) = *(pos++);\n"
 "    }\n"
 "    *outpos = '\\0';\n"
 "    output[1] = 'O'; \n"
@@ -75,7 +75,7 @@ main(void)
 
         cl::Device device = devices.at(0);
 
-        assert (device.getInfo<CL_DEVICE_NAME>() == "cell");
+        assert (device.getInfo<CL_DEVICE_NAME>() == "cellspu");
 
         a = poclu_bswap_cl_float (device(), a);
         b = poclu_bswap_cl_int (device(), b);

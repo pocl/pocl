@@ -29,6 +29,7 @@
 #include "common.h"
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
+#include "cellspu/cellspu.h"
 
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
@@ -39,15 +40,16 @@ struct _cl_device_id* pocl_devices = NULL;
 int pocl_num_devices = 0;
 
 #ifdef TCE_AVAILABLE
-#define POCL_NUM_DEVICE_TYPES 3
+#define POCL_NUM_DEVICE_TYPES 4
 #else
-#define POCL_NUM_DEVICE_TYPES 2
+#define POCL_NUM_DEVICE_TYPES 3
 #endif
 
-/* all device types available to the pocl */
+/* All device drivers available to the pocl. */
 static struct _cl_device_id pocl_device_types[POCL_NUM_DEVICE_TYPES] = {
   POCL_DEVICES_PTHREAD,
   POCL_DEVICES_BASIC,
+  POCL_DEVICES_CELLSPU,
 #if defined(TCE_AVAILABLE)
   POCL_DEVICES_TTASIM,
 #endif
