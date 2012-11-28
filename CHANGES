@@ -10,8 +10,7 @@ Overall
   using loops which are only partially unrolled. Reduces
   code size explosion with large WGs in comparison to
   the full replication method.
-- First steps towards Cell support. Runs with
-  the PPE as a device. See README.Cell.
+- PowerPC 64 support (tested on Cell/Debian Sid/PS3).
 
 Kernel Compiler Passes
 ----------------------

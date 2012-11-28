@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 DIST_SUBDIRS = tce x86_64 powerpc64 cellspu
-SUBDIRS = ${DIST_SUBDIRS} # @TARGET@ @HOST@ # ppc
+SUBDIRS = ${DIST_SUBDIRS} @TARGET@ @HOST@ 
 
 include sources.mk
 

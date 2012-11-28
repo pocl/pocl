@@ -1,4 +1,4 @@
-#                                               -*- Autoconf -*-
+##                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2012 Universidad Rey Juan Carlos
@@ -66,12 +66,15 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 
 case "$LLVM_VERSION" in
-     3.1*)
+     3.1)
      AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
    ;;
-     3.2svn)
-     AC_DEFINE([LLVM_3_2], [], "Using LLVM svn (upcoming 3.2)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.2)")     
+     3.2*)
+     AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
+   ;;
+     3.3svn)
+     AC_DEFINE([LLVM_3_3], [], "Using LLVM svn (upcoming 3.3)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.3)")     
    ;;   
      *)
    AC_MSG_ERROR(
@@ -546,8 +549,8 @@ AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
                    ["$HOST_LD_FLAGS"],
                    [Parameter to compiler to generate loadable module.])
 
-#AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
-#AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
+AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
+AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
