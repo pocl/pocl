@@ -2,7 +2,8 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/devices.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
+#                         Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +23,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = topology pthread basic
+SUBDIRS = topology pthread basic cellspu
 
 noinst_LTLIBRARIES = libpocl-devices.la
 
 libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c dev_image.h \
 	prototypes.inc common.h bufalloc.h
 libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
-	basic/libpocl-devices-basic.la topology/libpocl-devices-topology.la
+	basic/libpocl-devices-basic.la topology/libpocl-devices-topology.la \
+	cellspu/libpocl-devices-cellspu.la
 
 libpocl_devices_la_CPPFLAGS = \
   -I$(top_srcdir)/fix-include \

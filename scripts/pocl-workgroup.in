@@ -67,10 +67,9 @@ linked_out="${linked_bc}.out"
 
 target_dir=${target}
 case $target in
-  tce-*) target_dir="tce"
-  ;;
-  powerpc64-*) target_dir="powerpc64"
-  ;;
+  tce-*) target_dir="tce"  ;;
+  powerpc64-*) target_dir="powerpc64" ;;
+  cellspu-*)    target_dir="cellspu" 
 esac
 
 llvm_ld="pocl-llvm-ld"

@@ -43,7 +43,8 @@ target_dir=${target}
 case $target in
   @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@" ;;
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
-  tce-*)    target_dir="tce"
+  tce-*)    target_dir="tce" ;;
+  cellspu-*)    target_dir="cellspu"
 esac
 
 CLANG_FLAGS="$CLANG_FLAGS -fasm -target $target"

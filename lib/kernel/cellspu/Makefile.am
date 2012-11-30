@@ -1,8 +1,10 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for tests/tce.
+# Makefile.am for pocl/lib/kernel/cellspu. 
+#
+# The Cell SPU target.
 # 
-# Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+# Copyright (c) 2012 Pekka Jääskeläinen
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +24,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = ttasim
+LEX =
+
+targetpkglibdir = $(pkglibdir)/cellspu
+targetpkglib_LIBRARIES = libkernel.a
+
+vpath %.cl @srcdir@:@srcdir@/..
+vpath %.c @srcdir@:@srcdir@/..
+vpath %.ll @srcdir@:@srcdir@/..
+
+include ../sources.mk
+
+nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
+
+RANLIB = @LLVM_RANLIB@
+AR = @LLVM_AR@
+
+CLANGFLAGS += -target cellspu-v0
+CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/cellspu/types.h

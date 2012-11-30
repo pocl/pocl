@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/lib/kernel/tce. 
+# Makefile.am for pocl/lib/kernel/powerpc64. 
 #
 # The PowerPC64 target.
 # 

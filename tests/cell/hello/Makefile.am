@@ -1,6 +1,5 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for tests/tce.
 # 
 # Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
@@ -22,4 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = ttasim
+noinst_PROGRAMS = host
+
+host_SOURCES = host.cpp 
+host_LDADD = ../../../lib/CL/libpocl.la ../../../lib/poclu/libpoclu.la @LD_FLAGS_BIN@
+host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL \
+	-DSRCDIR='"$(abs_srcdir)"'
+
+
+run: host
+	@POCL_DEVICES="cellspu" ./host
