@@ -266,7 +266,7 @@ pocl_tce_run
         llvm_ld = "pocl-llvm-ld";
 
       error = snprintf (command, COMMAND_LENGTH,
-		  "%s -link-as-library -o %s %s/%s",
+		  "%s --disable-opt -link-as-library -o %s %s/%s",
                         llvm_ld,
                         bytecode, cmd->command.run.tmp_dir, 
                         POCL_PARALLEL_BC_FILENAME);
