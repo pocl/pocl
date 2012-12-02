@@ -23,19 +23,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-while getopts k:o: o
+while getopts k:o:t: o
 do
     case "$o" in
 	k)   kernel="${OPTARG}";;
 	o)   output_file="${OPTARG}";;
-	[?]) echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1;;
+	t)   target="${OPTARG}";;
+	[?]) echo >&2 "Usage: $0 -k <kernel> -t <target> -o <output_file> <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
 
 if [ "x$kernel" = x ]
 then
-    echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
+    echo >&2 "Usage: $0 -k <kernel> -t <target> -o <output_file> <input_file>" && exit 1
 fi
 
 if [ "x$output_file" = x ]
@@ -54,7 +55,7 @@ else
     @OPT@ -load=@pkglibdir@/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 fi
 
-@CLANG@ -c -o ${output_file}.o -x c - <<EOF
+@CLANG@ -target $target -c -o ${output_file}.o -x c - <<EOF
 #include "${header}"
 
 unsigned _num_args = _${kernel}_NUM_ARGS;

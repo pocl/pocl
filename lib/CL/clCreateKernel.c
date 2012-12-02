@@ -101,14 +101,16 @@ POclCreateKernel(cl_program program,
 
       if (stat(BUILDDIR "/scripts/" POCL_KERNEL, &buf) == 0)
         error = snprintf(command, COMMAND_LENGTH,
-                         BUILDDIR "/scripts/" POCL_KERNEL " -k %s -o %s %s",
+                         BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s",
                          kernel_name,
+                         program->devices[device_i]->llvm_target_triplet,
                          descriptor_filename,
                          binary_filename);
       else
         error = snprintf(command, COMMAND_LENGTH,
-                         POCL_KERNEL " -k %s -o %s %s",
+                         POCL_KERNEL " -k %s -t %s -o %s %s",
                          kernel_name,
+                         program->devices[device_i]->llvm_target_triplet,
                          descriptor_filename,
                          binary_filename);
       if (error < 0)
