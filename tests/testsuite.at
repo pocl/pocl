@@ -105,6 +105,8 @@ AT_CLEANUP
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
+#lack of double support
+AT_XFAIL_IF([test $(grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2) = "powerpc"])
 AT_KEYWORDS([scalarwave])
 AT_DATA([expout],
 [Initial condition: t=0
