@@ -493,7 +493,7 @@ AC_ARG_ENABLE([ppc64],
                fi
               ] )
  
-AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
+kernel_dir=$default_target
 
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
@@ -535,13 +535,18 @@ case $host_os in
     ;;  
 esac
 AC_SUBST([ICD_LD_FLAGS])
+
+
 case $host_cpu in
-  arm*)
+  armv7l)
+    #armv7l seems a popular host_cpu in distros. Clang uses armv7, though
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS"
     HOST_LLC_FLAGS="$ARM_LLC_FLAGS"
+    default_target="armv7"
+    kernel_dir="arm"
     ;;
   x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
@@ -560,6 +565,9 @@ case $host_cpu in
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
 esac
+
+AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
+AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])
 AC_SUBST([TARGET_CPU], [$target_cpu])

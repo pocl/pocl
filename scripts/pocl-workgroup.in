@@ -67,6 +67,7 @@ linked_out="${linked_bc}.out"
 
 target_dir=${target}
 case $target in
+  arm*) target_dir="arm";;
   tce-*) target_dir="tce"  ;;
   powerpc64-*) target_dir="powerpc64" ;;
   cellspu-*)    target_dir="cellspu" 
