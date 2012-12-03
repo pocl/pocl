@@ -544,8 +544,10 @@ pocl_pthread_run
       error = system (command);
       assert (error == 0);
            
+      // For the pthread device, use device type is always the same as the host. 
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -c -o %s.o %s",
+			CLANG " -target %s -c -o %s.o %s",
+			HOST_CPU,
 			module,
 			assembly);
       assert (error >= 0);

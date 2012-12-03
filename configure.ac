@@ -388,7 +388,7 @@ if test -z "$TCECC" || \
    test -z "$TCE_CONFIG" || \
    test -z "$TCE_LIBRARY"; then
 
-AC_MSG_NOTICE([TCE installation not found. The ttasim device won't be built.])
+AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
 
 else
 
@@ -455,10 +455,51 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
+
+#
+# Targets.
+# Note - there are two kinds of targets: the autoconf cross compilation target
+# which is actually the host in OpenCL terms, 
+# and the OpenCL target, i.e. the compute node architecture. With basic and pthread
+# OCL devices, all these three are one and the same.
+
+AC_ARG_ENABLE( [targets],
+               [AS_HELP_STRING( [--enable-targets],
+                                [Comma-separated list of OCL target devices to compile the 
+                                 kernel library against.] ) ],
+               ,
+               enableval=all)
+
+#TODO: check for bad targets...
+if test "x$enableval" == "xall" 
+then  
+  OCL_TARGETS="arm x86_64 powerpc powerpc64 tce cellspu"
+else
+  OCL_TARGETS=$(echo $enableval | tr ',' ' ')
+fi
+AC_SUBST([OCL_TARGETS])
+
+#Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
+#run in 32 bit mode per default. So for powerpc, do not use the host cpu unless
+#user overrides. See Readme.Cell
+default_target=$host_cpu
+AC_ARG_ENABLE([ppc64],
+              AS_HELP_STRING([--enable-ppc64],
+                             [If on PowerPC, use 64 bit runtime, not the 32bit one.]),
+              ,
+              [if test x"$host_cpu" = x"powerpc64"
+               then
+                 default_target="powerpc"
+               fi
+              ] )
+ 
+AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
+
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
-		 lib/kernel/powerpc64/Makefile
                  lib/kernel/cellspu/Makefile
+                 lib/kernel/powerpc/Makefile
+                 lib/kernel/powerpc64/Makefile
                  lib/kernel/x86_64/Makefile])
 
 AC_ARG_ENABLE([arm-cortex-a8],
@@ -586,6 +627,7 @@ LDFLAGS=""
 
 AC_CONFIG_FILES([include/arm/types.h
                  include/tce/types.h
+                 include/powerpc/types.h
                  include/powerpc64/types.h
                  include/cellspu/types.h
                  include/x86_64/types.h])
