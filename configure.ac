@@ -487,7 +487,7 @@ AC_ARG_ENABLE([ppc64],
               AS_HELP_STRING([--enable-ppc64],
                              [If on PowerPC, use 64 bit runtime, not the 32bit one.]),
               ,
-              [if test $host_cpu=="powerpc64"
+              [if test x"$host_cpu" = x"powerpc64"
                then
                  default_target="powerpc"
                fi
