@@ -1,4 +1,4 @@
-##                                               -*- Autoconf -*-
+ ##                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2012 Universidad Rey Juan Carlos
@@ -473,16 +473,31 @@ AC_ARG_ENABLE( [targets],
 #TODO: check for bad targets...
 if test "x$enableval" == "xall" 
 then  
-  OCL_TARGETS="arm x86_64 powerpc64 tce"
+  OCL_TARGETS="arm x86_64 powerpc powerpc64 tce"
 else
   OCL_TARGETS=$(echo $enableval | tr ',' ' ')
 fi
 AC_SUBST([OCL_TARGETS])
 
-AC_DEFINE_UNQUOTED([HOST_CPU], "$host_cpu", [The host CPU type.])
+#Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
+#run in 32 bit mode per default. So for powerpc, do not use the host cpu unless
+#user overrides. See Readme.Cell
+default_target=$host_cpu
+AC_ARG_ENABLE([ppc64],
+              AS_HELP_STRING([--enable-ppc64],
+                             [If on PowerPC, use 64 bit runtime, not the 32bit one.]),
+              ,
+              [if test $host_cpu=="powerpc64"
+               then
+                 default_target="powerpc"
+               fi
+              ] )
+ 
+AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
 
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
+                 lib/kernel/powerpc/Makefile
                  lib/kernel/powerpc64/Makefile
                  lib/kernel/x86_64/Makefile])
 
@@ -611,6 +626,7 @@ LDFLAGS=""
 
 AC_CONFIG_FILES([include/arm/types.h
                  include/tce/types.h
+                 include/powerpc/types.h
                  include/powerpc64/types.h
                  include/x86_64/types.h])
 

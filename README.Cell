@@ -1,12 +1,21 @@
 Notes on compiling pocl in Debian Sid/Cell/Playstation 3.
 
+The "default" debian for Powerpc has a 32bit userspace runtime, 
+even if the processor itself is a 64bit PowerPC. You can run 
+multilibs on debian to be able to build 64bit binaries in the
+32bit environment, but the 'dlopen' of 64 bit libraries in 32bit
+binaries will fail. Hence, both libpocl and the opencl kerenls 
+must be of the same bitwidth.
+
 status
 ------
-It builds when the 32bit mode is forced. example1 of
-the test suite passes and many of the smaller test cases. 
+32bit binaries are assumed, and built by default. If you know you
+have a 64bit userspace, you can override by giving
+	--enable-ppc64
+option to configure.
 
-The 32bitness produces the warnings from the use of 
-doubles which makes a couple of the test cases fail.
+The only thing that currently will fail are the tests that use 
+double precision floating points (see pocl bug #911911).
 
 powerpc64
 ---------
@@ -23,7 +32,7 @@ get detected.
 powerpc32
 ---------
 Configure with:
-./configure --host=powerpc-linux-gnu --target=powerpc-linux-gnu
+./configure 
 
 This makes pocl to use the 32bit mode for the
 kernel compilation.
