@@ -187,8 +187,9 @@ pocl_basic_run
       assert (error == 0);
            
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target %s -c -o %s.o %s",
+			CLANG " -target %s %s -c -o %s.o %s",
 			HOST_CPU,
+			HOST_CLANG_FLAGS,
 			module,
 			assembly);
       assert (error >= 0);

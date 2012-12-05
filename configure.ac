@@ -543,8 +543,7 @@ case $host_cpu in
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS"
-    HOST_LLC_FLAGS="$ARM_LLC_FLAGS"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS -mfloat-abi=hard -fPIC"
     default_target="armv7"
     kernel_dir="arm"
     ;;
