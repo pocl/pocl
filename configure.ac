@@ -219,7 +219,7 @@ if test x"$icd" != xno; then :
   # In fact, ocl-icd >= 1.4 is required. However, Debian wheezy will
   # have ocl-icd 1.3 *with the required fixes*
   # So, lets hope Debian wheezy adds a minor version number to the bugfixed ocl-icd.
-  PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3.1], 
+  PKG_CHECK_MODULES([OCL_ICD], [ocl-icd >= 1.3], 
     [ OCL_ICD_available=yes 
       AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
     [:])

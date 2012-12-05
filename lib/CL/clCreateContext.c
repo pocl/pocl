@@ -67,6 +67,7 @@ POclCreateContext(const cl_context_properties * properties,
 
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
+  context->valid = 1;
   return context;
 }
 POsym(clCreateContext)

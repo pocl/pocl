@@ -139,6 +139,7 @@ POclCreateKernel(cl_program program,
   kernel->function_name = strdup(kernel_name);
   kernel->name = strdup(kernel_name);
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
+  kernel->reqd_wg_size = (int*)lt_dlsym(dlhandle, "_reqd_wg_size");
   kernel->context = program->context;
   kernel->program = program;
   kernel->dlhandle = dlhandle; /* TODO: why is this stored? */

@@ -58,7 +58,7 @@ build-prepare: $(testsuite_src_dir)
 		rodinia_2.0.1/opencl/*/*/Makefile \
 		rodinia_2.0.1/opencl/*/*/makefile
 
-MAKE_OPTS= OPENCL_LIBS="$(OPENCL_EXTLIBS)" OPENCL_CFLAGS="$(OPENCL_CFLAGS)"
+MAKE_OPTS= OPENCL_LIBS="$(OPENCL_EXTLIBS)" OPENCL_CFLAGS="-I${abs_top_srcdir}/include $(OPENCL_CFLAGS)"
 
 src=rodinia_2.0.1/opencl
 

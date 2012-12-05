@@ -63,6 +63,7 @@ int _arg_is_pointer[] = _${kernel}_ARG_IS_POINTER;
 int _arg_is_local[] = _${kernel}_ARG_IS_LOCAL;
 int _arg_is_image[] = _${kernel}_ARG_IS_IMAGE;
 int _arg_is_sampler[] = _${kernel}_ARG_IS_SAMPLER;
+int _reqd_wg_size[3] = _${kernel}_REQD_WG_SIZE;
 unsigned _num_locals = _${kernel}_NUM_LOCALS;
 #if _${kernel}_NUM_LOCALS != 0
 unsigned _local_sizes[_${kernel}_NUM_LOCALS] = _${kernel}_LOCAL_SIZE;

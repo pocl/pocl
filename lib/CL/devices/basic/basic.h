@@ -73,7 +73,7 @@ GEN_PROTOTYPES (basic)
   0, /* image3d_max_height */						\
   0, /* image3d_max_depth */						\
   0, /* max_samplers */							\
-  0, /* max_parameter_size */						\
+  1024, /* max_parameter_size */						\
   0, /* mem_base_addr_align */						\
   0, /* min_data_type_align_size */					\
   CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN, /* single_fp_config */	\
@@ -87,6 +87,7 @@ GEN_PROTOTYPES (basic)
   CL_GLOBAL, /* local_mem_type */					\
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
+  CL_TRUE, /* host_unified_memory */                  \
   0, /* profiling_timer_resolution */					\
   !(WORDS_BIGENDIAN), /* endian_little */				\
   CL_TRUE, /* available */						\
