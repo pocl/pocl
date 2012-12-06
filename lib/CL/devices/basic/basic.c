@@ -161,7 +161,7 @@ pocl_basic_run
         llvm_ld = "pocl-llvm-ld";
 
       error = snprintf (command, COMMAND_LENGTH,
-			"%s -link-as-library -o %s %s/%s",
+			"%s --disable-opt -link-as-library -o %s %s/%s",
                         llvm_ld, bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
@@ -186,7 +186,8 @@ pocl_basic_run
       assert (error == 0);
            
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -c -o %s.o %s",
+			CLANG " -target %s -c -o %s.o %s",
+			HOST_CPU,
 			module,
 			assembly);
       assert (error >= 0);

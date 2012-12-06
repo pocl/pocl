@@ -57,6 +57,7 @@ POclCreateSubBuffer(cl_mem                   buffer,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(mem);
+  mem->mappings = NULL;
   mem->parent = buffer;
 
   mem->type = CL_MEM_OBJECT_BUFFER;

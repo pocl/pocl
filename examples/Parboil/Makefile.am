@@ -33,7 +33,7 @@ datasets_tarfile=pb2.5datasets_standard.tgz
 
 .PHONY: build
 
-all: $(testsuite_src_dir)
+all: build-prepare
 
 ${srcdir}/${driver_tarfile}:
 	@echo 'You need to download $@ to "$(srcdir)"'
@@ -59,18 +59,18 @@ $(testsuite_src_dir):
 	tar xvzf ../${benchmarks_tarfile} && \
 	tar xvzf ../${datasets_tarfile}
 
-# Parboil tests are built in place and its source tree is modified.
-# So, copying the source tree in our build tree if required
-# (ie if $(srcdir) is not $(CURDIR) )
 build-prepare: $(testsuite_src_dir)
 # The OpenCL benchmarks want GPU devices. Change to CPU devices using
 # sed.
-	cd $(testsuite_src_dir) && \
+	@cd $(testsuite_src_dir) && \
 	find -name "*.c" -o -name "*.cc" -o -name "*.cpp" | \
 	grep opencl | \
 	xargs sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g'
-	echo -e "OPENCL_PATH=${abs_top_srcdir}/include\nOPENCL_LIB_PATH=${abs_top_builddir}/lib/CL/.libs" > ${testsuite_src_dir}/common/Makefile.conf
-
+	@cd ${testsuite_pocl_dir} && patch -sNp0 < opencl.mk.patch > /dev/null || true
+	cd ${testsuite_src_dir} && patch -sNp0 < ${testsuite_pocl_dir}/benchmarks.patch > /dev/null || true
+	@echo -e "OPENCL_PATH=${abs_top_srcdir}/\nOPENCL_LIB_PATH=${abs_top_builddir}/lib/CL/.libs" > ${testsuite_src_dir}/common/Makefile.conf
+	@echo -e "APP_CFLAGS=-DCL_USE_DEPRECATED_OPENCL_1_1_APIS" >> ${testsuite_src_dir}/common/Makefile.conf
+	@echo -e "APP_CXXFLAGS=-DCL_USE_DEPRECATED_OPENCL_1_1_APIS" >> ${testsuite_src_dir}/common/Makefile.conf
 src=rodinia_2.0.1/opencl
 
 build-spmv: build-prepare
@@ -113,7 +113,7 @@ build-bfs: build-prepare
 	cd ${testsuite_src_dir} ; ./parboil compile bfs opencl_base 
 
 run-bfs: 
-	cd ${testsuite_src_dir} ; ./parboil run bfs opencl_base 1M
+	cd ${testsuite_src_dir} ; ./parboil run bfs opencl_base NY
 
 build-histo: build-prepare
 	cd ${testsuite_src_dir} ; ./parboil compile histo opencl_base 
@@ -144,6 +144,8 @@ build: build-spmv build-stencil build-tpacf build-cutcp build-mri-gridding build
 
 clean-local:
 	$(RM) -r parboil
+
+check-local: build
 
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)

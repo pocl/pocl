@@ -274,7 +274,7 @@ POclEnqueueNDRangeKernel(cl_command_queue command_queue,
   pc.global_offset[1] = offset_y;
   pc.global_offset[2] = offset_z;
 
-  command_node->type = CL_COMMAND_TYPE_RUN;
+  command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.data = command_queue->device->data;
   command_node->command.run.tmp_dir = strdup(tmpdir);
   command_node->command.run.kernel = kernel;

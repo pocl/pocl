@@ -25,28 +25,28 @@
 
 if TEST_SUITE_VIENNACL
 testsuite_pocl_dir=${abs_top_srcdir}/examples/ViennaCL
-testsuite_src_dir=${testsuite_pocl_dir}/ViennaCL-1.2.0-src
+testsuite_src_dir=${testsuite_pocl_dir}/ViennaCL-1.3.1-src
 
 .PHONY: build
 
 all: $(testsuite_src_dir)
 
-$(srcdir)/ViennaCL-1.2.0-src.tar.gz:
+$(srcdir)/ViennaCL-1.3.1-src.tar.gz:
 	cd $(srcdir) && \
-	wget http://sourceforge.net/projects/viennacl/files/1.2.x/ViennaCL-1.2.0-src.tar.gz
+	wget http://sourceforge.net/projects/viennacl/files/1.3.x/ViennaCL-1.3.1-src.tar.gz
 
 $(testsuite_src_dir):
-	$(MAKE) $(srcdir)/ViennaCL-1.2.0-src.tar.gz
+	$(MAKE) $(srcdir)/ViennaCL-1.3.1-src.tar.gz
 	cd $(testsuite_pocl_dir) && \
-	tar xvzf ViennaCL-1.2.0-src.tar.gz
+	tar xvzf ViennaCL-1.3.1-src.tar.gz
 
 # ViennaCL must be built in the subdirectory build/ of the extracted source
 # (it does not work elsewhere) and its source tree is modified.
 # So, copying the source tree in our build tree if required
 # (ie if $(srcdir) is not $(CURDIR) )
 build:
-	if [ ! -d ViennaCL-1.2.0-src ]; then cp -aL $(testsuite_src_dir) . ; fi
-	cd ViennaCL-1.2.0-src/build; \
+	if [ ! -d ViennaCL-1.3.1-src ]; then cp -aL $(testsuite_src_dir) . ; fi
+	cd ViennaCL-1.3.1-src/build; \
  	cmake \
 		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
 		-D BUILD_MANUAL:BOOL=OFF \
@@ -55,9 +55,9 @@ build:
 		..
 
 clean-local:
-	rm -fr ViennaCL-1.2.0-src
+	rm -fr ViennaCL-1.3.1-src
 
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
-	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.2.0-src.tar.gz
+	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.3.1-src.tar.gz
 endif

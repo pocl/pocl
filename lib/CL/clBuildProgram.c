@@ -95,7 +95,7 @@ POclBuildProgram(cl_program program,
 
       if ((program->binaries = 
            (unsigned char**) 
-           malloc( sizeof (unsigned char*) * real_num_devices)) == NULL)
+           calloc( real_num_devices, sizeof (unsigned char*))) == NULL)
         {
           free (program->binary_sizes);
           program->binary_sizes = NULL;

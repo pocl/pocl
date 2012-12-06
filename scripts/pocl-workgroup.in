@@ -67,7 +67,10 @@ linked_out="${linked_bc}.out"
 
 target_dir=${target}
 case $target in
-  tce-*)    target_dir="tce"
+  arm*) target_dir="arm";;
+  tce-*) target_dir="tce"  ;;
+  powerpc64-*) target_dir="powerpc64" ;;
+  cellspu-*)    target_dir="cellspu" 
 esac
 
 llvm_ld="pocl-llvm-ld"
@@ -79,9 +82,9 @@ fi
 
 if [ -f @abs_top_builddir@/lib/kernel/${target_dir}/libkernel.a ]
 then
-    ${llvm_ld} -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target_dir} -lkernel
+    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target_dir} -lkernel
 else
-    ${llvm_ld} -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target_dir} -lkernel
+    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target_dir} -lkernel
 fi
 rm ${linked_out}
 
@@ -123,19 +126,12 @@ then
 EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-mem-ops-only"
 fi
 
-if test "x$POCL_WORK_GROUP_METHOD" = "x";
-then
-METHOD_PASS=workitemrepl
-else
-METHOD_PASS=$POCL_WORK_GROUP_METHOD
-fi
-
 #set -x
 
-@OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
+@OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -${METHOD_PASS} -workgroup \
-    -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
+    -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
     ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}
 
 #set +x

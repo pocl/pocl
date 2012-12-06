@@ -109,7 +109,7 @@ POclEnqueueReadBuffer(cl_command_queue command_queue,
     if (cmd == NULL)
       return CL_OUT_OF_HOST_MEMORY;
 
-    cmd->type = CL_COMMAND_TYPE_READ;
+    cmd->type = CL_COMMAND_READ_BUFFER;
     cmd->command.read.data = device->data;
     cmd->command.read.host_ptr = ptr;
     cmd->command.read.device_ptr = buffer->device_ptrs[device->dev_id]+offset;

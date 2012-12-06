@@ -28,6 +28,7 @@ AT_COLOR_TESTS
 AT_BANNER([OpenCL specification tests])
 
 AT_SETUP([example1: dot product])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
 (1.000000, 1.000000, 1.000000, 1.000000) . (1.000000, 1.000000, 1.000000, 1.000000) = 4.000000
@@ -51,14 +52,16 @@ AT_CLEANUP
 AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_bitselect...
 OK
 ])
-AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_bitselect], 0, expout)
+AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/examples/kernel/kernel test_bitselect], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_fabs...
 OK
@@ -67,6 +70,7 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
@@ -75,6 +79,7 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
+AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_rotate...
 OK
@@ -100,6 +105,9 @@ AT_CLEANUP
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
+#lack of double support
+AT_XFAIL_IF([test $(grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2) = "powerpc"])
+AT_KEYWORDS([scalarwave])
 AT_DATA([expout],
 [Initial condition: t=0
 Time step 1: t=0.03125

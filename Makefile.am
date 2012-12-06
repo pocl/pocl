@@ -32,9 +32,12 @@ pkgconfig_DATA = pocl.pc
 if BUILD_ICD
 icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
+do_subst = sed -e 's,[@]libdir[@],$(libdir),g'
+pocl.icd: pocl.icd.in
+	$(do_subst) < $(srcdir)/pocl.icd.in > $(builddir)/pocl.icd
+CLEANFILES = pocl.icd
 endif
 
 EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf \
   CHANGES fix-include
-
 

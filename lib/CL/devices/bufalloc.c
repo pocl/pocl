@@ -151,6 +151,7 @@ append_new_chunk (memory_region_t *region,
   new_chunk->parent_region = region;
   new_chunk->size = size;
   new_chunk->is_allocated = 1;
+  new_chunk->children = NULL;
 
   region->last_chunk->size = chunk_slack (region->last_chunk, size);
   region->last_chunk->start_address = 

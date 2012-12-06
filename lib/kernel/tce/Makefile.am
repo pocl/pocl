@@ -40,6 +40,6 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-CLANGFLAGS += -ccc-host-triple tce-tut-llvm
+CLANGFLAGS += -target tce-tut-llvm
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/tce/types.h
 

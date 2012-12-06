@@ -41,6 +41,8 @@ llvmopencl_la_SOURCES = Barrier.h						\
 						WorkItemAliasAnalysis.cc WIVectorize.cc \
 						WorkitemHandler.h WorkitemHandler.cc \
 						WorkitemLoops.h WorkitemLoops.cc \
-						PHIsToAllocas.h PHIsToAllocas.cc
+						PHIsToAllocas.h PHIsToAllocas.cc \
+						BreakConstantGEPs.h BreakConstantGEPs.cpp \
+						WorkitemHandlerChooser.h WorkitemHandlerChooser.cc
 
 #llvmopencl_la_LIBADD = @LIBS_LLVMTRANSFORMUTILS@

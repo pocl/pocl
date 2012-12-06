@@ -202,9 +202,7 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
         #ifdef LLVM_3_1
         LI->getBase().Calculate(DT->getBase());
         #else
-        // The algorithm has changed - Calculate is removed, Analyze used in stead.
-        // See LLVM commit c9b1e25493b393013b28e5d457f2fb2845a4dd9f
-        LI->getBase().Analyze(DT->getBase());
+        LI->runOnFunction(*f);
         #endif
       }
   }

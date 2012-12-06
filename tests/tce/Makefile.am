@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for tests/regression.
+# Makefile.am for tests/tce.
 # 
 # Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 # 
@@ -23,13 +23,3 @@
 # THE SOFTWARE.
 
 SUBDIRS = ttasim
-
-
-
-
-
-
-
-
-
-

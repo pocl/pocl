@@ -52,7 +52,7 @@ case $target in
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
 esac
 
-CLANG_FLAGS="$CLANG_FLAGS -ccc-host-triple $target"
+CLANG_FLAGS="$CLANG_FLAGS -target $target"
 
 if test -z "$CLANGFLAGS"
 then
@@ -90,9 +90,9 @@ fi
 
 if [ -f @abs_top_builddir@/lib/kernel/${target}/libkernel.a ]
 then
-    ${llvm_ld} -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${target} -lkernel
+    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@abs_top_builddir@/lib/kernel/${target} -lkernel
 else
-    ${llvm_ld} -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir/@${target}} -lkernel
+    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L@pkglibdir/@${target}} -lkernel
 fi
 rm ${linked_out}
 

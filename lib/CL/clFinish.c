@@ -39,7 +39,7 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
       cl_event *event = &node->event;
       switch (node->type)
         {
-        case CL_COMMAND_TYPE_READ:
+        case CL_COMMAND_READ_BUFFER:
           POCL_PROFILE_SUBMITTED;
           POCL_PROFILE_RUNNING;
           command_queue->device->read
@@ -50,7 +50,7 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           POCL_PROFILE_COMPLETE;
           POclReleaseMemObject (node->command.read.buffer);
           break;
-        case CL_COMMAND_TYPE_WRITE:
+        case CL_COMMAND_WRITE_BUFFER:
           POCL_PROFILE_SUBMITTED;
           POCL_PROFILE_RUNNING;
           command_queue->device->write
@@ -61,7 +61,7 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           POCL_PROFILE_COMPLETE;
           POclReleaseMemObject (node->command.write.buffer);
           break;
-        case CL_COMMAND_TYPE_COPY:
+        case CL_COMMAND_COPY_BUFFER:
           POCL_PROFILE_SUBMITTED;
           POCL_PROFILE_RUNNING;
           command_queue->device->copy
@@ -73,7 +73,7 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           POclReleaseMemObject (node->command.copy.src_buffer);
           POclReleaseMemObject (node->command.copy.dst_buffer);
           break;
-        case CL_COMMAND_TYPE_RUN:
+        case CL_COMMAND_NDRANGE_KERNEL:
           assert (*event == node->event);
           POCL_PROFILE_SUBMITTED;
           POCL_PROFILE_RUNNING;
@@ -90,6 +90,9 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           free (node->command.run.tmp_dir);
           POclReleaseKernel(node->command.run.kernel);
           break;  
+        case CL_COMMAND_MARKER:
+          POCL_PROFILE_COMPLETE;
+          break;
         default:
           POCL_ABORT_UNIMPLEMENTED();
           break;

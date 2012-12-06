@@ -27,6 +27,11 @@
 
 #include "pocl_cl.h"
 #include "pocl_icd.h"
+#include "config.h"
+
+#ifndef WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN 0
+#endif
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (basic)
@@ -83,7 +88,7 @@ GEN_PROTOTYPES (basic)
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_TRUE, /* endian_little */						\
+  !(WORDS_BIGENDIAN), /* endian_little */				\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\
@@ -113,8 +118,8 @@ GEN_PROTOTYPES (basic)
   pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* build_program */ \
   NULL, /* data */                                      \
-  NULL,  /* kernel_lib_target (forced kernel library dir) */    \
-  NULL, /* llvm_target_triplet */                           \
+  KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */    \
+  HOST_CPU, /* llvm_target_triplet */                           \
   0     /* dev_id */           \
 }
 

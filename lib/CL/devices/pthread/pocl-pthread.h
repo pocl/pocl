@@ -26,6 +26,11 @@
 
 #include "pocl_cl.h"
 #include "pocl_icd.h"
+#include "config.h"
+
+#ifndef WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN 0
+#endif
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)
@@ -42,7 +47,7 @@ GEN_PROTOTYPES (basic)
   3, /* max_work_item_dimensions */					\
   /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */ \
   /* and may avoid errors in user code that uses int instead of size_t */ \
-  {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX}, /* max_work_item_sizes */       \
+  {1024, 1024, 1024}, /* max_work_item_sizes */       \
   1024, /* max_work_group_size */					\
   8, /* preferred_wg_size_multiple */                                   \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
@@ -87,7 +92,7 @@ GEN_PROTOTYPES (basic)
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
   0, /* profiling_timer_resolution */					\
-  CL_TRUE, /* endian_little: TODO: check from CPU id */						\
+  !(WORDS_BIGENDIAN), /* endian_little */				\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
   CL_EXEC_KERNEL, /*execution_capabilities */				\
@@ -117,8 +122,8 @@ GEN_PROTOTYPES (basic)
   pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* build_program */ \
   NULL, /* data */                                  \
-  NULL,  /* kernel_lib_target (forced kernel library dir) */  \
-  NULL, /* llvm_target_triplet */                         \
+  KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */  \
+  HOST_CPU, /* llvm_target_triplet */                         \
   0     /* dev_id */                                    \
 }
 

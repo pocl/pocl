@@ -26,15 +26,15 @@ AT_BANNER([Workgroup creation tests])
 
 AT_SETUP([Unconditional barriers (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 1 1], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 2 2], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/basic_barriers_2_2_2_2.stdout)
 ])
 AT_CLEANUP
 
 AT_SETUP([Unconditional barriers (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 1 1], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [12
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel basic_barriers.cl 2 2 2 2], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/basic_barriers_2_2_2_2.stdout)
 ])
 AT_CLEANUP
 
@@ -60,7 +60,7 @@ AT_CLEANUP
 
 AT_SETUP([Barriered for loops (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops POCL_VECTORIZE_WORK_GROUPS=1 $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
+AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
 AT_CHECK([sort -c stdout])
 AT_CLEANUP
 

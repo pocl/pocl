@@ -80,6 +80,7 @@ class TCEDevice {
   
   TTAMachine::AddressSpace *local_as;
   TTAMachine::AddressSpace *global_as;
+  TTAMachine::AddressSpace *private_as;
   std::string machine_file;
   
   cl_device_id parent;

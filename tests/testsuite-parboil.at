@@ -7,7 +7,7 @@ m4_define([POAT_PB_SETUP],[
 ])
 dnl POAT_PB_CHECK_BUILD(name, extra build cmd)
 m4_define([POAT_PB_CHECK_BUILD],[
-  AT_CHECK([make build-$1 -sC ${abs_top_builddir}/examples/Parboil 2>&1 | grep "Parboil" | grep . $2 ], 0, 
+  AT_CHECK([make build-$1 -sC ${abs_top_builddir}/examples/Parboil 2>&1 | grep "Parboil parallel benchmark suite" | grep . $2 ], 0, 
 [Parboil parallel benchmark suite, version 0.2
 ])
 ])
@@ -15,78 +15,97 @@ m4_define([POAT_PB_CHECK_BUILD],[
 AT_BANNER([Parboil tests])
 
 POAT_PB_SETUP([spmv])
+#This fails when pocl has ICD enabled
+AT_XFAIL_IF([grep -q "define BUILD_ICD" $abs_top_srcdir/config.h])
 POAT_PB_CHECK_BUILD([spmv])
-AT_CHECK_UNQUOTED([make run-spmv -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-spmv -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
 AT_CLEANUP
 
 POAT_PB_SETUP([stencil])
 POAT_PB_CHECK_BUILD([stencil])
-AT_CHECK_UNQUOTED([make run-stencil -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
+AT_CHECK_UNQUOTED([make run-stencil -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
+# Result verification error
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([tpacf])
+# This probably is in infinite loop with wiloops.
+AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([tpacf])
-AT_CHECK_UNQUOTED([make run-tpacf -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
+AT_CHECK_UNQUOTED([make run-tpacf -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
+# Result verification error.
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([cutcp])
 POAT_PB_CHECK_BUILD([cutcp])
-AT_CHECK_UNQUOTED([make run-cutcp -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-cutcp -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
 AT_CLEANUP
 
-POAT_PB_SETUP([mri-gridding])
+POAT_PB_SETUP([mri-gridding], [long])
+# Takes forever to compile with the repl method.
+# Also tries to create an illegal work group size and has potentially
+# erroneous kernels?
+AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([mri-gridding])
-AT_CHECK_UNQUOTED([make run-mri-gridding -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-mri-gridding -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
+#AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([sad])
 POAT_PB_CHECK_BUILD([sad])
-AT_CHECK_UNQUOTED([make run-sad -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
+AT_CHECK_UNQUOTED([make run-sad -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
+# Requires read_imageui
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
-POAT_PB_SETUP([bfs])
+POAT_PB_SETUP([bfs], [bfs-parboil long])
+#AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([bfs])
-AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil 2>&1 | grep Pass], 0,
+[Pass
+])
 AT_CLEANUP
 
 POAT_PB_SETUP([histo])
+# Illegal kernels with array parameters to functions.
+AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([histo])
-AT_CHECK_UNQUOTED([make run-histo -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
+AT_CHECK_UNQUOTED([make run-histo -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [])
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([sgemm])
 POAT_PB_CHECK_BUILD([sgemm])
-AT_CHECK_UNQUOTED([make run-sgemm -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-sgemm -sC $abs_top_builddir/examples/Parboil 2>&1| grep Pass], 0, 
+[Pass
+])
 AT_CLEANUP
 
 POAT_PB_SETUP([mri-q])
 POAT_PB_CHECK_BUILD([mri-q])
-AT_CHECK_UNQUOTED([make run-mri-q -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-mri-q -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
 AT_CLEANUP
 
-POAT_PB_SETUP([lbm])
+POAT_PB_SETUP([lbm], [long])
 POAT_PB_CHECK_BUILD([lbm])
-AT_CHECK_UNQUOTED([make run-lbm -sC $abs_top_builddir/examples/Parboil | grep .], 0, 
-[])
-AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make run-lbm -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
+[Pass
+])
+#AT_XFAIL_IF(true)
 AT_CLEANUP

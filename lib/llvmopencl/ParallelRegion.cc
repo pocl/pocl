@@ -40,10 +40,6 @@
 #include <map>
 #include <algorithm>
 
-#define LOCAL_ID_X "_local_id_x"
-#define LOCAL_ID_Y "_local_id_y"
-#define LOCAL_ID_Z "_local_id_z"
-
 using namespace std;
 using namespace llvm;
 using namespace pocl;
@@ -51,9 +47,20 @@ using namespace pocl;
 //#define DEBUG_REMAP
 //#define DEBUG_REPLICATE
 //#define DEBUG_PURGE
-//#define DEBUG_PR_CREATION
 
 #include <iostream>
+
+int ParallelRegion::idGen = 0;
+
+
+ParallelRegion::ParallelRegion(int forcedRegionId) : 
+  std::vector<llvm::BasicBlock *>(), 
+  LocalIDXLoadInstr(NULL), LocalIDYLoadInstr(NULL), LocalIDZLoadInstr(NULL),
+  exitIndex_(0), entryIndex_(0), pRegionId(forcedRegionId)
+{
+  if (forcedRegionId == -1)
+    pRegionId = idGen++;
+}
 
 /**
  * Ensure all variables are named so they will be replicated and renamed
@@ -91,8 +98,8 @@ ParallelRegion *
 ParallelRegion::replicate(ValueToValueMapTy &map,
                           const Twine &suffix = "")
 {
-  ParallelRegion *new_region = new ParallelRegion();
-
+  ParallelRegion *new_region = new ParallelRegion(pRegionId);
+  
   /* Because ParallelRegions are all replicated before they
      are attached to the function, it can happen that
      the same BB is replicated multiple times and it gets
@@ -184,9 +191,11 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   if (t->getNumSuccessors() != 1)
     {
       std::cout << "!!! trying to chain region" << std::endl;
-      this->dump();
+      this->dumpNames();
       std::cout << "!!! after region" << std::endl;
-      region->dump();
+      region->dumpNames();
+      t->getParent()->dump();
+      
       assert (t->getNumSuccessors() == 1);
     }
   
@@ -226,6 +235,7 @@ ParallelRegion::purge()
         // This successor is not on the parallel region, purge.
         iterator next_block = i;
         ++next_block;
+        assert ((*i)->getParent() != NULL && *next_block != NULL);
         BasicBlock *unreachable =
           BasicBlock::Create((*i)->getContext(),
                              (*i)->getName() + ".unreachable",
@@ -250,12 +260,11 @@ ParallelRegion::purge()
 }
 
 void
-ParallelRegion::insertPrologue(unsigned x,
-                               unsigned y,
-                               unsigned z)
+ParallelRegion::insertLocalIdInit(llvm::BasicBlock* entry,
+                                  unsigned x,
+                                  unsigned y,
+                                  unsigned z)
 {
-  BasicBlock *entry = entryBB();
-
   IRBuilder<> builder(entry, entry->getFirstInsertionPt());
 
   Module *M = entry->getParent()->getParent();
@@ -264,23 +273,32 @@ ParallelRegion::insertPrologue(unsigned x,
   if (M->getPointerSize() == llvm::Module::Pointer64)
     size_t_width = 64;
 
-  GlobalVariable *gvx = M->getGlobalVariable(LOCAL_ID_X);
+  GlobalVariable *gvx = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
   if (gvx != NULL)
       builder.CreateStore(ConstantInt::get(IntegerType::
                                            get(M->getContext(), size_t_width), 
                                            x), gvx);
 
-  GlobalVariable *gvy = M->getGlobalVariable(LOCAL_ID_Y);
+  GlobalVariable *gvy = M->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
   if (gvy != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(), size_t_width),
                                          y), gvy);
 
-  GlobalVariable *gvz = M->getGlobalVariable(LOCAL_ID_Z);
+  GlobalVariable *gvz = M->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
   if (gvz != NULL)
     builder.CreateStore(ConstantInt::get(IntegerType::
                                          get(M->getContext(), size_t_width),
                                          z), gvz);
+}
+
+void
+ParallelRegion::insertPrologue(unsigned x,
+                               unsigned y,
+                               unsigned z)
+{
+  BasicBlock *entry = entryBB();
+  ParallelRegion::insertLocalIdInit(entry, x, y, z);
 }
 
 void
@@ -294,7 +312,14 @@ void
 ParallelRegion::dumpNames()
 {
   for (iterator i = begin(), e = end(); i != e; ++i)
-    std::cout << (*i)->getName().str() << " ";
+    {
+      std::cout << (*i)->getName().str();
+      if (entryBB() == (*i)) 
+        std::cout << "(EN)";
+      if (exitBB() == (*i))
+        std::cout << "(EX)";
+      std::cout << " ";
+    }
   std::cout << std::endl;
 }
 
@@ -347,7 +372,7 @@ ParallelRegion::Verify()
           std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
           std::cerr << "the entry is: " << entryBB()->getName().str() << std::endl;
 
-#if 1
+#if 0
           (*i)->getParent()->viewCFG();
 #endif
           assert(0 && "Incoming edges to non-entry block!");
@@ -384,17 +409,16 @@ ParallelRegion::Verify()
 }
 
 void
-ParallelRegion::setID(
+ParallelRegion::AddIDMetadata(
     llvm::LLVMContext& context, 
     std::size_t x, 
     std::size_t y, 
-    std::size_t z,
-    std::size_t regionID) {
+    std::size_t z) {
   
     int counter = 1;
     Value *v1[] = {
         MDString::get(context, "WI_region"),      
-        ConstantInt::get(Type::getInt32Ty(context), regionID)};      
+        ConstantInt::get(Type::getInt32Ty(context), pRegionId)};      
     MDNode* mdRegion = MDNode::get(context, v1);  
     Value *v2[] = {
         MDString::get(context, "WI_xyz"),      
@@ -417,8 +441,8 @@ ParallelRegion::setID(
             ConstantInt::get(Type::getInt32Ty(context), counter)};      
         MDNode* mdCounter = MDNode::get(context, v3);  
         counter++;
-        ii->setMetadata("wi",md);
-        ii->setMetadata("wi_counter",mdCounter);      
+        ii->setMetadata("wi", md);
+        ii->setMetadata("wi_counter", mdCounter);
       }
     }
 }
@@ -448,14 +472,216 @@ ParallelRegion::AddBlockBefore(llvm::BasicBlock *block, llvm::BasicBlock *before
     insert(beforePos, block);
     /* The entryIndex_ should be still correct. In case the 'before' block
        was an old entry node, the new one replaces it as an entry node at
-       the same index and the old one gets pushed forward. */
-
-       
+       the same index and the old one gets pushed forward. */      
 }
 
+
+void
+ParallelRegion::AddBlockAfter(llvm::BasicBlock *block, llvm::BasicBlock *after)
+{
+    llvm::BasicBlock *oldExit = exitBB();
+    ParallelRegion::iterator afterPos = find(begin(), end(), after);
+    ParallelRegion::iterator oldExitPos = find(begin(), end(), oldExit);
+    assert (afterPos != end());
+
+    /* The old exit node might be pushed further, at most one position. 
+       Whether this is the case, depends if the node was inserted before or
+       after that node in the vector. That is, if indexof(before) < indexof(oldExit). */
+    if (afterPos < oldExitPos) ++exitIndex_;
+    afterPos++;
+    insert(afterPos, block);
+}
 
 bool 
 ParallelRegion::HasBlock(llvm::BasicBlock *bb)
 {
     return find(begin(), end(), bb) != end();
+}
+
+/**
+ * Find the instruction that loads the Z dimension of the work item
+ * in the beginning of the parallel region, if not found, creates it.
+ */
+llvm::Instruction*
+ParallelRegion::LocalIDZLoad()
+{
+  if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
+  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  return LocalIDZLoadInstr = 
+    builder.CreateLoad
+    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL));
+}
+
+/**
+ * Find the instruction that loads the Y dimension of the work item
+ * in the beginning of the parallel region, if not found, creates it.
+ */
+llvm::Instruction*
+ParallelRegion::LocalIDYLoad()
+{
+  if (LocalIDYLoadInstr != NULL) return LocalIDYLoadInstr;
+  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  return LocalIDYLoadInstr = 
+    builder.CreateLoad
+    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL));
+}
+
+/**
+ * Find the instruction that loads the X dimension of the work item
+ * in the beginning of the parallel region, if not found, creates it.
+ */
+llvm::Instruction*
+ParallelRegion::LocalIDXLoad()
+{
+  if (LocalIDXLoadInstr != NULL) return LocalIDXLoadInstr;
+  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  return LocalIDXLoadInstr = 
+    builder.CreateLoad
+    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL));
+}
+
+void
+ParallelRegion::InjectPrintF
+(llvm::Instruction *before, std::string formatStr, 
+ std::vector<Value*>& params)
+{
+  IRBuilder<> builder(before);
+  llvm::Module *M = before->getParent()->getParent()->getParent();
+
+  llvm::Value *stringArg = 
+    builder.CreateGlobalString(formatStr);
+    
+  /* generated with help from http://llvm.org/demo/index.cgi */
+  Function* printfFunc = M->getFunction("printf");
+  if (printfFunc == NULL) {
+    PointerType* PointerTy_4 = PointerType::get(IntegerType::get(M->getContext(), 8), 0);
+ 
+    std::vector<Type*> FuncTy_6_args;
+    FuncTy_6_args.push_back(PointerTy_4);
+    
+    FunctionType* FuncTy_6 = 
+      FunctionType::get
+      (/*Result=*/IntegerType::get(M->getContext(), 32),
+       /*Params=*/FuncTy_6_args,
+       /*isVarArg=*/true);
+
+    printfFunc = 
+      Function::Create
+      (/*Type=*/FuncTy_6,
+       /*Linkage=*/GlobalValue::ExternalLinkage,
+       /*Name=*/"printf", M); 
+    printfFunc->setCallingConv(CallingConv::C);
+
+    AttrListPtr func_printf_PAL;
+    {
+      SmallVector<AttributeWithIndex, 4> Attrs;
+#ifdef LLVM_3_1
+      AttributeWithIndex PAWI;
+      PAWI.Index = 1U; 
+      PAWI.Attrs = Attribute::NoCapture;
+      Attrs.push_back(PAWI);
+      PAWI.Index = 4294967295U; 
+      PAWI.Attrs = Attribute::NoUnwind;
+      Attrs.push_back(PAWI);
+      func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+#else
+      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attributes::NoCapture));
+      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attributes::NoUnwind));
+      func_printf_PAL = AttrListPtr::get(M->getContext(), Attrs);
+#endif
+    }
+    printfFunc->setAttributes(func_printf_PAL);
+  }
+
+  std::vector<Constant*> const_ptr_8_indices;
+
+  ConstantInt* const_int64_9 = ConstantInt::get(M->getContext(), APInt(64, StringRef("0"), 10));
+  const_ptr_8_indices.push_back(const_int64_9);
+  const_ptr_8_indices.push_back(const_int64_9);
+  assert (isa<Constant>(stringArg));
+  Constant* const_ptr_8 = 
+    ConstantExpr::getGetElementPtr
+    (cast<Constant>(stringArg), const_ptr_8_indices);
+
+  std::vector<Value*> args;
+  args.push_back(const_ptr_8);
+  args.insert(args.end(), params.begin(), params.end());
+
+  CallInst::Create(printfFunc, args, "", before);
+}
+
+void
+ParallelRegion::SetExitBB(llvm::BasicBlock *block)
+{
+  for (size_t i = 0; i < size(); ++i)
+    {
+      if (at(i) == block) 
+        {
+          setExitBBIndex(i);
+          return;
+        }
+    }
+  assert (false && "The block was not found in the PRegion!");
+}
+
+/**
+ * Adds a printf to the end of the parallel region that prints the
+ * region ID and the work item ID. 
+ *
+ * Useful for debugging control flow bugs.
+ */
+void
+ParallelRegion::InjectRegionPrintF()
+{
+  llvm::Module *M = entryBB()->getParent()->getParent();
+
+#if 0
+  // it should reuse equal strings anyways
+  const char* FORMAT_STR_VAR = ".pocl.pRegion_debug_str";
+  llvm::Value *stringArg = M->getGlobalVariable(FORMAT_STR_VAR);
+  if (stringArg == NULL)
+    {
+      IRBuilder<> builder(entryBB());
+      stringArg = builder.CreateGlobalString("PR %d WI %u %u %u\n", FORMAT_STR_VAR);
+    }
+#endif
+
+  ConstantInt* pRID = ConstantInt::get(M->getContext(), APInt(32, pRegionId, 10));
+  std::vector<Value*> params;
+  params.push_back(pRID);
+  params.push_back(LocalIDXLoad());
+  params.push_back(LocalIDYLoad());
+  params.push_back(LocalIDZLoad());
+
+  InjectPrintF(exitBB()->getTerminator(), "PR %d WI %u %u %u\n", params);
+
+}
+
+/**
+ * Adds a printf to the end of the parallel region that prints the
+ * hex contents of all named non-pointer variables.
+ *
+ * Useful for debugging data flow bugs.
+ */
+void
+ParallelRegion::InjectVariablePrintouts()
+{
+  for (ParallelRegion::iterator i = begin();
+       i != end(); ++i)
+    {
+      llvm::BasicBlock *bb = *i;
+      for (llvm::BasicBlock::iterator instr = bb->begin();
+           instr != bb->end(); ++instr) 
+        {
+          llvm::Instruction *instruction = instr;
+          if (isa<PointerType>(instruction->getType()) ||
+              !instruction->hasName()) continue;
+          std::string name = instruction->getName().str();
+          std::vector<Value*> args;
+          IRBuilder<> builder(exitBB()->getTerminator());
+          args.push_back(builder.CreateGlobalString(name));
+          args.push_back(instruction);
+          InjectPrintF(instruction->getParent()->getTerminator(), "variable %s == %x\n", args);
+        }
+    }
 }

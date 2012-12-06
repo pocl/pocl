@@ -31,7 +31,7 @@ int call_test(char const *const name)
   
   /* call OpenCL program */
   cl_context const context =
-    clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, NULL, NULL, NULL);
+    clCreateContextFromType(NULL, CL_DEVICE_TYPE_ALL, NULL, NULL, NULL);
   if (context == 0) return -1;
   
   size_t ndevices;

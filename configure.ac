@@ -1,4 +1,4 @@
-#                                               -*- Autoconf -*-
+##                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2012 Universidad Rey Juan Carlos
@@ -32,10 +32,12 @@ AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
-LT_INIT
 
 # check for tools
 PKG_PROG_PKG_CONFIG
+
+#Exit if pkg-config is not found.
+PKG_CHECK_EXISTS([pkg-config],[],[AC_MSG_ERROR([pkg-config not found])])
 
 # check: hwloc version must be 1.0+
 PKG_CHECK_MODULES([HWLOC], [hwloc >= 1.0], [
@@ -49,23 +51,30 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LN_S
 
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+
+LT_INIT
+
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
 
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROG([LLVM_CONFIG], [llvm-config])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.1])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 
 case "$LLVM_VERSION" in
-     3.1*)
+     3.1)
      AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
    ;;
-     3.2svn)
-     AC_DEFINE([LLVM_3_2], [], "Using LLVM svn (upcoming 3.2)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.2)")     
+     3.2*)
+     AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
+   ;;
+     3.3svn)
+     AC_DEFINE([LLVM_3_3], [], "Using LLVM svn (upcoming 3.3)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.3)")     
    ;;   
      *)
    AC_MSG_ERROR(
@@ -99,7 +108,7 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
   fi
-  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.2.0-src.tar.gz" ; then
+  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.3.1-src.tar.gz" ; then
     enable_testsuite_viennacl=yes
   fi
   if test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
@@ -270,9 +279,9 @@ AS_CASE(["$tests_with_icd,$icd,$oclsym"],
   [AC_MSG_ERROR([Invalid value for --enable-tests-with-icd])]) 
 
 if test x"$tests_with_icd" = xyes; then
-  PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], [
-    OCL_ICD_available=yes
-  ], [
+  PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], 
+  [], 
+  [
     AC_MSG_WARN([Tests through ICD loaded enabled but OpenCL.pc file installed by ocl-icd seems missing])
     if test -z "$OPENCL_LIBS"; then
       OPENCL_LIBS="-lOpenCL"
@@ -379,7 +388,7 @@ if test -z "$TCECC" || \
    test -z "$TCE_CONFIG" || \
    test -z "$TCE_LIBRARY"; then
 
-AC_MSG_NOTICE([TCE installation not found. The ttasim device won't be built.])
+AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
 
 else
 
@@ -408,8 +417,8 @@ if test "x$debug" = "xno"
 then
 	CXXFLAGS="$CXXFLAGS"
 else
-	CFLAGS="-O0 -g"
-	CXXFLAGS="-O0 -g"
+	CFLAGS="$CXXFLAGS -O0 -g"
+	CXXFLAGS="$CXXFLAGS -O0 -g"
 fi
 
 AC_DEFINE([HAVE_GL_GL_H], [], [OpenGL])
@@ -422,8 +431,8 @@ test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementati
 # Checks for programs.
 AC_DEFUN([LLVM_PROG], [
   AC_ARG_VAR([$1], [$3])
-  AC_PATH_PROG([$1], [$2], , [$LLVM_BINDIR:$PATH])
-  AS_IF([test "x$1" = x], [
+  AC_PATH_PROGS([$1], [$2 $2-$LLVM_VERSION], , [$LLVM_BINDIR:$PATH])
+  AS_IF([test -z "$$1"], [
     AC_MSG_FAILURE([cannot find LLVM binary '$2' in '$LLVM_BINDIR' nor \$PATH])
   ])
 ])
@@ -446,8 +455,51 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
+
+#
+# Targets.
+# Note - there are two kinds of targets: the autoconf cross compilation target
+# which is actually the host in OpenCL terms, 
+# and the OpenCL target, i.e. the compute node architecture. With basic and pthread
+# OCL devices, all these three are one and the same.
+
+AC_ARG_ENABLE( [targets],
+               [AS_HELP_STRING( [--enable-targets],
+                                [Comma-separated list of OCL target devices to compile the 
+                                 kernel library against.] ) ],
+               ,
+               enableval=all)
+
+#TODO: check for bad targets...
+if test "x$enableval" == "xall" 
+then  
+  OCL_TARGETS="arm x86_64 powerpc powerpc64 tce cellspu"
+else
+  OCL_TARGETS=$(echo $enableval | tr ',' ' ')
+fi
+AC_SUBST([OCL_TARGETS])
+
+#Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
+#run in 32 bit mode per default. So for powerpc, do not use the host cpu unless
+#user overrides. See Readme.Cell
+default_target=$host_cpu
+AC_ARG_ENABLE([ppc64],
+              AS_HELP_STRING([--enable-ppc64],
+                             [If on PowerPC, use 64 bit runtime, not the 32bit one.]),
+              ,
+              [if test x"$host_cpu" = x"powerpc64"
+               then
+                 default_target="powerpc"
+               fi
+              ] )
+ 
+kernel_dir=$default_target
+
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
+                 lib/kernel/cellspu/Makefile
+                 lib/kernel/powerpc/Makefile
+                 lib/kernel/powerpc64/Makefile
                  lib/kernel/x86_64/Makefile])
 
 AC_ARG_ENABLE([arm-cortex-a8],
@@ -483,13 +535,18 @@ case $host_os in
     ;;  
 esac
 AC_SUBST([ICD_LD_FLAGS])
+
+
 case $host_cpu in
-  arm*)
+  armv7l)
+    #armv7l seems a popular host_cpu in distros. Clang uses armv7, though
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS $ARM_CLANG_FLAGS"
     HOST_LLC_FLAGS="$ARM_LLC_FLAGS"
+    default_target="armv7"
+    kernel_dir="arm"
     ;;
   x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
@@ -499,11 +556,18 @@ case $host_cpu in
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
+  powerpc64)
+    AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    ;;
   *)
     AC_MSG_NOTICE([unknown host, using the generic kernel lib])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
 esac
+
+AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
+AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])
 AC_SUBST([TARGET_CPU], [$target_cpu])
@@ -571,6 +635,9 @@ LDFLAGS=""
 
 AC_CONFIG_FILES([include/arm/types.h
                  include/tce/types.h
+                 include/powerpc/types.h
+                 include/powerpc64/types.h
+                 include/cellspu/types.h
                  include/x86_64/types.h])
 
 AC_MSG_NOTICE([Checking target compiler characteristics])
@@ -636,11 +703,9 @@ AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc
-                 pocl.icd
                  examples/ViennaCL/custom-context.stdout
                  tests/atlocal
                  ocl-vendors/pocl-tests.icd
-
                  include/Makefile
                  include/CL/Makefile
                  include/OpenCL/Makefile
@@ -652,6 +717,7 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/tce/Makefile
                  lib/CL/devices/tce/ttasim/Makefile
                  lib/CL/devices/topology/Makefile
+                 lib/CL/devices/cellspu/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  lib/poclu/Makefile
@@ -674,6 +740,8 @@ AC_CONFIG_FILES([Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
+                 tests/cell/Makefile
+                 tests/cell/hello/Makefile
                  tools/llvm-ld/Makefile
                  ])
 
@@ -682,7 +750,6 @@ AC_OUTPUT
 
 #Print a summary of selected options:
 echo
-echo "                  SUMMARY"
 echo =======================================================================
 echo
 echo Using LLVM version $LLVM_VERSION from $($LLVM_CONFIG --prefix)
@@ -716,6 +783,12 @@ else
  echo "Linking directly with libpocl will not work."
 fi
 echo
-echo
 
+if test ! -z $TCE_AVAILABLE;
+then
+ echo "Enabling the TCE device driver."
+ echo
+fi
+echo Enabled testsuites: $POAT_TESTSUITES
+echo
 

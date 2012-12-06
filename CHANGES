@@ -5,15 +5,24 @@
 
 Overall
 -------
-- Support for LLVM 3.2 (svn). 
+- Support for LLVM 3.2 (svn).
+- Multi-WI work group functions can be now generated
+  using loops which are only partially unrolled. Reduces
+  code size explosion with large WGs in comparison to
+  the full replication method.
+- PowerPC 64 support (tested on Cell/Debian Sid/PS3).
 
 Kernel Compiler Passes
 ----------------------
+- Several miscompilations and compiler crashes fixed.
 - Multiple bugs fixed from the work group vectorizer.
 - Updated metadata format pocl uses to pass information
   to vectorization and TCE backend to simplify debuging.
 - Kernel pointer arguments are not always marked 'noalias' (restricted).
-  This probably was a specs misunderstanding.
+  Doing this previously was a specs misunderstanding.
+- ConstantGEPs to static variables generated from automated
+  locals caused problems. Now converting them to normal GEPs
+  using a pass from the SAFECode project.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------

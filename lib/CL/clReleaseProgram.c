@@ -52,7 +52,8 @@ POclReleaseProgram(cl_program program) CL_API_SUFFIX__VERSION_1_0
       free (program->source);
       if (program->binaries != NULL)
         {
-          free (program->binaries[0]);
+          if (program->binaries[0])
+            free (program->binaries[0]);
           free (program->binaries);
         }
       free (program->binary_sizes);

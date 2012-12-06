@@ -28,6 +28,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "config.h"
 
 using namespace llvm;
 
@@ -74,8 +75,16 @@ Flatten::runOnModule(Module &M)
       if (KernelName == f->getName() || 
           (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f)))
         {
+#ifdef LLVM_3_1
           f->removeFnAttr(Attribute::AlwaysInline);
           f->addFnAttr(Attribute::NoInline);
+#else
+          AttrBuilder b;
+          f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::AlwaysInline)));
+          AttrBuilder c;
+          f->addFnAttr(Attributes::NoInline);
+#endif
+
           f->setLinkage(llvm::GlobalValue::ExternalLinkage);
           changed = true;
 #ifdef DEBUG_FLATTEN
@@ -84,8 +93,15 @@ Flatten::runOnModule(Module &M)
         } 
       else
         {
+#ifdef LLVM_3_1
           f->removeFnAttr(Attribute::NoInline);
           f->addFnAttr(Attribute::AlwaysInline);
+#else
+          AttrBuilder b;
+          f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::NoInline)));
+          f->addFnAttr(Attributes::AlwaysInline);
+#endif
+
           f->setLinkage(llvm::GlobalValue::InternalLinkage);
           changed = true;
 #ifdef DEBUG_FLATTEN

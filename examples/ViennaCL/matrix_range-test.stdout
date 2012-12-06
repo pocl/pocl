@@ -10,26 +10,17 @@
   numeric: float
 
 //
-////////// Test 1: Copy to GPU //////////
+////////// Test: Copy CTOR //////////
 //
-Testing upper left copy to A... PASSED!
-Testing lower right copy to A... PASSED!
-Testing upper copy to C... PASSED!
-Testing left copy to D... PASSED!
+Testing matrix created from range... PASSED!
+Testing range created from range... PASSED!
 
 //
-////////// Test 2: Copy from GPU //////////
+////////// Test: Assignments //////////
 //
-Testing upper left copy to A... PASSED!
-Testing lower right copy to A... PASSED!
-Testing upper copy to C... PASSED!
-Testing left copy to D... PASSED!
-//
-////////// Test 2: Inplace add //////////
-//
-PASSED!
-Inplace add to matrix: PASSED!
-Inplace add of prod(): PASSED!
+Testing matrix assigned to range... PASSED!
+Testing range assigned to matrix... PASSED!
+Testing range assigned to range... PASSED!
 
 //
 ////////// Test 1: Copy to GPU //////////
@@ -47,8 +38,244 @@ Testing lower right copy to A... PASSED!
 Testing upper copy to C... PASSED!
 Testing left copy to D... PASSED!
 //
-////////// Test 2: Inplace add //////////
+////////// Test 3: Addition //////////
+//
+Inplace add to submatrix: PASSED!
+Inplace add to matrix: PASSED!
+Inplace add of matrix: PASSED!
+Add to submatrix: PASSED!
+Add to matrix: PASSED!
+//
+////////// Test 4: Subtraction //////////
+//
+Inplace sub to submatrix: PASSED!
+Inplace sub to matrix: PASSED!
+Inplace sub of matrix: PASSED!
+Sub from submatrix: PASSED!
+Sub from matrix: PASSED!
+//
+////////// Test 5: Scaling //////////
+//
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+//
+////////// Test 6: Matrix-Matrix Products //////////
+//
+Assigned C = A * B: PASSED!
+Assigned C = A^T * B: PASSED!
+Assigned C = A * B^T: PASSED!
+Assigned C = A^T * B^T: PASSED!
+Inplace add of prod(): PASSED!
+//
+////////// Test 7: Matrix-Vector Products //////////
 //
 PASSED!
+
+----------------------------------------------
+
+
+//
+////////// Test: Copy CTOR //////////
+//
+Testing matrix created from range... PASSED!
+Testing range created from range... PASSED!
+
+//
+////////// Test: Assignments //////////
+//
+Testing matrix assigned to range... PASSED!
+Testing range assigned to matrix... PASSED!
+Testing range assigned to range... PASSED!
+
+//
+////////// Test 1: Copy to GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+
+//
+////////// Test 2: Copy from GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+//
+////////// Test 3: Addition //////////
+//
+Inplace add to submatrix: PASSED!
 Inplace add to matrix: PASSED!
+Inplace add of matrix: PASSED!
+Add to submatrix: PASSED!
+Add to matrix: PASSED!
+//
+////////// Test 4: Subtraction //////////
+//
+Inplace sub to submatrix: PASSED!
+Inplace sub to matrix: PASSED!
+Inplace sub of matrix: PASSED!
+Sub from submatrix: PASSED!
+Sub from matrix: PASSED!
+//
+////////// Test 5: Scaling //////////
+//
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+//
+////////// Test 6: Matrix-Matrix Products //////////
+//
+Assigned C = A * B: PASSED!
+Assigned C = A^T * B: PASSED!
+Assigned C = A * B^T: PASSED!
+Assigned C = A^T * B^T: PASSED!
 Inplace add of prod(): PASSED!
+//
+////////// Test 7: Matrix-Vector Products //////////
+//
+PASSED!
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     0
+  numeric: double
+
+//
+////////// Test: Copy CTOR //////////
+//
+Testing matrix created from range... PASSED!
+Testing range created from range... PASSED!
+
+//
+////////// Test: Assignments //////////
+//
+Testing matrix assigned to range... PASSED!
+Testing range assigned to matrix... PASSED!
+Testing range assigned to range... PASSED!
+
+//
+////////// Test 1: Copy to GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+
+//
+////////// Test 2: Copy from GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+//
+////////// Test 3: Addition //////////
+//
+Inplace add to submatrix: PASSED!
+Inplace add to matrix: PASSED!
+Inplace add of matrix: PASSED!
+Add to submatrix: PASSED!
+Add to matrix: PASSED!
+//
+////////// Test 4: Subtraction //////////
+//
+Inplace sub to submatrix: PASSED!
+Inplace sub to matrix: PASSED!
+Inplace sub of matrix: PASSED!
+Sub from submatrix: PASSED!
+Sub from matrix: PASSED!
+//
+////////// Test 5: Scaling //////////
+//
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+//
+////////// Test 6: Matrix-Matrix Products //////////
+//
+Assigned C = A * B: PASSED!
+Assigned C = A^T * B: PASSED!
+Assigned C = A * B^T: PASSED!
+Assigned C = A^T * B^T: PASSED!
+Inplace add of prod(): PASSED!
+//
+////////// Test 7: Matrix-Vector Products //////////
+//
+PASSED!
+
+----------------------------------------------
+
+
+//
+////////// Test: Copy CTOR //////////
+//
+Testing matrix created from range... PASSED!
+Testing range created from range... PASSED!
+
+//
+////////// Test: Assignments //////////
+//
+Testing matrix assigned to range... PASSED!
+Testing range assigned to matrix... PASSED!
+Testing range assigned to range... PASSED!
+
+//
+////////// Test 1: Copy to GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+
+//
+////////// Test 2: Copy from GPU //////////
+//
+Testing upper left copy to A... PASSED!
+Testing lower right copy to A... PASSED!
+Testing upper copy to C... PASSED!
+Testing left copy to D... PASSED!
+//
+////////// Test 3: Addition //////////
+//
+Inplace add to submatrix: PASSED!
+Inplace add to matrix: PASSED!
+Inplace add of matrix: PASSED!
+Add to submatrix: PASSED!
+Add to matrix: PASSED!
+//
+////////// Test 4: Subtraction //////////
+//
+Inplace sub to submatrix: PASSED!
+Inplace sub to matrix: PASSED!
+Inplace sub of matrix: PASSED!
+Sub from submatrix: PASSED!
+Sub from matrix: PASSED!
+//
+////////// Test 5: Scaling //////////
+//
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+//
+////////// Test 6: Matrix-Matrix Products //////////
+//
+Assigned C = A * B: PASSED!
+Assigned C = A^T * B: PASSED!
+Assigned C = A * B^T: PASSED!
+Assigned C = A^T * B^T: PASSED!
+Inplace add of prod(): PASSED!
+//
+////////// Test 7: Matrix-Vector Products //////////
+//
+PASSED!
+
+----------------------------------------------
+
