@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clFlush()
+/* OpenCL runtime library: clEnqueueMapBuffer()
 
-   Copyright (c) 2012 Pekka Jääskeläinen
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -20,18 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#ifndef POCL_CL_ENQUEUE_MAP_BUFFER_H
+#define POCL_CL_ENQUEUE_MAP_BUFFER_H
 
-#include "pocl_cl.h"
-#include "utlist.h"
+/* Function for performing the actual mapping, used both from the
+   clFinish() and the blocking call. */
+void*
+pocl_map_mem_cmd(cl_device_id device, 
+                 cl_mem buffer, 
+                 mem_mapping_t *mapping_info);
 
-CL_API_ENTRY cl_int CL_API_CALL
-POclFlush(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
-{
-  /* "clFlush only guarantees that all queued commands to command_queue
-     will eventually be submitted to the appropriate device. There is no guarantee 
-     that they will be complete after clFlush returns." */
-  /* This could be implemented as an asyc clFinish(), executing it in another
-     thread? */
-  return POclFinish (command_queue);
-}
-POsym(clFlush)
+#endif

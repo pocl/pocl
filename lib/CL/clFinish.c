@@ -73,6 +73,16 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           POclReleaseMemObject (node->command.copy.src_buffer);
           POclReleaseMemObject (node->command.copy.dst_buffer);
           break;
+        case CL_COMMAND_MAP_BUFFER: 
+          {
+            POCL_WARN_UNTESTED();
+            POCL_PROFILE_SUBMITTED;
+            POCL_PROFILE_RUNNING;            
+            pocl_map_mem_cmd (command_queue->device, node->command.map.buffer, 
+                              node->command.map.mapping);
+            POCL_PROFILE_COMPLETE;
+            break;
+          }
         case CL_COMMAND_NDRANGE_KERNEL:
           assert (*event == node->event);
           POCL_PROFILE_SUBMITTED;
