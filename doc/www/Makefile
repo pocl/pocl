@@ -20,6 +20,10 @@
 #
 # Makefile for generatic the static web pages from the Mako templates.
 # See: http://www.makotemplates.org/
+#
+# How to publish the web pages in the SF.net:
+# https://sourceforge.net/apps/trac/sourceforge/wiki/Project%20web
+# You need an SF account and to be an admin in the pocl project.
 
 generated_htmls=$(patsubst %.mak,%.html,$(wildcard *.mak))
 
