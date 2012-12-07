@@ -1,0 +1,59 @@
+<%
+   sub_page = ""
+   try:
+       sub_page = " - " + self.attr.sub_page
+   except:
+       pass
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <meta name="robots" content="index, follow" /> 
+    <meta name="keywords" content="OpenCL portable OpenCL pocl" /> 
+    <meta name="description" content="pocl - Portable OpenCL " /> 
+
+    <meta property="og:title" content="pocl home page"/> 
+    <meta property="og:site_name" content="pocl"/> 
+    <meta property="og:type" content="website"/>
+    <meta property="og:description" content="pocl: a performance portable open source OpenCL implementation"/>
+    <meta property="og:url" content="http://pocl.sourceforge.net"/>    
+    <meta property="fb:admins" content="pekka.jaaskelainen"/>
+
+    <title>pocl - Portable OpenCL${sub_page}</title>
+    <link rel="stylesheet" type="text/css" href="pocl-style.css" />
+  </head>
+
+<body>
+  <div id="page">
+    <div id="header">
+      <h1 id="title">pocl - Portable OpenCL${sub_page}</h1>
+    </div>
+
+    <div id="navi">
+        <ul id="menu_item_list">
+          <li class="menu_item"><a href="index.html" class="menu_link">Main</a></li>
+          <li class="menu_item"><a href="download.html" class="menu_link">Download</a></li>
+          <li class="menu_item"><a href="documentation.html" class="menu_link">Documentation</a></li>
+          <li class="menu_item"><a href="discussion.html" class="menu_link">Discussion</a></li>
+##          <li class="menu_item"><a href="publications.html" class="menu_link">Publications</a></li>
+        </ul>
+    </div>
+
+    <div id="content">
+    ${self.body()}
+    </div>
+
+    <div id="footer">
+      <p class="footer">
+        pocl - Portable OpenCL  &copy; 2010-2012 pocl developers
+      </p>
+    </div>
+
+ </div>
+
+</body>
+
+</html>

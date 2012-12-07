@@ -1,0 +1,111 @@
+body 
+{
+    background-color : white;
+    width: 800px;
+    align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+h1#title
+{
+#    background-color: #000044;
+    color: black;
+    padding: 10px;
+}
+
+p.footer {
+#    background-color: #000044;
+    color: black;
+    padding: 10px;
+#    border-style: solid;
+#    border-color: black;
+
+}
+
+p.license_text {
+    font-size: xx-small;
+}
+
+
+h1
+{
+#    background-color: #00ccdd;
+    padding: 4px;
+    font-size: large;
+}
+
+h2
+{
+#    background-color: #00ccee;
+    padding: 4px;
+    font-size: medium;
+    font-weight: bold;
+}
+
+h3
+{
+#    background-color: #00ddee;
+    padding: 4px;
+    font-size: medium;
+
+ 
+}
+
+
+#header
+{
+    border-style: solid;
+    border-color: black;
+}
+
+#footer
+{
+    border-style: solid;
+    border-color: black;
+}
+
+
+#navi
+{
+    width: 100%;
+    min-height: 40px;
+#    background-color: #0000aa;
+#    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    vertical-align: top;
+    text-align: center;
+    border-bottom: solid;
+
+}
+
+#menu_item_list
+{
+    float: left;
+    margin-top: 0px;
+    margin-left: 15px;
+    padding: 0px;
+    font-size: 12px;
+    list-style-type: none;
+}
+
+#page 
+{
+}
+
+#content
+{
+    clear: both;
+}
+
+
+li.menu_item 
+{
+    float: left;
+    margin: 15px;
+}
+
+a.menu_link 
+{
+}
+

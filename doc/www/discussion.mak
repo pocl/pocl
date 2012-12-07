@@ -1,0 +1,15 @@
+<%!
+        sub_page = "Discussion channels"
+%>
+
+<%inherit file="basic_page.makt" />
+
+<p>The recommended way to communicate between the pocl developers and the 
+users are the mailing lists and the IRC channel. </p>
+
+<p>
+The <a href="https://lists.sourceforge.net/lists/listinfo/pocl-devel">mailing list</a> is hosted by Sourceforge.
+
+The #pocl IRC channel is in <strong>irc.oftc.net</strong>.
+</p>
+
