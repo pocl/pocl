@@ -65,7 +65,6 @@ POclGetKernelWorkGroupInfo
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
     {
         typedef struct { size_t size[3]; } size_t_3;
-        POCL_WARN_UNTESTED();
 #if 0
         printf("### reqd wg sizes %d %d %d\n", 
                kernel->reqd_wg_size[0], 
@@ -81,7 +80,6 @@ POclGetKernelWorkGroupInfo
     case CL_KERNEL_LOCAL_MEM_SIZE:
     {
       size_t local_size = 0, i;
-      POCL_WARN_UNTESTED();
 
       /* Count the host-allocated locals. */
       for (i = 0; i < kernel->num_args; ++i)

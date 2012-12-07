@@ -75,7 +75,6 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           break;
         case CL_COMMAND_MAP_BUFFER: 
           {
-            POCL_WARN_UNTESTED();
             POCL_UPDATE_EVENT_SUBMITTED;
             POCL_UPDATE_EVENT_RUNNING;            
             pocl_map_mem_cmd (command_queue->device, node->command.map.buffer, 

@@ -1,0 +1,15 @@
+m4_define([POAT_AMDSDK_SETUP],[
+  AT_SETUP([$1])
+  AT_KEYWORDS([amdsdk $1 $2])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" amd "*],[false],[:])])
+  # AMD APP SDK tests require OCL-ICD.
+  AT_SKIP_IF([! grep -vq "#define HAVE_OCL_ICD 1" $abs_top_srcdir/config.h])
+])
+
+AT_BANNER([AMD APP SDK tests])
+
+POAT_AMDSDK_SETUP([matrixmul])
+AT_CHECK_UNQUOTED([make test_MatrixMultiplication -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP

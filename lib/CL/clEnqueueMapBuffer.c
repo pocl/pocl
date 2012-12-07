@@ -110,8 +110,6 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
       if (cmd == NULL)
         return CL_OUT_OF_HOST_MEMORY;
 
-      POCL_WARN_UNTESTED();
-
       cmd->type = CL_COMMAND_MAP_BUFFER;
       cmd->command.map.buffer = buffer;
       cmd->command.map.mapping = mapping_info;

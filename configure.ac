@@ -97,13 +97,14 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil)])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,AMD)])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
 enable_testsuite_viennacl=no
 enable_testsuite_rodinia=no
 enable_testsuite_parboil=no
+enable_testsuite_amd=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -122,7 +123,7 @@ if test x"$enable_testsuites" = xcheck ; then
 
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,AMD"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -140,6 +141,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,Parboil,*|*,parboil,*], [
     enable_testsuite_parboil=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,AMD,*|*,amd,*], [
+    enable_testsuite_amd=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -173,10 +178,20 @@ if test "$enable_testsuite_parboil" = "yes" ; then
   fi
 fi
 
+if test "$enable_testsuite_amd" = "yes" ; then
+  # Check for software and sources for AMD APP SDK
+  if ! test -f "$srcdir/examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64.tgz"; then
+    AC_MSG_WARN([disabling AMD APP SDK testsuite as the 2.8 lnx64 package not in '$srcdir/examples/AMD'.])
+    enable_testsuite_amd=no
+  fi
+fi
+
+
 AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -205,6 +220,13 @@ if test "$enable_testsuite_parboil" = "yes"; then
 else
   AC_MSG_NOTICE([tests from Parboil are disabled])
 fi
+if test "$enable_testsuite_amd" = "yes"; then
+  AC_MSG_NOTICE([tests from AMD APP SDK are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES amd"
+else
+  AC_MSG_NOTICE([tests from AMD APP SDK are disabled])
+fi
+
 
 AC_SUBST([POAT_TESTSUITES])
 ####################################################################
@@ -732,6 +754,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Rodinia/Makefile
                  examples/Parboil/Makefile
                  examples/ViennaCL/Makefile
+                 examples/AMD/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/regression/Makefile
