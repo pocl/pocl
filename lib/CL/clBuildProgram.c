@@ -30,7 +30,7 @@
 #define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclBuildProgram(cl_program program,
+POname(clBuildProgram)(cl_program program,
                cl_uint num_devices,
                const cl_device_id *device_list,
                const char *options,

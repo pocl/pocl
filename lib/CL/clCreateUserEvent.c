@@ -2,7 +2,7 @@
 
 
 CL_API_ENTRY cl_event CL_API_CALL
-POclCreateUserEvent(cl_context     context ,
+POname(clCreateUserEvent)(cl_context     context ,
                   cl_int *       errcode_ret ) CL_API_SUFFIX__VERSION_1_1 
 {
   POCL_ABORT_UNIMPLEMENTED();

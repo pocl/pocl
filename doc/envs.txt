@@ -40,7 +40,7 @@ be cleaned in clReleaseProgram.
 
 POCL_MAX_WORK_GROUP_SIZE 
 
-Forces the maximum WG size returned by the device or kernel work group quries
+Forces the maximum WG size returned by the device or kernel work group queries
 to be at most this number. 
 
 POCL_MAX_PTHREAD_COUNT

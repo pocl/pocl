@@ -39,7 +39,7 @@ struct _cl_platform_id _platforms[1]  = {};
  * On POCL, this trivially reduces to 1 - POCL itself.
  */ 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetPlatformIDs(cl_uint           num_entries,
+POname(clGetPlatformIDs)(cl_uint           num_entries,
                  cl_platform_id *  platforms,
                  cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
 {	

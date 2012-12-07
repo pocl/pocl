@@ -25,7 +25,7 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueCopyBufferRect(cl_command_queue command_queue,
+POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
                         cl_mem src_buffer,
                         cl_mem dst_buffer,
                         const size_t *src_origin,
@@ -85,7 +85,7 @@ POclEnqueueCopyBufferRect(cl_command_queue command_queue,
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
 
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
 
       POCL_PROFILE_QUEUED;
     }
@@ -104,9 +104,9 @@ POclEnqueueCopyBufferRect(cl_command_queue command_queue,
       /* in-order queue - all previously enqueued commands must 
        * finish before this read */
       // ensure our buffer is not freed yet
-      POclRetainMemObject (src_buffer);
-      POclRetainMemObject (dst_buffer);
-      POclFinish(command_queue);
+      POname(clRetainMemObject) (src_buffer);
+      POname(clRetainMemObject) (dst_buffer);
+      POname(clFinish)(command_queue);
     }
   POCL_PROFILE_SUBMITTED;
   POCL_PROFILE_RUNNING;
@@ -122,8 +122,8 @@ POclEnqueueCopyBufferRect(cl_command_queue command_queue,
 
   POCL_PROFILE_COMPLETE;
 
-  POclReleaseMemObject (src_buffer);
-  POclReleaseMemObject (dst_buffer);
+  POname(clReleaseMemObject) (src_buffer);
+  POname(clReleaseMemObject) (dst_buffer);
 
   return CL_SUCCESS;
 }

@@ -26,7 +26,7 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueUnmapMemObject(cl_command_queue command_queue,
+POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                         cl_mem           memobj,
                         void *           mapped_ptr,
                         cl_uint          num_events_in_wait_list,
@@ -72,7 +72,7 @@ POclEnqueueUnmapMemObject(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
 
       POCL_PROFILE_QUEUED;
     }
@@ -101,7 +101,7 @@ POclEnqueueUnmapMemObject(cl_command_queue command_queue,
 
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;
-  POclReleaseMemObject (memobj);
+  POname(clReleaseMemObject) (memobj);
 
   return CL_SUCCESS;
 }

@@ -3,7 +3,7 @@
 #include "pocl_image_util.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueReadImage(cl_command_queue     command_queue,
+POname(clEnqueueReadImage)(cl_command_queue     command_queue,
                    cl_mem               image,
                    cl_bool              blocking_read, 
                    const size_t *       origin, /* [3] */

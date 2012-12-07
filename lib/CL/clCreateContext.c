@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
-POclCreateContext(const cl_context_properties * properties,
+POname(clCreateContext)(const cl_context_properties * properties,
                 cl_uint                       num_devices,
                 const cl_device_id *          devices,
                 void (CL_CALLBACK * pfn_notify)(const char *, const void *, size_t, void *),
@@ -60,7 +60,7 @@ POclCreateContext(const cl_context_properties * properties,
           context->devices[j] = device_ptr;
           ++j;
         }
-      POclRetainDevice(device_ptr);
+      POname(clRetainDevice)(device_ptr);
     }   
 
   context->properties = properties;

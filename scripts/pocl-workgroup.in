@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-target=@HOST@
+target=@TARGET@
 
 while getopts k:x:y:z:t:o: o
 do
@@ -67,10 +67,11 @@ linked_out="${linked_bc}.out"
 
 target_dir=${target}
 case $target in
-  arm*) target_dir="arm";;
-  tce-*) target_dir="tce"  ;;
-  powerpc64-*) target_dir="powerpc64" ;;
-  cellspu-*)    target_dir="cellspu" 
+  arm*)        target_dir="arm";;
+  cellspu-*)   target_dir="cellspu";;
+  powerpc64-*) target_dir="powerpc64";;
+  tce-*)       target_dir="tce";;
+  x86_64-*)    target_dir="x86_64";;
 esac
 
 llvm_ld="pocl-llvm-ld"
@@ -80,12 +81,27 @@ then
 fi
 
 
+
+# On OSX, it appears that the pocl kernel library have the
+# architecture x86_64, while the pocl kernels have the architecture
+# x86_64-apple-macosx10.8.0. This leads to warnings that spoil e.g.
+# the test case output.
+
+# These warnings look e.g. like:
+# WARNING: Linking two modules of different target triples: /Users/eschnett/src/pocl-erik/lib/kernel/x86_64/libkernel.a(get_global_id.o): 'x86_64' and 'x86_64-apple-macosx10.8.0'
+
+# Redirect stderr, and remove certain warnings that appear on OSX. I
+# don't know how else to avoid the warnings...
+{
 if [ -f @abs_top_builddir@/lib/kernel/${target_dir}/libkernel.a ]
 then
     ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target_dir} -lkernel
 else
     ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target_dir} -lkernel
 fi
+} 2> ${linked_out}.err
+grep -v '^WARNING: Linking two modules of different target triples:' ${linked_out}.err 1>&2
+rm ${linked_out}.err
 rm ${linked_out}
 
 header="`dirname $1`/`basename $1 .bc`_header.h"

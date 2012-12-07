@@ -40,7 +40,7 @@
 
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetMemObjectInfo(cl_mem      memobj ,
+POname(clGetMemObjectInfo)(cl_mem      memobj ,
                    cl_mem_info param_name , 
                    size_t      param_value_size ,
                    void *      param_value ,

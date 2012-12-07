@@ -25,7 +25,7 @@
 #include "pocl_image_util.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
-POclCreateImage2D(cl_context              context,
+POname(clCreateImage2D)(cl_context              context,
                 cl_mem_flags            flags,
                 const cl_image_format * image_format,
                 size_t                  width,
@@ -98,7 +98,7 @@ CL_API_SUFFIX__VERSION_1_0
   for (i = 0; i < context->num_devices; ++i)
     {
       if (i > 0)
-        POclRetainMemObject (mem);
+        POname(clRetainMemObject) (mem);
       device_id = context->devices[i];
       device_ptr = device_id->malloc(device_id->data, 0, size, NULL);
       

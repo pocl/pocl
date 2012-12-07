@@ -27,7 +27,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
-POclCreateProgramWithSource(cl_context context,
+POname(clCreateProgramWithSource)(cl_context context,
                           cl_uint count,
                           const char **strings,
                           const size_t *lengths,

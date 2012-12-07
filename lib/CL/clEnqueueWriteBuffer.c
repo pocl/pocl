@@ -26,7 +26,7 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueWriteBuffer(cl_command_queue command_queue,
+POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
                      cl_mem buffer,
                      cl_bool blocking_write,
                      size_t offset,
@@ -68,7 +68,7 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
 
       POCL_PROFILE_QUEUED;
     }
@@ -87,8 +87,8 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
         {
           /* in-order queue - all previously enqueued commands must 
            * finish before this read */
-          POclRetainMemObject (buffer);
-          POclFinish (command_queue);
+          POname(clRetainMemObject) (buffer);
+          POname(clFinish) (command_queue);
         }
 
       POCL_PROFILE_SUBMITTED;
@@ -97,7 +97,7 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
       device->write(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
       POCL_PROFILE_COMPLETE;
 
-      POclReleaseMemObject (buffer);
+      POname(clReleaseMemObject) (buffer);
     }
   else
   {
@@ -113,7 +113,7 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
     cmd->command.write.buffer = buffer;
     cmd->next = NULL;
     cmd->event = event ? *event : NULL;
-    POclRetainMemObject (buffer);
+    POname(clRetainMemObject) (buffer);
 
     LL_APPEND(command_queue->root, cmd);
   }

@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclRetainMemObject(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0 
+POname(clRetainMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0 
 {
   POCL_RETAIN_OBJECT(memobj);
   return CL_SUCCESS;

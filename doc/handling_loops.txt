@@ -6,7 +6,7 @@ There are two cases for handling loops:
       1) loops that contain barriers
       2) loops that do not contain barriers
 
-1) Is handled by adding implict barriers before the loop and replicating
+1) Is handled by adding implicit barriers before the loop and replicating
 the header and the body separately (Carlos please clarify the details).
 
 2) Is handled as a single ParallelRegion. The whole loop is replicated.

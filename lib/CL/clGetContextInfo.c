@@ -26,7 +26,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetContextInfo(cl_context context, 
+POname(clGetContextInfo)(cl_context context, 
                  cl_context_info param_name,
                  size_t param_value_size,
                  void *param_value,

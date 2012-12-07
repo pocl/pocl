@@ -26,7 +26,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
-POclCreateProgramWithBinary(cl_context                     context,
+POname(clCreateProgramWithBinary)(cl_context                     context,
                           cl_uint                        num_devices,
                           const cl_device_id *           device_list,
                           const size_t *                 lengths,

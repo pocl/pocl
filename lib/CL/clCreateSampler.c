@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 #include "pocl_icd.h"
 extern CL_API_ENTRY cl_sampler CL_API_CALL
-POclCreateSampler(cl_context          context,
+POname(clCreateSampler)(cl_context          context,
                 cl_bool             normalized_coords, 
                 cl_addressing_mode  addressing_mode, 
                 cl_filter_mode      filter_mode,

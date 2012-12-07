@@ -25,7 +25,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetProgramInfo(cl_program program,
+POname(clGetProgramInfo)(cl_program program,
                  cl_program_info param_name,
                  size_t param_value_size,
                  void *param_value,

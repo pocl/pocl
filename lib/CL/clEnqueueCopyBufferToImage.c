@@ -2,7 +2,7 @@
 #include "pocl_image_util.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueCopyBufferToImage(cl_command_queue  command_queue,
+POname(clEnqueueCopyBufferToImage)(cl_command_queue  command_queue,
                            cl_mem            buffer,
                            cl_mem            image, 
                            size_t            src_offset,

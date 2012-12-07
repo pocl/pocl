@@ -30,7 +30,7 @@
 #define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_kernel CL_API_CALL
-POclCreateKernel(cl_program program,
+POname(clCreateKernel)(cl_program program,
                const char *kernel_name,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
@@ -63,7 +63,7 @@ POclCreateKernel(cl_program program,
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       if (device_i > 0)
-        POclRetainKernel (kernel);
+        POname(clRetainKernel) (kernel);
 
       snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
                 program->temp_dir, program->devices[device_i]->name);
