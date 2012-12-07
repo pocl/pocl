@@ -587,11 +587,10 @@ case $host_cpu in
     ;;
 esac
 
-AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])
-AC_DEFINE_UNQUOTED([TARGET],"$target", [The target triple.])
+AC_DEFINE_UNQUOTED([TARGET], "$target", [The target triple.])
 AC_SUBST([TARGET_CPU], [$target_cpu])
 AC_ARG_VAR([TARGET_CLANG_FLAGS],
            [Parameters to for target compilation.])
@@ -604,7 +603,9 @@ AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
                    [Parameters to llc for code generation in the target.])
 
 AC_SUBST([HOST], [$host])
+AC_DEFINE_UNQUOTED([HOST], "$host", [The host triple.])
 AC_SUBST([HOST_CPU], [$host_cpu])
+AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],

@@ -26,7 +26,7 @@
 #set -x
 #set -e
 
-target=@TARGET@
+target=@HOST@
 
 while getopts t:o: o
 do
