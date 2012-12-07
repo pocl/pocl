@@ -40,55 +40,55 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
       switch (node->type)
         {
         case CL_COMMAND_READ_BUFFER:
-          POCL_PROFILE_SUBMITTED;
-          POCL_PROFILE_RUNNING;
+          POCL_UPDATE_EVENT_SUBMITTED;
+          POCL_UPDATE_EVENT_RUNNING;
           command_queue->device->read
             (node->command.read.data, 
              node->command.read.host_ptr, 
              node->command.read.device_ptr, 
              node->command.read.cb); 
-          POCL_PROFILE_COMPLETE;
+          POCL_UPDATE_EVENT_COMPLETE;
           POclReleaseMemObject (node->command.read.buffer);
           break;
         case CL_COMMAND_WRITE_BUFFER:
-          POCL_PROFILE_SUBMITTED;
-          POCL_PROFILE_RUNNING;
+          POCL_UPDATE_EVENT_SUBMITTED;
+          POCL_UPDATE_EVENT_RUNNING;
           command_queue->device->write
             (node->command.write.data, 
              node->command.write.host_ptr, 
              node->command.write.device_ptr, 
              node->command.write.cb);
-          POCL_PROFILE_COMPLETE;
+          POCL_UPDATE_EVENT_COMPLETE;
           POclReleaseMemObject (node->command.write.buffer);
           break;
         case CL_COMMAND_COPY_BUFFER:
-          POCL_PROFILE_SUBMITTED;
-          POCL_PROFILE_RUNNING;
+          POCL_UPDATE_EVENT_SUBMITTED;
+          POCL_UPDATE_EVENT_RUNNING;
           command_queue->device->copy
             (node->command.copy.data, 
              node->command.copy.src_ptr, 
              node->command.copy.dst_ptr,
              node->command.copy.cb);
-          POCL_PROFILE_COMPLETE;
+          POCL_UPDATE_EVENT_COMPLETE;
           POclReleaseMemObject (node->command.copy.src_buffer);
           POclReleaseMemObject (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_MAP_BUFFER: 
           {
             POCL_WARN_UNTESTED();
-            POCL_PROFILE_SUBMITTED;
-            POCL_PROFILE_RUNNING;            
+            POCL_UPDATE_EVENT_SUBMITTED;
+            POCL_UPDATE_EVENT_RUNNING;            
             pocl_map_mem_cmd (command_queue->device, node->command.map.buffer, 
                               node->command.map.mapping);
-            POCL_PROFILE_COMPLETE;
+            POCL_UPDATE_EVENT_COMPLETE;
             break;
           }
         case CL_COMMAND_NDRANGE_KERNEL:
           assert (*event == node->event);
-          POCL_PROFILE_SUBMITTED;
-          POCL_PROFILE_RUNNING;
+          POCL_UPDATE_EVENT_SUBMITTED;
+          POCL_UPDATE_EVENT_RUNNING;
           command_queue->device->run(node->command.run.data, node);
-          POCL_PROFILE_COMPLETE;
+          POCL_UPDATE_EVENT_COMPLETE;
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];
@@ -101,7 +101,7 @@ POclFinish(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           POclReleaseKernel(node->command.run.kernel);
           break;  
         case CL_COMMAND_MARKER:
-          POCL_PROFILE_COMPLETE;
+          POCL_UPDATE_EVENT_COMPLETE;
           break;
         default:
           POCL_ABORT_UNIMPLEMENTED();

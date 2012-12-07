@@ -1,6 +1,7 @@
 /* pocl_cl.h - local runtime library declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+                 2011-2012 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -444,50 +445,50 @@ struct _cl_sampler {
   cl_filter_mode      filter_mode;
 };
 
-#define POCL_PROFILE_QUEUED                                             \
+#define POCL_UPDATE_EVENT_QUEUED                                        \
   do {                                                                  \
-    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
-        event != NULL && (*event) != NULL)                              \
+    if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
         (*event)->status = CL_QUEUED;                                   \
-        (*event)->time_queue =                                          \
-          command_queue->device->get_timer_value(command_queue->device->data); \
+        if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
+          (*event)->time_queue =                                        \
+            command_queue->device->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_PROFILE_SUBMITTED                                          \
+#define POCL_UPDATE_EVENT_SUBMITTED                                          \
   do {                                                                  \
-    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
-        event != NULL && (*event) != NULL)                              \
+    if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
         assert((*event)->status = CL_QUEUED);                           \
         (*event)->status = CL_SUBMITTED;                                \
-        (*event)->time_submit =                                         \
-          command_queue->device->get_timer_value(command_queue->device->data); \
+        if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
+          (*event)->time_submit =                                       \
+            command_queue->device->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_PROFILE_RUNNING                                            \
+#define POCL_UPDATE_EVENT_RUNNING                                            \
   do {                                                                  \
-    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
-        event != NULL && (*event) != NULL)                              \
+    if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
         assert((*event)->status = CL_SUBMITTED);                        \
         (*event)->status = CL_RUNNING;                                  \
-        (*event)->time_start =                                          \
-          command_queue->device->get_timer_value(command_queue->device->data); \
+        if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
+          (*event)->time_start =                                        \
+            command_queue->device->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_PROFILE_COMPLETE                                           \
+#define POCL_UPDATE_EVENT_COMPLETE                                           \
   do {                                                                  \
-    if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE &&        \
-        event != NULL && (*event) != NULL)                              \
+    if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
         assert((*event)->status = CL_RUNNING);                          \
         (*event)->status = CL_COMPLETE;                                 \
-        (*event)->time_end =                                            \
-          command_queue->device->get_timer_value(command_queue->device->data); \
+        if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
+          (*event)->time_end =                                          \
+            command_queue->device->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
     

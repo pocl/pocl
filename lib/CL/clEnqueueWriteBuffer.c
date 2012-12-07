@@ -70,7 +70,7 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POclRetainCommandQueue (command_queue);
 
-      POCL_PROFILE_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
   /* enqueue the write, or execute directly */
@@ -91,11 +91,11 @@ POclEnqueueWriteBuffer(cl_command_queue command_queue,
           POclFinish (command_queue);
         }
 
-      POCL_PROFILE_SUBMITTED;
-      POCL_PROFILE_RUNNING;
+      POCL_UPDATE_EVENT_SUBMITTED;
+      POCL_UPDATE_EVENT_RUNNING;
       /* TODO: fixme. The offset computation must be done at the device driver. */
       device->write(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
-      POCL_PROFILE_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE;
 
       POclReleaseMemObject (buffer);
     }

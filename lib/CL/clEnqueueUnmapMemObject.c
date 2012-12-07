@@ -74,11 +74,11 @@ POclEnqueueUnmapMemObject(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POclRetainCommandQueue (command_queue);
 
-      POCL_PROFILE_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
-  POCL_PROFILE_SUBMITTED;
-  POCL_PROFILE_RUNNING;
+  POCL_UPDATE_EVENT_SUBMITTED;
+  POCL_UPDATE_EVENT_RUNNING;
 
   if (memobj->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
     {
@@ -97,7 +97,7 @@ POclEnqueueUnmapMemObject(cl_command_queue command_queue,
            mapping->size);
     }
 
-  POCL_PROFILE_COMPLETE;
+  POCL_UPDATE_EVENT_COMPLETE;
 
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;

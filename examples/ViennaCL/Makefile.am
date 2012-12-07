@@ -43,12 +43,12 @@ $(srcdir)/ViennaCL-1.4.0-src.tar.gz:
 $(testsuite_src_dir):
 	$(MAKE) $(srcdir)/ViennaCL-1.3.1-src.tar.gz
 	cd $(testsuite_pocl_dir) && \
-	tar xvzf ViennaCL-1.3.1-src.tar.gz
+	tar xzf ViennaCL-1.3.1-src.tar.gz
 
 $(testsuite_1_4_0_src_dir):
 	$(MAKE) $(srcdir)/ViennaCL-1.4.0-src.tar.gz
 	cd $(testsuite_pocl_dir) && \
-	tar xvzf ViennaCL-1.4.0-src.tar.gz
+	tar xzf ViennaCL-1.4.0-src.tar.gz
 
 # ViennaCL must be built in the subdirectory build/ of the extracted source
 # (it does not work elsewhere) and its source tree is modified.

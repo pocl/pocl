@@ -78,7 +78,7 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POclRetainCommandQueue (command_queue);
 
-      POCL_PROFILE_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
@@ -96,7 +96,7 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
 
   if (host_ptr == NULL)
     {
-      POCL_PROFILE_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE;
       POCL_ERROR (CL_MAP_FAILURE);
     }
 
@@ -127,16 +127,16 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
     }
 
 
-  POCL_PROFILE_SUBMITTED;
-  POCL_PROFILE_RUNNING;
+  POCL_UPDATE_EVENT_SUBMITTED;
+  POCL_UPDATE_EVENT_RUNNING;
 
   host_ptr = pocl_map_mem_cmd(device, buffer, mapping_info);
 
-  POCL_PROFILE_COMPLETE;
+  POCL_UPDATE_EVENT_COMPLETE;
 
   if (host_ptr == NULL)
     {
-      POCL_PROFILE_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE;
       POCL_ERROR (CL_MAP_FAILURE);
     }
 

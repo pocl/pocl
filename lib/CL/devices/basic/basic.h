@@ -21,6 +21,15 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+/**
+ * @file basic.h
+ *
+ * The purpose of the 'basic' device driver is to serve as an example of
+ * a minimalistic (but still working) device driver for pocl.
+ *
+ * It is a "native device" without multithreading and uses the malloc
+ * directly for buffer allocation etc.
+ */
 
 #ifndef POCL_BASIC_H
 #define POCL_BASIC_H

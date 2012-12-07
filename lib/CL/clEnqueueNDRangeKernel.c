@@ -263,7 +263,7 @@ POclEnqueueNDRangeKernel(cl_command_queue command_queue,
       (*event)->command = command_node;
       (*event)->command->event = *event;
 
-      POCL_PROFILE_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
   pc.work_dim = work_dim;

@@ -49,6 +49,14 @@
    larger region. */
 #define ALLOCATION_MULTIPLE 32
 
+/* To avoid memory hogging in case of larger buffers, limit the
+   extra allocation margin to this number of megabytes.
+
+   The extra allocation should be done to avoid repetitive calls and
+   memory fragmentation for smaller buffers only. 
+ */
+#define ADDITIONAL_ALLOCATION_MAX_MB 100
+
 /* Whether to immediately free a region in case the last chunk was
    deallocated. If 0, it can reuse the same region over multiple kernels. */
 #define FREE_EMPTY_REGIONS 0
@@ -167,7 +175,15 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
           return ENOMEM;
         }
 
-      size_t region_size = size*ALLOCATION_MULTIPLE;
+      /* Fallback to the minimum size in case of overflow. 
+         Allocate a larger chunk to avoid allocation overheads
+         later on. */
+      size_t region_size = 
+        max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
+                size * ALLOCATION_MULTIPLE), size);
+
+      assert (region_size >= size);
+
       void* space = NULL;
       if ((posix_memalign (&space, alignment, region_size)) != 0)
         {
@@ -185,10 +201,16 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
       new_mem_region->alignment = alignment;
       DL_APPEND (d->mem_regions, new_mem_region);
       chunk = alloc_buffer_from_region (new_mem_region, size);
-      
-      /* In case the malloc didn't fail it should have been able to allocate 
-         the buffer to a newly created Region. */
-      assert (chunk != NULL);
+
+      if (chunk == NULL)
+      {
+        printf("pocl error: could not allocate a buffer of size %lu from the newly created region of size %lu.\n",
+               size, region_size);
+        print_chunks(new_mem_region->chunks);
+        /* In case the malloc didn't fail it should have been able to allocate 
+           the buffer to a newly created Region. */
+        assert (chunk != NULL);
+      }
     }
   BA_UNLOCK (d->mem_regions_lock);
   
@@ -552,11 +574,11 @@ pocl_pthread_run
   printf("### wgs per thread==%d leftover wgs==%d\n", wgs_per_thread, leftover_wgs);
 #endif
 
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
+  if (cmd->event != NULL)
+    {
       cmd->event->status = CL_RUNNING;
-      cmd->event->time_start = pocl_basic_get_timer_value(d);
+      if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        cmd->event->time_start = pocl_basic_get_timer_value(d);
   }
   
   int first_gid_x = 0;
@@ -594,12 +616,12 @@ pocl_pthread_run
 #endif
   }
 
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
+  if (cmd->event != NULL)
+    {
       cmd->event->status = CL_COMPLETE;
-      cmd->event->time_end = pocl_basic_get_timer_value(d);
-  }
+      if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        cmd->event->time_end = pocl_basic_get_timer_value(d);
+    }
 
   free(threads);
   free(arguments);

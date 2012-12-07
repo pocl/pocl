@@ -60,6 +60,12 @@ pocl_basic_init (cl_device_id device, const char* parameters)
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
+
+  /* The basic driver represents only one "compute unit" as
+     it doesn't exploit multiple hardware threads. Multiple
+     basic devices can be still used for task level parallelism 
+     using multiple OpenCL devices. */
+  device->max_compute_units = 1;
 }
 
 void *
