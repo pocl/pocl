@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples.
+# Makefile.am for pocl/examples/EinsteinToolkit
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,5 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a  standalone trig scalarwave kernel \
-	opencl-book-samples ViennaCL Rodinia Parboil EinsteinToolkit
+noinst_PROGRAMS = EinsteinToolkit
+
+EinsteinToolkit_SOURCES = EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL_RHS2.cl
+EinsteinToolkit_LDADD = -lm @OPENCL_LIBS@
+EinsteinToolkit_CFLAGS = -std=c99 @OPENCL_CFLAGS@
+
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

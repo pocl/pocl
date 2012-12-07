@@ -141,17 +141,25 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_OBJECT_INIT \
   POCL_LOCK_INITIALIZER, 0
 
+/* Note: OSX doesn't use ELF, and doesn't support aliases. */
 #define POCL_ALIAS_OPENCL_SYMBOL(name)                          \
   typeof(name) name __attribute__ ((alias ("PO" #name),         \
                                     visibility("default")));
 
 #ifdef DIRECT_LINKAGE
+/* "Direct linkage" means that we link against the run-time library
+   directly. The symbols in the library can have their standard
+   names. */
 #  define POname(name) name
 #  define POdeclsym(name)
 /* #  define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name) */
 #  define POsym(name)
 #  define POsymAlways(name)
 #else
+/* For ICD, the standard symbol names are provided by the ICD wrapper,
+   and we need to mangle our symbol names by adding a prefix "PO". We
+   also provide the standard symbol names as aliases, but hide (most
+   of) them. */
 #  define POname(name) PO##name
 #  define POdeclsym(name)                                       \
   typeof(name) PO##name __attribute__((visibility("hidden")));

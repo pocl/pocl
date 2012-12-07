@@ -734,6 +734,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Rodinia/Makefile
                  examples/Parboil/Makefile
                  examples/ViennaCL/Makefile
+                 examples/EinsteinToolkit/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/regression/Makefile

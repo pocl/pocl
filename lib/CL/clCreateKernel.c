@@ -123,7 +123,7 @@ POname(clCreateKernel)(cl_program program,
       if (dlhandle == NULL)
         {
           if (access (descriptor_filename, R_OK) != 0)
-            POCL_ABORT("The kernel descriptor.so is not found.");
+            POCL_ABORT("The kernel descriptor.so was not found.\n");
         
           dlhandle = lt_dlopen(descriptor_filename);
           if (dlhandle == NULL) 
