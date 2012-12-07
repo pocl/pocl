@@ -107,6 +107,7 @@ AT_BANNER([Full applications])
 AT_SETUP([Scalar wave equation])
 #lack of double support
 AT_XFAIL_IF([test $(grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2) = "powerpc"])
+AT_XFAIL_IF([test $(grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2) = "armv7"])
 AT_KEYWORDS([scalarwave])
 AT_DATA([expout],
 [Initial condition: t=0
@@ -145,3 +146,4 @@ m4_include(testsuite-viennacl.at)
 m4_include(testsuite-runtime.at)
 m4_include(testsuite-rodinia.at)
 m4_include(testsuite-parboil.at)
+m4_include(testsuite-amd.at)

@@ -72,7 +72,7 @@ POname(clEnqueueCopyBuffer)(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POname(clRetainCommandQueue) (command_queue);
 
-      POCL_PROFILE_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
 

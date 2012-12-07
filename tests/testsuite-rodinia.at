@@ -4,6 +4,8 @@ m4_define([POAT_ROD_SETUP],[
   AT_SETUP([$1])
   AT_KEYWORDS([rodinia $1 $2])
   AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" rodinia "*],[false],[:])])
+  # Rodinia does not (yet) work with the (OCL-)ICD build.
+  AT_SKIP_IF([grep -vq "#define HAVE_OCL_ICD 1" $abs_top_srcdir/config.h])
 ])
 dnl POAT_ROD_CHECK_BUILD(name, extra build cmd)
 m4_define([POAT_ROD_CHECK_BUILD],[

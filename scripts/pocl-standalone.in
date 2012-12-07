@@ -24,6 +24,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+#echo 0=$0 @=$@
+#set -x
+#set -e
+
 target=@TARGET@
 
 while getopts h:t:o: o

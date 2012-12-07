@@ -67,6 +67,8 @@ namespace {
   private:
     void ProcessPointers(Function *F,
                          raw_fd_ostream &out);
+    void ProcessReqdWGSize(Function *F,
+                           raw_fd_ostream &out);
     Function *ProcessAutomaticLocals(Function *F,
                                      raw_fd_ostream &out);
   };
@@ -105,7 +107,8 @@ GenerateHeader::runOnModule(Module &M)
   
     Function *F = mi;
 
-    ProcessPointers(F, out);
+    ProcessPointers(F, out);    
+    ProcessReqdWGSize(F, out);
     
     Function *new_kernel = ProcessAutomaticLocals(F, out);
     if (new_kernel != F)
@@ -132,6 +135,31 @@ GenerateHeader::runOnModule(Module &M)
 }
 
 #include <iostream>
+
+void
+GenerateHeader::ProcessReqdWGSize(Function *F,
+                                  raw_fd_ostream &out) 
+{
+
+  unsigned LocalSizeX = 0, LocalSizeY = 0, LocalSizeZ = 0;
+
+  llvm::NamedMDNode *size_info = F->getParent()->getNamedMetadata("opencl.kernel_wg_size_info");
+  if (size_info) {
+    for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
+      llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
+      if (KernelSizeInfo->getOperand(0) == F) {
+        LocalSizeX = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+        LocalSizeY = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+        LocalSizeZ = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+      }
+    }
+  }
+
+  out << "#define _" << F->getName() << "_REQD_WG_SIZE {"
+      << LocalSizeX << ", "
+      << LocalSizeY << ", "
+      << LocalSizeZ << "}\n";
+}
 
 
 void

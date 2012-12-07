@@ -25,6 +25,8 @@
 #include "utlist.h"
 #include <assert.h>
 
+#include "clEnqueueMapBuffer.h"
+
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_mem           buffer,
@@ -64,20 +66,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   device = command_queue->device;
  
-  mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
-  if (mapping_info == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
-
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);
-  if (blocking_map != CL_TRUE)
-    {
-      POCL_ABORT_UNIMPLEMENTED();
-    }
-  else
-    {
-      POname(clFinish) (command_queue);
-    }
 
   if (event != NULL)
     {
@@ -88,29 +78,86 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       (*event)->queue = command_queue;
       POname(clRetainCommandQueue) (command_queue);
 
-      POCL_PROFILE_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
-  POCL_PROFILE_SUBMITTED;
-  POCL_PROFILE_RUNNING;
+  mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
+  if (mapping_info == NULL)
+    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  host_ptr = device->map_mem 
-      (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
-       buffer->mem_host_ptr);
+  /* The first call to the device driver's map mem tells where
+     the mapping will be stored (the last argument is NULL) in
+     the host memory. When the last argument is non-NULL, the
+     buffer will be mapped there (assumed it will succeed).  */
 
-  POCL_PROFILE_COMPLETE;
+  host_ptr = mapping_info->host_ptr = device->map_mem 
+    (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
+     NULL);
 
   if (host_ptr == NULL)
+    {
+      POCL_UPDATE_EVENT_COMPLETE;
       POCL_ERROR (CL_MAP_FAILURE);
+    }
 
-  mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;
   DL_APPEND (buffer->mappings, mapping_info);
+
+  if (blocking_map != CL_TRUE)
+    {
+      _cl_command_node *cmd = malloc(sizeof(_cl_command_node));
+      if (cmd == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+
+      cmd->type = CL_COMMAND_MAP_BUFFER;
+      cmd->command.map.buffer = buffer;
+      cmd->command.map.mapping = mapping_info;
+      cmd->next = NULL;
+      cmd->event = event ? *event : NULL;
+      LL_APPEND(command_queue->root, cmd);
   
-  buffer->map_count++;
+      return mapping_info->host_ptr;
+    }
+  else
+    {
+      POname(clFinish) (command_queue);
+    }
+
+
+  POCL_UPDATE_EVENT_SUBMITTED;
+  POCL_UPDATE_EVENT_RUNNING;
+
+  host_ptr = pocl_map_mem_cmd(device, buffer, mapping_info);
+
+  POCL_UPDATE_EVENT_COMPLETE;
+
+  if (host_ptr == NULL)
+    {
+      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_ERROR (CL_MAP_FAILURE);
+    }
 
   POCL_SUCCESS ();
   return host_ptr;
 }
 POsym(clEnqueueMapBuffer)
+
+void*
+pocl_map_mem_cmd(cl_device_id device, 
+                 cl_mem buffer, 
+                 mem_mapping_t *mapping_info) {
+
+
+  
+  /* The second call ensures the memory is flushed/updated to the
+     host location. */
+  device->map_mem 
+    (device->data, buffer->device_ptrs[device->dev_id], 
+     mapping_info->offset, mapping_info->size, mapping_info->host_ptr);
+  
+  buffer->map_count++;
+  return mapping_info->host_ptr;
+
+}
+

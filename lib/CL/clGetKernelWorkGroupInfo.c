@@ -5,6 +5,7 @@
 
 #include "devices/devices.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 #define POCL_RETURN_KERNEL_WG_INFO(__TYPE__, __VALUE__)                \
   {                                                                 \
@@ -62,13 +63,40 @@ POname(clGetKernelWorkGroupInfo)
          param_value, param_value_size_ret);
         
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
-      POCL_ABORT_UNIMPLEMENTED();
+    {
+        typedef struct { size_t size[3]; } size_t_3;
+#if 0
+        printf("### reqd wg sizes %d %d %d\n", 
+               kernel->reqd_wg_size[0], 
+               kernel->reqd_wg_size[1], 
+               kernel->reqd_wg_size[2]);
+#endif
+        POCL_RETURN_GETINFO(size_t_3, *(size_t_3*)kernel->reqd_wg_size);
+    }
       
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
       POCL_RETURN_KERNEL_WG_INFO(size_t, device->preferred_wg_size_multiple);
       
     case CL_KERNEL_LOCAL_MEM_SIZE:
-      POCL_RETURN_KERNEL_WG_INFO(cl_ulong, device->local_mem_size);
+    {
+      size_t local_size = 0, i;
+
+      /* Count the host-allocated locals. */
+      for (i = 0; i < kernel->num_args; ++i)
+        {
+          if (!kernel->arg_is_local[i]) continue;
+          local_size += kernel->arguments[i].size;
+        }
+      /* Count the automatic locals. */
+      for (i = 0; i < kernel->num_locals; ++i)
+        {
+          local_size += kernel->arguments[kernel->num_args + i].size;
+        }
+#if 0
+      printf("### local memory usage %d\n", local_size);
+#endif
+      POCL_RETURN_KERNEL_WG_INFO(cl_ulong, local_size);
+    }
       
     default:  
       POCL_ABORT_UNIMPLEMENTED();

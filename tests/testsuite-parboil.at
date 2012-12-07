@@ -15,8 +15,9 @@ m4_define([POAT_PB_CHECK_BUILD],[
 AT_BANNER([Parboil tests])
 
 POAT_PB_SETUP([spmv])
-#This fails when pocl has ICD enabled
-AT_XFAIL_IF([grep -q "define BUILD_ICD" $abs_top_srcdir/config.h])
+#This fails when pocl has ICD enabled. -- seems to work at least with ocl-icd. 
+#With other ICDs none of the tests should work.
+#AT_XFAIL_IF([grep -q "define BUILD_ICD" $abs_top_srcdir/config.h])
 POAT_PB_CHECK_BUILD([spmv])
 AT_CHECK_UNQUOTED([make run-spmv -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass

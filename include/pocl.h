@@ -79,12 +79,20 @@ typedef struct
   cl_mem dst_buffer;
 } _cl_command_copy;
 
+// clEnqueueMapBuffer
+typedef struct
+{
+  cl_mem buffer;
+  struct mem_mapping_t *mapping;
+} _cl_command_map;
+
 typedef union
 {
   _cl_command_run run;
   _cl_command_read read;
   _cl_command_write write;
   _cl_command_copy copy;
+  _cl_command_map map;
 } _cl_command_t;
 
 // one item in the command queue

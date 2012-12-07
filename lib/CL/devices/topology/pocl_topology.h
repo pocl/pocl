@@ -1,6 +1,6 @@
 /* pocl_topology.h - retrieving the topology of OpenCL devices
 
-   Copyright (c) 2012 Cyril Roelandt
+   Copyright (c) 2012 Cyril Roelandt and Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,20 @@
    THE SOFTWARE.
 */
 
+/**
+ * Functionality for using the hwloc library for automatically detecting
+ * the device characteristics and filling the info to the device structure to
+ * make the info accessible to the clGetDeviceInfo() etc.
+ *
+ * http://www.open-mpi.org/projects/hwloc/
+ */
 #ifndef POCL_TOPOLOGY_H
 #define POCL_TOPOLOGY_H
 
+#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
+
 #pragma GCC visibility push(hidden)
-void pocl_topology_set_global_mem_size(cl_device_id device);
-void pocl_topology_set_max_mem_alloc_size(cl_device_id device);
+void pocl_topology_detect_device_info(cl_device_id device);
 #pragma GCC visibility pop
 
 #endif /* POCL_TOPOLOGY_H */

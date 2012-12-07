@@ -39,6 +39,8 @@
 #include "bufalloc.h"
 #include <../dev_image.h>
 
+#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
+
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
    the next buffer allocations.
@@ -46,6 +48,14 @@
    Falls back to single multiple allocation if fails to allocate a
    larger region. */
 #define ALLOCATION_MULTIPLE 32
+
+/* To avoid memory hogging in case of larger buffers, limit the
+   extra allocation margin to this number of megabytes.
+
+   The extra allocation should be done to avoid repetitive calls and
+   memory fragmentation for smaller buffers only. 
+ */
+#define ADDITIONAL_ALLOCATION_MAX_MB 100
 
 /* Whether to immediately free a region in case the last chunk was
    deallocated. If 0, it can reuse the same region over multiple kernels. */
@@ -59,8 +69,6 @@
 
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
-
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */
@@ -110,14 +118,25 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   d->current_dlhandle = 0;
 
   device->data = d;
-  device->max_compute_units = get_max_thread_count();
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   BA_INIT_LOCK (d->mem_regions_lock);
   d->mem_regions = NULL;
 #endif  
 
-  pocl_topology_set_global_mem_size(device);
-  pocl_topology_set_max_mem_alloc_size(device);
+  device->address_bits = SIZEOF_VOID_P * 8;
+
+  /* Use the minimum values until we get a more sensible 
+     upper limit from somewhere. */
+  device->max_read_image_args = device->max_write_image_args = 128;
+  device->image2d_max_width = device->image2d_max_height = 8192;
+  device->image3d_max_width = device->image3d_max_height = device->image3d_max_depth = 2048;
+  device->max_samplers = 16;  
+  device->max_constant_args = 8;
+
+  device->min_data_type_align_size = device->mem_base_addr_align = ALIGNMENT;
+
+  pocl_cpuinfo_detect_device_info(device);
+  pocl_topology_detect_device_info(device);
 }
 
 void
@@ -156,7 +175,15 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
           return ENOMEM;
         }
 
-      size_t region_size = size*ALLOCATION_MULTIPLE;
+      /* Fallback to the minimum size in case of overflow. 
+         Allocate a larger chunk to avoid allocation overheads
+         later on. */
+      size_t region_size = 
+        max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
+                size * ALLOCATION_MULTIPLE), size);
+
+      assert (region_size >= size);
+
       void* space = NULL;
       if ((posix_memalign (&space, alignment, region_size)) != 0)
         {
@@ -174,10 +201,16 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
       new_mem_region->alignment = alignment;
       DL_APPEND (d->mem_regions, new_mem_region);
       chunk = alloc_buffer_from_region (new_mem_region, size);
-      
-      /* In case the malloc didn't fail it should have been able to allocate 
-         the buffer to a newly created Region. */
-      assert (chunk != NULL);
+
+      if (chunk == NULL)
+      {
+        printf("pocl error: could not allocate a buffer of size %lu from the newly created region of size %lu.\n",
+               size, region_size);
+        print_chunks(new_mem_region->chunks);
+        /* In case the malloc didn't fail it should have been able to allocate 
+           the buffer to a newly created Region. */
+        assert (chunk != NULL);
+      }
     }
   BA_UNLOCK (d->mem_regions_lock);
   
@@ -383,6 +416,7 @@ pocl_pthread_copy_rect (void *data,
               region[0]);
 }
 
+#define FALLBACK_MAX_THREAD_COUNT 8
 //#define DEBUG_MT
 //#define DEBUG_MAX_THREAD_COUNT
 /**
@@ -391,93 +425,16 @@ pocl_pthread_copy_rect (void *data,
  */
 static
 int 
-get_max_thread_count() 
+get_max_thread_count(cl_device_id device) 
 {
-  /* query from /proc/cpuinfo how many hardware threads there are, if available */
-  const char* cpuinfo = "/proc/cpuinfo";
-  /* eight is a good round number ;) */
-  const int FALLBACK_MAX_THREAD_COUNT = 8;
-
-  static int cores = 0;
-  if (cores != 0)
-      return cores;
-
   if (getenv(THREAD_COUNT_ENV) != NULL) 
     {
-      cores = atoi(getenv(THREAD_COUNT_ENV));
-      return cores;
+      return atoi(getenv(THREAD_COUNT_ENV));
     }
-
-  if (access (cpuinfo, R_OK) == 0) 
-    {
-      FILE *f = fopen (cpuinfo, "r");
-#     define MAX_CPUINFO_SIZE 64*1024
-      char contents[MAX_CPUINFO_SIZE];
-      int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
-      fclose (f);
-      contents[num_read] = '\0';
-
-      /* Count the number of times 'processor' keyword is found which
-         should give the number of cores overall in a multiprocessor
-         system. In Meego Harmattan on ARM it prints Processor instead of
-         processor */
-      cores = 0;
-      char* p = contents;
-      while ((p = strstr (p, "rocessor")) != NULL) 
-        {
-          cores++;
-          /* Skip to the end of the line. Otherwise causes two cores
-             to be detected in case of, for example:
-             Processor       : ARMv7 Processor rev 2 (v7l) */
-          char* eol = strstr (p, "\n");
-          if (eol != NULL)
-              p = eol;
-          ++p;
-        }     
-#ifdef DEBUG_MAX_THREAD_COUNT 
-      printf("total cores %d\n", cores);
-#endif
-      if (cores == 0)
-        return FALLBACK_MAX_THREAD_COUNT;
-
-      int cores_per_cpu = 1;
-      p = contents;
-      if ((p = strstr (p, "cpu cores")) != NULL)
-        {
-          if (sscanf (p, ": %d\n", &cores_per_cpu) != 1)
-            cores_per_cpu = 1;
-#ifdef DEBUG_MAX_THREAD_COUNT 
-          printf ("cores per cpu %d\n", cores_per_cpu);
-#endif
-        }
-
-      int siblings = 1;
-      p = contents;
-      if ((p = strstr (p, "siblings")) != NULL)
-        {
-          if (sscanf (p, ": %d\n", &siblings) != 1)
-            siblings = cores_per_cpu;
-#ifdef DEBUG_MAX_THREAD_COUNT 
-          printf ("siblings %d\n", siblings);
-#endif
-        }
-      if (siblings > cores_per_cpu) {
-#ifdef DEBUG_MAX_THREAD_COUNT 
-        printf ("max threads %d\n", cores*(siblings/cores_per_cpu));
-#endif
-        return cores*(siblings/cores_per_cpu); /* hardware threading is on */
-      } else {
-#ifdef DEBUG_MAX_THREAD_COUNT 
-        printf ("max threads %d\n", cores);
-#endif
-        return cores; /* only multicore, if not unicore*/
-      }      
-    } 
-#ifdef DEBUG_MAX_THREAD_COUNT 
-  printf ("could not open /proc/cpuinfo, falling back to max threads %d\n", 
-          FALLBACK_MAX_THREAD_COUNT);
-#endif
-  return FALLBACK_MAX_THREAD_COUNT;
+  if (device->max_compute_units == 0)
+    return FALLBACK_MAX_THREAD_COUNT;
+  else
+    return device->max_compute_units;
 }
 
 void
@@ -493,6 +450,7 @@ pocl_pthread_run
   char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
+  cl_device_id device_ptr;
   size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
@@ -546,8 +504,9 @@ pocl_pthread_run
            
       // For the pthread device, use device type is always the same as the host. 
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target %s -c -o %s.o %s",
+			CLANG " -target %s %s -c -o %s.o %s",
 			HOST_CPU,
+			HOST_CLANG_FLAGS,
 			module,
 			assembly);
       assert (error >= 0);
@@ -582,6 +541,7 @@ pocl_pthread_run
       if (kernel->context->devices[i]->data == data)
         {
           device = i;
+          device_ptr = kernel->context->devices[i];
           break;
         }
     }
@@ -595,7 +555,7 @@ pocl_pthread_run
   /* TODO: distributing the work groups in the x dimension is not always the
      best option. This assumes x dimension has enough work groups to utilize
      all the threads. */
-  int max_threads = get_max_thread_count();
+  int max_threads = get_max_thread_count(device_ptr);
   int num_threads = min(max_threads, num_groups_x);
   pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
   struct thread_arguments *arguments = 
@@ -614,11 +574,11 @@ pocl_pthread_run
   printf("### wgs per thread==%d leftover wgs==%d\n", wgs_per_thread, leftover_wgs);
 #endif
 
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
+  if (cmd->event != NULL)
+    {
       cmd->event->status = CL_RUNNING;
-      cmd->event->time_start = pocl_basic_get_timer_value(d);
+      if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        cmd->event->time_start = pocl_basic_get_timer_value(d);
   }
   
   int first_gid_x = 0;
@@ -656,12 +616,12 @@ pocl_pthread_run
 #endif
   }
 
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
+  if (cmd->event != NULL)
+    {
       cmd->event->status = CL_COMPLETE;
-      cmd->event->time_end = pocl_basic_get_timer_value(d);
-  }
+      if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        cmd->event->time_end = pocl_basic_get_timer_value(d);
+    }
 
   free(threads);
   free(arguments);

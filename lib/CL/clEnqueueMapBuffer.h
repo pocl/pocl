@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clReleaseContext()
+/* OpenCL runtime library: clEnqueueMapBuffer()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -20,30 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#ifndef POCL_CL_ENQUEUE_MAP_BUFFER_H
+#define POCL_CL_ENQUEUE_MAP_BUFFER_H
 
-#include "pocl_cl.h"
+/* Function for performing the actual mapping, used both from the
+   clFinish() and the blocking call. */
+void*
+pocl_map_mem_cmd(cl_device_id device, 
+                 cl_mem buffer, 
+                 mem_mapping_t *mapping_info);
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
-{
-  if (!context->valid)
-    return CL_INVALID_CONTEXT;
-
-  POCL_RELEASE_OBJECT(context);
-  if (context->pocl_refcount == 0)
-    {
-      /* The context holds references to all its devices,
-         memory objects, command-queues etc. Release the
-         references and let the objects to get freed. */
-      /* TODO: call the corresponding clRelease* functions
-         for all the referred objects. */
-      int i;
-      for (i = 0; i < context->num_devices; ++i) 
-        {
-          POname(clReleaseDevice) (context->devices[i]);
-        }   
-      free(context);
-    }
-  return CL_SUCCESS;
-}
-POsym(clReleaseContext)
+#endif

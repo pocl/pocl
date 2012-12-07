@@ -1,6 +1,8 @@
 
 m4_define([POAT_SAMPLES_SKIP], [
   AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" samples "*],[false],[:])])
+  # The book samples do not (yet) work with the (OCL-)ICD build.
+  AT_SKIP_IF([grep -vq "#define HAVE_OCL_ICD 1" $abs_top_srcdir/config.h])
 ])
 
 AT_BANNER([OpenCL Programming Guide Samples])

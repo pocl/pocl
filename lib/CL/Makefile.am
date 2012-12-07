@@ -51,6 +51,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueReadBuffer.c	\
                    clEnqueueReadBufferRect.c	\
                    clEnqueueMapBuffer.c	\
+                   clEnqueueMapBuffer.h	\
                    clEnqueueUnmapMemObject.c	\
                    clReleaseMemObject.c		\
                    clRetainMemObject.c		\

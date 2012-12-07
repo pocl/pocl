@@ -44,6 +44,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
+  context->valid = 0;
 
   num_devices = 0;
   for (i = 0; i < pocl_num_devices; ++i) {
@@ -53,7 +54,15 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   }
 
   if (num_devices == 0)
-    POCL_ERROR(CL_DEVICE_NOT_AVAILABLE);
+    {
+      if (errcode_ret != NULL) 
+        {
+          *errcode_ret = (CL_DEVICE_NOT_FOUND); 
+        } 
+      /* Return a dummy context so icd call to clReleaseContext() still
+         works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
+      return context;
+    }
 
   context->num_devices = num_devices;
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
@@ -72,6 +81,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
+  context->valid = 1;
   return context;
 }
 POsym(clCreateContextFromType)

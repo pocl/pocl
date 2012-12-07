@@ -23,4 +23,4 @@
 # THE SOFTWARE.
 
 SUBDIRS = example1 example2 example2a  standalone trig scalarwave kernel \
-	opencl-book-samples ViennaCL Rodinia Parboil EinsteinToolkit
+	opencl-book-samples ViennaCL Rodinia Parboil AMD EinsteinToolkit

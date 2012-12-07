@@ -26,19 +26,29 @@
 if TEST_SUITE_VIENNACL
 testsuite_pocl_dir=${abs_top_srcdir}/examples/ViennaCL
 testsuite_src_dir=${testsuite_pocl_dir}/ViennaCL-1.3.1-src
+testsuite_1_4_0_src_dir=${testsuite_pocl_dir}/ViennaCL-1.4.0-src
 
 .PHONY: build
 
-all: $(testsuite_src_dir)
+all: $(testsuite_src_dir) $(testsuite_1_4_0_src_dir)
 
 $(srcdir)/ViennaCL-1.3.1-src.tar.gz:
 	cd $(srcdir) && \
 	wget http://sourceforge.net/projects/viennacl/files/1.3.x/ViennaCL-1.3.1-src.tar.gz
 
+$(srcdir)/ViennaCL-1.4.0-src.tar.gz:
+	cd $(srcdir) && \
+	wget http://sourceforge.net/projects/viennacl/files/1.4.x/ViennaCL-1.4.0-src.tar.gz
+
 $(testsuite_src_dir):
 	$(MAKE) $(srcdir)/ViennaCL-1.3.1-src.tar.gz
 	cd $(testsuite_pocl_dir) && \
-	tar xvzf ViennaCL-1.3.1-src.tar.gz
+	tar xzf ViennaCL-1.3.1-src.tar.gz
+
+$(testsuite_1_4_0_src_dir):
+	$(MAKE) $(srcdir)/ViennaCL-1.4.0-src.tar.gz
+	cd $(testsuite_pocl_dir) && \
+	tar xzf ViennaCL-1.4.0-src.tar.gz
 
 # ViennaCL must be built in the subdirectory build/ of the extracted source
 # (it does not work elsewhere) and its source tree is modified.
@@ -47,7 +57,17 @@ $(testsuite_src_dir):
 build:
 	if [ ! -d ViennaCL-1.3.1-src ]; then cp -aL $(testsuite_src_dir) . ; fi
 	cd ViennaCL-1.3.1-src/build; \
- 	cmake \
+	cmake \
+		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
+		-D BUILD_MANUAL:BOOL=OFF \
+		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \
+		$(OPENCL_CMAKE) \
+		..
+
+build-1.4.0:
+	if [ ! -d ViennaCL-1.4.0-src ]; then cp -aL $(testsuite_1_4_0_src_dir) . ; fi
+	cd ViennaCL-1.4.0-src/build; \
+	cmake \
 		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
 		-D BUILD_MANUAL:BOOL=OFF \
 		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \

@@ -22,6 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+#echo 0=$0 @=$@
+#set -x
+#set -e
+
 target=@TARGET@
 
 while getopts t:o: o
@@ -49,6 +53,7 @@ case $target in
 esac
 
 case $target in
+  arm*)     CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
   @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@";;
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
 esac

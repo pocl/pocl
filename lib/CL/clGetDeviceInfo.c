@@ -148,7 +148,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_MAX_PARAMETER_SIZE                : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->max_parameter_size);
   case CL_DEVICE_MAX_SAMPLERS                      : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->max_samplers);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_samplers);
   case CL_DEVICE_MEM_BASE_ADDR_ALIGN               : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->mem_base_addr_align);
   case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE          : 
@@ -172,7 +172,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_LOCAL_MEM_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->local_mem_size);
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          :
-    POCL_RETURN_GETINFO(cl_uint, device->error_correction_support);
+    POCL_RETURN_GETINFO(cl_bool, device->error_correction_support);
   case CL_DEVICE_PROFILING_TIMER_RESOLUTION        :
     POCL_RETURN_GETINFO(cl_uint, device->profiling_timer_resolution);
   case CL_DEVICE_ENDIAN_LITTLE                     :
@@ -194,7 +194,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 
   case CL_DRIVER_VERSION:
     POCL_RETURN_DEVICE_INFO_STR(device->driver_version);
-  case CL_DEVICE_PROFILE                           : break;
+  case CL_DEVICE_PROFILE                           : 
+    POCL_RETURN_DEVICE_INFO_STR(device->profile);
   case CL_DEVICE_VERSION                           : 
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
 
@@ -213,7 +214,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_HALF_FP_CONFIG                    : break;
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_half);
-  case CL_DEVICE_HOST_UNIFIED_MEMORY               : break;
+  case CL_DEVICE_HOST_UNIFIED_MEMORY               : 
+    POCL_RETURN_GETINFO(cl_bool, device->host_unified_memory);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_char);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT         :

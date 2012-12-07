@@ -40,7 +40,7 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_INIT_OBJECT(*event);
   (*event)->queue = command_queue;
   POname(clRetainCommandQueue) (command_queue);
-  POCL_PROFILE_QUEUED;
+  POCL_UPDATE_EVENT_QUEUED;
 
   _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
   if (cmd == NULL)

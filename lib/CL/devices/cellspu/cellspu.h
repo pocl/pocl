@@ -87,6 +87,7 @@ GEN_PROTOTYPES (cellspu)
   CL_GLOBAL, /* local_mem_type */					\
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
+  CL_TRUE, /* host_unified_memory */                \
   0, /* profiling_timer_resolution */					\
   CL_FALSE, /* endian_little */						\
   CL_TRUE, /* available */						\

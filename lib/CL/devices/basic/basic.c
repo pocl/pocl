@@ -23,6 +23,8 @@
 */
 
 #include "basic.h"
+#include "cpuinfo.h"
+
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -54,11 +56,16 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
-
-  pocl_topology_set_global_mem_size(device);
-  pocl_topology_set_max_mem_alloc_size(device);
-
   device->data = d;
+
+  pocl_cpuinfo_detect_device_info(device);
+  pocl_topology_detect_device_info(device);
+
+  /* The basic driver represents only one "compute unit" as
+     it doesn't exploit multiple hardware threads. Multiple
+     basic devices can be still used for task level parallelism 
+     using multiple OpenCL devices. */
+  device->max_compute_units = 1;
 }
 
 void *
@@ -186,8 +193,9 @@ pocl_basic_run
       assert (error == 0);
            
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target %s -c -o %s.o %s",
+			CLANG " -target %s %s -c -o %s.o %s",
 			HOST_CPU,
+			HOST_CLANG_FLAGS,
 			module,
 			assembly);
       assert (error >= 0);
