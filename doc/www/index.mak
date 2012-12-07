@@ -40,7 +40,7 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li>PowerPC64/Linux (host&amp;device)</li>
   <li>PowerPC32/Linux (host&amp;device)</li>
   <li>ARM v7/Linux (host&amp;device)</li>
-  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> (host X86_64&amp;instruction set simulator+FPGA prototype as a device</li>
+  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> (host X86_64&amp;instruction set simulator+FPGA-over-PCIe prototype as a device</li>
 </ul>
 
   

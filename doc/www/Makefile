@@ -29,5 +29,9 @@ all: $(generated_htmls)
 	./generate_html.py $< $@
 	cp $@ public_html
 
+publish:
+	scp public_html/* $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
+
 clean:
 	rm -f $(generated_htmls)
+
