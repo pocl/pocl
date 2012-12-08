@@ -10,14 +10,27 @@ int const niters = 100;
 
 
 
-/* Build with Apple's OpenCL:
+/* Build options:
+   
+   Redshift, Apple's OpenCL:
    clang -I/System/Library/Frameworks/OpenCL.framework/Headers -L/System/Library/Frameworks/OpenCL.framework/Libraries -o EinsteinToolkit EinsteinToolkit.c -Wl,-framework,OpenCL
+   
+   Nvidia, AMD's OpenCL:
+   clang -I/usr/local/AMD-APP-SDK-v2.8-RC-lnx64/include -L /usr/local/AMD-APP-SDK-v2.8-RC-lnx64/lib -o EinsteinToolkit EinsteinToolkit.c -lOpenCL -lm
+   
+   Nvidia, Intel's OpenCL:
+   clang -I/usr/local/intel_ocl_sdk_2012_x64/usr/include -L/usr/local/intel_ocl_sdk_2012_x64/usr/lib64 -o EinsteinToolkit EinsteinToolkit.c -lOpenCL
+   
+   Nvidia, Nvidia's OpenCL:
+   clang -I/usr/local/cuda-5.0/include -L/usr/local/cuda-5.0/lib64 -o EinsteinToolkit EinsteinToolkit.c -lOpenCL -lm
 */
 
+
+
 /* Run times on various systems:
- * Laptop, OSX, Intel(R) Core(TM) i7-3820QM CPU @ 2.70GHz
+ * Redshift, laptop, OSX, Intel(R) Core(TM) i7-3820QM CPU @ 2.70GHz:
  *    Theoretical best: 0.03125  usec per gpu
- *    Apple's OpenCL:   0.309488 usec per gpu
+ *    Apple's OpenCL:   0.213103 usec per gpu (with VECTOR_SIZE_I=2)
  *    pocl:             0.564411 usec per gpu
 */
 
@@ -88,7 +101,7 @@ cl_command_queue cmd_queue = 0;
 #define GROUP_SIZE_K  1
 #define TILE_SIZE_I   4
 #define TILE_SIZE_J   4
-#define TILE_SIZE_K   4
+#define TILE_SIZE_K   1
 
 
 
@@ -429,8 +442,43 @@ static void allocate(cGH const* const cctkGH,
 
 void setup()
 {
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, NULL, NULL, NULL);
-  assert(context);
+  cl_int cerr;
+  
+  // Choose a platform and a context (basically a device)
+  cl_uint num_platforms;
+  clGetPlatformIDs(0, NULL, &num_platforms);
+  cl_platform_id platform_ids[num_platforms];
+  clGetPlatformIDs(num_platforms, &platform_ids[0], &num_platforms);
+  if (num_platforms <= 0) {
+    fprintf(stderr, "No OpenCL platforms found\n");
+    assert(0);
+  }
+  assert(num_platforms > 0);
+  
+  cl_device_type const want_device_types = CL_DEVICE_TYPE_CPU;
+  // CL_DEVICE_TYPE_GPU
+  // CL_DEVICE_TYPE_ACCELERATOR
+  // CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR
+  
+  // Loop over all platforms
+  cl_platform_id platform_id;
+  for (cl_uint platform = 0; platform < num_platforms; ++platform) {
+    
+    platform_id = platform_ids[platform];
+    
+    cl_context_properties const cprops[] =
+      {CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, 0};
+    context =
+      clCreateContextFromType(cprops, want_device_types, NULL, NULL, &cerr);
+    if (cerr == CL_SUCCESS) goto found_context;
+    
+  }
+  // Could not find a context on any platform, abort
+  fprintf(stderr, "Could not create OpenCL context for selected device type\n");
+  assert(0);
+  
+  // Found a context, continue
+ found_context:;
   
   size_t ndevices;
   clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevices);
@@ -973,7 +1021,7 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
              (int)global_work_size[0],
              (int)global_work_size[1],
              (int)global_work_size[2]);
-      printf("Local work group size: %4d %4d %4d\n",
+      printf("Local work group size:  %4d %4d %4d\n",
              (int)local_work_size[0],
              (int)local_work_size[1],
              (int)local_work_size[2]);
