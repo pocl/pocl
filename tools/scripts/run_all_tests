@@ -35,15 +35,20 @@ function run {
         fi
 }
 
-echo -n "Running 'make check' with the 'pthread' device..."
-export POCL_DEVICES="pthread"
+echo -n "Running 'make check' with ocl-icd and the default device..."
+run ./configure --enable-testsuites=all
 run make check
 
-echo -n "Running 'make check' with the 'basic' device..."
+echo -n "Running 'make check' with the 'pthread' device (without ICD)..."
+export POCL_DEVICES="pthread"
+run ./configure --enable-testsuites=all --disable-icd
+run make check
+
+echo -n "Running 'make check' with the 'basic' device (without ICD)..."
 export POCL_DEVICES="basic"
 run make check
 
-echo -n "Running 'make check' with multiple devices..."
+echo -n "Running 'make check' with multiple devices (without ICD)..."
 export POCL_DEVICES="pthread basic pthread pthread"
 run make check
 
