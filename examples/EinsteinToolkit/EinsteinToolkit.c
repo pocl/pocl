@@ -1313,6 +1313,9 @@ int main(int argc, char** argv)
   printf("Total elapsed time: %g sec\n", elapsed);
   printf("RESULT: Time per grid point update: %g usec\n",
          1.0e+6 * time_per_point);
+  double const flop_per_point = 3400.0;
+  printf("        This corresponds to %g GFlop/s\n",
+         1.0e-9 * flop_per_point / time_per_point);
   
   printf("\n");
   // VECTOR_SIZE_I=1: 3388 FLop per gpu
