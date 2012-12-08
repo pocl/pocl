@@ -156,7 +156,8 @@ typedef pthread_mutex_t pocl_lock_t;
 #else
 /* Symbol aliases are supported */
 
-#  define POdeclsym(name)                                       \
+#  define POname(name) PO##name
+#  define POdeclsym(name)			\
   typeof(name) PO##name __attribute__((visibility("hidden")));
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   typeof(name) name __attribute__((alias ("PO" #name), visibility("default")));
