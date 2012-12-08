@@ -10,13 +10,30 @@ int const niters = 100;
 
 
 
+/* Build with Apple's OpenCL:
+   clang -I/System/Library/Frameworks/OpenCL.framework/Headers -L/System/Library/Frameworks/OpenCL.framework/Libraries -o EinsteinToolkit EinsteinToolkit.c -Wl,-framework,OpenCL
+*/
+
+/* Run times on various systems:
+ * Laptop, OSX, Intel(R) Core(TM) i7-3820QM CPU @ 2.70GHz
+ *    Theoretical best: 0.03125  usec per gpu
+ *    Apple's OpenCL:   0.309488 usec per gpu
+ *    pocl:             0.564411 usec per gpu
+*/
+
+
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include <CL/opencl.h>
+#ifdef __APPLE__
+#  include <OpenCL/opencl.h>
+#else
+#  include <CL/opencl.h>
+#endif	
 
 
 
@@ -421,6 +438,31 @@ void setup()
   cl_device_id devices[ndevices];
   clGetContextInfo(context, CL_CONTEXT_DEVICES,
                    ndevices*sizeof(cl_device_id), devices, NULL);
+  
+  size_t device_name_length;
+  clGetDeviceInfo(devices[0], CL_DEVICE_NAME, 0, NULL, &device_name_length);
+  char device_name[device_name_length];
+  clGetDeviceInfo(devices[0], CL_DEVICE_NAME,
+                  device_name_length, device_name, NULL);
+  printf("OpenCL device name: %s\n", device_name);
+  
+  cl_platform_id platform;
+  clGetDeviceInfo(devices[0], CL_DEVICE_PLATFORM,
+                  sizeof platform, &platform, NULL);
+  size_t platform_name_length;
+  clGetPlatformInfo(platform, CL_PLATFORM_NAME,
+                    0, NULL, &platform_name_length);
+  char platform_name[platform_name_length];
+  clGetPlatformInfo(platform, CL_PLATFORM_NAME,
+                    platform_name_length, platform_name, NULL);
+  printf("OpenCL platform name: %s\n", platform_name);
+  size_t platform_vendor_length;
+  clGetPlatformInfo(platform, CL_PLATFORM_VENDOR,
+                    0, NULL, &platform_vendor_length);
+  char platform_vendor[platform_vendor_length];
+  clGetPlatformInfo(platform, CL_PLATFORM_VENDOR,
+                    platform_vendor_length, platform_vendor, NULL);
+  printf("OpenCL platform vendor: %s\n", platform_vendor);
   
   cmd_queue = clCreateCommandQueue(context, devices[0], 0, NULL);
   assert(cmd_queue);
@@ -1210,7 +1252,7 @@ int main(int argc, char** argv)
   }
   struct timeval tv1;
   gettimeofday(&tv1, NULL);
-  printf("End timing\n", niters);
+  printf("End timing\n");
   
   
   
