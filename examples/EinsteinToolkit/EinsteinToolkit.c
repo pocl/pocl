@@ -20,10 +20,32 @@ int const niters = 100;
 
 
 
+// Stringify
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
+// Divide while rounding down
+static inline size_t divdown(size_t const a, size_t const b)
+{
+  return a/b;
+}
+
 // Divide while rounding up
 static inline size_t divup(size_t const a, size_t const b)
 {
   return (a+b-1)/b;
+}
+
+// Round down
+static inline size_t rounddown(size_t const a, size_t const b)
+{
+  return divdown(a, b) * b;
+}
+
+// Round up
+static inline size_t roundup(size_t const a, size_t const b)
+{
+  return divup(a, b) * b;
 }
 
 
@@ -33,9 +55,6 @@ cl_context context = 0;
 cl_command_queue cmd_queue = 0;
 
 
-
-/* Note: The #defines here need to be identical to those in the OpenCL
-   kernels! */
 
 // Code generation choices:
 #define VECTORISE_ALIGNED_ARRAYS 1
@@ -373,7 +392,7 @@ static void allocate(cGH const* const cctkGH,
 {
   int const nsize =
     cctkGH->cctk_ash[0] * cctkGH->cctk_ash[1] * cctkGH->cctk_ash[2];
-  ptr->ptr = malloc(nsize * sizeof *ptr->ptr);
+  ptr->ptr = malloc(nsize * sizeof(CCTK_REAL));
   assert(ptr->ptr);
   for (int k=0; k<cctkGH->cctk_lsh[2]; ++k) {
     for (int j=0; j<cctkGH->cctk_lsh[1]; ++j) {
@@ -385,7 +404,7 @@ static void allocate(cGH const* const cctkGH,
     }
   }
   ptr->mem = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR,
-                            nsize * sizeof *ptr->ptr, ptr->ptr, NULL);
+                            nsize * sizeof(CCTK_REAL), ptr->ptr, NULL);
   assert(ptr->mem);
 }
 
@@ -427,188 +446,200 @@ void init(cGH              * const cctkGH,
   cctkGH->cctk_lbnd[0] = 0;
   cctkGH->cctk_lbnd[1] = 0;
   cctkGH->cctk_lbnd[2] = 0;
-  cctkGH->cctk_lsh[0] = 70;
-  cctkGH->cctk_lsh[1] = 70;
-  cctkGH->cctk_lsh[2] = 70;
-  cctkGH->cctk_ash[0] = divup(70, VECTOR_SIZE_I);
-  cctkGH->cctk_ash[1] = divup(70, VECTOR_SIZE_J);
-  cctkGH->cctk_ash[2] = divup(70, VECTOR_SIZE_K);
+  cctkGH->cctk_lsh[0] = cctkGH->cctk_gsh[0];
+  cctkGH->cctk_lsh[1] = cctkGH->cctk_gsh[1];
+  cctkGH->cctk_lsh[2] = cctkGH->cctk_gsh[2];
+  cctkGH->cctk_ash[0] = roundup(cctkGH->cctk_lsh[0], VECTOR_SIZE_I);
+  cctkGH->cctk_ash[1] = roundup(cctkGH->cctk_lsh[1], VECTOR_SIZE_J);
+  cctkGH->cctk_ash[2] = roundup(cctkGH->cctk_lsh[2], VECTOR_SIZE_K);
   // Looping region (for all threads combined)
-  cctkGH->lmin[0] = 3;
-  cctkGH->lmin[1] = 3;
-  cctkGH->lmin[2] = 3;
-  cctkGH->lmax[0] = 67;
-  cctkGH->lmax[1] = 67;
-  cctkGH->lmax[2] = 67;
-  // Active region (for this thread)
   cctkGH->imin[0] = 3;
   cctkGH->imin[1] = 3;
   cctkGH->imin[2] = 3;
-  cctkGH->imax[0] = 67;
-  cctkGH->imax[1] = 67;
-  cctkGH->imax[2] = 67;
+  cctkGH->imax[0] = cctkGH->cctk_lsh[0] - 3;
+  cctkGH->imax[1] = cctkGH->cctk_lsh[1] - 3;
+  cctkGH->imax[2] = cctkGH->cctk_lsh[2] - 3;
+  // Active region (for this thread)
+  cctkGH->lmin[0] = rounddown(cctkGH->imin[0], VECTOR_SIZE_I);
+  cctkGH->lmin[1] = rounddown(cctkGH->imin[1], VECTOR_SIZE_J);
+  cctkGH->lmin[2] = rounddown(cctkGH->imin[2], VECTOR_SIZE_K);
+  cctkGH->lmax[0] = cctkGH->lmin[0] + roundup(cctkGH->imax[0] - cctkGH->lmin[0],
+                                              VECTOR_SIZE_I * UNROLL_SIZE_I);
+  cctkGH->lmax[1] = cctkGH->lmin[1] + roundup(cctkGH->imax[1] - cctkGH->lmin[1],
+                                              VECTOR_SIZE_K * UNROLL_SIZE_J);
+  cctkGH->lmax[2] = cctkGH->lmin[2] + roundup(cctkGH->imax[2] - cctkGH->lmin[2],
+                                              VECTOR_SIZE_J * UNROLL_SIZE_K);
+  printf("cctkGH:\n");
+  printf("   gsh=[%d,%d,%d]\n", cctkGH->cctk_gsh[0], cctkGH->cctk_gsh[1], cctkGH->cctk_gsh[2]);
+  printf("   lbnd=[%d,%d,%d]\n", cctkGH->cctk_lbnd[0], cctkGH->cctk_lbnd[1], cctkGH->cctk_lbnd[2]);
+  printf("   lsh=[%d,%d,%d]\n", cctkGH->cctk_lsh[0], cctkGH->cctk_lsh[1], cctkGH->cctk_lsh[2]);
+  printf("   ash=[%d,%d,%d]\n", cctkGH->cctk_ash[0], cctkGH->cctk_ash[1], cctkGH->cctk_ash[2]);
+  printf("   imin=[%d,%d,%d]\n", cctkGH->imin[0], cctkGH->imin[1], cctkGH->imin[2]);
+  printf("   imax=[%d,%d,%d]\n", cctkGH->imax[0], cctkGH->imax[1], cctkGH->imax[2]);
+  printf("   lmin=[%d,%d,%d]\n", cctkGH->lmin[0], cctkGH->lmin[1], cctkGH->lmin[2]);
+  printf("   lmax=[%d,%d,%d]\n", cctkGH->lmax[0], cctkGH->lmax[1], cctkGH->lmax[2]);
   
-  cctk_parameters->A_bound_limit = 0.0;
-  cctk_parameters->A_bound_scalar = 0.0;
-  cctk_parameters->A_bound_speed = 0.0;
-  cctk_parameters->alpha_bound_limit = 0.0;
-  cctk_parameters->alpha_bound_scalar = 0.0;
-  cctk_parameters->alpha_bound_speed = 0.0;
-  cctk_parameters->AlphaDriver = 1.0;
-  cctk_parameters->At11_bound_limit = 0.0;
-  cctk_parameters->At11_bound_scalar = 0.0;
-  cctk_parameters->At11_bound_speed = 0.0;
-  cctk_parameters->At12_bound_limit = 0.0;
-  cctk_parameters->At12_bound_scalar = 0.0;
-  cctk_parameters->At12_bound_speed = 0.0;
-  cctk_parameters->At13_bound_limit = 0.0;
-  cctk_parameters->At13_bound_scalar = 0.0;
-  cctk_parameters->At13_bound_speed = 0.0;
-  cctk_parameters->At22_bound_limit = 0.0;
-  cctk_parameters->At22_bound_scalar = 0.0;
-  cctk_parameters->At22_bound_speed = 0.0;
-  cctk_parameters->At23_bound_limit = 0.0;
-  cctk_parameters->At23_bound_scalar = 0.0;
-  cctk_parameters->At23_bound_speed = 0.0;
-  cctk_parameters->At33_bound_limit = 0.0;
-  cctk_parameters->At33_bound_scalar = 0.0;
-  cctk_parameters->At33_bound_speed = 0.0;
-  cctk_parameters->B1_bound_limit = 0.0;
-  cctk_parameters->B1_bound_scalar = 0.0;
-  cctk_parameters->B1_bound_speed = 0.0;
-  cctk_parameters->B2_bound_limit = 0.0;
-  cctk_parameters->B2_bound_scalar = 0.0;
-  cctk_parameters->B2_bound_speed = 0.0;
-  cctk_parameters->B3_bound_limit = 0.0;
-  cctk_parameters->B3_bound_scalar = 0.0;
-  cctk_parameters->B3_bound_speed = 0.0;
-  cctk_parameters->beta1_bound_limit = 0.0;
-  cctk_parameters->beta1_bound_scalar = 0.0;
-  cctk_parameters->beta1_bound_speed = 0.0;
-  cctk_parameters->beta2_bound_limit = 0.0;
-  cctk_parameters->beta2_bound_scalar = 0.0;
-  cctk_parameters->beta2_bound_speed = 0.0;
-  cctk_parameters->beta3_bound_limit = 0.0;
-  cctk_parameters->beta3_bound_scalar = 0.0;
-  cctk_parameters->beta3_bound_speed = 0.0;
-  cctk_parameters->BetaDriver = 1.0;
-  cctk_parameters->EpsDiss = 0.2;
-  cctk_parameters->gt11_bound_limit = 0.0;
-  cctk_parameters->gt11_bound_scalar = 0.0;
-  cctk_parameters->gt11_bound_speed = 0.0;
-  cctk_parameters->gt12_bound_limit = 0.0;
-  cctk_parameters->gt12_bound_scalar = 0.0;
-  cctk_parameters->gt12_bound_speed = 0.0;
-  cctk_parameters->gt13_bound_limit = 0.0;
-  cctk_parameters->gt13_bound_scalar = 0.0;
-  cctk_parameters->gt13_bound_speed = 0.0;
-  cctk_parameters->gt22_bound_limit = 0.0;
-  cctk_parameters->gt22_bound_scalar = 0.0;
-  cctk_parameters->gt22_bound_speed = 0.0;
-  cctk_parameters->gt23_bound_limit = 0.0;
-  cctk_parameters->gt23_bound_scalar = 0.0;
-  cctk_parameters->gt23_bound_speed = 0.0;
-  cctk_parameters->gt33_bound_limit = 0.0;
-  cctk_parameters->gt33_bound_scalar = 0.0;
-  cctk_parameters->gt33_bound_speed = 0.0;
-  cctk_parameters->harmonicF = 2.0;
-  cctk_parameters->LapseACoeff = 1.0;
-  cctk_parameters->LapseAdvectionCoeff = 1.0;
-  cctk_parameters->MinimumLapse = 0.0;
-  cctk_parameters->ML_curv_bound_limit = 0.0;
-  cctk_parameters->ML_curv_bound_scalar = 0.0;
-  cctk_parameters->ML_curv_bound_speed = 0.0;
-  cctk_parameters->ML_dtlapse_bound_limit = 0.0;
-  cctk_parameters->ML_dtlapse_bound_scalar = 0.0;
-  cctk_parameters->ML_dtlapse_bound_speed = 0.0;
-  cctk_parameters->ML_dtshift_bound_limit = 0.0;
-  cctk_parameters->ML_dtshift_bound_scalar = 0.0;
-  cctk_parameters->ML_dtshift_bound_speed = 0.0;
-  cctk_parameters->ML_Gamma_bound_limit = 0.0;
-  cctk_parameters->ML_Gamma_bound_scalar = 0.0;
-  cctk_parameters->ML_Gamma_bound_speed = 0.0;
-  cctk_parameters->ML_lapse_bound_limit = 0.0;
-  cctk_parameters->ML_lapse_bound_scalar = 0.0;
-  cctk_parameters->ML_lapse_bound_speed = 0.0;
-  cctk_parameters->ML_log_confac_bound_limit = 0.0;
-  cctk_parameters->ML_log_confac_bound_scalar = 0.0;
-  cctk_parameters->ML_log_confac_bound_speed = 0.0;
-  cctk_parameters->ML_metric_bound_limit = 0.0;
-  cctk_parameters->ML_metric_bound_scalar = 0.0;
-  cctk_parameters->ML_metric_bound_speed = 0.0;
-  cctk_parameters->ML_shift_bound_limit = 0.0;
-  cctk_parameters->ML_shift_bound_scalar = 0.0;
-  cctk_parameters->ML_shift_bound_speed = 0.0;
-  cctk_parameters->ML_trace_curv_bound_limit = 0.0;
-  cctk_parameters->ML_trace_curv_bound_scalar = 0.0;
-  cctk_parameters->ML_trace_curv_bound_speed = 0.0;
-  cctk_parameters->phi_bound_limit = 0.0;
-  cctk_parameters->phi_bound_scalar = 0.0;
-  cctk_parameters->phi_bound_speed = 0.0;
-  cctk_parameters->ShiftAdvectionCoeff = 1.0;
-  cctk_parameters->ShiftBCoeff = 1.0;
-  cctk_parameters->ShiftGammaCoeff = 0.75;
-  cctk_parameters->SpatialBetaDriverRadius = 1.0e+10;
-  cctk_parameters->SpatialShiftGammaCoeffRadius = 1.0e+10;
-  cctk_parameters->trK_bound_limit = 0.0;
-  cctk_parameters->trK_bound_scalar = 0.0;
-  cctk_parameters->trK_bound_speed = 0.0;
-  cctk_parameters->Xt1_bound_limit = 0.0;
-  cctk_parameters->Xt1_bound_scalar = 0.0;
-  cctk_parameters->Xt1_bound_speed = 0.0;
-  cctk_parameters->Xt2_bound_limit = 0.0;
-  cctk_parameters->Xt2_bound_scalar = 0.0;
-  cctk_parameters->Xt2_bound_speed = 0.0;
-  cctk_parameters->Xt3_bound_limit = 0.0;
-  cctk_parameters->Xt3_bound_scalar = 0.0;
-  cctk_parameters->Xt3_bound_speed = 0.0;
-  cctk_parameters->conformalMethod = 0;
-  cctk_parameters->fdOrder = 4;
-  cctk_parameters->harmonicN = 1;
-  cctk_parameters->harmonicShift = 0;
-  cctk_parameters->ML_BSSN_CL_Advect_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_Advect_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_boundary_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_boundary_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_constraints1_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_constraints1_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_constraints2_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_constraints2_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_convertFromADMBase_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_convertFromADMBase_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_convertFromADMBaseGamma_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_convertFromADMBaseGamma_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBase_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBase_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShift_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShift_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShiftBoundary_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShiftBoundary_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBaseFakeDtLapseShift_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_convertToADMBaseFakeDtLapseShift_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_Dissipation_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_Dissipation_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_enforce_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_enforce_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_InitGamma_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_InitGamma_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_InitRHS_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_InitRHS_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_MaxNumArrayEvolvedVars = 0;
-  cctk_parameters->ML_BSSN_CL_MaxNumEvolvedVars = 0;
-  cctk_parameters->ML_BSSN_CL_Minkowski_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_Minkowski_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_RHS1_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_RHS1_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_RHS2_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_RHS2_calc_offset = 0;
-  cctk_parameters->ML_BSSN_CL_RHSStaticBoundary_calc_every = 0;
-  cctk_parameters->ML_BSSN_CL_RHSStaticBoundary_calc_offset = 0;
-  cctk_parameters->other_timelevels = 1;
-  cctk_parameters->rhs_timelevels = 1;
-  cctk_parameters->ShiftAlphaPower = 0;
-  cctk_parameters->timelevels = 3;
-  cctk_parameters->verbose = 0;
+  /* cctk_parameters->A_bound_limit = 0.0; */
+  /* cctk_parameters->A_bound_scalar = 0.0; */
+  /* cctk_parameters->A_bound_speed = 0.0; */
+  /* cctk_parameters->alpha_bound_limit = 0.0; */
+  /* cctk_parameters->alpha_bound_scalar = 0.0; */
+  /* cctk_parameters->alpha_bound_speed = 0.0; */
+  /* cctk_parameters->AlphaDriver = 1.0; */
+  /* cctk_parameters->At11_bound_limit = 0.0; */
+  /* cctk_parameters->At11_bound_scalar = 0.0; */
+  /* cctk_parameters->At11_bound_speed = 0.0; */
+  /* cctk_parameters->At12_bound_limit = 0.0; */
+  /* cctk_parameters->At12_bound_scalar = 0.0; */
+  /* cctk_parameters->At12_bound_speed = 0.0; */
+  /* cctk_parameters->At13_bound_limit = 0.0; */
+  /* cctk_parameters->At13_bound_scalar = 0.0; */
+  /* cctk_parameters->At13_bound_speed = 0.0; */
+  /* cctk_parameters->At22_bound_limit = 0.0; */
+  /* cctk_parameters->At22_bound_scalar = 0.0; */
+  /* cctk_parameters->At22_bound_speed = 0.0; */
+  /* cctk_parameters->At23_bound_limit = 0.0; */
+  /* cctk_parameters->At23_bound_scalar = 0.0; */
+  /* cctk_parameters->At23_bound_speed = 0.0; */
+  /* cctk_parameters->At33_bound_limit = 0.0; */
+  /* cctk_parameters->At33_bound_scalar = 0.0; */
+  /* cctk_parameters->At33_bound_speed = 0.0; */
+  /* cctk_parameters->B1_bound_limit = 0.0; */
+  /* cctk_parameters->B1_bound_scalar = 0.0; */
+  /* cctk_parameters->B1_bound_speed = 0.0; */
+  /* cctk_parameters->B2_bound_limit = 0.0; */
+  /* cctk_parameters->B2_bound_scalar = 0.0; */
+  /* cctk_parameters->B2_bound_speed = 0.0; */
+  /* cctk_parameters->B3_bound_limit = 0.0; */
+  /* cctk_parameters->B3_bound_scalar = 0.0; */
+  /* cctk_parameters->B3_bound_speed = 0.0; */
+  /* cctk_parameters->beta1_bound_limit = 0.0; */
+  /* cctk_parameters->beta1_bound_scalar = 0.0; */
+  /* cctk_parameters->beta1_bound_speed = 0.0; */
+  /* cctk_parameters->beta2_bound_limit = 0.0; */
+  /* cctk_parameters->beta2_bound_scalar = 0.0; */
+  /* cctk_parameters->beta2_bound_speed = 0.0; */
+  /* cctk_parameters->beta3_bound_limit = 0.0; */
+  /* cctk_parameters->beta3_bound_scalar = 0.0; */
+  /* cctk_parameters->beta3_bound_speed = 0.0; */
+  /* cctk_parameters->BetaDriver = 1.0; */
+  /* cctk_parameters->EpsDiss = 0.2; */
+  /* cctk_parameters->gt11_bound_limit = 0.0; */
+  /* cctk_parameters->gt11_bound_scalar = 0.0; */
+  /* cctk_parameters->gt11_bound_speed = 0.0; */
+  /* cctk_parameters->gt12_bound_limit = 0.0; */
+  /* cctk_parameters->gt12_bound_scalar = 0.0; */
+  /* cctk_parameters->gt12_bound_speed = 0.0; */
+  /* cctk_parameters->gt13_bound_limit = 0.0; */
+  /* cctk_parameters->gt13_bound_scalar = 0.0; */
+  /* cctk_parameters->gt13_bound_speed = 0.0; */
+  /* cctk_parameters->gt22_bound_limit = 0.0; */
+  /* cctk_parameters->gt22_bound_scalar = 0.0; */
+  /* cctk_parameters->gt22_bound_speed = 0.0; */
+  /* cctk_parameters->gt23_bound_limit = 0.0; */
+  /* cctk_parameters->gt23_bound_scalar = 0.0; */
+  /* cctk_parameters->gt23_bound_speed = 0.0; */
+  /* cctk_parameters->gt33_bound_limit = 0.0; */
+  /* cctk_parameters->gt33_bound_scalar = 0.0; */
+  /* cctk_parameters->gt33_bound_speed = 0.0; */
+  /* cctk_parameters->harmonicF = 2.0; */
+  /* cctk_parameters->LapseACoeff = 1.0; */
+  /* cctk_parameters->LapseAdvectionCoeff = 1.0; */
+  /* cctk_parameters->MinimumLapse = 0.0; */
+  /* cctk_parameters->ML_curv_bound_limit = 0.0; */
+  /* cctk_parameters->ML_curv_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_curv_bound_speed = 0.0; */
+  /* cctk_parameters->ML_dtlapse_bound_limit = 0.0; */
+  /* cctk_parameters->ML_dtlapse_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_dtlapse_bound_speed = 0.0; */
+  /* cctk_parameters->ML_dtshift_bound_limit = 0.0; */
+  /* cctk_parameters->ML_dtshift_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_dtshift_bound_speed = 0.0; */
+  /* cctk_parameters->ML_Gamma_bound_limit = 0.0; */
+  /* cctk_parameters->ML_Gamma_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_Gamma_bound_speed = 0.0; */
+  /* cctk_parameters->ML_lapse_bound_limit = 0.0; */
+  /* cctk_parameters->ML_lapse_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_lapse_bound_speed = 0.0; */
+  /* cctk_parameters->ML_log_confac_bound_limit = 0.0; */
+  /* cctk_parameters->ML_log_confac_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_log_confac_bound_speed = 0.0; */
+  /* cctk_parameters->ML_metric_bound_limit = 0.0; */
+  /* cctk_parameters->ML_metric_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_metric_bound_speed = 0.0; */
+  /* cctk_parameters->ML_shift_bound_limit = 0.0; */
+  /* cctk_parameters->ML_shift_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_shift_bound_speed = 0.0; */
+  /* cctk_parameters->ML_trace_curv_bound_limit = 0.0; */
+  /* cctk_parameters->ML_trace_curv_bound_scalar = 0.0; */
+  /* cctk_parameters->ML_trace_curv_bound_speed = 0.0; */
+  /* cctk_parameters->phi_bound_limit = 0.0; */
+  /* cctk_parameters->phi_bound_scalar = 0.0; */
+  /* cctk_parameters->phi_bound_speed = 0.0; */
+  /* cctk_parameters->ShiftAdvectionCoeff = 1.0; */
+  /* cctk_parameters->ShiftBCoeff = 1.0; */
+  /* cctk_parameters->ShiftGammaCoeff = 0.75; */
+  /* cctk_parameters->SpatialBetaDriverRadius = 1.0e+10; */
+  /* cctk_parameters->SpatialShiftGammaCoeffRadius = 1.0e+10; */
+  /* cctk_parameters->trK_bound_limit = 0.0; */
+  /* cctk_parameters->trK_bound_scalar = 0.0; */
+  /* cctk_parameters->trK_bound_speed = 0.0; */
+  /* cctk_parameters->Xt1_bound_limit = 0.0; */
+  /* cctk_parameters->Xt1_bound_scalar = 0.0; */
+  /* cctk_parameters->Xt1_bound_speed = 0.0; */
+  /* cctk_parameters->Xt2_bound_limit = 0.0; */
+  /* cctk_parameters->Xt2_bound_scalar = 0.0; */
+  /* cctk_parameters->Xt2_bound_speed = 0.0; */
+  /* cctk_parameters->Xt3_bound_limit = 0.0; */
+  /* cctk_parameters->Xt3_bound_scalar = 0.0; */
+  /* cctk_parameters->Xt3_bound_speed = 0.0; */
+  /* cctk_parameters->conformalMethod = 0; */
+  /* cctk_parameters->fdOrder = 4; */
+  /* cctk_parameters->harmonicN = 1; */
+  /* cctk_parameters->harmonicShift = 0; */
+  /* cctk_parameters->ML_BSSN_CL_Advect_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_Advect_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_boundary_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_boundary_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_constraints1_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_constraints1_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_constraints2_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_constraints2_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertFromADMBase_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertFromADMBase_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertFromADMBaseGamma_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertFromADMBaseGamma_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBase_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBase_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShift_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShift_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShiftBoundary_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBaseDtLapseShiftBoundary_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBaseFakeDtLapseShift_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_convertToADMBaseFakeDtLapseShift_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_Dissipation_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_Dissipation_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_enforce_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_enforce_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_InitGamma_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_InitGamma_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_InitRHS_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_InitRHS_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_MaxNumArrayEvolvedVars = 0; */
+  /* cctk_parameters->ML_BSSN_CL_MaxNumEvolvedVars = 0; */
+  /* cctk_parameters->ML_BSSN_CL_Minkowski_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_Minkowski_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_RHS1_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_RHS1_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_RHS2_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_RHS2_calc_offset = 0; */
+  /* cctk_parameters->ML_BSSN_CL_RHSStaticBoundary_calc_every = 0; */
+  /* cctk_parameters->ML_BSSN_CL_RHSStaticBoundary_calc_offset = 0; */
+  /* cctk_parameters->other_timelevels = 1; */
+  /* cctk_parameters->rhs_timelevels = 1; */
+  /* cctk_parameters->ShiftAlphaPower = 0; */
+  /* cctk_parameters->timelevels = 3; */
+  /* cctk_parameters->verbose = 0; */
   
   allocate(cctkGH, &cctk_arguments->x, 10.0);
   allocate(cctkGH, &cctk_arguments->y, 11.0);
@@ -635,7 +666,7 @@ void init(cGH              * const cctkGH,
   allocate(cctkGH, &cctk_arguments->A, 0.0);
   allocate(cctkGH, &cctk_arguments->A_p, 0.0);
   allocate(cctkGH, &cctk_arguments->A_p_p, 0.0);
-  allocate(cctkGH, &cctk_arguments->Arhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->Arhs, -1.0);
   allocate(cctkGH, &cctk_arguments->B1, 0.0);
   allocate(cctkGH, &cctk_arguments->B1_p, 0.0);
   allocate(cctkGH, &cctk_arguments->B1_p_p, 0.0);
@@ -645,9 +676,9 @@ void init(cGH              * const cctkGH,
   allocate(cctkGH, &cctk_arguments->B3, 0.0);
   allocate(cctkGH, &cctk_arguments->B3_p, 0.0);
   allocate(cctkGH, &cctk_arguments->B3_p_p, 0.0);
-  allocate(cctkGH, &cctk_arguments->B1rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->B2rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->B3rhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->B1rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->B2rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->B3rhs, -1.0);
   allocate(cctkGH, &cctk_arguments->Xt1, 0.0);
   allocate(cctkGH, &cctk_arguments->Xt1_p, 0.0);
   allocate(cctkGH, &cctk_arguments->Xt1_p_p, 0.0);
@@ -657,17 +688,17 @@ void init(cGH              * const cctkGH,
   allocate(cctkGH, &cctk_arguments->Xt3, 0.0);
   allocate(cctkGH, &cctk_arguments->Xt3_p, 0.0);
   allocate(cctkGH, &cctk_arguments->Xt3_p_p, 0.0);
-  allocate(cctkGH, &cctk_arguments->Xt1rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->Xt2rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->Xt3rhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->Xt1rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->Xt2rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->Xt3rhs, -1.0);
   allocate(cctkGH, &cctk_arguments->alpha, 1.0);
   allocate(cctkGH, &cctk_arguments->alpha_p, 1.0);
   allocate(cctkGH, &cctk_arguments->alpha_p_p, 1.0);
-  allocate(cctkGH, &cctk_arguments->alpharhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->alpharhs, -1.0);
   allocate(cctkGH, &cctk_arguments->phi, 0.0);
   allocate(cctkGH, &cctk_arguments->phi_p, 0.0);
   allocate(cctkGH, &cctk_arguments->phi_p_p, 0.0);
-  allocate(cctkGH, &cctk_arguments->phirhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->phirhs, -1.0);
   allocate(cctkGH, &cctk_arguments->gt11, 1.0);
   allocate(cctkGH, &cctk_arguments->gt11_p, 1.0);
   allocate(cctkGH, &cctk_arguments->gt11_p_p, 1.0);
@@ -686,12 +717,12 @@ void init(cGH              * const cctkGH,
   allocate(cctkGH, &cctk_arguments->gt33, 1.0);
   allocate(cctkGH, &cctk_arguments->gt33_p, 1.0);
   allocate(cctkGH, &cctk_arguments->gt33_p_p, 1.0);
-  allocate(cctkGH, &cctk_arguments->gt11rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->gt12rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->gt13rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->gt22rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->gt23rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->gt33rhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->gt11rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->gt12rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->gt13rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->gt22rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->gt23rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->gt33rhs, -1.0);
   allocate(cctkGH, &cctk_arguments->beta1, 0.0);
   allocate(cctkGH, &cctk_arguments->beta1_p, 0.0);
   allocate(cctkGH, &cctk_arguments->beta1_p_p, 0.0);
@@ -701,19 +732,19 @@ void init(cGH              * const cctkGH,
   allocate(cctkGH, &cctk_arguments->beta3, 0.0);
   allocate(cctkGH, &cctk_arguments->beta3_p, 0.0);
   allocate(cctkGH, &cctk_arguments->beta3_p_p, 0.0);
-  allocate(cctkGH, &cctk_arguments->beta1rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->beta2rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->beta3rhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->beta1rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->beta2rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->beta3rhs, -1.0);
   allocate(cctkGH, &cctk_arguments->trK, 0.0);
   allocate(cctkGH, &cctk_arguments->trK_p, 0.0);
   allocate(cctkGH, &cctk_arguments->trK_p_p, 0.0);
-  allocate(cctkGH, &cctk_arguments->trKrhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->At11rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->At12rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->At13rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->At22rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->At23rhs, 0.0);
-  allocate(cctkGH, &cctk_arguments->At33rhs, 0.0);
+  allocate(cctkGH, &cctk_arguments->trKrhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->At11rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->At12rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->At13rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->At22rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->At23rhs, -1.0);
+  allocate(cctkGH, &cctk_arguments->At33rhs, -1.0);
 }
 
 
@@ -747,7 +778,22 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
                                 NULL, NULL);
     assert(program);
     
-    ierr = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    char const* const options =
+      "-DVECTORISE_ALIGNED_ARRAYS=" STR(VECTORISE_ALIGNED_ARRAYS) " "
+      "-DVECTOR_SIZE_I=" STR(VECTOR_SIZE_I) " "
+      "-DVECTOR_SIZE_J=" STR(VECTOR_SIZE_J) " "
+      "-DVECTOR_SIZE_K=" STR(VECTOR_SIZE_K) " "
+      "-DUNROLL_SIZE_I=" STR(UNROLL_SIZE_I) " "
+      "-DUNROLL_SIZE_J=" STR(UNROLL_SIZE_J) " "
+      "-DUNROLL_SIZE_K=" STR(UNROLL_SIZE_K) " "
+      "-DGROUP_SIZE_I=" STR(GROUP_SIZE_I) " "
+      "-DGROUP_SIZE_J=" STR(GROUP_SIZE_J) " "
+      "-DGROUP_SIZE_K=" STR(GROUP_SIZE_K) " "
+      "-DTILE_SIZE_I=" STR(TILE_SIZE_I) " "
+      "-DTILE_SIZE_J=" STR(TILE_SIZE_J) " "
+      "-DTILE_SIZE_K=" STR(TILE_SIZE_K) " ";
+    
+    ierr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
     assert(!ierr);
     
     kernel = clCreateKernel(program, "ML_BSSN_CL_RHS1", NULL);
@@ -867,9 +913,30 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
   set_arg(kernel, nargs++, &cctk_arguments->trKrhs.mem);
   
   size_t const global_work_size[3] =
-    { cctkGH->cctk_ash[0], cctkGH->cctk_ash[1], cctkGH->cctk_ash[2] };
+    {
+      divup(cctkGH->lmax[0] - cctkGH->lmin[0],
+            VECTOR_SIZE_I * UNROLL_SIZE_I * GROUP_SIZE_I * TILE_SIZE_I),
+      divup(cctkGH->lmax[1] - cctkGH->lmin[1],
+            VECTOR_SIZE_J * UNROLL_SIZE_J * GROUP_SIZE_J * TILE_SIZE_J),
+      divup(cctkGH->lmax[2] - cctkGH->lmin[2],
+            VECTOR_SIZE_K * UNROLL_SIZE_K * GROUP_SIZE_K * TILE_SIZE_K)
+    };
   size_t const local_work_size[3] =
     { GROUP_SIZE_I, GROUP_SIZE_J, GROUP_SIZE_K };
+  {
+    static int did_print = 0;
+    if (!did_print) {
+      did_print = 1;
+      printf("Global work group size: %4d %4d %4d\n",
+             (int)global_work_size[0],
+             (int)global_work_size[1],
+             (int)global_work_size[2]);
+      printf("Local work group size: %4d %4d %4d\n",
+             (int)local_work_size[0],
+             (int)local_work_size[1],
+             (int)local_work_size[2]);
+    }
+  }
   
   ierr = clEnqueueNDRangeKernel(cmd_queue, kernel, dim,
                                 NULL, global_work_size, local_work_size,  
@@ -905,7 +972,22 @@ int exec_ML_BSSN_CL_RHS2(char              const* const program_source,
                                 NULL, NULL);
     assert(program);
     
-    ierr = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    char const* const options =
+      "-DVECTORISE_ALIGNED_ARRAYS=" STR(VECTORISE_ALIGNED_ARRAYS) " "
+      "-DVECTOR_SIZE_I=" STR(VECTOR_SIZE_I) " "
+      "-DVECTOR_SIZE_J=" STR(VECTOR_SIZE_J) " "
+      "-DVECTOR_SIZE_K=" STR(VECTOR_SIZE_K) " "
+      "-DUNROLL_SIZE_I=" STR(UNROLL_SIZE_I) " "
+      "-DUNROLL_SIZE_J=" STR(UNROLL_SIZE_J) " "
+      "-DUNROLL_SIZE_K=" STR(UNROLL_SIZE_K) " "
+      "-DGROUP_SIZE_I=" STR(GROUP_SIZE_I) " "
+      "-DGROUP_SIZE_J=" STR(GROUP_SIZE_J) " "
+      "-DGROUP_SIZE_K=" STR(GROUP_SIZE_K) " "
+      "-DTILE_SIZE_I=" STR(TILE_SIZE_I) " "
+      "-DTILE_SIZE_J=" STR(TILE_SIZE_J) " "
+      "-DTILE_SIZE_K=" STR(TILE_SIZE_K) " ";
+    
+    ierr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
     assert(!ierr);
     
     kernel = clCreateKernel(program, "ML_BSSN_CL_RHS2", NULL);
@@ -1013,6 +1095,63 @@ int exec_ML_BSSN_CL_RHS2(char              const* const program_source,
 
 
 
+static void check_var(cGH const* const cctkGH,
+                      ptr_t* const ptr,
+                      CCTK_REAL const val)
+{
+  int const nsize =
+    cctkGH->cctk_ash[0] * cctkGH->cctk_ash[1] * cctkGH->cctk_ash[2];
+  int ierr = clEnqueueReadBuffer
+    (cmd_queue, ptr->mem, 1, 0, nsize * sizeof(CCTK_REAL), ptr->ptr,
+     0, NULL, NULL);
+  for (int k=cctkGH->imin[2]; k<cctkGH->imax[2]; ++k) {
+    for (int j=cctkGH->imin[1]; j<cctkGH->imax[1]; ++j) {
+      for (int i=cctkGH->imin[0]; i<cctkGH->imax[0]; ++i) {
+        int const ind3d =
+          i + cctkGH->cctk_ash[0] * (j + cctkGH->cctk_ash[1] * k);
+        if (! (fabs(ptr->ptr[ind3d] - val) <= 1.0e-15)) {
+          printf("[%d,%d,%d] %.17g %.17g\n", i,j,k, ptr->ptr[ind3d], val);
+        }
+        assert(fabs(ptr->ptr[ind3d] - val) <= 1.0e-15);
+      }
+    }
+  }
+}
+
+
+
+void check(cGH              * const cctkGH,
+           cctk_parameters_t* const cctk_parameters,
+           cctk_arguments_t * const cctk_arguments)
+{
+  check_var(cctkGH, &cctk_arguments->Arhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->B1rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->B2rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->B3rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->Xt1rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->Xt2rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->Xt3rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->alpharhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->phirhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->gt11rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->gt12rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->gt13rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->gt22rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->gt23rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->beta1rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->beta2rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->beta3rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->trKrhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->At11rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->At12rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->At13rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->At22rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->At23rhs, 0.0);
+  check_var(cctkGH, &cctk_arguments->At33rhs, 0.0);
+}
+
+
+
 #ifndef SRCDIR
 #  define SRCDIR "."
 #endif
@@ -1058,6 +1197,8 @@ int main(int argc, char** argv)
   printf("RHS2...\n");
   exec_ML_BSSN_CL_RHS2(source2, &cctkGH, &cctk_parameters, &cctk_arguments);
   
+  check(&cctkGH, &cctk_parameters, &cctk_arguments);
+  
   
   
   printf("Begin timing %d iterations...\n", niters);
@@ -1084,7 +1225,9 @@ int main(int argc, char** argv)
          1.0e+6 * time_per_point);
   
   printf("\n");
-  printf("Note: This benchmark performs about 8,000 Flop per grid point update.\n");
+  // VECTOR_SIZE_I=1: 3388 FLop per gpu
+  // VECTOR_SIZE_I=2: 3418 Flop per gpu
+  printf("Note: This benchmark performs about 3,400  Flop per grid point update.\n");
   printf("      A \"typical\" result is about 1.0 usec.\n");
   printf("      Smaller numbers are better.\n");
   printf("\n");

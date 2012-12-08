@@ -1,33 +1,5 @@
 // -*-C-*-
 
-// Code generation choices:
-#define VECTORISE_ALIGNED_ARRAYS 1
-
-// Loop traversal choices:
-#define VECTOR_SIZE_I 1
-#define VECTOR_SIZE_J 1
-#define VECTOR_SIZE_K 1
-#define UNROLL_SIZE_I 1
-#define UNROLL_SIZE_J 1
-#define UNROLL_SIZE_K 1
-#define GROUP_SIZE_I  1
-#define GROUP_SIZE_J  1
-#define GROUP_SIZE_K  1
-#define TILE_SIZE_I   4
-#define TILE_SIZE_J   4
-#define TILE_SIZE_K   4
-
-// OpenCL RunTime definitions:
-// -*-C-*-
-
-#pragma OPENCL EXTENSION cl_khr_fp64    : enable
-#pragma OPENCL EXTENSION cl_amd_printf  : enable
-#pragma OPENCL EXTENSION cl_intel_printf: enable
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-
 
 
 #define CCTK_ATTRIBUTE_UNUSED    __attribute__((__unused__))
@@ -378,11 +350,11 @@ CCTK_REAL_VEC INV(CCTK_REAL_VEC const x)
 {
   return ToReal(1)/x;
 }
-CCTK_REAL_VEC Sign(CCTK_REAL_VEC const x);
-CCTK_REAL_VEC Sign(CCTK_REAL_VEC const x)
-{
-  return x==ToReal(0) ? ToReal(0) : copysign(ToReal(1), x);
-}
+/* CCTK_REAL_VEC Sign(CCTK_REAL_VEC const x); */
+/* CCTK_REAL_VEC Sign(CCTK_REAL_VEC const x) */
+/* { */
+/*   return x==ToReal(0) ? ToReal(0) : copysign(ToReal(1), x); */
+/* } */
 // CCTK_REAL_VEC SQR(CCTK_REAL_VEC const x)
 // {
 //   return pown(x,2);
@@ -400,8 +372,9 @@ CCTK_REAL_VEC ksgn(CCTK_REAL_VEC x)
 CCTK_INT_VEC kisgn(CCTK_REAL_VEC x);
 CCTK_INT_VEC kisgn(CCTK_REAL_VEC x)
 {
-  return kifthen(x==0.0, (CCTK_INT_VEC)0,
-                 kifthen(x<0.0, (CCTK_INT_VEC)-1, (CCTK_INT_VEC)+1));
+  return select(select((CCTK_INT_VEC)+1,
+                       (CCTK_INT_VEC)-1, (CCTK_INT_VEC)(x<ToReal(0.0))),
+                (CCTK_INT_VEC)0, (CCTK_INT_VEC)(x==ToReal(0.0)));
 }
 
 #define KRANC_GFOFFSET3D(u,i,j,k)                       \
@@ -2841,12 +2814,6 @@ LC_LOOP3VEC(ML_BSSN_CL_RHS2,
   }
   
   /* Calculate temporaries and grid functions */
-  ptrdiff_t CCTK_ATTRIBUTE_UNUSED dir1 = kisgn(beta1L);
-  
-  ptrdiff_t CCTK_ATTRIBUTE_UNUSED dir2 = kisgn(beta2L);
-  
-  ptrdiff_t CCTK_ATTRIBUTE_UNUSED dir3 = kisgn(beta3L);
-  
   CCTK_REAL_VEC JacPDstandardNth11alpha CCTK_ATTRIBUTE_UNUSED ;
   CCTK_REAL_VEC JacPDstandardNth11gt11 CCTK_ATTRIBUTE_UNUSED ;
   CCTK_REAL_VEC JacPDstandardNth11gt12 CCTK_ATTRIBUTE_UNUSED ;
