@@ -28,10 +28,15 @@ int const niters = 100;
 
 
 /* Run times on various systems:
+ *
  * Redshift, laptop, OSX, Intel(R) Core(TM) i7-3820QM CPU @ 2.70GHz:
- *    Theoretical best: 0.03125  usec per gpu
- *    Apple's OpenCL:   0.213103 usec per gpu (with VECTOR_SIZE_I=2)
- *    pocl:             0.55614  usec per gpu (with THREAD_COUNT_ENV=4)
+ *    Theoretical best: 0.0393519 usec per gpu
+ *    Apple's OpenCL:   0.213103  usec per gpu (with VECTOR_SIZE_I=2)
+ *    pocl:             0.55614   usec per gpu (with THREAD_COUNT_ENV=4)
+ *
+ * Nvidia, workstation, Intel(R) Xeon(R) CPU X5675 @ 3.07GHz
+ *    Theoretical best: 0.0230727 usec per gpu
+ *    pocl:             0.267914  usec per gpu
 */
 
 
@@ -463,39 +468,40 @@ void setup()
   // CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR
   
   // Loop over all platforms
+  platform_id = 0;
   for (cl_uint platform = 0; platform < num_platforms; ++platform) {
     
-    platform_id = platform_ids[platform];
+    cl_platform_id const tmp_platform_id = platform_ids[platform];
     printf("OpenCL platform #%d:\n", platform);
     
     size_t platform_name_length;
-    clGetPlatformInfo(platform_id, CL_PLATFORM_NAME,
+    clGetPlatformInfo(tmp_platform_id, CL_PLATFORM_NAME,
                       0, NULL, &platform_name_length);
     char platform_name[platform_name_length];
-    clGetPlatformInfo(platform_id, CL_PLATFORM_NAME,
+    clGetPlatformInfo(tmp_platform_id, CL_PLATFORM_NAME,
                       platform_name_length, platform_name, NULL);
     printf("   OpenCL platform name: %s\n", platform_name);
     size_t platform_vendor_length;
-    clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
+    clGetPlatformInfo(tmp_platform_id, CL_PLATFORM_VENDOR,
                       0, NULL, &platform_vendor_length);
     char platform_vendor[platform_vendor_length];
-    clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
+    clGetPlatformInfo(tmp_platform_id, CL_PLATFORM_VENDOR,
                       platform_vendor_length, platform_vendor, NULL);
     printf("   OpenCL platform vendor: %s\n", platform_vendor);
     
     cl_context_properties const cprops[] =
-      {CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, 0};
+      {CL_CONTEXT_PLATFORM, (cl_context_properties)tmp_platform_id, 0};
     context =
       clCreateContextFromType(cprops, want_device_types, NULL, NULL, &cerr);
-    if (cerr == CL_SUCCESS) goto found_context;
-    
+    if (cerr == CL_SUCCESS) {
+      platform_id = tmp_platform_id;
+    }
   }
-  // Could not find a context on any platform, abort
-  fprintf(stderr, "Could not create OpenCL context for selected device type\n");
-  assert(0);
-  
-  // Found a context, continue
- found_context:;
+  if (platform_id == 0) {
+    // Could not find a context on any platform, abort
+    fprintf(stderr, "Could not create OpenCL context for selected device type\n");
+    assert(0);
+  }
   
   size_t ndevice_ids;
   clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevice_ids);
