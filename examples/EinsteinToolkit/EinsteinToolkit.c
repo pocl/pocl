@@ -98,7 +98,7 @@ cl_command_queue cmd_queue;
 #define UNROLL_SIZE_I 1
 #define UNROLL_SIZE_J 1
 #define UNROLL_SIZE_K 1
-#define GROUP_SIZE_I  2
+#define GROUP_SIZE_I  1
 #define GROUP_SIZE_J  1
 #define GROUP_SIZE_K  1
 #define TILE_SIZE_I   4
@@ -1035,17 +1035,20 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
   set_arg(kernel, nargs++, &cctk_arguments->trK_p_p.mem);
   set_arg(kernel, nargs++, &cctk_arguments->trKrhs.mem);
   
+  size_t const local_work_size[3] =
+    { GROUP_SIZE_I, GROUP_SIZE_J, GROUP_SIZE_K };
   size_t const global_work_size[3] =
     {
       divup(cctkGH->lmax[0] - cctkGH->lmin[0],
-            VECTOR_SIZE_I * UNROLL_SIZE_I * TILE_SIZE_I),
+            VECTOR_SIZE_I * UNROLL_SIZE_I * GROUP_SIZE_I * TILE_SIZE_I) *
+      GROUP_SIZE_I,
       divup(cctkGH->lmax[1] - cctkGH->lmin[1],
-            VECTOR_SIZE_J * UNROLL_SIZE_J * TILE_SIZE_J),
+            VECTOR_SIZE_J * UNROLL_SIZE_J * GROUP_SIZE_J * TILE_SIZE_J) *
+      GROUP_SIZE_J,
       divup(cctkGH->lmax[2] - cctkGH->lmin[2],
-            VECTOR_SIZE_K * UNROLL_SIZE_K * TILE_SIZE_K)
+            VECTOR_SIZE_K * UNROLL_SIZE_K * GROUP_SIZE_K * TILE_SIZE_K) *
+      GROUP_SIZE_K,
     };
-  size_t const local_work_size[3] =
-    { GROUP_SIZE_I, GROUP_SIZE_J, GROUP_SIZE_K };
   {
     static int did_print = 0;
     if (!did_print) {
