@@ -463,10 +463,9 @@ CCTK_INT_VEC kisgn(CCTK_REAL_VEC x)
     ptrdiff_t const lc_offI = cctkGH->lmin[0]; /* offset */             \
     ptrdiff_t const lc_offJ = cctkGH->lmin[1];                          \
     ptrdiff_t const lc_offK = cctkGH->lmin[2];                          \
-    /*TODO because group size is 1*/                                    \
-    ptrdiff_t const lc_grpI = 0 /*TODO get_local_id(0)*/; /* index in group */ \
-    ptrdiff_t const lc_grpJ = 0 /*TODO get_local_id(1)*/;               \
-    ptrdiff_t const lc_grpK = 0 /*TODO get_local_id(2)*/;               \
+    ptrdiff_t const lc_grpI = get_local_id(0); /* index in group */     \
+    ptrdiff_t const lc_grpJ = get_local_id(1);                          \
+    ptrdiff_t const lc_grpK = get_local_id(2);                          \
     ptrdiff_t const lc_grdI = get_group_id(0); /* index in grid */      \
     ptrdiff_t const lc_grdJ = get_group_id(1);                          \
     ptrdiff_t const lc_grdK = get_group_id(2);                          \

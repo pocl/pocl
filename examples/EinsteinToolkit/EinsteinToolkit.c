@@ -31,7 +31,7 @@ int const niters = 100;
  * Redshift, laptop, OSX, Intel(R) Core(TM) i7-3820QM CPU @ 2.70GHz:
  *    Theoretical best: 0.03125  usec per gpu
  *    Apple's OpenCL:   0.213103 usec per gpu (with VECTOR_SIZE_I=2)
- *    pocl:             0.564411 usec per gpu
+ *    pocl:             0.55614  usec per gpu (with THREAD_COUNT_ENV=4)
 */
 
 
@@ -81,8 +81,10 @@ static inline size_t roundup(size_t const a, size_t const b)
 
 
 // Global OpenCL handles
-cl_context context = 0;
-cl_command_queue cmd_queue = 0;
+cl_platform_id platform_id;
+cl_device_id device_id;
+cl_context context;
+cl_command_queue cmd_queue;
 
 
 
@@ -96,12 +98,12 @@ cl_command_queue cmd_queue = 0;
 #define UNROLL_SIZE_I 1
 #define UNROLL_SIZE_J 1
 #define UNROLL_SIZE_K 1
-#define GROUP_SIZE_I  1
+#define GROUP_SIZE_I  2
 #define GROUP_SIZE_J  1
 #define GROUP_SIZE_K  1
 #define TILE_SIZE_I   4
 #define TILE_SIZE_J   4
-#define TILE_SIZE_K   1
+#define TILE_SIZE_K   4
 
 
 
@@ -461,10 +463,25 @@ void setup()
   // CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR
   
   // Loop over all platforms
-  cl_platform_id platform_id;
   for (cl_uint platform = 0; platform < num_platforms; ++platform) {
     
     platform_id = platform_ids[platform];
+    printf("OpenCL platform #%d:\n", platform);
+    
+    size_t platform_name_length;
+    clGetPlatformInfo(platform_id, CL_PLATFORM_NAME,
+                      0, NULL, &platform_name_length);
+    char platform_name[platform_name_length];
+    clGetPlatformInfo(platform_id, CL_PLATFORM_NAME,
+                      platform_name_length, platform_name, NULL);
+    printf("   OpenCL platform name: %s\n", platform_name);
+    size_t platform_vendor_length;
+    clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
+                      0, NULL, &platform_vendor_length);
+    char platform_vendor[platform_vendor_length];
+    clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
+                      platform_vendor_length, platform_vendor, NULL);
+    printf("   OpenCL platform vendor: %s\n", platform_vendor);
     
     cl_context_properties const cprops[] =
       {CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id, 0};
@@ -480,39 +497,40 @@ void setup()
   // Found a context, continue
  found_context:;
   
-  size_t ndevices;
-  clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevices);
-  ndevices /= sizeof(cl_device_id);
-  cl_device_id devices[ndevices];
+  size_t ndevice_ids;
+  clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevice_ids);
+  ndevice_ids /= sizeof(cl_device_id);
+  cl_device_id device_ids[ndevice_ids];
   clGetContextInfo(context, CL_CONTEXT_DEVICES,
-                   ndevices*sizeof(cl_device_id), devices, NULL);
+                   ndevice_ids*sizeof(cl_device_id), device_ids, NULL);
+  assert(ndevice_ids >= 1);
+  device_id = device_ids[0];
   
   size_t device_name_length;
-  clGetDeviceInfo(devices[0], CL_DEVICE_NAME, 0, NULL, &device_name_length);
+  clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, NULL, &device_name_length);
   char device_name[device_name_length];
-  clGetDeviceInfo(devices[0], CL_DEVICE_NAME,
+  clGetDeviceInfo(device_id, CL_DEVICE_NAME,
                   device_name_length, device_name, NULL);
   printf("OpenCL device name: %s\n", device_name);
   
-  cl_platform_id platform;
-  clGetDeviceInfo(devices[0], CL_DEVICE_PLATFORM,
-                  sizeof platform, &platform, NULL);
+  clGetDeviceInfo(device_id, CL_DEVICE_PLATFORM,
+                  sizeof platform_id, &platform_id, NULL);
   size_t platform_name_length;
-  clGetPlatformInfo(platform, CL_PLATFORM_NAME,
+  clGetPlatformInfo(platform_id, CL_PLATFORM_NAME,
                     0, NULL, &platform_name_length);
   char platform_name[platform_name_length];
-  clGetPlatformInfo(platform, CL_PLATFORM_NAME,
+  clGetPlatformInfo(platform_id, CL_PLATFORM_NAME,
                     platform_name_length, platform_name, NULL);
   printf("OpenCL platform name: %s\n", platform_name);
   size_t platform_vendor_length;
-  clGetPlatformInfo(platform, CL_PLATFORM_VENDOR,
+  clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
                     0, NULL, &platform_vendor_length);
   char platform_vendor[platform_vendor_length];
-  clGetPlatformInfo(platform, CL_PLATFORM_VENDOR,
+  clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
                     platform_vendor_length, platform_vendor, NULL);
   printf("OpenCL platform vendor: %s\n", platform_vendor);
   
-  cmd_queue = clCreateCommandQueue(context, devices[0], 0, NULL);
+  cmd_queue = clCreateCommandQueue(context, device_id, 0, NULL);
   assert(cmd_queue);
 }
 
@@ -556,9 +574,9 @@ void init(cGH              * const cctkGH,
   cctkGH->lmax[0] = cctkGH->lmin[0] + roundup(cctkGH->imax[0] - cctkGH->lmin[0],
                                               VECTOR_SIZE_I * UNROLL_SIZE_I);
   cctkGH->lmax[1] = cctkGH->lmin[1] + roundup(cctkGH->imax[1] - cctkGH->lmin[1],
-                                              VECTOR_SIZE_K * UNROLL_SIZE_J);
+                                              VECTOR_SIZE_J * UNROLL_SIZE_J);
   cctkGH->lmax[2] = cctkGH->lmin[2] + roundup(cctkGH->imax[2] - cctkGH->lmin[2],
-                                              VECTOR_SIZE_J * UNROLL_SIZE_K);
+                                              VECTOR_SIZE_K * UNROLL_SIZE_K);
   printf("cctkGH:\n");
   printf("   gsh=[%d,%d,%d]\n", cctkGH->cctk_gsh[0], cctkGH->cctk_gsh[1], cctkGH->cctk_gsh[2]);
   printf("   lbnd=[%d,%d,%d]\n", cctkGH->cctk_lbnd[0], cctkGH->cctk_lbnd[1], cctkGH->cctk_lbnd[2]);
@@ -884,7 +902,22 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
       "-DTILE_SIZE_K=" STR(TILE_SIZE_K) " ";
     
     ierr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
-    assert(!ierr);
+    if (ierr) {
+      size_t log_size;
+      ierr = clGetProgramBuildInfo(program, device_id,
+                                   CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+      assert(!ierr);
+      char build_log[log_size];
+      ierr = clGetProgramBuildInfo(program, device_id,
+                                   CL_PROGRAM_BUILD_LOG,
+                                   log_size, build_log, NULL);
+      assert(!ierr);
+      printf("Build log:\n"
+             "********************************************************************************\n"
+             "%s\n"
+             "********************************************************************************\n", build_log);
+      assert(0);
+    }
     
     kernel = clCreateKernel(program, "ML_BSSN_CL_RHS1", NULL);
     assert(kernel);
@@ -1005,11 +1038,11 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
   size_t const global_work_size[3] =
     {
       divup(cctkGH->lmax[0] - cctkGH->lmin[0],
-            VECTOR_SIZE_I * UNROLL_SIZE_I * GROUP_SIZE_I * TILE_SIZE_I),
+            VECTOR_SIZE_I * UNROLL_SIZE_I * TILE_SIZE_I),
       divup(cctkGH->lmax[1] - cctkGH->lmin[1],
-            VECTOR_SIZE_J * UNROLL_SIZE_J * GROUP_SIZE_J * TILE_SIZE_J),
+            VECTOR_SIZE_J * UNROLL_SIZE_J * TILE_SIZE_J),
       divup(cctkGH->lmax[2] - cctkGH->lmin[2],
-            VECTOR_SIZE_K * UNROLL_SIZE_K * GROUP_SIZE_K * TILE_SIZE_K)
+            VECTOR_SIZE_K * UNROLL_SIZE_K * TILE_SIZE_K)
     };
   size_t const local_work_size[3] =
     { GROUP_SIZE_I, GROUP_SIZE_J, GROUP_SIZE_K };
@@ -1186,21 +1219,27 @@ int exec_ML_BSSN_CL_RHS2(char              const* const program_source,
 
 
 static void check_var(cGH const* const cctkGH,
+                      char const* const name,
                       ptr_t* const ptr,
-                      CCTK_REAL const val)
+                      CCTK_REAL const val_int, CCTK_REAL const val_bnd)
 {
   int const nsize =
     cctkGH->cctk_ash[0] * cctkGH->cctk_ash[1] * cctkGH->cctk_ash[2];
   int ierr = clEnqueueReadBuffer
     (cmd_queue, ptr->mem, 1, 0, nsize * sizeof(CCTK_REAL), ptr->ptr,
      0, NULL, NULL);
-  for (int k=cctkGH->imin[2]; k<cctkGH->imax[2]; ++k) {
-    for (int j=cctkGH->imin[1]; j<cctkGH->imax[1]; ++j) {
-      for (int i=cctkGH->imin[0]; i<cctkGH->imax[0]; ++i) {
+  for (int k=0; k<cctkGH->cctk_lsh[2]; ++k) {
+    for (int j=0; j<cctkGH->cctk_lsh[1]; ++j) {
+      for (int i=0; i<cctkGH->cctk_lsh[0]; ++i) {
+        int const is_int = (i>=cctkGH->imin[0] && i<cctkGH->imax[0] &&
+                            j>=cctkGH->imin[1] && j<cctkGH->imax[1] &&
+                            k>=cctkGH->imin[2] && k<cctkGH->imax[2]);
+        double const val = is_int ? val_int : val_bnd;
         int const ind3d =
           i + cctkGH->cctk_ash[0] * (j + cctkGH->cctk_ash[1] * k);
         if (! (fabs(ptr->ptr[ind3d] - val) <= 1.0e-15)) {
-          printf("[%d,%d,%d] %.17g %.17g\n", i,j,k, ptr->ptr[ind3d], val);
+          printf("%s[%d,%d,%d] is:%.17g should:%.17g\n",
+                 name, i,j,k, ptr->ptr[ind3d], val);
         }
         assert(fabs(ptr->ptr[ind3d] - val) <= 1.0e-15);
       }
@@ -1214,30 +1253,30 @@ void check(cGH              * const cctkGH,
            cctk_parameters_t* const cctk_parameters,
            cctk_arguments_t * const cctk_arguments)
 {
-  check_var(cctkGH, &cctk_arguments->Arhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->B1rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->B2rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->B3rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->Xt1rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->Xt2rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->Xt3rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->alpharhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->phirhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->gt11rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->gt12rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->gt13rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->gt22rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->gt23rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->beta1rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->beta2rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->beta3rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->trKrhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->At11rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->At12rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->At13rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->At22rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->At23rhs, 0.0);
-  check_var(cctkGH, &cctk_arguments->At33rhs, 0.0);
+  check_var(cctkGH, "Arhs", &cctk_arguments->Arhs, 0.0, -1.0);
+  check_var(cctkGH, "B1rhs", &cctk_arguments->B1rhs, 0.0, -1.0);
+  check_var(cctkGH, "B2rhs", &cctk_arguments->B2rhs, 0.0, -1.0);
+  check_var(cctkGH, "B3rhs", &cctk_arguments->B3rhs, 0.0, -1.0);
+  check_var(cctkGH, "Xt1rhs", &cctk_arguments->Xt1rhs, 0.0, -1.0);
+  check_var(cctkGH, "Xt2rhs", &cctk_arguments->Xt2rhs, 0.0, -1.0);
+  check_var(cctkGH, "Xt3rhs", &cctk_arguments->Xt3rhs, 0.0, -1.0);
+  check_var(cctkGH, "alpharhs", &cctk_arguments->alpharhs, 0.0, -1.0);
+  check_var(cctkGH, "phirhs", &cctk_arguments->phirhs, 0.0, -1.0);
+  check_var(cctkGH, "gt11rhs", &cctk_arguments->gt11rhs, 0.0, -1.0);
+  check_var(cctkGH, "gt12rhs", &cctk_arguments->gt12rhs, 0.0, -1.0);
+  check_var(cctkGH, "gt13rhs", &cctk_arguments->gt13rhs, 0.0, -1.0);
+  check_var(cctkGH, "gt22rhs", &cctk_arguments->gt22rhs, 0.0, -1.0);
+  check_var(cctkGH, "gt23rhs", &cctk_arguments->gt23rhs, 0.0, -1.0);
+  check_var(cctkGH, "beta1rhs", &cctk_arguments->beta1rhs, 0.0, -1.0);
+  check_var(cctkGH, "beta2rhs", &cctk_arguments->beta2rhs, 0.0, -1.0);
+  check_var(cctkGH, "beta3rhs", &cctk_arguments->beta3rhs, 0.0, -1.0);
+  check_var(cctkGH, "trKrhs", &cctk_arguments->trKrhs, 0.0, -1.0);
+  check_var(cctkGH, "At11rhs", &cctk_arguments->At11rhs, 0.0, -1.0);
+  check_var(cctkGH, "At12rhs", &cctk_arguments->At12rhs, 0.0, -1.0);
+  check_var(cctkGH, "At13rhs", &cctk_arguments->At13rhs, 0.0, -1.0);
+  check_var(cctkGH, "At22rhs", &cctk_arguments->At22rhs, 0.0, -1.0);
+  check_var(cctkGH, "At23rhs", &cctk_arguments->At23rhs, 0.0, -1.0);
+  check_var(cctkGH, "At33rhs", &cctk_arguments->At33rhs, 0.0, -1.0);
 }
 
 
