@@ -40,7 +40,7 @@ $(srcdir)/$(tarfile):
 $(testsuite_src_dir):
 	$(MAKE) $(srcdir)/$(tarfile)
 	cd $(testsuite_pocl_dir) && \
-	tar xvzf $(tarfile)
+	tar xzf $(tarfile)
 
 # Rodinia are build in place and its source tree is modified.
 # So, copying the source tree in our build tree if required

@@ -44,7 +44,7 @@ build:
 	cd $(testsuite_src_dir)/samples/opencl && \
 	$(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
 
-test_MatrixMultiplication:
+test_MatrixMultiplication: build
 	cd $(amd_app_dir)/MatrixMultiplication && \
 	ln -sf $(amd_app_dir)/MatrixMultiplication/MatrixMultiplication_Kernels.cl $(amd_app_dir)/MatrixMultiplication/build/debug/x86_64/MatrixMultiplication_Kernels.cl && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/MatrixMultiplication -e

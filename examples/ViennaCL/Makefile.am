@@ -30,7 +30,7 @@ testsuite_1_4_0_src_dir=${testsuite_pocl_dir}/ViennaCL-1.4.0-src
 
 .PHONY: build
 
-all: $(testsuite_src_dir) $(testsuite_1_4_0_src_dir)
+all: $(testsuite_src_dir) 
 
 $(srcdir)/ViennaCL-1.3.1-src.tar.gz:
 	cd $(srcdir) && \
