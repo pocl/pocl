@@ -11,6 +11,9 @@ Overall
   code size explosion with large WGs in comparison to
   the full replication method.
 - PowerPC 64 support (tested on Cell/Debian Sid/PS3).
+- Most of the AMD APP SDK OpenCL examples now work.
+  The failing ones are mostly dependent on unsupported extensions or
+  require a GPU device type.
 
 Kernel Compiler Passes
 ----------------------

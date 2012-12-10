@@ -8,8 +8,293 @@ m4_define([POAT_AMDSDK_SETUP],[
 
 AT_BANNER([AMD APP SDK tests])
 
+POAT_AMDSDK_SETUP([aesencryptdecrypt])
+AT_CHECK_UNQUOTED([make test_AESEncryptDecrypt -sC $abs_top_builddir/examples/AMD | grep "Encryption Passed"], 0, 
+[Encryption Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([atomiccounters])
+# Expected Error: Device does not support cl_ext_atomic_counters_32 extension!
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_AtomicCounters -sC $abs_top_builddir/examples/AMD | grep "Encryption Passed"], 0, 
+[Encryption Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([bitonicsort])
+AT_CHECK_UNQUOTED([make test_BitonicSort -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([binarysearch])
+AT_CHECK_UNQUOTED([make test_BinarySearch -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([binomialoption])
+AT_CHECK_UNQUOTED([make test_BinomialOption -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([blackscholes])
+# clEnqueueMapBuffer failed. (mapPtr) Error code : unknown error code
+# Strangely enough this passes when executed via the testsuite script but
+# fails if the make is invoked manually or the app executed directly.
+AT_SKIP_IF(true)
+AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([blackscholesdp])
+# Expected Error: Device does not support cl_amd_fp64 extension!
+# Could be defined if cl_khr_fp64 if defined:
+# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([boxfilter])
+# clEnqueueMapBuffer failed. (mapPtr) Error code : unknown error code
+# Strangely enough this passes when executed via the testsuite script but
+# fails if the make is invoked manually or the app executed directly.
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_BoxFilter -sC $abs_top_builddir/examples/AMD | egrep "Passed|failed"], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([dct])
+AT_CHECK_UNQUOTED([make test_DCT -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([devicefission])
+# Error: clGetDeviceInfo failed. (maxSubDevices) Error code : CL_INVALID_VALUE
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_DeviceFission -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([dwthaar1d])
+# Failed (verification error)
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_DwtHaar1D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([fastwalshtransform])
+AT_CHECK_UNQUOTED([make test_FastWalshTransform -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([floydwarshall])
+AT_CHECK_UNQUOTED([make test_FloydWarshall -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([fluidsimulation2d])
+# Expected Error: Device does not support cl_amd_fp64 extension!
+# Could be defined if cl_khr_fp64 if defined:
+# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_FluidSimulation2D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([helloworld])
+AT_CHECK_UNQUOTED([make test_HelloWorld -sC $abs_top_builddir/examples/AMD | egrep "GdkknVnqkc|HelloWorld"], 0, 
+[GdkknVnqkc
+HelloWorld
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([histogram])
+# Expected Error: Device does not support cl_khr_byte_addressable_store extension!
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_Histogram -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([imageoverlap])
+# pocl error: encountered unimplemented part of the OpenCL specs in clCreateImage2D.c:119
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_ImageOverlap -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([ludecomposition])
+# Expected Error: Device does not support cl_amd_fp64 extension!
+# Could be defined if cl_khr_fp64 if defined:
+# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([mandelbrot])
+# undefined symbol: _Z11native_log2fbuild/debug/x86_64/Mandelbrot: symbol lookup error
+# (native_log2(float) is missing)
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
 POAT_AMDSDK_SETUP([matrixmul])
 AT_CHECK_UNQUOTED([make test_MatrixMultiplication -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([matrixmulimage])
+# pocl error: encountered unimplemented part of the OpenCL specs in clCreateImage2D.c:119
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_MatrixMulImage -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([matrixtranspose])
+AT_CHECK_UNQUOTED([make test_MatrixTranspose -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([memorymodel])
+AT_CHECK_UNQUOTED([make test_MemoryModel -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([montecarloasian])
+# kernel compilation fails due to 
+# error: can't convert between vector values of different size ('float4' and 'int')
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([montecarloasiandp])
+# Expected Error: Device does not support cl_amd_fp64 extension!
+# Could be defined if cl_khr_fp64 if defined:
+# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_MonteCarloAsianDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([nbody])
+AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([prefixsum])
+AT_CHECK_UNQUOTED([make test_PrefixSum -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([quasirandomsequence])
+AT_CHECK_UNQUOTED([make test_QuasiRandomSequence -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([radixsort])
+# Expected Error: Device does not support cl_khr_byte_addressable_store extension!
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_RadixSort -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([recursivegaussian])
+AT_CHECK_UNQUOTED([make test_RecursiveGaussian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([reduction])
+AT_CHECK_UNQUOTED([make test_Reduction -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([scanlargearrays])
+# Fails with vectorization.
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([scanlargearrays-noautovec])
+AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=0 make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([simpleconvolution])
+AT_CHECK_UNQUOTED([make test_SimpleConvolution -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([simpleimage])
+# pocl error: encountered unimplemented part of the OpenCL specs in clCreateImage2D.c:119
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_SimpleImage -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([sobelfilter])
+AT_CHECK_UNQUOTED([make test_SobelFilter -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([template])
+AT_CHECK_UNQUOTED([make test_Template -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([templatec])
+AT_CHECK_UNQUOTED([make test_TemplateC -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+[Passed!
+])     
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([transferoverlap])
+# Expected Error: Device does not support cl_khr_local_int32_base_atomics extension!
+AT_XFAIL_IF(true)
+AT_CHECK_UNQUOTED([make test_TransferOverlap -sC $abs_top_builddir/examples/AMD | grep "Passed"], 0, 
+[Passed!
+])
+AT_CLEANUP
+
+POAT_AMDSDK_SETUP([urng])
+AT_CHECK_UNQUOTED([make test_URNG -sC $abs_top_builddir/examples/AMD | grep Passed | cut -c -7], 0, 
+[Passed! 
+])     
 AT_CLEANUP

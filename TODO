@@ -4,7 +4,6 @@ Version roadmap
 High priority:
     * make NVIDIA OpenCL SDK examples to work (1.0)
     * make Intel OpenCL SDK examples to work (1.0)    
-    * make AMD OpenCL SDK examples to work (1.0)
     * make the book examples at 
       https://code.google.com/p/opencl-book-samples
       to work (1.0)   
