@@ -51,6 +51,16 @@ POname(clGetContextInfo)(cl_context context,
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
+  case CL_CONTEXT_NUM_DEVICES:
+    {
+      if (param_value_size < sizeof(size_t) && param_value != NULL)
+        return CL_INVALID_VALUE;
+      if (param_value != NULL )
+        *((size_t*)param_value)=context->num_devices;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret=sizeof(size_t);
+      return CL_SUCCESS;
+    }
   default: 
     break;
   }
