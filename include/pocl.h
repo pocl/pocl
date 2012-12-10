@@ -33,6 +33,16 @@
 #define POCL_ADDRESS_SPACE_LOCAL 4
 #define POCL_ADDRESS_SPACE_CONSTANT 5
 
+typedef struct _mem_mapping mem_mapping_t;
+/* represents a single buffer to host memory mapping */
+struct _mem_mapping {
+  void *host_ptr; /* the location of the mapped buffer chunk in the host memory */
+  size_t offset; /* offset to the beginning of the buffer */
+  size_t size;
+  mem_mapping_t *prev, *next;
+};
+
+
 // Command Queue datatypes
 
 // clEnqueueNDRangeKernel
@@ -83,7 +93,7 @@ typedef struct
 typedef struct
 {
   cl_mem buffer;
-  struct mem_mapping_t *mapping;
+  mem_mapping_t *mapping;
 } _cl_command_map;
 
 typedef union

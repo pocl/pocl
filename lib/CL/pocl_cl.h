@@ -340,16 +340,6 @@ struct _cl_command_queue {
   _cl_command_node *root;
 };
 
-
-typedef struct _mem_mapping mem_mapping_t;
-/* represents a single buffer to host memory mapping */
-struct _mem_mapping {
-  void *host_ptr; /* the location of the mapped buffer chunk in the host memory */
-  size_t offset; /* offset to the beginning of the buffer */
-  size_t size;
-  mem_mapping_t *prev, *next;
-};
-
 typedef struct _cl_mem cl_mem_t;
 
 struct _cl_mem {
