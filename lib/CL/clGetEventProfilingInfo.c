@@ -25,7 +25,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetEventProfilingInfo(cl_event event,
+POname(clGetEventProfilingInfo)(cl_event event,
                         cl_profiling_info param_name,
                         size_t param_value_size,
                         void *param_value,

@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueNativeKernel(cl_command_queue   command_queue ,
+POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 					  void (CL_CALLBACK * user_func)(void *), 
                       void *             args ,
                       size_t             cb_args , 

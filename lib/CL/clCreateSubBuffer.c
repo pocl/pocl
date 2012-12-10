@@ -26,7 +26,7 @@
 
 /* NOTE: this function is untested! */
 CL_API_ENTRY cl_mem CL_API_CALL
-POclCreateSubBuffer(cl_mem                   buffer,
+POname(clCreateSubBuffer)(cl_mem                   buffer,
                   cl_mem_flags             flags,
                   cl_buffer_create_type    buffer_create_type,
                   const void *             buffer_create_info,

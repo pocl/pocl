@@ -28,4 +28,4 @@ scalarwave_SOURCES = scalarwave.c scalarwave.cl
 scalarwave_LDADD = -lm @OPENCL_LIBS@
 scalarwave_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

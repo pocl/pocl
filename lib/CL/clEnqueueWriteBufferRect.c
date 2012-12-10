@@ -25,7 +25,7 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueWriteBufferRect(cl_command_queue command_queue,
+POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
                          cl_mem buffer,
                          cl_bool blocking_write,
                          const size_t *buffer_origin,
@@ -90,8 +90,8 @@ POclEnqueueWriteBufferRect(cl_command_queue command_queue,
       /* in-order queue - all previously enqueued commands must 
        * finish before this read */
       // ensure our buffer is not freed yet
-      POclRetainMemObject (buffer);
-      POclFinish(command_queue);
+      POname(clRetainMemObject) (buffer);
+      POname(clFinish)(command_queue);
     }
   POCL_UPDATE_EVENT_SUBMITTED;
   POCL_UPDATE_EVENT_RUNNING;
@@ -105,7 +105,7 @@ POclEnqueueWriteBufferRect(cl_command_queue command_queue,
 
   POCL_UPDATE_EVENT_COMPLETE;
 
-  POclReleaseMemObject (buffer);
+  POname(clReleaseMemObject) (buffer);
 
   return CL_SUCCESS;
 }

@@ -2,7 +2,7 @@
 
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetSamplerInfo(cl_sampler          sampler ,
+POname(clGetSamplerInfo)(cl_sampler          sampler ,
                  cl_sampler_info     param_name ,
                  size_t              param_value_size ,
                  void *              param_value ,

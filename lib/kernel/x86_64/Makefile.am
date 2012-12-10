@@ -38,8 +38,8 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-libkernel_a_SOURCES = abs.cl ceil.cl copysign.cl fabs.cl floor.cl max.cl min.cl signbit.cl sqrt.cl
+libkernel_a_SOURCES = abs.cl ceil.cl copysign.cl fabs.cl floor.cl fmax.cl fmin.cl max.cl min.cl signbit.cl sqrt.cl
 
-CLANGFLAGS += -target x86_64
+CLANGFLAGS += -target @HOST@
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/x86_64/types.h
 

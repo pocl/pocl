@@ -25,7 +25,7 @@
 #include "devices.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
-POclCreateBuffer(cl_context context,
+POname(clCreateBuffer)(cl_context context,
                cl_mem_flags flags,
                size_t size,
                void *host_ptr,
@@ -67,7 +67,7 @@ POclCreateBuffer(cl_context context,
   for (i = 0; i < context->num_devices; ++i)
     {
       if (i > 0)
-        POclRetainMemObject (mem);
+        POname(clRetainMemObject) (mem);
       device = context->devices[i];
       device_ptr = device->malloc(device->data, flags, size, host_ptr);
       if (device_ptr == NULL)

@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclGetImageInfo(cl_mem            image ,
+POname(clGetImageInfo)(cl_mem            image ,
                cl_image_info     param_name , 
                size_t            param_value_size ,
                void *            param_value ,

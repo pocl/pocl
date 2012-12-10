@@ -28,7 +28,7 @@
 #include "clEnqueueMapBuffer.h"
 
 CL_API_ENTRY void * CL_API_CALL
-POclEnqueueMapBuffer(cl_command_queue command_queue,
+POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_mem           buffer,
                    cl_bool          blocking_map, 
                    cl_map_flags     map_flags,
@@ -67,7 +67,7 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
   device = command_queue->device;
  
   /* Ensure the parent buffer is not freed prematurely. */
-  POclRetainMemObject (buffer);
+  POname(clRetainMemObject) (buffer);
 
   if (event != NULL)
     {
@@ -76,7 +76,7 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
         return (void*)CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
 
       POCL_UPDATE_EVENT_QUEUED;
     }
@@ -121,7 +121,7 @@ POclEnqueueMapBuffer(cl_command_queue command_queue,
     }
   else
     {
-      POclFinish (command_queue);
+      POname(clFinish) (command_queue);
     }
 
 

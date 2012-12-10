@@ -36,7 +36,7 @@
 //#define DEBUG_NDRANGE
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueNDRangeKernel(cl_command_queue command_queue,
+POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                        cl_kernel kernel,
                        cl_uint work_dim,
                        const size_t *global_work_offset,
@@ -110,7 +110,7 @@ POclEnqueueNDRangeKernel(cl_command_queue command_queue,
     {
       size_t preferred_wg_multiple;
       cl_int retval = 
-        POclGetKernelWorkGroupInfo
+        POname(clGetKernelWorkGroupInfo)
         (kernel, command_queue->device, 
          CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
          sizeof (size_t), &preferred_wg_multiple, NULL);
@@ -259,7 +259,7 @@ POclEnqueueNDRangeKernel(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
       (*event)->command = command_node;
       (*event)->command->event = *event;
 
@@ -281,8 +281,8 @@ POclEnqueueNDRangeKernel(cl_command_queue command_queue,
   command_node->command.run.pc = pc;
   command_node->next = NULL; 
   
-  POclRetainCommandQueue (command_queue);
-  POclRetainKernel (kernel);
+  POname(clRetainCommandQueue) (command_queue);
+  POname(clRetainKernel) (kernel);
 
   command_node->command.run.arg_buffer_count = 0;
   /* Retain all memobjects so they won't get freed before the
@@ -308,7 +308,7 @@ POclEnqueueNDRangeKernel(cl_command_queue command_queue,
         printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
 #endif
         buf = *(cl_mem *) (al->value);
-        POclRetainMemObject (buf);
+        POname(clRetainMemObject) (buf);
         command_node->command.run.arg_buffers[count] = buf;
         ++count;
       }

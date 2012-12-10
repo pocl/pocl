@@ -22,6 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+#echo 0=$0 @=$@
+#set -x
+#set -e
+
 target=@HOST@
 
 while getopts t:o: o
@@ -41,12 +45,18 @@ fi
 
 target_dir=${target}
 case $target in
-  arm*) target_dir="arm"
-	CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
-  tce-*)    target_dir="tce" ;;
-  cellspu-*)    target_dir="cellspu"
+  arm*)        target_dir="arm";;
+  cellspu-*)   target_dir="cellspu";;
+  powerpc64-*) target_dir="powerpc64";;
+  tce-*)       target_dir="tce";;
+  x86_64-*)    target_dir="x86_64";;
 esac
 
+case $target in
+  arm*)     CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
+  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@";;
+  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
+esac
 CLANG_FLAGS="$CLANG_FLAGS -fasm -target $target"
 
 preprocessed_file=${output_file}.i
@@ -59,4 +69,3 @@ else
 fi
 
 @CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
-

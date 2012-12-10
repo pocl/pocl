@@ -27,7 +27,7 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueCopyBuffer(cl_command_queue command_queue,
+POname(clEnqueueCopyBuffer)(cl_command_queue command_queue,
                     cl_mem src_buffer,
                     cl_mem dst_buffer,
                     size_t src_offset,
@@ -70,7 +70,7 @@ POclEnqueueCopyBuffer(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
 
       POCL_UPDATE_EVENT_QUEUED;
     }
@@ -83,8 +83,8 @@ POclEnqueueCopyBuffer(cl_command_queue command_queue,
   cmd->command.copy.src_buffer = src_buffer;
   cmd->command.copy.dst_buffer = dst_buffer;
   
-  POclRetainMemObject(src_buffer);
-  POclRetainMemObject(dst_buffer);
+  POname(clRetainMemObject)(src_buffer);
+  POname(clRetainMemObject)(dst_buffer);
 
   cmd->type = CL_COMMAND_COPY_BUFFER;
   cmd->command.copy.data = device_id->data;

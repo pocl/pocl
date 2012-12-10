@@ -1,6 +1,6 @@
 #include "pocl_cl.h"
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueTask(cl_command_queue   command_queue,
+POname(clEnqueueTask)(cl_command_queue   command_queue,
               cl_kernel          kernel,
               cl_uint            num_events_in_wait_list,
               const cl_event *   event_wait_list,
@@ -8,7 +8,7 @@ POclEnqueueTask(cl_command_queue   command_queue,
 {
     const size_t globalWS=1; 
     const size_t localWS=1; 
-    return POclEnqueueNDRangeKernel( command_queue,
+    return POname(clEnqueueNDRangeKernel)( command_queue,
                                    kernel, 
                                    1 /*work_dim*/,
                                    NULL /*global_work_offset*/,

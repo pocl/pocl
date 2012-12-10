@@ -16,7 +16,7 @@ with subdirectories for devices, kernels and WG sizes, as described in the
 mailing list.
 
 We could create a tar, zip or similar archive of the whole temp directory
-hierarcy. Implementing the queries for binary sizes etc. is
+hierarchy. Implementing the queries for binary sizes etc. is
 problematic as they need to build the archive just for the file size
 check.
 

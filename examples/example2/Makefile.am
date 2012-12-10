@@ -28,4 +28,4 @@ example2_SOURCES = example2.c example2.cl
 example2_LDADD = @OPENCL_LIBS@
 example2_CFLAGS = @OPENCL_CFLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

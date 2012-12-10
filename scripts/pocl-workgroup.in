@@ -21,6 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+#echo 0=$0 @=$@
+#set -x
+#set -e
+
 target=@HOST@
 
 while getopts k:x:y:z:t:o: o
@@ -67,10 +71,11 @@ linked_out="${linked_bc}.out"
 
 target_dir=${target}
 case $target in
-  arm*) target_dir="arm";;
-  tce-*) target_dir="tce"  ;;
-  powerpc64-*) target_dir="powerpc64" ;;
-  cellspu-*)    target_dir="cellspu" 
+  arm*)        target_dir="arm";;
+  cellspu-*)   target_dir="cellspu";;
+  powerpc64-*) target_dir="powerpc64";;
+  tce-*)       target_dir="tce";;
+  x86_64-*)    target_dir="x86_64";;
 esac
 
 llvm_ld="pocl-llvm-ld"
@@ -78,6 +83,7 @@ if [ -f @abs_top_builddir@/tools/llvm-ld/pocl-llvm-ld ]
 then
   llvm_ld="@abs_top_builddir@/tools/llvm-ld/pocl-llvm-ld"
 fi
+
 
 
 if [ -f @abs_top_builddir@/lib/kernel/${target_dir}/libkernel.a ]

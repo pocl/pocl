@@ -1,6 +1,6 @@
 #include "pocl_cl.h"
 CL_API_ENTRY cl_mem CL_API_CALL
-POclCreateFromGLTexture2D(cl_context      context,
+POname(clCreateFromGLTexture2D)(cl_context      context,
                         cl_mem_flags    flags,
                         cl_GLenum       target,
                         cl_GLint        miplevel,

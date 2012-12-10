@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueCopyImage(cl_command_queue      command_queue ,
+POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
                    cl_mem                src_image ,
                    cl_mem                dst_image , 
                    const size_t *        src_origin ,

@@ -26,7 +26,7 @@
 #include <assert.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueReadBuffer(cl_command_queue command_queue,
+POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
                     cl_mem buffer,
                     cl_bool blocking_read,
                     size_t offset,
@@ -68,7 +68,7 @@ POclEnqueueReadBuffer(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
-      POclRetainCommandQueue (command_queue);
+      POname(clRetainCommandQueue) (command_queue);
 
       POCL_UPDATE_EVENT_QUEUED;
     }
@@ -89,8 +89,8 @@ POclEnqueueReadBuffer(cl_command_queue command_queue,
           /* in-order queue - all previously enqueued commands must 
            * finish before this read */
           // ensure our buffer is not freed yet
-          POclRetainMemObject (buffer);
-          POclFinish(command_queue);
+          POname(clRetainMemObject) (buffer);
+          POname(clFinish)(command_queue);
         }
       /* TODO: offset computation doesn't work in case the ptr is not 
          a direct pointer */
@@ -101,7 +101,7 @@ POclEnqueueReadBuffer(cl_command_queue command_queue,
 
       POCL_UPDATE_EVENT_COMPLETE;
 
-      POclReleaseMemObject (buffer);
+      POname(clReleaseMemObject) (buffer);
     }
   else
   {
@@ -117,7 +117,7 @@ POclEnqueueReadBuffer(cl_command_queue command_queue,
     cmd->command.read.buffer = buffer;
     cmd->next = NULL;
     cmd->event = event ? *event : NULL;
-    POclRetainMemObject (buffer);
+    POname(clRetainMemObject) (buffer);
     LL_APPEND(command_queue->root, cmd);
   }
 

@@ -26,7 +26,7 @@
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclSetKernelArg(cl_kernel kernel,
+POname(clSetKernelArg)(cl_kernel kernel,
                cl_uint arg_index,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0

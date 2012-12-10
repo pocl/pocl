@@ -24,7 +24,7 @@
 #include "utlist.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueMarker(cl_command_queue     command_queue,
+POname(clEnqueueMarker)(cl_command_queue     command_queue,
                   cl_event *           event) 
 CL_API_SUFFIX__VERSION_1_0
 {
@@ -39,7 +39,7 @@ CL_API_SUFFIX__VERSION_1_0
     return CL_OUT_OF_HOST_MEMORY; 
   POCL_INIT_OBJECT(*event);
   (*event)->queue = command_queue;
-  POclRetainCommandQueue (command_queue);
+  POname(clRetainCommandQueue) (command_queue);
   POCL_UPDATE_EVENT_QUEUED;
 
   _cl_command_node * cmd = malloc(sizeof(_cl_command_node));

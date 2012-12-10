@@ -2,7 +2,7 @@
 
 
 CL_API_ENTRY cl_int CL_API_CALL
-POclEnqueueCopyImageToBuffer(cl_command_queue  command_queue ,
+POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
                            cl_mem            src_image ,
                            cl_mem            dst_buffer , 
                            const size_t *    src_origin ,

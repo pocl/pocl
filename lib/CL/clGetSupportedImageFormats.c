@@ -1,7 +1,7 @@
 #include "pocl_cl.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-POclGetSupportedImageFormats(cl_context           context,
+POname(clGetSupportedImageFormats)(cl_context           context,
                            cl_mem_flags         flags,
                            cl_mem_object_type   image_type,
                            cl_uint              num_entries,

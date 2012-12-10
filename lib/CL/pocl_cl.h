@@ -142,26 +142,38 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_OBJECT_INIT \
   POCL_LOCK_INITIALIZER, 0
 
-#define POdeclsym(name) \
-  typeof(name) PO##name __attribute__((visibility("hidden")));
+#ifdef __APPLE__
+/* Note: OSX doesn't support aliases because it doesn't use ELF */
 
-#define POCL_ALIAS_OPENCL_SYMBOL(name) \
-  typeof(name) name __attribute__ ((alias ("PO" #name), \
-                                    visibility("default")));
-
-#define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
-
-#ifdef DIRECT_LINKAGE
-#  define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
-#else
+#  ifdef BUILD_ICD
+#    error "ICD not supported on OSX"
+#  endif
+#  define POname(name) name
+#  define POdeclsym(name)
 #  define POsym(name)
+#  define POsymAlways(name)
+
+#else
+/* Symbol aliases are supported */
+
+#  define POname(name) PO##name
+#  define POdeclsym(name)			\
+  typeof(name) PO##name __attribute__((visibility("hidden")));
+#  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
+  typeof(name) name __attribute__((alias ("PO" #name), visibility("default")));
+#  define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
+#  ifdef DIRECT_LINKAGE
+#    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
+#  else
+#    define POsym(name)
+#  endif
+
 #endif
 
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
-#  define POCL_ICD_OBJECT\
-     struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch;
 #  define POsymICD(name) POsym(name)
 #  define POdeclsymICD(name) POdeclsym(name)
 #else
