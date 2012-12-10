@@ -41,7 +41,7 @@ $(srcdir)/ViennaCL-1.4.0-src.tar.gz:
 	wget http://sourceforge.net/projects/viennacl/files/1.4.x/ViennaCL-1.4.0-src.tar.gz
 
 $(testsuite_src_dir):
-	$(MAKE) $(srcdir)/ViennaCL-1.3.1-src.tar.gz
+	$(MAKE) $(srcdir)/ViennaCL-1.3.1-src.tar.gz 
 	cd $(testsuite_pocl_dir) && \
 	tar xzf ViennaCL-1.3.1-src.tar.gz
 
@@ -73,6 +73,8 @@ build-1.4.0:
 		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \
 		$(OPENCL_CMAKE) \
 		..
+
+check-local: $(testsuite_src_dir) build
 
 clean-local:
 	rm -fr ViennaCL-1.3.1-src

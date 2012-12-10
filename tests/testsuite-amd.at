@@ -51,13 +51,13 @@ AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD], 0
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholesdp])
+AT_KEYWORDS([cl_amd_fp64])
 # Expected Error: Device does not support cl_amd_fp64 extension!
 # Could be defined if cl_khr_fp64 if defined:
 # http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
-])
+], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([boxfilter])
@@ -105,13 +105,12 @@ AT_CHECK_UNQUOTED([make test_FloydWarshall -sC $abs_top_builddir/examples/AMD | 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([fluidsimulation2d])
-# Expected Error: Device does not support cl_amd_fp64 extension!
-# Could be defined if cl_khr_fp64 if defined:
-# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+# error: can't convert between vector values of different size ('uint' (aka 'unsigned int') and 'int8')
 AT_XFAIL_IF(true)
+AT_KEYWORDS([cl_amd_fp64])
 AT_CHECK_UNQUOTED([make test_FluidSimulation2D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
-])
+], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([helloworld])
@@ -138,13 +137,12 @@ AT_CHECK_UNQUOTED([make test_ImageOverlap -sC $abs_top_builddir/examples/AMD | g
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([ludecomposition])
-# Expected Error: Device does not support cl_amd_fp64 extension!
-# Could be defined if cl_khr_fp64 if defined:
-# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+# a verification error
+AT_KEYWORDS([cl_amd_fp64])
 AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
-])
+], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([mandelbrot])
@@ -192,13 +190,12 @@ AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMD 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([montecarloasiandp])
-# Expected Error: Device does not support cl_amd_fp64 extension!
-# Could be defined if cl_khr_fp64 if defined:
-# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
+AT_KEYWORDS([cl_amd_fp64])
+# error: can't convert between vector values of different size ('double4' and 'int')
 AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_MonteCarloAsianDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
-])
+], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([nbody])

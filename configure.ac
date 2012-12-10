@@ -97,7 +97,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,AMD)])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -120,10 +120,13 @@ if test x"$enable_testsuites" = xcheck ; then
           -f "$srcdir/examples/Parboil/pb2.5driver.tgz"; then
     enable_testsuite_parboil=yes
   fi
+  if test -f "$srcdir/examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64.tgz" ; then
+    enable_testsuite_amd=yes
+  fi
 
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,AMD"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],

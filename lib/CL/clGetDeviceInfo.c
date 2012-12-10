@@ -200,7 +200,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
 
   case CL_DEVICE_EXTENSIONS                        : 
-    POCL_RETURN_DEVICE_INFO_STR("cl_khr_fp16");
+    POCL_RETURN_DEVICE_INFO_STR(device->extensions);
   case CL_DEVICE_PLATFORM                          :
     {
       /* Return the first platform id, assuming this is the only

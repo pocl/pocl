@@ -29,3 +29,45 @@
 
 ----------------------------------------------
 
+# Testing setup:
+  eps:     1e-10
+  numeric: double
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-15
+  numeric: double
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-20
+  numeric: double
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-25
+  numeric: double
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-30
+  numeric: double
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-35
+  numeric: double
+# Test passed
+
+----------------------------------------------
+

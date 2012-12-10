@@ -42,6 +42,7 @@ $(testsuite_src_dir): AMD-APP-SDK-v2.8-RC-lnx64.tgz
 
 build:
 	cd $(testsuite_src_dir)/samples/opencl && \
+	find -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' && \
 	$(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
 
 test_AESEncryptDecrypt: 
@@ -244,6 +245,8 @@ test_URNG:
 	ln -sf $(amd_app_dir)/URNG/URNG_Kernels.cl $(amd_app_dir)/URNG/build/debug/x86_64/ && \
 	ln -sf $(amd_app_dir)/URNG/URNG_Input.bmp $(amd_app_dir)/URNG/build/debug/x86_64/ && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/URNG -e
+
+check-local: all
 
 clean-local:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
