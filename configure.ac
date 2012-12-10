@@ -577,6 +577,7 @@ case $host_cpu in
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
+
   powerpc64)
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
@@ -586,6 +587,16 @@ case $host_cpu in
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     ;;
 esac
+
+#kludge, when waiting for a solution to the host/target/device issue.
+if test x"$default_target"x = xpowerpcx
+then
+    AC_MSG_NOTICE([using the ppc unoptimized kernel lib for the native device])
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target powerpc "
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    kernel_dir="powerpc"
+    host="powerpc-unknown-linux-gnu"
+fi	
 
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 

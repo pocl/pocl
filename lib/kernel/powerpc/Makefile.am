@@ -40,6 +40,6 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-CLANGFLAGS += -target powerpc
+CLANGFLAGS += -target powerpc-unknown-linux-gnu
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/powerpc/types.h
 
