@@ -118,7 +118,7 @@ AT_CLEANUP
 POAT_VCL_SETUP([blas3], [long])
 AT_XFAIL_IF([true])
 POAT_VCL_CHECK_BUILD([blas3-test])
-AT_CHECK([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/blas3-test 2>&1 | grep passed | grep -v "incomplete" | wc -l], 0, 
+AT_CHECK([POCL_WORK_GROUP_METHOD=loops POCL_WILOOPS_MAX_UNROLL_COUNT=1 $abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/tests/blas3-test 2>&1 | grep passed | grep -v "incomplete" | wc -l], 0, 
 [121
 ])
 AT_CLEANUP

@@ -93,7 +93,12 @@ multiple work items. Legal values:
 
     loops  -- Create for-loops that execute the work items
               (under stabilization). The drawback is the
-               need to save the thread contexts in arrays.
+              need to save the thread contexts in arrays.
+
+              The loops will be unrolled a certain number of
+              times of which maximum can be controlled with
+              POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
+              variable.
 
     repl   -- Replicate and chain all work items. This results
               in more easily scalarizable private variables.
