@@ -30,6 +30,21 @@
 
 #include "prototypes.inc"
 
+/* simplistic linker script: 
+ * this is the SPU local address where 'OpenCL global' memory starts.
+ * (if we merge the spus to a single device, this is the 'OpenCL local' memory
+ * 
+ * The idea is to allocate
+ * 64k (0-64k) for text.
+ * 128k (64k-192k) for Opencl local memory.
+ * 64k (192k-256k) for stack + heap (if any)
+ * 
+ * I was unable to place the stack to start at 0x20000, thus the "unclean" division.
+ */
+#define CELLSPU_OCL_BUFFERS_START 0x10000
+#define CELLSPU_OCL_BUFFERS_SIZE 0x20000
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,7 +111,7 @@ GEN_PROTOTYPES (cellspu)
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   "cellspu", /* name */							\
-  "IBM", /* vendor */							\
+  "STI", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
   "EMBEDDED_PROFILE", /* profile */						\
   "OpenCL 1.2 pocl", /* version */					\
@@ -117,7 +132,7 @@ GEN_PROTOTYPES (cellspu)
   NULL, /* unmap_mem is a NOP */                    \
   pocl_cellspu_run, /* run */                         \
   pocl_cellspu_get_timer_value,                \
-    NULL, /*pocl_cellspu_build_program */	 \
+  NULL, /*pocl_cellspu_build_program */	 \
   NULL, /* data */                               \
   "cellspu", /* kernel_lib_target (forced kernel library dir) */    \
   "cellspu-v0", /* llvm_target_triplet */               \

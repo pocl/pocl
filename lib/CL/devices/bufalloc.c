@@ -366,6 +366,11 @@ free_chunk (chunk_info_t* chunk)
 
 }
 
+/** Initialize a memory_region_t. 
+ * @param region is a pointer to a existing memory_region_t data structure.
+ * @param start the base address of the memory region to be managed.
+ * @Param size  the size of the region (in bytes?)
+ */
 void 
 init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
 {
