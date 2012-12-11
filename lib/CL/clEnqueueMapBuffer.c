@@ -85,14 +85,24 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   if (mapping_info == NULL)
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-  /* The first call to the device driver's map mem tells where
-     the mapping will be stored (the last argument is NULL) in
-     the host memory. When the last argument is non-NULL, the
-     buffer will be mapped there (assumed it will succeed).  */
-
-  host_ptr = mapping_info->host_ptr = device->map_mem 
-    (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
-     NULL);
+  if (buffer->flags & CL_MEM_USE_HOST_PTR)
+    {
+      /* In this case it should use the given host_ptr + offset as
+         the mapping area in the host memory. */   
+      assert (buffer->mem_host_ptr != NULL);
+      host_ptr = buffer->mem_host_ptr + offset;
+    }
+  else
+    {
+      /* The first call to the device driver's map mem tells where
+         the mapping will be stored (the last argument is NULL) in
+         the host memory. When the last argument is non-NULL, the
+         buffer will be mapped there (assumed it will succeed).  */
+      
+      host_ptr = device->map_mem 
+        (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
+         NULL);
+    }
 
   if (host_ptr == NULL)
     {
@@ -100,6 +110,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       POCL_ERROR (CL_MAP_FAILURE);
     }
 
+  mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;
   DL_APPEND (buffer->mappings, mapping_info);

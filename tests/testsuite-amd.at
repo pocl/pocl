@@ -96,7 +96,8 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([fluidsimulation2d])
 # error: can't convert between vector values of different size ('uint' (aka 'unsigned int') and 'int8')
-# It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
+# It should be a legal implicit conversion according to 6.3 Operators. Some other error makes it
+# break with Intel OCL also.
 AT_XFAIL_IF(true)
 AT_KEYWORDS([cl_amd_fp64])
 AT_CHECK_UNQUOTED([make test_FluidSimulation2D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
