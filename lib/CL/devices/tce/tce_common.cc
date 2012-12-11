@@ -137,8 +137,9 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
     POCL_ABORT("global address space not found in the ADF. "
                "Mark it by adding numerical ids 3 and 5 to the AS.\n");
 
-  int local_size = 
-    local_as->end() - local_as->start() - TTA_UNALLOCATED_LOCAL_SPACE;
+  int local_size = (private_as == local_as) ?
+    local_as->end() - local_as->start() - TTA_UNALLOCATED_LOCAL_SPACE:
+    local_as->end() - local_as->start();
   if (local_size < 0)
     POCL_ABORT("Not enough space in the local memory with the assumed unallocated space.\n");
 

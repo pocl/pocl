@@ -41,32 +41,22 @@ AT_CHECK_UNQUOTED([make test_BinomialOption -sC $abs_top_builddir/examples/AMD |
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholes])
-# clEnqueueMapBuffer failed. (mapPtr) Error code : unknown error code
-# Strangely enough this passes when executed via the testsuite script but
-# fails if the make is invoked manually or the app executed directly.
-AT_SKIP_IF(true)
-AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD], 0, 
+AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholesdp])
 AT_KEYWORDS([cl_amd_fp64])
-# Expected Error: Device does not support cl_amd_fp64 extension!
-# Could be defined if cl_khr_fp64 if defined:
-# http://www.khronos.org/registry/cl/extensions/amd/cl_amd_fp64.txt
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([boxfilter])
-# clEnqueueMapBuffer failed. (mapPtr) Error code : unknown error code
-# Strangely enough this passes when executed via the testsuite script but
-# fails if the make is invoked manually or the app executed directly.
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_BoxFilter -sC $abs_top_builddir/examples/AMD | egrep "Passed|failed"], 0, 
 [Passed!
+Verifying results...Passed!
 ])
 AT_CLEANUP
 
@@ -85,7 +75,7 @@ AT_CHECK_UNQUOTED([make test_DeviceFission -sC $abs_top_builddir/examples/AMD | 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([dwthaar1d])
-# Failed (verification error)
+# Failed (verification error). 
 AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_DwtHaar1D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
@@ -106,6 +96,7 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([fluidsimulation2d])
 # error: can't convert between vector values of different size ('uint' (aka 'unsigned int') and 'int8')
+# It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
 AT_XFAIL_IF(true)
 AT_KEYWORDS([cl_amd_fp64])
 AT_CHECK_UNQUOTED([make test_FluidSimulation2D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
@@ -121,8 +112,6 @@ HelloWorld
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([histogram])
-# Expected Error: Device does not support cl_khr_byte_addressable_store extension!
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_Histogram -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])     
@@ -146,9 +135,6 @@ AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([mandelbrot])
-# undefined symbol: _Z11native_log2fbuild/debug/x86_64/Mandelbrot: symbol lookup error
-# (native_log2(float) is missing)
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -183,6 +169,7 @@ AT_CLEANUP
 POAT_AMDSDK_SETUP([montecarloasian])
 # kernel compilation fails due to 
 # error: can't convert between vector values of different size ('float4' and 'int')
+# It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
 AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
@@ -192,6 +179,7 @@ AT_CLEANUP
 POAT_AMDSDK_SETUP([montecarloasiandp])
 AT_KEYWORDS([cl_amd_fp64])
 # error: can't convert between vector values of different size ('double4' and 'int')
+# It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
 AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_MonteCarloAsianDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!

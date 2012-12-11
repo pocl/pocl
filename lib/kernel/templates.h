@@ -610,7 +610,7 @@
 
 #define IMPLEMENT_EXPR_F_F(NAME, EXPR, VTYPE, STYPE)    \
   VTYPE __attribute__ ((overloadable))                  \
-  NAME(VTYPE a, VTYPE b)                                \
+  NAME(VTYPE a)                                         \
   {                                                     \
     typedef VTYPE vtype;                                \
     typedef STYPE stype;                                \

@@ -131,22 +131,23 @@ main(void)
             NULL, &enqEvent);
  
         cl::Event mapEvent;
-        (int *) queue.enqueueMapBuffer(
+        void *outVal = queue.enqueueMapBuffer(
             outputBuffer,
             CL_TRUE, // block 
             CL_MAP_READ,
             0, OUTPUT_SIZE, NULL, &mapEvent);
        
-        if (std::string(output) == "PONG") 
+        char* outStr = (char*)(outVal);
+        if (std::string(outStr) == "PONG") 
             std::cout << "OK\n";
         else
-            std::cerr << "FAIL, received: " << output << "\n";
+            std::cerr << "FAIL, received: " << outStr << "\n";
 
         cl::Event unmapEvent;
         // Finally release our hold on accessing the memory
         queue.enqueueUnmapMemObject(
             outputBuffer,
-            (void *) &output[0],
+            (void*)(outVal),
             NULL,
             &unmapEvent);
 

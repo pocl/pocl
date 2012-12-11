@@ -116,7 +116,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       cmd->next = NULL;
       cmd->event = event ? *event : NULL;
       LL_APPEND(command_queue->root, cmd);
-  
+      POCL_SUCCESS ();
       return mapping_info->host_ptr;
     }
   else
