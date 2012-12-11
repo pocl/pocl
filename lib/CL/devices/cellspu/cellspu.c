@@ -141,8 +141,17 @@ pocl_cellspu_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
 #endif
 	void *mmap_base=spe_ls_area_get( spe_context );
 	memcpy( host_ptr, mmap_base+(chunk->start_address), cb);
-	printf("host_ptr=%s\n", host_ptr);
 
+}
+
+/* write 'bytes' of bytes from *host_a to SPU local storage area. */
+void cellspu_memwrite( void *lsa, void *host_a, size_t bytes )
+{	
+#ifdef DEBUG_CELLSPU_DRIVER
+	printf("cellspu: write %d bytes from %x (host) to %x (device)\n", bytes, host_a,lsa);
+#endif
+	void *mmap_base=spe_ls_area_get( spe_context );
+	memcpy( mmap_base+(int)lsa, host_a, bytes);
 }
 
 void
@@ -150,11 +159,7 @@ pocl_cellspu_write (void *data, const void *host_ptr, void *device_ptr, size_t c
 {
 	chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 	assert( chunk->is_allocated  && "cellspu: writing to an ullacoated memory?");
-#ifdef DEBUG_CELLSPU_DRIVER
-	printf("cellspu: write %d bytes from %x (host) to %d (device)\n", cb, host_ptr,chunk->start_address);
-#endif
-	void *mmap_base=spe_ls_area_get( spe_context );
-	memcpy( mmap_base+(chunk->start_address), host_ptr, cb);
+        cellspu_memwrite( chunk->start_address, host_ptr, cb );
 }
 
 
@@ -188,6 +193,12 @@ pocl_cellspu_run
     (module, POCL_FILENAME_LENGTH,
      "%s/parallel.so", tmpdir);
   assert (error >= 0);
+
+  // This is the entry to the kenrel. We currently hard-code it
+  // into the SPU binary. Resulting in only one entry-point per 
+  // SPU image.
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+            "_%s_workgroup", kernel->function_name);
 
 
   if ( access (module, F_OK) != 0)
@@ -231,12 +242,17 @@ pocl_cellspu_run
       // Compile the assembly version of the OCL kernel with the
       // C wrapper to get a spulet
       error = snprintf (command, COMMAND_LENGTH,
-			"spu-gcc spe_wrap.c -o %s %s -Xlinker --defsym -Xlinker _ocl_buffer=%d",
+			"spu-gcc spe_wrap.c -o %s %s "
+			" -Xlinker --defsym -Xlinker _ocl_buffer=%d"
+			" -Xlinker --defsym -Xlinker kernel_command=%d"
+			" -D_KERNEL=%s -std=c99",
 			module,
 			assembly, 
-			CELLSPU_OCL_BUFFERS_START);
+			CELLSPU_OCL_BUFFERS_START,
+			CELLSPU_KERNEL_CMD_ADDR,
+			workgroup_string);
       assert (error >= 0);
-      
+     printf("compiling: %s\n", command); fflush(stdout); 
       error = system (command);
       assert (error == 0);
 
@@ -263,13 +279,6 @@ pocl_cellspu_run
   // This structure gets passed to the device.
   // It contains all the info needed to run a kernel  
   __kernel_exec_cmd dev_cmd;
-
-  //snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-  //          "_%s_workgroup", kernel->function_name);
-  // TODO: we need the address of the function workgroup_string.
-  // to place in dev_cmd. Either open up the elf and dig it out,
-  // or set it to a fixed location in when calling spu-gcc above.	
-
 
   // the code below is lifted from pthreads :) 
   uint32_t *arguments = dev_cmd.args;
@@ -328,7 +337,7 @@ pocl_cellspu_run
         }
       else
         {
-          arguments[i] = al->value;
+          arguments[i] = (uint32_t)al->value;
         }
     }
 
@@ -338,14 +347,14 @@ pocl_cellspu_run
        ++i)
     {
       al = &(kernel->arguments[i]);
-      arguments[i] = malloc (sizeof (void *));
+      arguments[i] = (uint32_t)malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_cellspu_malloc_local(data, al->size);
     }
 
 
   // finish up the command, send it to SPE
-  dev_cmd.status =POCL_KST_FREE;
-  //pocl_cellspu_write( &dev_cmd, d->commandQueueAddr, sizeof(__kernel_exec_cmd) );
+  dev_cmd.status =POCL_KST_READY;
+  cellspu_memwrite( CELLSPU_KERNEL_CMD_ADDR, &dev_cmd, sizeof(__kernel_exec_cmd) );
 
 
   // Execute code on SPU. This starts with the main() in the spu - see spe_wrap.c

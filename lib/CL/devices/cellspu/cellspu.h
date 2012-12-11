@@ -42,7 +42,9 @@
  * I was unable to place the stack to start at 0x20000, thus the "unclean" division.
  */
 #define CELLSPU_OCL_BUFFERS_START 0x10000
-#define CELLSPU_OCL_BUFFERS_SIZE 0x20000
+#define CELLSPU_OCL_BUFFERS_SIZE  0x20000
+#define CELLSPU_KERNEL_CMD_ADDR   0x30000
+//#define CELLSPU_OCL_KERNEL_ADDRESS 0x2000
 
 
 #ifdef __cplusplus
