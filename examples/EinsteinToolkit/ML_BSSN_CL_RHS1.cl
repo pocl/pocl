@@ -187,7 +187,7 @@
 #define kcosh(x)    cosh(x)
 #define kexp(x)     exp(x)
 #define klog(x)     log(x)
-#define kpow(x,a)   pow(x,a)
+#define kpow(x,a)   pow(x,(CCTK_REAL_VEC)(a))
 #define ksin(x)     sin(x)
 #define ksinh(x)    sinh(x)
 #define ktan(x)     tan(x)

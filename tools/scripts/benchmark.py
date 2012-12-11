@@ -242,10 +242,7 @@ amd_benchmarks = \
      AMDBenchmarkCase("Reduction", "Reduction -q -t -x 400000000"),
      AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 512000")]
 
-benchmarks = amd_benchmarks
-
-#The EinsteinToolkit doesn't compiler with Intel's SDK
-#benchmarks += [EinsteinToolkitCase("EinsteinToolkit")]
+benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
     
 def print_environment_info():
     timeout, llvm_version, stderr, rc = run_cmd("llvm-config --version")

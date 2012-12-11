@@ -6,7 +6,7 @@
    does not influence the benchmark result, it only influences the
    benchmark's accuracy. Small numbers of iterations lead to
    inaccurate results. */
-int const niters = 100;
+int const niters = 10;
 
 
 
@@ -32,7 +32,7 @@ int const niters = 100;
  * Redshift, laptop, OSX, Intel(R) Core(TM) i7-3820QM CPU @ 2.70GHz:
  *    Theoretical best: 0.0393519 usec per gpu
  *    Apple's OpenCL:   0.213103  usec per gpu (with VECTOR_SIZE_I=2)
- *    pocl:             0.55614   usec per gpu (with THREAD_COUNT_ENV=4)
+ *    pocl:             0.543815  usec per gpu (with THREAD_COUNT_ENV=4)
  *
  * Nvidia, workstation, Intel(R) Xeon(R) CPU X5675 @ 3.07GHz
  *    Theoretical best: 0.0230727 usec per gpu
@@ -94,7 +94,7 @@ cl_command_queue cmd_queue;
 
 
 // Code generation choices:
-#define VECTORISE_ALIGNED_ARRAYS 1
+#define VECTORISE_ALIGNED_ARRAYS 0
 
 // Loop traversal choices:
 #define VECTOR_SIZE_I 1
@@ -106,9 +106,9 @@ cl_command_queue cmd_queue;
 #define GROUP_SIZE_I  1
 #define GROUP_SIZE_J  1
 #define GROUP_SIZE_K  1
-#define TILE_SIZE_I   4
-#define TILE_SIZE_J   4
-#define TILE_SIZE_K   4
+#define TILE_SIZE_I   1
+#define TILE_SIZE_J   1
+#define TILE_SIZE_K   1
 
 
 
@@ -1059,14 +1059,14 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
     static int did_print = 0;
     if (!did_print) {
       did_print = 1;
-      printf("Global work group size: %4d %4d %4d\n",
-             (int)global_work_size[0],
-             (int)global_work_size[1],
-             (int)global_work_size[2]);
       printf("Local work group size:  %4d %4d %4d\n",
              (int)local_work_size[0],
              (int)local_work_size[1],
              (int)local_work_size[2]);
+      printf("Global work group size: %4d %4d %4d\n",
+             (int)global_work_size[0],
+             (int)global_work_size[1],
+             (int)global_work_size[2]);
     }
   }
   
