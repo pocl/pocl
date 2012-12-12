@@ -80,7 +80,7 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
         }
     }
 
-  size_t ReplThreshold = 32;
+  size_t ReplThreshold = 2;
   if (getenv("POCL_FULL_REPLICATION_THRESHOLD") != NULL) 
     {
       ReplThreshold = atoi(getenv("POCL_FULL_REPLICATION_THRESHOLD"));

@@ -99,7 +99,7 @@ multiple work items. Legal values:
               The loops will be unrolled a certain number of
               times of which maximum can be controlled with
               POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
-              variable.
+              variable (default is to not perform unrolling).
 
     repl   -- Replicate and chain all work items. This results
               in more easily scalarizable private variables.

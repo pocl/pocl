@@ -450,7 +450,7 @@ WorkitemLoops::ProcessFunction(Function &F)
         if (getenv("POCL_WILOOPS_MAX_UNROLL_COUNT") != NULL)
             unrollCount = atoi(getenv("POCL_WILOOPS_MAX_UNROLL_COUNT"));
         else
-            unrollCount = 32;
+            unrollCount = 1;
         /* Find a two's exponent unroll count, if available. */
         while (unrollCount >= 1)
           {
