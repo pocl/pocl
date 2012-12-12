@@ -1,0 +1,23 @@
+date: 2012-12-12
+LLVM: 3.2svn
+ cpu: Intel(R) Core(TM)2 Duo CPU     E8400  @ 3.00GHz
+
+case                     pocl    vendor  
+AESEncryptDecrypt        0.401   0.340   0.85x   
+BitonicSort              0.567   1.906   3.36x   
+BinarySearch             1.610   0.464   0.29x   
+BinomialOption           5.112   2.887   0.56x   
+BlackScholes             11.640  0.890   0.08x   
+DCT                      0.823   0.724   0.88x   
+FastWalshTransform       7.575   16.064  2.12x   
+FloydWarshall            0.444   0.908   2.05x   
+Histogram                2.195   1.540   0.70x   
+Mandelbrot               0.556   0.547   0.98x   
+MatrixTranspose          2.433   1.791   0.74x   
+MatrixMultiplication     1.384   0.988   0.71x   
+NBody                    2.115   1.773   0.84x   
+QuasiRandomSequence      0.987   0.865   0.88x   
+RadixSort                1.060   0.350   0.33x   
+Reduction                2.940   3.132   1.07x   
+SimpleConvolution        0.733   2.192   2.99x   
+EinsteinToolkit          5.815   12.390  2.13x   

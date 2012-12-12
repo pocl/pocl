@@ -6,7 +6,7 @@
    does not influence the benchmark result, it only influences the
    benchmark's accuracy. Small numbers of iterations lead to
    inaccurate results. */
-int const niters = 100;
+int const niters = 10;
 
 
 
@@ -94,7 +94,7 @@ cl_command_queue cmd_queue;
 
 
 // Code generation choices:
-#define VECTORISE_ALIGNED_ARRAYS 1
+#define VECTORISE_ALIGNED_ARRAYS 0
 
 // Loop traversal choices:
 #define VECTOR_SIZE_I 1
@@ -106,9 +106,9 @@ cl_command_queue cmd_queue;
 #define GROUP_SIZE_I  1
 #define GROUP_SIZE_J  1
 #define GROUP_SIZE_K  1
-#define TILE_SIZE_I   4
-#define TILE_SIZE_J   4
-#define TILE_SIZE_K   4
+#define TILE_SIZE_I   1
+#define TILE_SIZE_J   1
+#define TILE_SIZE_K   1
 
 
 
