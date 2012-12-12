@@ -127,9 +127,9 @@ AT_CHECK_UNQUOTED([make test_ImageOverlap -sC $abs_top_builddir/examples/AMD | g
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([ludecomposition])
-# a verification error
 AT_KEYWORDS([cl_amd_fp64])
-AT_XFAIL_IF(true)
+# a verification error happens only with vectorization
+#AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
@@ -228,7 +228,7 @@ AT_CLEANUP
 POAT_AMDSDK_SETUP([scanlargearrays])
 # Fails with vectorization.
 AT_XFAIL_IF(true)
-AT_CHECK_UNQUOTED([make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=1 make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP

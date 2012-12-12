@@ -112,10 +112,10 @@ OPT_SWITCH=$POCL_KERNEL_COMPILER_OPT_SWITCH
 fi
 
 EXTRA_OPTS=""
-if ! test "x$POCL_VECTORIZE_WORK_GROUPS" = "x0";
+if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
 then
 OPT_SWITCH="-O3"
-EXTRA_OPTS="-wi-vectorize -instcombine"
+EXTRA_OPTS="-wi-vectorize"
 fi
 
 if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
@@ -139,6 +139,6 @@ fi
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
-    ${EXTRA_OPTS} -header=${header} -o ${output_file} ${linked_bc}
+    ${EXTRA_OPTS} -instcombine -header=${header} -o ${output_file} ${linked_bc}
 
 #set +x
