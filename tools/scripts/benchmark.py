@@ -27,6 +27,15 @@
 # Requires the ocl-icd as the icd loader. It uses its OCL_ICD_VENDORS env
 # to limit the choice of the OpenCL implementation to only the benchmarked 
 # one.
+#
+# Run this from the pocl top source directory. For example:
+#
+# tools/scripts/benchmark.py /etc/OpenCL/vendors_intel_only
+#
+# This runs the test suite with pocl and with the ICD found in the given
+# directory. It assumes the directory contains only one ICD file. In this
+# case it could be the Intel's OpenCL. If you run the benchmark
+# without the parameter, it measures only pocl execution times.
 
 import sys
 import os
