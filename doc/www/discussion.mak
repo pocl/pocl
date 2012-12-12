@@ -4,8 +4,8 @@
 
 <%inherit file="basic_page.makt" />
 
-<p>The recommended way to communicate between the pocl developers and the 
-users are the mailing lists and the IRC channel. </p>
+<p>The recommended ways to communicate between the pocl developers and the 
+users are the mailing list and the IRC channel. </p>
 
 <p>
 The <a href="https://lists.sourceforge.net/lists/listinfo/pocl-devel">mailing list</a> is hosted by Sourceforge.

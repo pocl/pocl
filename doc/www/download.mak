@@ -14,7 +14,7 @@ the version control system:</p>
         bzr co lp:pocl
 </pre>
 
-We also pack releases regularly, usually after each new LLVM release:
+We also package releases regularly, usually after each new LLVM release:
 
 <ul>
 <li><b>Version 0.6:</b> Uses LLVM 3.1.
