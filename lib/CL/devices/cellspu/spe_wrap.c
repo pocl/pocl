@@ -74,9 +74,11 @@ static void tta_opencl_wg_execute(
     context.global_offset[0] = cmd->global_offset[0];
     context.global_offset[1] = cmd->global_offset[1];
     context.global_offset[2] = cmd->global_offset[2];
-             
-#error TODO: these values seem to be garbled. Check the alignment of the kernel_cmd_structure on PPU vs. SPU 
 
+#ifdef DEBUG_SPU_DEVICE
+    printf("SPU: running WG:s x=[%d,%d], y=[0,%d), z=[0,%d)\n",\
+                 first_gidx, last_gidx, num_groups_y, num_groups_z);
+#endif
     for (unsigned gid_x = first_gidx; gid_x <= last_gidx; gid_x++) { 
         for (unsigned gid_y = 0; gid_y < num_groups_y; gid_y++) { 
             for (unsigned gid_z = 0; gid_z < num_groups_z; gid_z++) {
@@ -114,6 +116,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
        a single trampoline call as fast as possible. 
 
        Do not create any threads. */
+   
     for (int i = 0; i < kernel->num_args + kernel->num_locals; ++i) {
 #ifdef DEBUG_SPU_DEVICE
         printf("SPU: processing arg %d", i);
@@ -135,8 +138,6 @@ extern kernel_metadata _test_kernel_md;
 
 
 static kernel_exec_cmd* wait_for_command() {
-    printf("addy of status is %x. offset is %d\n", (int)&(kernel_command.status), ((int)&(kernel_command.status) - (int)&kernel_command));
-    printf("status is %x\n", kernel_command.status);
     while (kernel_command.status != POCL_KST_READY) 
         ;
     kernel_command.status = POCL_KST_RUNNING;
@@ -155,7 +156,8 @@ int main() {
     printf("SPU: main() starts\n");
 #endif
 
-    do {
+// TODO: kludge - just assume a single-shot call to the kernel for now. 
+//    do {
 
 #ifdef DEBUG_SPU_DEVICE
         printf("SPU: waiting for commands\n");
@@ -172,7 +174,7 @@ int main() {
         tta_opencl_wg_launch(next_command);
         kernel_command.status = POCL_KST_FINISHED;   
 
-    } while (1);
+  //  } while (1);
 
     return 0;
 }

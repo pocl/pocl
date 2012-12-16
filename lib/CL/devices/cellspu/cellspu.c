@@ -83,7 +83,7 @@ pocl_cellspu_init (cl_device_id device, const char* parameters)
  * Allocate a chunk for kernel local variables.
  */
 void *
-pocl_cellspu_malloc_local (void *device_data, size_t size)
+cellspu_malloc_local (void *device_data, size_t size)
 {
   struct data* d = (struct data*)device_data;
   chunk_info_t *chunk = alloc_buffer (&spe_local_mem, size);
@@ -102,7 +102,7 @@ pocl_cellspu_malloc (void *device_data, cl_mem_flags flags,
   if (chunk == NULL) return NULL;
 
 #ifdef DEBUG_CELLSPU_DRIVER
-  printf("host: malloc %x (host) %d (device) size: %u\n", host_ptr, chunk->start_address, size);
+  printf("host: malloc %x (host) %x (device) size: %u\n", host_ptr, chunk->start_address, size);
 #endif
 #if 0
   if ((flags & CL_MEM_COPY_HOST_PTR) ||  
@@ -137,7 +137,7 @@ pocl_cellspu_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
 	assert( chunk->is_allocated  && "cellspu: writing to an ullacoated memory?");
 
 #ifdef DEBUG_CELLSPU_DRIVER
-	printf("cellspu: read %d bytes to %x (host) from %d (device)\n", cb, host_ptr,chunk->start_address);
+	printf("cellspu: read %d bytes to %x (host) from %x (device)\n", cb, host_ptr,chunk->start_address);
 #endif
 	void *mmap_base=spe_ls_area_get( spe_context );
 	memcpy( host_ptr, mmap_base+(chunk->start_address), cb);
@@ -145,13 +145,13 @@ pocl_cellspu_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
 }
 
 /* write 'bytes' of bytes from *host_a to SPU local storage area. */
-void cellspu_memwrite( void *lsa, void *host_a, size_t bytes )
+void cellspu_memwrite( void *lsa, const void *host_a, size_t bytes )
 {	
 #ifdef DEBUG_CELLSPU_DRIVER
 	printf("cellspu: write %d bytes from %x (host) to %x (device)\n", bytes, host_a,lsa);
 #endif
 	void *mmap_base=spe_ls_area_get( spe_context );
-	memcpy( mmap_base+(int)lsa, host_a, bytes);
+	memcpy( (void*)(mmap_base+(int)lsa), (const void*)host_a, bytes);
 }
 
 void
@@ -159,7 +159,7 @@ pocl_cellspu_write (void *data, const void *host_ptr, void *device_ptr, size_t c
 {
 	chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 	assert( chunk->is_allocated  && "cellspu: writing to an ullacoated memory?");
-        cellspu_memwrite( chunk->start_address, host_ptr, cb );
+        cellspu_memwrite( (void*)(chunk->start_address), host_ptr, cb );
 }
 
 
@@ -197,8 +197,9 @@ pocl_cellspu_run
   // This is the entry to the kenrel. We currently hard-code it
   // into the SPU binary. Resulting in only one entry-point per 
   // SPU image.
+  // TODO: figure out which function to call given what conditions
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_%s_workgroup", kernel->function_name);
+            "_%s_workgroup_fast", kernel->function_name);
 
 
   if ( access (module, F_OK) != 0)
@@ -279,6 +280,15 @@ pocl_cellspu_run
   // This structure gets passed to the device.
   // It contains all the info needed to run a kernel  
   __kernel_exec_cmd dev_cmd;
+  dev_cmd.work_dim = cmd->command.run.pc.work_dim;
+  dev_cmd.num_groups[0] = cmd->command.run.pc.num_groups[0];
+  dev_cmd.num_groups[1] = cmd->command.run.pc.num_groups[1];
+  dev_cmd.num_groups[2] = cmd->command.run.pc.num_groups[2];
+
+  dev_cmd.global_offset[0] = cmd->command.run.pc.global_offset[0];
+  dev_cmd.global_offset[1] = cmd->command.run.pc.global_offset[1];
+  dev_cmd.global_offset[2] = cmd->command.run.pc.global_offset[2];
+
 
   // the code below is lifted from pthreads :) 
   uint32_t *arguments = dev_cmd.args;
@@ -288,7 +298,7 @@ pocl_cellspu_run
       al = &(kernel->arguments[i]);
       if (kernel->arg_is_local[i])
         {
-          chunk_info_t* local_chunk = pocl_cellspu_malloc_local (d, al->size);
+          chunk_info_t* local_chunk = cellspu_malloc_local (d, al->size);
           if (local_chunk == NULL)
             POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
 
@@ -348,15 +358,28 @@ pocl_cellspu_run
     {
       al = &(kernel->arguments[i]);
       arguments[i] = (uint32_t)malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_cellspu_malloc_local(data, al->size);
+      *(void **)(arguments[i]) = cellspu_malloc_local(data, al->size);
     }
 
+  // the main loop on the spe needs an auxiliary struct for to get the 
+  // number of arguments and such. 
+  __kernel_metadata kmd;
+  strncpy( kmd.name, workgroup_string, sizeof( kmd.name ) );  
+  kmd.num_args = kernel->num_args;
+  kmd.num_locals = kernel->num_locals;
+  // TODO: fill in the rest, if used by the spu main function.
 
+  // TODO malloc_local should be given the 'device data'. as long as teh 
+  // spu context is global this is ok.
+  void *chunk = cellspu_malloc_local( NULL, sizeof(__kernel_metadata) ); 
+  void *kernel_area = ((chunk_info_t*)chunk)->start_address;
+  cellspu_memwrite( kernel_area, &kmd, sizeof(__kernel_metadata) );
+  dev_cmd.kernel = kernel_area;
+  
   // finish up the command, send it to SPE
   dev_cmd.status =POCL_KST_READY;
-  cellspu_memwrite( CELLSPU_KERNEL_CMD_ADDR, &dev_cmd, sizeof(__kernel_exec_cmd) );
-
-
+  cellspu_memwrite( (void*)CELLSPU_KERNEL_CMD_ADDR, &dev_cmd, sizeof(__kernel_exec_cmd) );
+       
   // Execute code on SPU. This starts with the main() in the spu - see spe_wrap.c
   if (spe_context_run(spe_context,&entry,0,NULL,NULL,NULL) < 0)
     perror("context_run error");
