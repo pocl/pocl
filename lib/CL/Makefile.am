@@ -135,7 +135,7 @@ if TCE_AVAILABLE
 libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
-libpocl_la_LIBADD = devices/libpocl-devices.la 
+libpocl_la_LIBADD = devices/libpocl-devices.la -lspe2
 
 if ! BUILD_ICD
 

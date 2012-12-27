@@ -25,10 +25,10 @@ exec_dot_product_kernel(const char *program_source,
   cl_int       err; 
   int          i;
  
-  // create the OpenCL context on a GPU device 
+  // create the OpenCL context on any available OCL device 
   context = clCreateContextFromType(
       NULL, 
-      CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU,
+      CL_DEVICE_TYPE_ALL,
       NULL, NULL, NULL); 
   if (context == (cl_context)0) 
     return -1; 
