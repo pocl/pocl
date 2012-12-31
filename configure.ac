@@ -768,9 +768,16 @@ AC_C_BIGENDIAN
 
 # The libtool library version string to use (passed to -version-info).
 # See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
+# libpocl.so should get only API additions as we are implementing a standard.
 # 0:0:0 == 0.6
 # 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
 AC_SUBST([LIB_VERSION], ["1:0:0"])
+
+# The kernel compiler opt plugin shared library, however, changes more 
+# drastically. Let's try to follow the similar 'current' numbering as
+# pocl and perhaps tune the 'revision' and 'age' later.
+AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["1:0:0"])
+
 AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
