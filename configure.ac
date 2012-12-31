@@ -766,9 +766,10 @@ LDFLAGS="$old_LDFLAGS"
 
 AC_C_BIGENDIAN
 
-# The libtool library version string to use (passed to --version-info).
+# The libtool library version string to use (passed to -version-info).
+# See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
 # 0:0:0 == 0.6
-# 1:0:0 == 0.7
+# 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
 AC_SUBST([LIB_VERSION], ["1:0:0"])
 AC_SUBST([LD_FLAGS_BIN])
 
