@@ -33,8 +33,10 @@ if BUILD_ICD
 icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 do_subst = sed -e 's,[@]libdir[@],$(libdir),g'
-pocl.icd: pocl.icd.in
+pocl.icd:
 	$(do_subst) < $(srcdir)/pocl.icd.in > $(builddir)/pocl.icd
+.PHONY: pocl.icd
+
 CLEANFILES = pocl.icd
 endif
 
