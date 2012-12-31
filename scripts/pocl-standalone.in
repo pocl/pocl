@@ -56,7 +56,13 @@ case $target in
   arm*)        target_dir="arm";;
   cellspu-*)   target_dir="cellspu";;
   powerpc64-*) target_dir="powerpc64";;
-  tce-*)       target_dir="tce";;
+  tce-*)       
+        target_dir="tce"
+        if test "$LLVM_VERSION" != "3.1"
+        then
+            FP_CONTRACT=-fp-contract=off
+        fi
+        ;;
   x86_64-*)    target_dir="x86_64";;
 esac
 
@@ -142,5 +148,5 @@ fi
     -globaldce -simplifycfg -loop-simplify -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl \
     -workgroup -local-size=1 1 1 ${OPT_SWITCH} ${EXTRA_OPTS} \
-    -header=/dev/null -o ${output_file} ${linked_bc}
+    -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
 rm -fr ${tempdir}

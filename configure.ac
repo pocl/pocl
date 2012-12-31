@@ -65,6 +65,11 @@ test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 
+AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
+
+AM_CONDITIONAL([LLVM_3_1], test "$LLVM_VERSION" == "3.1")
+
+
 case "$LLVM_VERSION" in
      3.1)
      AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")

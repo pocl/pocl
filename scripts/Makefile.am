@@ -39,7 +39,8 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]HOST_LD_FLAGS[@],$(HOST_LD_FLAGS),g'		\
                -e 's,[@]OPT[@],$(OPT),g'				\
                -e 's,[@]LLVM_LD[@],$(LLVM_LD),g'			\
-               -e 's,[@]LLC[@],$(LLC),g'
+               -e 's,[@]LLC[@],$(LLC),g' \
+               -e 's,[@]LLVM_VERSION[@],$(LLVM_VERSION),g' 
 
 pocl-build: pocl-build.in Makefile
 	$(do_subst) < $< > $@

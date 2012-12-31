@@ -4,7 +4,7 @@
 #
 # The TCE (http://tce.cs.tut.fi) target.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2013 Pekka Jääskeläinen 
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,5 +41,13 @@ RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
 CLANGFLAGS += -target tce-tut-llvm
+
+# TCE's software emulation chokes on the fmuladd intrinsics
+# generated automatically. Force it off for now until it's
+# supported more properly in TCE.
+if ! LLVM_3_1
+CLANGFLAGS += -ffp-contract=off -target tce-tut-llvm
+endif
+
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/tce/types.h
 
