@@ -79,7 +79,7 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM 3.1.
+Unsupported LLVM version. Please use LLVM 3.1 or 3.2.
    ])
    LLVM_VERSION=
    ;;
@@ -386,6 +386,7 @@ AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
+OCL_DRIVERS="basic pthreads"
 # look for the TCE library (needed for the ttasim device driver)
 
 AC_PATH_PROG([TCE_CONFIG], [tce-config])
@@ -421,6 +422,7 @@ AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
 AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
 AC_SUBST([TCE_AVAILABLE], ["1"])
 LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
+OCL_DRIVERS="$OCL_DRIVERS tce"
 fi
 
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
@@ -479,6 +481,33 @@ export CLANG
 export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
+
+
+####################################################################
+# Determine which device drivers to build.
+
+# Check if CellSPU support is found
+# The libspe version requirement is not strict. This is the only one tested.
+PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
+  [
+    AC_MSG_NOTICE([libspe2 found.])
+    LIBSPE_AVAILABLE=yes
+    OCL_DRIVERS="$OCL_DRIVERS spu"
+    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+  ],
+  [
+    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
+    LIBSPE_AVAILABLE=no
+  ])
+
+AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
+
+
+if test ! -z $TCE_AVAILABLE
+then
+  OCL_DRIVERS="$OCL_DRIVERS tce"
+fi
+AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 
 
 #
@@ -823,11 +852,7 @@ else
 fi
 echo
 
-if test ! -z $TCE_AVAILABLE;
-then
- echo "Enabling the TCE device driver."
- echo
-fi
+echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES
 echo
 

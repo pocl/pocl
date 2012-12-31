@@ -29,7 +29,10 @@
 #include "common.h"
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
+
+#if defined(BUILD_SPU)
 #include "cellspu/cellspu.h"
+#endif
 
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
@@ -49,7 +52,9 @@ int pocl_num_devices = 0;
 static struct _cl_device_id pocl_device_types[POCL_NUM_DEVICE_TYPES] = {
   POCL_DEVICES_PTHREAD,
   POCL_DEVICES_BASIC,
+#if defined(BUILD_SPU)
   POCL_DEVICES_CELLSPU,
+#endif
 #if defined(TCE_AVAILABLE)
   POCL_DEVICES_TTASIM,
 #endif

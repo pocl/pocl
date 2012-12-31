@@ -23,15 +23,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = topology pthread basic cellspu
+SUBDIRS = topology pthread basic
 
 noinst_LTLIBRARIES = libpocl-devices.la
 
 libpocl_devices_la_SOURCES = devices.h devices.c bufalloc.c dev_image.h \
 	prototypes.inc common.h bufalloc.h cpuinfo.c cpuinfo.h
 libpocl_devices_la_LIBADD = pthread/libpocl-devices-pthread.la \
-	basic/libpocl-devices-basic.la topology/libpocl-devices-topology.la \
-	cellspu/libpocl-devices-cellspu.la
+	basic/libpocl-devices-basic.la topology/libpocl-devices-topology.la 
 
 libpocl_devices_la_CPPFLAGS = \
   -I$(top_srcdir)/fix-include \
@@ -45,3 +44,9 @@ if TCE_AVAILABLE
 SUBDIRS += tce
 libpocl_devices_la_LIBADD += tce/libpocl-devices-tce.la
 endif
+
+if BUILD_SPU
+SUBDIRS += cellspu
+libpocl_devices_la_LIBADD += cellspu/libpocl-devices-cellspu.la
+endif
+
