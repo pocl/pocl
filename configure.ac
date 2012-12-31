@@ -1,7 +1,8 @@
 ##                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
+#                         Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +33,17 @@ AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
+
+AM_CONDITIONAL([DARWIN_HOST_OS], false)
+case $host_os in
+  darwin* )
+    AM_CONDITIONAL([DARWIN_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+         ;;
+  *)
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
+         ;;
+esac
 
 # check for tools
 PKG_PROG_PKG_CONFIG
@@ -64,6 +76,7 @@ test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
+LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
@@ -89,6 +102,24 @@ Unsupported LLVM version. Please use LLVM 3.1 or 3.2.
    LLVM_VERSION=
    ;;
 esac
+
+LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
+
+if test ! -e $LLVM_SHARED_LIB_FILE;
+then
+        AC_MSG_ERROR([
+$LLVM_SHARED_LIB_FILE not found. 
+Recompile and install LLVM after ./configure --enable-shared.
+Read the INSTALL file for details.])
+fi
+
+LLVM_RTTI_CHECK=$($LLVM_CONFIG --cxxflags | grep -i "\-fno-rtti")
+
+if test x"$LLVM_RTTI_CHECK" != x; then
+AC_MSG_ERROR([Your LLVM was not built with RTTI. 
+You should rebuild LLVM with 'make REQUIRES_RTTI=1'. 
+See the INSTALL file for more information.])
+fi
 
 AC_ARG_ENABLE([region-allocator],
 [AS_HELP_STRING([--disable-region-allocator], 
