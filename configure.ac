@@ -538,11 +538,6 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
 
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
-
-if test ! -z $TCE_AVAILABLE
-then
-  OCL_DRIVERS="$OCL_DRIVERS tce"
-fi
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 
 

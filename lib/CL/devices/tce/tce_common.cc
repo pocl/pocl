@@ -328,7 +328,7 @@ pocl_tce_run
 
   for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
     {
-      al = &(cmd->command.run.kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_is_local[i])
         {
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
@@ -374,7 +374,7 @@ pocl_tce_run
        i < cmd->command.run.kernel->num_args + cmd->command.run.kernel->num_locals;
        ++i) 
     {
-      al = &(cmd->command.run.kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
       if (local_chunk == NULL)
         POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
