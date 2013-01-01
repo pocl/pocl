@@ -60,14 +60,6 @@ build using gcc. Use e.g. this command to configure instead:
 
   ./configure --enable-shared CC=gcc CXX=g++ --prefix=YOUR_INSTALLATION_PREFIX_HERE
 
-
-It's highly recommended to use the latest development version of LLVM.
-However, as llvm-svn is a moving target, new revisions might break pocl
-compilation. The latest LLVM trunk revision pocl has been tested 
-successfully with is:    
-
-    153643
-
 The standard build installations as provided by FSF are as follows:
 
 Basic Installation
