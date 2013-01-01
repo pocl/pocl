@@ -1,7 +1,8 @@
 0.7  January 2013
 =================
 
-[changes updated from bzr log up to 2012-08-28]
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
 
 Overall
 -------
@@ -11,9 +12,13 @@ Overall
   code size explosion with large WGs in comparison to
   the full replication method.
 - PowerPC 64 support (tested on Cell/Debian Sid/PS3).
+- PowerPC 32 support (tested on Cell/Debian Sid/PS3).
+- ARM v7 support (on Linux)
 - Beginning of Cell SPU support (very experimental!).
 - Most of the AMD APP SDK OpenCL examples now work and have been
   added to the pocl test suite. 
+- Most of the Parboil benchmark cases added to the test
+  suite.
 
 Kernel Compiler Passes
 ----------------------
@@ -29,8 +34,8 @@ Kernel Compiler Passes
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
-- clGetDeviceInfo can now use the hwloc lib for device property
-  queries. Still to exploit fully.
+- clGetDeviceInfo now uses the hwloc lib for device property
+  queries. Many new queries implemented.
 - clGetKernelInfo (initial implementation)
 - clGetMemObjectInfo (initial implementation)
 - clGetCommandQueueInfo (initial implementation)
@@ -41,6 +46,7 @@ OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 The OpenCL Runtime Implementations (OpenCL 1.2 Chapter 5)
 ---------------------------------------------------------
 - clBuildProgram: support for passing options to the compiler.
+- clEnqueueMarker
 
 OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 -------------------------------------------------------------------
@@ -56,7 +62,10 @@ Framework
 Device Drivers
 --------------
 
-- tce: support for explicitly calling custom/special operations 
+- pthread/basic: 
+  * extract CPU clock frequency from /proc/cpuinfo, if available
+  * return cl_khr_fp64 if doubles supported by the CPU
+- ttasim: support for explicitly calling custom/special operations 
   through the vendor extensions API
 
 Misc.
@@ -66,8 +75,8 @@ Misc.
 - Fixed passing NULL as a buffer argument to clSetKernelArguments
 - Fixed a major bug when launching the same kernel multiple times:
   the arguments very not copied to the command object.
-- Fixed several issues with ICD, it is now considered stable for
-  use.
+- Fixed several issues with ICD, it is now considered stable to be
+  used by default.
 
 0.6   August 2012
 =================
