@@ -148,23 +148,24 @@ POname(clCreateKernel)(cl_program program,
   kernel->arg_is_image = lt_dlsym(dlhandle, "_arg_is_image");
   kernel->arg_is_sampler = lt_dlsym(dlhandle, "_arg_is_sampler");
   kernel->num_locals = *(cl_uint *) lt_dlsym(dlhandle, "_num_locals");
-  kernel->arguments =
+  /* Temporary store for the arguments that are set with clSetKernelArg. */
+  kernel->dyn_arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
 
-  /* Initialize kernel arguments (in case the user doesn't). */
+  /* Initialize kernel "dynamic" arguments (in case the user doesn't). */
   for (i = 0; i < kernel->num_args; ++i)
     {
-      kernel->arguments[i].value = NULL;
-      kernel->arguments[i].size = 0;
+      kernel->dyn_arguments[i].value = NULL;
+      kernel->dyn_arguments[i].size = 0;
     }
 
   /* Fill up automatic local arguments. */
   for (i = 0; i < kernel->num_locals; ++i)
     {
-      kernel->arguments[kernel->num_args + i].value = NULL;
-      kernel->arguments[kernel->num_args + i].size =
+      kernel->dyn_arguments[kernel->num_args + i].value = NULL;
+      kernel->dyn_arguments[kernel->num_args + i].size =
         ((unsigned *) lt_dlsym(dlhandle, "_local_sizes"))[i];
     }
 

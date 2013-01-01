@@ -85,12 +85,12 @@ POname(clGetKernelWorkGroupInfo)
       for (i = 0; i < kernel->num_args; ++i)
         {
           if (!kernel->arg_is_local[i]) continue;
-          local_size += kernel->arguments[i].size;
+          local_size += kernel->dyn_arguments[i].size;
         }
       /* Count the automatic locals. */
       for (i = 0; i < kernel->num_locals; ++i)
         {
-          local_size += kernel->arguments[kernel->num_args + i].size;
+          local_size += kernel->dyn_arguments[kernel->num_args + i].size;
         }
 #if 0
       printf("### local memory usage %d\n", local_size);

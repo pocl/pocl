@@ -28,8 +28,6 @@ POAT_PB_CHECK_BUILD([stencil])
 AT_CHECK_UNQUOTED([make run-stencil -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
 ])
-# Result verification error
-AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([tpacf])

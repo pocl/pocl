@@ -125,6 +125,5 @@ AT_CLEANUP
 
 AT_SETUP([clSetKernelArg overwriting the previous kernel's args - lp:1075134])
 AT_KEYWORDS([regression setkernelarg])
-AT_XFAIL_IF(true)
 AT_CHECK([$abs_top_builddir/tests/regression/test_setargs], 0)
 AT_CLEANUP

@@ -81,6 +81,7 @@ struct thread_arguments {
   struct pocl_context pc;
   int last_gid_x; 
   pocl_workgroup workgroup;
+  struct pocl_argument *kernel_args;
 };
 
 struct data {
@@ -614,6 +615,7 @@ pocl_pthread_run
     arguments[i].pc.group_id[0] = first_gid_x;
     arguments[i].workgroup = w;
     arguments[i].last_gid_x = last_gid_x;
+    arguments[i].kernel_args = cmd->command.run.arguments;
 
     /* TODO: pool of worker threads to avoid syscalls here */
     error = pthread_create (&threads[i],
@@ -663,11 +665,11 @@ workgroup_thread (void *p)
      To function 
      void setup_kernel_arg_array(void **arguments, cl_kernel kernel)
      or similar
-*/
+  */
   cl_kernel kernel = ta->kernel;
   for (i = 0; i < kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(ta->kernel_args[i]);
       if (kernel->arg_is_local[i])
         {
           arguments[i] = malloc (sizeof (void *));
@@ -715,7 +717,7 @@ workgroup_thread (void *p)
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(ta->kernel_args[i]);
       arguments[i] = malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
     }

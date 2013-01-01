@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clEnqueueNDRangeKernel()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012 Pekka Jääskeläinen / Tampere Univ. of Tech.
+                 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -279,6 +279,28 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->command.run.tmp_dir = strdup(tmpdir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
+  /* Copy the currently set kernel arguments because the same kernel 
+     object can be reused for new launches with different arguments. */
+  command_node->command.run.arguments = 
+    (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
+                                     sizeof (struct pocl_argument));
+
+  for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
+    {
+      struct pocl_argument *arg = &command_node->command.run.arguments[i];
+      arg->size = kernel->dyn_arguments[i].size;
+
+      if (kernel->dyn_arguments[i].value == NULL)
+        {
+          arg->value = NULL;
+        }
+      else
+        {
+          arg->value = malloc (kernel->dyn_arguments[i].size);
+          memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
+        }
+    }
+
   command_node->next = NULL; 
   
   POname(clRetainCommandQueue) (command_queue);
@@ -289,7 +311,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
      queued kernel has been executed. */
   for (i = 0; i < kernel->num_args; ++i)
   {
-    struct pocl_argument *al = &(kernel->arguments[i]);
+    struct pocl_argument *al = &(kernel->dyn_arguments[i]);
     if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
       ++command_node->command.run.arg_buffer_count;
   }
@@ -300,7 +322,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   count = 0;
   for (i = 0; i < kernel->num_args; ++i)
   {
-    struct pocl_argument *al = &(kernel->arguments[i]);
+    struct pocl_argument *al = &(kernel->dyn_arguments[i]);
     if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
       {
         cl_mem buf;

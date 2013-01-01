@@ -97,6 +97,13 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
             }
           free (node->command.run.arg_buffers);
           free (node->command.run.tmp_dir);
+          for (i = 0; i < node->command.run.kernel->num_args + 
+                 node->command.run.kernel->num_locals; ++i)
+          {
+            free (node->command.run.arguments[i].value);
+          }
+          free (node->command.run.arguments);
+          
           POname(clReleaseKernel)(node->command.run.kernel);
           break;  
         case CL_COMMAND_MARKER:

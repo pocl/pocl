@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clSetKernelArg()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+                 2013 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -40,10 +41,10 @@ POname(clSetKernelArg)(cl_kernel kernel,
   if (arg_index >= kernel->num_args)
     return CL_INVALID_ARG_INDEX;
   
-  if (kernel->arguments == NULL)
+  if (kernel->dyn_arguments == NULL)
     return CL_INVALID_KERNEL;
 
-  p = &(kernel->arguments[arg_index]);  
+  p = &(kernel->dyn_arguments[arg_index]);  
   
   if (arg_value != NULL)
     {

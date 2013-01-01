@@ -228,10 +228,10 @@ pocl_basic_run
   for (i = 0; i < kernel->context->num_devices; ++i)
     {
       if (kernel->context->devices[i]->data == data)
-	{
-	  device = i;
-	  break;
-	}
+        {
+          device = i;
+          break;
+        }
     }
 
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
@@ -242,9 +242,12 @@ pocl_basic_run
 
   void *arguments[kernel->num_args + kernel->num_locals];
 
+  /* Process the kernel arguments. Convert the opaque buffer
+     pointers to real device pointers, allocate dynamic local 
+     memory buffers, etc. */
   for (i = 0; i < kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       if (kernel->arg_is_local[i])
         {
           arguments[i] = malloc (sizeof (void *));
@@ -294,7 +297,7 @@ pocl_basic_run
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
     }
