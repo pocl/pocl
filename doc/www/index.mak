@@ -17,7 +17,14 @@ multicore, multithread ...</p>
 goal of the project is to serve as a research platform for issues in parallel
 programming on heterogeneous platforms.</p>
 
-<h2>Current status (2012-12-07)</h2>
+<h1>News</h1>
+
+<h2>2013-01-01: 0.7 in release testing!</h2>
+
+<p>Please help testing the next pocl release. 
+Instructions <a href="https://sourceforge.net/apps/mediawiki/pocl/index.php?title=ReleaseTestLog">here</a>.</p>
+
+<h1>Current status (2013-01-01)</h1>
 
 <p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
 unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new tested applications.</p>
@@ -42,11 +49,11 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li>PowerPC64/Linux (host&amp;device)</li>
   <li>PowerPC32/Linux (host&amp;device)</li>
   <li>ARM v7/Linux (host&amp;device)</li>
-  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> (host X86_64&amp;instruction set simulator+FPGA-over-PCIe prototype as a device</li>
+  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> (host X86_64&amp;instruction set simulator+FPGA-over-PCIe prototype as a device)</li>
 </ul>
 
   
-<h2>Feature highlights (2012-12-07)</h2>
+<h1>Feature highlights (2013-01-01)</h1>
 <ul>
   <li>icd support</li>
   <li>configurable list of devices</li>

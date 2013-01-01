@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DIST_SUBDIRS = tce x86_64 powerpc powerpc64 cellspu
+DIST_SUBDIRS = tce x86_64 powerpc powerpc64 cellspu arm
 SUBDIRS = @OCL_TARGETS@ 
 
 include sources.mk

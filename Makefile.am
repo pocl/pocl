@@ -41,5 +41,5 @@ CLEANFILES = pocl.icd
 endif
 
 EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf \
-  CHANGES fix-include
+  CHANGES fix-include pocl.icd.in
 
