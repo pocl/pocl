@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.7-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.7], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -89,10 +89,6 @@ case "$LLVM_VERSION" in
    ;;
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
-   ;;
-     3.3svn)
-     AC_DEFINE([LLVM_3_3], [], "Using LLVM svn (upcoming 3.3)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.3)")     
    ;;   
      *)
    AC_MSG_ERROR(
