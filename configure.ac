@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
-#                         Pekka Jääskeläinen / Tampere University of Technology
+#               2011-2013 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.7-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.8-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -797,12 +797,13 @@ AC_C_BIGENDIAN
 # libpocl.so should get only API additions as we are implementing a standard.
 # 0:0:0 == 0.6
 # 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
-AC_SUBST([LIB_VERSION], ["1:0:0"])
+# 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
+AC_SUBST([LIB_VERSION], ["2:0:1"])
 
 # The kernel compiler opt plugin shared library, however, changes more 
 # drastically. Let's try to follow the similar 'current' numbering as
 # pocl and perhaps tune the 'revision' and 'age' later.
-AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["1:0:0"])
+AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["2:0:1"])
 
 AC_SUBST([LD_FLAGS_BIN])
 
