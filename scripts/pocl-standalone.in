@@ -144,9 +144,10 @@ then
 EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-no-fp"
 fi
 
-@OPT@ -load=${pocl_lib} -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl \
-    -workgroup -local-size=1 1 1 ${OPT_SWITCH} ${EXTRA_OPTS} \
-    -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
+@OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
+    -workgroup -kernel=${kernel} -local-size=1 1 1 ${OPT_SWITCH} \
+    ${EXTRA_OPTS} -instcombine -header=/dev/null ${FP_CONRACT} -o ${output_file} ${linked_bc}
+
 rm -fr ${tempdir}
