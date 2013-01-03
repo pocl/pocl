@@ -45,7 +45,7 @@ build:
 	( patch -sNp0 < $(testsuite_pocl_dir)/SDKApplication.cpp.patch || true ) && \ 
 	cd .. && \
 	find -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' && \
-	$(MAKE) -s 2>&1 | grep -v "No LSB modules are available" 
+	LDFLAGS=-lX11 $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" 
 
 test_AESEncryptDecrypt: 
 	cd $(amd_app_dir)/AESEncryptDecrypt && \
