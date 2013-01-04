@@ -56,29 +56,55 @@ the installation directory.
 Example of compiling an OpenCL host program against pocl using
 the pkg-config:
 
-gcc example1.c -o example `pkg-config --libs --cflags pocl`
+   gcc example1.c -o example `pkg-config --libs --cflags pocl`
 
 In this link mode, your program will always require the pocl OpenCL library. It
 wont be able to run with another OpenCL implementation without recompilation.
 
-Pocl needs to be configurated with the --enable-direct-linkage option (enabled
+Pocl needs to be configured with the --enable-direct-linkage option (enabled
 by default)
 
 LINKING YOUR PROGRAM WITH POCL THROUGH AN ICD LOADER
 
 You can link your OpenCL program against an ICD loader. If your ICD loader is
-correctly configurated to load pocl, your program will be able to use pocl.
+correctly configured to load pocl, your program will be able to use pocl.
 See "INSTALLABLE CLIENT DRIVER (ICD)" below for more information about ICD and 
 ICD loaders.
 
 Example of compiling an OpenCL host program using the free ocl-icd loader:
 
-gcc example1.c -o example `pkg-config --libs --cflags OpenCL`
+   gcc example1.c -o example `pkg-config --libs --cflags OpenCL`
 
 Example of compiling an OpenCL host program using the AMD ICD loader (no
 pkg-config support):
 
-gcc example1.c -o example -lOpenCL
+   gcc example1.c -o example -lOpenCL
+
+INSTALLABLE CLIENT DRIVER (ICD)
+
+pocl is built with the ICD extensions of OpenCL by default if development files
+of ocl-icd are found at configure time. This allows you to have several OpenCL
+implementations concurrently on your computer, and select the one to use at
+runtime by selecting the corresponding cl_platform. ICD support can be disabled
+by adding the flag
+
+  --disable-icd
+
+to the ./configure script.
+
+In case you also give the --prefix=$INSTALL option to ./configure, you need to 
+copy the icd file to where your ICD loader finds it, e.g.:
+
+  cp $INSTALL/etc/OpenCL/vendors/pocl.icd /etc/OpenCL/vendors/pocl.icd
+
+The ocl-icd ICD loader allows to use the OCL_ICD_VENDORS environment variable
+to specify a (non-standard) replacement for the /etc/OpenCL/vendors directory.
+
+An ICD loader is an OpenCL library acting as a "proxy" to one of the various OpenCL
+implementations installed in the system. pocl does not provide an ICD loader itself, 
+but NVidia, AMD, Intel and the free ocl-icd project each provides one.
+
+  ocl-icd: https://forge.imag.fr/projects/ocl-icd/
 
 STANDALONE
 
@@ -108,30 +134,3 @@ library or system call in the host. The examples "barriers" and "forloops"
 show how to call "printf" inside the kernel, but any other host function 
 can be called as well. This can prove quite useful when debugging OpenCL 
 kernels.
-
-KERNEL REPLICATION
-
-(todo)
-
-INSTALLABLE CLIENT DRIVER (ICD)
-
-Pocl is built with the ICD extensions of OpenCL by default if development files
-of ocl-icd are found at configure time. This allows you to have several OpenCL
-implementations concurrently on your computer, and select the one to use at
-runtime by selecting the corresponding cl_platform. ICD support can be disabled
-by adding the flag
-
-  --disable-icd
-
-to the ./configure script.
-
-In case you also give the --prefix=$INSTALL option to ./configure, you need to 
-copy the icd file to where your ICD loader finds it:
-  cp $INSTALL/etc/OpenCL/vendors/pocl.icd /etc/OpenCL/vendors/pocl.icd
-
-The ocl-icd ICD loader allows to use the OCL_ICD_VENDORS environment variable
-to specify a (non standard) replacement of the /etc/OpenCL/vendors directory.
-
-An ICD loader is an OpenCL library acting as a demultiplexor to various OpenCL
-implementations. Pocl does not provide an ICD loader itself, but NVidia, AMD,
-Intel and the free ocl-icd project each provides one.
