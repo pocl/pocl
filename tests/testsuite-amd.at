@@ -48,6 +48,8 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholesdp])
 AT_KEYWORDS([cl_amd_fp64])
+#this causes assert on LLVM 3.1
+AT_SKIP_IF([ grep "#define LLVM_3_1" $abs_top_srcdir/config.h ])
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)

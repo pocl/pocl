@@ -112,7 +112,7 @@ fi
 LLVM_RTTI_CHECK=$($LLVM_CONFIG --cxxflags | grep -i "\-fno-rtti")
 
 if test x"$LLVM_RTTI_CHECK" != x; then
-AC_MSG_ERROR([Your LLVM was not built with RTTI. 
+AC_MSG_WARN([Your LLVM was not built with RTTI. 
 You should rebuild LLVM with 'make REQUIRES_RTTI=1'. 
 See the INSTALL file for more information.])
 fi
