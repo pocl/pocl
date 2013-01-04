@@ -138,6 +138,7 @@ AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([mandelbrot])
+AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_srcdir/config.h ])
 AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -190,6 +191,7 @@ AT_CHECK_UNQUOTED([make test_MonteCarloAsianDP -sC $abs_top_builddir/examples/AM
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([nbody])
+AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_srcdir/config.h ])
 AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
