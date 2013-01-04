@@ -491,6 +491,13 @@ AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
 
 test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
 
+PKG_CHECK_MODULES([GLEW], [glew], 
+  [
+    AC_DEFINE([HAVE_GLEW], [],
+        [Defined if The OpenGL Extension Wrangler library is found])
+  ],
+  [AC_MSG_NOTICE([libGLEW not found. A few tests will not work])])
+
 # Checks for programs.
 AC_DEFUN([LLVM_PROG], [
   AC_ARG_VAR([$1], [$3])
