@@ -528,29 +528,6 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
-
-####################################################################
-# Determine which device drivers to build.
-
-# Check if CellSPU support is found
-# The libspe version requirement is not strict. This is the only one tested.
-PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
-  [
-    AC_MSG_NOTICE([libspe2 found.])
-    LIBSPE_AVAILABLE=yes
-    OCL_DRIVERS="$OCL_DRIVERS spu"
-    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
-  ],
-  [
-    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
-    LIBSPE_AVAILABLE=no
-  ])
-
-AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
-
-AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
-
-
 #
 # Targets.
 # Note - there are two kinds of targets: the autoconf cross compilation target
@@ -563,7 +540,7 @@ AC_ARG_ENABLE( [targets],
                                 [Comma-separated list of OCL target devices to compile the 
                                  kernel library against.] ) ],
                ,
-               enableval=all)
+               enableval=$host_cpu)
 
 #TODO: check for bad targets...
 if test "x$enableval" == "xall" 
@@ -572,6 +549,33 @@ then
 else
   OCL_TARGETS=$(echo $enableval | tr ',' ' ')
 fi
+
+####################################################################
+# Determine which device drivers to build.
+
+# Check if CellSPU support is found
+# The libspe version requirement is not strict. This is the only one tested.
+PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
+  [
+    AC_MSG_NOTICE([libspe2 found.])
+    LIBSPE_AVAILABLE=yes
+    OCL_DRIVERS="$OCL_DRIVERS spu"
+    OCL_TARGETS="$OCL_TARGETS cellspu"
+    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+  ],
+  [
+    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
+    LIBSPE_AVAILABLE=no
+  ])
+
+AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
+
+AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
+if test ! -z TCE_AVAILABLE
+then 
+    OCL_TARGETS="$OCL_TARGETS tce"
+fi
+
 AC_SUBST([OCL_TARGETS])
 
 #Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
