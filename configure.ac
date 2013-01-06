@@ -103,7 +103,7 @@ LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
 
 if test ! -e $LLVM_SHARED_LIB_FILE;
 then
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 $LLVM_SHARED_LIB_FILE not found. 
 Recompile and install LLVM after ./configure --enable-shared.
 Read the INSTALL file for details.])
