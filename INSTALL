@@ -37,6 +37,8 @@ build using gcc. Use e.g. this command to configure instead:
 
   ./configure --enable-shared CC=gcc CXX=g++ --prefix=YOUR_INSTALLATION_PREFIX_HERE
 
+  See README.Darwin for more details on installing pocl on Mac.
+
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
 source tree, you need to generate the autotool build files with 
