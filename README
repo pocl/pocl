@@ -82,11 +82,10 @@ pkg-config support):
 
 INSTALLABLE CLIENT DRIVER (ICD)
 
-pocl is built with the ICD extensions of OpenCL by default if development files
-of ocl-icd are found at configure time. This allows you to have several OpenCL
-implementations concurrently on your computer, and select the one to use at
-runtime by selecting the corresponding cl_platform. ICD support can be disabled
-by adding the flag
+pocl is built with the ICD extensions of OpenCL by default. This allows you 
+to have several OpenCL implementations concurrently on your computer, and 
+select the one to use at runtime by selecting the corresponding cl_platform. 
+ICD support can be disabled by adding the flag
 
   --disable-icd
 
