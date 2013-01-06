@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#define DEBUG_SPU_DEVICE
+//#define DEBUG_SPU_DEVICE
 
 #include "include/pocl_device.h"
 #include <stdlib.h>
