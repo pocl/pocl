@@ -8,7 +8,7 @@ body
 }
 h1#title
 {
-#    background-color: #000044;
+    background-color: white;
     color: black;
     padding: 10px;
 }
@@ -29,14 +29,14 @@ p.license_text {
 
 h1
 {
-#    background-color: #00ccdd;
+    background-color: #E6E6E6;
     padding: 4px;
     font-size: large;
 }
 
 h2
 {
-#    background-color: #00ccee;
+    background-color: #F2F2F2;
     padding: 4px;
     font-size: medium;
     font-weight: bold;
@@ -44,7 +44,7 @@ h2
 
 h3
 {
-#    background-color: #00ddee;
+    background-color: #F2F2F2;
     padding: 4px;
     font-size: medium;
 

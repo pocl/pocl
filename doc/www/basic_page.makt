@@ -1,7 +1,7 @@
 <%
    sub_page = ""
    try:
-       sub_page = " - " + self.attr.sub_page
+       sub_page = " | " + self.attr.sub_page
    except:
        pass
 %>
@@ -48,7 +48,7 @@
 
     <div id="footer">
       <p class="footer">
-        pocl - Portable OpenCL  &copy; 2010-2012 pocl developers 
+        pocl - Portable OpenCL  &copy; 2010-2013 pocl developers 
       </p>
     </div>
 

@@ -40,7 +40,7 @@
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
-#define DEBUG_CELLSPU_DRIVER
+//#define DEBUG_CELLSPU_DRIVER
 
 struct data {
   /* Currently loaded kernel. */
@@ -246,14 +246,16 @@ pocl_cellspu_run
 			"spu-gcc lib/CL/devices/cellspu/spe_wrap.c -o %s %s "
 			" -Xlinker --defsym -Xlinker _ocl_buffer=%d"
 			" -Xlinker --defsym -Xlinker kernel_command=%d"
-			" -D_KERNEL=%s -std=c99",
+			" -I . -D_KERNEL=%s -std=c99",
 			module,
 			assembly, 
 			CELLSPU_OCL_BUFFERS_START,
 			CELLSPU_KERNEL_CMD_ADDR,
 			workgroup_string);
       assert (error >= 0);
-     printf("compiling: %s\n", command); fflush(stdout); 
+#ifdef DEBUG_CELLSPU_DRIVER
+      printf("compiling: %s\n", command); fflush(stdout); 
+#endif
       error = system (command);
       assert (error == 0);
 
@@ -295,7 +297,7 @@ pocl_cellspu_run
 
   for (i = 0; i < kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(kernel->dyn_arguments[i]);
       if (kernel->arg_is_local[i])
         {
           chunk_info_t* local_chunk = cellspu_malloc_local (d, al->size);
@@ -356,7 +358,7 @@ pocl_cellspu_run
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(kernel->dyn_arguments[i]);
       arguments[i] = (uint32_t)malloc (sizeof (void *));
       *(void **)(arguments[i]) = cellspu_malloc_local(data, al->size);
     }

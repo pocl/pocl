@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Pekka Jääskeläinen
+# Copyright (c) 2012-2013 Pekka Jääskeläinen
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -31,10 +31,9 @@ all: $(generated_htmls)
 
 %.html : %.mak
 	./generate_html.py $< $@
-	cp $@ public_html
 
 publish:
-	scp public_html/* $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
+	rsync -r *.html *.css $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
 
 clean:
 	rm -f $(generated_htmls)

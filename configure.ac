@@ -1,8 +1,8 @@
 ##                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
-#               2011-2013 Pekka Jääskeläinen / Tampere University of Technology
+# Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
+#                         Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -107,7 +107,7 @@ LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
 
 if test ! -e $LLVM_SHARED_LIB_FILE;
 then
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 $LLVM_SHARED_LIB_FILE not found. 
 Recompile and install LLVM after ./configure --enable-shared.
 Read the INSTALL file for details.])
@@ -284,6 +284,13 @@ if test x"$icd" != xno; then :
     [ OCL_ICD_available=yes 
       AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
     [:])
+  # Check for the ICD loader library. There doesn't seem to be
+  # a symbol that is available only in the ICD loaders. Thus,
+  # this check is passed also in case libOpenCL is the implementation,
+  # not the loader.
+  AC_CHECK_LIB([OpenCL], [clGetPlatformIDs], [:], [
+    AC_MSG_ERROR([Could not find an ICD loader. Please install one or add --disable-icd (see README for details).])
+    ])
 fi
 
 AS_CASE(["$icd,$OCL_ICD_available"],
@@ -464,9 +471,14 @@ fi
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
 
 # libtool dynamic library handling library
+old_LIBS="$LIBS"
+LIBS=
 AC_SEARCH_LIBS([lt_dlsym], [ltdl], [], [
 AC_MSG_ERROR([unable to find the libtool dl library (usually libltdl-dev)])
 ])
+LTDL_LIBS="$LIBS"
+AC_SUBST([LTDL_LIBS])
+LIBS="$old_LIBS"
 
 # Following checks are related to the build system for devices (clang and so),
 # and not for building the host code.
@@ -525,29 +537,6 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
-
-####################################################################
-# Determine which device drivers to build.
-
-# Check if CellSPU support is found
-# The libspe version requirement is not strict. This is the only one tested.
-PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
-  [
-    AC_MSG_NOTICE([libspe2 found.])
-    LIBSPE_AVAILABLE=yes
-    OCL_DRIVERS="$OCL_DRIVERS spu"
-    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
-  ],
-  [
-    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
-    LIBSPE_AVAILABLE=no
-  ])
-
-AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
-
-AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
-
-
 #
 # Targets.
 # Note - there are two kinds of targets: the autoconf cross compilation target
@@ -560,15 +549,45 @@ AC_ARG_ENABLE( [targets],
                                 [Comma-separated list of OCL target devices to compile the 
                                  kernel library against.] ) ],
                ,
-               enableval=all)
+               enableval=$host_cpu)
 
 #TODO: check for bad targets...
 if test "x$enableval" == "xall" 
 then  
   OCL_TARGETS="arm x86_64 powerpc powerpc64 tce cellspu"
+elif test "x$enableval" == "xarmv7l"
+then
+  OCL_TARGETS="arm"
 else
   OCL_TARGETS=$(echo $enableval | tr ',' ' ')
 fi
+
+####################################################################
+# Determine which device drivers to build.
+
+# Check if CellSPU support is found
+# The libspe version requirement is not strict. This is the only one tested.
+PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
+  [
+    AC_MSG_NOTICE([libspe2 found.])
+    LIBSPE_AVAILABLE=yes
+    OCL_DRIVERS="$OCL_DRIVERS spu"
+    OCL_TARGETS="$OCL_TARGETS cellspu"
+    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+  ],
+  [
+    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
+    LIBSPE_AVAILABLE=no
+  ])
+
+AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
+
+AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
+if test ! -z TCE_AVAILABLE
+then 
+    OCL_TARGETS="$OCL_TARGETS tce"
+fi
+
 AC_SUBST([OCL_TARGETS])
 
 #Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)

@@ -1,0 +1,42 @@
+Portable OpenCL (pocl) v0.7 released
+------------------------------------
+
+Portable OpenCL aims to be an efficient open source (MIT-licensed) 
+implementation of the OpenCL 1.2 standard. 
+
+In addition to producing an easily portable open source OpenCL
+implementation, another major goal of the project is improving 
+performance portability of OpenCL programs with compiler 
+optimizations, reducing the need for target-dependent manual 
+optimizations. 
+
+At the core of pocl is the kernel compiler that consists of a 
+set of LLVM passes used to statically generate multiple work-item
+work group functions of kernels, even in the presence of work-group 
+barriers. These functions are suitable for parallelization in multiple 
+ways (SIMD, VLIW, superscalar,...).
+
+This release adds support for LLVM 3.2, generating the work group
+functions using simple (parallel) loop structures, fixes to make the
+pocl work on ppc32, ppc64 and armv7. Initial Cell SPU support has also 
+been added (very experimental!) to this release as an example of
+an heterogeneous pocl device driver.
+
+Even though the OpenCL 1.2 standard is not yet implemented fully and
+it contains known bugs, we consider pocl ready for wider scale testing. 
+The pocl 0.7 test suite compiles and runs most of the ViennaCL 1.3.1 examples, 
+Rodinia 2.0.1 benchmarks, Parboil benchmarks, OpenCL Programming Guide book 
+samples and the AMD APP SDK v2.8 OpenCL samples.
+
+Acknowledgements
+----------------
+We'd like to thank the Radio Implementation Research Team from Nokia
+Research Center which sponsored the development of this release. Much 
+appreciated!
+
+Links
+-----
+Home page:         http://pocl.sourceforge.net/
+This announcement: http://pocl.sourceforge.net/downloads/ANNOUNCEMENT
+Change log:        http://pocl.sourceforge.net/downloads/CHANGES
+Download:          http://pocl.sourceforge.net/downloads
