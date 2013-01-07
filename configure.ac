@@ -551,6 +551,9 @@ AC_ARG_ENABLE( [targets],
 if test "x$enableval" == "xall" 
 then  
   OCL_TARGETS="arm x86_64 powerpc powerpc64 tce cellspu"
+elif test "x$enableval" == "xarmv7l"
+then
+  OCL_TARGETS="arm"
 else
   OCL_TARGETS=$(echo $enableval | tr ',' ' ')
 fi
