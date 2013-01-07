@@ -467,9 +467,14 @@ fi
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
 
 # libtool dynamic library handling library
+old_LIBS="$LIBS"
+LIBS=
 AC_SEARCH_LIBS([lt_dlsym], [ltdl], [], [
 AC_MSG_ERROR([unable to find the libtool dl library (usually libltdl-dev)])
 ])
+LTDL_LIBS="$LIBS"
+AC_SUBST([LTDL_LIBS])
+LIBS="$old_LIBS"
 
 # Following checks are related to the build system for devices (clang and so),
 # and not for building the host code.
