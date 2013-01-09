@@ -6,7 +6,7 @@
 <p>Basic usage of pocl should be as easy as any other OpenCL implementation.
 The recommended way is to use the ICD interface. </p>
 
-<p>Its behavior can be controlled with multiple environment variables.
+<p>The behavior of pocl can be controlled with multiple environment variables.
 See <a href="http://bazaar.launchpad.net/~pocl/pocl/trunk/view/head:/doc/envs.txt">doc/envs.txt</a>
 for the full listing.</p>
 

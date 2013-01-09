@@ -19,6 +19,10 @@ programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2013-01-09: 0.7 released!</h2>
+
+<p>The source package, the change log, and the release annoucement are <a href="/downloads">here</a>.</p> 
+
 <h2>2013-01-01: 0.7 in release testing!</h2>
 
 <p>Please help testing the next pocl release. 

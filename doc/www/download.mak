@@ -17,7 +17,11 @@ the version control system:</p>
 We also package releases regularly, usually after each new LLVM release:
 
 <ul>
-<li><b>Version 0.7 RC:</b> Uses LLVM 3.2. Please help testing this release. Instructions <a href="https://sourceforge.net/apps/mediawiki/pocl/index.php?title=ReleaseTestLog">here</a>.</li>
+## Please help testing this release. Instructions <a href="https://sourceforge.net/apps/mediawiki/pocl/index.php?title=ReleaseTestLog">here</a>.</li>
+<li><b>Version 0.7:</b> Uses LLVM 3.2. 
+            <a href="http://pocl.sourceforge.net/downloads/pocl-0.7.tar.gz">pocl-0.7.tar.gz (1.0M)</a>, 
+            <a href="http://pocl.sourceforge.net/downloads/CHANGES">change log</a>, 
+            <a href="http://pocl.sourceforge.net/downloads/ANNOUNCEMENT">release notes</a></li>
 
 <li><b>Version 0.6:</b> Uses LLVM 3.1.
             <a href="https://launchpad.net/pocl/0.6/0.6.0/+download/pocl-0.6.tar.gz">pocl-0.6.tar.gz (780K)</a>, 
