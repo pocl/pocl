@@ -41,5 +41,7 @@ CLEANFILES = pocl.icd
 endif
 
 EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf \
-  CHANGES fix-include pocl.icd.in
+  CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
+  README.Darwin README.devel README.ppc64
+
 

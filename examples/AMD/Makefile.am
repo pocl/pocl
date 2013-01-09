@@ -44,8 +44,8 @@ build: $(testsuite_src_dir)
 	cd $(testsuite_src_dir)/samples/opencl/SDKUtil && \
 	( patch -sNp0 < $(testsuite_pocl_dir)/SDKApplication.cpp.patch || true ) && \
 	cd .. && \
-	( ( find -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' ) || true ) && \
-	LDFLAGS=-lX11 $(MAKE) -s | grep -v "No LSB modules are available" || true
+	find -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' && \
+	LDFLAGS=-lX11 $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
 
 test_AESEncryptDecrypt: 
 	cd $(amd_app_dir)/AESEncryptDecrypt && \

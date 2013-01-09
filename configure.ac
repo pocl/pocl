@@ -588,7 +588,6 @@ then
     OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
-AC_SUBST([OCL_TARGETS])
 
 #Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
 #run in 32 bit mode per default. So for powerpc, do not use the host cpu unless
@@ -601,10 +600,12 @@ AC_ARG_ENABLE([ppc64],
               [if test x"$host_cpu" = x"powerpc64"
                then
                  default_target="powerpc"
+                 OCL_TARGETS="$OCL_TARGETS powerpc"
                fi
               ] )
  
 kernel_dir=$default_target
+AC_SUBST([OCL_TARGETS])
 
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/tce/Makefile
