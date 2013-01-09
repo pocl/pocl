@@ -7,7 +7,7 @@ git clone git://anongit.freedesktop.org/piglit
 cd piglit
 ccmake .
 # It should open the cmake's curses GUI. Select only the CL tests and
-# the need for waffle.
+# deselect waffle.
 
 # Build the piglit test framework
 make
