@@ -52,12 +52,14 @@ header="`dirname $1`/`basename $1 .bc`_header.h"
 
 rm -f ${header}
 
-if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
-then
-    @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
-else
-    @OPT@ -load=@pkglibdir@/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+# BEGIN REMOVE ONCE INSTALLED
+@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+if false ; then
+# END REMOVE ONCE INSTALLED
+@OPT@ -load=@pkglibdir@/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+# BEGIN REMOVE ONCE INSTALLED
 fi
+# END REMOVE ONCE INSTALLED
 
 @CLANG@ @HOST_CLANG_FLAGS@ -c -o ${output_file}.o -x c - <<EOF
 #include "${header}"

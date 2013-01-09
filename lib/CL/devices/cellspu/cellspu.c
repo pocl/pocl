@@ -22,13 +22,13 @@
 */
 
 #include "cellspu.h"
+#include "install-paths.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <../dev_image.h>
 #include <sys/time.h>
-#include <sys/stat.h>
 
 #include <libspe2.h>
 #include "pocl_device.h"
@@ -205,13 +205,14 @@ pocl_cellspu_run
   if ( access (module, F_OK) != 0)
     {
       char *llvm_ld;
-      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/linked.bc", tmpdir);
       assert (error >= 0);
       
-      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
+      if (getenv("POCL_BUILDING") != NULL)
         llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
+      else if (access(PKGLIBEXECDIR "/pocl-llvm-ld", X_OK) == 0)
+        llvm_ld = PKGLIBEXECDIR "/pocl-llvm-ld";
       else
         llvm_ld = "pocl-llvm-ld";
 

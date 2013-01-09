@@ -736,9 +736,6 @@ if test x"$prefix" = xNONE; then
   fi
 fi
 
-AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
-AC_DEFINE_UNQUOTED([POCL_INSTALLED_DATA],["$prefix/share/pocl"],[The installation directory])
-AC_SUBST([POCL_INSTALLED_DATA], $prefix/share/pocl)
 AC_DEFINE_UNQUOTED([LLVM_LD], ["pocl-llvm-ld"],[LLVM linker binary])
 AC_SUBST([LLVM_LD], [pocl-llvm-ld])
 

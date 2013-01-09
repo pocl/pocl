@@ -22,7 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-bin_SCRIPTS = pocl-build pocl-kernel pocl-workgroup pocl-standalone
+bin_SCRIPTS = pocl-standalone
+pkgdata_SCRIPTS = pocl-build pocl-kernel pocl-workgroup
 CLEANFILES = pocl-build pocl-kernel pocl-workgroup pocl-standalone
 EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in pocl-standalone.in
 
@@ -30,6 +31,7 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]abs_top_builddir[@],$(abs_top_builddir),g'	\
                -e 's,[@]pkgincludedir[@],$(pkgincludedir),g'		\
                -e 's,[@]pkglibdir[@],$(pkglibdir),g'			\
+               -e 's,[@]pkglibexecdir[@],$(pkglibexecdir),g'		\
                -e 's,[@]CLANG[@],$(CLANG),g'				\
                -e 's,[@]CLFLAGS[@],$(CLFLAGS),g'			\
                -e 's,[@]TARGET[@],$(TARGET),g'	\
@@ -42,18 +44,32 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]LLC[@],$(LLC),g' \
                -e 's,[@]LLVM_VERSION[@],$(LLVM_VERSION),g' 
 
-pocl-build: pocl-build.in Makefile
+pocl-build pocl-kernel pocl-workgroup pocl-standalone: %: %.in Makefile ../install-paths.h
 	$(do_subst) < $< > $@
 	chmod +x $@
 
-pocl-kernel: pocl-kernel.in Makefile
-	$(do_subst) < $< > $@
-	chmod +x $@
+#pocl-kernel: pocl-kernel.in Makefile
+#	$(do_subst) < $< > $@
+#	chmod +x $@
+#
+#pocl-workgroup: pocl-workgroup.in Makefile
+#	$(do_subst) < $< > $@
+#	chmod +x $@
+#
+#pocl-standalone: pocl-standalone.in Makefile
+#	$(do_subst) < $< > $@
+#	chmod +x $@
 
-pocl-workgroup: pocl-workgroup.in Makefile
-	$(do_subst) < $< > $@
-	chmod +x $@
-
-pocl-standalone: pocl-standalone.in Makefile
-	$(do_subst) < $< > $@
-	chmod +x $@
+install-exec-hook: $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
+	for f in $(bin_SCRIPTS) ; do \
+		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
+			> "$(DESTDIR)$(bindir)/$$f" \
+			< "$$f" && \
+		chmod +x "$(DESTDIR)$(bindir)/$$f" ; \
+	done
+	for f in $(pkgdata_SCRIPTS) ; do \
+		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
+			> "$(DESTDIR)$(pkgdatadir)/$$f" \
+			< "$$f" && \
+		chmod +x "$(DESTDIR)$(pkgdatadir)/$$f" ; \
+	done

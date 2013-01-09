@@ -24,6 +24,7 @@
 
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "install-paths.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -55,7 +56,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   char parallel_filename[POCL_FILENAME_LENGTH];
   size_t n;
   int i, count;
-  struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
   struct pocl_context pc;
@@ -207,8 +207,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (access (parallel_filename, F_OK) != 0) 
     {
 
-      if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
+      if (getenv("POCL_BUILDING") != NULL)
         pocl_wg_script = BUILDDIR "/scripts/" POCL_WORKGROUP;
+      else if (access(PKGDATADIR "/" POCL_WORKGROUP, X_OK) == 0)
+        pocl_wg_script = PKGDATADIR "/" POCL_WORKGROUP;
       else
         pocl_wg_script = POCL_WORKGROUP;
 

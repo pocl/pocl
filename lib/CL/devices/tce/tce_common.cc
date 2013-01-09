@@ -24,9 +24,9 @@
 #include "pocl_util.h"
 
 #include "config.h"
+#include "install-paths.h"
 
 #include <unistd.h>
-#include <sys/stat.h>
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE
@@ -257,12 +257,14 @@ pocl_tce_run
   if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       char *llvm_ld;
-      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/linked.bc", cmd->command.run.tmp_dir);
       assert (error >= 0);
-      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
+
+      if (getenv("POCL_BUILDING") != NULL)
         llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
+      else if (access(PKGLIBEXECDIR "/pocl-llvm-ld", X_OK) == 0)
+        llvm_ld = PKGLIBEXECDIR "/pocl-llvm-ld";
       else
         llvm_ld = "pocl-llvm-ld";
 
@@ -278,10 +280,12 @@ pocl_tce_run
       
       std::string deviceMainSrc = "";
 
-      if (access (BUILDDIR "/lib/CL/devices/tce/tta_device_main.c", R_OK) == 0)
+      if (getenv("POCL_BUILDING") != NULL)
         deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
-      else
-        deviceMainSrc = POCL_INSTALLED_DATA "/tta_device_main.c";
+      else {
+	assert(access(PKGDATADIR "/tta_device_main.c", R_OK) == 0);
+        deviceMainSrc = PKGDATADIR "/tta_device_main.c";
+      }
      
       std::string kernelObjSrc = "";
       kernelObjSrc += cmd->command.run.tmp_dir;

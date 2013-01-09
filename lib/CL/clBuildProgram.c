@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "install-paths.h"
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -117,6 +118,13 @@ POname(clBuildProgram)(cl_program program,
 
       fclose(source_file);
 
+      if (getenv("POCL_BUILDING") != NULL)
+        pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
+      else if (access(PKGDATADIR "/" POCL_BUILD, X_OK) == 0)
+        pocl_build_script = PKGDATADIR "/" POCL_BUILD;
+      else
+        pocl_build_script = POCL_BUILD;
+
       /* Build the fully linked non-parallel bitcode for all
          devices. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
@@ -130,11 +138,6 @@ POname(clBuildProgram)(cl_program program,
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          if (access(BUILDDIR "/scripts/" POCL_BUILD, X_OK) == 0)
-            pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
-          else
-            pocl_build_script = POCL_BUILD;
-          
           if (real_device_list[device_i]->llvm_target_triplet != NULL)
             {
               error = snprintf(command, COMMAND_LENGTH,

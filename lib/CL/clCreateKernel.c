@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "install-paths.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -41,12 +42,12 @@ POname(clCreateKernel)(cl_program program,
   FILE *binary_file;
   size_t n;
   char descriptor_filename[POCL_FILENAME_LENGTH];
-  struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
   lt_dlhandle dlhandle = NULL;
   int i;
   int device_i;
+  char* pocl_kernel_fmt;
   
   if (program == NULL || program->num_devices == 0)
     POCL_ERROR(CL_INVALID_PROGRAM);
@@ -59,6 +60,13 @@ POname(clCreateKernel)(cl_program program,
     POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT (kernel);
+
+  if (getenv("POCL_BUILDING") != NULL)
+    pocl_kernel_fmt = BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s";
+  else if (access(PKGDATADIR "/" POCL_KERNEL, X_OK) == 0)
+    pocl_kernel_fmt = PKGDATADIR "/" POCL_KERNEL " -k %s -t %s -o %s %s";
+  else
+    pocl_kernel_fmt = POCL_KERNEL " -k %s -t %s -o %s %s";
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
@@ -99,20 +107,12 @@ POname(clCreateKernel)(cl_program program,
       if (error < 0)
         POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 
-      if (stat(BUILDDIR "/scripts/" POCL_KERNEL, &buf) == 0)
-        error = snprintf(command, COMMAND_LENGTH,
-                         BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s",
-                         kernel_name,
-                         program->devices[device_i]->llvm_target_triplet,
-                         descriptor_filename,
-                         binary_filename);
-      else
-        error = snprintf(command, COMMAND_LENGTH,
-                         POCL_KERNEL " -k %s -t %s -o %s %s",
-                         kernel_name,
-                         program->devices[device_i]->llvm_target_triplet,
-                         descriptor_filename,
-                         binary_filename);
+      error = snprintf(command, COMMAND_LENGTH,
+                       pocl_kernel_fmt,
+                       kernel_name,
+                       program->devices[device_i]->llvm_target_triplet,
+                       descriptor_filename,
+                       binary_filename);
       if (error < 0)
         POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
 

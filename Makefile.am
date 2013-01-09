@@ -44,4 +44,19 @@ EXTRA_DIST = config/xclang doc/envs.txt tools/data/test_machine.adf \
   CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
   README.Darwin README.devel README.ppc64
 
+BUILT_SOURCES = install-paths.h
+CLEANFILES = install-paths.h
+# Always rebuild install-paths.h as paths can be changed at each make invocation
+.PHONY: install-paths.h
+install-paths.h:
+	echo "#define PKGDATADIR \"${pkgdatadir}\"" > $@.new
+	echo "#define PKGLIBEXECDIR \"${pkglibexecdir}\"" >> $@.new
+	@if cmp --quiet $@.new $@ ; then \
+		: "Paths not changed" ;\
+		$(RM) $@.new ;\
+	else \
+		echo "New paths, updating $@" ;\
+		mv $@.new $@ ;\
+	fi
+
 
