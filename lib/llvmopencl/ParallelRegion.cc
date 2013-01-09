@@ -28,12 +28,16 @@
 #include "config.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
-#else
+#include "llvm/ValueSymbolTable.h"
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
+#include "llvm/ValueSymbolTable.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #endif
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/ValueSymbolTable.h"
 
 #include <set>
 #include <sstream>
@@ -572,7 +576,11 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
+#if (defined LLVM_3_1 or defined LLVM_3_2)
     AttrListPtr func_printf_PAL;
+#else
+    AttributeSet func_printf_PAL;
+#endif
     {
       SmallVector<AttributeWithIndex, 4> Attrs;
 #ifdef LLVM_3_1
@@ -584,10 +592,14 @@ ParallelRegion::InjectPrintF
       PAWI.Attrs = Attribute::NoUnwind;
       Attrs.push_back(PAWI);
       func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
-#else
+#elif defined LLVM_3_2
       Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attributes::NoCapture));
       Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attributes::NoUnwind));
       func_printf_PAL = AttrListPtr::get(M->getContext(), Attrs);
+#else
+      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attribute::NoCapture));
+      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attribute::NoUnwind));
+      func_printf_PAL = AttributeSet::get(M->getContext(), Attrs);
 #endif
     }
     printfFunc->setAttributes(func_printf_PAL);

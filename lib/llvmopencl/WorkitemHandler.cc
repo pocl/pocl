@@ -22,15 +22,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "config.h"
 #include <sstream>
 #include <iostream>
 
-#include "llvm/Support/CommandLine.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/ValueSymbolTable.h"
+#else
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/ValueSymbolTable.h"
+#endif
+#include "llvm/Support/CommandLine.h"
 #include "WorkitemHandler.h"
 #include "Kernel.h"
 

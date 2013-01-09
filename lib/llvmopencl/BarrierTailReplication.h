@@ -23,9 +23,15 @@
 #ifndef POCL_BARRIER_TAIL_REPLICATION
 #define POCL_BARRIER_TAIL_REPLICATION
 
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
+#include "llvm/Function.h"
+#else
+#include "llvm/IR/Function.h"
+#endif
+
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <map>

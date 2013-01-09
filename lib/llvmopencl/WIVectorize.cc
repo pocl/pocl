@@ -37,11 +37,6 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Target/TargetData.h"
-#else
-#include "llvm/IRBuilder.h"
-#include "llvm/TypeBuilder.h"
-#include "llvm/DataLayout.h"
-#endif
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -49,8 +44,36 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Metadata.h"
+#elif defined LLVM_3_2
+#include "llvm/IRBuilder.h"
+#include "llvm/TypeBuilder.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Type.h"
+#include "llvm/Metadata.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Metadata.h"
+#endif
+#include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -67,7 +90,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Transforms/Vectorize.h"
-#include "llvm/Metadata.h"
 #include <algorithm>
 #include <map>
 #include <iostream>

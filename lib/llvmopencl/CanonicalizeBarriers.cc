@@ -21,14 +21,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "config.h"
 #include "CanonicalizeBarriers.h"
 #include "BarrierBlock.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <iostream>
+
+#if (defined LLVM_3_1 or defined LLVM_3_2)
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#else
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#endif
 
 using namespace llvm;
 using namespace pocl;

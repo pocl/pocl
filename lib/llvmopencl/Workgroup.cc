@@ -27,20 +27,33 @@
 #include "BarrierTailReplication.h"
 #include "WorkitemReplication.h"
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "config.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
-#else
+#include "llvm/BasicBlock.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Module.h"
 #endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -166,8 +179,10 @@ Workgroup::runOnModule(Module &M)
       
 #ifdef LLVM_3_1
     L->addFnAttr(Attribute::NoInline);
-#else
+#elif defined LLVM_3_2
     L->addFnAttr(Attributes::NoInline);
+#else
+    L->addFnAttr(Attribute::NoInline);
 #endif
 
     privatizeContext(M, L);
