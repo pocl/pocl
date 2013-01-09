@@ -1,7 +1,17 @@
 0.8  unreleased
 ===============
 
-[changes updated from bzr log until 2013-01-01]
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+[changes updated from bzr log until 2013-01-09]
+
+Misc.
+-----
+-  Fix to the helper script search logic:
+   Search from the BUILDDIR only if env POCL_BUILDING is
+   defined. Otherwise search from PKGDATADIR first, then
+   from the PATH.	
 
 0.7  January 2013
 =================
