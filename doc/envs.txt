@@ -1,5 +1,10 @@
 pocl supports some environment variables to control its behavior as follows:
 
+POCL_BUILDING
+
+If set, the pocl helper scripts are searched first from the
+pocl build directory.
+
 POCL_DEVICES and POCL_DEVICEn_PARAMETERS
 
 POCL_DEVICES is a space separated list of the device instances to be enabled. 

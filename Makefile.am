@@ -51,6 +51,7 @@ CLEANFILES = install-paths.h
 install-paths.h:
 	echo "#define PKGDATADIR \"${pkgdatadir}\"" > $@.new
 	echo "#define PKGLIBEXECDIR \"${pkglibexecdir}\"" >> $@.new
+	echo "#define PKGINCLUDEDIR \"${pkgincludedir}\"" >> $@.new
 	@if cmp --quiet $@.new $@ ; then \
 		: "Paths not changed" ;\
 		$(RM) $@.new ;\

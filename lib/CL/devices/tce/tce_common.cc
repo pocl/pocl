@@ -1,6 +1,6 @@
 /* tce_common.cc - common functionality over the different TCE/TTA device drivers.
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -278,14 +278,20 @@ pocl_tce_run
       error = system(command);
       assert (error == 0);
       
+      std::string poclIncludePathSwitch = "";
       std::string deviceMainSrc = "";
-
       if (getenv("POCL_BUILDING") != NULL)
-        deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
-      else {
-	assert(access(PKGDATADIR "/tta_device_main.c", R_OK) == 0);
-        deviceMainSrc = PKGDATADIR "/tta_device_main.c";
-      }
+        {
+          deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
+          poclIncludePathSwitch = " -I " SRCDIR "/include";
+        }
+      else 
+        {
+          assert(access(PKGDATADIR "/tta_device_main.c", R_OK) == 0);
+          deviceMainSrc = PKGDATADIR "/tta_device_main.c";
+          poclIncludePathSwitch = " -I " PKGINCLUDEDIR;
+
+        }
      
       std::string kernelObjSrc = "";
       kernelObjSrc += cmd->command.run.tmp_dir;
@@ -294,7 +300,7 @@ pocl_tce_run
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
-        std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
+        std::string("tcecc --vector-backend -llwpr ") + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
         userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
         " -g -O3 -o " + assemblyFileName;

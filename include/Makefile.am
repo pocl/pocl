@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h utlist.h 
+pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h 
 
 # The sort command (also) removes duplicate entries which might appear 
 # due to @TARGET@ and/or @HOST@ being one of the manually defined 
@@ -33,9 +33,11 @@ nobase_pkginclude_HEADERS = $(sort 				\
                             tce/types.h			\
                             @TARGET@/types.h	\
                             @HOST@/types.h)
-
 include_HEADERS = poclu.h
 
-EXTRA_DIST = types.host.in types.target.in
+# utlist.h is a header only utility lib for linked list
+# handling. Needs to be included in the source package but
+# should not be installed.
+EXTRA_DIST = utlist.h types.host.in types.target.in
 
 SUBDIRS = CL OpenCL
