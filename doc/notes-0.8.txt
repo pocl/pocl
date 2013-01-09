@@ -1,0 +1,40 @@
+Portable OpenCL (pocl) v0.8 released
+------------------------------------
+
+[TODO]
+
+Portable OpenCL aims to be an efficient open source (MIT-licensed) 
+implementation of the OpenCL 1.2 standard. 
+
+In addition to producing an easily portable open source OpenCL
+implementation, another major goal of the project is improving 
+performance portability of OpenCL programs with compiler 
+optimizations, reducing the need for target-dependent manual 
+optimizations. 
+
+At the core of pocl is the kernel compiler that consists of a 
+set of LLVM passes used to statically generate multiple work-item
+work group functions of kernels, even in the presence of work-group 
+barriers. These functions are suitable for parallelization in multiple 
+ways (SIMD, VLIW, superscalar,...).
+
+This release adds  ... [TODO]
+
+Even though the OpenCL 1.2 standard is not yet implemented fully and
+it contains known bugs, we consider pocl ready for wider scale testing. 
+The pocl 0.7 test suite compiles and runs most of the ViennaCL 1.3.1 examples, 
+Rodinia 2.0.1 benchmarks, Parboil benchmarks, OpenCL Programming Guide book
+samples and the AMD APP SDK v2.8 OpenCL samples, ... [TODO]
+
+Acknowledgements
+----------------
+We'd like to thank the Radio Implementation Research Team from Nokia
+Research Center and Academy of Finland (funding decision 253087) for
+funding the development of this release. 
+
+Links
+-----
+Home page:         http://pocl.sourceforge.net/
+This announcement: http://pocl.sourceforge.net/downloads/ANNOUNCEMENT
+Change log:        http://pocl.sourceforge.net/downloads/CHANGES
+Download:          http://pocl.sourceforge.net/downloads
