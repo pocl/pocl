@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h utlist.h \
-	poclu.h
+pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h utlist.h 
+
 # The sort command (also) removes duplicate entries which might appear 
 # due to @TARGET@ and/or @HOST@ being one of the manually defined 
 # targets. 
