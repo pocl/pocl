@@ -138,6 +138,6 @@ fi
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -workgroup -kernel=${kernel} -local-size=1 1 1 ${OPT_SWITCH} \
-    ${EXTRA_OPTS} -instcombine -header=/dev/null ${FP_CONRACT} -o ${output_file} ${linked_bc}
+    ${EXTRA_OPTS} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
 
 rm -fr ${tempdir}
