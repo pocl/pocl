@@ -297,13 +297,17 @@ pocl_tce_run
       kernelObjSrc += cmd->command.run.tmp_dir;
       kernelObjSrc += "/../descriptor.so.kernel_obj.c";
 
+      TCEString extraFlags = "";
+      if (getenv("POCL_TCECC_EXTRA_FLAGS") != NULL)
+        extraFlags += " " + TCEString(getenv("POCL_TCECC_EXTRA_FLAGS"));
+
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
         std::string("tcecc --vector-backend -llwpr ") + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
         userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
-        " -g -O3 -o " + assemblyFileName;
+        " -g -O3 -o " + assemblyFileName + " " + extraFlags;
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
