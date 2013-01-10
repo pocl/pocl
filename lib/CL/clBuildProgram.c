@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clBuildProgram()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011-2013 Universidad Rey Juan Carlos,
+                           Pekka Jääskeläinen / Tampere Univ. of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +58,9 @@ POname(clBuildProgram)(cl_program program,
   if (program == NULL)
     return CL_INVALID_PROGRAM;
 
+  if (pfn_notify == NULL && user_data != NULL)
+    return CL_INVALID_VALUE;
+
   if (options != NULL)
     {
       user_options = options;
@@ -66,7 +70,7 @@ POname(clBuildProgram)(cl_program program,
     {
       free(program->compiler_options);
       program->compiler_options = NULL;        
-    }
+    }  
 
   if (program->source == NULL && program->binaries == NULL)
     return CL_INVALID_PROGRAM;
