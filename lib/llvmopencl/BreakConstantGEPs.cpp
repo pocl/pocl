@@ -70,7 +70,9 @@ static RegisterPass<BreakConstantGEPs> P ("break-constgeps",
 static ConstantExpr *
 hasConstantGEP (Value * V) {
   if (ConstantExpr * CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::GetElementPtr) {
+      if (CE->getOpcode() == Instruction::GetElementPtr ||
+          CE->getOpcode() == Instruction::BitCast) 
+      {
       return CE;
     } else {
       for (unsigned index = 0; index < CE->getNumOperands(); ++index) {
