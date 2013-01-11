@@ -20,11 +20,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "config.h"
+
+#include <iostream>
+
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/Linker.h"
+#if defined(LLVM_3_2) || defined(LLVM_3_1)
 #include "llvm/LLVMContext.h"
-#include "llvm/Support/Program.h"
 #include "llvm/Module.h"
+#else
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#endif
+#include "llvm/Support/Program.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Target/TargetMachine.h"
@@ -583,10 +592,14 @@ int main(int argc, char **argv, char **envp) {
 
     // The libraries aren't linked in but are noted as "dependent" in the
     // module.
+#if defined(LLVM_3_1) || defined(LLVM_3_2)
     for (cl::list<std::string>::const_iterator I = Libraries.begin(),
          E = Libraries.end(); I != E ; ++I) {
       TheLinker.getModule()->addLibrary(*I);
     }
+#else
+    #error LLVM 3.3 doesn't have the Module::addLibrary() API
+#endif
   } else {
     // Build a list of the items from our command line
     Linker::ItemList Items;

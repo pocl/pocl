@@ -22,6 +22,11 @@
    THE SOFTWARE.
 */
 
+#if __clang_major__ == 3 && (__clang_minor__ == 2 || __clangminor__ == 1)
+#define CLANG_OLDER_THAN_3_3
+#endif
+
+
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
@@ -111,7 +116,12 @@ typedef struct error_undefined_type_double error_undefined_type_double;
 // better way? Should we also align the other vectors?
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
+
+#ifdef CLANG_OLDER_THAN_3_3
 typedef char char3  __attribute__((__ext_vector_type__(3), __aligned__(4)));
+#else
+typedef char char3  __attribute__((__ext_vector_type__(3)));
+#endif
 typedef char char4  __attribute__((__ext_vector_type__(4)));
 typedef char char8  __attribute__((__ext_vector_type__(8)));
 typedef char char16 __attribute__((__ext_vector_type__(16)));
@@ -135,7 +145,11 @@ typedef ushort ushort8  __attribute__((__ext_vector_type__(8)));
 typedef ushort ushort16 __attribute__((__ext_vector_type__(16)));
 
 typedef int int2  __attribute__((__ext_vector_type__(2)));
+#ifdef CLANG_OLDER_THAN_3_3
 typedef int int3  __attribute__((__ext_vector_type__(3), __aligned__(16)));
+#else
+typedef int int3  __attribute__((__ext_vector_type__(3)));
+#endif
 typedef int int4  __attribute__((__ext_vector_type__(4)));
 typedef int int8  __attribute__((__ext_vector_type__(8)));
 typedef int int16 __attribute__((__ext_vector_type__(16)));
@@ -161,7 +175,11 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
+#ifdef CLANG_OLDER_THAN_3_3
 typedef float float3  __attribute__((__ext_vector_type__(3), __aligned__(16)));
+#else
+typedef float float3  __attribute__((__ext_vector_type__(3)));
+#endif
 typedef float float4  __attribute__((__ext_vector_type__(4)));
 typedef float float8  __attribute__((__ext_vector_type__(8)));
 typedef float float16 __attribute__((__ext_vector_type__(16)));
@@ -829,7 +847,7 @@ void barrier (cl_mem_fence_flags flags);
 #define sin _cl_sin
 #define sqrt _cl_sqrt
 
-#if __clang_major__ >= 3 && __clang_minor__ >=2
+#if !defined(LLVM_3_1)
 #define acos _cl_acos
 #define asin _cl_asin
 #define atan _cl_atan
@@ -1848,7 +1866,10 @@ typedef int sampler_t;
 #define CLK_FILTER_NEAREST              0x00
 #define CLK_FILTER_LINEAR               0x10
 
+#if defined(CLANG_OLDER_THAN_3_3)
+/* Clang 3.3 generates image2d_t as an opaque type. */
 typedef struct image2d_t_* image2d_t;
+#endif
 
 float4 _cl_overloadable read_imagef( image2d_t image,
         sampler_t sampler,

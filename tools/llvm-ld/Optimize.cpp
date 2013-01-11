@@ -12,7 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "config.h"
+#if defined(LLVM_3_2) || defined(LLVM_3_1)
 #include "llvm/Module.h"
+#else
+#include "llvm/IR/Module.h"
+#endif
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
@@ -24,10 +28,19 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Scalar.h"
+
 #ifdef LLVM_3_1
+
 #include "llvm/Target/TargetData.h"
+
 #else
+
+#if defined(LLVM_3_2) 
 #include "llvm/DataLayout.h"
+#else
+#include "llvm/IR/DataLayout.h"
+#endif
+
 #endif
 using namespace llvm;
 

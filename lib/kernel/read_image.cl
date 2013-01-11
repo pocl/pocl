@@ -2,6 +2,8 @@
 
 #include "image.h"
 
+#ifdef CLANG_OLDER_THAN_3_3
+
 float4 _cl_overloadable read_imagef ( image2d_t image,
         sampler_t sampler,
         int2 coord) {
@@ -28,3 +30,6 @@ float4 _cl_overloadable read_imagef ( image2d_t image,
 
   return color;
 }
+
+#endif
+

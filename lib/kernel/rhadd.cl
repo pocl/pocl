@@ -23,5 +23,10 @@
 
 #include "templates.h"
 
+#ifdef CLANG_OLDER_THAN_3_3
+// Clang 3.3 crashes when generating this. Probably due to the
+// conversion (implicit conversions between vectors are not supported
+// anyhow).
 DEFINE_EXPR_G_GG(rhadd,
                  (a >> (sgtype)1) + (b >> (sgtype)1) + ((a | b) & (gtype)1))
+#endif

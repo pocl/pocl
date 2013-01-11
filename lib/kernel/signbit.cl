@@ -42,7 +42,11 @@
 
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
+#ifdef CLANG_OLDER_THAN_3_3
+// Clang 3.3 crashes when generating this. Probably due to the
+// conversion *(jtype*)&a.
 IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
+#endif
 IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)

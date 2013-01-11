@@ -21,6 +21,11 @@
    THE SOFTWARE.
 */
 
+#ifdef CLANG_OLDER_THAN_3_3
+// Clang 3.3 crashes when generating this. Probably due to the
+// conversion (implicit conversions between vectors are not supported
+// anyhow).
+
 #include "templates.h"
 
 // Decompose a and b into their upper and lower halves.
@@ -92,3 +97,5 @@ DEFINE_EXPR_G_GGG(mad_sat,
                       /* overflow */
                       max;
                   }))
+
+#endif
