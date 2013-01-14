@@ -114,3 +114,17 @@ automatic CPU feature detection and tuning for the kernel library of the
 current default (the one clang/llvm was compiled for) cpu in
 pthread/basic device drivers. 
 
+
+Optimization opportunities
+--------------------------
+* Even when using an in-order queue, schedule kernels
+  in parallel in case their input buffers are not depending
+  on the unfinished ones (should be legal per OpenCL 1.2 5.11).
+* Compile for-loops without barriers like for-loops with
+  barriers are, to produce better parallelizable code without
+  fully unrolling everything. The difficulty is to detect when
+  it's legal to do so (no diverging work-items when barrier is
+  placed).
+
+  
+  
