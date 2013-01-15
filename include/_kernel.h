@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#if __clang_major__ == 3 && (__clang_minor__ == 2 || __clangminor__ == 1)
+#if __clang_major__ == 3 && (__clang_minor__ == 2 || __clang_minor__ == 1)
 #define CLANG_OLDER_THAN_3_3
 #endif
 
