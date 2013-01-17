@@ -30,9 +30,7 @@ pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h
 nobase_pkginclude_HEADERS = $(sort 				\
 							arm/types.h			\
                             x86_64/types.h		\
-                            tce/types.h			\
-                            @TARGET@/types.h	\
-                            @HOST@/types.h)
+                            tce/types.h)
 include_HEADERS = poclu.h
 
 # utlist.h is a header only utility lib for linked list
