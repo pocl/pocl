@@ -195,7 +195,7 @@ pocl_basic_run
            
       error = snprintf (command, COMMAND_LENGTH,
 			CLANG " -target %s %s -c -o %s.o %s",
-			HOST_CPU,
+			OCL_KERNEL_TARGET,
 			HOST_CLANG_FLAGS,
 			module,
 			assembly);

@@ -429,47 +429,6 @@ AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
-OCL_DRIVERS="basic pthreads"
-# look for the TCE library (needed for the ttasim device driver)
-
-AC_PATH_PROG([TCE_CONFIG], [tce-config])
-
-if test ! -z "$TCE_CONFIG"; then
-
-AC_PATH_PROG([TCECC], [tcecc])
-
-AC_LANG([C++])
-
-AC_LANG_CONFTEST(
-[AC_LANG_PROGRAM(
-  [[#include <Application.hh>]],
-  [Application::initialize()])
-])
-
-  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
-  then
-        TCE_LIBRARY=ok
-  fi
-
-fi
-
-if test -z "$TCECC" || \
-   test -z "$TCE_CONFIG" || \
-   test -z "$TCE_LIBRARY"; then
-
-AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
-
-else
-
-AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
-AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
-AC_SUBST([TCE_AVAILABLE], ["1"])
-LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
-OCL_DRIVERS="$OCL_DRIVERS tce"
-fi
-
-AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
-
 # libtool dynamic library handling library
 old_LIBS="$LIBS"
 LIBS=
@@ -537,33 +496,160 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
-#
 # Targets.
-# Note - there are two kinds of targets: the autoconf cross compilation target
-# which is actually the host in OpenCL terms, 
-# and the OpenCL target, i.e. the compute node architecture. With basic and pthread
-# OCL devices, all these three are one and the same.
+# This is the target architecture of the basic and pthreads devices.
+# These always are the same arch as host (in current pocl implementation).
+# Also, this is the autoconf "host".
+# We have: 
+# target triplet: the OCL device target triple
+# kernel dir: where to search for the ocl lib kernel
+HOST_LLC_FLAGS="-relocation-model=pic"
+HOST_LD_FLAGS="-shared"
 
-AC_ARG_ENABLE( [targets],
-               [AS_HELP_STRING( [--enable-targets],
-                                [Comma-separated list of OCL target devices to compile the 
-                                 kernel library against.] ) ],
-               ,
-               enableval=$host_cpu)
+case $host_os in
+  darwin* )
+    # MacOS ld outputs useless warnings like
+    # ld: warning: -macosx_version_min not specificed, assuming 10.7
+    # suppress them with -w.
+    HOST_LD_FLAGS="-bundle -w"  
+    ICD_LD_FLAGS="-single_module"
+    ;;
+  *gnu )
+    ICD_LD_FLAGS="-Wl,-Bsymbolic"
+    ;;  
+esac
+AC_SUBST([ICD_LD_FLAGS])
 
-#TODO: check for bad targets...
-if test "x$enableval" == "xall" 
-then  
-  OCL_TARGETS="arm x86_64 powerpc powerpc64 tce cellspu"
-elif test "x$enableval" == "xarmv7l"
-then
-  OCL_TARGETS="arm"
-else
-  OCL_TARGETS=$(echo $enableval | tr ',' ' ')
-fi
+
+case $host_cpu in
+  armv7l)
+    AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
+    #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+    OCL_KERNEL_TARGET="armv7"
+    # Assume -lm should not be used. TODO: add an embedded math lib
+    # for compiling kernels for ARM envs without usable math libs.
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target armv7 -mfloat-abi=hard -fPIC"
+    kernel_dir="arm"
+    ;;
+  x86_64)
+    AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=$host
+    kernel_dir="x86_64"
+    ;;
+  i?86)
+    AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=$host
+    kernel_dir="x86_64"
+    ;;
+ 
+  tce)
+    AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    kernel_dir="tce"
+    ;;
+
+  powerpc*)
+    #on all tested operating systems with PowerPC, the processor is 64bit,
+    #but the operating system is 32 bit. Therefore, when on powerpc, always build
+    #for 32 bit ppc. If this does not work for you ... patches welcome.
+    AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    kernel_dir="powerpc"
+    OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
+    ;;
+  *)
+    AC_MSG_ERROR([unknown/unsupported host $host])
+    ;;
+esac
+OCL_TARGETS=$kernel_dir
+
+
+AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
+
+AC_SUBST([TARGET], [$target])
+AC_DEFINE_UNQUOTED([TARGET], "$target", [The target triple.])
+AC_SUBST([TARGET_CPU], [$target_cpu])
+AC_ARG_VAR([TARGET_CLANG_FLAGS],
+           [Parameters to for target compilation.])
+AC_DEFINE_UNQUOTED([TARGET_CLANG_FLAGS],
+                   ["$TARGET_CLANG_FLAGS"],
+                   [Parameters to for target compilation.])
+AC_SUBST([TARGET_LLC_FLAGS])
+AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
+                   ["$TARGET_LLC_FLAGS"], 
+                   [Parameters to llc for code generation in the target.])
+
+AC_SUBST([HOST], [$host])
+AC_DEFINE_UNQUOTED([HOST], "$host", [The host triple.])
+AC_SUBST([HOST_CPU], [$host_cpu])
+AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
+AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
+AC_ARG_VAR([HOST_CLANG_FLAGS],
+           [Parameters to for host compilation.])
+AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
+                   ["$HOST_CLANG_FLAGS"],
+                   [Parameters to for host compilation.])
+AC_SUBST([HOST_LLC_FLAGS])
+AC_DEFINE_UNQUOTED([HOST_LLC_FLAGS],
+                   ["$HOST_LLC_FLAGS"], 
+                   [Parameters to llc for code generation in the host.])
+
+AC_SUBST([HOST_LD_FLAGS])
+AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
+                   ["$HOST_LD_FLAGS"],
+                   [Parameter to compiler to generate loadable module.])
+
+AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
+
+
 
 ####################################################################
 # Determine which device drivers to build.
+
+OCL_DRIVERS="basic pthreads"
+
+# look for the TCE library (needed for the ttasim device driver)
+AC_PATH_PROG([TCE_CONFIG], [tce-config])
+
+if test ! -z "$TCE_CONFIG"; then
+
+AC_PATH_PROG([TCECC], [tcecc])
+
+AC_LANG([C++])
+
+AC_LANG_CONFTEST(
+[AC_LANG_PROGRAM(
+  [[#include <Application.hh>]],
+  [Application::initialize()])
+])
+
+  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
+  then
+        TCE_LIBRARY=ok
+  fi
+
+fi
+
+if test -z "$TCECC" || \
+   test -z "$TCE_CONFIG" || \
+   test -z "$TCE_LIBRARY"; then
+
+AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
+
+else
+
+AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
+AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
+AC_SUBST([TCE_AVAILABLE], ["1"])
+LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
+OCL_DRIVERS="$OCL_DRIVERS tce"
+fi
+
+AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
+
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
@@ -588,23 +674,6 @@ then
     OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
-
-#Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
-#run in 32 bit mode per default. So for powerpc, do not use the host cpu unless
-#user overrides. See Readme.Cell
-default_target=$host_cpu
-AC_ARG_ENABLE([ppc64],
-              AS_HELP_STRING([--enable-ppc64],
-                             [If on PowerPC, use 64 bit runtime, not the 32bit one.]),
-              ,
-              [if test x"$host_cpu" = x"powerpc64"
-               then
-                 default_target="powerpc"
-                 OCL_TARGETS="$OCL_TARGETS powerpc"
-               fi
-              ] )
- 
-kernel_dir=$default_target
 AC_SUBST([OCL_TARGETS])
 
 AC_CONFIG_FILES([lib/kernel/arm/Makefile
@@ -614,116 +683,6 @@ AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/powerpc64/Makefile
                  lib/kernel/x86_64/Makefile])
 
-AC_ARG_ENABLE([arm-cortex-a8],
-        [AS_HELP_STRING([--enable-arm-cortex-a8],
-         [Optimize the ARM OpenCL kernel library for the Cortex A8 instruction set.])],
-        [
-         ARM_CLANG_FLAGS="$ARM_CLANG_FLAGS -mcpu=cortex-a8"
-         ARM_LLC_FLAGS="-relocation-model=pic -mcpu=cortex-a8 -mattr=+neon"
-         AC_MSG_NOTICE([optimizing the ARM kernel library for the Cortex A8 instruction set.])
-        ]
-)
-
-case $target_cpu in
-  arm*)   
-    TARGET_CLANG_FLAGS="$TARGET_CLANG_FLAGS $ARM_CLANG_FLAGS"
-    TARGET_LLC_FLAGS="$TARGET_LLC_FLAGS $ARM_LLC_FLAGS"
-    ;;
-esac
-
-HOST_LLC_FLAGS="-relocation-model=pic"
-HOST_LD_FLAGS="-shared"
-
-case $host_os in
-  darwin* )
-    # MacOS ld outputs useless warnings like
-    # ld: warning: -macosx_version_min not specificed, assuming 10.7
-    # suppress them with -w.
-    HOST_LD_FLAGS="-bundle -w"  
-    ICD_LD_FLAGS="-single_module"
-    ;;
-  *gnu )
-    ICD_LD_FLAGS="-Wl,-Bsymbolic"
-    ;;  
-esac
-AC_SUBST([ICD_LD_FLAGS])
-
-
-case $host_cpu in
-  armv7l)
-    #armv7l seems a popular host_cpu in distros. Clang uses armv7, though
-    AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
-    # Assume -lm should not be used. TODO: add an embedded math lib
-    # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target armv7 -mfloat-abi=hard -fPIC"
-    default_target="armv7"
-    kernel_dir="arm"
-    ;;
-  x86_64)
-    AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    ;;
-  tce)
-    AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    ;;
-
-  powerpc64)
-    AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    ;;
-  *)
-    AC_MSG_NOTICE([unknown host, using the generic kernel lib])
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    ;;
-esac
-
-#kludge, when waiting for a solution to the host/target/device issue.
-if test x"$default_target"x = xpowerpcx
-then
-    AC_MSG_NOTICE([using the ppc unoptimized kernel lib for the native device])
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target powerpc "
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    kernel_dir="powerpc"
-    host="powerpc-unknown-linux-gnu"
-fi	
-
-AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
-
-AC_SUBST([TARGET], [$target])
-AC_DEFINE_UNQUOTED([TARGET], "$target", [The target triple.])
-AC_SUBST([TARGET_CPU], [$target_cpu])
-AC_ARG_VAR([TARGET_CLANG_FLAGS],
-           [Parameters to for target compilation.])
-AC_DEFINE_UNQUOTED([TARGET_CLANG_FLAGS],
-                   ["$TARGET_CLANG_FLAGS"],
-                   [Parameters to for target compilation.])
-AC_SUBST([TARGET_LLC_FLAGS])
-AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
-                   ["$TARGET_LLC_FLAGS"], 
-                   [Parameters to llc for code generation in the target.])
-
-AC_SUBST([HOST], [$host])
-AC_DEFINE_UNQUOTED([HOST], "$host", [The host triple.])
-AC_SUBST([HOST_CPU], [$host_cpu])
-AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
-AC_ARG_VAR([HOST_CLANG_FLAGS],
-           [Parameters to for host compilation.])
-AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
-                   ["$HOST_CLANG_FLAGS"],
-                   [Parameters to for host compilation.])
-AC_SUBST([HOST_LLC_FLAGS])
-AC_DEFINE_UNQUOTED([HOST_LLC_FLAGS],
-                   ["$HOST_LLC_FLAGS"], 
-                   [Parameters to llc for code generation in the host.])
-
-AC_SUBST([HOST_LD_FLAGS])
-AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
-                   ["$HOST_LD_FLAGS"],
-                   [Parameter to compiler to generate loadable module.])
-
-AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
-AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
@@ -790,7 +749,6 @@ AC_SUBST([HOST_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
 AC_CHECK_SIZEOF([void *])
 AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
-AC_CONFIG_FILES([include/${HOST}/types.h:include/types.host.in])
 
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])

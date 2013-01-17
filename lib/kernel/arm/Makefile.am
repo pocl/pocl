@@ -42,6 +42,6 @@ nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
 RANLIB = @LLVM_RANLIB@
 AR = @LLVM_AR@
 
-CLANGFLAGS += -target armv7 -mfloat-abi=hard
+CLANGFLAGS += -target @OCL_KERNEL_TARGET@ -mfloat-abi=hard
 CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/arm/types.h
 
