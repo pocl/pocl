@@ -1,5 +1,5 @@
 <%inherit file="basic_page.makt" />
-<p>Portable OpenCL (pocl) is a MIT-licensed open source implementation of the OpenCL 
+<p>Portable OpenCL (pocl) aims to become a MIT-licensed open source implementation of the OpenCL 
 standard which can be easily adapted for new targets and devices, both for homogeneous
 CPU and heterogenous GPUs/accelerators.</p>
 
@@ -13,9 +13,8 @@ compiler that can generate multi-work-item work-group functions that exploit
 various types of parallel hardware resources: VLIW, superscalar, SIMD, SIMT,
 multicore, multithread ...</p>
 
-<p>In addition to providing a portable open source implementation of OpenCL, another 
-goal of the project is to serve as a research platform for issues in parallel
-programming on heterogeneous platforms.</p>
+<p>Additional purpose of the project is to serve as a research platform for issues 
+in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
