@@ -78,6 +78,10 @@ variable in your shell:
 Inside the 'ocl-vendors' directory there's a single .icd file which is
 generated to point to the pocl library in the build tree.
 
+If you want use the pocl from the build tree, you must also export POCL_BUILDING=1 
+so pocl searches for its utility scripts from the build tree first, then the 
+installation location. The "make check" testsuite does this automatically.
+
 To test as much as possible link options, it is recommended to configure
 pocl two times and run "make check" with both. One should be configurated with:
 
