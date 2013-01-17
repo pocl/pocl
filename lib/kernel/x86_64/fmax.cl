@@ -106,6 +106,7 @@ IMPLEMENT_SPLIT (fmax, float16, lo, hi)
 #  error "SSE not supported"
 #endif
 
+#ifdef cl_khr_fp64
 #ifdef __SSE2__
 IMPLEMENT_DIRECT(fmax, double  , IMPLEMENT_FMAX_SSE2_DOUBLE1)
 IMPLEMENT_DIRECT(fmax, double2 , IMPLEMENT_FMAX_SSE2_DOUBLE2)
@@ -120,4 +121,5 @@ IMPLEMENT_SPLIT (fmax, double8 , lo, hi)
 IMPLEMENT_SPLIT (fmax, double16, lo, hi)
 #else
 #  error "SSE2 not supported"
+#endif
 #endif

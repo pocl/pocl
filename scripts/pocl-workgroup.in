@@ -76,6 +76,7 @@ case $target in
   powerpc-*)   target_dir="powerpc";;
   powerpc64-*) target_dir="powerpc64";;
   tce-*)       target_dir="tce";;
+  i?86*)       target_dir="x86_64";;
   x86_64-*)    target_dir="x86_64";;
 esac
 

@@ -731,7 +731,6 @@ AC_SUBST([TARGET_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
 AC_CHECK_SIZEOF([void *])
 AC_SUBST([TARGET_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
-AC_CONFIG_FILES([include/${TARGET}/types.h:include/types.target.in])
 
 AS_UNSET([ac_cv_sizeof_long])
 AS_UNSET([ac_cv_sizeof___fp16])

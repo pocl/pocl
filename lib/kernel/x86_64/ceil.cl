@@ -131,6 +131,9 @@ IMPLEMENT_SPLIT (ceil, float8 , lo, hi)
 #endif
 IMPLEMENT_SPLIT (ceil, float16, lo, hi)
 
+
+#ifdef cl_khr_fp64
+
 #ifdef __SSE4_1__
 IMPLEMENT_DIRECT(ceil, double  , IMPLEMENT_CEIL_SSE41_DOUBLE)
 IMPLEMENT_DIRECT(ceil, double2 , IMPLEMENT_CEIL_SSE41_DOUBLE2)
@@ -149,3 +152,5 @@ IMPLEMENT_SPLIT (ceil, double4 , lo, hi)
 #endif
 IMPLEMENT_SPLIT (ceil, double8 , lo, hi)
 IMPLEMENT_SPLIT (ceil, double16, lo, hi)
+
+#endif

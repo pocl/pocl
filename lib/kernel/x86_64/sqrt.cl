@@ -108,6 +108,7 @@ IMPLEMENT_SPLIT (sqrt, float8 , lo, hi)
 #endif
 IMPLEMENT_SPLIT (sqrt, float16, lo, hi)
 
+#ifdef cl_khr_fp64
 #ifdef __SSE2__
 IMPLEMENT_DIRECT(sqrt, double  , IMPLEMENT_SQRT_SSE2_DOUBLE)
 IMPLEMENT_DIRECT(sqrt, double2 , IMPLEMENT_SQRT_SSE2_DOUBLE2)
@@ -126,7 +127,7 @@ IMPLEMENT_SPLIT (sqrt, double4 , lo, hi)
 #endif
 IMPLEMENT_SPLIT (sqrt, double8 , lo, hi)
 IMPLEMENT_SPLIT (sqrt, double16, lo, hi)
-
+#endif
 
 
 DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
