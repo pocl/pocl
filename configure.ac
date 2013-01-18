@@ -829,6 +829,7 @@ AC_CONFIG_FILES([Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
+                 tests/tce/fp16/Makefile
                  tests/cell/Makefile
                  tests/cell/hello/Makefile
                  tools/llvm-ld/Makefile
