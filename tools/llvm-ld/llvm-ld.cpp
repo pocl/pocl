@@ -590,16 +590,9 @@ int main(int argc, char **argv, char **envp) {
     if (TheLinker.LinkInFiles(Files))
       return 1; // Error already printed
 
-    // The libraries aren't linked in but are noted as "dependent" in the
-    // module.
-#if defined(LLVM_3_1) || defined(LLVM_3_2)
-    for (cl::list<std::string>::const_iterator I = Libraries.begin(),
-         E = Libraries.end(); I != E ; ++I) {
-      TheLinker.getModule()->addLibrary(*I);
-    }
-#else
-    #error LLVM 3.3 doesn't have the Module::addLibrary() API
-#endif
+    if (TheLinker.LinkInLibraries(Libraries))
+      return 1; // Error already printed
+
   } else {
     // Build a list of the items from our command line
     Linker::ItemList Items;
