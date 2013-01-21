@@ -129,7 +129,7 @@ GEN_PROTOTYPES (basic)
   NULL, /* build_program */ \
   NULL, /* data */                                      \
   KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */    \
-  HOST, /* llvm_target_triplet */                           \
+  OCL_KERNEL_TARGET, /* llvm_target_triplet */                           \
   0     /* dev_id */           \
 }
 

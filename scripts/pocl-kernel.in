@@ -61,7 +61,7 @@ if false ; then
 fi
 # END REMOVE ONCE INSTALLED
 
-@CLANG@ @HOST_CLANG_FLAGS@ -c -o ${output_file}.o -x c - <<EOF
+@CLANG@ @HOST_CLANG_FLAGS@ -target $target -c -o ${output_file}.o -x c - <<EOF
 #include "${header}"
 
 unsigned _num_args = _${kernel}_NUM_ARGS;

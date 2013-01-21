@@ -48,6 +48,7 @@ case $target in
   arm*)        target_dir="arm"
                target="armv7";;
   cellspu-*)   target_dir="cellspu";;
+  powerpc-*) target_dir="powerpc";;
   powerpc64-*) target_dir="powerpc64";;
   tce-*)       target_dir="tce";;
   x86_64-*)    target_dir="x86_64";;
