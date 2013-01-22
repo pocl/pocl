@@ -212,7 +212,11 @@ class AMDBenchmarkCase(BenchmarkCase):
     def run(self):
         directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir
         os.chdir(directory)
-        cmd = self.name + "/build/debug/x86_64/" + self.command
+        # Iterate 10 times to amortize the kernel compilation time.
+        # In a real application, the kernel compilation overheads can be excluded 
+        # (to some extent, at least) by using the binary API of OpenCL, so it 
+        # should be realistc to exclude it.
+        cmd = self.name + "/build/debug/x86_64/" + self.command + " -i 10"
         timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
         if timeout or rc != 0:
             sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
