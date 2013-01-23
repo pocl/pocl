@@ -490,6 +490,7 @@ LLVM_PROG([LLC], [llc], [LLVM static compiler])
 LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
 LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
 LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
+LLVM_PROG([LLVM_LINK], [llvm-link], [LLVM IR linker])
 # $CLANG and $LLC are needed by config/xclang
 export CLANG
 export LLC
@@ -601,9 +602,6 @@ AC_SUBST([HOST_LD_FLAGS])
 AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
                    ["$HOST_LD_FLAGS"],
                    [Parameter to compiler to generate loadable module.])
-
-AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
-
 
 
 ####################################################################

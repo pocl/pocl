@@ -40,7 +40,7 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]HOST_CLANG_FLAGS[@],$(HOST_CLANG_FLAGS),g'	\
                -e 's,[@]HOST_LD_FLAGS[@],$(HOST_LD_FLAGS),g'		\
                -e 's,[@]OPT[@],$(OPT),g'				\
-               -e 's,[@]LLVM_LD[@],$(LLVM_LD),g'			\
+               -e 's,[@]LLVM_LINK[@],$(LLVM_LINK),g'			\
                -e 's,[@]LLC[@],$(LLC),g' \
                -e 's,[@]LLVM_VERSION[@],$(LLVM_VERSION),g' 
 

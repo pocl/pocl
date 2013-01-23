@@ -25,8 +25,6 @@
 DIST_SUBDIRS = tce x86_64 powerpc powerpc64 cellspu arm
 SUBDIRS = @OCL_TARGETS@ 
 
-include sources.mk
-
 # The source files in this dir are not built directly
 # but are used with the target specific subdirs as
 # fallback implementations. Include them in the
@@ -35,6 +33,3 @@ EXTRA_DIST = ${libkernel_SRCS} \
 	Makefile.target.am Makefile.host.am \
 	Makefile.target.in Makefile.host.in 
 
-distclean-local:
-	$(MAKE) -C @TARGET@ distclean
-	-$(MAKE) -C @HOST@ distclean

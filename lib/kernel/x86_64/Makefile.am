@@ -22,24 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
-
-targetpkglibdir = $(pkglibdir)/x86_64
-targetpkglib_LIBRARIES = libkernel.a
-
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
 
 include ../sources.mk
-
-nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
-
-RANLIB = @LLVM_RANLIB@
-AR = @LLVM_AR@
-
-libkernel_a_SOURCES = abs.cl ceil.cl copysign.cl fabs.cl floor.cl fmax.cl fmin.cl max.cl min.cl sqrt.cl
-
-CLANGFLAGS += -target @OCL_KERNEL_TARGET@
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/x86_64/types.h
+all: kernel-@TARGET@.bc
 

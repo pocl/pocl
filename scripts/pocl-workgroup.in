@@ -80,20 +80,13 @@ case $target in
   x86_64-*)    target_dir="x86_64";;
 esac
 
-llvm_ld="@pkglibexecdir@/pocl-llvm-ld"
-# BEGIN REMOVE ONCE INSTALLED
-# Fixing llvm_ld until the script is installed
-llvm_ld="@abs_top_builddir@/tools/llvm-ld/pocl-llvm-ld"
-# END REMOVE ONCE INSTALLED
-
 full_target_dir="@pkglibdir@/${target_dir}"
 # BEGIN REMOVE ONCE INSTALLED
 # Fixing full_target_dir until the script is installed
 full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
 # END REMOVE ONCE INSTALLED
 
-${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L"$full_target_dir" -lkernel
-rm ${linked_out}
+@LLVM_LINK@ -o ${linked_bc}  $1 "$full_target_dir"/kernel-$target.bc 
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
