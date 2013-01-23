@@ -158,24 +158,9 @@ pocl_basic_run
     {
       char *llvm_ld;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/linked.bc", tmpdir);
+                        "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
-      
-      if (getenv("POCL_BUILDING") != NULL)
-        llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
-      else if (access(PKGLIBEXECDIR "/pocl-llvm-ld", X_OK) == 0)
-        llvm_ld = PKGLIBEXECDIR "/pocl-llvm-ld";
-      else
-        llvm_ld = "pocl-llvm-ld";
-
-      error = snprintf (command, COMMAND_LENGTH,
-			"%s --disable-opt -link-as-library -o %s %s/%s",
-                        llvm_ld, bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
-      
-      error = system(command);
-      assert (error == 0);
-      
+     
       error = snprintf (assembly, POCL_FILENAME_LENGTH,
 			"%s/parallel.s",
 			tmpdir);

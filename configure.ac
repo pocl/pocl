@@ -693,9 +693,6 @@ if test x"$prefix" = xNONE; then
   fi
 fi
 
-AC_DEFINE_UNQUOTED([LLVM_LD], ["pocl-llvm-ld"],[LLVM linker binary])
-AC_SUBST([LLVM_LD], [pocl-llvm-ld])
-
 # Checks for libraries.
 
 # Checks for header files.
@@ -830,7 +827,6 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/fp16/Makefile
                  tests/cell/Makefile
                  tests/cell/hello/Makefile
-                 tools/llvm-ld/Makefile
                  ])
 
 AC_OUTPUT
