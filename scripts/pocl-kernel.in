@@ -61,7 +61,15 @@ if false ; then
 fi
 # END REMOVE ONCE INSTALLED
 
-@CLANG@ @HOST_CLANG_FLAGS@ -target $target -c -o ${output_file}.o -x c - <<EOF
+#pure clang doesn't allow "-target tce-tut-llvm"
+case $target in
+  tce-*)
+    target_flags="" ;;
+  *)
+    target_flags="-target $target";;
+esac
+@CLANG@ @HOST_CLANG_FLAGS@ $target_flags -c -o ${output_file}.o -x c - <<EOF
+
 #include "${header}"
 
 unsigned _num_args = _${kernel}_NUM_ARGS;

@@ -24,23 +24,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
-
-targetpkglibdir = $(pkglibdir)/tce
-targetpkglib_LIBRARIES = libkernel.a
-
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+KERNEL_TARGET=tce-tut-llvm
+TARGET_DIR=tce
 
 include ../sources.mk
-
-nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
-
-RANLIB = @LLVM_RANLIB@
-AR = @LLVM_AR@
-
-CLANGFLAGS += -target tce-tut-llvm
 
 # TCE's software emulation chokes on the fmuladd intrinsics
 # generated automatically. Force it off for now until it's
@@ -49,5 +36,6 @@ if ! LLVM_3_1
 CLANGFLAGS += -ffp-contract=off -target tce-tut-llvm
 endif
 
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/tce/types.h
+
+all: kernel-${KERNEL_TARGET}.bc
 

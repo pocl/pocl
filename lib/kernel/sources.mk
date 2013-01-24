@@ -161,13 +161,13 @@ OBJ:LKERNEL_SRCS
 
 #rules to compile the different kernel library source file types into LLVM bitcode
 .c.bc:
-	@CLANG@ -emit-llvm -c -target @TARGET@ -o $@ -x c $< -include ../../../include/x86_64/types.h 
+	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h 
 .cl.bc:
-	@CLANG@ -emit-llvm -c -target @TARGET@ -o $@ -x cl $< -include ../../../include/x86_64/types.h    -include ../../../include/_kernel.h
+	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h    -include ../../../include/_kernel.h
 
-CLEANFILES = kernel-@TARGET@.bc ${OBJ}
+CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 
-kernel-@TARGET@.bc: ${OBJ}
+kernel-${KERNEL_TARGET}.bc: ${OBJ}
 	llvm-link -o $@ $^
 
 
