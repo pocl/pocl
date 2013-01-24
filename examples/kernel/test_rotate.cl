@@ -127,7 +127,7 @@ DEFINE_BODY_G
    int patterns[] = {0x01, 0x80, 0x77, 0xee};
    for (int p=0; p<4; ++p) {
      int const bits = count_bits(sgtype);
-     int array[bits];
+     int array[64];
      for (int b=0; b<bits; ++b) {
        array[b] = !!(patterns[p] & (1 << (b & 7)));
      }
