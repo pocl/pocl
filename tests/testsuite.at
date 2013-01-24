@@ -61,6 +61,9 @@ AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/examples/kernel/kernel 
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
+# Fails because signbit compilation crashes with Clang 3.3 and is thus
+# not available.
+AT_XFAIL_IF([ grep -q "#define LLVM_3_3" $abs_top_srcdir/config.h ])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_fabs...
@@ -79,6 +82,9 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
+# Fails due to Clang 3.3 detecting this now: 
+# error: variable length arrays are not supported in OpenCL
+AT_XFAIL_IF([ grep -q "#define LLVM_3_3" $abs_top_srcdir/config.h ])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_rotate...

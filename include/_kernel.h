@@ -1811,7 +1811,10 @@ int printf(const /*constant*/ char * restrict format, ...)
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */
 
+#if defined(CLANG_OLDER_THAN_3_3)
+/* Clang 3.3 generates event_t as an opaque type. */
 typedef uint event_t;
+#endif
 
 #define _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)            \
   _cl_overloadable                                              \
