@@ -58,8 +58,9 @@ AT_CLEANUP
 
 AT_SETUP([for-loop with a variable iteration count (loops) - lp:938883])
 AT_KEYWORDS([regression])
-#this broke on ppc in commit 525 
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+#this broke on ppc in commit 525, for LLVM 3.1 
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&\
+  grep -q "define LLVM_3_1" $abs_top_builddir/config.h])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
 
@@ -122,8 +123,9 @@ AT_CLEANUP
 
 AT_SETUP([undominated variable from conditional barrier handling (loops) - lp:1045835])
 AT_KEYWORDS([regression undominated])
-#this broke on ppc in commit 525 
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+#this broke on ppc in commit 525, for LLVM 3.1
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&\
+  grep -q "define LLVM_3_1" $abs_top_builddir/config.h])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_undominated_variable], 0)
 AT_CLEANUP
 

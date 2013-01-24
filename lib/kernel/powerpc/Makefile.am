@@ -24,22 +24,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
-
-targetpkglibdir = $(pkglibdir)/powerpc
-targetpkglib_LIBRARIES = libkernel.a
-
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+KERNEL_TARGET=@OCL_KERNEL_TARGET@
+TARGET_DIR=powerpc
 
 include ../sources.mk
-
-nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
-
-RANLIB = @LLVM_RANLIB@
-AR = @LLVM_AR@
-
-CLANGFLAGS += -target @OCL_KERNEL_TARGET@
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/powerpc/types.h
+all: kernel-@OCL_KERNEL_TARGET@.bc
 
