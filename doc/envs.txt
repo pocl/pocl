@@ -106,6 +106,11 @@ multiple work items. Legal values:
               POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
               variable (default is to not perform unrolling).
 
+    loopvec -- Create work-item for-loops (see 'loops') and execute 
+               the LLVM LoopVectorizer. The loops are not unrolled
+               but the unrolling decision is left to the generic
+               LLVM passes.
+
     repl   -- Replicate and chain all work items. This results
               in more easily scalarizable private variables.
               However, the code bloat is increased with larger

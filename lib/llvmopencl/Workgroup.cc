@@ -214,7 +214,7 @@ Workgroup::isKernelToProcess(const Function &F)
       return true;
 
     return false;
-  }
+  }  
 
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
     if (kernels->getOperand(i)->getOperand(0) == NULL)
@@ -265,7 +265,11 @@ createLauncher(Module &M, Function *F)
   for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i)  {
     arguments.push_back(ai);
     ++ai;
-  }
+  }  
+
+  /* Copy the function attributes to transfer noalias etc. from the
+     original kernel which will be inlined into the launcher. */
+  L->setAttributes(F->getAttributes());
 
   Value *ptr, *v;
   char s[STRING_LENGTH];
@@ -527,7 +531,7 @@ createWorkgroup(Module &M, Function *F)
 }
 
 /**
- * Creates a work group launcher more suitable for the proper
+ * Creates a work group launcher more suitable for the heterogeneous
  * host-device setup  (called KERNELNAME_workgroup_fast).
  *
  * 1) Pointer arguments are stored directly as pointers to the

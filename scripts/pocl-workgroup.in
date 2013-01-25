@@ -2,6 +2,7 @@
 # pocl-workgroup - Parallelize a kernel from an OpenCL bytecode file.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
+#               2011-2013 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -125,12 +126,22 @@ then
 EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-mem-ops-only"
 fi
 
+#EXTRA_OPTS+="-vectorize-loops"
+
+WG_VECTORIZER=""
+if test "x$POCL_WORK_GROUP_METHOD" = "xloopvec";
+then
+export POCL_WORK_GROUP_METHOD=loops
+export POCL_WILOOPS_MAX_UNROLL_COUNT=1
+WG_VECTORIZER=-vectorize-loops
+fi
+
 #set -x
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
+    -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} ${WG_VECTORIZER} \
     ${EXTRA_OPTS} -instcombine -header=${header} -o ${output_file} ${linked_bc}
 
 #set +x
