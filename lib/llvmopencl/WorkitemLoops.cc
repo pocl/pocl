@@ -406,6 +406,9 @@ WorkitemLoops::ProcessFunction(Function &F)
 
     llvm::ValueToValueMapTy reference_map;
     ParallelRegion *original = (*i);
+
+    original->AddParallelForMetadata();
+
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### handling region:" << std::endl;
     original->dumpNames();    
@@ -849,7 +852,7 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
 {
     /* TODO: rematerialization:
 
-       If the instructions is a load from a scalar global, we need
+       If the instruction is a load from a scalar global, we need
        not context save it but should just (re)load. This
        covers loads from the temporary _local_id_x etc. variables. 
 

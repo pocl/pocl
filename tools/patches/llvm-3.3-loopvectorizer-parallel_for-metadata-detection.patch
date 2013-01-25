@@ -1,0 +1,52 @@
+Index: lib/Transforms/Vectorize/LoopVectorize.cpp
+===================================================================
+--- lib/Transforms/Vectorize/LoopVectorize.cpp	(revision 173365)
++++ lib/Transforms/Vectorize/LoopVectorize.cpp	(working copy)
+@@ -396,6 +396,9 @@
+   /// This does not mean that it is profitable to vectorize this
+   /// loop, only that it is legal to do so.
+   bool canVectorize();
++  
++  /// Returns true in case the loop at hand is known to be a parallel loop.
++  bool isParallelLoop();
+ 
+   /// Returns the Induction variable.
+   PHINode *getInduction() { return Induction; }
+@@ -2067,6 +2070,26 @@
+   return true;
+ }
+ 
++bool LoopVectorizationLegality::isParallelLoop() {
++  llvm::BasicBlock *header = TheLoop->getHeader();
++  if (header == NULL)
++    return false;
++
++  // Search for the parallel_for metadata in any of the instructions in
++  // the loop header basic block.
++  for (BasicBlock::iterator ii = header->begin();
++       ii != header->end(); ii++) {
++    Instruction *instr = ii;
++    if (instr->getMetadata("parallel_for") != NULL) {
++      DEBUG(dbgs() << "LV: A parallel loop, loop-carried dependencies not checked.\n");
++      return true;
++    }
++  }
++  DEBUG(dbgs() << "LV: not a parallel loop, header:");
++  DEBUG(header->dump());
++  return false;
++}
++
+ bool LoopVectorizationLegality::canVectorize() {
+   assert(TheLoop->getLoopPreheader() && "No preheader!!");
+ 
+@@ -2117,7 +2140,9 @@
+   }
+ 
+   // Go over each instruction and look at memory deps.
+-  if (!canVectorizeMemory()) {
++  // Check for parallel loops only as a fall back as they are
++  // the rarer case now.
++  if (!canVectorizeMemory() && !isParallelLoop()) {
+     DEBUG(dbgs() << "LV: Can't vectorize due to memory conflicts\n");
+     return false;
+   }

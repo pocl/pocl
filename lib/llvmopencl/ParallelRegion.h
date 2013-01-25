@@ -82,6 +82,8 @@ class Kernel;
                        std::size_t y = 0, 
                        std::size_t z = 0);
 
+    void AddParallelForMetadata();
+
     bool HasBlock(llvm::BasicBlock *bb);
 
     void InjectRegionPrintF();
