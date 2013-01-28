@@ -529,7 +529,7 @@ case $host_cpu in
     OCL_KERNEL_TARGET="armv7"
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target armv7 -mfloat-abi=hard -fPIC"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard -fPIC"
     kernel_dir="arm"
     ;;
   x86_64)
