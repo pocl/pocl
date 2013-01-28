@@ -22,9 +22,9 @@ LKERNEL_SRCS= \
 	get_num_groups.c			\
 	get_group_id.c				\
 	get_global_offset.c			\
+	fenv_cl.c				\
 	as_type.cl				\
 	atomics.cl				\
-	convert_type.cl				\
 	acos.cl					\
 	acosh.cl				\
 	acospi.cl				\
@@ -38,6 +38,7 @@ LKERNEL_SRCS= \
 	atanpi.cl				\
 	cbrt.cl					\
 	ceil.cl					\
+	convert_type.cl				\
 	copysign.cl				\
 	cos.cl					\
 	cosh.cl					\
@@ -161,7 +162,7 @@ OBJ:LKERNEL_SRCS
 
 #rules to compile the different kernel library source file types into LLVM bitcode
 .c.bc:
-	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h 
+	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
 .cl.bc:
 	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h    -include ../../../include/_kernel.h
 
