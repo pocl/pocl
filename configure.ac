@@ -521,7 +521,6 @@ case $host_os in
 esac
 AC_SUBST([ICD_LD_FLAGS])
 
-
 case $host_cpu in
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
@@ -532,7 +531,7 @@ case $host_cpu in
     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard -fPIC"
     kernel_dir="arm"
     ;;
-  x86_64)
+  amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
