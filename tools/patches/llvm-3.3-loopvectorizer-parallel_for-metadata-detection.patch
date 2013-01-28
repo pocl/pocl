@@ -2,7 +2,18 @@ Index: lib/Transforms/Vectorize/LoopVectorize.cpp
 ===================================================================
 --- lib/Transforms/Vectorize/LoopVectorize.cpp	(revision 173365)
 +++ lib/Transforms/Vectorize/LoopVectorize.cpp	(working copy)
-@@ -396,6 +396,9 @@
+@@ -101,7 +101,9 @@
+                    cl::desc("Enable if-conversion during vectorization."));
+ 
+ /// We don't vectorize loops with a known constant trip count below this number.
+-static const unsigned TinyTripCountVectorThreshold = 16;
++static cl::opt<unsigned>
++TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16), cl::Hidden,
++                             cl::desc("The minimum trip count in the loops to vectorize."));
+ 
+ /// We don't unroll loops with a known constant trip count below this number.
+ static const unsigned TinyTripCountUnrollThreshold = 128;
+@@ -396,6 +398,9 @@
    /// This does not mean that it is profitable to vectorize this
    /// loop, only that it is legal to do so.
    bool canVectorize();
@@ -12,34 +23,27 @@ Index: lib/Transforms/Vectorize/LoopVectorize.cpp
  
    /// Returns the Induction variable.
    PHINode *getInduction() { return Induction; }
-@@ -2067,6 +2070,26 @@
+@@ -2067,6 +2072,19 @@
    return true;
  }
  
 +bool LoopVectorizationLegality::isParallelLoop() {
-+  llvm::BasicBlock *header = TheLoop->getHeader();
-+  if (header == NULL)
++
++  llvm::BasicBlock *latch = TheLoop->getHeader();
++  if (latch == NULL)
 +    return false;
 +
-+  // Search for the parallel_for metadata in any of the instructions in
-+  // the loop header basic block.
-+  for (BasicBlock::iterator ii = header->begin();
-+       ii != header->end(); ii++) {
-+    Instruction *instr = ii;
-+    if (instr->getMetadata("parallel_for") != NULL) {
-+      DEBUG(dbgs() << "LV: A parallel loop, loop-carried dependencies not checked.\n");
++  if (latch->getTerminator()->getMetadata("parallel_loop") != NULL) {
++      DEBUG(dbgs() << "LV: A parallel loop, loop-carried dependencies can be ignored.\n");
 +      return true;
-+    }
 +  }
-+  DEBUG(dbgs() << "LV: not a parallel loop, header:");
-+  DEBUG(header->dump());
 +  return false;
 +}
 +
  bool LoopVectorizationLegality::canVectorize() {
    assert(TheLoop->getLoopPreheader() && "No preheader!!");
  
-@@ -2117,7 +2140,9 @@
+@@ -2117,7 +2135,9 @@
    }
  
    // Go over each instruction and look at memory deps.

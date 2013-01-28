@@ -412,29 +412,6 @@ ParallelRegion::Verify()
   return true;
 }
 
-/**
- * Adds "parallel_for=1" metadata to instructions in the entry basic block of 
- * the region to annotate the beginning of a parallel loop iteration in the 
- * wiloops method.
- */
-void
-ParallelRegion::AddParallelForMetadata() {
-
-  if (size() == 0) return;
-
-  for (BasicBlock::iterator ii = entryBB()->begin();
-       ii != entryBB()->end(); ii++) {
-    Instruction *instr = ii;
-
-    instr->setMetadata
-      ("parallel_for", 
-       MDNode::get
-       (entryBB()->getContext(), 
-        ConstantInt::get(Type::getInt32Ty(entryBB()->getContext()), 1)));
-  }
-
-}
-
 void
 ParallelRegion::AddIDMetadata(
     llvm::LLVMContext& context, 

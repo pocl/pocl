@@ -317,7 +317,13 @@ WorkitemLoops::CreateLoopAround
       (IntegerType::get(C, size_t_width), 
        LocalSizeForDim)));
       
-  builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+  Instruction *loopBranch =
+      builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+
+  /* Add the metadata to mark a parallel loop. */
+  loopBranch->setMetadata
+      ("parallel_loop", 
+       MDNode::get(C, ConstantInt::get(Type::getInt32Ty(C), 1)));
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -406,8 +412,6 @@ WorkitemLoops::ProcessFunction(Function &F)
 
     llvm::ValueToValueMapTy reference_map;
     ParallelRegion *original = (*i);
-
-    original->AddParallelForMetadata();
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### handling region:" << std::endl;

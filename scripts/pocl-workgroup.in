@@ -133,7 +133,7 @@ if test "x$POCL_WORK_GROUP_METHOD" = "xloopvec";
 then
 export POCL_WORK_GROUP_METHOD=loops
 export POCL_WILOOPS_MAX_UNROLL_COUNT=1
-WG_VECTORIZER=-vectorize-loops
+WG_VECTORIZER="-vectorize-loops -vectorizer-min-trip-count 1"
 fi
 
 #set -x
