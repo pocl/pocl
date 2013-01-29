@@ -322,7 +322,7 @@ WorkitemLoops::CreateLoopAround
 
   /* Add the metadata to mark a parallel loop. */
   loopBranch->setMetadata
-      ("parallel_loop", 
+      ("llvm.loop.ignore_assumed_deps", 
        MDNode::get(C, ConstantInt::get(Type::getInt32Ty(C), 1)));
 
   builder.SetInsertPoint(loopEndBB);
@@ -493,6 +493,7 @@ WorkitemLoops::ProcessFunction(Function &F)
             ParallelRegion *unrolled = 
               original->replicate(reference_map, ".unrolled_wi");
             unrolled->chainAfter(prev);
+            unrolled->AddParallelLoopMetadata();
             prev = unrolled;
             lastBB = unrolled->exitBB();
             if (AddWIMetadata)
@@ -526,6 +527,7 @@ WorkitemLoops::ProcessFunction(Function &F)
               (original->entryBB(), l.first);
           }
       }
+    original->AddParallelLoopMetadata();
 
     //F.viewCFGOnly();
   }

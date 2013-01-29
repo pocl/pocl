@@ -412,6 +412,30 @@ ParallelRegion::Verify()
   return true;
 }
 
+/**
+ * Adds metadata to all the memory instructions to denote
+ * they originate from a parallel loop.
+ *
+ * Format:
+ * llvm.mem.parallel_loop_access 
+ *
+ */
+void
+ParallelRegion::AddParallelLoopMetadata() {
+ 
+  for (iterator i = begin(), e = end(); i != e; ++i) {
+    BasicBlock* bb = *i;      
+    for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
+         ii != ee; ii++) {
+      if (ii->mayReadOrWriteMemory())
+        ii->setMetadata
+          ("llvm.mem.parallel_loop_access",
+           MDNode::get(ii->getContext(), ConstantInt::get(Type::getInt32Ty(ii->getContext()), 1)));
+      
+    }
+  }
+}
+
 void
 ParallelRegion::AddIDMetadata(
     llvm::LLVMContext& context, 
