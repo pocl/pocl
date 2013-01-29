@@ -582,8 +582,8 @@ ParallelRegion::InjectPrintF
     AttributeSet func_printf_PAL;
 #endif
     {
-      SmallVector<AttributeWithIndex, 4> Attrs;
 #ifdef LLVM_3_1
+      SmallVector<AttributeWithIndex, 4> Attrs;
       AttributeWithIndex PAWI;
       PAWI.Index = 1U; 
       PAWI.Attrs = Attribute::NoCapture;
@@ -593,13 +593,13 @@ ParallelRegion::InjectPrintF
       Attrs.push_back(PAWI);
       func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 #elif defined LLVM_3_2
+      SmallVector<AttributeWithIndex, 4> Attrs;
       Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attributes::NoCapture));
       Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attributes::NoUnwind));
       func_printf_PAL = AttrListPtr::get(M->getContext(), Attrs);
 #else
-      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attribute::NoCapture));
-      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attribute::NoUnwind));
-      func_printf_PAL = AttributeSet::get(M->getContext(), Attrs);
+      func_printf_PAL.addAttribute( M->getContext(), 1U, Attribute::NoCapture);
+      func_printf_PAL.addAttribute( M->getContext(), 4294967295U, Attribute::NoUnwind);
 #endif
     }
     printfFunc->setAttributes(func_printf_PAL);
