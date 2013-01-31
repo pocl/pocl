@@ -1,16 +1,22 @@
 Index: llvm/include/llvm/Analysis/LoopInfo.h
 ===================================================================
---- llvm.orig/include/llvm/Analysis/LoopInfo.h	2013-01-29 16:13:49.076601096 +0200
-+++ llvm/include/llvm/Analysis/LoopInfo.h	2013-01-29 18:25:42.964349198 +0200
-@@ -381,6 +381,13 @@
+--- llvm.orig/include/llvm/Analysis/LoopInfo.h	2013-01-29 23:40:09.480348774 +0200
++++ llvm/include/llvm/Analysis/LoopInfo.h	2013-01-31 16:13:16.517296071 +0200
+@@ -381,6 +381,19 @@
    /// isSafeToClone - Return true if the loop body is safe to clone in practice.
    bool isSafeToClone() const;
  
-+  /// isParallel - Returns true if the loop is parallel, i.e., is known not to
-+  /// contain any dependencies between iterations, or the programmer (or implicitly
-+  /// the language used) has communicated that the compiler is free to ignore
-+  /// such (assumed) dependencies (E.g., #pragma ivdep of the Intel's compiler,
-+  /// the implicit work item loops of OpenCL C, or #pragma omp for of OpenMP).
++  /// isParallel - Returns true if the loop should be considered as
++  /// a "parallel loop" with freely scheduled iterations. A parallel loop can
++  /// be assumed to not contain any dependencies between iterations by the compiler.
++  /// That is, any loop-carried dependency checking can be skipped completely when
++  /// parallelizing the loop on the target machine. Thus, if the parallel loop
++  /// information originates from the programmer, e.g. via the OpenMP parallel
++  /// for pragma, it is the programmer's responsibility to ensure the are no
++  /// loop-carried dependencies. The final execution order of the instructions
++  /// across iterations is not guaranteed, thus, the end result might or might
++  /// implement actual concurrent execution of instructions across multiple
++  /// iterations.
 +  bool isParallel() const;
 +
    /// hasDedicatedExits - Return true if no exit block for the loop
@@ -18,9 +24,9 @@ Index: llvm/include/llvm/Analysis/LoopInfo.h
    bool hasDedicatedExits() const;
 Index: llvm/lib/Analysis/LoopInfo.cpp
 ===================================================================
---- llvm.orig/lib/Analysis/LoopInfo.cpp	2013-01-29 16:37:46.500599304 +0200
-+++ llvm/lib/Analysis/LoopInfo.cpp	2013-01-29 18:25:27.284349115 +0200
-@@ -233,6 +233,32 @@
+--- llvm.orig/lib/Analysis/LoopInfo.cpp	2013-01-29 23:40:12.164348629 +0200
++++ llvm/lib/Analysis/LoopInfo.cpp	2013-01-31 13:20:04.885692041 +0200
+@@ -233,6 +233,31 @@
    return true;
  }
  
@@ -29,14 +35,13 @@ Index: llvm/lib/Analysis/LoopInfo.cpp
 +
 +  BasicBlock *latch = getLoopLatch();
 +  if (latch == NULL ||
-+      latch->getTerminator()->getMetadata(
-+        "llvm.loop.ignore_assumed_deps") == NULL)
++      latch->getTerminator()->getMetadata("llvm.loop.parallel") == NULL)
 +    return false;
 +
 +  // The loop branch contains the parallel loop metadata. In order to ensure
-+  // that any optimization pass hasn't added loop-carried dependencies, check
-+  // that all the memory instructions in the loop contain the parallelism
-+  // metadata.
++  // that any parallel-loop-unaware optimization pass hasn't added loop-carried
++  // dependencies (thus converted the loop back to a sequential loop), check
++  // that all the memory instructions in the loop contain parallelism metadata.
 +  for (block_iterator i = block_begin(), e = block_end(); i != e; ++i) {
 +    for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
 +         ii != ee; ii++) {
@@ -55,9 +60,9 @@ Index: llvm/lib/Analysis/LoopInfo.cpp
  bool Loop::hasDedicatedExits() const {
 Index: llvm/lib/Transforms/Vectorize/LoopVectorize.cpp
 ===================================================================
---- llvm.orig/lib/Transforms/Vectorize/LoopVectorize.cpp	2013-01-29 16:09:08.052349353 +0200
-+++ llvm/lib/Transforms/Vectorize/LoopVectorize.cpp	2013-01-29 16:50:01.332349011 +0200
-@@ -2299,6 +2299,12 @@
+--- llvm.orig/lib/Transforms/Vectorize/LoopVectorize.cpp	2013-01-29 23:40:47.824348824 +0200
++++ llvm/lib/Transforms/Vectorize/LoopVectorize.cpp	2013-01-31 12:54:29.796348864 +0200
+@@ -2265,6 +2265,12 @@
  }
  
  bool LoopVectorizationLegality::canVectorizeMemory() {
@@ -70,10 +75,10 @@ Index: llvm/lib/Transforms/Vectorize/LoopVectorize.cpp
    typedef SmallVector<Value*, 16> ValueVector;
    typedef SmallPtrSet<Value*, 16> ValueSet;
    // Holds the Load and Store *instructions*.
-Index: llvm/test/Transforms/LoopVectorize/parallel-loops-after-reg2mem.ll
+Index: llvm/test/Transforms/LoopVectorize/X86/parallel-loops-after-reg2mem.ll
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ llvm/test/Transforms/LoopVectorize/parallel-loops-after-reg2mem.ll	2013-01-29 18:25:01.120348389 +0200
++++ llvm/test/Transforms/LoopVectorize/X86/parallel-loops-after-reg2mem.ll	2013-01-31 15:53:52.892612408 +0200
 @@ -0,0 +1,39 @@
 +; RUN: opt < %s -reg2mem -loop-vectorize -force-vector-unroll=1 -force-vector-width=4 -dce -instcombine -S | FileCheck %s
 +
@@ -104,7 +109,7 @@ Index: llvm/test/Transforms/LoopVectorize/parallel-loops-after-reg2mem.ll
 +  store i32 %2, i32* %arrayidx2, align 4, !tbaa !0, !llvm.mem.parallel_loop_access !3
 +  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
 +  %exitcond = icmp eq i32 %lftr.wideiv, 512
-+  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.ignore_assumed_deps !3
++  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.parallel !3
 +
 +for.end:                                          ; preds = %for.body
 +  ret void
@@ -114,10 +119,10 @@ Index: llvm/test/Transforms/LoopVectorize/parallel-loops-after-reg2mem.ll
 +!1 = metadata !{metadata !"omnipotent char", metadata !2}
 +!2 = metadata !{metadata !"Simple C/C++ TBAA"}
 +!3 = metadata !{i32 1}
-Index: llvm/test/Transforms/LoopVectorize/parallel-loops.ll
+Index: llvm/test/Transforms/LoopVectorize/X86/parallel-loops.ll
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ llvm/test/Transforms/LoopVectorize/parallel-loops.ll	2013-01-29 18:23:00.512349153 +0200
++++ llvm/test/Transforms/LoopVectorize/X86/parallel-loops.ll	2013-01-31 15:53:43.532376944 +0200
 @@ -0,0 +1,73 @@
 +; RUN: opt < %s  -loop-vectorize -force-vector-unroll=1 -force-vector-width=4 -dce -instcombine -S | FileCheck %s
 +
@@ -182,7 +187,7 @@ Index: llvm/test/Transforms/LoopVectorize/parallel-loops.ll
 +  store i32 %2, i32* %arrayidx2, align 4, !tbaa !0, !llvm.mem.parallel_loop_access !3
 +  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
 +  %exitcond = icmp eq i32 %lftr.wideiv, 512
-+  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.ignore_assumed_deps !3
++  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.parallel !3
 +
 +for.end:                                          ; preds = %for.body
 +  ret void
@@ -192,3 +197,85 @@ Index: llvm/test/Transforms/LoopVectorize/parallel-loops.ll
 +!1 = metadata !{metadata !"omnipotent char", metadata !2}
 +!2 = metadata !{metadata !"Simple C/C++ TBAA"}
 +!3 = metadata !{i32 1}
+Index: llvm/docs/LangRef.rst
+===================================================================
+--- llvm.orig/docs/LangRef.rst	2013-01-31 13:47:06.796599138 +0200
++++ llvm/docs/LangRef.rst	2013-01-31 16:16:55.064599535 +0200
+@@ -2478,6 +2478,77 @@
+     !2 = metadata !{ i8 0, i8 2, i8 3, i8 6 }
+     !3 = metadata !{ i8 -2, i8 0, i8 3, i8 6 }
+ 
++'``llvm.loop``'
++^^^^^^^^^^^^^^^
++
++It is sometimes useful to attach information to loop constructs. Currently,
++loop metadata is implemented as metadata attached to the branch instruction
++in the loop latch block. Loop-level metadata is prefixed with ``llvm.loop``.
++
++'``llvm.loop.parallel``' Metadata
++^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++This loop metadata can be used to communicate that a loop should be considered
++a parallel loop. The semantics of parallel loops in this case is the one
++with the strongest cross-iteration instruction ordering freedom: the
++iterations in the loop can be considered completely independent of each
++other (also known as embarrasingly parallel loops).
++
++This metadata can originate from a programming language with parallel loop
++constructs. In such a case it is completely the programmer's responsibility
++to ensure the instructions from the different iterations of the loop can be
++executed in an arbitrary order, in parallel, or intertwined. No loop-carried
++dependency checking at all must be expected from the compiler.
++
++In order to fulfil the LLVM requirement for metadata to be ignorable
++safely, it is important to ensure that a parallel loop is converted to
++a sequential loop in case an optimization (unknowingly of the parallel loop
++semantics) converts the loop back to such. This happens when new memory
++accesses that do not fulfil the requirement of free ordering across iterations
++are added to the loop. Therefore, this metadata is required, but not
++sufficient, to consider the loop at hand a parallel loop. In order to consider
++a loop a parallel loop, also all of its memory accessing instructions need to be
++marked with the ```llvm.mem.parallel_loop_access``` metadata.
++
++'``llvm.mem``'
++^^^^^^^^^^^^^^^
++
++Metadata types used to annotate memory accesses with information helpful
++for optimizations are prefixed with ``llvm.mem``.
++
++'``llvm.mem.parallel_loop_access``' Metadata
++^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++In order to consider a loop a parallel loop, in addition to using
++the ``llvm.loop.parallel`` metadata to mark the loop latch branch instruction,
++also all of the memory accessing instructions in the loop body need to be
++marked with the ``llvm.mem.parallel_loop_access`` metadata. If there
++is at least one memory accessing instruction not marked with the metadata,
++the loop, despite it possibly using the ``llvm.loop.parallel`` metadata,
++must be considered a sequential loop. This causes parallel loops to be
++converted to sequential loops due to optimization passes that are unaware of
++the parallel semantics and that insert new memory instructions to the loop
++body.
++
++Example of a loop that is considered parallel due to its correct use of
++both ``llvm.loop.parallel`` and ```llvm.mem.parallel_loop_access```
++metadata types:
++
++.. code-block:: llvm
++
++   for.body:
++   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
++   %arrayidx = getelementptr inbounds i32* %b, i64 %indvars.iv
++   %0 = load i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !0
++   ...
++   store i32 %0, i32* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !0
++   ...
++   br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.parallel !0
++   for.end:                                          ; preds = %for.body
++   ret void
++   ...
++   !0 = metadata !{i32 1}
++
+ Module Flags Metadata
+ =====================
+ 

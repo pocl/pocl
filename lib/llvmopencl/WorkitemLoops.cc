@@ -322,7 +322,7 @@ WorkitemLoops::CreateLoopAround
 
   /* Add the metadata to mark a parallel loop. */
   loopBranch->setMetadata
-      ("llvm.loop.ignore_assumed_deps", 
+      ("llvm.loop.parallel", 
        MDNode::get(C, ConstantInt::get(Type::getInt32Ty(C), 1)));
 
   builder.SetInsertPoint(loopEndBB);
