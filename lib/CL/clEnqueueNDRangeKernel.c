@@ -292,7 +292,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
       arg->size = kernel->dyn_arguments[i].size;
 
-      if (kernel->dyn_arguments[i].value == NULL)
+      if (kernel->arg_is_pointer[i] && (*(cl_mem *)kernel->dyn_arguments[i].value == NULL))
         {
           arg->value = NULL;
         }
@@ -314,7 +314,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
+    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && (*(cl_mem *)al->value != NULL))
       ++command_node->command.run.arg_buffer_count;
   }
   
@@ -325,7 +325,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
+    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && (*(cl_mem *)al->value != NULL))
       {
         cl_mem buf;
 #if 0
