@@ -1,0 +1,155 @@
+/* Tests a case where one of the arguments is NULL
+
+   Copyright (c) 2013 Victor Oliveira <victormatheus@gmail.com>
+   
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+   
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
+// Enable OpenCL C++ exceptions
+#define __CL_ENABLE_EXCEPTIONS
+#include <CL/cl.hpp>
+
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+
+#define BUFFER_SIZE (1024)
+
+static char
+kernelSourceCode[] = 
+"__kernel void test_kernel (__global const float      *in,  \n"
+"                           __global const float      *aux, \n"
+"                           __global       float      *out) \n"
+"{                                                          \n"
+"  int gid = get_global_id(0);                              \n"
+"  float  in_v  = in [gid];                                 \n"
+"  float  aux_v = (aux)? aux[gid] : 0.5f;                   \n"
+"  float  out_v;                                            \n"
+"  out_v = (in_v > aux_v)? 1.0f : 0.0f;                     \n"
+"  out[gid]  =  out_v;                                      \n"
+"}                                                          \n";
+
+int
+main(void)
+{
+    float in [BUFFER_SIZE];
+    float out[BUFFER_SIZE];
+    cl_int err;
+
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        in[i] = (float)rand()/(float)RAND_MAX;;
+    }
+
+    try {
+        std::vector<cl::Platform> platformList;
+
+        // Pick platform
+        cl::Platform::get(&platformList);
+
+        // Pick first platform
+        cl_context_properties cprops[] = {
+            CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
+        cl::Context context(CL_DEVICE_TYPE_CPU, cprops);
+
+        // Query the set of devices attched to the context
+        std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+
+        // Create and program from source
+        cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
+        cl::Program program(context, sources);
+
+        // Build program
+        program.build(devices);
+
+        // Create buffer for A and copy host contents
+        cl::Buffer inBuffer = cl::Buffer(
+            context, 
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+            BUFFER_SIZE * sizeof(float), 
+            (void *) &in[0]);
+
+        // Create buffer for that uses the host ptr C
+        cl::Buffer outBuffer = cl::Buffer(
+            context, 
+            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
+            BUFFER_SIZE * sizeof(float), 
+            (void *) &out[0]);
+
+        // Create kernel object
+        cl::Kernel kernel(program, "test_kernel");
+
+        // Set kernel args
+        kernel.setArg(0, inBuffer);
+        kernel.setArg(1, NULL);
+        kernel.setArg(2, outBuffer);
+
+        // Create command queue
+        cl::CommandQueue queue(context, devices[0], 0);
+ 
+        // Do the work
+        queue.enqueueNDRangeKernel(
+            kernel, 
+            cl::NullRange, 
+            cl::NDRange(BUFFER_SIZE),
+            cl::NullRange);
+ 
+        // Map to host pointer. This enforces a sync with 
+        // the host backing space, remember we choose GPU device.
+        float * output = (float *) queue.enqueueMapBuffer(
+            outBuffer,
+            CL_TRUE, // block 
+            CL_MAP_READ,
+            0,
+            BUFFER_SIZE * sizeof(float));
+
+        bool ok = true;
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+            if (   (in[i] >  0.5f && out[i] < 1.0f)
+                || (in[i] <= 0.5f && out[i] > 0.0f))
+              ok = false;
+        }
+
+        if (ok) 
+          return EXIT_SUCCESS;
+        else
+          return EXIT_FAILURE;
+
+        // Finally release our hold on accessing the memory
+        err = queue.enqueueUnmapMemObject(
+            outBuffer,
+            (void *) output);
+ 
+        // There is no need to perform a finish on the final unmap
+        // or release any objects as this all happens implicitly with
+        // the C++ Wrapper API.
+    } 
+    catch (cl::Error err) {
+         std::cerr
+             << "ERROR: "
+             << err.what()
+             << "("
+             << err.err()
+             << ")"
+             << std::endl;
+
+         return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
