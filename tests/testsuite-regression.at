@@ -135,7 +135,6 @@ AT_CHECK([$abs_top_builddir/tests/regression/test_setargs], 0)
 AT_CLEANUP
 
 AT_SETUP([setting a buffer argument to NULL causes a segfault - lp:1109030])
-AT_XFAIL_IF(true)
 AT_KEYWORDS([regression nullarg])
 AT_CHECK([$abs_top_builddir/tests/regression/test_null_arg], 0)
 AT_CLEANUP

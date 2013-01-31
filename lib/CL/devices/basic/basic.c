@@ -246,7 +246,10 @@ pocl_basic_run
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
           if (al->value == NULL)
-            arguments[i] = NULL;
+            {
+              arguments[i] = malloc (sizeof (void *));
+              *(void **)arguments[i] = NULL;
+            }
           else
             arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device]);
         }

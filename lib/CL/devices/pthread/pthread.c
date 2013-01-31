@@ -668,10 +668,13 @@ workgroup_thread (void *p)
            that case we must pass the same NULL forward to the kernel.
            Otherwise, the user must have created a buffer with per device
            pointers stored in the cl_mem. */
-        if (al->value == NULL)
-          arguments[i] = NULL;
+        if (al->value == NULL) 
+          {
+            arguments[i] = malloc (sizeof (void *));
+            *(void **)arguments[i] = NULL;
+          }
         else
-          arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
       }
       else if (kernel->arg_is_image[i])
         {
@@ -700,6 +703,9 @@ workgroup_thread (void *p)
       else
         arguments[i] = al->value;
     }
+
+  /* Allocate the automatic local buffers which are implemented as implicit
+     extra arguments at the end of the kernel argument list. */
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
@@ -732,7 +738,8 @@ workgroup_thread (void *p)
           pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
           free(arguments[i]);
         }
-      else if( kernel->arg_is_sampler[i] || kernel->arg_is_image[i] ) 
+      else if (kernel->arg_is_sampler[i] || kernel->arg_is_image[i] || 
+               (kernel->arg_is_pointer[i] && *(void**)arguments[i] == NULL))
         {
           free(arguments[i]);
         }

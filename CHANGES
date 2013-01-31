@@ -6,6 +6,11 @@ refer to the version control log for a full listing.
 
 [changes updated from bzr log until 2013-01-09]
 
+Major bugfixes
+--------------
+- Fixed passing NULL as a buffer argument to clSetKernelArguments
+  (again, this time with a regression test added).
+
 Misc.
 -----
 -  Fix to the helper script search logic:

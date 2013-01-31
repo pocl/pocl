@@ -46,7 +46,9 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   p = &(kernel->dyn_arguments[arg_index]);  
   
-  if (arg_value != NULL)
+  if (arg_value != NULL && 
+      !(kernel->arg_is_pointer[arg_index] && 
+        *(const int*)arg_value == 0))
     {
       free (p->value);
 
@@ -66,8 +68,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
 #if 0
   printf(
-      "### clSetKernelArg for %s arg %d set to %x\n", 
-      kernel->name, arg_index, p->value);
+      "### clSetKernelArg for %s arg %d (size %u) set to %x points to %x\n", 
+      kernel->name, arg_index, arg_size, p->value, *(int*)arg_value);
 #endif
 
   p->size = arg_size;

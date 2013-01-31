@@ -332,7 +332,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
 #endif
         buf = *(cl_mem *) (al->value);
-        POname(clRetainMemObject) (buf);
+        if (buf != NULL)
+          POname(clRetainMemObject) (buf);
         command_node->command.run.arg_buffers[count] = buf;
         ++count;
       }
