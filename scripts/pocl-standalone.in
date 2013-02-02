@@ -97,18 +97,15 @@ fi
 
 linked_bc="${tempdir}/linked.bc"
 linked_out="${linked_bc}.out"
-llvm_ld="@pkglibexecdir@/pocl-llvm-ld"
 pocl_lib="@pkglibdir@/llvmopencl.so"
 full_target_dir="@pkglibdir@/${target_dir}"
 # BEGIN REMOVE ONCE INSTALLED
 # Fixing variables until the script is installed
-llvm_ld="@abs_top_builddir@/tools/llvm-ld/pocl-llvm-ld"
 pocl_lib="@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so"
 full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
 # END REMOVE ONCE INSTALLED
 
-${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} ${kernel_bc} -L"$full_target_dir" -lkernel
-rm ${linked_out}
+llvm-link -o ${linked_bc} ${kernel_bc} ${full_target_dir}/kernel*.bc
 
 OPT_SWITCH="-O3"
 

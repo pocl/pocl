@@ -27,6 +27,9 @@
 KERNEL_TARGET=tce-tut-llvm
 TARGET_DIR=tce
 
+targetpkglibdir = ${pkglibdir}/tce
+targetpkglib_DATA = kernel-tce-tut-llvm.bc
+
 include ../sources.mk
 
 # TCE's software emulation chokes on the fmuladd intrinsics
