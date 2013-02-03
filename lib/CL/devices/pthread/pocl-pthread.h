@@ -41,7 +41,7 @@ GEN_PROTOTYPES (basic)
 #define POCL_DEVICES_PTHREAD {	 					\
   POCL_DEVICE_ICD_DISPATCH     						\
   POCL_OBJECT_INIT, \
-  CL_DEVICE_TYPE_CPU, /* type */					\
+  CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
