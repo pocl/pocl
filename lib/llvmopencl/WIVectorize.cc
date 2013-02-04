@@ -1218,6 +1218,7 @@ namespace {
                     return false;
                 }
             }
+#ifndef LLVM_3_1            
             if (VTTI) {
               unsigned ICost = VTTI->getMemoryOpCost(I->getOpcode(), I->getType(),
                                                      IAlignment, IAddressSpace);
@@ -1238,7 +1239,8 @@ namespace {
               else if (!VParts && VCost == ICost + JCost)
                 return false;
 
-            }            
+            }   
+#endif                     
       } else if(foundPointer && abs64(OffsetInElmts)>1){
           if (isa<GetElementPtrInst>(I)) {
               return true;
@@ -1277,6 +1279,9 @@ namespace {
       return isa<Constant>(I->getOperand(2)) &&
              isa<Constant>(J->getOperand(2));
       // FIXME: We may want to vectorize non-constant shuffles also.
+#ifdef LLVM_3_1             
+    }
+#else    
     }  else if (VTTI) {
       unsigned ICost = getInstrCost(I->getOpcode(), IT1, IT2);
       unsigned JCost = getInstrCost(J->getOpcode(), JT1, JT2);
@@ -1299,6 +1304,7 @@ namespace {
 
       //CostSavings = ICost + JCost - VCost;
     }
+#endif    
     // The powi intrinsic is special because only the first argument is
     // vectorized, the second arguments must be equal.
     CallInst *CI = dyn_cast<CallInst>(I);
@@ -2047,7 +2053,11 @@ namespace {
              << *J->first << " <-> " << *J->second << "} of depth " <<
              MaxDepth << " and size " << PrunedTree.size() <<
             " (effective size: " << EffSize << ")\n");
-      if ((VTTI || MaxDepth >= ReqChainDepth) && EffSize > BestEffSize) {
+#if defined LLVM_3_1      
+      if (MaxDepth >= ReqChainDepth && EffSize > BestEffSize) {
+#else          
+      if ((VTTI || MaxDepth >= ReqChainDepth) && EffSize > BestEffSize) {          
+#endif          
         BestMaxDepth = MaxDepth;
         BestEffSize = EffSize;
         BestTree = PrunedTree;
