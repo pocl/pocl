@@ -416,22 +416,41 @@ ParallelRegion::Verify()
  * Adds metadata to all the memory instructions to denote
  * they originate from a parallel loop.
  *
- * Format:
- * llvm.mem.parallel_loop_access 
+ * Due to nested parallel loops, there can be multiple loop
+ * references.
  *
+ * Format:
+ * llvm.mem.parallel_loop_access !0
+ *
+ * !0 { metadata !0 }
+ *
+ * In a 2-nested loop:
+ *
+ * llvm.mem.parallel_loop_access !0
+ *
+ * !0 { metadata !1, metadata !2}
+ * !1 { metadata !1 }
+ * !2 { metadata !2 }
  */
 void
-ParallelRegion::AddParallelLoopMetadata() {
+ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
  
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock* bb = *i;      
     for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
          ii != ee; ii++) {
-      if (ii->mayReadOrWriteMemory())
-        ii->setMetadata
-          ("llvm.mem.parallel_loop_access",
-           MDNode::get(ii->getContext(), ConstantInt::get(Type::getInt32Ty(ii->getContext()), 1)));
-      
+      if (ii->mayReadOrWriteMemory()) {
+        std::vector<Value*> loopIds;
+        MDNode *oldIds = ii->getMetadata("llvm.mem.parallel_loop_access");
+        if (oldIds != NULL) {
+          for (unsigned i = 0; i < oldIds->getNumOperands(); ++i) {
+            loopIds.push_back(oldIds->getOperand(i));
+          }
+        }
+        loopIds.push_back(identifier);
+        ii->setMetadata("llvm.mem.parallel_loop_access", 
+                        MDNode::get(bb->getContext(), loopIds));
+      }
     }
   }
 }

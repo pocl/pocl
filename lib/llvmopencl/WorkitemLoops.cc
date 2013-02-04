@@ -1,7 +1,7 @@
 // LLVM function pass to create a loop that runs all the work items 
 // in a work group.
 // 
-// Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+// Copyright (c) 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -188,7 +188,8 @@ WorkitemLoops::runOnFunction(Function &F)
 
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
 WorkitemLoops::CreateLoopAround
-(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
+(ParallelRegion &region,
+ llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
  bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
  bool addIncBlock) 
 {
@@ -320,10 +321,25 @@ WorkitemLoops::CreateLoopAround
   Instruction *loopBranch =
       builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
 
-  /* Add the metadata to mark a parallel loop. */
-  loopBranch->setMetadata
-      ("llvm.loop.parallel", 
-       MDNode::get(C, ConstantInt::get(Type::getInt32Ty(C), 1)));
+  /* Add the metadata to mark a parallel loop. The metadata 
+     refer to a loop-unique dummy metadata that is not merged
+     automatically. */
+
+  /* This creation of the identifier metadata is copied from
+     LLVM's MDBuilder::createAnonymousTBAARoot(). */
+  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Value*>());
+  MDNode *Root = MDNode::get(C, Dummy);
+  // At this point we have
+  //   !0 = metadata !{}            <- dummy
+  //   !1 = metadata !{metadata !0} <- root
+  // Replace the dummy operand with the root node itself and delete the dummy.
+  Root->replaceOperandWith(0, Root);
+  MDNode::deleteTemporary(Dummy);
+  // We now have
+  //   !1 = metadata !{metadata !1} <- self-referential root
+
+  loopBranch->setMetadata("llvm.loop.parallel", Root);
+  region.AddParallelLoopMetadata(Root);
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -493,7 +509,6 @@ WorkitemLoops::ProcessFunction(Function &F)
             ParallelRegion *unrolled = 
               original->replicate(reference_map, ".unrolled_wi");
             unrolled->chainAfter(prev);
-            unrolled->AddParallelLoopMetadata();
             prev = unrolled;
             lastBB = unrolled->exitBB();
             if (AddWIMetadata)
@@ -504,13 +519,13 @@ WorkitemLoops::ProcessFunction(Function &F)
       }
 
     if (LocalSizeX > 1)
-      l = CreateLoopAround(l.first, l.second, peelFirst, localIdX, LocalSizeX, !unrolled);
+      l = CreateLoopAround(*original, l.first, l.second, peelFirst, localIdX, LocalSizeX, !unrolled);
 
     if (LocalSizeY > 1)
-      l = CreateLoopAround(l.first, l.second, false, localIdY, LocalSizeY);
+      l = CreateLoopAround(*original, l.first, l.second, false, localIdY, LocalSizeY);
 
     if (LocalSizeZ > 1)
-      l = CreateLoopAround(l.first, l.second, false, localIdZ, LocalSizeZ);
+      l = CreateLoopAround(*original, l.first, l.second, false, localIdZ, LocalSizeZ);
 
     /* Loop edges coming from another region mean B-loops which means 
        we have to fix the loop edge to jump to the beginning of the wi-loop 
@@ -527,7 +542,6 @@ WorkitemLoops::ProcessFunction(Function &F)
               (original->entryBB(), l.first);
           }
       }
-    original->AddParallelLoopMetadata();
 
     //F.viewCFGOnly();
   }

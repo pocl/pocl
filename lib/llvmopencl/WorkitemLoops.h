@@ -81,7 +81,7 @@ namespace pocl {
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
     CreateLoopAround
-        (llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
+        (ParallelRegion &region, llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
          bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
          bool addIncBlock=true);
 
