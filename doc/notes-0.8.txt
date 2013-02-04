@@ -1,6 +1,8 @@
 Portable Computing Language (pocl) v0.8 released
 ------------------------------------------------
 
+[TODO: add release date]
+
 [TODO]
 
 Pocl aims to be an efficient open source (MIT-licensed) 
@@ -20,8 +22,8 @@ ways (SIMD, VLIW, superscalar,...).
 
 This release adds  ... [TODO]
 
-Even though the OpenCL 1.2 standard is not yet implemented fully and
-it contains known bugs, we consider pocl ready for wider scale testing. 
+We consider pocl ready for wider scale testing, although the OpenCL
+1.2 standard is not yet fully implemented, and it contains known bugs.
 The pocl 0.8 test suite compiles and runs most of the ViennaCL 1.3.1 examples, 
 Rodinia 2.0.1 benchmarks, Parboil benchmarks, OpenCL Programming Guide book
 samples and the AMD APP SDK v2.8 OpenCL samples, ... [TODO]
@@ -32,7 +34,11 @@ Acknowledgements
 ----------------
 We'd like to thank the Radio Implementation Research Team from Nokia
 Research Center and Academy of Finland (funding decision 253087) for
-funding the development of this release. 
+funding the development of this release.
+
+E. Schnetter acknowledges support from the Perimeter Institute, as
+well as funding from NSERC (Canada) via a Discovery Grant and from NSF
+(USA) via OCI Award 0905046.
 
 Thanks to Victor Oliveira for his first code contributions to the
 project and for testing pocl with the GEGL OpenCL filters.
