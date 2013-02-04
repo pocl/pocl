@@ -643,6 +643,7 @@ AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are ava
 AC_SUBST([TCE_AVAILABLE], ["1"])
 LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
 OCL_DRIVERS="$OCL_DRIVERS tce"
+OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
@@ -666,10 +667,6 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
-if test ! -z TCE_AVAILABLE
-then 
-    OCL_TARGETS="$OCL_TARGETS tce"
-fi
 
 AC_SUBST([OCL_TARGETS])
 
