@@ -22,7 +22,6 @@ LKERNEL_SRCS= \
 	get_num_groups.c			\
 	get_group_id.c				\
 	get_global_offset.c			\
-	fenv_cl.c				\
 	as_type.cl				\
 	atomics.cl				\
 	acos.cl					\
