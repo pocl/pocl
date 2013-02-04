@@ -78,7 +78,7 @@ AT_DATA([expout],
 [Running test test_hadd...
 OK
 ])
-AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd 2>&1 | egrep -v warning], 0, expout)
+AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd 2>&1], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])

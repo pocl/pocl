@@ -1391,8 +1391,8 @@ DEFINE_BODY_G
    
    int const bits = count_bits(sgtype);
    sgtype const tmin =
-     is_signed(sgtype) ? ((sgtype)1 << (sgtype)(bits-1)) : (sgtype)0;
-   sgtype const tmax = tmin - (sgtype)1;
+     is_signed(sgtype) ? (sgtype)((sugtype)1 << (sugtype)(bits-1)) : (sgtype)0;
+   sgtype const tmax = (sgtype)((sugtype)tmin - (sugtype)1);
    for (int iter=0; iter<nrandoms; ++iter) {
      typedef union {
        gtype  v;
