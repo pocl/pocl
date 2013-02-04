@@ -6,17 +6,17 @@
    OpenCL type conversion functions
 
    Copyright (c) 2013 Victor Oliveira <victormatheus@gmail.com>
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,10 +26,6 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
-
-void cl_set_rounding_mode(int mode);
-void cl_set_default_rounding_mode();
 
 
   char _cl_overloadable convert_char(char a)
@@ -3739,8 +3735,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a < (char)DST_MIN) ? (char)DST_MIN :
             convert_char(a > (char)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
@@ -3752,8 +3748,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char2(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a < (char)DST_MIN) ? (char2)DST_MIN :
             convert_char2(a > (char)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
@@ -3765,8 +3761,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char4(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a < (char)DST_MIN) ? (char4)DST_MIN :
             convert_char4(a > (char)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
@@ -3778,8 +3774,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char8(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a < (char)DST_MIN) ? (char8)DST_MIN :
             convert_char8(a > (char)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
@@ -3791,8 +3787,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char16(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a < (char)DST_MIN) ? (char16)DST_MIN :
             convert_char16(a > (char)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
@@ -3807,7 +3803,7 @@ __IF_FP64(
       return (convert_uchar(a < (char)0) ? (uchar)0 :
               convert_uchar(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a < (char)0      ) ? (uchar)0 :
             convert_uchar(a > (char)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
@@ -3822,7 +3818,7 @@ __IF_FP64(
       return (convert_uchar2(a < (char)0) ? (uchar2)0 :
               convert_uchar2(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a < (char)0      ) ? (uchar2)0 :
             convert_uchar2(a > (char)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
@@ -3837,7 +3833,7 @@ __IF_FP64(
       return (convert_uchar4(a < (char)0) ? (uchar4)0 :
               convert_uchar4(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a < (char)0      ) ? (uchar4)0 :
             convert_uchar4(a > (char)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
@@ -3852,7 +3848,7 @@ __IF_FP64(
       return (convert_uchar8(a < (char)0) ? (uchar8)0 :
               convert_uchar8(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a < (char)0      ) ? (uchar8)0 :
             convert_uchar8(a > (char)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
@@ -3867,7 +3863,7 @@ __IF_FP64(
       return (convert_uchar16(a < (char)0) ? (uchar16)0 :
               convert_uchar16(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a < (char)0      ) ? (uchar16)0 :
             convert_uchar16(a > (char)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
@@ -3879,8 +3875,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a < (char)DST_MIN) ? (short)DST_MIN :
             convert_short(a > (char)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
@@ -3892,8 +3888,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short2(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a < (char)DST_MIN) ? (short2)DST_MIN :
             convert_short2(a > (char)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
@@ -3905,8 +3901,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short4(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a < (char)DST_MIN) ? (short4)DST_MIN :
             convert_short4(a > (char)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
@@ -3918,8 +3914,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short8(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a < (char)DST_MIN) ? (short8)DST_MIN :
             convert_short8(a > (char)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
@@ -3931,8 +3927,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short16(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a < (char)DST_MIN) ? (short16)DST_MIN :
             convert_short16(a > (char)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
@@ -3947,7 +3943,7 @@ __IF_FP64(
       return (convert_ushort(a < (char)0) ? (ushort)0 :
               convert_ushort(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a < (char)0      ) ? (ushort)0 :
             convert_ushort(a > (char)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
@@ -3962,7 +3958,7 @@ __IF_FP64(
       return (convert_ushort2(a < (char)0) ? (ushort2)0 :
               convert_ushort2(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a < (char)0      ) ? (ushort2)0 :
             convert_ushort2(a > (char)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
@@ -3977,7 +3973,7 @@ __IF_FP64(
       return (convert_ushort4(a < (char)0) ? (ushort4)0 :
               convert_ushort4(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a < (char)0      ) ? (ushort4)0 :
             convert_ushort4(a > (char)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
@@ -3992,7 +3988,7 @@ __IF_FP64(
       return (convert_ushort8(a < (char)0) ? (ushort8)0 :
               convert_ushort8(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a < (char)0      ) ? (ushort8)0 :
             convert_ushort8(a > (char)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
@@ -4007,7 +4003,7 @@ __IF_FP64(
       return (convert_ushort16(a < (char)0) ? (ushort16)0 :
               convert_ushort16(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a < (char)0      ) ? (ushort16)0 :
             convert_ushort16(a > (char)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
@@ -4019,8 +4015,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int(a < (char)DST_MIN) ? (int)DST_MIN :
             convert_int(a > (char)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
@@ -4032,8 +4028,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int2(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a < (char)DST_MIN) ? (int2)DST_MIN :
             convert_int2(a > (char)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
@@ -4045,8 +4041,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int4(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a < (char)DST_MIN) ? (int4)DST_MIN :
             convert_int4(a > (char)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
@@ -4058,8 +4054,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int8(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a < (char)DST_MIN) ? (int8)DST_MIN :
             convert_int8(a > (char)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
@@ -4071,8 +4067,8 @@ __IF_FP64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int16(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a < (char)DST_MIN) ? (int16)DST_MIN :
             convert_int16(a > (char)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
@@ -4087,7 +4083,7 @@ __IF_FP64(
       return (convert_uint(a < (char)0) ? (uint)0 :
               convert_uint(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a < (char)0      ) ? (uint)0 :
             convert_uint(a > (char)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
@@ -4102,7 +4098,7 @@ __IF_FP64(
       return (convert_uint2(a < (char)0) ? (uint2)0 :
               convert_uint2(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a < (char)0      ) ? (uint2)0 :
             convert_uint2(a > (char)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
@@ -4117,7 +4113,7 @@ __IF_FP64(
       return (convert_uint4(a < (char)0) ? (uint4)0 :
               convert_uint4(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a < (char)0      ) ? (uint4)0 :
             convert_uint4(a > (char)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
@@ -4132,7 +4128,7 @@ __IF_FP64(
       return (convert_uint8(a < (char)0) ? (uint8)0 :
               convert_uint8(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a < (char)0      ) ? (uint8)0 :
             convert_uint8(a > (char)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
@@ -4147,7 +4143,7 @@ __IF_FP64(
       return (convert_uint16(a < (char)0) ? (uint16)0 :
               convert_uint16(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a < (char)0      ) ? (uint16)0 :
             convert_uint16(a > (char)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
@@ -4160,8 +4156,8 @@ __IF_INT64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a < (char)DST_MIN) ? (long)DST_MIN :
             convert_long(a > (char)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
@@ -4173,8 +4169,8 @@ __IF_INT64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long2(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a < (char)DST_MIN) ? (long2)DST_MIN :
             convert_long2(a > (char)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
@@ -4186,8 +4182,8 @@ __IF_INT64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long4(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a < (char)DST_MIN) ? (long4)DST_MIN :
             convert_long4(a > (char)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
@@ -4199,8 +4195,8 @@ __IF_INT64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long8(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a < (char)DST_MIN) ? (long8)DST_MIN :
             convert_long8(a > (char)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
@@ -4212,8 +4208,8 @@ __IF_INT64(
     int const src_size = sizeof(char);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long16(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a < (char)DST_MIN) ? (long16)DST_MIN :
             convert_long16(a > (char)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
@@ -4230,7 +4226,7 @@ __IF_INT64(
       return (convert_ulong(a < (char)0) ? (ulong)0 :
               convert_ulong(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a < (char)0      ) ? (ulong)0 :
             convert_ulong(a > (char)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
@@ -4245,7 +4241,7 @@ __IF_INT64(
       return (convert_ulong2(a < (char)0) ? (ulong2)0 :
               convert_ulong2(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a < (char)0      ) ? (ulong2)0 :
             convert_ulong2(a > (char)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
@@ -4260,7 +4256,7 @@ __IF_INT64(
       return (convert_ulong4(a < (char)0) ? (ulong4)0 :
               convert_ulong4(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a < (char)0      ) ? (ulong4)0 :
             convert_ulong4(a > (char)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
@@ -4275,7 +4271,7 @@ __IF_INT64(
       return (convert_ulong8(a < (char)0) ? (ulong8)0 :
               convert_ulong8(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a < (char)0      ) ? (ulong8)0 :
             convert_ulong8(a > (char)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
@@ -4290,7 +4286,7 @@ __IF_INT64(
       return (convert_ulong16(a < (char)0) ? (ulong16)0 :
               convert_ulong16(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a < (char)0      ) ? (ulong16)0 :
             convert_ulong16(a > (char)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
@@ -4303,7 +4299,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a > (uchar)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
   }
@@ -4314,7 +4310,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char2(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a > (uchar)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
   }
@@ -4325,7 +4321,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char4(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a > (uchar)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
   }
@@ -4336,7 +4332,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char8(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a > (uchar)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
   }
@@ -4347,7 +4343,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char16(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a > (uchar)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
   }
@@ -4358,7 +4354,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a > (uchar)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
   }
@@ -4369,7 +4365,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar2(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a > (uchar)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
   }
@@ -4380,7 +4376,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar4(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a > (uchar)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
   }
@@ -4391,7 +4387,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar8(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a > (uchar)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
   }
@@ -4402,7 +4398,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar16(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a > (uchar)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
   }
@@ -4413,7 +4409,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a > (uchar)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
   }
@@ -4424,7 +4420,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short2(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a > (uchar)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
   }
@@ -4435,7 +4431,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short4(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a > (uchar)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
   }
@@ -4446,7 +4442,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short8(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a > (uchar)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
   }
@@ -4457,7 +4453,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short16(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a > (uchar)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
   }
@@ -4468,7 +4464,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a > (uchar)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
   }
@@ -4479,7 +4475,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort2(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a > (uchar)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
   }
@@ -4490,7 +4486,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort4(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a > (uchar)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
   }
@@ -4501,7 +4497,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort8(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a > (uchar)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
   }
@@ -4512,7 +4508,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort16(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a > (uchar)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
   }
@@ -4523,7 +4519,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int(a > (uchar)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
   }
@@ -4534,7 +4530,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int2(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a > (uchar)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
   }
@@ -4545,7 +4541,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int4(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a > (uchar)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
   }
@@ -4556,7 +4552,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int8(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a > (uchar)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
   }
@@ -4567,7 +4563,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int16(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a > (uchar)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
   }
@@ -4578,7 +4574,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a > (uchar)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
   }
@@ -4589,7 +4585,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint2(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a > (uchar)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
   }
@@ -4600,7 +4596,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint4(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a > (uchar)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
   }
@@ -4611,7 +4607,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint8(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a > (uchar)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
   }
@@ -4622,7 +4618,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint16(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a > (uchar)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
   }
@@ -4634,7 +4630,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a > (uchar)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
   }
@@ -4645,7 +4641,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long2(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a > (uchar)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
   }
@@ -4656,7 +4652,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long4(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a > (uchar)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
   }
@@ -4667,7 +4663,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long8(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a > (uchar)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
   }
@@ -4678,7 +4674,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long16(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a > (uchar)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
   }
@@ -4691,7 +4687,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a > (uchar)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
   }
@@ -4702,7 +4698,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong2(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a > (uchar)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
   }
@@ -4713,7 +4709,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong4(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a > (uchar)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
   }
@@ -4724,7 +4720,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong8(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a > (uchar)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
   }
@@ -4735,7 +4731,7 @@ __IF_INT64(
     int const src_size = sizeof(uchar);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong16(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a > (uchar)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
   }
@@ -4747,8 +4743,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a < (short)DST_MIN) ? (char)DST_MIN :
             convert_char(a > (short)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
@@ -4760,8 +4756,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char2(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a < (short)DST_MIN) ? (char2)DST_MIN :
             convert_char2(a > (short)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
@@ -4773,8 +4769,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char4(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a < (short)DST_MIN) ? (char4)DST_MIN :
             convert_char4(a > (short)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
@@ -4786,8 +4782,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char8(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a < (short)DST_MIN) ? (char8)DST_MIN :
             convert_char8(a > (short)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
@@ -4799,8 +4795,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char16(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a < (short)DST_MIN) ? (char16)DST_MIN :
             convert_char16(a > (short)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
@@ -4815,7 +4811,7 @@ __IF_INT64(
       return (convert_uchar(a < (short)0) ? (uchar)0 :
               convert_uchar(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a < (short)0      ) ? (uchar)0 :
             convert_uchar(a > (short)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
@@ -4830,7 +4826,7 @@ __IF_INT64(
       return (convert_uchar2(a < (short)0) ? (uchar2)0 :
               convert_uchar2(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a < (short)0      ) ? (uchar2)0 :
             convert_uchar2(a > (short)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
@@ -4845,7 +4841,7 @@ __IF_INT64(
       return (convert_uchar4(a < (short)0) ? (uchar4)0 :
               convert_uchar4(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a < (short)0      ) ? (uchar4)0 :
             convert_uchar4(a > (short)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
@@ -4860,7 +4856,7 @@ __IF_INT64(
       return (convert_uchar8(a < (short)0) ? (uchar8)0 :
               convert_uchar8(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a < (short)0      ) ? (uchar8)0 :
             convert_uchar8(a > (short)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
@@ -4875,7 +4871,7 @@ __IF_INT64(
       return (convert_uchar16(a < (short)0) ? (uchar16)0 :
               convert_uchar16(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a < (short)0      ) ? (uchar16)0 :
             convert_uchar16(a > (short)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
@@ -4887,8 +4883,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a < (short)DST_MIN) ? (short)DST_MIN :
             convert_short(a > (short)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
@@ -4900,8 +4896,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short2(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a < (short)DST_MIN) ? (short2)DST_MIN :
             convert_short2(a > (short)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
@@ -4913,8 +4909,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short4(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a < (short)DST_MIN) ? (short4)DST_MIN :
             convert_short4(a > (short)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
@@ -4926,8 +4922,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short8(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a < (short)DST_MIN) ? (short8)DST_MIN :
             convert_short8(a > (short)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
@@ -4939,8 +4935,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short16(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a < (short)DST_MIN) ? (short16)DST_MIN :
             convert_short16(a > (short)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
@@ -4955,7 +4951,7 @@ __IF_INT64(
       return (convert_ushort(a < (short)0) ? (ushort)0 :
               convert_ushort(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a < (short)0      ) ? (ushort)0 :
             convert_ushort(a > (short)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
@@ -4970,7 +4966,7 @@ __IF_INT64(
       return (convert_ushort2(a < (short)0) ? (ushort2)0 :
               convert_ushort2(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a < (short)0      ) ? (ushort2)0 :
             convert_ushort2(a > (short)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
@@ -4985,7 +4981,7 @@ __IF_INT64(
       return (convert_ushort4(a < (short)0) ? (ushort4)0 :
               convert_ushort4(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a < (short)0      ) ? (ushort4)0 :
             convert_ushort4(a > (short)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
@@ -5000,7 +4996,7 @@ __IF_INT64(
       return (convert_ushort8(a < (short)0) ? (ushort8)0 :
               convert_ushort8(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a < (short)0      ) ? (ushort8)0 :
             convert_ushort8(a > (short)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
@@ -5015,7 +5011,7 @@ __IF_INT64(
       return (convert_ushort16(a < (short)0) ? (ushort16)0 :
               convert_ushort16(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a < (short)0      ) ? (ushort16)0 :
             convert_ushort16(a > (short)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
@@ -5027,8 +5023,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int(a < (short)DST_MIN) ? (int)DST_MIN :
             convert_int(a > (short)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
@@ -5040,8 +5036,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int2(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a < (short)DST_MIN) ? (int2)DST_MIN :
             convert_int2(a > (short)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
@@ -5053,8 +5049,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int4(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a < (short)DST_MIN) ? (int4)DST_MIN :
             convert_int4(a > (short)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
@@ -5066,8 +5062,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int8(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a < (short)DST_MIN) ? (int8)DST_MIN :
             convert_int8(a > (short)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
@@ -5079,8 +5075,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int16(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a < (short)DST_MIN) ? (int16)DST_MIN :
             convert_int16(a > (short)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
@@ -5095,7 +5091,7 @@ __IF_INT64(
       return (convert_uint(a < (short)0) ? (uint)0 :
               convert_uint(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a < (short)0      ) ? (uint)0 :
             convert_uint(a > (short)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
@@ -5110,7 +5106,7 @@ __IF_INT64(
       return (convert_uint2(a < (short)0) ? (uint2)0 :
               convert_uint2(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a < (short)0      ) ? (uint2)0 :
             convert_uint2(a > (short)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
@@ -5125,7 +5121,7 @@ __IF_INT64(
       return (convert_uint4(a < (short)0) ? (uint4)0 :
               convert_uint4(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a < (short)0      ) ? (uint4)0 :
             convert_uint4(a > (short)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
@@ -5140,7 +5136,7 @@ __IF_INT64(
       return (convert_uint8(a < (short)0) ? (uint8)0 :
               convert_uint8(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a < (short)0      ) ? (uint8)0 :
             convert_uint8(a > (short)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
@@ -5155,7 +5151,7 @@ __IF_INT64(
       return (convert_uint16(a < (short)0) ? (uint16)0 :
               convert_uint16(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a < (short)0      ) ? (uint16)0 :
             convert_uint16(a > (short)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
@@ -5168,8 +5164,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a < (short)DST_MIN) ? (long)DST_MIN :
             convert_long(a > (short)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
@@ -5181,8 +5177,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long2(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a < (short)DST_MIN) ? (long2)DST_MIN :
             convert_long2(a > (short)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
@@ -5194,8 +5190,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long4(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a < (short)DST_MIN) ? (long4)DST_MIN :
             convert_long4(a > (short)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
@@ -5207,8 +5203,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long8(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a < (short)DST_MIN) ? (long8)DST_MIN :
             convert_long8(a > (short)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
@@ -5220,8 +5216,8 @@ __IF_INT64(
     int const src_size = sizeof(short);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long16(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a < (short)DST_MIN) ? (long16)DST_MIN :
             convert_long16(a > (short)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
@@ -5238,7 +5234,7 @@ __IF_INT64(
       return (convert_ulong(a < (short)0) ? (ulong)0 :
               convert_ulong(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a < (short)0      ) ? (ulong)0 :
             convert_ulong(a > (short)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
@@ -5253,7 +5249,7 @@ __IF_INT64(
       return (convert_ulong2(a < (short)0) ? (ulong2)0 :
               convert_ulong2(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a < (short)0      ) ? (ulong2)0 :
             convert_ulong2(a > (short)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
@@ -5268,7 +5264,7 @@ __IF_INT64(
       return (convert_ulong4(a < (short)0) ? (ulong4)0 :
               convert_ulong4(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a < (short)0      ) ? (ulong4)0 :
             convert_ulong4(a > (short)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
@@ -5283,7 +5279,7 @@ __IF_INT64(
       return (convert_ulong8(a < (short)0) ? (ulong8)0 :
               convert_ulong8(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a < (short)0      ) ? (ulong8)0 :
             convert_ulong8(a > (short)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
@@ -5298,7 +5294,7 @@ __IF_INT64(
       return (convert_ulong16(a < (short)0) ? (ulong16)0 :
               convert_ulong16(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a < (short)0      ) ? (ulong16)0 :
             convert_ulong16(a > (short)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
@@ -5311,7 +5307,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a > (ushort)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
   }
@@ -5322,7 +5318,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char2(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a > (ushort)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
   }
@@ -5333,7 +5329,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char4(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a > (ushort)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
   }
@@ -5344,7 +5340,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char8(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a > (ushort)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
   }
@@ -5355,7 +5351,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char16(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a > (ushort)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
   }
@@ -5366,7 +5362,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a > (ushort)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
   }
@@ -5377,7 +5373,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar2(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a > (ushort)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
   }
@@ -5388,7 +5384,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar4(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a > (ushort)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
   }
@@ -5399,7 +5395,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar8(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a > (ushort)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
   }
@@ -5410,7 +5406,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar16(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a > (ushort)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
   }
@@ -5421,7 +5417,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a > (ushort)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
   }
@@ -5432,7 +5428,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short2(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a > (ushort)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
   }
@@ -5443,7 +5439,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short4(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a > (ushort)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
   }
@@ -5454,7 +5450,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short8(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a > (ushort)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
   }
@@ -5465,7 +5461,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short16(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a > (ushort)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
   }
@@ -5476,7 +5472,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a > (ushort)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
   }
@@ -5487,7 +5483,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort2(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a > (ushort)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
   }
@@ -5498,7 +5494,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort4(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a > (ushort)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
   }
@@ -5509,7 +5505,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort8(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a > (ushort)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
   }
@@ -5520,7 +5516,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort16(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a > (ushort)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
   }
@@ -5531,7 +5527,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int(a > (ushort)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
   }
@@ -5542,7 +5538,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int2(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a > (ushort)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
   }
@@ -5553,7 +5549,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int4(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a > (ushort)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
   }
@@ -5564,7 +5560,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int8(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a > (ushort)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
   }
@@ -5575,7 +5571,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int16(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a > (ushort)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
   }
@@ -5586,7 +5582,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a > (ushort)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
   }
@@ -5597,7 +5593,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint2(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a > (ushort)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
   }
@@ -5608,7 +5604,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint4(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a > (ushort)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
   }
@@ -5619,7 +5615,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint8(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a > (ushort)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
   }
@@ -5630,7 +5626,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint16(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a > (ushort)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
   }
@@ -5642,7 +5638,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a > (ushort)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
   }
@@ -5653,7 +5649,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long2(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a > (ushort)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
   }
@@ -5664,7 +5660,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long4(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a > (ushort)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
   }
@@ -5675,7 +5671,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long8(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a > (ushort)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
   }
@@ -5686,7 +5682,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long16(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a > (ushort)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
   }
@@ -5699,7 +5695,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a > (ushort)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
   }
@@ -5710,7 +5706,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong2(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a > (ushort)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
   }
@@ -5721,7 +5717,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong4(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a > (ushort)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
   }
@@ -5732,7 +5728,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong8(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a > (ushort)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
   }
@@ -5743,7 +5739,7 @@ __IF_INT64(
     int const src_size = sizeof(ushort);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong16(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a > (ushort)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
   }
@@ -5755,8 +5751,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a < (int)DST_MIN) ? (char)DST_MIN :
             convert_char(a > (int)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
@@ -5768,8 +5764,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char2(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a < (int)DST_MIN) ? (char2)DST_MIN :
             convert_char2(a > (int)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
@@ -5781,8 +5777,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char4(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a < (int)DST_MIN) ? (char4)DST_MIN :
             convert_char4(a > (int)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
@@ -5794,8 +5790,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char8(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a < (int)DST_MIN) ? (char8)DST_MIN :
             convert_char8(a > (int)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
@@ -5807,8 +5803,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char16(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a < (int)DST_MIN) ? (char16)DST_MIN :
             convert_char16(a > (int)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
@@ -5823,7 +5819,7 @@ __IF_INT64(
       return (convert_uchar(a < (int)0) ? (uchar)0 :
               convert_uchar(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a < (int)0      ) ? (uchar)0 :
             convert_uchar(a > (int)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
@@ -5838,7 +5834,7 @@ __IF_INT64(
       return (convert_uchar2(a < (int)0) ? (uchar2)0 :
               convert_uchar2(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a < (int)0      ) ? (uchar2)0 :
             convert_uchar2(a > (int)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
@@ -5853,7 +5849,7 @@ __IF_INT64(
       return (convert_uchar4(a < (int)0) ? (uchar4)0 :
               convert_uchar4(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a < (int)0      ) ? (uchar4)0 :
             convert_uchar4(a > (int)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
@@ -5868,7 +5864,7 @@ __IF_INT64(
       return (convert_uchar8(a < (int)0) ? (uchar8)0 :
               convert_uchar8(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a < (int)0      ) ? (uchar8)0 :
             convert_uchar8(a > (int)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
@@ -5883,7 +5879,7 @@ __IF_INT64(
       return (convert_uchar16(a < (int)0) ? (uchar16)0 :
               convert_uchar16(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a < (int)0      ) ? (uchar16)0 :
             convert_uchar16(a > (int)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
@@ -5895,8 +5891,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a < (int)DST_MIN) ? (short)DST_MIN :
             convert_short(a > (int)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
@@ -5908,8 +5904,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short2(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a < (int)DST_MIN) ? (short2)DST_MIN :
             convert_short2(a > (int)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
@@ -5921,8 +5917,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short4(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a < (int)DST_MIN) ? (short4)DST_MIN :
             convert_short4(a > (int)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
@@ -5934,8 +5930,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short8(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a < (int)DST_MIN) ? (short8)DST_MIN :
             convert_short8(a > (int)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
@@ -5947,8 +5943,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short16(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a < (int)DST_MIN) ? (short16)DST_MIN :
             convert_short16(a > (int)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
@@ -5963,7 +5959,7 @@ __IF_INT64(
       return (convert_ushort(a < (int)0) ? (ushort)0 :
               convert_ushort(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a < (int)0      ) ? (ushort)0 :
             convert_ushort(a > (int)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
@@ -5978,7 +5974,7 @@ __IF_INT64(
       return (convert_ushort2(a < (int)0) ? (ushort2)0 :
               convert_ushort2(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a < (int)0      ) ? (ushort2)0 :
             convert_ushort2(a > (int)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
@@ -5993,7 +5989,7 @@ __IF_INT64(
       return (convert_ushort4(a < (int)0) ? (ushort4)0 :
               convert_ushort4(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a < (int)0      ) ? (ushort4)0 :
             convert_ushort4(a > (int)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
@@ -6008,7 +6004,7 @@ __IF_INT64(
       return (convert_ushort8(a < (int)0) ? (ushort8)0 :
               convert_ushort8(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a < (int)0      ) ? (ushort8)0 :
             convert_ushort8(a > (int)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
@@ -6023,7 +6019,7 @@ __IF_INT64(
       return (convert_ushort16(a < (int)0) ? (ushort16)0 :
               convert_ushort16(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a < (int)0      ) ? (ushort16)0 :
             convert_ushort16(a > (int)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
@@ -6035,8 +6031,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int(a < (int)DST_MIN) ? (int)DST_MIN :
             convert_int(a > (int)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
@@ -6048,8 +6044,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int2(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a < (int)DST_MIN) ? (int2)DST_MIN :
             convert_int2(a > (int)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
@@ -6061,8 +6057,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int4(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a < (int)DST_MIN) ? (int4)DST_MIN :
             convert_int4(a > (int)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
@@ -6074,8 +6070,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int8(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a < (int)DST_MIN) ? (int8)DST_MIN :
             convert_int8(a > (int)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
@@ -6087,8 +6083,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int16(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a < (int)DST_MIN) ? (int16)DST_MIN :
             convert_int16(a > (int)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
@@ -6103,7 +6099,7 @@ __IF_INT64(
       return (convert_uint(a < (int)0) ? (uint)0 :
               convert_uint(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a < (int)0      ) ? (uint)0 :
             convert_uint(a > (int)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
@@ -6118,7 +6114,7 @@ __IF_INT64(
       return (convert_uint2(a < (int)0) ? (uint2)0 :
               convert_uint2(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a < (int)0      ) ? (uint2)0 :
             convert_uint2(a > (int)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
@@ -6133,7 +6129,7 @@ __IF_INT64(
       return (convert_uint4(a < (int)0) ? (uint4)0 :
               convert_uint4(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a < (int)0      ) ? (uint4)0 :
             convert_uint4(a > (int)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
@@ -6148,7 +6144,7 @@ __IF_INT64(
       return (convert_uint8(a < (int)0) ? (uint8)0 :
               convert_uint8(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a < (int)0      ) ? (uint8)0 :
             convert_uint8(a > (int)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
@@ -6163,7 +6159,7 @@ __IF_INT64(
       return (convert_uint16(a < (int)0) ? (uint16)0 :
               convert_uint16(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a < (int)0      ) ? (uint16)0 :
             convert_uint16(a > (int)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
@@ -6176,8 +6172,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a < (int)DST_MIN) ? (long)DST_MIN :
             convert_long(a > (int)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
@@ -6189,8 +6185,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long2(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a < (int)DST_MIN) ? (long2)DST_MIN :
             convert_long2(a > (int)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
@@ -6202,8 +6198,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long4(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a < (int)DST_MIN) ? (long4)DST_MIN :
             convert_long4(a > (int)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
@@ -6215,8 +6211,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long8(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a < (int)DST_MIN) ? (long8)DST_MIN :
             convert_long8(a > (int)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
@@ -6228,8 +6224,8 @@ __IF_INT64(
     int const src_size = sizeof(int);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long16(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a < (int)DST_MIN) ? (long16)DST_MIN :
             convert_long16(a > (int)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
@@ -6246,7 +6242,7 @@ __IF_INT64(
       return (convert_ulong(a < (int)0) ? (ulong)0 :
               convert_ulong(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a < (int)0      ) ? (ulong)0 :
             convert_ulong(a > (int)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
@@ -6261,7 +6257,7 @@ __IF_INT64(
       return (convert_ulong2(a < (int)0) ? (ulong2)0 :
               convert_ulong2(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a < (int)0      ) ? (ulong2)0 :
             convert_ulong2(a > (int)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
@@ -6276,7 +6272,7 @@ __IF_INT64(
       return (convert_ulong4(a < (int)0) ? (ulong4)0 :
               convert_ulong4(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a < (int)0      ) ? (ulong4)0 :
             convert_ulong4(a > (int)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
@@ -6291,7 +6287,7 @@ __IF_INT64(
       return (convert_ulong8(a < (int)0) ? (ulong8)0 :
               convert_ulong8(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a < (int)0      ) ? (ulong8)0 :
             convert_ulong8(a > (int)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
@@ -6306,7 +6302,7 @@ __IF_INT64(
       return (convert_ulong16(a < (int)0) ? (ulong16)0 :
               convert_ulong16(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a < (int)0      ) ? (ulong16)0 :
             convert_ulong16(a > (int)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
@@ -6319,7 +6315,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a > (uint)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
   }
@@ -6330,7 +6326,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char2(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a > (uint)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
   }
@@ -6341,7 +6337,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char4(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a > (uint)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
   }
@@ -6352,7 +6348,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char8(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a > (uint)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
   }
@@ -6363,7 +6359,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char16(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a > (uint)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
   }
@@ -6374,7 +6370,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a > (uint)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
   }
@@ -6385,7 +6381,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar2(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a > (uint)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
   }
@@ -6396,7 +6392,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar4(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a > (uint)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
   }
@@ -6407,7 +6403,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar8(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a > (uint)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
   }
@@ -6418,7 +6414,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar16(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a > (uint)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
   }
@@ -6429,7 +6425,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a > (uint)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
   }
@@ -6440,7 +6436,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short2(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a > (uint)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
   }
@@ -6451,7 +6447,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short4(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a > (uint)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
   }
@@ -6462,7 +6458,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short8(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a > (uint)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
   }
@@ -6473,7 +6469,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short16(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a > (uint)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
   }
@@ -6484,7 +6480,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a > (uint)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
   }
@@ -6495,7 +6491,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort2(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a > (uint)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
   }
@@ -6506,7 +6502,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort4(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a > (uint)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
   }
@@ -6517,7 +6513,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort8(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a > (uint)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
   }
@@ -6528,7 +6524,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort16(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a > (uint)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
   }
@@ -6539,7 +6535,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int(a > (uint)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
   }
@@ -6550,7 +6546,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int2(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a > (uint)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
   }
@@ -6561,7 +6557,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int4(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a > (uint)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
   }
@@ -6572,7 +6568,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int8(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a > (uint)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
   }
@@ -6583,7 +6579,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int16(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a > (uint)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
   }
@@ -6594,7 +6590,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a > (uint)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
   }
@@ -6605,7 +6601,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint2(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a > (uint)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
   }
@@ -6616,7 +6612,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint4(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a > (uint)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
   }
@@ -6627,7 +6623,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint8(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a > (uint)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
   }
@@ -6638,7 +6634,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint16(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a > (uint)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
   }
@@ -6650,7 +6646,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a > (uint)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
   }
@@ -6661,7 +6657,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long2(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a > (uint)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
   }
@@ -6672,7 +6668,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long4(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a > (uint)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
   }
@@ -6683,7 +6679,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long8(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a > (uint)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
   }
@@ -6694,7 +6690,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long16(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a > (uint)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
   }
@@ -6707,7 +6703,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a > (uint)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
   }
@@ -6718,7 +6714,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong2(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a > (uint)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
   }
@@ -6729,7 +6725,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong4(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a > (uint)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
   }
@@ -6740,7 +6736,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong8(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a > (uint)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
   }
@@ -6751,7 +6747,7 @@ __IF_INT64(
     int const src_size = sizeof(uint);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong16(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a > (uint)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
   }
@@ -6764,8 +6760,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a < (long)DST_MIN) ? (char)DST_MIN :
             convert_char(a > (long)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
@@ -6777,8 +6773,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char2(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a < (long)DST_MIN) ? (char2)DST_MIN :
             convert_char2(a > (long)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
@@ -6790,8 +6786,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char4(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a < (long)DST_MIN) ? (char4)DST_MIN :
             convert_char4(a > (long)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
@@ -6803,8 +6799,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char8(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a < (long)DST_MIN) ? (char8)DST_MIN :
             convert_char8(a > (long)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
@@ -6816,8 +6812,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char16(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a < (long)DST_MIN) ? (char16)DST_MIN :
             convert_char16(a > (long)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
@@ -6834,7 +6830,7 @@ __IF_INT64(
       return (convert_uchar(a < (long)0) ? (uchar)0 :
               convert_uchar(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a < (long)0      ) ? (uchar)0 :
             convert_uchar(a > (long)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
@@ -6849,7 +6845,7 @@ __IF_INT64(
       return (convert_uchar2(a < (long)0) ? (uchar2)0 :
               convert_uchar2(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a < (long)0      ) ? (uchar2)0 :
             convert_uchar2(a > (long)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
@@ -6864,7 +6860,7 @@ __IF_INT64(
       return (convert_uchar4(a < (long)0) ? (uchar4)0 :
               convert_uchar4(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a < (long)0      ) ? (uchar4)0 :
             convert_uchar4(a > (long)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
@@ -6879,7 +6875,7 @@ __IF_INT64(
       return (convert_uchar8(a < (long)0) ? (uchar8)0 :
               convert_uchar8(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a < (long)0      ) ? (uchar8)0 :
             convert_uchar8(a > (long)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
@@ -6894,7 +6890,7 @@ __IF_INT64(
       return (convert_uchar16(a < (long)0) ? (uchar16)0 :
               convert_uchar16(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a < (long)0      ) ? (uchar16)0 :
             convert_uchar16(a > (long)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
@@ -6908,8 +6904,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a < (long)DST_MIN) ? (short)DST_MIN :
             convert_short(a > (long)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
@@ -6921,8 +6917,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short2(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a < (long)DST_MIN) ? (short2)DST_MIN :
             convert_short2(a > (long)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
@@ -6934,8 +6930,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short4(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a < (long)DST_MIN) ? (short4)DST_MIN :
             convert_short4(a > (long)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
@@ -6947,8 +6943,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short8(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a < (long)DST_MIN) ? (short8)DST_MIN :
             convert_short8(a > (long)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
@@ -6960,8 +6956,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short16(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a < (long)DST_MIN) ? (short16)DST_MIN :
             convert_short16(a > (long)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
@@ -6978,7 +6974,7 @@ __IF_INT64(
       return (convert_ushort(a < (long)0) ? (ushort)0 :
               convert_ushort(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a < (long)0      ) ? (ushort)0 :
             convert_ushort(a > (long)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
@@ -6993,7 +6989,7 @@ __IF_INT64(
       return (convert_ushort2(a < (long)0) ? (ushort2)0 :
               convert_ushort2(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a < (long)0      ) ? (ushort2)0 :
             convert_ushort2(a > (long)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
@@ -7008,7 +7004,7 @@ __IF_INT64(
       return (convert_ushort4(a < (long)0) ? (ushort4)0 :
               convert_ushort4(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a < (long)0      ) ? (ushort4)0 :
             convert_ushort4(a > (long)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
@@ -7023,7 +7019,7 @@ __IF_INT64(
       return (convert_ushort8(a < (long)0) ? (ushort8)0 :
               convert_ushort8(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a < (long)0      ) ? (ushort8)0 :
             convert_ushort8(a > (long)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
@@ -7038,7 +7034,7 @@ __IF_INT64(
       return (convert_ushort16(a < (long)0) ? (ushort16)0 :
               convert_ushort16(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a < (long)0      ) ? (ushort16)0 :
             convert_ushort16(a > (long)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
@@ -7052,8 +7048,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int(a < (long)DST_MIN) ? (int)DST_MIN :
             convert_int(a > (long)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
@@ -7065,8 +7061,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int2(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a < (long)DST_MIN) ? (int2)DST_MIN :
             convert_int2(a > (long)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
@@ -7078,8 +7074,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int4(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a < (long)DST_MIN) ? (int4)DST_MIN :
             convert_int4(a > (long)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
@@ -7091,8 +7087,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int8(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a < (long)DST_MIN) ? (int8)DST_MIN :
             convert_int8(a > (long)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
@@ -7104,8 +7100,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int16(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a < (long)DST_MIN) ? (int16)DST_MIN :
             convert_int16(a > (long)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
@@ -7122,7 +7118,7 @@ __IF_INT64(
       return (convert_uint(a < (long)0) ? (uint)0 :
               convert_uint(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a < (long)0      ) ? (uint)0 :
             convert_uint(a > (long)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
@@ -7137,7 +7133,7 @@ __IF_INT64(
       return (convert_uint2(a < (long)0) ? (uint2)0 :
               convert_uint2(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a < (long)0      ) ? (uint2)0 :
             convert_uint2(a > (long)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
@@ -7152,7 +7148,7 @@ __IF_INT64(
       return (convert_uint4(a < (long)0) ? (uint4)0 :
               convert_uint4(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a < (long)0      ) ? (uint4)0 :
             convert_uint4(a > (long)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
@@ -7167,7 +7163,7 @@ __IF_INT64(
       return (convert_uint8(a < (long)0) ? (uint8)0 :
               convert_uint8(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a < (long)0      ) ? (uint8)0 :
             convert_uint8(a > (long)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
@@ -7182,7 +7178,7 @@ __IF_INT64(
       return (convert_uint16(a < (long)0) ? (uint16)0 :
               convert_uint16(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a < (long)0      ) ? (uint16)0 :
             convert_uint16(a > (long)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
@@ -7196,8 +7192,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a < (long)DST_MIN) ? (long)DST_MIN :
             convert_long(a > (long)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
@@ -7209,8 +7205,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long2(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a < (long)DST_MIN) ? (long2)DST_MIN :
             convert_long2(a > (long)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
@@ -7222,8 +7218,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long4(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a < (long)DST_MIN) ? (long4)DST_MIN :
             convert_long4(a > (long)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
@@ -7235,8 +7231,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long8(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a < (long)DST_MIN) ? (long8)DST_MIN :
             convert_long8(a > (long)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
@@ -7248,8 +7244,8 @@ __IF_INT64(
     int const src_size = sizeof(long);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long16(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a < (long)DST_MIN) ? (long16)DST_MIN :
             convert_long16(a > (long)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
@@ -7266,7 +7262,7 @@ __IF_INT64(
       return (convert_ulong(a < (long)0) ? (ulong)0 :
               convert_ulong(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a < (long)0      ) ? (ulong)0 :
             convert_ulong(a > (long)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
@@ -7281,7 +7277,7 @@ __IF_INT64(
       return (convert_ulong2(a < (long)0) ? (ulong2)0 :
               convert_ulong2(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a < (long)0      ) ? (ulong2)0 :
             convert_ulong2(a > (long)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
@@ -7296,7 +7292,7 @@ __IF_INT64(
       return (convert_ulong4(a < (long)0) ? (ulong4)0 :
               convert_ulong4(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a < (long)0      ) ? (ulong4)0 :
             convert_ulong4(a > (long)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
@@ -7311,7 +7307,7 @@ __IF_INT64(
       return (convert_ulong8(a < (long)0) ? (ulong8)0 :
               convert_ulong8(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a < (long)0      ) ? (ulong8)0 :
             convert_ulong8(a > (long)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
@@ -7326,7 +7322,7 @@ __IF_INT64(
       return (convert_ulong16(a < (long)0) ? (ulong16)0 :
               convert_ulong16(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a < (long)0      ) ? (ulong16)0 :
             convert_ulong16(a > (long)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
@@ -7340,7 +7336,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a > (ulong)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
   }
@@ -7351,7 +7347,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char2(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a > (ulong)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
   }
@@ -7362,7 +7358,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char4(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a > (ulong)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
   }
@@ -7373,7 +7369,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char8(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a > (ulong)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
   }
@@ -7384,7 +7380,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(char);
     if (dst_size > src_size) return convert_char16(a);
-    char const DST_MAX = (char)1 << (char)(CHAR_BIT * dst_size);
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a > (ulong)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
   }
@@ -7397,7 +7393,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a > (ulong)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
   }
@@ -7408,7 +7404,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar2(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a > (ulong)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
   }
@@ -7419,7 +7415,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar4(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a > (ulong)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
   }
@@ -7430,7 +7426,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar8(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a > (ulong)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
   }
@@ -7441,7 +7437,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uchar);
     if (dst_size >= src_size) return convert_uchar16(a);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a > (ulong)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
   }
@@ -7454,7 +7450,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a > (ulong)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
   }
@@ -7465,7 +7461,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short2(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a > (ulong)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
   }
@@ -7476,7 +7472,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short4(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a > (ulong)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
   }
@@ -7487,7 +7483,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short8(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a > (ulong)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
   }
@@ -7498,7 +7494,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(short);
     if (dst_size > src_size) return convert_short16(a);
-    short const DST_MAX = (short)1 << (short)(CHAR_BIT * dst_size);
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a > (ulong)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
   }
@@ -7511,7 +7507,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a > (ulong)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
   }
@@ -7522,7 +7518,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort2(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a > (ulong)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
   }
@@ -7533,7 +7529,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort4(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a > (ulong)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
   }
@@ -7544,7 +7540,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort8(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a > (ulong)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
   }
@@ -7555,7 +7551,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ushort);
     if (dst_size >= src_size) return convert_ushort16(a);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a > (ulong)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
   }
@@ -7568,7 +7564,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int(a > (ulong)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
   }
@@ -7579,7 +7575,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int2(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a > (ulong)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
   }
@@ -7590,7 +7586,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int4(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a > (ulong)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
   }
@@ -7601,7 +7597,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int8(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a > (ulong)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
   }
@@ -7612,7 +7608,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(int);
     if (dst_size > src_size) return convert_int16(a);
-    int const DST_MAX = (int)1 << (int)(CHAR_BIT * dst_size);
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a > (ulong)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
   }
@@ -7625,7 +7621,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a > (ulong)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
   }
@@ -7636,7 +7632,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint2(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a > (ulong)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
   }
@@ -7647,7 +7643,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint4(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a > (ulong)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
   }
@@ -7658,7 +7654,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint8(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a > (ulong)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
   }
@@ -7669,7 +7665,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(uint);
     if (dst_size >= src_size) return convert_uint16(a);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a > (ulong)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
   }
@@ -7682,7 +7678,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a > (ulong)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
   }
@@ -7693,7 +7689,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long2(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a > (ulong)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
   }
@@ -7704,7 +7700,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long4(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a > (ulong)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
   }
@@ -7715,7 +7711,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long8(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a > (ulong)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
   }
@@ -7726,7 +7722,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(long);
     if (dst_size > src_size) return convert_long16(a);
-    long const DST_MAX = (long)1 << (long)(CHAR_BIT * dst_size);
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a > (ulong)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
   }
@@ -7739,7 +7735,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a > (ulong)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
   }
@@ -7750,7 +7746,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong2(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a > (ulong)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
   }
@@ -7761,7 +7757,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong4(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a > (ulong)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
   }
@@ -7772,7 +7768,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong8(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a > (ulong)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
   }
@@ -7783,7 +7779,7 @@ __IF_INT64(
     int const src_size = sizeof(ulong);
     int const dst_size = sizeof(ulong);
     if (dst_size >= src_size) return convert_ulong16(a);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a > (ulong)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
   }
@@ -7794,8 +7790,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(char);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a < (float)DST_MIN) ? (char)DST_MIN :
             convert_char(a > (float)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
@@ -7806,8 +7802,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(char);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a < (float)DST_MIN) ? (char2)DST_MIN :
             convert_char2(a > (float)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
@@ -7818,8 +7814,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(char);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a < (float)DST_MIN) ? (char4)DST_MIN :
             convert_char4(a > (float)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
@@ -7830,8 +7826,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(char);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a < (float)DST_MIN) ? (char8)DST_MIN :
             convert_char8(a > (float)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
@@ -7842,8 +7838,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(char);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a < (float)DST_MIN) ? (char16)DST_MIN :
             convert_char16(a > (float)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
@@ -7854,7 +7850,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uchar);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a > (float)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
   }
@@ -7864,7 +7860,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uchar);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a > (float)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
   }
@@ -7874,7 +7870,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uchar);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a > (float)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
   }
@@ -7884,7 +7880,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uchar);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a > (float)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
   }
@@ -7894,7 +7890,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uchar);
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a > (float)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
   }
@@ -7904,8 +7900,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(short);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a < (float)DST_MIN) ? (short)DST_MIN :
             convert_short(a > (float)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
@@ -7916,8 +7912,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(short);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a < (float)DST_MIN) ? (short2)DST_MIN :
             convert_short2(a > (float)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
@@ -7928,8 +7924,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(short);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a < (float)DST_MIN) ? (short4)DST_MIN :
             convert_short4(a > (float)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
@@ -7940,8 +7936,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(short);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a < (float)DST_MIN) ? (short8)DST_MIN :
             convert_short8(a > (float)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
@@ -7952,8 +7948,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(short);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a < (float)DST_MIN) ? (short16)DST_MIN :
             convert_short16(a > (float)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
@@ -7964,7 +7960,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ushort);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a > (float)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
   }
@@ -7974,7 +7970,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ushort);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a > (float)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
   }
@@ -7984,7 +7980,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ushort);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a > (float)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
   }
@@ -7994,7 +7990,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ushort);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a > (float)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
   }
@@ -8004,7 +8000,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ushort);
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a > (float)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
   }
@@ -8014,8 +8010,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(int);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int(a < (float)DST_MIN) ? (int)DST_MIN :
             convert_int(a > (float)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
@@ -8026,8 +8022,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(int);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a < (float)DST_MIN) ? (int2)DST_MIN :
             convert_int2(a > (float)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
@@ -8038,8 +8034,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(int);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a < (float)DST_MIN) ? (int4)DST_MIN :
             convert_int4(a > (float)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
@@ -8050,8 +8046,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(int);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a < (float)DST_MIN) ? (int8)DST_MIN :
             convert_int8(a > (float)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
@@ -8062,8 +8058,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(int);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a < (float)DST_MIN) ? (int16)DST_MIN :
             convert_int16(a > (float)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
@@ -8074,7 +8070,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uint);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a > (float)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
   }
@@ -8084,7 +8080,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uint);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a > (float)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
   }
@@ -8094,7 +8090,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uint);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a > (float)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
   }
@@ -8104,7 +8100,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uint);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a > (float)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
   }
@@ -8114,7 +8110,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(uint);
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a > (float)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
   }
@@ -8125,8 +8121,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(long);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a < (float)DST_MIN) ? (long)DST_MIN :
             convert_long(a > (float)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
@@ -8137,8 +8133,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(long);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a < (float)DST_MIN) ? (long2)DST_MIN :
             convert_long2(a > (float)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
@@ -8149,8 +8145,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(long);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a < (float)DST_MIN) ? (long4)DST_MIN :
             convert_long4(a > (float)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
@@ -8161,8 +8157,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(long);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a < (float)DST_MIN) ? (long8)DST_MIN :
             convert_long8(a > (float)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
@@ -8173,8 +8169,8 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(long);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a < (float)DST_MIN) ? (long16)DST_MIN :
             convert_long16(a > (float)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
@@ -8187,7 +8183,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ulong);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a > (float)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
   }
@@ -8197,7 +8193,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ulong);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a > (float)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
   }
@@ -8207,7 +8203,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ulong);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a > (float)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
   }
@@ -8217,7 +8213,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ulong);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a > (float)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
   }
@@ -8227,7 +8223,7 @@ __IF_INT64(
   {
     int const src_size = sizeof(float);
     int const dst_size = sizeof(ulong);
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a > (float)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
   }
@@ -8240,8 +8236,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char(a < (double)DST_MIN) ? (char)DST_MIN :
             convert_char(a > (double)DST_MAX) ? (char)DST_MAX :
             convert_char(a));
@@ -8253,8 +8249,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char2(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char2(a < (double)DST_MIN) ? (char2)DST_MIN :
             convert_char2(a > (double)DST_MAX) ? (char2)DST_MAX :
             convert_char2(a));
@@ -8266,8 +8262,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char4(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char4(a < (double)DST_MIN) ? (char4)DST_MIN :
             convert_char4(a > (double)DST_MAX) ? (char4)DST_MAX :
             convert_char4(a));
@@ -8279,8 +8275,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char8(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char8(a < (double)DST_MIN) ? (char8)DST_MIN :
             convert_char8(a > (double)DST_MAX) ? (char8)DST_MAX :
             convert_char8(a));
@@ -8292,8 +8288,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(char);
     if (dst_size >= src_size) return convert_char16(a);
-    char const DST_MIN = (char)1 << (char)(CHAR_BIT * dst_size - 1);
-    char const DST_MAX = DST_MIN - (char)1;
+    char const DST_MIN = CHAR_MIN;
+    char const DST_MAX = CHAR_MAX;
     return (convert_char16(a < (double)DST_MIN) ? (char16)DST_MIN :
             convert_char16(a > (double)DST_MAX) ? (char16)DST_MAX :
             convert_char16(a));
@@ -8310,7 +8306,7 @@ __IF_FP64(
       return (convert_uchar(a < (double)0) ? (uchar)0 :
               convert_uchar(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar(a < (double)0      ) ? (uchar)0 :
             convert_uchar(a > (double)DST_MAX) ? (uchar)DST_MAX :
             convert_uchar(a));
@@ -8325,7 +8321,7 @@ __IF_FP64(
       return (convert_uchar2(a < (double)0) ? (uchar2)0 :
               convert_uchar2(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar2(a < (double)0      ) ? (uchar2)0 :
             convert_uchar2(a > (double)DST_MAX) ? (uchar2)DST_MAX :
             convert_uchar2(a));
@@ -8340,7 +8336,7 @@ __IF_FP64(
       return (convert_uchar4(a < (double)0) ? (uchar4)0 :
               convert_uchar4(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar4(a < (double)0      ) ? (uchar4)0 :
             convert_uchar4(a > (double)DST_MAX) ? (uchar4)DST_MAX :
             convert_uchar4(a));
@@ -8355,7 +8351,7 @@ __IF_FP64(
       return (convert_uchar8(a < (double)0) ? (uchar8)0 :
               convert_uchar8(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar8(a < (double)0      ) ? (uchar8)0 :
             convert_uchar8(a > (double)DST_MAX) ? (uchar8)DST_MAX :
             convert_uchar8(a));
@@ -8370,7 +8366,7 @@ __IF_FP64(
       return (convert_uchar16(a < (double)0) ? (uchar16)0 :
               convert_uchar16(a));
     }
-    uchar const DST_MAX = (uchar)0 - (uchar)1;
+    uchar const DST_MAX = UCHAR_MAX;
     return (convert_uchar16(a < (double)0      ) ? (uchar16)0 :
             convert_uchar16(a > (double)DST_MAX) ? (uchar16)DST_MAX :
             convert_uchar16(a));
@@ -8384,8 +8380,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short(a < (double)DST_MIN) ? (short)DST_MIN :
             convert_short(a > (double)DST_MAX) ? (short)DST_MAX :
             convert_short(a));
@@ -8397,8 +8393,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short2(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short2(a < (double)DST_MIN) ? (short2)DST_MIN :
             convert_short2(a > (double)DST_MAX) ? (short2)DST_MAX :
             convert_short2(a));
@@ -8410,8 +8406,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short4(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short4(a < (double)DST_MIN) ? (short4)DST_MIN :
             convert_short4(a > (double)DST_MAX) ? (short4)DST_MAX :
             convert_short4(a));
@@ -8423,8 +8419,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short8(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short8(a < (double)DST_MIN) ? (short8)DST_MIN :
             convert_short8(a > (double)DST_MAX) ? (short8)DST_MAX :
             convert_short8(a));
@@ -8436,8 +8432,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(short);
     if (dst_size >= src_size) return convert_short16(a);
-    short const DST_MIN = (short)1 << (short)(CHAR_BIT * dst_size - 1);
-    short const DST_MAX = DST_MIN - (short)1;
+    short const DST_MIN = SHRT_MIN;
+    short const DST_MAX = SHRT_MAX;
     return (convert_short16(a < (double)DST_MIN) ? (short16)DST_MIN :
             convert_short16(a > (double)DST_MAX) ? (short16)DST_MAX :
             convert_short16(a));
@@ -8454,7 +8450,7 @@ __IF_FP64(
       return (convert_ushort(a < (double)0) ? (ushort)0 :
               convert_ushort(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort(a < (double)0      ) ? (ushort)0 :
             convert_ushort(a > (double)DST_MAX) ? (ushort)DST_MAX :
             convert_ushort(a));
@@ -8469,7 +8465,7 @@ __IF_FP64(
       return (convert_ushort2(a < (double)0) ? (ushort2)0 :
               convert_ushort2(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort2(a < (double)0      ) ? (ushort2)0 :
             convert_ushort2(a > (double)DST_MAX) ? (ushort2)DST_MAX :
             convert_ushort2(a));
@@ -8484,7 +8480,7 @@ __IF_FP64(
       return (convert_ushort4(a < (double)0) ? (ushort4)0 :
               convert_ushort4(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort4(a < (double)0      ) ? (ushort4)0 :
             convert_ushort4(a > (double)DST_MAX) ? (ushort4)DST_MAX :
             convert_ushort4(a));
@@ -8499,7 +8495,7 @@ __IF_FP64(
       return (convert_ushort8(a < (double)0) ? (ushort8)0 :
               convert_ushort8(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort8(a < (double)0      ) ? (ushort8)0 :
             convert_ushort8(a > (double)DST_MAX) ? (ushort8)DST_MAX :
             convert_ushort8(a));
@@ -8514,7 +8510,7 @@ __IF_FP64(
       return (convert_ushort16(a < (double)0) ? (ushort16)0 :
               convert_ushort16(a));
     }
-    ushort const DST_MAX = (ushort)0 - (ushort)1;
+    ushort const DST_MAX = USHRT_MAX;
     return (convert_ushort16(a < (double)0      ) ? (ushort16)0 :
             convert_ushort16(a > (double)DST_MAX) ? (ushort16)DST_MAX :
             convert_ushort16(a));
@@ -8528,8 +8524,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int(a < (double)DST_MIN) ? (int)DST_MIN :
             convert_int(a > (double)DST_MAX) ? (int)DST_MAX :
             convert_int(a));
@@ -8541,8 +8537,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int2(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int2(a < (double)DST_MIN) ? (int2)DST_MIN :
             convert_int2(a > (double)DST_MAX) ? (int2)DST_MAX :
             convert_int2(a));
@@ -8554,8 +8550,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int4(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int4(a < (double)DST_MIN) ? (int4)DST_MIN :
             convert_int4(a > (double)DST_MAX) ? (int4)DST_MAX :
             convert_int4(a));
@@ -8567,8 +8563,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int8(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int8(a < (double)DST_MIN) ? (int8)DST_MIN :
             convert_int8(a > (double)DST_MAX) ? (int8)DST_MAX :
             convert_int8(a));
@@ -8580,8 +8576,8 @@ __IF_FP64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(int);
     if (dst_size >= src_size) return convert_int16(a);
-    int const DST_MIN = (int)1 << (int)(CHAR_BIT * dst_size - 1);
-    int const DST_MAX = DST_MIN - (int)1;
+    int const DST_MIN = INT_MIN;
+    int const DST_MAX = INT_MAX;
     return (convert_int16(a < (double)DST_MIN) ? (int16)DST_MIN :
             convert_int16(a > (double)DST_MAX) ? (int16)DST_MAX :
             convert_int16(a));
@@ -8598,7 +8594,7 @@ __IF_FP64(
       return (convert_uint(a < (double)0) ? (uint)0 :
               convert_uint(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint(a < (double)0      ) ? (uint)0 :
             convert_uint(a > (double)DST_MAX) ? (uint)DST_MAX :
             convert_uint(a));
@@ -8613,7 +8609,7 @@ __IF_FP64(
       return (convert_uint2(a < (double)0) ? (uint2)0 :
               convert_uint2(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint2(a < (double)0      ) ? (uint2)0 :
             convert_uint2(a > (double)DST_MAX) ? (uint2)DST_MAX :
             convert_uint2(a));
@@ -8628,7 +8624,7 @@ __IF_FP64(
       return (convert_uint4(a < (double)0) ? (uint4)0 :
               convert_uint4(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint4(a < (double)0      ) ? (uint4)0 :
             convert_uint4(a > (double)DST_MAX) ? (uint4)DST_MAX :
             convert_uint4(a));
@@ -8643,7 +8639,7 @@ __IF_FP64(
       return (convert_uint8(a < (double)0) ? (uint8)0 :
               convert_uint8(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint8(a < (double)0      ) ? (uint8)0 :
             convert_uint8(a > (double)DST_MAX) ? (uint8)DST_MAX :
             convert_uint8(a));
@@ -8658,7 +8654,7 @@ __IF_FP64(
       return (convert_uint16(a < (double)0) ? (uint16)0 :
               convert_uint16(a));
     }
-    uint const DST_MAX = (uint)0 - (uint)1;
+    uint const DST_MAX = UINT_MAX;
     return (convert_uint16(a < (double)0      ) ? (uint16)0 :
             convert_uint16(a > (double)DST_MAX) ? (uint16)DST_MAX :
             convert_uint16(a));
@@ -8672,8 +8668,8 @@ __IF_INT64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long(a < (double)DST_MIN) ? (long)DST_MIN :
             convert_long(a > (double)DST_MAX) ? (long)DST_MAX :
             convert_long(a));
@@ -8685,8 +8681,8 @@ __IF_INT64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long2(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long2(a < (double)DST_MIN) ? (long2)DST_MIN :
             convert_long2(a > (double)DST_MAX) ? (long2)DST_MAX :
             convert_long2(a));
@@ -8698,8 +8694,8 @@ __IF_INT64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long4(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long4(a < (double)DST_MIN) ? (long4)DST_MIN :
             convert_long4(a > (double)DST_MAX) ? (long4)DST_MAX :
             convert_long4(a));
@@ -8711,8 +8707,8 @@ __IF_INT64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long8(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long8(a < (double)DST_MIN) ? (long8)DST_MIN :
             convert_long8(a > (double)DST_MAX) ? (long8)DST_MAX :
             convert_long8(a));
@@ -8724,8 +8720,8 @@ __IF_INT64(
     int const src_size = sizeof(double);
     int const dst_size = sizeof(long);
     if (dst_size >= src_size) return convert_long16(a);
-    long const DST_MIN = (long)1 << (long)(CHAR_BIT * dst_size - 1);
-    long const DST_MAX = DST_MIN - (long)1;
+    long const DST_MIN = LONG_MIN;
+    long const DST_MAX = LONG_MAX;
     return (convert_long16(a < (double)DST_MIN) ? (long16)DST_MIN :
             convert_long16(a > (double)DST_MAX) ? (long16)DST_MAX :
             convert_long16(a));
@@ -8742,7 +8738,7 @@ __IF_INT64(
       return (convert_ulong(a < (double)0) ? (ulong)0 :
               convert_ulong(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong(a < (double)0      ) ? (ulong)0 :
             convert_ulong(a > (double)DST_MAX) ? (ulong)DST_MAX :
             convert_ulong(a));
@@ -8757,7 +8753,7 @@ __IF_INT64(
       return (convert_ulong2(a < (double)0) ? (ulong2)0 :
               convert_ulong2(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong2(a < (double)0      ) ? (ulong2)0 :
             convert_ulong2(a > (double)DST_MAX) ? (ulong2)DST_MAX :
             convert_ulong2(a));
@@ -8772,7 +8768,7 @@ __IF_INT64(
       return (convert_ulong4(a < (double)0) ? (ulong4)0 :
               convert_ulong4(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong4(a < (double)0      ) ? (ulong4)0 :
             convert_ulong4(a > (double)DST_MAX) ? (ulong4)DST_MAX :
             convert_ulong4(a));
@@ -8787,7 +8783,7 @@ __IF_INT64(
       return (convert_ulong8(a < (double)0) ? (ulong8)0 :
               convert_ulong8(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong8(a < (double)0      ) ? (ulong8)0 :
             convert_ulong8(a > (double)DST_MAX) ? (ulong8)DST_MAX :
             convert_ulong8(a));
@@ -8802,9850 +8798,10 @@ __IF_INT64(
       return (convert_ulong16(a < (double)0) ? (ulong16)0 :
               convert_ulong16(a));
     }
-    ulong const DST_MAX = (ulong)0 - (ulong)1;
+    ulong const DST_MAX = ULONG_MAX;
     return (convert_ulong16(a < (double)0      ) ? (ulong16)0 :
             convert_ulong16(a > (double)DST_MAX) ? (ulong16)DST_MAX :
             convert_ulong16(a));
   }
     
-)
-  char _cl_overloadable
-  convert_char_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char _cl_overloadable
-  convert_char_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char2 _cl_overloadable
-  convert_char2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char4 _cl_overloadable
-  convert_char4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char8 _cl_overloadable
-  convert_char8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  char16 _cl_overloadable
-  convert_char16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar _cl_overloadable
-  convert_uchar_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short _cl_overloadable
-  convert_short_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short2 _cl_overloadable
-  convert_short2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short4 _cl_overloadable
-  convert_short4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short8 _cl_overloadable
-  convert_short8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  short16 _cl_overloadable
-  convert_short16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort _cl_overloadable
-  convert_ushort_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int _cl_overloadable
-  convert_int_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int2 _cl_overloadable
-  convert_int2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int4 _cl_overloadable
-  convert_int4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int8 _cl_overloadable
-  convert_int8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  int16 _cl_overloadable
-  convert_int16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint _cl_overloadable
-  convert_uint_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint2 _cl_overloadable
-  convert_uint2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint4 _cl_overloadable
-  convert_uint4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint8 _cl_overloadable
-  convert_uint8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  uint16 _cl_overloadable
-  convert_uint16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rte(float a)
-  {
-    cl_set_rounding_mode(1);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rtz(float a)
-  {
-    cl_set_rounding_mode(0);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rtp(float a)
-  {
-    cl_set_rounding_mode(2);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rtn(float a)
-  {
-    cl_set_rounding_mode(3);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rte(float2 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rtz(float2 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rtp(float2 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rtn(float2 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rte(float4 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rtz(float4 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rtp(float4 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rtn(float4 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rte(float8 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rtz(float8 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rtp(float8 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rtn(float8 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rte(float16 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rtz(float16 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rtp(float16 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rtn(float16 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    char result = convert_char(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char _cl_overloadable
-  convert_char_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    char result = convert_char_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    char2 result = convert_char2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char2 _cl_overloadable
-  convert_char2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    char2 result = convert_char2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    char4 result = convert_char4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char4 _cl_overloadable
-  convert_char4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    char4 result = convert_char4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    char8 result = convert_char8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char8 _cl_overloadable
-  convert_char8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    char8 result = convert_char8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    char16 result = convert_char16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  char16 _cl_overloadable
-  convert_char16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    char16 result = convert_char16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    uchar result = convert_uchar(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar _cl_overloadable
-  convert_uchar_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    uchar result = convert_uchar_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar2 result = convert_uchar2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar2 _cl_overloadable
-  convert_uchar2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar2 result = convert_uchar2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar4 result = convert_uchar4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar4 _cl_overloadable
-  convert_uchar4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar4 result = convert_uchar4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar8 result = convert_uchar8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar8 _cl_overloadable
-  convert_uchar8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar8 result = convert_uchar8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar16 result = convert_uchar16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uchar16 _cl_overloadable
-  convert_uchar16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    uchar16 result = convert_uchar16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    short result = convert_short(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short _cl_overloadable
-  convert_short_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    short result = convert_short_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    short2 result = convert_short2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short2 _cl_overloadable
-  convert_short2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    short2 result = convert_short2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    short4 result = convert_short4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short4 _cl_overloadable
-  convert_short4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    short4 result = convert_short4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    short8 result = convert_short8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short8 _cl_overloadable
-  convert_short8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    short8 result = convert_short8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    short16 result = convert_short16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  short16 _cl_overloadable
-  convert_short16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    short16 result = convert_short16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    ushort result = convert_ushort(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort _cl_overloadable
-  convert_ushort_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    ushort result = convert_ushort_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort2 result = convert_ushort2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort2 _cl_overloadable
-  convert_ushort2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort2 result = convert_ushort2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort4 result = convert_ushort4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort4 _cl_overloadable
-  convert_ushort4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort4 result = convert_ushort4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort8 result = convert_ushort8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort8 _cl_overloadable
-  convert_ushort8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort8 result = convert_ushort8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort16 result = convert_ushort16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  ushort16 _cl_overloadable
-  convert_ushort16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    ushort16 result = convert_ushort16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    int result = convert_int(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int _cl_overloadable
-  convert_int_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    int result = convert_int_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    int2 result = convert_int2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int2 _cl_overloadable
-  convert_int2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    int2 result = convert_int2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    int4 result = convert_int4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int4 _cl_overloadable
-  convert_int4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    int4 result = convert_int4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    int8 result = convert_int8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int8 _cl_overloadable
-  convert_int8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    int8 result = convert_int8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    int16 result = convert_int16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  int16 _cl_overloadable
-  convert_int16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    int16 result = convert_int16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    uint result = convert_uint(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint _cl_overloadable
-  convert_uint_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    uint result = convert_uint_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    uint2 result = convert_uint2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint2 _cl_overloadable
-  convert_uint2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    uint2 result = convert_uint2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    uint4 result = convert_uint4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint4 _cl_overloadable
-  convert_uint4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    uint4 result = convert_uint4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    uint8 result = convert_uint8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint8 _cl_overloadable
-  convert_uint8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    uint8 result = convert_uint8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    uint16 result = convert_uint16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  uint16 _cl_overloadable
-  convert_uint16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    uint16 result = convert_uint16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    long result = convert_long(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long _cl_overloadable
-  convert_long_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    long result = convert_long_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    long2 result = convert_long2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long2 _cl_overloadable
-  convert_long2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    long2 result = convert_long2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    long4 result = convert_long4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long4 _cl_overloadable
-  convert_long4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    long4 result = convert_long4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    long8 result = convert_long8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long8 _cl_overloadable
-  convert_long8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    long8 result = convert_long8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    long16 result = convert_long16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  long16 _cl_overloadable
-  convert_long16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    long16 result = convert_long16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rte(double a)
-  {
-    cl_set_rounding_mode(1);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rtz(double a)
-  {
-    cl_set_rounding_mode(0);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rtp(double a)
-  {
-    cl_set_rounding_mode(2);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    ulong result = convert_ulong(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong _cl_overloadable
-  convert_ulong_sat_rtn(double a)
-  {
-    cl_set_rounding_mode(3);
-    ulong result = convert_ulong_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rte(double2 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rtz(double2 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rtp(double2 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong2 result = convert_ulong2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong2 _cl_overloadable
-  convert_ulong2_sat_rtn(double2 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong2 result = convert_ulong2_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rte(double4 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rtz(double4 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rtp(double4 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong4 result = convert_ulong4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong4 _cl_overloadable
-  convert_ulong4_sat_rtn(double4 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong4 result = convert_ulong4_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rte(double8 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rtz(double8 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rtp(double8 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong8 result = convert_ulong8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong8 _cl_overloadable
-  convert_ulong8_sat_rtn(double8 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong8 result = convert_ulong8_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rte(double16 a)
-  {
-    cl_set_rounding_mode(1);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rtz(double16 a)
-  {
-    cl_set_rounding_mode(0);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rtp(double16 a)
-  {
-    cl_set_rounding_mode(2);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong16 result = convert_ulong16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  ulong16 _cl_overloadable
-  convert_ulong16_sat_rtn(double16 a)
-  {
-    cl_set_rounding_mode(3);
-    ulong16 result = convert_ulong16_sat(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-  float _cl_overloadable
-  convert_float_rte(char a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtz(char a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtp(char a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtn(char a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rte(char2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtz(char2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtp(char2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtn(char2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rte(char4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtz(char4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtp(char4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtn(char4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rte(char8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtz(char8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtp(char8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtn(char8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rte(char16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtz(char16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtp(char16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtn(char16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rte(char a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtz(char a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtp(char a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtn(char a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rte(char2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtz(char2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtp(char2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtn(char2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rte(char4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtz(char4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtp(char4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtn(char4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rte(char8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtz(char8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtp(char8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtn(char8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rte(char16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtz(char16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtp(char16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtn(char16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-  float _cl_overloadable
-  convert_float_rte(uchar a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtz(uchar a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtp(uchar a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtn(uchar a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rte(uchar2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtz(uchar2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtp(uchar2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtn(uchar2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rte(uchar4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtz(uchar4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtp(uchar4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtn(uchar4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rte(uchar8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtz(uchar8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtp(uchar8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtn(uchar8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rte(uchar16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtz(uchar16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtp(uchar16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtn(uchar16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rte(uchar a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtz(uchar a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtp(uchar a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtn(uchar a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rte(uchar2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtz(uchar2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtp(uchar2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtn(uchar2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rte(uchar4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtz(uchar4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtp(uchar4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtn(uchar4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rte(uchar8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtz(uchar8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtp(uchar8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtn(uchar8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rte(uchar16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtz(uchar16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtp(uchar16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtn(uchar16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-  float _cl_overloadable
-  convert_float_rte(short a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtz(short a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtp(short a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtn(short a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rte(short2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtz(short2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtp(short2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtn(short2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rte(short4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtz(short4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtp(short4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtn(short4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rte(short8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtz(short8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtp(short8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtn(short8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rte(short16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtz(short16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtp(short16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtn(short16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rte(short a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtz(short a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtp(short a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtn(short a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rte(short2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtz(short2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtp(short2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtn(short2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rte(short4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtz(short4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtp(short4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtn(short4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rte(short8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtz(short8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtp(short8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtn(short8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rte(short16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtz(short16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtp(short16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtn(short16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-  float _cl_overloadable
-  convert_float_rte(ushort a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtz(ushort a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtp(ushort a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtn(ushort a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rte(ushort2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtz(ushort2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtp(ushort2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtn(ushort2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rte(ushort4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtz(ushort4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtp(ushort4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtn(ushort4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rte(ushort8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtz(ushort8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtp(ushort8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtn(ushort8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rte(ushort16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtz(ushort16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtp(ushort16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtn(ushort16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rte(ushort a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtz(ushort a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtp(ushort a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtn(ushort a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rte(ushort2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtz(ushort2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtp(ushort2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtn(ushort2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rte(ushort4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtz(ushort4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtp(ushort4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtn(ushort4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rte(ushort8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtz(ushort8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtp(ushort8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtn(ushort8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rte(ushort16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtz(ushort16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtp(ushort16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtn(ushort16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-  float _cl_overloadable
-  convert_float_rte(int a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtz(int a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtp(int a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtn(int a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rte(int2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtz(int2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtp(int2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtn(int2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rte(int4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtz(int4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtp(int4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtn(int4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rte(int8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtz(int8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtp(int8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtn(int8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rte(int16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtz(int16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtp(int16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtn(int16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rte(int a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtz(int a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtp(int a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtn(int a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rte(int2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtz(int2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtp(int2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtn(int2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rte(int4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtz(int4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtp(int4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtn(int4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rte(int8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtz(int8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtp(int8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtn(int8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rte(int16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtz(int16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtp(int16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtn(int16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-  float _cl_overloadable
-  convert_float_rte(uint a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtz(uint a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtp(uint a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float _cl_overloadable
-  convert_float_rtn(uint a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rte(uint2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtz(uint2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtp(uint2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float2 _cl_overloadable
-  convert_float2_rtn(uint2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rte(uint4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtz(uint4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtp(uint4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float4 _cl_overloadable
-  convert_float4_rtn(uint4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rte(uint8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtz(uint8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtp(uint8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float8 _cl_overloadable
-  convert_float8_rtn(uint8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rte(uint16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtz(uint16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtp(uint16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-  float16 _cl_overloadable
-  convert_float16_rtn(uint16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rte(uint a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtz(uint a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtp(uint a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double _cl_overloadable
-  convert_double_rtn(uint a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rte(uint2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtz(uint2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtp(uint2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double2 _cl_overloadable
-  convert_double2_rtn(uint2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rte(uint4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtz(uint4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtp(uint4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double4 _cl_overloadable
-  convert_double4_rtn(uint4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rte(uint8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtz(uint8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtp(uint8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double8 _cl_overloadable
-  convert_double8_rtn(uint8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rte(uint16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtz(uint16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtp(uint16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_FP64(
-  double16 _cl_overloadable
-  convert_double16_rtn(uint16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rte(long a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rtz(long a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rtp(long a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rtn(long a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rte(long2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rtz(long2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rtp(long2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rtn(long2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rte(long4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rtz(long4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rtp(long4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rtn(long4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rte(long8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rtz(long8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rtp(long8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rtn(long8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rte(long16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rtz(long16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rtp(long16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rtn(long16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rte(long a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rtz(long a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rtp(long a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rtn(long a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rte(long2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rtz(long2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rtp(long2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rtn(long2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rte(long4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rtz(long4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rtp(long4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rtn(long4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rte(long8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rtz(long8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rtp(long8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rtn(long8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rte(long16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rtz(long16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rtp(long16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rtn(long16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rte(ulong a)
-  {
-    cl_set_rounding_mode(1);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rtz(ulong a)
-  {
-    cl_set_rounding_mode(0);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rtp(ulong a)
-  {
-    cl_set_rounding_mode(2);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float _cl_overloadable
-  convert_float_rtn(ulong a)
-  {
-    cl_set_rounding_mode(3);
-    float result = convert_float(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rte(ulong2 a)
-  {
-    cl_set_rounding_mode(1);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rtz(ulong2 a)
-  {
-    cl_set_rounding_mode(0);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rtp(ulong2 a)
-  {
-    cl_set_rounding_mode(2);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float2 _cl_overloadable
-  convert_float2_rtn(ulong2 a)
-  {
-    cl_set_rounding_mode(3);
-    float2 result = convert_float2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rte(ulong4 a)
-  {
-    cl_set_rounding_mode(1);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rtz(ulong4 a)
-  {
-    cl_set_rounding_mode(0);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rtp(ulong4 a)
-  {
-    cl_set_rounding_mode(2);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float4 _cl_overloadable
-  convert_float4_rtn(ulong4 a)
-  {
-    cl_set_rounding_mode(3);
-    float4 result = convert_float4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rte(ulong8 a)
-  {
-    cl_set_rounding_mode(1);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rtz(ulong8 a)
-  {
-    cl_set_rounding_mode(0);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rtp(ulong8 a)
-  {
-    cl_set_rounding_mode(2);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float8 _cl_overloadable
-  convert_float8_rtn(ulong8 a)
-  {
-    cl_set_rounding_mode(3);
-    float8 result = convert_float8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rte(ulong16 a)
-  {
-    cl_set_rounding_mode(1);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rtz(ulong16 a)
-  {
-    cl_set_rounding_mode(0);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rtp(ulong16 a)
-  {
-    cl_set_rounding_mode(2);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  float16 _cl_overloadable
-  convert_float16_rtn(ulong16 a)
-  {
-    cl_set_rounding_mode(3);
-    float16 result = convert_float16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rte(ulong a)
-  {
-    cl_set_rounding_mode(1);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rtz(ulong a)
-  {
-    cl_set_rounding_mode(0);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rtp(ulong a)
-  {
-    cl_set_rounding_mode(2);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double _cl_overloadable
-  convert_double_rtn(ulong a)
-  {
-    cl_set_rounding_mode(3);
-    double result = convert_double(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rte(ulong2 a)
-  {
-    cl_set_rounding_mode(1);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rtz(ulong2 a)
-  {
-    cl_set_rounding_mode(0);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rtp(ulong2 a)
-  {
-    cl_set_rounding_mode(2);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double2 _cl_overloadable
-  convert_double2_rtn(ulong2 a)
-  {
-    cl_set_rounding_mode(3);
-    double2 result = convert_double2(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rte(ulong4 a)
-  {
-    cl_set_rounding_mode(1);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rtz(ulong4 a)
-  {
-    cl_set_rounding_mode(0);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rtp(ulong4 a)
-  {
-    cl_set_rounding_mode(2);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double4 _cl_overloadable
-  convert_double4_rtn(ulong4 a)
-  {
-    cl_set_rounding_mode(3);
-    double4 result = convert_double4(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rte(ulong8 a)
-  {
-    cl_set_rounding_mode(1);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rtz(ulong8 a)
-  {
-    cl_set_rounding_mode(0);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rtp(ulong8 a)
-  {
-    cl_set_rounding_mode(2);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double8 _cl_overloadable
-  convert_double8_rtn(ulong8 a)
-  {
-    cl_set_rounding_mode(3);
-    double8 result = convert_double8(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rte(ulong16 a)
-  {
-    cl_set_rounding_mode(1);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rtz(ulong16 a)
-  {
-    cl_set_rounding_mode(0);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rtp(ulong16 a)
-  {
-    cl_set_rounding_mode(2);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
-)
-__IF_INT64(
-  double16 _cl_overloadable
-  convert_double16_rtn(ulong16 a)
-  {
-    cl_set_rounding_mode(3);
-    double16 result = convert_double16(a);
-    cl_set_default_rounding_mode();
-    return result;
-  }
-  
 )
