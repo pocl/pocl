@@ -1,5 +1,5 @@
 <%inherit file="basic_page.makt" />
-<p>Portable OpenCL (pocl) aims to become a MIT-licensed open source implementation of the OpenCL 
+<p>Portable Computing Language (pocl) aims to become a MIT-licensed open source implementation of the OpenCL 
 standard which can be easily adapted for new targets and devices, both for homogeneous
 CPU and heterogenous GPUs/accelerators.</p>
 
@@ -18,14 +18,14 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2013-02-04: Project renamed to POrtable Computing Language (pocl) </h2>
+
+<p>The project was renamed to POrtable Computing Language (pocl) to avoid trademark
+uncertainties (was: Portable OpenCL). It's still pronounced "pogle"! :)</p>
+
 <h2>2013-01-09: 0.7 released!</h2>
 
 <p>The source package, the change log, and the release annoucement are <a href="/downloads">here</a>.</p> 
-
-<h2>2013-01-01: 0.7 in release testing!</h2>
-
-<p>Please help testing the next pocl release. 
-Instructions <a href="https://sourceforge.net/apps/mediawiki/pocl/index.php?title=ReleaseTestLog">here</a>.</p>
 
 <h1>Current status (2013-01-01)</h1>
 

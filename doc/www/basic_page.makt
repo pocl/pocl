@@ -12,13 +12,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
     <meta name="robots" content="index, follow" /> 
-    <meta name="keywords" content="OpenCL portable OpenCL pocl" /> 
-    <meta name="description" content="pocl - Portable OpenCL " /> 
+    <meta name="keywords" content="OpenCL portable OpenCL pocl Portable Computing Langauge" /> 
+    <meta name="description" content="pocl - Portable Computing Language" /> 
 
     <meta property="og:title" content="pocl home page"/> 
     <meta property="og:site_name" content="pocl"/> 
     <meta property="og:type" content="website"/>
-    <meta property="og:description" content="pocl: a performance portable open source OpenCL implementation"/>
+    <meta property="og:description" content="pocl: aiming towards a performance portable open source OpenCL implementation"/>
     <meta property="og:url" content="http://pocl.sourceforge.net"/>    
     <meta property="fb:admins" content="pekka.jaaskelainen"/>
 
@@ -29,7 +29,7 @@
 <body>
   <div id="page">
     <div id="header">
-      <h1 id="title">pocl - Portable OpenCL${sub_page}</h1>
+      <h1 id="title">pocl - Portable Computing Language${sub_page}</h1>
     </div>
 
     <div id="navi">
@@ -48,7 +48,7 @@
 
     <div id="footer">
       <p class="footer">
-        pocl - Portable OpenCL  &copy; 2010-2013 pocl developers 
+        pocl - Portable Computing Language &copy; 2010-2013 pocl developers 
       </p>
     </div>
 
