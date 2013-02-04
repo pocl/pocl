@@ -4,12 +4,32 @@
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
 
-[changes updated from bzr log until 2013-01-09]
+[changes updated from bzr log until 2013-02-04]
+
+Overall
+-------
+
+- Removed the depedency on llvm-ld (which was copied to
+  pocl-llvm-ld to pocl tree). Now uses llvm-link instead.
+- Project renamed to Portable Computing Language (pocl).
 
 Major bugfixes
 --------------
 - Fixed passing NULL as a buffer argument to clSetKernelArguments
-  (again, this time with a regression test added).
+  (this time with a regression test added).
+- Constant BitCast expressions broken to variables to avoid
+  crashing when copying a kernel with casts on automatic
+  local pointers.
+
+OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
+-------------------------------------------------------
+- Return correctly formatted CL_DEVICE_VERSION and 
+  CL_DEVICE_OPENCL_C_VERSION.
+
+OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+-------------------------------------------------------------------
+- convert_type* builtins now generated with a Python script by
+  Victor Oliveira.  
 
 Misc.
 -----

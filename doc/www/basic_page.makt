@@ -22,7 +22,7 @@
     <meta property="og:url" content="http://pocl.sourceforge.net"/>    
     <meta property="fb:admins" content="pekka.jaaskelainen"/>
 
-    <title>pocl - Portable OpenCL${sub_page}</title>
+    <title>pocl - Portable Computing Language${sub_page}</title>
     <link rel="stylesheet" type="text/css" href="pocl-style.css" />
   </head>
 
