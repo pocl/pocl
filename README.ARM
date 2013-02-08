@@ -3,6 +3,9 @@ Ubuntu.
 
 Current known issues:
 
+- You might need to install libhwloc from the sources if
+  the Ubuntu in Panda doesn't ship a new enough one.
+  http://www.open-mpi.org/projects/hwloc/
 - ABI/ISA compatibility issue (soft float or not). This is
   producible in the example1 which takes float4 buffers as args.
   example2, which uses scalar buffers works ok.
