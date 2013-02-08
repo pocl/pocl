@@ -163,7 +163,8 @@ OBJ:LKERNEL_SRCS
 .c.bc:
 	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
 .cl.bc:
-	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h    -include ../../../include/_kernel.h
+	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h \
+		-include ${abs_top_srcdir}/include/_kernel.h
 
 CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 
