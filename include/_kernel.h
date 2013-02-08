@@ -1855,7 +1855,10 @@ __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
 // Image support
 
+#if defined(CLANG_OLDER_THAN_3_3)
+/* Clang 3.3 generates sampler_t as an opaque type. */
 typedef int sampler_t;
+#endif
 
 #define CLK_ADDRESS_NONE                0x00
 #define CLK_ADDRESS_MIRRORED_REPEAT     0x01

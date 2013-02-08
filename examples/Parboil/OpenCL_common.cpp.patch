@@ -1,4 +1,4 @@
---- OpenCL_common.cpp.orig	2013-02-05 16:51:53.458366127 +0200
+--- OpenCL_common.cpp	2013-02-05 16:51:53.458366127 +0200
 +++ parboil/benchmarks/bfs/src/opencl_base/OpenCL_common.cpp	2013-02-05 16:54:02.674616150 +0200
 @@ -40,7 +40,7 @@
        if (reqDeviceType != NULL) {
