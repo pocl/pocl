@@ -51,6 +51,15 @@ AT_CLEANUP
         
 AT_BANNER([Kernel runtime library])
 
+AT_SETUP([Kernel functions as_type])
+AT_KEYWORDS([tce])
+AT_DATA([expout],
+[Running test test_as_type...
+OK
+])
+AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/examples/kernel/kernel test_as_type], 0, expout)
+AT_CLEANUP
+
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 AT_KEYWORDS([tce])
 AT_DATA([expout],

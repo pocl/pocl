@@ -136,19 +136,25 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   device->min_data_type_align_size = device->mem_base_addr_align = ALIGNMENT;
 
+  /* Note: The specification describes identifiers being delimited by
+     only a single space character. Some programs that check the device's
+     extension  string assume this rule. Future extenion additions should
+     ensure that there is no more than a single space between
+     identifiers. */
+
 #if SIZEOF_DOUBLE == 8
-#define DOUBLE_EXT "cl_khr_fp64"
+#define DOUBLE_EXT "cl_khr_fp64 "
 #else
 #define DOUBLE_EXT 
 #endif
 
 #if SIZEOF___FP16 == 2
-#define HALF_EXT "cl_khr_fp16"
+#define HALF_EXT "cl_khr_fp16 "
 #else
 #define HALF_EXT
 #endif
 
-  device->extensions = DOUBLE_EXT " " HALF_EXT " cl_khr_byte_addressable_store";
+  device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);

@@ -76,6 +76,7 @@ main(int argc, char **argv)
     
     /* Run all tests */
     char const *const tests[] = {
+      "test_as_type",
       "test_bitselect",
       "test_fabs",
       "test_hadd",
@@ -108,3 +109,4 @@ main(int argc, char **argv)
   printf("OK\n");
   return 0;
 }
+
