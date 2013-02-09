@@ -24,6 +24,7 @@
 #include "devices/devices.h"
 #include "pocl_cl.h"
 #include <stdlib.h>
+#include <string.h>
 
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContextFromType)(const cl_context_properties *properties,
@@ -34,6 +35,46 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 {
   int num_devices;
   int i, j;
+  int num_properties;
+
+  if (properties)
+    {
+      const cl_context_properties *p = properties;
+      const cl_context_properties *q;
+
+      cl_platform_id platforms[1];
+      cl_uint num_platforms;
+      cl_bool platform_found;
+
+      POname(clGetPlatformIDs)(1, platforms, &num_platforms);
+
+      num_properties = 0;
+      while (p[0] != 0)
+        {
+          for(q=properties; q<p; q+=2)
+            if (q[0] == p[0])
+              POCL_ERROR(CL_INVALID_PROPERTY);
+
+          switch (p[0])
+            {
+              case CL_CONTEXT_PLATFORM:
+
+                platform_found = CL_FALSE;
+                for (i=0; i<num_platforms; i++)
+                  if ((cl_platform_id)p[1] == platforms[i])
+                    platform_found = CL_TRUE;
+
+                if (platform_found == CL_FALSE)
+                  POCL_ERROR(CL_INVALID_PROPERTY);
+
+                p += 2;
+                break;
+
+              default: POCL_ERROR(CL_INVALID_PROPERTY);
+            }
+          num_properties++;
+        }
+    }
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
@@ -77,7 +118,9 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     }
   }   
 
-  context->properties = properties;
+  context->properties = (cl_context_properties *) malloc((num_properties * 2 + 1) * sizeof(cl_context_properties));
+  memcpy(context->properties, properties, (num_properties * 2 + 1) * sizeof(cl_context_properties));
+  context->num_properties = num_properties;
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

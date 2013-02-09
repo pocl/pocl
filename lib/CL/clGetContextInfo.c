@@ -38,7 +38,17 @@ POname(clGetContextInfo)(cl_context context,
     return CL_INVALID_CONTEXT;
 
   switch (param_name) {
-    
+    case CL_CONTEXT_REFERENCE_COUNT:
+    {
+      cl_uint refcount = context->pocl_refcount;
+      if (param_value_size < sizeof(size_t) && param_value != NULL)
+        return CL_INVALID_VALUE;
+      if (param_value != NULL )
+        *((size_t*)param_value)=refcount;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret=sizeof(size_t);
+      return CL_SUCCESS;
+    }
   case CL_CONTEXT_DEVICES:
     {
       value_size = context->num_devices * sizeof(cl_device_id);
@@ -61,10 +71,21 @@ POname(clGetContextInfo)(cl_context context,
         *param_value_size_ret=sizeof(size_t);
       return CL_SUCCESS;
     }
-  default: 
-    break;
+  case CL_CONTEXT_PROPERTIES:
+    {
+      size_t properties_size = (context->num_properties * 2 + 1) * sizeof(cl_context_properties);
+      if (param_value_size < properties_size && param_value != NULL)
+        return CL_INVALID_VALUE;
+      if (param_value != NULL )
+        param_value=context->properties;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret=properties_size;
+      return CL_SUCCESS;
   }
-  POCL_WARN_INCOMPLETE();
+  default:
   return CL_INVALID_VALUE;
+}
+
+  return CL_SUCCESS;
 }
 POsym(clGetContextInfo)

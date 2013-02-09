@@ -319,9 +319,10 @@ struct _cl_context {
   POCL_OBJECT;
   /* queries */
   cl_device_id *devices;
-  const cl_context_properties *properties;
+  cl_context_properties *properties;
   /* implementation */
   unsigned num_devices;
+  unsigned num_properties;
   /* some OpenCL apps (AMD OpenCL SDK at least) use a trial-error 
      approach for creating a context with a device type, and call 
      clReleaseContext for the result regardless if it failed or not. 

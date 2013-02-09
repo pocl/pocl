@@ -63,6 +63,10 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
     POCL_RETURN_MEM_INFO(cl_uint, memobj->pocl_refcount);
   case CL_MEM_CONTEXT:
     POCL_RETURN_MEM_INFO(cl_context, memobj->context);
+  case CL_MEM_ASSOCIATED_MEMOBJECT:
+    POCL_RETURN_MEM_INFO(cl_mem, memobj->parent);
+  case CL_MEM_OFFSET:
+    POCL_ABORT_UNIMPLEMENTED();
   }
   return CL_INVALID_VALUE;
 }
