@@ -308,6 +308,8 @@ _CL_DECLARE_AS_TYPE_2(ushort)
 #define _CL_DECLARE_AS_TYPE_4(SRC)              \
   _CL_DECLARE_AS_TYPE(SRC, char4)               \
   _CL_DECLARE_AS_TYPE(SRC, uchar4)              \
+  _CL_DECLARE_AS_TYPE(SRC, char3)               \
+  _CL_DECLARE_AS_TYPE(SRC, uchar3)              \
   _CL_DECLARE_AS_TYPE(SRC, short2)              \
   _CL_DECLARE_AS_TYPE(SRC, ushort2)             \
   _CL_DECLARE_AS_TYPE(SRC, int)                 \
@@ -315,6 +317,8 @@ _CL_DECLARE_AS_TYPE_2(ushort)
   _CL_DECLARE_AS_TYPE(SRC, float)
 _CL_DECLARE_AS_TYPE_4(char4)
 _CL_DECLARE_AS_TYPE_4(uchar4)
+_CL_DECLARE_AS_TYPE_4(char3)
+_CL_DECLARE_AS_TYPE_4(uchar3)
 _CL_DECLARE_AS_TYPE_4(short2)
 _CL_DECLARE_AS_TYPE_4(ushort2)
 _CL_DECLARE_AS_TYPE_4(int)
@@ -327,6 +331,8 @@ _CL_DECLARE_AS_TYPE_4(float)
   _CL_DECLARE_AS_TYPE(SRC, uchar8)              \
   _CL_DECLARE_AS_TYPE(SRC, short4)              \
   _CL_DECLARE_AS_TYPE(SRC, ushort4)             \
+  _CL_DECLARE_AS_TYPE(SRC, short3)              \
+  _CL_DECLARE_AS_TYPE(SRC, ushort3)             \
   _CL_DECLARE_AS_TYPE(SRC, int2)                \
   _CL_DECLARE_AS_TYPE(SRC, uint2)               \
   __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long))    \
@@ -337,6 +343,8 @@ _CL_DECLARE_AS_TYPE_8(char8)
 _CL_DECLARE_AS_TYPE_8(uchar8)
 _CL_DECLARE_AS_TYPE_8(short4)
 _CL_DECLARE_AS_TYPE_8(ushort4)
+_CL_DECLARE_AS_TYPE_8(short3)
+_CL_DECLARE_AS_TYPE_8(ushort3)
 _CL_DECLARE_AS_TYPE_8(int2)
 _CL_DECLARE_AS_TYPE_8(uint2)
 __IF_INT64(_CL_DECLARE_AS_TYPE_8(long))
@@ -352,9 +360,12 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_8(double))
   _CL_DECLARE_AS_TYPE(SRC, ushort8)             \
   _CL_DECLARE_AS_TYPE(SRC, int4)                \
   _CL_DECLARE_AS_TYPE(SRC, uint4)               \
+  _CL_DECLARE_AS_TYPE(SRC, int3)                \
+  _CL_DECLARE_AS_TYPE(SRC, uint3)               \
   __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long2))   \
   __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong2))  \
   _CL_DECLARE_AS_TYPE(SRC, float4)              \
+  _CL_DECLARE_AS_TYPE(SRC, float3)              \
   __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double2))
 _CL_DECLARE_AS_TYPE_16(char16)
 _CL_DECLARE_AS_TYPE_16(uchar16)
@@ -362,9 +373,12 @@ _CL_DECLARE_AS_TYPE_16(short8)
 _CL_DECLARE_AS_TYPE_16(ushort8)
 _CL_DECLARE_AS_TYPE_16(int4)
 _CL_DECLARE_AS_TYPE_16(uint4)
+_CL_DECLARE_AS_TYPE_16(int3)
+_CL_DECLARE_AS_TYPE_16(uint3)
 __IF_INT64(_CL_DECLARE_AS_TYPE_16(long2))
 __IF_INT64(_CL_DECLARE_AS_TYPE_16(ulong2))
 _CL_DECLARE_AS_TYPE_16(float4)
+_CL_DECLARE_AS_TYPE_16(float3)
 __IF_FP64(_CL_DECLARE_AS_TYPE_16(double2))
 
 /* 32 bytes */
@@ -375,16 +389,22 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_16(double2))
   _CL_DECLARE_AS_TYPE(SRC, uint8)               \
   __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long4))   \
   __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong4))  \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long3))   \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong3))  \
   _CL_DECLARE_AS_TYPE(SRC, float8)              \
-  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double4))
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double4))  \
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double3))
 _CL_DECLARE_AS_TYPE_32(short16)
 _CL_DECLARE_AS_TYPE_32(ushort16)
 _CL_DECLARE_AS_TYPE_32(int8)
 _CL_DECLARE_AS_TYPE_32(uint8)
 __IF_INT64(_CL_DECLARE_AS_TYPE_32(long4))
 __IF_INT64(_CL_DECLARE_AS_TYPE_32(ulong4))
+__IF_INT64(_CL_DECLARE_AS_TYPE_32(long3))
+__IF_INT64(_CL_DECLARE_AS_TYPE_32(ulong3))
 _CL_DECLARE_AS_TYPE_32(float8)
 __IF_FP64(_CL_DECLARE_AS_TYPE_32(double4))
+__IF_FP64(_CL_DECLARE_AS_TYPE_32(double3))
 
 /* 64 bytes */
 #define _CL_DECLARE_AS_TYPE_64(SRC)             \
