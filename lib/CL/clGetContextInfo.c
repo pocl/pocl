@@ -61,8 +61,16 @@ POname(clGetContextInfo)(cl_context context,
     case CL_CONTEXT_NUM_DEVICES:
       POCL_RETURN_CONTEXT_INFO(sizeof(size_t), &context->num_devices);
     case CL_CONTEXT_PROPERTIES:
+      if (context->properties)
+        {
       value_size = (context->num_properties * 2 + 1) * sizeof(cl_context_properties);
       POCL_RETURN_CONTEXT_INFO(value_size, context->devices);
+        }
+      else
+        {
+          *param_value_size_ret = 0;
+          return CL_SUCCESS;
+        }
     default:
       return CL_INVALID_VALUE;
   }

@@ -76,7 +76,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
       /* Return a dummy context so icd call to clReleaseContext() still
          works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
 
-      /* XXX: context memory leak */
       return context;
     }
 
@@ -97,17 +96,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
       ++j;
     }
   }   
-
-  context->properties = (cl_context_properties *) malloc((num_properties * 2 + 1) * sizeof(cl_context_properties));
-  if (context->properties == NULL)
-    {
-      free(context);
-      free(context->devices);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
-    }
-
-  memcpy(context->properties, properties, (num_properties * 2 + 1) * sizeof(cl_context_properties));
-  context->num_properties = num_properties;
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

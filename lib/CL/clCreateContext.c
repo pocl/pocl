@@ -28,12 +28,12 @@
 
 #define ERR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); } return -1; } while (0)
 
-int context_set_properties(cl_context                    ctx,
+int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode_ret)
 {
   int i;
-  int num_properties;
+  int num_properties = 0;
 
   /* verify if data in properties is valid
    * and set them */
@@ -76,9 +76,27 @@ int context_set_properties(cl_context                    ctx,
             }
           num_properties++;
         }
+
+      context->properties = (cl_context_properties *) malloc((num_properties * 2 + 1) * sizeof(cl_context_properties));
+      if (context->properties == NULL)
+        {
+          if (context->devices) free(context->devices);
+          free(context);
+          ERR(CL_OUT_OF_HOST_MEMORY);
     }
 
+      memcpy(context->properties, properties, (num_properties * 2 + 1) * sizeof(cl_context_properties));
+      context->num_properties = num_properties;
+
   return num_properties;
+}
+  else
+    {
+      context->properties     = NULL;
+      context->num_properties = 0;
+
+      return 0;
+    }
 }
 
 #undef ERR
