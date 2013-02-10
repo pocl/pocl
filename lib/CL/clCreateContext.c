@@ -161,17 +161,6 @@ POname(clCreateContext)(const cl_context_properties * properties,
       POname(clRetainDevice)(device_ptr);
     }   
 
-  context->properties = (cl_context_properties *) malloc((num_properties * 2 + 1) * sizeof(cl_context_properties));
-  if (context->properties == NULL)
-    {
-      free(context);
-      free(context->devices);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
-    }
-
-  memcpy(context->properties, properties, (num_properties * 2 + 1) * sizeof(cl_context_properties));
-  context->num_properties = num_properties;
-
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
   context->valid = 1;
