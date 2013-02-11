@@ -20,6 +20,7 @@ Major bugfixes
 - Constant BitCast expressions broken to variables to avoid
   crashing when copying a kernel with casts on automatic
   local pointers.
+- Fixes for i386/i686. Tested on Pentium4/Ubuntu 10.04 LTS.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
