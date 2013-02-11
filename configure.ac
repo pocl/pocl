@@ -530,18 +530,21 @@ case $host_cpu in
     # for compiling kernels for ARM envs without usable math libs.
     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard -fPIC"
     kernel_dir="arm"
+    CL_DEVICE_ADDRESS_BITS=32
     ;;
   amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
     kernel_dir="x86_64"
+    CL_DEVICE_ADDRESS_BITS=64
     ;;
   i?86)
     AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
     kernel_dir="x86_64"
+    CL_DEVICE_ADDRESS_BITS=32
     ;;
  
   tce)
@@ -558,6 +561,7 @@ case $host_cpu in
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     kernel_dir="powerpc"
     OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
+    CL_DEVICE_ADDRESS_BITS=32
     ;;
   *)
     AC_MSG_ERROR([unknown/unsupported host $host])
@@ -601,6 +605,11 @@ AC_SUBST([HOST_LD_FLAGS])
 AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
                    ["$HOST_LD_FLAGS"],
                    [Parameter to compiler to generate loadable module.])
+
+AC_SUBST([POCL_DEVICE_ADDRESS_BITS], [$CL_DEVICE_ADDRESS_BITS])
+AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
+                   [$CL_DEVICE_ADDRESS_BITS],
+                   [Value based on host processor, for basic and pthreads devices])
 
 
 ####################################################################

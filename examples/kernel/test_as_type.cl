@@ -43,14 +43,14 @@ void compare_bytes(
     uchar* src, size_t src_size
 ) {
   if (dst_size != src_size) {
-    printf("FAIL: %s - size mismatch! dst_size: %zu src_size: %zu",
-           name, dst_size, src_size);
+    printf("FAIL: %s - size mismatch! dst_size: %u src_size: %u",
+           name, (uint)dst_size, (uint)src_size);
     return;
   }
   for (size_t i = 0; i < dst_size; ++i) {
     if (dst[i] != src[i]) {
-      printf("FAIL: %s - byte #: %zu expected: %#.2x actual: %#.2x",
-             name, i, src[i], dst[i]);
+      printf("FAIL: %s - byte #: %u expected: %#.2x actual: %#.2x",
+             name, (uint)i, src[i], dst[i]);
     }
   }
 }

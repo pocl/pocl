@@ -71,7 +71,7 @@ GEN_PROTOTYPES (basic)
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF  , /* preferred_vector_width_half */ \
   0, /* max_clock_frequency */						\
-  0, /* address_bits */							\
+  POCL_DEVICE_ADDRESS_BITS, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
   CL_FALSE, /* image_support */						\
   0, /* max_read_image_args */						\

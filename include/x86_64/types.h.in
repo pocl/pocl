@@ -15,7 +15,15 @@ typedef unsigned long ulong;
 #undef cl_khr_fp64
 #endif
 
+#if @POCL_DEVICE_ADDRESS_BITS@ == 64
 typedef ulong size_t;
 typedef long ptrdiff_t;
 typedef long intptr_t;
 typedef ulong uintptr_t;
+#else
+typedef uint size_t;
+typedef int ptrdiff_t;
+typedef int intptr_t;
+typedef uint uintptr_t;
+#endif
+
