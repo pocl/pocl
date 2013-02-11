@@ -29,9 +29,23 @@ POname(clCreateCommandQueue)(cl_context context,
                      cl_command_queue_properties properties,
                      cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  int i;
+  cl_bool found;
+
+  /* validate flags */
+  if (properties > (1<<2)-1)
+    POCL_ERROR(CL_INVALID_VALUE);
+
   /* we don't handle out-of-order queues yet */
   if (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
     POCL_ERROR(CL_INVALID_QUEUE_PROPERTIES);
+
+  for (i=0; i<context->num_devices; i++)
+    if (context->devices[i] == device)
+      found = CL_TRUE;
+
+  if (found == CL_FALSE)
+    POCL_ERROR(CL_INVALID_DEVICE);
 
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)

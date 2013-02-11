@@ -24,6 +24,12 @@
 #include "devices/devices.h"
 #include "pocl_cl.h"
 #include <stdlib.h>
+#include <string.h>
+
+/* in clCreateContext.c */
+int context_set_properties(cl_context                    ctx,
+                           const cl_context_properties * properties,
+                           cl_int *                      errcode_ret);
 
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContextFromType)(const cl_context_properties *properties,
@@ -34,6 +40,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 {
   int num_devices;
   int i, j;
+  int num_properties;
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
@@ -45,6 +52,13 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
   POCL_INIT_OBJECT(context);
   context->valid = 0;
+
+  num_properties = context_set_properties(context, properties, errcode_ret);
+  if (num_properties < 0)
+    {
+      free(context);
+      return NULL;
+    }
 
   num_devices = 0;
   for (i = 0; i < pocl_num_devices; ++i) {
@@ -61,11 +75,17 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
         } 
       /* Return a dummy context so icd call to clReleaseContext() still
          works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
+
       return context;
     }
 
   context->num_devices = num_devices;
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
+  if (context->devices == NULL)
+    {
+      free(context);
+      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    }
   
   j = 0;
   for (i = 0; i < pocl_num_devices; ++i) {
@@ -76,8 +96,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
       ++j;
     }
   }   
-
-  context->properties = properties;
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
