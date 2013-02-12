@@ -61,6 +61,9 @@ POname(clBuildProgram)(cl_program program,
   if (pfn_notify == NULL && user_data != NULL)
     return CL_INVALID_VALUE;
 
+  if (program->kernels)
+    return CL_INVALID_OPERATION;
+
   if (options != NULL)
     {
       user_options = options;

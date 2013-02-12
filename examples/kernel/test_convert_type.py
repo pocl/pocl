@@ -39,7 +39,9 @@ limit_max = {'char'  : 'CHAR_MAX',
              'int'   : 'INT_MAX',
              'uint'  : 'UINT_MAX',
              'long'  : 'LONG_MAX',
-             'ulong' : 'ULONG_MAX'}
+             'ulong' : 'ULONG_MAX',
+             'float' : 'FLT_MAX',
+             'double': 'DBL_MAX'}
 
 limit_min = {'char'  : 'CHAR_MIN',
              'uchar' : '0',
@@ -48,7 +50,9 @@ limit_min = {'char'  : 'CHAR_MIN',
              'int'   : 'INT_MIN',
              'uint'  : '0',
              'long'  : 'LONG_MIN',
-             'ulong' : '0'}
+             'ulong' : '0',
+             'float' : '-FLT_MAX',
+             'double': '-DBL_MAX'}
 
 float_suffix = {'float': 'f', 'double': ''}
 float_int_type = {'float': 'int', 'double': 'long'}
@@ -70,14 +74,6 @@ def generate_conversions(src_types, dst_types):
     for dst in dst_types:
       for size in vector_sizes:
         yield (src, dst, size)
-
-def print_int64_ifdef(t):
-  if t in int64_types:
-    print("\n#ifdef cles_khr_int64")
-
-def print_int64_endif(t):
-  if t in int64_types:
-    print("\n#endif")
 
 #
 # file header
@@ -121,10 +117,17 @@ for f in float_types:
    0.0{S},  0.25{S},  0.5{S},  0.75{S},  1.0{S},  1.25{S},  1.5{S},  1.75{S}
 }};
 
+{F} {F}_sat_offsets[16] =
+{{
+   0.0{S}, ({F})CHAR_MAX, ({F})CHAR_MIN, ({F})UCHAR_MAX, ({F})SHRT_MIN, ({F})SHRT_MAX, ({F})USHRT_MAX, ({F})INT_MAX,
+   ({F})INT_MIN, ({F})UINT_MAX, ({F})LONG_MAX, ({F})LONG_MIN, ({F})ULONG_MAX, 0.0{S}, 1.0e15{S}, -1.0e15{S}
+}};
+
+
 const size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
 {I} {F}_rounded_values[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
 {I} {F}_rounded_values_rtz[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
-{I} {F}_rounded_values_rte[16] = {{ -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 }};
+{I} {F}_rounded_values_rte[16] = {{ -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 2, 2 }};
 {I} {F}_rounded_values_rtp[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 }};
 {I} {F}_rounded_values_rtn[16] = {{ -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 }};
 """.format(F=f, S=float_suffix[f], I=float_int_type[f]))
@@ -132,23 +135,30 @@ const size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
     print("\n#endif")
 
 #
-# integer comparison functions
+# comparison functions
 #
 
-for t in int_types:
-  print_int64_ifdef(t)
+for t in all_types:
+  if t == 'double':
+    print("\n#ifdef cl_khr_fp64")
+  if t in int64_types:
+    print("\n#ifdef cles_khr_int64")
   print("""
 __attribute__((__noinline__))
-void compare_{Type}_elements(char const* name, const {Type}* expected, const {Type}* actual, size_t n)
+void compare_{Type}_elements(char const* name, size_t sample, const {Type}* expected, const {Type}* actual, size_t n)
 {{
   for (size_t i = 0; i < n; ++i) {{
     if (expected[i] != actual[i]) {{
-      printf("FAIL: %s - element #: %zu expected: {TypeFormat} actual: {TypeFormat}\\n", name, i, expected[i], actual[i]);
+      printf("FAIL: %s - sample#: %u element#: %u expected: {TypeFormat} actual: {TypeFormat}\\n",
+        name, (uint)sample, (uint)i, expected[i], actual[i]);
       break;
     }}
   }}
 }}""".format(Type=t, TypeFormat=printf_format_type[t]))
-  print_int64_endif(t)
+  if t in int64_types:
+    print("\n#endif")
+  if t == 'double':
+    print("\n#endif")
 
 #
 # conversion tests
@@ -170,7 +180,7 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
     union {{ {D}{N} value; {D} raw[{M}]; }} expected, actual;
     expected.value = (({D}{N})(({D}){S}_values[i]));
     actual.value = convert_{D}{N}(({S}{N}){S}_values[i]);
-    compare_{D}_elements("convert_{D}{N}(({S}{N}))", expected.raw, actual.raw, {M});
+    compare_{D}_elements("convert_{D}{N}(({S}{N}))", i, expected.raw, actual.raw, {M});
     if ({S}_values[i] < min_expected) {{
        expected.value = ({D}{N})min_expected;
     }}
@@ -178,7 +188,7 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
        expected.value = ({D}{N})max_expected;
     }}
     actual.value = convert_{D}{N}_sat(({S}{N}){S}_values[i]);
-    compare_{D}_elements("convert_{D}{N}_sat(({S}{N}))", expected.raw, actual.raw, {M});
+    compare_{D}_elements("convert_{D}{N}_sat(({S}{N}))", i, expected.raw, actual.raw, {M});
   }}""".format(
       S=src, SMIN=limit_min[src], SMAX=limit_max[src],
       D=dst, DMIN=limit_min[dst], DMAX=limit_max[dst],
@@ -187,24 +197,70 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
     print("\n#endif")
 
 #
-# floating-point to integer conversions
+# floating-point to integer conversions, with and without saturation
 #
 
 for (src, dst, size) in generate_conversions(float_types, int_types):
-  if (src == 'double') or (dst in int64_types):
+  if (dst in int64_types):
+    print("\n#ifdef cles_khr_int64")
+  if (src == 'double'):
     print("\n#ifdef cl_khr_fp64")
   print("""
   for (size_t i = 0; i < {S}_values_length; ++i) {{
-    union {{ {D}{N} value; {D} raw[{M}]; }} expected, actual;""".format(
-      S=src, D=dst, N=size, M=size if len(size) > 0 else "1"))
+    const {S} sat_input = ({S}_values[i] + {S}_sat_offsets[i]);
+    const {S} min_expected = ({DMIN} > {SMIN}) ? ({S}){DMIN} : {SMIN};
+    const {S} max_expected = ({DMAX} < {SMAX}) ? ({S}){DMAX} : {SMAX};
+    union {{ {D}{N} value; {D} raw[{M}]; }} expected, actual;"""
+      .format(
+        S=src, SMIN=limit_min[src], SMAX=limit_max[src],
+        D=dst, DMIN=limit_min[dst], DMAX=limit_max[dst],
+        N=size, M=size if len(size) > 0 else "1"))
   for mode in rounding_modes:
     print("""    expected.value = (({D}{N})(({D}){S}_rounded_values{R}[i]));
     actual.value = convert_{D}{N}{R}(({S}{N}){S}_values[i]);
-    compare_{D}_elements("convert_{D}{N}{R}(({S}{N}))", expected.raw, actual.raw, {M});""".format(
-      S=src, D=dst, R=mode, N=size, M=size if len(size) > 0 else "1"))
+    compare_{D}_elements("convert_{D}{N}{R}(({S}{N}))", i, expected.raw, actual.raw, {M});
+    expected.value = ({D}{N})convert_{D}{R}(sat_input);
+    if (sat_input < min_expected) {{
+       expected.value = ({D}{N})min_expected;
+    }}
+    else if (sat_input > max_expected) {{
+       expected.value = ({D}{N})max_expected;
+    }}
+    actual.value = convert_{D}{N}_sat{R}(({S}{N})sat_input);
+    compare_{D}_elements("convert_{D}{N}_sat{R}(({S}{N}))", i, expected.raw, actual.raw, {M});"""
+      .format(S=src, D=dst, R=mode, N=size, M=size if len(size) > 0 else "1"))
   print("  }");
-  if (src == 'double') or (dst in int64_types):
+  if (src == 'double'):
     print("\n#endif")
+  if (dst in int64_types):
+    print("\n#endif")
+
+#
+# other random tests
+#
+
+print("""
+union { int8 value; int raw[8]; } qe, qa;
+qa.value = convert_int8_rtz((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
+compare_int_elements("convert_int8_rtz((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8_rtp((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-23, -23, -23, -23, 23, 24, 24, 24);
+compare_int_elements("convert_int8_rtp((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8_rtn((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-24, -24, -24, -23, 23, 23, 23, 23);
+compare_int_elements("convert_int8_rtn((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8_rte((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-24, -24, -23, -23, 23, 23, 24, 24);
+compare_int_elements("convert_int8_rte((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
+compare_int_elements("convert_int8((float8))", 0, qe.raw, qa.raw, 8);
+""")
 
 #
 # end conversion tests

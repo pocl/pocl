@@ -51,10 +51,6 @@ POname(clGetKernelWorkGroupInfo)
   else
     device = kernel->context->devices[0];
 
-  /* the wording of the specs is ambiguous - if param_value is NULL, do we need to check that param_name is valid? */
-  if (param_value == NULL)
-    return CL_INVALID_VALUE;
-
   switch (param_name)
     {
     case CL_KERNEL_WORK_GROUP_SIZE: 
@@ -98,8 +94,11 @@ POname(clGetKernelWorkGroupInfo)
       POCL_RETURN_KERNEL_WG_INFO(cl_ulong, local_size);
     }
       
-    default:  
+    case CL_KERNEL_PRIVATE_MEM_SIZE:
       POCL_ABORT_UNIMPLEMENTED();
+
+    default:
+      return CL_INVALID_VALUE;
     }
   return CL_SUCCESS;
 }

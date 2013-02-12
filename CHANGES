@@ -4,7 +4,7 @@
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
 
-[changes updated from bzr log until 2013-02-04]
+[changes updated from bzr log until 2013-02-10]
 
 Overall
 -------
@@ -20,23 +20,26 @@ Major bugfixes
 - Constant BitCast expressions broken to variables to avoid
   crashing when copying a kernel with casts on automatic
   local pointers.
+- Fixes for i386/i686. Tested on Pentium4/Ubuntu 10.04 LTS.
+- Lots of API error checking added (found by the Piglit testing suite).
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
-- Return correctly formatted CL_DEVICE_VERSION and 
+- Return correctly formatted CL_DEVICE_VERSION and
   CL_DEVICE_OPENCL_C_VERSION.
 
 OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 -------------------------------------------------------------------
 - convert_type* builtins now generated with a Python script by
-  Victor Oliveira.  
+  Victor Oliveira.
 
 Misc.
 -----
 -  Fix to the helper script search logic:
    Search from the BUILDDIR only if env POCL_BUILDING is
    defined. Otherwise search from PKGDATADIR first, then
-   from the PATH.	
+   from the PATH.
+-  Fixed memory leaks in clCreateContext*
 
 0.7  January 2013
 =================
@@ -56,7 +59,7 @@ Overall
 - ARM v7 support (on Linux)
 - Beginning of Cell SPU support (very experimental!).
 - Most of the AMD APP SDK OpenCL examples now work and have been
-  added to the pocl test suite. 
+  added to the pocl test suite.
 - Most of the Parboil benchmark cases added to the test
   suite.
 
@@ -97,15 +100,15 @@ Framework
 ---------
 
 - Made it possible to override the .cl -> .bc build command
-  called by clBuildProgram per device. 
+  called by clBuildProgram per device.
 
 Device Drivers
 --------------
 
-- pthread/basic: 
+- pthread/basic:
   * extract CPU clock frequency from /proc/cpuinfo, if available
   * return cl_khr_fp64 if doubles supported by the CPU
-- ttasim: support for explicitly calling custom/special operations 
+- ttasim: support for explicitly calling custom/special operations
   through the vendor extensions API
 
 Misc.
@@ -121,7 +124,7 @@ Misc.
 0.6   August 2012
 =================
 
-Kernel library 
+Kernel library
 --------------
 
 - Added initial optimized kernel library for X86_64/SSE.
@@ -134,22 +137,22 @@ Pthread device driver
 - Multithreading at the work group granularity using pthreads.
 - Tries to figure out the optimal maximum number of
   threads for the system based on the available hardware
-  threads. Currently works only in Linux using the 
+  threads. Currently works only in Linux using the
   /proc/cpuinfo interface.
-- Region-based customized memory allocator for speeding up buffer 
+- Region-based customized memory allocator for speeding up buffer
   allocations.
 
 Kernel compiler
 ---------------
 
-- Most of the tricky work group barrier cases (barriers inside 
+- Most of the tricky work group barrier cases (barriers inside
   for-loops etc) now supported.
 - Support for local variables, also automatic locals.
 - Reuse previous compilation results, if available.
 - Automatic vectorization of work groups (multiple work items
   in parallel).
-  
-Miscellaneous  
+
+Miscellaneous
 -------------
 - Installable Client Driver (icd) support.
 - Event profiling support (incomplete, works only for kernel and

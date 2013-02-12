@@ -34,6 +34,15 @@ POname(clGetProgramBuildInfo)(cl_program            program,
 {
   const char *retval = "";      /* dummy return value */
   
+  int i;
+  cl_bool found;
+
+  found = CL_FALSE;
+  for (i = 0; i < program->num_devices; i++)
+    if (device == program->devices[i]) found = CL_TRUE;
+
+  if (found == CL_FALSE) return CL_INVALID_DEVICE;
+
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
     {
@@ -45,6 +54,7 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
+
       return CL_SUCCESS;
     }
     

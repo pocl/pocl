@@ -134,9 +134,6 @@ error:
   if (source_file) {
     fclose(source_file);
   }
-  if (devices) {
-    free(devices);
-  }
   if (source) {
     free(source);
   }

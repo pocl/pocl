@@ -117,7 +117,7 @@ main(void)
 
         /* Force exit of the process regardless of the running kernel thread
            by replacing the process with a dummy process. */
-        execlp("true", NULL, NULL);
+        execlp("true", "true", NULL);
     } 
     catch (cl::Error err) {
          std::cerr

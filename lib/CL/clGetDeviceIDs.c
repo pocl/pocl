@@ -41,6 +41,11 @@ POname(clGetDeviceIDs)(cl_platform_id   platform,
   if (platform == NULL)
     return CL_INVALID_PLATFORM;
 
+  if (num_entries == 0 && devices != NULL)
+    return CL_INVALID_VALUE;
+  if (num_devices == NULL && devices == NULL)
+    return CL_INVALID_VALUE;
+
   for (i = 0; i < pocl_num_devices; ++i) {
     if ((pocl_devices[i].type & device_type) &&
         (pocl_devices[i].available == CL_TRUE))

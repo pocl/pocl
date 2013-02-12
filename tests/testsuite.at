@@ -52,6 +52,7 @@ AT_CLEANUP
 AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions as_type])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
 AT_KEYWORDS([conversion tce])
 AT_DATA([expout],
 [Running test test_as_type...
@@ -61,6 +62,7 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_as_type], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
 AT_KEYWORDS([conversion tce])
 AT_DATA([expout],
 [Running test test_convert_type...

@@ -35,22 +35,20 @@ void compare_bytes(
 {
   const size_t n = dst_elsize < src_elsize ? dst_elsize : src_elsize;
   if (dst_size != src_size) {
-    printf("FAIL: %s - sizeof mismatch! dst_size: %zu src_size: %zu\n",
-           name, dst_size, src_size);
+    printf("FAIL: %s - size mismatch! dst_size: %u src_size: %u\n",
+           name, (uint)dst_size, (uint)src_size);
     return;
   }
   for (size_t i = 0; i < n; ++i) {
     if (dst[i] != src[i]) {
-      printf("FAIL: %s - byte #: %zu expected: %#.2x actual: %#.2x\n",
-             name, i, src[i], dst[i]);
-      break;
+      printf("FAIL: %s - byte #: %u expected: %#.2x actual: %#.2x\n",
+             name, (uint)i, src[i], dst[i]);
     }
   }
 }
 
 kernel void test_as_type()
 {
-  printf("FAIL: crap!\n");
 #define TEST_AS_TYPE(DST, N, SRC, M)                            \
   {                                                             \
     union { SRC value; uchar raw[sizeof(SRC)]; } src;           \
