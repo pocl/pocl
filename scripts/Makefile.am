@@ -60,13 +60,15 @@ pocl-build pocl-kernel pocl-workgroup pocl-standalone: %: %.in Makefile ../insta
 #	$(do_subst) < $< > $@
 #	chmod +x $@
 
-install-exec-hook: $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
+install-exec-hook: $(bin_SCRIPTS) 
 	for f in $(bin_SCRIPTS) ; do \
 		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
 			> "$(DESTDIR)$(bindir)/$$f" \
 			< "$$f" && \
 		chmod +x "$(DESTDIR)$(bindir)/$$f" ; \
 	done
+
+install-data-hook: $(pkgdata_SCRIPTS)
 	for f in $(pkgdata_SCRIPTS) ; do \
 		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
 			> "$(DESTDIR)$(pkgdatadir)/$$f" \
