@@ -22,9 +22,15 @@
    THE SOFTWARE.
 */
 
+#include "config.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include <assert.h>
 #include <string.h>
+
+#define MAX_ARGUMENT_ALIGNMENT \
+  (ALIGNOF_FLOAT16 > ALIGNOF_DOUBLE16) \
+  ? ALIGNOF_FLOAT16 : ALIGNOF_DOUBLE16
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelArg)(cl_kernel kernel,
@@ -32,6 +38,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0
 {
+  size_t arg_alignment;
   struct pocl_argument *p;
   void *value;
   
@@ -50,9 +57,16 @@ POname(clSetKernelArg)(cl_kernel kernel,
       !(kernel->arg_is_pointer[arg_index] && 
         *(const int*)arg_value == 0))
     {
-      free (p->value);
+      pocl_aligned_free (p->value);
 
-      value = malloc (arg_size);
+      /* FIXME: this is a cludge to determine an acceptable alignment,
+       * we should probably extract the argument alignment from the
+       * LLVM bytecode during kernel header generation. */
+      arg_alignment = pocl_size_ceil2(arg_size);
+      if (arg_alignment >= MAX_ARGUMENT_ALIGNMENT)
+        arg_alignment = MAX_ARGUMENT_ALIGNMENT;
+
+      value = pocl_aligned_malloc (arg_alignment, arg_size);
       if (value == NULL)
         return CL_OUT_OF_HOST_MEMORY;
       
@@ -62,7 +76,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
     }
   else
     {
-      free (p->value);
+      pocl_aligned_free (p->value);
       p->value = NULL;
     }
 

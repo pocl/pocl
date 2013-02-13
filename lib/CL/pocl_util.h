@@ -42,6 +42,20 @@ void remove_directory (const char *path_name);
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
+/* Finds the next highest power of two of the given value. */
+size_t pocl_size_ceil2(size_t x);
+
+/* Allocates aligned blocks of memory.
+ *
+ * Uses malloc to allocate a block of memory on the heap of the desired
+ * size which is then aligned with the given alignment. The resulting
+ * pointer must be freed with a call to pocl_aligned_free. Alignment
+ * must be a non-zero power of 2.
+ *
+ */
+void *pocl_aligned_malloc(size_t alignment, size_t size);
+void pocl_aligned_free(void* ptr);
+
 #ifdef __cplusplus
 }
 #endif

@@ -21,6 +21,8 @@
    THE SOFTWARE.
 */
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -98,3 +100,45 @@ byteswap_float (float word, char should_swap)
     neww.bytes[3] = old.bytes[0];
     return neww.full_word;
 }
+
+size_t
+pocl_size_ceil2(size_t x) {
+  --x;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+#if SIZE_MAX > 0xFFFFFFFF
+  x |= x >> 32;
+#endif
+  return ++x;
+}
+
+void *
+pocl_aligned_malloc(size_t alignment, size_t size)
+{
+  size_t mask = alignment - 1;
+  if (!alignment || ((alignment & mask) != 0))
+    {
+      errno = EINVAL;
+      return NULL;
+    }
+
+  uintptr_t address = (uintptr_t)malloc(size + mask + sizeof(void *));
+  if (!address)
+    return NULL;
+
+  uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
+  void** address_ptr = (void **)(aligned_address - sizeof(void *));
+  *address_ptr = (void *)address;
+  return (void *)aligned_address;
+}
+
+void
+pocl_aligned_free(void *ptr)
+{
+  if (ptr)
+    free(*(void **)((uintptr_t)ptr - sizeof(void *)));
+}
+

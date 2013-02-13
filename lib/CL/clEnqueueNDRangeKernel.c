@@ -22,7 +22,9 @@
    THE SOFTWARE.
 */
 
+#include "config.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "utlist.h"
 #include "install-paths.h"
 #include <assert.h>
@@ -33,6 +35,10 @@
 
 #define COMMAND_LENGTH 1024
 #define ARGUMENT_STRING_LENGTH 32
+
+#define MAX_ARGUMENT_ALIGNMENT \
+  (ALIGNOF_FLOAT16 > ALIGNOF_DOUBLE16) \
+  ? ALIGNOF_FLOAT16 : ALIGNOF_DOUBLE16
 
 //#define DEBUG_NDRANGE
 
@@ -298,7 +304,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         }
       else
         {
-          arg->value = malloc (kernel->dyn_arguments[i].size);
+          /* FIXME: this is a cludge to determine an acceptable alignment,
+           * we should probably extract the argument alignment from the
+           * LLVM bytecode during kernel header generation. */
+          size_t arg_alignment = pocl_size_ceil2(arg->size);
+          if (arg_alignment >= MAX_ARGUMENT_ALIGNMENT)
+            arg_alignment = MAX_ARGUMENT_ALIGNMENT;
+          
+          arg->value = pocl_aligned_malloc (arg_alignment, kernel->dyn_arguments[i].size);
           memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
         }
     }

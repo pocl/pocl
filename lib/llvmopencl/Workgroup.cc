@@ -515,12 +515,23 @@ createWorkgroup(Module &M, Function *F)
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++ii) {
     Type *t = ii->getType();
-    
-    Value *gep = builder.CreateGEP(ai, 
-				   ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
+
+    Value *gep = builder.CreateGEP(ai,
+            ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
-    Value *bc = builder.CreateBitCast(pointer, t->getPointerTo());
-    arguments.push_back(builder.CreateLoad(bc));
+
+    /* If it's a pass by value pointer argument, we just pass the pointer
+     * as is to the function, no need to load form it first. */
+    Value *value;
+    if (ii->hasByValAttr()) {
+        value = builder.CreateBitCast(pointer, t);
+    }
+    else {
+        value = builder.CreateBitCast(pointer, t->getPointerTo());
+        value = builder.CreateLoad(value);
+    }
+
+    arguments.push_back(value);
     ++i;
   }
 
@@ -565,24 +576,37 @@ createWorkgroupFast(Module &M, Function *F)
   SmallVector<Value*, 8> arguments;
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
-       ii != ee; ++ii) {
+       ii != ee; ++i, ++ii) {
     Type *t = ii->getType();
-    
     Value *gep = builder.CreateGEP(ai, 
-				   ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
+            ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
     Value *bc = NULL;
+     
     if (t->isPointerTy()) {
-      /* Assume the pointer is directly in the arg array. */
-      arguments.push_back(builder.CreateBitCast(pointer, t));
-    } else {
-      /* Assume the pointer points to the scalar data in the global         
-         memory. */
-      bc = builder.CreateBitCast
-        (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
-      arguments.push_back(builder.CreateLoad(bc));
+      if (!ii->hasByValAttr()) {
+        /* Assume the pointer is directly in the arg array. */
+        arguments.push_back(builder.CreateBitCast(pointer, t));
+        continue;
+      }
+
+      /* It's a pass by value pointer argument, use the underlying
+       * element type in subsequent load. */
+      t = t->getPointerElementType();
     }
-    ++i;
+
+    /* Assume the pointer points to data in the global memory space. */
+    bc = builder.CreateBitCast(pointer,
+            t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+
+    /* If it's a pass by value pointer argument, we just pass the pointer
+     * as is to the function, no need to load from it first. */
+    Value *value = builder.CreateBitCast(pointer, t->getPointerTo());
+    if (!ii->hasByValAttr()) {
+        value = builder.CreateLoad(value);
+    }
+    
+    arguments.push_back(value);
   }
 
   arguments.back() = ++ai;
