@@ -36,10 +36,6 @@
 #define COMMAND_LENGTH 1024
 #define ARGUMENT_STRING_LENGTH 32
 
-#define MAX_ARGUMENT_ALIGNMENT \
-  (ALIGNOF_FLOAT16 > ALIGNOF_DOUBLE16) \
-  ? ALIGNOF_FLOAT16 : ALIGNOF_DOUBLE16
-
 //#define DEBUG_NDRANGE
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -296,7 +292,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
     {
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
-      arg->size = kernel->dyn_arguments[i].size;
+      size_t arg_alloc_size = kernel->dyn_arguments[i].size;
+      arg->size = arg_alloc_size;
 
       if (kernel->dyn_arguments[i].value == NULL)
         {
@@ -307,11 +304,13 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
           /* FIXME: this is a cludge to determine an acceptable alignment,
            * we should probably extract the argument alignment from the
            * LLVM bytecode during kernel header generation. */
-          size_t arg_alignment = pocl_size_ceil2(arg->size);
-          if (arg_alignment >= MAX_ARGUMENT_ALIGNMENT)
-            arg_alignment = MAX_ARGUMENT_ALIGNMENT;
-          
-          arg->value = pocl_aligned_malloc (arg_alignment, kernel->dyn_arguments[i].size);
+          size_t arg_alignment = pocl_size_ceil2(arg_alloc_size);
+          if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
+            arg_alignment = MAX_EXTENDED_ALIGNMENT;
+          if (arg_alloc_size < arg_alignment)
+            arg_alloc_size = arg_alignment;
+         
+          arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
           memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
         }
     }

@@ -25,6 +25,7 @@
 #define POCL_UTIL_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #pragma GCC visibility push(hidden)
 #ifdef __cplusplus
@@ -47,14 +48,22 @@ size_t pocl_size_ceil2(size_t x);
 
 /* Allocates aligned blocks of memory.
  *
- * Uses malloc to allocate a block of memory on the heap of the desired
+ * Uses aligned_alloc or posix_memalign when available. Otherwise, uses
+ * malloc to allocate a block of memory on the heap of the desired
  * size which is then aligned with the given alignment. The resulting
  * pointer must be freed with a call to pocl_aligned_free. Alignment
  * must be a non-zero power of 2.
- *
  */
+#if defined HAVE_ALIGNED_ALLOC
+# define pocl_aligned_malloc aligned_alloc
+# define pocl_aligned_free free
+#elif defined HAVE_POSIX_MEMALIGN
+void *pocl_aligned_malloc(size_t alignment, size_t size);
+# define pocl_aligned_free free
+#else
 void *pocl_aligned_malloc(size_t alignment, size_t size);
 void pocl_aligned_free(void* ptr);
+#endif
 
 #ifdef __cplusplus
 }

@@ -49,42 +49,42 @@
 #define IMPLEMENT_MAX_DIRECT (a>=b ? a : b)
 #define IMPLEMENT_MAX_SSE41_CHAR16              \
   ({                                            \
-    __asm__ ("pmaxsb128 %[src], %[dst]" :       \
+    __asm__ ("pmaxsb %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE_UCHAR16               \
   ({                                            \
-    __asm__ ("pmaxub128 %[src], %[dst]" :       \
+    __asm__ ("pmaxub %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE_SHORT8                \
   ({                                            \
-    __asm__ ("pmaxsw128 %[src], %[dst]" :       \
+    __asm__ ("pmaxsw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE41_USHORT8             \
   ({                                            \
-    __asm__ ("pmaxuw128 %[src], %[dst]" :       \
+    __asm__ ("pmaxuw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE41_INT4                \
   ({                                            \
-    __asm__ ("pmaxsd128 %[src], %[dst]" :       \
+    __asm__ ("pmaxsd %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE41_UINT4               \
   ({                                            \
-    __asm__ ("pmaxud128 %[src], %[dst]" :       \
+    __asm__ ("pmaxud %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \

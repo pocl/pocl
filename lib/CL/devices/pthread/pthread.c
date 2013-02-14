@@ -39,8 +39,6 @@
 #include "bufalloc.h"
 #include <../dev_image.h>
 
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
-
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
    the next buffer allocations.
@@ -134,7 +132,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->max_samplers = 16;  
   device->max_constant_args = 8;
 
-  device->min_data_type_align_size = device->mem_base_addr_align = ALIGNMENT;
+  device->min_data_type_align_size = device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
 
   /* Note: The specification describes identifiers being delimited by
      only a single space character. Some programs that check the device's
@@ -257,7 +255,7 @@ pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *h
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (allocate_aligned_buffer (d, &b, ALIGNMENT, size) == 0)
+      if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
         {
           memcpy (b, host_ptr, size);
           return b;
@@ -271,7 +269,7 @@ pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *h
       return host_ptr;
     }
 
-  if (allocate_aligned_buffer (d, &b, ALIGNMENT, size) == 0)
+  if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
     return b;
   
   return NULL;

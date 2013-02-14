@@ -31,36 +31,62 @@
 
 #define WORK_ITEMS 1
 
+// Currently assume these types map the OpenCL types, might be better to use
+// the explicitly-sized types in <cstdint> under C++11 for better portability.
+// 
+// We also assume the same packing rules between host and target, so if this
+// regression fails in the future, this might be worth investigating as to
+// the origin of the problem.
+
 typedef struct test_struct {
     int elementA;
     int elementB;
-    long elementC;
-    long elementD;
+    long long elementC;
+    char elementD;
+    long long elementE;
+    float elementF;
+    short elementG;
+    double elementH;
 } test_struct;
 
 static char
 kernelSourceCode[] = 
 "typedef struct test_struct {"
-"    int elementA;"
-"    int elementB;"
-"    long elementC;"
-"    long elementD;"
-"} test_struct;"
-""
+"    int elementA;\n"
+"    int elementB;\n"
+"    long elementC;\n"
+"    char elementD;\n"
+"    long elementE;\n"
+"    float elementF;\n"
+"    short elementG;\n"
+"    double elementH;\n"
+"} test_struct;\n"
+"\n"
 "kernel \n"
 "void test_kernel(test_struct input, global int* output) {"
 " output[0] = input.elementA;\n"
 " output[1] = input.elementB;\n"
-" printf (\"%u %u\\n\", input.elementA, input.elementB);"
+" output[2] = (int)input.elementC;\n"
+" output[3] = (int)input.elementD;\n"
+" output[4] = (int)input.elementE;\n"
+" output[5] = (int)input.elementF;\n"
+" output[6] = (int)input.elementG;\n"
+" output[7] = (int)input.elementH;\n"
 "}\n";
 
 int
 main(void)
 {
-    int output[2];
+    int buffer_storage[8];
     test_struct input;
     input.elementA = 1;
     input.elementB = 2;
+    input.elementC = 3;
+    input.elementD = 4;
+    input.elementE = 5;
+    input.elementF = 6;
+    input.elementG = 7;
+    input.elementH = 8;
 
     try {
         std::vector<cl::Platform> platformList;
@@ -87,14 +113,14 @@ main(void)
         cl::Buffer cBuffer = cl::Buffer(
             context, 
             CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
-            2 * sizeof(int), 
-            (void *) &output[0]);
+            8 * sizeof(int), 
+            (void *) &buffer_storage[0]);
 
         // Create kernel object
         cl::Kernel kernel(program, "test_kernel");
 
         // Set kernel args
-        kernel.setArg(0, 2*sizeof(int), output);
+        kernel.setArg(0, sizeof(test_struct), &input);
         kernel.setArg(1, cBuffer);
 
         // Create command queue
@@ -106,20 +132,19 @@ main(void)
             cl::NullRange, 
             cl::NDRange(1),
             cl::NullRange);
- 
 
         // Map cBuffer to host pointer. This enforces a sync with 
         // the host backing space, remember we choose GPU device.
-        int * output = (int *) queue.enqueueMapBuffer(
+        int* output = (int*)queue.enqueueMapBuffer(
             cBuffer,
             CL_TRUE, // block 
             CL_MAP_READ,
             0,
-            WORK_ITEMS * sizeof(int));
+            8 * sizeof(int));
 
         bool ok = true;
-        for (int i = 0; i < 2; i++) {
-            int correct = i;
+        for (int i = 0; i < 8; i++) {
+            int correct = i + 1;
             if (output[i] != correct) {
                 std::cout 
                     << "F(" << i << ": " << output[i] << " != " << correct 

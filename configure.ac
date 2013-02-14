@@ -626,16 +626,20 @@ AC_PATH_PROG([TCECC], [tcecc])
 
 AC_LANG([C++])
 
-AC_LANG_CONFTEST(
-[AC_LANG_PROGRAM(
-  [[#include <Application.hh>]],
-  [Application::initialize()])
-])
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS=`$TCE_CONFIG --libs --cxxflags --includes`
 
-  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
-  then
-        TCE_LIBRARY=ok
-  fi
+AC_MSG_CHECKING([for TCE])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <Application.hh> ]],
+    [[ Application::initialize() ]]
+  )],
+  [AC_MSG_RESULT(yes)
+  [TCE_LIBRARY=ok]],
+  [AC_MSG_RESULT(no)])
+
+CXXFLAGS=$old_CXXFLAGS
 
 fi
 
@@ -698,9 +702,30 @@ if test x"$prefix" = xNONE; then
   fi
 fi
 
-# Checks for libraries.
-
 # Checks for header files.
+
+# Checks for library features.
+AC_LANG([C++])
+
+AC_MSG_CHECKING([for aligned_alloc])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[ #include <stdlib.h> ]],
+        [[ void* p = aligned_alloc(0, 0); ]]
+    )],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_ALIGNED_ALLOC], [], [Defined if aligned_alloc is available.])],
+    [AC_MSG_RESULT(no)])
+
+AC_MSG_CHECKING([for posix_memalign])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[ #include <stdlib.h> ]],
+        [[ int r = posix_memalign(NULL, 0, 0); ]]
+    )],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_POSIX_MEMALIGN], [], [Defined if posix_memalign is available.])],
+    [AC_MSG_RESULT(no)])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_LANG([C])
@@ -748,9 +773,11 @@ AC_SUBST([HOST_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
 AC_CHECK_SIZEOF([void *])
 AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
-
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
+AS_IF([test $ac_cv_alignof_float16 -gt $ac_cv_alignof_double16],
+      [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_FLOAT16], [Defined to greatest expected alignment for extended types, in bytes.])],
+      [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_DOUBLE16], [Defined to greatest expected alignment for extended types, in bytes.])])
 
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])

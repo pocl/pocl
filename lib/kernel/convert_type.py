@@ -212,8 +212,8 @@ for src in int_types:
 # Saturated Conversions To Integers
 #
 # These functions are dependent on the unsaturated conversion functions
-# generated above, and use select to eliminate branching and vectorize
-# the conversions.
+# generated above, and use clamp, max, min, and select to eliminate
+# branching and vectorize the conversions.
 #
 # Again, as above, we allow all rounding modes for integer-to-integer
 # conversions with saturation.
@@ -227,8 +227,8 @@ def generate_saturated_conversion(src, dst, size):
     .format(DST=dst, SRC=src, N=size))
 
   # FIXME: This is a work around for lack of select function with
-  # signed third argument when the first two arguments on unsigned types.
-  # We cast to the signed type for sign-extension, then do a bitcase to
+  # signed third argument when the first two arguments are unsigned types.
+  # We cast to the signed type for sign-extension, then do a bitcast to
   # the unsigned type.
   if dst in unsigned_types:
     bool_prefix = "as_{DST}{N}(convert_{BOOL}{N}".format(DST=dst, BOOL=bool_type[dst], N=size);
@@ -237,44 +237,44 @@ def generate_saturated_conversion(src, dst, size):
     bool_prefix = "convert_{BOOL}{N}".format(BOOL=bool_type[dst], N=size);
     bool_suffix = ""
 
+  # Body
   if src == dst:
+
     # Conversion between same types
     print("  return x;")
-  else:
-    # Conversion between disjoint types
-    print("  {DST}{N} y = convert_{DST}{N}(x);".format(DST=dst, N=size));
+
+  elif src in float_types:
 
     # Conversion from float to int
-    if src in float_types:
-      print("  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN}){BS});"
-          .format(SRC=src, DST=dst, N=size, DST_MIN=limit_min[dst], BP=bool_prefix, BS=bool_suffix))
-      print("  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x > ({SRC}{N}){DST_MAX}){BS});"
-          .format(SRC=src, DST=dst, N=size, DST_MAX=limit_max[dst], BP=bool_prefix, BS=bool_suffix))
+    print("""  {DST}{N} y = convert_{DST}{N}(x);
+  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN}){BS});
+  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x > ({SRC}{N}){DST_MAX}){BS});
+  return y;""".format(SRC=src, DST=dst, N=size,
+      DST_MIN=limit_min[dst], DST_MAX=limit_max[dst],
+      BP=bool_prefix, BS=bool_suffix))
+
+  else:
 
     # Integer to integer convesion with sizeof(src) == sizeof(dst)
-    elif sizeof_type[src] == sizeof_type[dst]:
-      if src not in unsigned_types:
-        print("  y = select(y, ({DST}{N})0, {BP}(x < ({SRC}{N})0){BS});"
-          .format(SRC=src, DST=dst, N=size, BP=bool_prefix, BS=bool_suffix))
+    if sizeof_type[src] == sizeof_type[dst]:
+      if src in unsigned_types:
+        print("  x = min(x, ({SRC}){DST_MAX});".format(SRC=src, DST_MAX=limit_max[dst]))
       else:
-        print("  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x > ({SRC}{N}){DST_MAX}){BS});"
-          .format(SRC=src, DST=dst, N=size, DST_MAX=limit_max[dst], BP=bool_prefix, BS=bool_suffix))
+        print("  x = max(x, ({SRC})0);".format(SRC=src))
 
     # Integer to integer conversion where sizeof(src) > sizeof(dst)
     elif sizeof_type[src] > sizeof_type[dst]:
-      if src not in unsigned_types:
-        print("  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN}){BS});"
-          .format(SRC=src, DST=dst, N=size, DST_MIN=limit_min[dst], BP=bool_prefix, BS=bool_suffix))
-      print("  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x > ({SRC}{N}){DST_MAX}){BS});"
-          .format(SRC=src, DST=dst, N=size, DST_MAX=limit_max[dst], BP=bool_prefix, BS=bool_suffix))
+      if src in unsigned_types:
+        print("  x = min(x, ({SRC}){DST_MAX});".format(SRC=src, DST_MAX=limit_max[dst]))
+      else:
+        print("  x = clamp(x, ({SRC}){DST_MIN}, ({SRC}){DST_MAX});"
+          .format(SRC=src, DST_MIN=limit_min[dst], DST_MAX=limit_max[dst]))
 
     # Integer to integer conversion where sizeof(src) < sizeof(dst)
-    else:
-      if src not in unsigned_types and dst in unsigned_types:
-        print("  y = select(y, ({DST}{N})0, {BP}(x < ({SRC}{N})0){BS});"
-          .format(SRC=src, DST=dst, N=size, BP=bool_prefix, BS=bool_suffix))
+    elif src not in unsigned_types and dst in unsigned_types:
+        print("  x = max(x, ({SRC})0);".format(SRC=src))
 
-    print("  return y;")
+    print("  return convert_{DST}{N}(x);".format(DST=dst, N=size))
 
   # Footer
   print("}")

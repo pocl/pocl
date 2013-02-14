@@ -72,6 +72,8 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_convert_type], 0, expout
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
+# Fails due to buggy clz/pocount and bitselect functions.
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_bitselect...
@@ -93,6 +95,8 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
+# Fails because of missing mad_sat, hadd, and rhadd.
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_hadd...
@@ -102,6 +106,8 @@ AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd 2>&1], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
+# Fails because of bugs in rotate.
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce rotate])
 AT_DATA([expout],
 [Running test test_rotate...

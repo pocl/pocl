@@ -28,17 +28,13 @@
 #include <assert.h>
 #include <string.h>
 
-#define MAX_ARGUMENT_ALIGNMENT \
-  (ALIGNOF_FLOAT16 > ALIGNOF_DOUBLE16) \
-  ? ALIGNOF_FLOAT16 : ALIGNOF_DOUBLE16
-
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelArg)(cl_kernel kernel,
                cl_uint arg_index,
                size_t arg_size,
                const void *arg_value) CL_API_SUFFIX__VERSION_1_0
 {
-  size_t arg_alignment;
+  size_t arg_alignment, arg_alloc_size;
   struct pocl_argument *p;
   void *value;
   
@@ -63,10 +59,13 @@ POname(clSetKernelArg)(cl_kernel kernel,
        * we should probably extract the argument alignment from the
        * LLVM bytecode during kernel header generation. */
       arg_alignment = pocl_size_ceil2(arg_size);
-      if (arg_alignment >= MAX_ARGUMENT_ALIGNMENT)
-        arg_alignment = MAX_ARGUMENT_ALIGNMENT;
+      if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
+        arg_alignment = MAX_EXTENDED_ALIGNMENT;
+      arg_alloc_size = arg_size;
+      if (arg_alloc_size < arg_alignment)
+        arg_alloc_size = arg_alignment;
 
-      value = pocl_aligned_malloc (arg_alignment, arg_size);
+      value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
       if (value == NULL)
         return CL_OUT_OF_HOST_MEMORY;
       

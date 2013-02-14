@@ -13209,237 +13209,206 @@ char16 convert_char16_sat(char16 x)
 _cl_overloadable
 uchar convert_uchar_sat(char x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (char)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uchar(x);
 }
 
 _cl_overloadable
 uchar2 convert_uchar2_sat(char2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (char2)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uchar2(x);
 }
 
 _cl_overloadable
 uchar3 convert_uchar3_sat(char3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (char3)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uchar3(x);
 }
 
 _cl_overloadable
 uchar4 convert_uchar4_sat(char4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (char4)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uchar4(x);
 }
 
 _cl_overloadable
 uchar8 convert_uchar8_sat(char8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (char8)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uchar8(x);
 }
 
 _cl_overloadable
 uchar16 convert_uchar16_sat(char16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (char16)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uchar16(x);
 }
 
 _cl_overloadable
 short convert_short_sat(char x)
 {
-  short y = convert_short(x);
-  return y;
+  return convert_short(x);
 }
 
 _cl_overloadable
 short2 convert_short2_sat(char2 x)
 {
-  short2 y = convert_short2(x);
-  return y;
+  return convert_short2(x);
 }
 
 _cl_overloadable
 short3 convert_short3_sat(char3 x)
 {
-  short3 y = convert_short3(x);
-  return y;
+  return convert_short3(x);
 }
 
 _cl_overloadable
 short4 convert_short4_sat(char4 x)
 {
-  short4 y = convert_short4(x);
-  return y;
+  return convert_short4(x);
 }
 
 _cl_overloadable
 short8 convert_short8_sat(char8 x)
 {
-  short8 y = convert_short8(x);
-  return y;
+  return convert_short8(x);
 }
 
 _cl_overloadable
 short16 convert_short16_sat(char16 x)
 {
-  short16 y = convert_short16(x);
-  return y;
+  return convert_short16(x);
 }
 
 _cl_overloadable
 ushort convert_ushort_sat(char x)
 {
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (char)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ushort(x);
 }
 
 _cl_overloadable
 ushort2 convert_ushort2_sat(char2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (char2)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ushort2(x);
 }
 
 _cl_overloadable
 ushort3 convert_ushort3_sat(char3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (char3)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ushort3(x);
 }
 
 _cl_overloadable
 ushort4 convert_ushort4_sat(char4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (char4)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ushort4(x);
 }
 
 _cl_overloadable
 ushort8 convert_ushort8_sat(char8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (char8)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ushort8(x);
 }
 
 _cl_overloadable
 ushort16 convert_ushort16_sat(char16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (char16)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ushort16(x);
 }
 
 _cl_overloadable
 int convert_int_sat(char x)
 {
-  int y = convert_int(x);
-  return y;
+  return convert_int(x);
 }
 
 _cl_overloadable
 int2 convert_int2_sat(char2 x)
 {
-  int2 y = convert_int2(x);
-  return y;
+  return convert_int2(x);
 }
 
 _cl_overloadable
 int3 convert_int3_sat(char3 x)
 {
-  int3 y = convert_int3(x);
-  return y;
+  return convert_int3(x);
 }
 
 _cl_overloadable
 int4 convert_int4_sat(char4 x)
 {
-  int4 y = convert_int4(x);
-  return y;
+  return convert_int4(x);
 }
 
 _cl_overloadable
 int8 convert_int8_sat(char8 x)
 {
-  int8 y = convert_int8(x);
-  return y;
+  return convert_int8(x);
 }
 
 _cl_overloadable
 int16 convert_int16_sat(char16 x)
 {
-  int16 y = convert_int16(x);
-  return y;
+  return convert_int16(x);
 }
 
 _cl_overloadable
 uint convert_uint_sat(char x)
 {
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (char)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uint(x);
 }
 
 _cl_overloadable
 uint2 convert_uint2_sat(char2 x)
 {
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (char2)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uint2(x);
 }
 
 _cl_overloadable
 uint3 convert_uint3_sat(char3 x)
 {
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (char3)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uint3(x);
 }
 
 _cl_overloadable
 uint4 convert_uint4_sat(char4 x)
 {
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (char4)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uint4(x);
 }
 
 _cl_overloadable
 uint8 convert_uint8_sat(char8 x)
 {
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (char8)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uint8(x);
 }
 
 _cl_overloadable
 uint16 convert_uint16_sat(char16 x)
 {
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (char16)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_uint16(x);
 }
 
 #ifdef cles_khr_int64
 _cl_overloadable
 long convert_long_sat(char x)
 {
-  long y = convert_long(x);
-  return y;
+  return convert_long(x);
 }
 #endif
 
@@ -13447,8 +13416,7 @@ long convert_long_sat(char x)
 _cl_overloadable
 long2 convert_long2_sat(char2 x)
 {
-  long2 y = convert_long2(x);
-  return y;
+  return convert_long2(x);
 }
 #endif
 
@@ -13456,8 +13424,7 @@ long2 convert_long2_sat(char2 x)
 _cl_overloadable
 long3 convert_long3_sat(char3 x)
 {
-  long3 y = convert_long3(x);
-  return y;
+  return convert_long3(x);
 }
 #endif
 
@@ -13465,8 +13432,7 @@ long3 convert_long3_sat(char3 x)
 _cl_overloadable
 long4 convert_long4_sat(char4 x)
 {
-  long4 y = convert_long4(x);
-  return y;
+  return convert_long4(x);
 }
 #endif
 
@@ -13474,8 +13440,7 @@ long4 convert_long4_sat(char4 x)
 _cl_overloadable
 long8 convert_long8_sat(char8 x)
 {
-  long8 y = convert_long8(x);
-  return y;
+  return convert_long8(x);
 }
 #endif
 
@@ -13483,8 +13448,7 @@ long8 convert_long8_sat(char8 x)
 _cl_overloadable
 long16 convert_long16_sat(char16 x)
 {
-  long16 y = convert_long16(x);
-  return y;
+  return convert_long16(x);
 }
 #endif
 
@@ -13492,9 +13456,8 @@ long16 convert_long16_sat(char16 x)
 _cl_overloadable
 ulong convert_ulong_sat(char x)
 {
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (char)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ulong(x);
 }
 #endif
 
@@ -13502,9 +13465,8 @@ ulong convert_ulong_sat(char x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(char2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (char2)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ulong2(x);
 }
 #endif
 
@@ -13512,9 +13474,8 @@ ulong2 convert_ulong2_sat(char2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(char3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (char3)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ulong3(x);
 }
 #endif
 
@@ -13522,9 +13483,8 @@ ulong3 convert_ulong3_sat(char3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(char4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (char4)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ulong4(x);
 }
 #endif
 
@@ -13532,9 +13492,8 @@ ulong4 convert_ulong4_sat(char4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(char8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (char8)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ulong8(x);
 }
 #endif
 
@@ -13542,58 +13501,51 @@ ulong8 convert_ulong8_sat(char8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(char16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (char16)0)));
-  return y;
+  x = max(x, (char)0);
+  return convert_ulong16(x);
 }
 #endif
 
 _cl_overloadable
 char convert_char_sat(uchar x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MAX, convert_char(x > (uchar)CHAR_MAX));
-  return y;
+  x = min(x, (uchar)CHAR_MAX);
+  return convert_char(x);
 }
 
 _cl_overloadable
 char2 convert_char2_sat(uchar2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (uchar2)CHAR_MAX));
-  return y;
+  x = min(x, (uchar)CHAR_MAX);
+  return convert_char2(x);
 }
 
 _cl_overloadable
 char3 convert_char3_sat(uchar3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (uchar3)CHAR_MAX));
-  return y;
+  x = min(x, (uchar)CHAR_MAX);
+  return convert_char3(x);
 }
 
 _cl_overloadable
 char4 convert_char4_sat(uchar4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (uchar4)CHAR_MAX));
-  return y;
+  x = min(x, (uchar)CHAR_MAX);
+  return convert_char4(x);
 }
 
 _cl_overloadable
 char8 convert_char8_sat(uchar8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (uchar8)CHAR_MAX));
-  return y;
+  x = min(x, (uchar)CHAR_MAX);
+  return convert_char8(x);
 }
 
 _cl_overloadable
 char16 convert_char16_sat(uchar16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (uchar16)CHAR_MAX));
-  return y;
+  x = min(x, (uchar)CHAR_MAX);
+  return convert_char16(x);
 }
 
 _cl_overloadable
@@ -13635,177 +13587,152 @@ uchar16 convert_uchar16_sat(uchar16 x)
 _cl_overloadable
 short convert_short_sat(uchar x)
 {
-  short y = convert_short(x);
-  return y;
+  return convert_short(x);
 }
 
 _cl_overloadable
 short2 convert_short2_sat(uchar2 x)
 {
-  short2 y = convert_short2(x);
-  return y;
+  return convert_short2(x);
 }
 
 _cl_overloadable
 short3 convert_short3_sat(uchar3 x)
 {
-  short3 y = convert_short3(x);
-  return y;
+  return convert_short3(x);
 }
 
 _cl_overloadable
 short4 convert_short4_sat(uchar4 x)
 {
-  short4 y = convert_short4(x);
-  return y;
+  return convert_short4(x);
 }
 
 _cl_overloadable
 short8 convert_short8_sat(uchar8 x)
 {
-  short8 y = convert_short8(x);
-  return y;
+  return convert_short8(x);
 }
 
 _cl_overloadable
 short16 convert_short16_sat(uchar16 x)
 {
-  short16 y = convert_short16(x);
-  return y;
+  return convert_short16(x);
 }
 
 _cl_overloadable
 ushort convert_ushort_sat(uchar x)
 {
-  ushort y = convert_ushort(x);
-  return y;
+  return convert_ushort(x);
 }
 
 _cl_overloadable
 ushort2 convert_ushort2_sat(uchar2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  return y;
+  return convert_ushort2(x);
 }
 
 _cl_overloadable
 ushort3 convert_ushort3_sat(uchar3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  return y;
+  return convert_ushort3(x);
 }
 
 _cl_overloadable
 ushort4 convert_ushort4_sat(uchar4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  return y;
+  return convert_ushort4(x);
 }
 
 _cl_overloadable
 ushort8 convert_ushort8_sat(uchar8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  return y;
+  return convert_ushort8(x);
 }
 
 _cl_overloadable
 ushort16 convert_ushort16_sat(uchar16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  return y;
+  return convert_ushort16(x);
 }
 
 _cl_overloadable
 int convert_int_sat(uchar x)
 {
-  int y = convert_int(x);
-  return y;
+  return convert_int(x);
 }
 
 _cl_overloadable
 int2 convert_int2_sat(uchar2 x)
 {
-  int2 y = convert_int2(x);
-  return y;
+  return convert_int2(x);
 }
 
 _cl_overloadable
 int3 convert_int3_sat(uchar3 x)
 {
-  int3 y = convert_int3(x);
-  return y;
+  return convert_int3(x);
 }
 
 _cl_overloadable
 int4 convert_int4_sat(uchar4 x)
 {
-  int4 y = convert_int4(x);
-  return y;
+  return convert_int4(x);
 }
 
 _cl_overloadable
 int8 convert_int8_sat(uchar8 x)
 {
-  int8 y = convert_int8(x);
-  return y;
+  return convert_int8(x);
 }
 
 _cl_overloadable
 int16 convert_int16_sat(uchar16 x)
 {
-  int16 y = convert_int16(x);
-  return y;
+  return convert_int16(x);
 }
 
 _cl_overloadable
 uint convert_uint_sat(uchar x)
 {
-  uint y = convert_uint(x);
-  return y;
+  return convert_uint(x);
 }
 
 _cl_overloadable
 uint2 convert_uint2_sat(uchar2 x)
 {
-  uint2 y = convert_uint2(x);
-  return y;
+  return convert_uint2(x);
 }
 
 _cl_overloadable
 uint3 convert_uint3_sat(uchar3 x)
 {
-  uint3 y = convert_uint3(x);
-  return y;
+  return convert_uint3(x);
 }
 
 _cl_overloadable
 uint4 convert_uint4_sat(uchar4 x)
 {
-  uint4 y = convert_uint4(x);
-  return y;
+  return convert_uint4(x);
 }
 
 _cl_overloadable
 uint8 convert_uint8_sat(uchar8 x)
 {
-  uint8 y = convert_uint8(x);
-  return y;
+  return convert_uint8(x);
 }
 
 _cl_overloadable
 uint16 convert_uint16_sat(uchar16 x)
 {
-  uint16 y = convert_uint16(x);
-  return y;
+  return convert_uint16(x);
 }
 
 #ifdef cles_khr_int64
 _cl_overloadable
 long convert_long_sat(uchar x)
 {
-  long y = convert_long(x);
-  return y;
+  return convert_long(x);
 }
 #endif
 
@@ -13813,8 +13740,7 @@ long convert_long_sat(uchar x)
 _cl_overloadable
 long2 convert_long2_sat(uchar2 x)
 {
-  long2 y = convert_long2(x);
-  return y;
+  return convert_long2(x);
 }
 #endif
 
@@ -13822,8 +13748,7 @@ long2 convert_long2_sat(uchar2 x)
 _cl_overloadable
 long3 convert_long3_sat(uchar3 x)
 {
-  long3 y = convert_long3(x);
-  return y;
+  return convert_long3(x);
 }
 #endif
 
@@ -13831,8 +13756,7 @@ long3 convert_long3_sat(uchar3 x)
 _cl_overloadable
 long4 convert_long4_sat(uchar4 x)
 {
-  long4 y = convert_long4(x);
-  return y;
+  return convert_long4(x);
 }
 #endif
 
@@ -13840,8 +13764,7 @@ long4 convert_long4_sat(uchar4 x)
 _cl_overloadable
 long8 convert_long8_sat(uchar8 x)
 {
-  long8 y = convert_long8(x);
-  return y;
+  return convert_long8(x);
 }
 #endif
 
@@ -13849,8 +13772,7 @@ long8 convert_long8_sat(uchar8 x)
 _cl_overloadable
 long16 convert_long16_sat(uchar16 x)
 {
-  long16 y = convert_long16(x);
-  return y;
+  return convert_long16(x);
 }
 #endif
 
@@ -13858,8 +13780,7 @@ long16 convert_long16_sat(uchar16 x)
 _cl_overloadable
 ulong convert_ulong_sat(uchar x)
 {
-  ulong y = convert_ulong(x);
-  return y;
+  return convert_ulong(x);
 }
 #endif
 
@@ -13867,8 +13788,7 @@ ulong convert_ulong_sat(uchar x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(uchar2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  return y;
+  return convert_ulong2(x);
 }
 #endif
 
@@ -13876,8 +13796,7 @@ ulong2 convert_ulong2_sat(uchar2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(uchar3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  return y;
+  return convert_ulong3(x);
 }
 #endif
 
@@ -13885,8 +13804,7 @@ ulong3 convert_ulong3_sat(uchar3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(uchar4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  return y;
+  return convert_ulong4(x);
 }
 #endif
 
@@ -13894,8 +13812,7 @@ ulong4 convert_ulong4_sat(uchar4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(uchar8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  return y;
+  return convert_ulong8(x);
 }
 #endif
 
@@ -13903,117 +13820,92 @@ ulong8 convert_ulong8_sat(uchar8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(uchar16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  return y;
+  return convert_ulong16(x);
 }
 #endif
 
 _cl_overloadable
 char convert_char_sat(short x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (short)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x > (short)CHAR_MAX));
-  return y;
+  x = clamp(x, (short)CHAR_MIN, (short)CHAR_MAX);
+  return convert_char(x);
 }
 
 _cl_overloadable
 char2 convert_char2_sat(short2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (short2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (short2)CHAR_MAX));
-  return y;
+  x = clamp(x, (short)CHAR_MIN, (short)CHAR_MAX);
+  return convert_char2(x);
 }
 
 _cl_overloadable
 char3 convert_char3_sat(short3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (short3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (short3)CHAR_MAX));
-  return y;
+  x = clamp(x, (short)CHAR_MIN, (short)CHAR_MAX);
+  return convert_char3(x);
 }
 
 _cl_overloadable
 char4 convert_char4_sat(short4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (short4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (short4)CHAR_MAX));
-  return y;
+  x = clamp(x, (short)CHAR_MIN, (short)CHAR_MAX);
+  return convert_char4(x);
 }
 
 _cl_overloadable
 char8 convert_char8_sat(short8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (short8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (short8)CHAR_MAX));
-  return y;
+  x = clamp(x, (short)CHAR_MIN, (short)CHAR_MAX);
+  return convert_char8(x);
 }
 
 _cl_overloadable
 char16 convert_char16_sat(short16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (short16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (short16)CHAR_MAX));
-  return y;
+  x = clamp(x, (short)CHAR_MIN, (short)CHAR_MAX);
+  return convert_char16(x);
 }
 
 _cl_overloadable
 uchar convert_uchar_sat(short x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (short)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (short)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (short)0, (short)UCHAR_MAX);
+  return convert_uchar(x);
 }
 
 _cl_overloadable
 uchar2 convert_uchar2_sat(short2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (short2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (short2)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (short)0, (short)UCHAR_MAX);
+  return convert_uchar2(x);
 }
 
 _cl_overloadable
 uchar3 convert_uchar3_sat(short3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (short3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (short3)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (short)0, (short)UCHAR_MAX);
+  return convert_uchar3(x);
 }
 
 _cl_overloadable
 uchar4 convert_uchar4_sat(short4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (short4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (short4)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (short)0, (short)UCHAR_MAX);
+  return convert_uchar4(x);
 }
 
 _cl_overloadable
 uchar8 convert_uchar8_sat(short8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (short8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (short8)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (short)0, (short)UCHAR_MAX);
+  return convert_uchar8(x);
 }
 
 _cl_overloadable
 uchar16 convert_uchar16_sat(short16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (short16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (short16)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (short)0, (short)UCHAR_MAX);
+  return convert_uchar16(x);
 }
 
 _cl_overloadable
@@ -14055,147 +13947,128 @@ short16 convert_short16_sat(short16 x)
 _cl_overloadable
 ushort convert_ushort_sat(short x)
 {
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (short)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ushort(x);
 }
 
 _cl_overloadable
 ushort2 convert_ushort2_sat(short2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (short2)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ushort2(x);
 }
 
 _cl_overloadable
 ushort3 convert_ushort3_sat(short3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (short3)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ushort3(x);
 }
 
 _cl_overloadable
 ushort4 convert_ushort4_sat(short4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (short4)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ushort4(x);
 }
 
 _cl_overloadable
 ushort8 convert_ushort8_sat(short8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (short8)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ushort8(x);
 }
 
 _cl_overloadable
 ushort16 convert_ushort16_sat(short16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (short16)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ushort16(x);
 }
 
 _cl_overloadable
 int convert_int_sat(short x)
 {
-  int y = convert_int(x);
-  return y;
+  return convert_int(x);
 }
 
 _cl_overloadable
 int2 convert_int2_sat(short2 x)
 {
-  int2 y = convert_int2(x);
-  return y;
+  return convert_int2(x);
 }
 
 _cl_overloadable
 int3 convert_int3_sat(short3 x)
 {
-  int3 y = convert_int3(x);
-  return y;
+  return convert_int3(x);
 }
 
 _cl_overloadable
 int4 convert_int4_sat(short4 x)
 {
-  int4 y = convert_int4(x);
-  return y;
+  return convert_int4(x);
 }
 
 _cl_overloadable
 int8 convert_int8_sat(short8 x)
 {
-  int8 y = convert_int8(x);
-  return y;
+  return convert_int8(x);
 }
 
 _cl_overloadable
 int16 convert_int16_sat(short16 x)
 {
-  int16 y = convert_int16(x);
-  return y;
+  return convert_int16(x);
 }
 
 _cl_overloadable
 uint convert_uint_sat(short x)
 {
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (short)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_uint(x);
 }
 
 _cl_overloadable
 uint2 convert_uint2_sat(short2 x)
 {
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (short2)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_uint2(x);
 }
 
 _cl_overloadable
 uint3 convert_uint3_sat(short3 x)
 {
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (short3)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_uint3(x);
 }
 
 _cl_overloadable
 uint4 convert_uint4_sat(short4 x)
 {
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (short4)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_uint4(x);
 }
 
 _cl_overloadable
 uint8 convert_uint8_sat(short8 x)
 {
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (short8)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_uint8(x);
 }
 
 _cl_overloadable
 uint16 convert_uint16_sat(short16 x)
 {
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (short16)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_uint16(x);
 }
 
 #ifdef cles_khr_int64
 _cl_overloadable
 long convert_long_sat(short x)
 {
-  long y = convert_long(x);
-  return y;
+  return convert_long(x);
 }
 #endif
 
@@ -14203,8 +14076,7 @@ long convert_long_sat(short x)
 _cl_overloadable
 long2 convert_long2_sat(short2 x)
 {
-  long2 y = convert_long2(x);
-  return y;
+  return convert_long2(x);
 }
 #endif
 
@@ -14212,8 +14084,7 @@ long2 convert_long2_sat(short2 x)
 _cl_overloadable
 long3 convert_long3_sat(short3 x)
 {
-  long3 y = convert_long3(x);
-  return y;
+  return convert_long3(x);
 }
 #endif
 
@@ -14221,8 +14092,7 @@ long3 convert_long3_sat(short3 x)
 _cl_overloadable
 long4 convert_long4_sat(short4 x)
 {
-  long4 y = convert_long4(x);
-  return y;
+  return convert_long4(x);
 }
 #endif
 
@@ -14230,8 +14100,7 @@ long4 convert_long4_sat(short4 x)
 _cl_overloadable
 long8 convert_long8_sat(short8 x)
 {
-  long8 y = convert_long8(x);
-  return y;
+  return convert_long8(x);
 }
 #endif
 
@@ -14239,8 +14108,7 @@ long8 convert_long8_sat(short8 x)
 _cl_overloadable
 long16 convert_long16_sat(short16 x)
 {
-  long16 y = convert_long16(x);
-  return y;
+  return convert_long16(x);
 }
 #endif
 
@@ -14248,9 +14116,8 @@ long16 convert_long16_sat(short16 x)
 _cl_overloadable
 ulong convert_ulong_sat(short x)
 {
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (short)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ulong(x);
 }
 #endif
 
@@ -14258,9 +14125,8 @@ ulong convert_ulong_sat(short x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(short2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (short2)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ulong2(x);
 }
 #endif
 
@@ -14268,9 +14134,8 @@ ulong2 convert_ulong2_sat(short2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(short3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (short3)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ulong3(x);
 }
 #endif
 
@@ -14278,9 +14143,8 @@ ulong3 convert_ulong3_sat(short3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(short4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (short4)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ulong4(x);
 }
 #endif
 
@@ -14288,9 +14152,8 @@ ulong4 convert_ulong4_sat(short4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(short8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (short8)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ulong8(x);
 }
 #endif
 
@@ -14298,154 +14161,135 @@ ulong8 convert_ulong8_sat(short8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(short16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (short16)0)));
-  return y;
+  x = max(x, (short)0);
+  return convert_ulong16(x);
 }
 #endif
 
 _cl_overloadable
 char convert_char_sat(ushort x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MAX, convert_char(x > (ushort)CHAR_MAX));
-  return y;
+  x = min(x, (ushort)CHAR_MAX);
+  return convert_char(x);
 }
 
 _cl_overloadable
 char2 convert_char2_sat(ushort2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (ushort2)CHAR_MAX));
-  return y;
+  x = min(x, (ushort)CHAR_MAX);
+  return convert_char2(x);
 }
 
 _cl_overloadable
 char3 convert_char3_sat(ushort3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (ushort3)CHAR_MAX));
-  return y;
+  x = min(x, (ushort)CHAR_MAX);
+  return convert_char3(x);
 }
 
 _cl_overloadable
 char4 convert_char4_sat(ushort4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (ushort4)CHAR_MAX));
-  return y;
+  x = min(x, (ushort)CHAR_MAX);
+  return convert_char4(x);
 }
 
 _cl_overloadable
 char8 convert_char8_sat(ushort8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (ushort8)CHAR_MAX));
-  return y;
+  x = min(x, (ushort)CHAR_MAX);
+  return convert_char8(x);
 }
 
 _cl_overloadable
 char16 convert_char16_sat(ushort16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (ushort16)CHAR_MAX));
-  return y;
+  x = min(x, (ushort)CHAR_MAX);
+  return convert_char16(x);
 }
 
 _cl_overloadable
 uchar convert_uchar_sat(ushort x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (ushort)UCHAR_MAX)));
-  return y;
+  x = min(x, (ushort)UCHAR_MAX);
+  return convert_uchar(x);
 }
 
 _cl_overloadable
 uchar2 convert_uchar2_sat(ushort2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (ushort2)UCHAR_MAX)));
-  return y;
+  x = min(x, (ushort)UCHAR_MAX);
+  return convert_uchar2(x);
 }
 
 _cl_overloadable
 uchar3 convert_uchar3_sat(ushort3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (ushort3)UCHAR_MAX)));
-  return y;
+  x = min(x, (ushort)UCHAR_MAX);
+  return convert_uchar3(x);
 }
 
 _cl_overloadable
 uchar4 convert_uchar4_sat(ushort4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (ushort4)UCHAR_MAX)));
-  return y;
+  x = min(x, (ushort)UCHAR_MAX);
+  return convert_uchar4(x);
 }
 
 _cl_overloadable
 uchar8 convert_uchar8_sat(ushort8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (ushort8)UCHAR_MAX)));
-  return y;
+  x = min(x, (ushort)UCHAR_MAX);
+  return convert_uchar8(x);
 }
 
 _cl_overloadable
 uchar16 convert_uchar16_sat(ushort16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (ushort16)UCHAR_MAX)));
-  return y;
+  x = min(x, (ushort)UCHAR_MAX);
+  return convert_uchar16(x);
 }
 
 _cl_overloadable
 short convert_short_sat(ushort x)
 {
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MAX, convert_short(x > (ushort)SHRT_MAX));
-  return y;
+  x = min(x, (ushort)SHRT_MAX);
+  return convert_short(x);
 }
 
 _cl_overloadable
 short2 convert_short2_sat(ushort2 x)
 {
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MAX, convert_short2(x > (ushort2)SHRT_MAX));
-  return y;
+  x = min(x, (ushort)SHRT_MAX);
+  return convert_short2(x);
 }
 
 _cl_overloadable
 short3 convert_short3_sat(ushort3 x)
 {
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MAX, convert_short3(x > (ushort3)SHRT_MAX));
-  return y;
+  x = min(x, (ushort)SHRT_MAX);
+  return convert_short3(x);
 }
 
 _cl_overloadable
 short4 convert_short4_sat(ushort4 x)
 {
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MAX, convert_short4(x > (ushort4)SHRT_MAX));
-  return y;
+  x = min(x, (ushort)SHRT_MAX);
+  return convert_short4(x);
 }
 
 _cl_overloadable
 short8 convert_short8_sat(ushort8 x)
 {
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MAX, convert_short8(x > (ushort8)SHRT_MAX));
-  return y;
+  x = min(x, (ushort)SHRT_MAX);
+  return convert_short8(x);
 }
 
 _cl_overloadable
 short16 convert_short16_sat(ushort16 x)
 {
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MAX, convert_short16(x > (ushort16)SHRT_MAX));
-  return y;
+  x = min(x, (ushort)SHRT_MAX);
+  return convert_short16(x);
 }
 
 _cl_overloadable
@@ -14487,93 +14331,80 @@ ushort16 convert_ushort16_sat(ushort16 x)
 _cl_overloadable
 int convert_int_sat(ushort x)
 {
-  int y = convert_int(x);
-  return y;
+  return convert_int(x);
 }
 
 _cl_overloadable
 int2 convert_int2_sat(ushort2 x)
 {
-  int2 y = convert_int2(x);
-  return y;
+  return convert_int2(x);
 }
 
 _cl_overloadable
 int3 convert_int3_sat(ushort3 x)
 {
-  int3 y = convert_int3(x);
-  return y;
+  return convert_int3(x);
 }
 
 _cl_overloadable
 int4 convert_int4_sat(ushort4 x)
 {
-  int4 y = convert_int4(x);
-  return y;
+  return convert_int4(x);
 }
 
 _cl_overloadable
 int8 convert_int8_sat(ushort8 x)
 {
-  int8 y = convert_int8(x);
-  return y;
+  return convert_int8(x);
 }
 
 _cl_overloadable
 int16 convert_int16_sat(ushort16 x)
 {
-  int16 y = convert_int16(x);
-  return y;
+  return convert_int16(x);
 }
 
 _cl_overloadable
 uint convert_uint_sat(ushort x)
 {
-  uint y = convert_uint(x);
-  return y;
+  return convert_uint(x);
 }
 
 _cl_overloadable
 uint2 convert_uint2_sat(ushort2 x)
 {
-  uint2 y = convert_uint2(x);
-  return y;
+  return convert_uint2(x);
 }
 
 _cl_overloadable
 uint3 convert_uint3_sat(ushort3 x)
 {
-  uint3 y = convert_uint3(x);
-  return y;
+  return convert_uint3(x);
 }
 
 _cl_overloadable
 uint4 convert_uint4_sat(ushort4 x)
 {
-  uint4 y = convert_uint4(x);
-  return y;
+  return convert_uint4(x);
 }
 
 _cl_overloadable
 uint8 convert_uint8_sat(ushort8 x)
 {
-  uint8 y = convert_uint8(x);
-  return y;
+  return convert_uint8(x);
 }
 
 _cl_overloadable
 uint16 convert_uint16_sat(ushort16 x)
 {
-  uint16 y = convert_uint16(x);
-  return y;
+  return convert_uint16(x);
 }
 
 #ifdef cles_khr_int64
 _cl_overloadable
 long convert_long_sat(ushort x)
 {
-  long y = convert_long(x);
-  return y;
+  return convert_long(x);
 }
 #endif
 
@@ -14581,8 +14412,7 @@ long convert_long_sat(ushort x)
 _cl_overloadable
 long2 convert_long2_sat(ushort2 x)
 {
-  long2 y = convert_long2(x);
-  return y;
+  return convert_long2(x);
 }
 #endif
 
@@ -14590,8 +14420,7 @@ long2 convert_long2_sat(ushort2 x)
 _cl_overloadable
 long3 convert_long3_sat(ushort3 x)
 {
-  long3 y = convert_long3(x);
-  return y;
+  return convert_long3(x);
 }
 #endif
 
@@ -14599,8 +14428,7 @@ long3 convert_long3_sat(ushort3 x)
 _cl_overloadable
 long4 convert_long4_sat(ushort4 x)
 {
-  long4 y = convert_long4(x);
-  return y;
+  return convert_long4(x);
 }
 #endif
 
@@ -14608,8 +14436,7 @@ long4 convert_long4_sat(ushort4 x)
 _cl_overloadable
 long8 convert_long8_sat(ushort8 x)
 {
-  long8 y = convert_long8(x);
-  return y;
+  return convert_long8(x);
 }
 #endif
 
@@ -14617,8 +14444,7 @@ long8 convert_long8_sat(ushort8 x)
 _cl_overloadable
 long16 convert_long16_sat(ushort16 x)
 {
-  long16 y = convert_long16(x);
-  return y;
+  return convert_long16(x);
 }
 #endif
 
@@ -14626,8 +14452,7 @@ long16 convert_long16_sat(ushort16 x)
 _cl_overloadable
 ulong convert_ulong_sat(ushort x)
 {
-  ulong y = convert_ulong(x);
-  return y;
+  return convert_ulong(x);
 }
 #endif
 
@@ -14635,8 +14460,7 @@ ulong convert_ulong_sat(ushort x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(ushort2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  return y;
+  return convert_ulong2(x);
 }
 #endif
 
@@ -14644,8 +14468,7 @@ ulong2 convert_ulong2_sat(ushort2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(ushort3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  return y;
+  return convert_ulong3(x);
 }
 #endif
 
@@ -14653,8 +14476,7 @@ ulong3 convert_ulong3_sat(ushort3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(ushort4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  return y;
+  return convert_ulong4(x);
 }
 #endif
 
@@ -14662,8 +14484,7 @@ ulong4 convert_ulong4_sat(ushort4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(ushort8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  return y;
+  return convert_ulong8(x);
 }
 #endif
 
@@ -14671,225 +14492,176 @@ ulong8 convert_ulong8_sat(ushort8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(ushort16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  return y;
+  return convert_ulong16(x);
 }
 #endif
 
 _cl_overloadable
 char convert_char_sat(int x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (int)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x > (int)CHAR_MAX));
-  return y;
+  x = clamp(x, (int)CHAR_MIN, (int)CHAR_MAX);
+  return convert_char(x);
 }
 
 _cl_overloadable
 char2 convert_char2_sat(int2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (int2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (int2)CHAR_MAX));
-  return y;
+  x = clamp(x, (int)CHAR_MIN, (int)CHAR_MAX);
+  return convert_char2(x);
 }
 
 _cl_overloadable
 char3 convert_char3_sat(int3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (int3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (int3)CHAR_MAX));
-  return y;
+  x = clamp(x, (int)CHAR_MIN, (int)CHAR_MAX);
+  return convert_char3(x);
 }
 
 _cl_overloadable
 char4 convert_char4_sat(int4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (int4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (int4)CHAR_MAX));
-  return y;
+  x = clamp(x, (int)CHAR_MIN, (int)CHAR_MAX);
+  return convert_char4(x);
 }
 
 _cl_overloadable
 char8 convert_char8_sat(int8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (int8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (int8)CHAR_MAX));
-  return y;
+  x = clamp(x, (int)CHAR_MIN, (int)CHAR_MAX);
+  return convert_char8(x);
 }
 
 _cl_overloadable
 char16 convert_char16_sat(int16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (int16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (int16)CHAR_MAX));
-  return y;
+  x = clamp(x, (int)CHAR_MIN, (int)CHAR_MAX);
+  return convert_char16(x);
 }
 
 _cl_overloadable
 uchar convert_uchar_sat(int x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (int)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (int)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)UCHAR_MAX);
+  return convert_uchar(x);
 }
 
 _cl_overloadable
 uchar2 convert_uchar2_sat(int2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (int2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (int2)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)UCHAR_MAX);
+  return convert_uchar2(x);
 }
 
 _cl_overloadable
 uchar3 convert_uchar3_sat(int3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (int3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (int3)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)UCHAR_MAX);
+  return convert_uchar3(x);
 }
 
 _cl_overloadable
 uchar4 convert_uchar4_sat(int4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (int4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (int4)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)UCHAR_MAX);
+  return convert_uchar4(x);
 }
 
 _cl_overloadable
 uchar8 convert_uchar8_sat(int8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (int8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (int8)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)UCHAR_MAX);
+  return convert_uchar8(x);
 }
 
 _cl_overloadable
 uchar16 convert_uchar16_sat(int16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (int16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (int16)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)UCHAR_MAX);
+  return convert_uchar16(x);
 }
 
 _cl_overloadable
 short convert_short_sat(int x)
 {
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (int)SHRT_MIN));
-  y = select(y, (short)SHRT_MAX, convert_short(x > (int)SHRT_MAX));
-  return y;
+  x = clamp(x, (int)SHRT_MIN, (int)SHRT_MAX);
+  return convert_short(x);
 }
 
 _cl_overloadable
 short2 convert_short2_sat(int2 x)
 {
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (int2)SHRT_MIN));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x > (int2)SHRT_MAX));
-  return y;
+  x = clamp(x, (int)SHRT_MIN, (int)SHRT_MAX);
+  return convert_short2(x);
 }
 
 _cl_overloadable
 short3 convert_short3_sat(int3 x)
 {
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (int3)SHRT_MIN));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x > (int3)SHRT_MAX));
-  return y;
+  x = clamp(x, (int)SHRT_MIN, (int)SHRT_MAX);
+  return convert_short3(x);
 }
 
 _cl_overloadable
 short4 convert_short4_sat(int4 x)
 {
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (int4)SHRT_MIN));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x > (int4)SHRT_MAX));
-  return y;
+  x = clamp(x, (int)SHRT_MIN, (int)SHRT_MAX);
+  return convert_short4(x);
 }
 
 _cl_overloadable
 short8 convert_short8_sat(int8 x)
 {
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (int8)SHRT_MIN));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x > (int8)SHRT_MAX));
-  return y;
+  x = clamp(x, (int)SHRT_MIN, (int)SHRT_MAX);
+  return convert_short8(x);
 }
 
 _cl_overloadable
 short16 convert_short16_sat(int16 x)
 {
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (int16)SHRT_MIN));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x > (int16)SHRT_MAX));
-  return y;
+  x = clamp(x, (int)SHRT_MIN, (int)SHRT_MAX);
+  return convert_short16(x);
 }
 
 _cl_overloadable
 ushort convert_ushort_sat(int x)
 {
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (int)0)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x > (int)USHRT_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)USHRT_MAX);
+  return convert_ushort(x);
 }
 
 _cl_overloadable
 ushort2 convert_ushort2_sat(int2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (int2)0)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x > (int2)USHRT_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)USHRT_MAX);
+  return convert_ushort2(x);
 }
 
 _cl_overloadable
 ushort3 convert_ushort3_sat(int3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (int3)0)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x > (int3)USHRT_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)USHRT_MAX);
+  return convert_ushort3(x);
 }
 
 _cl_overloadable
 ushort4 convert_ushort4_sat(int4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (int4)0)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x > (int4)USHRT_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)USHRT_MAX);
+  return convert_ushort4(x);
 }
 
 _cl_overloadable
 ushort8 convert_ushort8_sat(int8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (int8)0)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x > (int8)USHRT_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)USHRT_MAX);
+  return convert_ushort8(x);
 }
 
 _cl_overloadable
 ushort16 convert_ushort16_sat(int16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (int16)0)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x > (int16)USHRT_MAX)));
-  return y;
+  x = clamp(x, (int)0, (int)USHRT_MAX);
+  return convert_ushort16(x);
 }
 
 _cl_overloadable
@@ -14931,57 +14703,50 @@ int16 convert_int16_sat(int16 x)
 _cl_overloadable
 uint convert_uint_sat(int x)
 {
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (int)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_uint(x);
 }
 
 _cl_overloadable
 uint2 convert_uint2_sat(int2 x)
 {
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (int2)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_uint2(x);
 }
 
 _cl_overloadable
 uint3 convert_uint3_sat(int3 x)
 {
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (int3)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_uint3(x);
 }
 
 _cl_overloadable
 uint4 convert_uint4_sat(int4 x)
 {
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (int4)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_uint4(x);
 }
 
 _cl_overloadable
 uint8 convert_uint8_sat(int8 x)
 {
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (int8)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_uint8(x);
 }
 
 _cl_overloadable
 uint16 convert_uint16_sat(int16 x)
 {
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (int16)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_uint16(x);
 }
 
 #ifdef cles_khr_int64
 _cl_overloadable
 long convert_long_sat(int x)
 {
-  long y = convert_long(x);
-  return y;
+  return convert_long(x);
 }
 #endif
 
@@ -14989,8 +14754,7 @@ long convert_long_sat(int x)
 _cl_overloadable
 long2 convert_long2_sat(int2 x)
 {
-  long2 y = convert_long2(x);
-  return y;
+  return convert_long2(x);
 }
 #endif
 
@@ -14998,8 +14762,7 @@ long2 convert_long2_sat(int2 x)
 _cl_overloadable
 long3 convert_long3_sat(int3 x)
 {
-  long3 y = convert_long3(x);
-  return y;
+  return convert_long3(x);
 }
 #endif
 
@@ -15007,8 +14770,7 @@ long3 convert_long3_sat(int3 x)
 _cl_overloadable
 long4 convert_long4_sat(int4 x)
 {
-  long4 y = convert_long4(x);
-  return y;
+  return convert_long4(x);
 }
 #endif
 
@@ -15016,8 +14778,7 @@ long4 convert_long4_sat(int4 x)
 _cl_overloadable
 long8 convert_long8_sat(int8 x)
 {
-  long8 y = convert_long8(x);
-  return y;
+  return convert_long8(x);
 }
 #endif
 
@@ -15025,8 +14786,7 @@ long8 convert_long8_sat(int8 x)
 _cl_overloadable
 long16 convert_long16_sat(int16 x)
 {
-  long16 y = convert_long16(x);
-  return y;
+  return convert_long16(x);
 }
 #endif
 
@@ -15034,9 +14794,8 @@ long16 convert_long16_sat(int16 x)
 _cl_overloadable
 ulong convert_ulong_sat(int x)
 {
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (int)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_ulong(x);
 }
 #endif
 
@@ -15044,9 +14803,8 @@ ulong convert_ulong_sat(int x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(int2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (int2)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_ulong2(x);
 }
 #endif
 
@@ -15054,9 +14812,8 @@ ulong2 convert_ulong2_sat(int2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(int3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (int3)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_ulong3(x);
 }
 #endif
 
@@ -15064,9 +14821,8 @@ ulong3 convert_ulong3_sat(int3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(int4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (int4)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_ulong4(x);
 }
 #endif
 
@@ -15074,9 +14830,8 @@ ulong4 convert_ulong4_sat(int4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(int8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (int8)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_ulong8(x);
 }
 #endif
 
@@ -15084,250 +14839,219 @@ ulong8 convert_ulong8_sat(int8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(int16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (int16)0)));
-  return y;
+  x = max(x, (int)0);
+  return convert_ulong16(x);
 }
 #endif
 
 _cl_overloadable
 char convert_char_sat(uint x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MAX, convert_char(x > (uint)CHAR_MAX));
-  return y;
+  x = min(x, (uint)CHAR_MAX);
+  return convert_char(x);
 }
 
 _cl_overloadable
 char2 convert_char2_sat(uint2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (uint2)CHAR_MAX));
-  return y;
+  x = min(x, (uint)CHAR_MAX);
+  return convert_char2(x);
 }
 
 _cl_overloadable
 char3 convert_char3_sat(uint3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (uint3)CHAR_MAX));
-  return y;
+  x = min(x, (uint)CHAR_MAX);
+  return convert_char3(x);
 }
 
 _cl_overloadable
 char4 convert_char4_sat(uint4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (uint4)CHAR_MAX));
-  return y;
+  x = min(x, (uint)CHAR_MAX);
+  return convert_char4(x);
 }
 
 _cl_overloadable
 char8 convert_char8_sat(uint8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (uint8)CHAR_MAX));
-  return y;
+  x = min(x, (uint)CHAR_MAX);
+  return convert_char8(x);
 }
 
 _cl_overloadable
 char16 convert_char16_sat(uint16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (uint16)CHAR_MAX));
-  return y;
+  x = min(x, (uint)CHAR_MAX);
+  return convert_char16(x);
 }
 
 _cl_overloadable
 uchar convert_uchar_sat(uint x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (uint)UCHAR_MAX)));
-  return y;
+  x = min(x, (uint)UCHAR_MAX);
+  return convert_uchar(x);
 }
 
 _cl_overloadable
 uchar2 convert_uchar2_sat(uint2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (uint2)UCHAR_MAX)));
-  return y;
+  x = min(x, (uint)UCHAR_MAX);
+  return convert_uchar2(x);
 }
 
 _cl_overloadable
 uchar3 convert_uchar3_sat(uint3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (uint3)UCHAR_MAX)));
-  return y;
+  x = min(x, (uint)UCHAR_MAX);
+  return convert_uchar3(x);
 }
 
 _cl_overloadable
 uchar4 convert_uchar4_sat(uint4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (uint4)UCHAR_MAX)));
-  return y;
+  x = min(x, (uint)UCHAR_MAX);
+  return convert_uchar4(x);
 }
 
 _cl_overloadable
 uchar8 convert_uchar8_sat(uint8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (uint8)UCHAR_MAX)));
-  return y;
+  x = min(x, (uint)UCHAR_MAX);
+  return convert_uchar8(x);
 }
 
 _cl_overloadable
 uchar16 convert_uchar16_sat(uint16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (uint16)UCHAR_MAX)));
-  return y;
+  x = min(x, (uint)UCHAR_MAX);
+  return convert_uchar16(x);
 }
 
 _cl_overloadable
 short convert_short_sat(uint x)
 {
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MAX, convert_short(x > (uint)SHRT_MAX));
-  return y;
+  x = min(x, (uint)SHRT_MAX);
+  return convert_short(x);
 }
 
 _cl_overloadable
 short2 convert_short2_sat(uint2 x)
 {
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MAX, convert_short2(x > (uint2)SHRT_MAX));
-  return y;
+  x = min(x, (uint)SHRT_MAX);
+  return convert_short2(x);
 }
 
 _cl_overloadable
 short3 convert_short3_sat(uint3 x)
 {
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MAX, convert_short3(x > (uint3)SHRT_MAX));
-  return y;
+  x = min(x, (uint)SHRT_MAX);
+  return convert_short3(x);
 }
 
 _cl_overloadable
 short4 convert_short4_sat(uint4 x)
 {
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MAX, convert_short4(x > (uint4)SHRT_MAX));
-  return y;
+  x = min(x, (uint)SHRT_MAX);
+  return convert_short4(x);
 }
 
 _cl_overloadable
 short8 convert_short8_sat(uint8 x)
 {
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MAX, convert_short8(x > (uint8)SHRT_MAX));
-  return y;
+  x = min(x, (uint)SHRT_MAX);
+  return convert_short8(x);
 }
 
 _cl_overloadable
 short16 convert_short16_sat(uint16 x)
 {
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MAX, convert_short16(x > (uint16)SHRT_MAX));
-  return y;
+  x = min(x, (uint)SHRT_MAX);
+  return convert_short16(x);
 }
 
 _cl_overloadable
 ushort convert_ushort_sat(uint x)
 {
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x > (uint)USHRT_MAX)));
-  return y;
+  x = min(x, (uint)USHRT_MAX);
+  return convert_ushort(x);
 }
 
 _cl_overloadable
 ushort2 convert_ushort2_sat(uint2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x > (uint2)USHRT_MAX)));
-  return y;
+  x = min(x, (uint)USHRT_MAX);
+  return convert_ushort2(x);
 }
 
 _cl_overloadable
 ushort3 convert_ushort3_sat(uint3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x > (uint3)USHRT_MAX)));
-  return y;
+  x = min(x, (uint)USHRT_MAX);
+  return convert_ushort3(x);
 }
 
 _cl_overloadable
 ushort4 convert_ushort4_sat(uint4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x > (uint4)USHRT_MAX)));
-  return y;
+  x = min(x, (uint)USHRT_MAX);
+  return convert_ushort4(x);
 }
 
 _cl_overloadable
 ushort8 convert_ushort8_sat(uint8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x > (uint8)USHRT_MAX)));
-  return y;
+  x = min(x, (uint)USHRT_MAX);
+  return convert_ushort8(x);
 }
 
 _cl_overloadable
 ushort16 convert_ushort16_sat(uint16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x > (uint16)USHRT_MAX)));
-  return y;
+  x = min(x, (uint)USHRT_MAX);
+  return convert_ushort16(x);
 }
 
 _cl_overloadable
 int convert_int_sat(uint x)
 {
-  int y = convert_int(x);
-  y = select(y, (int)INT_MAX, convert_int(x > (uint)INT_MAX));
-  return y;
+  x = min(x, (uint)INT_MAX);
+  return convert_int(x);
 }
 
 _cl_overloadable
 int2 convert_int2_sat(uint2 x)
 {
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MAX, convert_int2(x > (uint2)INT_MAX));
-  return y;
+  x = min(x, (uint)INT_MAX);
+  return convert_int2(x);
 }
 
 _cl_overloadable
 int3 convert_int3_sat(uint3 x)
 {
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MAX, convert_int3(x > (uint3)INT_MAX));
-  return y;
+  x = min(x, (uint)INT_MAX);
+  return convert_int3(x);
 }
 
 _cl_overloadable
 int4 convert_int4_sat(uint4 x)
 {
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MAX, convert_int4(x > (uint4)INT_MAX));
-  return y;
+  x = min(x, (uint)INT_MAX);
+  return convert_int4(x);
 }
 
 _cl_overloadable
 int8 convert_int8_sat(uint8 x)
 {
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MAX, convert_int8(x > (uint8)INT_MAX));
-  return y;
+  x = min(x, (uint)INT_MAX);
+  return convert_int8(x);
 }
 
 _cl_overloadable
 int16 convert_int16_sat(uint16 x)
 {
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MAX, convert_int16(x > (uint16)INT_MAX));
-  return y;
+  x = min(x, (uint)INT_MAX);
+  return convert_int16(x);
 }
 
 _cl_overloadable
@@ -15370,8 +15094,7 @@ uint16 convert_uint16_sat(uint16 x)
 _cl_overloadable
 long convert_long_sat(uint x)
 {
-  long y = convert_long(x);
-  return y;
+  return convert_long(x);
 }
 #endif
 
@@ -15379,8 +15102,7 @@ long convert_long_sat(uint x)
 _cl_overloadable
 long2 convert_long2_sat(uint2 x)
 {
-  long2 y = convert_long2(x);
-  return y;
+  return convert_long2(x);
 }
 #endif
 
@@ -15388,8 +15110,7 @@ long2 convert_long2_sat(uint2 x)
 _cl_overloadable
 long3 convert_long3_sat(uint3 x)
 {
-  long3 y = convert_long3(x);
-  return y;
+  return convert_long3(x);
 }
 #endif
 
@@ -15397,8 +15118,7 @@ long3 convert_long3_sat(uint3 x)
 _cl_overloadable
 long4 convert_long4_sat(uint4 x)
 {
-  long4 y = convert_long4(x);
-  return y;
+  return convert_long4(x);
 }
 #endif
 
@@ -15406,8 +15126,7 @@ long4 convert_long4_sat(uint4 x)
 _cl_overloadable
 long8 convert_long8_sat(uint8 x)
 {
-  long8 y = convert_long8(x);
-  return y;
+  return convert_long8(x);
 }
 #endif
 
@@ -15415,8 +15134,7 @@ long8 convert_long8_sat(uint8 x)
 _cl_overloadable
 long16 convert_long16_sat(uint16 x)
 {
-  long16 y = convert_long16(x);
-  return y;
+  return convert_long16(x);
 }
 #endif
 
@@ -15424,8 +15142,7 @@ long16 convert_long16_sat(uint16 x)
 _cl_overloadable
 ulong convert_ulong_sat(uint x)
 {
-  ulong y = convert_ulong(x);
-  return y;
+  return convert_ulong(x);
 }
 #endif
 
@@ -15433,8 +15150,7 @@ ulong convert_ulong_sat(uint x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(uint2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  return y;
+  return convert_ulong2(x);
 }
 #endif
 
@@ -15442,8 +15158,7 @@ ulong2 convert_ulong2_sat(uint2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(uint3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  return y;
+  return convert_ulong3(x);
 }
 #endif
 
@@ -15451,8 +15166,7 @@ ulong3 convert_ulong3_sat(uint3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(uint4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  return y;
+  return convert_ulong4(x);
 }
 #endif
 
@@ -15460,8 +15174,7 @@ ulong4 convert_ulong4_sat(uint4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(uint8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  return y;
+  return convert_ulong8(x);
 }
 #endif
 
@@ -15469,8 +15182,7 @@ ulong8 convert_ulong8_sat(uint8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(uint16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  return y;
+  return convert_ulong16(x);
 }
 #endif
 
@@ -15478,10 +15190,8 @@ ulong16 convert_ulong16_sat(uint16 x)
 _cl_overloadable
 char convert_char_sat(long x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (long)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x > (long)CHAR_MAX));
-  return y;
+  x = clamp(x, (long)CHAR_MIN, (long)CHAR_MAX);
+  return convert_char(x);
 }
 #endif
 
@@ -15489,10 +15199,8 @@ char convert_char_sat(long x)
 _cl_overloadable
 char2 convert_char2_sat(long2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (long2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (long2)CHAR_MAX));
-  return y;
+  x = clamp(x, (long)CHAR_MIN, (long)CHAR_MAX);
+  return convert_char2(x);
 }
 #endif
 
@@ -15500,10 +15208,8 @@ char2 convert_char2_sat(long2 x)
 _cl_overloadable
 char3 convert_char3_sat(long3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (long3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (long3)CHAR_MAX));
-  return y;
+  x = clamp(x, (long)CHAR_MIN, (long)CHAR_MAX);
+  return convert_char3(x);
 }
 #endif
 
@@ -15511,10 +15217,8 @@ char3 convert_char3_sat(long3 x)
 _cl_overloadable
 char4 convert_char4_sat(long4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (long4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (long4)CHAR_MAX));
-  return y;
+  x = clamp(x, (long)CHAR_MIN, (long)CHAR_MAX);
+  return convert_char4(x);
 }
 #endif
 
@@ -15522,10 +15226,8 @@ char4 convert_char4_sat(long4 x)
 _cl_overloadable
 char8 convert_char8_sat(long8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (long8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (long8)CHAR_MAX));
-  return y;
+  x = clamp(x, (long)CHAR_MIN, (long)CHAR_MAX);
+  return convert_char8(x);
 }
 #endif
 
@@ -15533,10 +15235,8 @@ char8 convert_char8_sat(long8 x)
 _cl_overloadable
 char16 convert_char16_sat(long16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (long16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (long16)CHAR_MAX));
-  return y;
+  x = clamp(x, (long)CHAR_MIN, (long)CHAR_MAX);
+  return convert_char16(x);
 }
 #endif
 
@@ -15544,10 +15244,8 @@ char16 convert_char16_sat(long16 x)
 _cl_overloadable
 uchar convert_uchar_sat(long x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (long)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (long)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UCHAR_MAX);
+  return convert_uchar(x);
 }
 #endif
 
@@ -15555,10 +15253,8 @@ uchar convert_uchar_sat(long x)
 _cl_overloadable
 uchar2 convert_uchar2_sat(long2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (long2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (long2)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UCHAR_MAX);
+  return convert_uchar2(x);
 }
 #endif
 
@@ -15566,10 +15262,8 @@ uchar2 convert_uchar2_sat(long2 x)
 _cl_overloadable
 uchar3 convert_uchar3_sat(long3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (long3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (long3)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UCHAR_MAX);
+  return convert_uchar3(x);
 }
 #endif
 
@@ -15577,10 +15271,8 @@ uchar3 convert_uchar3_sat(long3 x)
 _cl_overloadable
 uchar4 convert_uchar4_sat(long4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (long4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (long4)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UCHAR_MAX);
+  return convert_uchar4(x);
 }
 #endif
 
@@ -15588,10 +15280,8 @@ uchar4 convert_uchar4_sat(long4 x)
 _cl_overloadable
 uchar8 convert_uchar8_sat(long8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (long8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (long8)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UCHAR_MAX);
+  return convert_uchar8(x);
 }
 #endif
 
@@ -15599,10 +15289,8 @@ uchar8 convert_uchar8_sat(long8 x)
 _cl_overloadable
 uchar16 convert_uchar16_sat(long16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (long16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (long16)UCHAR_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UCHAR_MAX);
+  return convert_uchar16(x);
 }
 #endif
 
@@ -15610,10 +15298,8 @@ uchar16 convert_uchar16_sat(long16 x)
 _cl_overloadable
 short convert_short_sat(long x)
 {
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (long)SHRT_MIN));
-  y = select(y, (short)SHRT_MAX, convert_short(x > (long)SHRT_MAX));
-  return y;
+  x = clamp(x, (long)SHRT_MIN, (long)SHRT_MAX);
+  return convert_short(x);
 }
 #endif
 
@@ -15621,10 +15307,8 @@ short convert_short_sat(long x)
 _cl_overloadable
 short2 convert_short2_sat(long2 x)
 {
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (long2)SHRT_MIN));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x > (long2)SHRT_MAX));
-  return y;
+  x = clamp(x, (long)SHRT_MIN, (long)SHRT_MAX);
+  return convert_short2(x);
 }
 #endif
 
@@ -15632,10 +15316,8 @@ short2 convert_short2_sat(long2 x)
 _cl_overloadable
 short3 convert_short3_sat(long3 x)
 {
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (long3)SHRT_MIN));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x > (long3)SHRT_MAX));
-  return y;
+  x = clamp(x, (long)SHRT_MIN, (long)SHRT_MAX);
+  return convert_short3(x);
 }
 #endif
 
@@ -15643,10 +15325,8 @@ short3 convert_short3_sat(long3 x)
 _cl_overloadable
 short4 convert_short4_sat(long4 x)
 {
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (long4)SHRT_MIN));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x > (long4)SHRT_MAX));
-  return y;
+  x = clamp(x, (long)SHRT_MIN, (long)SHRT_MAX);
+  return convert_short4(x);
 }
 #endif
 
@@ -15654,10 +15334,8 @@ short4 convert_short4_sat(long4 x)
 _cl_overloadable
 short8 convert_short8_sat(long8 x)
 {
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (long8)SHRT_MIN));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x > (long8)SHRT_MAX));
-  return y;
+  x = clamp(x, (long)SHRT_MIN, (long)SHRT_MAX);
+  return convert_short8(x);
 }
 #endif
 
@@ -15665,10 +15343,8 @@ short8 convert_short8_sat(long8 x)
 _cl_overloadable
 short16 convert_short16_sat(long16 x)
 {
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (long16)SHRT_MIN));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x > (long16)SHRT_MAX));
-  return y;
+  x = clamp(x, (long)SHRT_MIN, (long)SHRT_MAX);
+  return convert_short16(x);
 }
 #endif
 
@@ -15676,10 +15352,8 @@ short16 convert_short16_sat(long16 x)
 _cl_overloadable
 ushort convert_ushort_sat(long x)
 {
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (long)0)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x > (long)USHRT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)USHRT_MAX);
+  return convert_ushort(x);
 }
 #endif
 
@@ -15687,10 +15361,8 @@ ushort convert_ushort_sat(long x)
 _cl_overloadable
 ushort2 convert_ushort2_sat(long2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (long2)0)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x > (long2)USHRT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)USHRT_MAX);
+  return convert_ushort2(x);
 }
 #endif
 
@@ -15698,10 +15370,8 @@ ushort2 convert_ushort2_sat(long2 x)
 _cl_overloadable
 ushort3 convert_ushort3_sat(long3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (long3)0)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x > (long3)USHRT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)USHRT_MAX);
+  return convert_ushort3(x);
 }
 #endif
 
@@ -15709,10 +15379,8 @@ ushort3 convert_ushort3_sat(long3 x)
 _cl_overloadable
 ushort4 convert_ushort4_sat(long4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (long4)0)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x > (long4)USHRT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)USHRT_MAX);
+  return convert_ushort4(x);
 }
 #endif
 
@@ -15720,10 +15388,8 @@ ushort4 convert_ushort4_sat(long4 x)
 _cl_overloadable
 ushort8 convert_ushort8_sat(long8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (long8)0)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x > (long8)USHRT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)USHRT_MAX);
+  return convert_ushort8(x);
 }
 #endif
 
@@ -15731,10 +15397,8 @@ ushort8 convert_ushort8_sat(long8 x)
 _cl_overloadable
 ushort16 convert_ushort16_sat(long16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (long16)0)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x > (long16)USHRT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)USHRT_MAX);
+  return convert_ushort16(x);
 }
 #endif
 
@@ -15742,10 +15406,8 @@ ushort16 convert_ushort16_sat(long16 x)
 _cl_overloadable
 int convert_int_sat(long x)
 {
-  int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (long)INT_MIN));
-  y = select(y, (int)INT_MAX, convert_int(x > (long)INT_MAX));
-  return y;
+  x = clamp(x, (long)INT_MIN, (long)INT_MAX);
+  return convert_int(x);
 }
 #endif
 
@@ -15753,10 +15415,8 @@ int convert_int_sat(long x)
 _cl_overloadable
 int2 convert_int2_sat(long2 x)
 {
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (long2)INT_MIN));
-  y = select(y, (int2)INT_MAX, convert_int2(x > (long2)INT_MAX));
-  return y;
+  x = clamp(x, (long)INT_MIN, (long)INT_MAX);
+  return convert_int2(x);
 }
 #endif
 
@@ -15764,10 +15424,8 @@ int2 convert_int2_sat(long2 x)
 _cl_overloadable
 int3 convert_int3_sat(long3 x)
 {
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (long3)INT_MIN));
-  y = select(y, (int3)INT_MAX, convert_int3(x > (long3)INT_MAX));
-  return y;
+  x = clamp(x, (long)INT_MIN, (long)INT_MAX);
+  return convert_int3(x);
 }
 #endif
 
@@ -15775,10 +15433,8 @@ int3 convert_int3_sat(long3 x)
 _cl_overloadable
 int4 convert_int4_sat(long4 x)
 {
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (long4)INT_MIN));
-  y = select(y, (int4)INT_MAX, convert_int4(x > (long4)INT_MAX));
-  return y;
+  x = clamp(x, (long)INT_MIN, (long)INT_MAX);
+  return convert_int4(x);
 }
 #endif
 
@@ -15786,10 +15442,8 @@ int4 convert_int4_sat(long4 x)
 _cl_overloadable
 int8 convert_int8_sat(long8 x)
 {
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (long8)INT_MIN));
-  y = select(y, (int8)INT_MAX, convert_int8(x > (long8)INT_MAX));
-  return y;
+  x = clamp(x, (long)INT_MIN, (long)INT_MAX);
+  return convert_int8(x);
 }
 #endif
 
@@ -15797,10 +15451,8 @@ int8 convert_int8_sat(long8 x)
 _cl_overloadable
 int16 convert_int16_sat(long16 x)
 {
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (long16)INT_MIN));
-  y = select(y, (int16)INT_MAX, convert_int16(x > (long16)INT_MAX));
-  return y;
+  x = clamp(x, (long)INT_MIN, (long)INT_MAX);
+  return convert_int16(x);
 }
 #endif
 
@@ -15808,10 +15460,8 @@ int16 convert_int16_sat(long16 x)
 _cl_overloadable
 uint convert_uint_sat(long x)
 {
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (long)0)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x > (long)UINT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UINT_MAX);
+  return convert_uint(x);
 }
 #endif
 
@@ -15819,10 +15469,8 @@ uint convert_uint_sat(long x)
 _cl_overloadable
 uint2 convert_uint2_sat(long2 x)
 {
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (long2)0)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x > (long2)UINT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UINT_MAX);
+  return convert_uint2(x);
 }
 #endif
 
@@ -15830,10 +15478,8 @@ uint2 convert_uint2_sat(long2 x)
 _cl_overloadable
 uint3 convert_uint3_sat(long3 x)
 {
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (long3)0)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x > (long3)UINT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UINT_MAX);
+  return convert_uint3(x);
 }
 #endif
 
@@ -15841,10 +15487,8 @@ uint3 convert_uint3_sat(long3 x)
 _cl_overloadable
 uint4 convert_uint4_sat(long4 x)
 {
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (long4)0)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x > (long4)UINT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UINT_MAX);
+  return convert_uint4(x);
 }
 #endif
 
@@ -15852,10 +15496,8 @@ uint4 convert_uint4_sat(long4 x)
 _cl_overloadable
 uint8 convert_uint8_sat(long8 x)
 {
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (long8)0)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x > (long8)UINT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UINT_MAX);
+  return convert_uint8(x);
 }
 #endif
 
@@ -15863,10 +15505,8 @@ uint8 convert_uint8_sat(long8 x)
 _cl_overloadable
 uint16 convert_uint16_sat(long16 x)
 {
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (long16)0)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x > (long16)UINT_MAX)));
-  return y;
+  x = clamp(x, (long)0, (long)UINT_MAX);
+  return convert_uint16(x);
 }
 #endif
 
@@ -15922,9 +15562,8 @@ long16 convert_long16_sat(long16 x)
 _cl_overloadable
 ulong convert_ulong_sat(long x)
 {
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (long)0)));
-  return y;
+  x = max(x, (long)0);
+  return convert_ulong(x);
 }
 #endif
 
@@ -15932,9 +15571,8 @@ ulong convert_ulong_sat(long x)
 _cl_overloadable
 ulong2 convert_ulong2_sat(long2 x)
 {
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (long2)0)));
-  return y;
+  x = max(x, (long)0);
+  return convert_ulong2(x);
 }
 #endif
 
@@ -15942,9 +15580,8 @@ ulong2 convert_ulong2_sat(long2 x)
 _cl_overloadable
 ulong3 convert_ulong3_sat(long3 x)
 {
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (long3)0)));
-  return y;
+  x = max(x, (long)0);
+  return convert_ulong3(x);
 }
 #endif
 
@@ -15952,9 +15589,8 @@ ulong3 convert_ulong3_sat(long3 x)
 _cl_overloadable
 ulong4 convert_ulong4_sat(long4 x)
 {
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (long4)0)));
-  return y;
+  x = max(x, (long)0);
+  return convert_ulong4(x);
 }
 #endif
 
@@ -15962,9 +15598,8 @@ ulong4 convert_ulong4_sat(long4 x)
 _cl_overloadable
 ulong8 convert_ulong8_sat(long8 x)
 {
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (long8)0)));
-  return y;
+  x = max(x, (long)0);
+  return convert_ulong8(x);
 }
 #endif
 
@@ -15972,9 +15607,8 @@ ulong8 convert_ulong8_sat(long8 x)
 _cl_overloadable
 ulong16 convert_ulong16_sat(long16 x)
 {
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (long16)0)));
-  return y;
+  x = max(x, (long)0);
+  return convert_ulong16(x);
 }
 #endif
 
@@ -15982,9 +15616,8 @@ ulong16 convert_ulong16_sat(long16 x)
 _cl_overloadable
 char convert_char_sat(ulong x)
 {
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MAX, convert_char(x > (ulong)CHAR_MAX));
-  return y;
+  x = min(x, (ulong)CHAR_MAX);
+  return convert_char(x);
 }
 #endif
 
@@ -15992,9 +15625,8 @@ char convert_char_sat(ulong x)
 _cl_overloadable
 char2 convert_char2_sat(ulong2 x)
 {
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (ulong2)CHAR_MAX));
-  return y;
+  x = min(x, (ulong)CHAR_MAX);
+  return convert_char2(x);
 }
 #endif
 
@@ -16002,9 +15634,8 @@ char2 convert_char2_sat(ulong2 x)
 _cl_overloadable
 char3 convert_char3_sat(ulong3 x)
 {
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (ulong3)CHAR_MAX));
-  return y;
+  x = min(x, (ulong)CHAR_MAX);
+  return convert_char3(x);
 }
 #endif
 
@@ -16012,9 +15643,8 @@ char3 convert_char3_sat(ulong3 x)
 _cl_overloadable
 char4 convert_char4_sat(ulong4 x)
 {
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (ulong4)CHAR_MAX));
-  return y;
+  x = min(x, (ulong)CHAR_MAX);
+  return convert_char4(x);
 }
 #endif
 
@@ -16022,9 +15652,8 @@ char4 convert_char4_sat(ulong4 x)
 _cl_overloadable
 char8 convert_char8_sat(ulong8 x)
 {
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (ulong8)CHAR_MAX));
-  return y;
+  x = min(x, (ulong)CHAR_MAX);
+  return convert_char8(x);
 }
 #endif
 
@@ -16032,9 +15661,8 @@ char8 convert_char8_sat(ulong8 x)
 _cl_overloadable
 char16 convert_char16_sat(ulong16 x)
 {
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (ulong16)CHAR_MAX));
-  return y;
+  x = min(x, (ulong)CHAR_MAX);
+  return convert_char16(x);
 }
 #endif
 
@@ -16042,9 +15670,8 @@ char16 convert_char16_sat(ulong16 x)
 _cl_overloadable
 uchar convert_uchar_sat(ulong x)
 {
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (ulong)UCHAR_MAX)));
-  return y;
+  x = min(x, (ulong)UCHAR_MAX);
+  return convert_uchar(x);
 }
 #endif
 
@@ -16052,9 +15679,8 @@ uchar convert_uchar_sat(ulong x)
 _cl_overloadable
 uchar2 convert_uchar2_sat(ulong2 x)
 {
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (ulong2)UCHAR_MAX)));
-  return y;
+  x = min(x, (ulong)UCHAR_MAX);
+  return convert_uchar2(x);
 }
 #endif
 
@@ -16062,9 +15688,8 @@ uchar2 convert_uchar2_sat(ulong2 x)
 _cl_overloadable
 uchar3 convert_uchar3_sat(ulong3 x)
 {
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (ulong3)UCHAR_MAX)));
-  return y;
+  x = min(x, (ulong)UCHAR_MAX);
+  return convert_uchar3(x);
 }
 #endif
 
@@ -16072,9 +15697,8 @@ uchar3 convert_uchar3_sat(ulong3 x)
 _cl_overloadable
 uchar4 convert_uchar4_sat(ulong4 x)
 {
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (ulong4)UCHAR_MAX)));
-  return y;
+  x = min(x, (ulong)UCHAR_MAX);
+  return convert_uchar4(x);
 }
 #endif
 
@@ -16082,9 +15706,8 @@ uchar4 convert_uchar4_sat(ulong4 x)
 _cl_overloadable
 uchar8 convert_uchar8_sat(ulong8 x)
 {
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (ulong8)UCHAR_MAX)));
-  return y;
+  x = min(x, (ulong)UCHAR_MAX);
+  return convert_uchar8(x);
 }
 #endif
 
@@ -16092,9 +15715,8 @@ uchar8 convert_uchar8_sat(ulong8 x)
 _cl_overloadable
 uchar16 convert_uchar16_sat(ulong16 x)
 {
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (ulong16)UCHAR_MAX)));
-  return y;
+  x = min(x, (ulong)UCHAR_MAX);
+  return convert_uchar16(x);
 }
 #endif
 
@@ -16102,9 +15724,8 @@ uchar16 convert_uchar16_sat(ulong16 x)
 _cl_overloadable
 short convert_short_sat(ulong x)
 {
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MAX, convert_short(x > (ulong)SHRT_MAX));
-  return y;
+  x = min(x, (ulong)SHRT_MAX);
+  return convert_short(x);
 }
 #endif
 
@@ -16112,9 +15733,8 @@ short convert_short_sat(ulong x)
 _cl_overloadable
 short2 convert_short2_sat(ulong2 x)
 {
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MAX, convert_short2(x > (ulong2)SHRT_MAX));
-  return y;
+  x = min(x, (ulong)SHRT_MAX);
+  return convert_short2(x);
 }
 #endif
 
@@ -16122,9 +15742,8 @@ short2 convert_short2_sat(ulong2 x)
 _cl_overloadable
 short3 convert_short3_sat(ulong3 x)
 {
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MAX, convert_short3(x > (ulong3)SHRT_MAX));
-  return y;
+  x = min(x, (ulong)SHRT_MAX);
+  return convert_short3(x);
 }
 #endif
 
@@ -16132,9 +15751,8 @@ short3 convert_short3_sat(ulong3 x)
 _cl_overloadable
 short4 convert_short4_sat(ulong4 x)
 {
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MAX, convert_short4(x > (ulong4)SHRT_MAX));
-  return y;
+  x = min(x, (ulong)SHRT_MAX);
+  return convert_short4(x);
 }
 #endif
 
@@ -16142,9 +15760,8 @@ short4 convert_short4_sat(ulong4 x)
 _cl_overloadable
 short8 convert_short8_sat(ulong8 x)
 {
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MAX, convert_short8(x > (ulong8)SHRT_MAX));
-  return y;
+  x = min(x, (ulong)SHRT_MAX);
+  return convert_short8(x);
 }
 #endif
 
@@ -16152,9 +15769,8 @@ short8 convert_short8_sat(ulong8 x)
 _cl_overloadable
 short16 convert_short16_sat(ulong16 x)
 {
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MAX, convert_short16(x > (ulong16)SHRT_MAX));
-  return y;
+  x = min(x, (ulong)SHRT_MAX);
+  return convert_short16(x);
 }
 #endif
 
@@ -16162,9 +15778,8 @@ short16 convert_short16_sat(ulong16 x)
 _cl_overloadable
 ushort convert_ushort_sat(ulong x)
 {
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x > (ulong)USHRT_MAX)));
-  return y;
+  x = min(x, (ulong)USHRT_MAX);
+  return convert_ushort(x);
 }
 #endif
 
@@ -16172,9 +15787,8 @@ ushort convert_ushort_sat(ulong x)
 _cl_overloadable
 ushort2 convert_ushort2_sat(ulong2 x)
 {
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x > (ulong2)USHRT_MAX)));
-  return y;
+  x = min(x, (ulong)USHRT_MAX);
+  return convert_ushort2(x);
 }
 #endif
 
@@ -16182,9 +15796,8 @@ ushort2 convert_ushort2_sat(ulong2 x)
 _cl_overloadable
 ushort3 convert_ushort3_sat(ulong3 x)
 {
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x > (ulong3)USHRT_MAX)));
-  return y;
+  x = min(x, (ulong)USHRT_MAX);
+  return convert_ushort3(x);
 }
 #endif
 
@@ -16192,9 +15805,8 @@ ushort3 convert_ushort3_sat(ulong3 x)
 _cl_overloadable
 ushort4 convert_ushort4_sat(ulong4 x)
 {
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x > (ulong4)USHRT_MAX)));
-  return y;
+  x = min(x, (ulong)USHRT_MAX);
+  return convert_ushort4(x);
 }
 #endif
 
@@ -16202,9 +15814,8 @@ ushort4 convert_ushort4_sat(ulong4 x)
 _cl_overloadable
 ushort8 convert_ushort8_sat(ulong8 x)
 {
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x > (ulong8)USHRT_MAX)));
-  return y;
+  x = min(x, (ulong)USHRT_MAX);
+  return convert_ushort8(x);
 }
 #endif
 
@@ -16212,9 +15823,8 @@ ushort8 convert_ushort8_sat(ulong8 x)
 _cl_overloadable
 ushort16 convert_ushort16_sat(ulong16 x)
 {
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x > (ulong16)USHRT_MAX)));
-  return y;
+  x = min(x, (ulong)USHRT_MAX);
+  return convert_ushort16(x);
 }
 #endif
 
@@ -16222,9 +15832,8 @@ ushort16 convert_ushort16_sat(ulong16 x)
 _cl_overloadable
 int convert_int_sat(ulong x)
 {
-  int y = convert_int(x);
-  y = select(y, (int)INT_MAX, convert_int(x > (ulong)INT_MAX));
-  return y;
+  x = min(x, (ulong)INT_MAX);
+  return convert_int(x);
 }
 #endif
 
@@ -16232,9 +15841,8 @@ int convert_int_sat(ulong x)
 _cl_overloadable
 int2 convert_int2_sat(ulong2 x)
 {
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MAX, convert_int2(x > (ulong2)INT_MAX));
-  return y;
+  x = min(x, (ulong)INT_MAX);
+  return convert_int2(x);
 }
 #endif
 
@@ -16242,9 +15850,8 @@ int2 convert_int2_sat(ulong2 x)
 _cl_overloadable
 int3 convert_int3_sat(ulong3 x)
 {
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MAX, convert_int3(x > (ulong3)INT_MAX));
-  return y;
+  x = min(x, (ulong)INT_MAX);
+  return convert_int3(x);
 }
 #endif
 
@@ -16252,9 +15859,8 @@ int3 convert_int3_sat(ulong3 x)
 _cl_overloadable
 int4 convert_int4_sat(ulong4 x)
 {
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MAX, convert_int4(x > (ulong4)INT_MAX));
-  return y;
+  x = min(x, (ulong)INT_MAX);
+  return convert_int4(x);
 }
 #endif
 
@@ -16262,9 +15868,8 @@ int4 convert_int4_sat(ulong4 x)
 _cl_overloadable
 int8 convert_int8_sat(ulong8 x)
 {
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MAX, convert_int8(x > (ulong8)INT_MAX));
-  return y;
+  x = min(x, (ulong)INT_MAX);
+  return convert_int8(x);
 }
 #endif
 
@@ -16272,9 +15877,8 @@ int8 convert_int8_sat(ulong8 x)
 _cl_overloadable
 int16 convert_int16_sat(ulong16 x)
 {
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MAX, convert_int16(x > (ulong16)INT_MAX));
-  return y;
+  x = min(x, (ulong)INT_MAX);
+  return convert_int16(x);
 }
 #endif
 
@@ -16282,9 +15886,8 @@ int16 convert_int16_sat(ulong16 x)
 _cl_overloadable
 uint convert_uint_sat(ulong x)
 {
-  uint y = convert_uint(x);
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x > (ulong)UINT_MAX)));
-  return y;
+  x = min(x, (ulong)UINT_MAX);
+  return convert_uint(x);
 }
 #endif
 
@@ -16292,9 +15895,8 @@ uint convert_uint_sat(ulong x)
 _cl_overloadable
 uint2 convert_uint2_sat(ulong2 x)
 {
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x > (ulong2)UINT_MAX)));
-  return y;
+  x = min(x, (ulong)UINT_MAX);
+  return convert_uint2(x);
 }
 #endif
 
@@ -16302,9 +15904,8 @@ uint2 convert_uint2_sat(ulong2 x)
 _cl_overloadable
 uint3 convert_uint3_sat(ulong3 x)
 {
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x > (ulong3)UINT_MAX)));
-  return y;
+  x = min(x, (ulong)UINT_MAX);
+  return convert_uint3(x);
 }
 #endif
 
@@ -16312,9 +15913,8 @@ uint3 convert_uint3_sat(ulong3 x)
 _cl_overloadable
 uint4 convert_uint4_sat(ulong4 x)
 {
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x > (ulong4)UINT_MAX)));
-  return y;
+  x = min(x, (ulong)UINT_MAX);
+  return convert_uint4(x);
 }
 #endif
 
@@ -16322,9 +15922,8 @@ uint4 convert_uint4_sat(ulong4 x)
 _cl_overloadable
 uint8 convert_uint8_sat(ulong8 x)
 {
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x > (ulong8)UINT_MAX)));
-  return y;
+  x = min(x, (ulong)UINT_MAX);
+  return convert_uint8(x);
 }
 #endif
 
@@ -16332,9 +15931,8 @@ uint8 convert_uint8_sat(ulong8 x)
 _cl_overloadable
 uint16 convert_uint16_sat(ulong16 x)
 {
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x > (ulong16)UINT_MAX)));
-  return y;
+  x = min(x, (ulong)UINT_MAX);
+  return convert_uint16(x);
 }
 #endif
 
@@ -16342,9 +15940,8 @@ uint16 convert_uint16_sat(ulong16 x)
 _cl_overloadable
 long convert_long_sat(ulong x)
 {
-  long y = convert_long(x);
-  y = select(y, (long)LONG_MAX, convert_long(x > (ulong)LONG_MAX));
-  return y;
+  x = min(x, (ulong)LONG_MAX);
+  return convert_long(x);
 }
 #endif
 
@@ -16352,9 +15949,8 @@ long convert_long_sat(ulong x)
 _cl_overloadable
 long2 convert_long2_sat(ulong2 x)
 {
-  long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MAX, convert_long2(x > (ulong2)LONG_MAX));
-  return y;
+  x = min(x, (ulong)LONG_MAX);
+  return convert_long2(x);
 }
 #endif
 
@@ -16362,9 +15958,8 @@ long2 convert_long2_sat(ulong2 x)
 _cl_overloadable
 long3 convert_long3_sat(ulong3 x)
 {
-  long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MAX, convert_long3(x > (ulong3)LONG_MAX));
-  return y;
+  x = min(x, (ulong)LONG_MAX);
+  return convert_long3(x);
 }
 #endif
 
@@ -16372,9 +15967,8 @@ long3 convert_long3_sat(ulong3 x)
 _cl_overloadable
 long4 convert_long4_sat(ulong4 x)
 {
-  long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MAX, convert_long4(x > (ulong4)LONG_MAX));
-  return y;
+  x = min(x, (ulong)LONG_MAX);
+  return convert_long4(x);
 }
 #endif
 
@@ -16382,9 +15976,8 @@ long4 convert_long4_sat(ulong4 x)
 _cl_overloadable
 long8 convert_long8_sat(ulong8 x)
 {
-  long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MAX, convert_long8(x > (ulong8)LONG_MAX));
-  return y;
+  x = min(x, (ulong)LONG_MAX);
+  return convert_long8(x);
 }
 #endif
 
@@ -16392,9 +15985,8 @@ long8 convert_long8_sat(ulong8 x)
 _cl_overloadable
 long16 convert_long16_sat(ulong16 x)
 {
-  long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MAX, convert_long16(x > (ulong16)LONG_MAX));
-  return y;
+  x = min(x, (ulong)LONG_MAX);
+  return convert_long16(x);
 }
 #endif
 

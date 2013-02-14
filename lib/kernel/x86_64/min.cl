@@ -49,42 +49,42 @@
 #define IMPLEMENT_MIN_DIRECT (a<=b ? a : b)
 #define IMPLEMENT_MIN_SSE41_CHAR16              \
   ({                                            \
-    __asm__ ("pminsb128 %[src], %[dst]" :       \
+    __asm__ ("pminsb %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE_UCHAR16               \
   ({                                            \
-    __asm__ ("pminub128 %[src], %[dst]" :       \
+    __asm__ ("pminub %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE_SHORT8                \
   ({                                            \
-    __asm__ ("pminsw128 %[src], %[dst]" :       \
+    __asm__ ("pminsw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE41_USHORT8             \
   ({                                            \
-    __asm__ ("pminuw128 %[src], %[dst]" :       \
+    __asm__ ("pminuw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE41_INT4                \
   ({                                            \
-    __asm__ ("pminsd128 %[src], %[dst]" :       \
+    __asm__ ("pminsd %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE41_UINT4               \
   ({                                            \
-    __asm__ ("pminud128 %[src], %[dst]" :       \
+    __asm__ ("pminud %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \

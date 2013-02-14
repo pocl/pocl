@@ -103,6 +103,11 @@ byteswap_float (float word, char should_swap)
 
 size_t
 pocl_size_ceil2(size_t x) {
+  /* Rounds up to the next highest power of two without branching and
+   * is as fast as a BSR instruction on x86, see:
+   *
+   * http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+   */
   --x;
   x |= x >> 1;
   x |= x >> 2;
@@ -115,30 +120,74 @@ pocl_size_ceil2(size_t x) {
   return ++x;
 }
 
+#ifndef HAVE_ALIGNED_ALLOC
 void *
 pocl_aligned_malloc(size_t alignment, size_t size)
 {
-  size_t mask = alignment - 1;
-  if (!alignment || ((alignment & mask) != 0))
+# ifdef HAVE_POSIX_MEMALIGN
+  
+  /* make sure that size is a multiple of alignment, as posix_memalign
+   * does not perform this test, whereas aligned_alloc does */
+  if ((size & (alignment - 1)) != 0)
     {
       errno = EINVAL;
       return NULL;
     }
 
+  /* posix_memalign requires alignment to be at least sizeof(void *) */
+  if (alignment < sizeof(void *))
+    alignment = sizeof(void* );
+
+  void* result;
+  int err;
+  
+  err = posix_memalign(&result, alignment, size);
+  if (err)
+    {
+      errno = err;
+      return NULL;
+    }
+
+  return result;
+
+# else
+  
+  /* allow zero-sized allocations, force alignment to 1 */
+  if (!size)
+    alignment = 1;
+
+  /* make sure alignment is a non-zero power of two and that
+   * size is a multiple of alignment */
+  size_t mask = alignment - 1;
+  if (!alignment || ((alignment & mask) != 0) || ((size & mask) != 0))
+    {
+      errno = EINVAL;
+      return NULL;
+    }
+
+  /* allocate memory plus space for alignment header */
   uintptr_t address = (uintptr_t)malloc(size + mask + sizeof(void *));
   if (!address)
     return NULL;
 
+  /* align the address, and store original pointer for future use
+   * with free in the preceeding bytes */
   uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
   void** address_ptr = (void **)(aligned_address - sizeof(void *));
   *address_ptr = (void *)address;
   return (void *)aligned_address;
-}
 
+#endif
+}
+#endif
+
+#if !defined HAVE_ALIGNED_ALLOC && !defined HAVE_POSIX_MEMALIGN
 void
 pocl_aligned_free(void *ptr)
 {
+  /* extract pointer from original allocation and free it */
   if (ptr)
     free(*(void **)((uintptr_t)ptr - sizeof(void *)));
 }
+#endif
 
