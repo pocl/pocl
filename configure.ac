@@ -842,7 +842,6 @@ AC_CONFIG_FILES([Makefile
                  examples/standalone/Makefile
                  examples/trig/Makefile
                  examples/scalarwave/Makefile
-                 examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
                  examples/Rodinia/Makefile
                  examples/Parboil/Makefile
@@ -851,6 +850,7 @@ AC_CONFIG_FILES([Makefile
                  examples/EinsteinToolkit/Makefile
                  scripts/Makefile
                  tests/Makefile
+                 tests/kernel/Makefile
                  tests/regression/Makefile
                  tests/workgroup/Makefile
                  tests/runtime/Makefile
