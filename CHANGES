@@ -27,9 +27,9 @@ Major bugfixes
 - Replaced deprecated SSE 4.1 assembly mneunomics in x86-64 min/max
   kernel functions that have since been removed in more recent
   versions of gas and llvm-as.
-- Fix for lp:987905. SPIR/LLVM IR 'byval' attributes are now handled
-  correctly on kernel function arguments, allowing for structs and
-  oversized vectors to be passed in with value semantics.
+- SPIR/LLVM IR 'byval' attributes are now handled correctly on
+  kernel function arguments, allowing for structs and oversized
+  vectors to be passed in with value semantics.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------

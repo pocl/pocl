@@ -43,8 +43,8 @@ struct int_single {
 };
 
 struct int_pair {
-    int a;
-    int b;
+    long int a;
+    long int b;
 };
 
 struct test_struct {
@@ -64,8 +64,8 @@ kernelSourceCode[] =
 "    int a; \n"
 "} int_single;\n"
 "typedef struct int_pair {\n"
-"    int a;\n"
-"    int b;\n"
+"    long a;\n"
+"    long b;\n"
 "} int_pair;\n"
 "typedef struct test_struct {\n"
 "    int elementA;\n"
@@ -82,8 +82,8 @@ kernelSourceCode[] =
 " output[0] = input.a;\n"
 "}\n"
 "kernel void test_pair(int_pair input, global int* output) {"
-" output[0] = input.a;\n"
-" output[1] = input.b;\n"
+" output[0] = (int)input.a;\n"
+" output[1] = (int)input.b;\n"
 "}\n"
 "kernel void test_kernel(test_struct input, global int* output) {"
 " output[0] = input.elementA;\n"

@@ -77,6 +77,11 @@ missing APIs have been encountered in the test cases.
   between GL and CL contexts
   * clEnqueueAcquireGLObjects (*)
 
+  Miscellaneous
+
+* Passing structs as values to kernels (P), see
+  https://bugs.launchpad.net/pocl/+bug/987905
+
 Other
 -----
 * configure should check for 'clang'
