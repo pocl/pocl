@@ -25,6 +25,8 @@
 # 
 # requires matplotlib http://matplotlib.org
 import sys
+import os
+import os.path
 
 try:
     import numpy as np
@@ -41,16 +43,16 @@ class BenchmarkResult(object):
 
 class BenchmarkCase(object):
     def __init__(self, case_description):
-        self.case_desc = case_description
+        self.desc = case_description
         self.results = {}
 
     def add_result(self, platform, res):
         self.results[platform] = res
         
 class BenchmarkResults(object):
-    def __init__(self, title_, *platforms_):
+    def __init__(self, title_, platforms_):
         self.cpu = None
-        self.platforms = platforms_
+        self.platforms = ['pocl'] + sorted(list(set(platforms_) - set(['pocl'])))
         self.cases = []
         self.title = title_
 
@@ -59,11 +61,12 @@ class BenchmarkResults(object):
         http://matplotlib.org/examples/pylab_examples/barchart_demo.html
         to produce a basic bar chart. """        
 
-        ind = np.arange(len(self.cases)) # the ex locations for the groups
         width = 0.35 # the width of the bars
+        all_bars_in_a_group = width * len(self.platforms) + width
+        ind = np.arange(len(self.cases)) * all_bars_in_a_group
         plt.subplot(111)
 
-        colors = 'kwbrg'
+        colors = ['1.0','0.5', '0.0']
         i = 0
         rects = []
         # Add as many bars as there are platforms
@@ -75,49 +78,70 @@ class BenchmarkResults(object):
 
         plt.ylabel('Runtime (s)')
         plt.title(self.title)
-        benchmark_names = [x.case_desc + '  ' for x in self.cases]
-        locs, labels = plt.xticks(ind+(width*i)/2, benchmark_names, ha='left')
+        benchmark_names = [x.desc + '  ' for x in self.cases]
+        locs, labels = plt.xticks(ind + width, benchmark_names, ha='left')
         setp(labels, 'rotation', 'vertical')
         plt.legend([x[0] for x in rects], self.platforms)
         plt.savefig(output_fname, bbox_inches="tight")
 
-def parse_results(fn, results):
-    f = open(fn, 'r')
-    found_cpu = False
-    found_case = False
-    for line in f.readlines():
-        if not found_cpu:     
-            splat = line.split(':')
+    def _get_benchmark_case(self, case_desc):
+        for case in self.cases:
+            if case.desc == case_desc: return case
+        case = BenchmarkCase(case_desc)
+        self.cases.append(case)
+        return case
 
-            if len(splat) and splat[0].strip() == 'CPU':
-                results.cpu = splat[1].strip()
-                found_cpu = True
-            continue
+    def parse(self, fn, all_platforms, platform_start):
+        f = open(fn, 'r')
+        found_cpu = False
+        found_case = False
+        # How many platforms were in this result set.
+        platform_count = 0
+        platforms = all_platforms[platform_start:]
+        for line in f.readlines():
+            if not found_cpu:     
+                splat = line.split(':')
+
+                if len(splat) and splat[0].strip() == 'CPU':
+                    cpu = splat[1].strip()
+                    found_cpu = True
+                continue
         
-        if not found_case:
-            if line.startswith('case'):
-                found_case = True
-            continue
+            if not found_case:
+                if line.startswith('case'):
+                    found_case = True
+                continue
 
-        # Now parsing the cases
-        splat = line.split()
-        case = BenchmarkCase(splat[0])
-        i = 0
-        for number in splat[1:-1]:
-            try:
-                float(number)
-                case.add_result(results.platforms[i], float(number))
-            except:
-                case.add_result(results.platforms[i], 0.0)                
-            i += 1
-
-        results.cases.append(case)
-    return results
+            # Now parsing the cases
+            splat = line.split()
+            case = self._get_benchmark_case(splat[0])
+            i = 0
+            for number in splat[1:-1]:
+                try:
+                    float(number)
+                    case.add_result(platforms[i], float(number))
+                except:
+                    case.add_result(platforms[i], 0.0)                
+                i += 1
+            platform_count = max(i, platform_count)
+            
+        return platform_count
 
 if __name__ == "__main__":
-    input_fname = sys.argv[2]
-    results = BenchmarkResults(sys.argv[1], sys.argv[3], sys.argv[4])
-    results = parse_results(input_fname, results)
+    result_files = []
+    for arg in sys.argv[1:]:
+        if os.path.exists(arg):
+            result_files.append(arg)
+
+    input_fname = result_files[0]
+    i = len(result_files) + 1
+    title = sys.argv[i]
+    platforms = sys.argv[i+1:]
+    results = BenchmarkResults(title, platforms)
+
+    consumed_platforms = 0
+    for ifn in result_files:
+        consumed_platforms += results.parse(ifn, platforms, consumed_platforms)
 
     output_fname = ".".join(input_fname.split(".")[0:-1]) + ".eps"
     results.bar_chart(output_fname)
