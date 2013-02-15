@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 #define COMMAND_LENGTH 1024
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -46,23 +47,34 @@ POname(clBuildProgram)(cl_program program,
   size_t n;
   struct stat buf;
   char command[COMMAND_LENGTH];
+  int errcode;
+  int i;
   int error;
   unsigned char *binary;
-  int device_i;
   unsigned real_num_devices;
   cl_device_id *real_device_list;
   /* The default build script for .cl files. */
   char *pocl_build_script;
+  int device_i = 0;
   char *user_options = "";
 
   if (program == NULL)
-    return CL_INVALID_PROGRAM;
+  {
+    errcode = CL_INVALID_PROGRAM;
+    goto ERROR;
+  }
 
   if (pfn_notify == NULL && user_data != NULL)
-    return CL_INVALID_VALUE;
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
 
   if (program->kernels)
-    return CL_INVALID_OPERATION;
+  {
+    errcode = CL_INVALID_OPERATION;
+    goto ERROR;
+  }
 
   if (options != NULL)
     {
@@ -76,11 +88,17 @@ POname(clBuildProgram)(cl_program program,
     }  
 
   if (program->source == NULL && program->binaries == NULL)
-    return CL_INVALID_PROGRAM;
+  {
+    errcode = CL_INVALID_PROGRAM;
+    goto ERROR;
+  }
 
   if ((num_devices > 0 && device_list == NULL) ||
       (num_devices == 0 && device_list != NULL))
-    return CL_INVALID_VALUE;
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
       
   if (num_devices == 0)
     {
@@ -97,33 +115,36 @@ POname(clBuildProgram)(cl_program program,
       snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/", program->temp_dir);
       mkdir (tmpdir, S_IRWXU);
 
-      if ((program->binary_sizes =
-           (size_t *) malloc (sizeof (size_t) * real_num_devices)) == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
+      if (((program->binary_sizes =
+           (size_t *) malloc (sizeof (size_t) * real_num_devices)) == NULL) 
+              || (program->binaries = 
+           (unsigned char**) calloc( real_num_devices, sizeof (unsigned char*))) == NULL)
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_BINARIES;
+      }
 
-      if ((program->binaries = 
-           (unsigned char**) 
-           calloc( real_num_devices, sizeof (unsigned char*))) == NULL)
-        {
-          free (program->binary_sizes);
-          program->binary_sizes = NULL;
-          return CL_OUT_OF_HOST_MEMORY;
-        }
-     
       snprintf 
         (source_file_name, POCL_FILENAME_LENGTH, "%s/%s", tmpdir, 
          POCL_PROGRAM_CL_FILENAME);
 
       source_file = fopen(source_file_name, "w+");
       if (source_file == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_BINARIES;
+      }
 
       n = fwrite (program->source, 1,
                   strlen(program->source), source_file);
-      if (n < strlen(program->source))
-        return CL_OUT_OF_HOST_MEMORY;
-
       fclose(source_file);
+
+      if (n < strlen(program->source))
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_BINARIES;
+      }
+
 
       if (getenv("POCL_BUILDING") != NULL)
         pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
@@ -136,6 +157,7 @@ POname(clBuildProgram)(cl_program program,
          devices. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
+          program->binaries[device_i] = NULL;
           cl_device_id device = real_device_list[device_i];
           snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
                     program->temp_dir, device->name);
@@ -164,7 +186,10 @@ POname(clBuildProgram)(cl_program program,
             }
           
           if (error < 0)
-            return CL_OUT_OF_HOST_MEMORY;
+          {
+            errcode = CL_OUT_OF_HOST_MEMORY;
+            goto ERROR_CLEAN_BINARIES;
+          }
 
           /* call the customized build command, if needed for the
              device driver */
@@ -180,11 +205,17 @@ POname(clBuildProgram)(cl_program program,
             }
 
           if (error != 0)
-            return CL_BUILD_PROGRAM_FAILURE;
+          {
+            errcode = CL_BUILD_PROGRAM_FAILURE;
+            goto ERROR_CLEAN_BINARIES;
+          }
 
           binary_file = fopen(binary_file_name, "r");
           if (binary_file == NULL)
-            return CL_OUT_OF_HOST_MEMORY;
+          {
+            errcode = CL_OUT_OF_HOST_MEMORY;
+            goto ERROR_CLEAN_BINARIES;
+          }
 
           fseek(binary_file, 0, SEEK_END);
 
@@ -193,13 +224,16 @@ POname(clBuildProgram)(cl_program program,
 
           binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
           if (binary == NULL)
-            return CL_OUT_OF_HOST_MEMORY;
+          {
+              errcode = CL_OUT_OF_HOST_MEMORY;
+              goto ERROR_CLEAN_BINARIES;
+          }
 
           n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
           if (n < program->binary_sizes[device_i])
             {
-              free (binary);
-              return CL_OUT_OF_HOST_MEMORY;
+                errcode = CL_OUT_OF_HOST_MEMORY;
+                goto ERROR_CLEAN_BINARIES;
             }
           program->binaries[device_i] = binary;
         }
@@ -210,23 +244,39 @@ POname(clBuildProgram)(cl_program program,
          memory in the clBuildWithBinary(). Dump them to the files. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
-          snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
+          error = snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
                     program->temp_dir, real_device_list[device_i]->name);
-          mkdir (device_tmpdir, S_IRWXU);
+          MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
 
-          snprintf 
+          error = mkdir (device_tmpdir, S_IRWXU);
+          MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
+
+          error = snprintf 
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+          MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
 
           binary_file = fopen(binary_file_name, "w");
+          MEM_ASSERT(binary_file, ERROR_CLEAN_PROGRAM);
+
           fwrite (program->binaries[device_i], 1, program->binary_sizes[device_i],
                   binary_file);
 
           fclose (binary_file);
-          
         }      
     }
 
   return CL_SUCCESS;
+
+ERROR_CLEAN_BINARIES:
+  for(i = 0; i < device_i; i++)
+  {
+    free(program->binaries[i]); 
+  }
+ERROR_CLEAN_PROGRAM:
+  free(program->binaries);
+  free(program->binary_sizes);
+ERROR:
+    return errcode;
 }
 POsym(clBuildProgram)
