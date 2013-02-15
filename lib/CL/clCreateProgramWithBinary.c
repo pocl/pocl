@@ -39,23 +39,36 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   unsigned total_binary_size;
   unsigned char *pos;
   int i;
+  int errcode;
 
   if (device_list == NULL || num_devices == 0 || lengths == NULL)
-    POCL_ERROR(CL_INVALID_VALUE);
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
 
   if (context == NULL)
-    POCL_ERROR(CL_INVALID_CONTEXT);
+  {
+    errcode = CL_INVALID_CONTEXT;
+    goto ERROR;
+  }
 
   total_binary_size = 0;
   for (i = 0; i < num_devices; ++i)
     {
       if (lengths[i] == 0 || binaries[i] == NULL)
-        POCL_ERROR(CL_INVALID_VALUE);       
+      {
+        errcode = CL_INVALID_VALUE;
+        goto ERROR;
+      }
       total_binary_size += lengths[i];
     }
   
   if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
   
   POCL_INIT_OBJECT(program);
   program->binary_sizes = NULL;
@@ -70,14 +83,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       (program->binaries[0] = (unsigned char*)
        malloc (sizeof (unsigned char) * total_binary_size)) == NULL)
     {
-      if (program->binaries != NULL)
-        {
-          free (program->binaries[0]);
-          free (program->binaries);
-        }
-      free (program->binary_sizes);
-      free (program);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
   if (context->num_devices != num_devices)
@@ -108,5 +115,20 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return program;
+
+ERROR_CLEAN_PROGRAM_BINARIES_AND_DEVICES:
+  free(program->devices);
+ERROR_CLEAN_PROGRAM_AND_BINARIES:
+  free(program->binaries[0]);
+  free(program->binaries);
+  free(program->binary_sizes);
+ERROR_CLEAN_PROGRAM:
+  free(program);
+ERROR:
+    if(errcode_ret != NULL)
+    {
+        *errcode_ret = errcode;
+    }
+    return NULL;
 }
 POsym(clCreateProgramWithBinary)

@@ -40,13 +40,20 @@ CL_API_SUFFIX__VERSION_1_0
   void *device_ptr;
   unsigned i, j;
   int size;
+  int errcode;
 
   if (context == NULL)
-    POCL_ERROR(CL_INVALID_CONTEXT);
+  {
+    errcode = CL_INVALID_CONTEXT;
+    goto ERROR;
+  }
 
   mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
 
   POCL_INIT_OBJECT(mem);
   mem->parent = NULL;
@@ -73,8 +80,8 @@ CL_API_SUFFIX__VERSION_1_0
   mem->device_ptrs = (void **) malloc(context->num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
-      free(mem);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR_CLEAN_MEM;
     }  
   
   int host_channels;
@@ -104,13 +111,8 @@ CL_API_SUFFIX__VERSION_1_0
       
       if (device_ptr == NULL)
         {
-          for (j = 0; j < i; ++j)
-            {
-              device_id = context->devices[j];
-              device_id->free(device_id->data, 0, mem->device_ptrs[j]);
-            }
-          free(mem);
-          POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
+            errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+            goto ERROR_CLEAN_MEM_AND_DEV;
         }
       mem->device_ptrs[i] = device_ptr;
       /* The device allocator allocated from a device-host shared memory. */
@@ -139,5 +141,20 @@ CL_API_SUFFIX__VERSION_1_0
     *errcode_ret = CL_SUCCESS;
   
   return mem;
+
+ERROR_CLEAN_MEM_AND_DEV:
+  for (j = 0; j < i; ++j)
+    {
+      device_id = context->devices[j];
+      device_id->free(device_id->data, 0, mem->device_ptrs[j]);
+    }
+ERROR_CLEAN_MEM:
+  free(mem);
+ERROR:
+  if(errcode_ret)
+  {
+    *errcode_ret = errcode;
+  }
+  return NULL;
 }
 POsym(clCreateImage2D) 
