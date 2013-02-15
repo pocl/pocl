@@ -43,6 +43,7 @@ POname(clCreateKernel)(cl_program program,
   size_t n;
   char descriptor_filename[POCL_FILENAME_LENGTH];
   char command[COMMAND_LENGTH];
+  int errcode;
   int error;
   lt_dlhandle dlhandle = NULL;
   int i;
@@ -50,14 +51,23 @@ POname(clCreateKernel)(cl_program program,
   char* pocl_kernel_fmt;
   
   if (program == NULL || program->num_devices == 0)
-    POCL_ERROR(CL_INVALID_PROGRAM);
+  {
+    errcode = CL_INVALID_PROGRAM;
+    goto ERROR;
+  }
 
   if (program->binaries == NULL || program->binary_sizes == NULL)
-    POCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
+  {
+    errcode = CL_INVALID_PROGRAM_EXECUTABLE;
+    goto ERROR;
+  }
 
   kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
 
   POCL_INIT_OBJECT (kernel);
 
@@ -89,36 +99,50 @@ POname(clCreateKernel)(cl_program program,
                        "%s/kernel.bc",
                        tmpdir);
       if (error < 0)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       binary_file = fopen(binary_filename, "w+");
       if (binary_file == NULL)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       n = fwrite(program->binaries[device_i], 1,
                  program->binary_sizes[device_i], binary_file);
-      if (n < program->binary_sizes[device_i])
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
-  
       fclose(binary_file);
 
-      error = snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
-                       "%s/%s/descriptor.so", device_tmpdir, kernel_name);
-      if (error < 0)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      if (n < program->binary_sizes[device_i])
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
+  
 
-      error = snprintf(command, COMMAND_LENGTH,
+      error |= snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
+                       "%s/%s/descriptor.so", device_tmpdir, kernel_name);
+
+      error |= snprintf(command, COMMAND_LENGTH,
                        pocl_kernel_fmt,
                        kernel_name,
                        program->devices[device_i]->llvm_target_triplet,
                        descriptor_filename,
                        binary_filename);
       if (error < 0)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       error = system(command);
       if (error != 0)
-        POCL_ERROR(CL_INVALID_KERNEL_NAME);
+      {
+        errcode = CL_INVALID_KERNEL_NAME;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       if (dlhandle == NULL)
         {
@@ -131,7 +155,8 @@ POname(clCreateKernel)(cl_program program,
               fprintf(stderr, 
                       "Error loading the kernel descriptor from %s (lt_dlerror(): %s)\n", 
                       descriptor_filename, lt_dlerror());
-              POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+              errcode = CL_OUT_OF_HOST_MEMORY;
+              goto ERROR_CLEAN_KERNEL;
             }
         }
     }
@@ -178,5 +203,18 @@ POname(clCreateKernel)(cl_program program,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return kernel;
+
+ERROR_CLEAN_KERNEL_AND_CONTENTS:
+  free(kernel->function_name);
+  free(kernel->name);
+  free(kernel->dyn_arguments);
+ERROR_CLEAN_KERNEL:
+  free(kernel);
+ERROR:
+  if(errcode_ret != NULL)
+  {
+    *errcode_ret = errcode;
+  }
+  return NULL;
 }
 POsym(clCreateKernel)
