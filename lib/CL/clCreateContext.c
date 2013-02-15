@@ -95,6 +95,7 @@ int context_set_properties(cl_context                    context,
       memcpy(context->properties, properties, (num_properties * 2 + 1) * sizeof(cl_context_properties));
       context->num_properties = num_properties;
 
+  *errcode = 0;
   return num_properties;
 }
   else
@@ -159,7 +160,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
       if (device_ptr == NULL)
         {
             errcode = CL_INVALID_DEVICE;
-            goto ERROR_CLEAN_CONTEXT;
+            goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
         }
 
       if (device_ptr->available == CL_TRUE) 
