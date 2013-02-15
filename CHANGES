@@ -46,7 +46,7 @@ Misc.
 - Fix to the helper script search logic:
   Search from the BUILDDIR only if env POCL_BUILDING is defined.
   Otherwise search from PKGDATADIR first, then from the PATH.
-- Fixed memory leaks in clCreateContext*
+- Fixed memory leaks in clCreateContext* and clCreateKernel
 - Ensured that stored arguments are adequately aligned in
   clSetKernelArg and clEnqueueNDRangeKernel.
 

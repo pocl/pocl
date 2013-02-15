@@ -34,27 +34,43 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
 {
   cl_device_id device;
   cl_mem mem;
+  int errcode;
   int i;
 
   if (buffer == NULL || buffer->parent != NULL)
-    POCL_ERROR(CL_INVALID_MEM_OBJECT);
+  {
+    errcode = CL_INVALID_MEM_OBJECT;
+    goto ERROR;
+  }
 
   if (buffer_create_type != CL_BUFFER_CREATE_TYPE_REGION ||
       buffer_create_info == NULL)
-    POCL_ERROR(CL_INVALID_VALUE);
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
 
   cl_buffer_region* info = 
     (cl_buffer_region*)buffer_create_info;
 
   if (info->size == 0)
-    POCL_ERROR(CL_INVALID_BUFFER_SIZE);
+  {
+    errcode = CL_INVALID_BUFFER_SIZE;
+    goto ERROR;
+  }
   
   if (info->size + info->origin > buffer->size)
-    POCL_ERROR(CL_INVALID_VALUE);
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
 
   mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
 
   POCL_INIT_OBJECT(mem);
   mem->mappings = NULL;
@@ -70,7 +86,10 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
        flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY)) ||
       (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | 
                 CL_MEM_COPY_HOST_PTR)))
-    POCL_ERROR(CL_INVALID_VALUE);
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR_CLEAN_MEM;
+  }
 
   if ((buffer->flags & CL_MEM_HOST_WRITE_ONLY &&
        flags & CL_MEM_HOST_READ_ONLY) ||
@@ -78,7 +97,10 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
        flags & CL_MEM_HOST_WRITE_ONLY) ||
       (buffer->flags & CL_MEM_HOST_NO_ACCESS &&
        flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)))
-    POCL_ERROR(CL_INVALID_VALUE);
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR_CLEAN_MEM;
+  }
 
   if ((flags & CL_MEM_READ_WRITE) |
       (flags & CL_MEM_READ_ONLY) |
@@ -109,8 +131,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->device_ptrs = (void **) malloc(pocl_num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
-      free(mem);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_MEM;
     }
 
   for (i = 0; i < pocl_num_devices; ++i)
@@ -139,6 +161,16 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return mem;
-  
+
+ERROR_CLEAN_MEM_AND_DEVPTR:
+    free(mem->device_ptrs);
+ERROR_CLEAN_MEM:
+    free(mem);
+ERROR:
+  if(errcode_ret)
+  {
+    *errcode_ret = errcode;
+  }
+  return NULL;
 }
 POsym(clCreateSubBuffer)

@@ -41,6 +41,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   int num_devices;
   int i, j;
   int num_properties;
+  int errcode;
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
@@ -48,16 +49,18 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
   cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
 
   POCL_INIT_OBJECT(context);
   context->valid = 0;
 
-  num_properties = context_set_properties(context, properties, errcode_ret);
-  if (num_properties < 0)
+  num_properties = context_set_properties(context, properties, &errcode);
+  if (errcode)
     {
-      free(context);
-      return NULL;
+        goto ERROR_CLEAN_CONTEXT_AND_PROPERTIES;
     }
 
   num_devices = 0;
@@ -83,8 +86,8 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
   if (context->devices == NULL)
     {
-      free(context);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_CONTEXT_AND_PROPERTIES;
     }
   
   j = 0;
@@ -101,5 +104,16 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     *errcode_ret = CL_SUCCESS;
   context->valid = 1;
   return context;
+
+ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
+  free(context->properties);
+ERROR_CLEAN_CONTEXT:
+  free(context);
+ERROR:
+  if(errcode_ret)
+  {
+    *errcode_ret = errcode;
+  }
+  return NULL;
 }
 POsym(clCreateContextFromType)
