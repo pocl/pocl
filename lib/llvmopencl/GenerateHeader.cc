@@ -196,8 +196,9 @@ GenerateHeader::ProcessPointers(Function *F,
   
     is_image[i] = false;
     is_sampler[i] = false;
-    
-    if (const PointerType *p = dyn_cast<PointerType> (t)) {
+ 
+    const PointerType *p = dyn_cast<PointerType>(t);
+    if (p && !ii->hasByValAttr()) {
       is_pointer[i] = true;
       // index 0 is for function attributes, parameters start at 1.
       if (p->getAddressSpace() == POCL_ADDRESS_SPACE_GLOBAL ||

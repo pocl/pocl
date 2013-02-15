@@ -38,8 +38,6 @@
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
 
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
-
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
@@ -77,7 +75,7 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, ALIGNMENT, size) == 0)
+      if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
         {
           memcpy (b, host_ptr, size);
           return b;
@@ -91,7 +89,7 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
       return host_ptr;
     }
 
-  if (posix_memalign (&b, ALIGNMENT, size) == 0)
+  if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
     return b;
   
   return NULL;

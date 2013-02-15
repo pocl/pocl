@@ -30,7 +30,5 @@ targetpkglib_DATA = kernel-@TARGET@.bc
 
 include ../sources.mk
 
-LKERNEL_SRCS+=fenv_cl.c
-
 all: kernel-@TARGET@.bc
 

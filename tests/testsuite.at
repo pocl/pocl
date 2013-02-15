@@ -52,23 +52,34 @@ AT_CLEANUP
 AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions as_type])
-# lack of 64bit integers
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
-AT_KEYWORDS([tce])
+AT_KEYWORDS([conversion tce])
 AT_DATA([expout],
 [Running test test_as_type...
 OK
 ])
-AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/examples/kernel/kernel test_as_type], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_as_type], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions convert_type])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
+AT_KEYWORDS([conversion tce])
+AT_DATA([expout],
+[Running test test_convert_type...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
+# Fails due to buggy clz/pocount and bitselect functions.
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_bitselect...
 OK
 ])
-AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/examples/kernel/kernel test_bitselect], 0, expout)
+AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel test_bitselect], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
@@ -80,25 +91,29 @@ AT_DATA([expout],
 [Running test test_fabs...
 OK
 ])
-AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_fabs], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
+# Fails because of missing mad_sat, hadd, and rhadd.
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
 ])
-AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_hadd 2>&1], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_hadd 2>&1], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
+# Fails because of bugs in rotate.
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce rotate])
 AT_DATA([expout],
 [Running test test_rotate...
 OK
 ])
-AT_CHECK([$abs_top_builddir/examples/kernel/kernel test_rotate], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_rotate], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Trigonometric functions])

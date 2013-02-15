@@ -22,7 +22,9 @@
    THE SOFTWARE.
 */
 
+#include "config.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "utlist.h"
 #include "install-paths.h"
 #include <assert.h>
@@ -290,7 +292,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
     {
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
-      arg->size = kernel->dyn_arguments[i].size;
+      size_t arg_alloc_size = kernel->dyn_arguments[i].size;
+      arg->size = arg_alloc_size;
 
       if (kernel->dyn_arguments[i].value == NULL)
         {
@@ -298,7 +301,16 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         }
       else
         {
-          arg->value = malloc (kernel->dyn_arguments[i].size);
+          /* FIXME: this is a cludge to determine an acceptable alignment,
+           * we should probably extract the argument alignment from the
+           * LLVM bytecode during kernel header generation. */
+          size_t arg_alignment = pocl_size_ceil2(arg_alloc_size);
+          if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
+            arg_alignment = MAX_EXTENDED_ALIGNMENT;
+          if (arg_alloc_size < arg_alignment)
+            arg_alloc_size = arg_alignment;
+         
+          arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
           memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
         }
     }

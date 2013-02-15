@@ -15,13 +15,21 @@ Overall
 
 Major bugfixes
 --------------
-- Fixed passing NULL as a buffer argument to clSetKernelArguments
+- Fixed passing NULL as a buffer argument to clSetKernelArg
   (this time with a regression test added).
 - Constant BitCast expressions broken to variables to avoid
   crashing when copying a kernel with casts on automatic
   local pointers.
 - Fixes for i386/i686. Tested on Pentium4/Ubuntu 10.04 LTS.
 - Lots of API error checking added (found by the Piglit testing suite).
+- Fixed bug in select producing incorrect results when the third
+  conditional argument is an unsigned scalar or vector.
+- Replaced deprecated SSE 4.1 assembly mneunomics in x86-64 min/max
+  kernel functions that have since been removed in more recent
+  versions of gas and llvm-as.
+- SPIR/LLVM IR 'byval' attributes are now handled correctly on
+  kernel function arguments, allowing for structs and oversized
+  vectors to be passed in with value semantics.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
@@ -35,11 +43,12 @@ OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 
 Misc.
 -----
--  Fix to the helper script search logic:
-   Search from the BUILDDIR only if env POCL_BUILDING is
-   defined. Otherwise search from PKGDATADIR first, then
-   from the PATH.
--  Fixed memory leaks in clCreateContext*
+- Fix to the helper script search logic:
+  Search from the BUILDDIR only if env POCL_BUILDING is defined.
+  Otherwise search from PKGDATADIR first, then from the PATH.
+- Fixed memory leaks in clCreateContext*
+- Ensured that stored arguments are adequately aligned in
+  clSetKernelArg and clEnqueueNDRangeKernel.
 
 0.7  January 2013
 =================

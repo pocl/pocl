@@ -86,9 +86,14 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regressio
 AT_CLEANUP
 
 AT_SETUP([struct kernel arguments - lp:987905])
-AT_XFAIL_IF(true)
+AT_XFAIL_IF([true])
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_structs_as_args], 0)
+AT_CLEANUP
+
+AT_SETUP([vector kernel arguments - lp:987905])
+AT_KEYWORDS([regression struct])
+AT_CHECK([$abs_top_builddir/tests/regression/test_vectors_as_args], 0)
 AT_CLEANUP
 
 AT_SETUP([barrier just before return (repl) - lp:1012030])

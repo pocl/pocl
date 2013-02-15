@@ -430,11 +430,25 @@ __IF_INT64(_CL_DECLARE_AS_TYPE_128(long16))
 __IF_INT64(_CL_DECLARE_AS_TYPE_128(ulong16))
 __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
 
-#define _CL_DECLARE_CONVERT_TYPE(SRC, DST, SIZE, INTSUFFIX, FLOATSUFFIX) \
-  DST##SIZE _cl_overloadable                                            \
-    convert_##DST##SIZE##INTSUFFIX##FLOATSUFFIX(SRC##SIZE a);
+/* Conversions between builtin types.
+ * 
+ * Even though the OpenCL specification isn't entirely clear on this
+ * matter, we implement all rounding mode combinations even for
+ * integer-to-integer conversions. The rounding mode is essentially
+ * redundant and thus ignored.
+ *
+ * Other OpenCL implementations seem to allow this in user code, and some
+ * of the test suites/benchmarks out in the wild expect these functions
+ * are available.
+ *
+ * Saturating conversions are only allowed when the destination type
+ * is an integer.
+ */
 
-/* conversions to int may have a suffix: _sat */
+#define _CL_DECLARE_CONVERT_TYPE(SRC, DST, SIZE, INTSUFFIX, FLOATSUFFIX) \
+  DST##SIZE _cl_overloadable                                             \
+  convert_##DST##SIZE##INTSUFFIX##FLOATSUFFIX(SRC##SIZE a);
+
 #define _CL_DECLARE_CONVERT_TYPE_DST(SRC, SIZE, FLOATSUFFIX)            \
   _CL_DECLARE_CONVERT_TYPE(SRC, char  , SIZE,     , FLOATSUFFIX)        \
   _CL_DECLARE_CONVERT_TYPE(SRC, char  , SIZE, _sat, FLOATSUFFIX)        \
@@ -457,35 +471,33 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   __IF_FP64(                                                            \
   _CL_DECLARE_CONVERT_TYPE(SRC, double, SIZE,     , FLOATSUFFIX))
 
-/* conversions from float may have a suffix: _rte _rtz _rtp _rtn */
-#define _CL_DECLARE_CONVERT_TYPE_SRC_DST(SIZE)          \
-  _CL_DECLARE_CONVERT_TYPE_DST(char  , SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(uchar , SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(short , SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(ushort, SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(int   , SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(uint  , SIZE,     )      \
-  __IF_INT64(                                           \
-  _CL_DECLARE_CONVERT_TYPE_DST(long  , SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(ulong , SIZE,     ))     \
-  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rte)      \
-  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rtz)      \
-  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rtp)      \
-  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, _rtn)      \
-  __IF_FP64(                                            \
-  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE,     )      \
-  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rte)      \
-  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rtz)      \
-  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rtp)      \
-  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, _rtn))
+#define _CL_DECLARE_CONVERT_TYPE_SRC_DST(SIZE, FLOATSUFFIX) \
+  _CL_DECLARE_CONVERT_TYPE_DST(char  , SIZE, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_DST(uchar , SIZE, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_DST(short , SIZE, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_DST(ushort, SIZE, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_DST(int   , SIZE, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_DST(uint  , SIZE, FLOATSUFFIX)   \
+  __IF_INT64(                                               \
+  _CL_DECLARE_CONVERT_TYPE_DST(long  , SIZE, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_DST(ulong , SIZE, FLOATSUFFIX))  \
+  _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, FLOATSUFFIX)   \
+  __IF_FP64(                                                \
+  _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, FLOATSUFFIX))
 
-_CL_DECLARE_CONVERT_TYPE_SRC_DST(  )
-_CL_DECLARE_CONVERT_TYPE_SRC_DST( 2)
-_CL_DECLARE_CONVERT_TYPE_SRC_DST( 3)
-_CL_DECLARE_CONVERT_TYPE_SRC_DST( 4)
-_CL_DECLARE_CONVERT_TYPE_SRC_DST( 8)
-_CL_DECLARE_CONVERT_TYPE_SRC_DST(16)
+#define _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(FLOATSUFFIX) \
+  _CL_DECLARE_CONVERT_TYPE_SRC_DST(  , FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_SRC_DST( 2, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_SRC_DST( 3, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_SRC_DST( 4, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_SRC_DST( 8, FLOATSUFFIX)   \
+  _CL_DECLARE_CONVERT_TYPE_SRC_DST(16, FLOATSUFFIX)
+
+_CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(    )
+_CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtz)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rte)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtp)
+_CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtn)
 
 
 /* Work-Item Functions */
