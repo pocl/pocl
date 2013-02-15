@@ -2,30 +2,31 @@
 // TESTING: fabs
 // TESTING: signbit
 
-#define IMPLEMENT_BODY_V(NAME, BODY, VTYPE, STYPE, JTYPE, SJTYPE)       \
+#define IMPLEMENT_BODY_V(NAME, BODY, SIZE, VTYPE, STYPE, JTYPE, SJTYPE) \
   void NAME##_##VTYPE()                                                 \
   {                                                                     \
     typedef VTYPE vtype;                                                \
     typedef STYPE stype;                                                \
     typedef JTYPE jtype;                                                \
     typedef SJTYPE sjtype;                                              \
-    char const *const typename = #VTYPE;                                \
+    const char * const typename = #VTYPE;                               \
+    const int vecsize = SIZE;                                           \
     BODY;                                                               \
   }
-#define DEFINE_BODY_V(NAME, EXPR)                               \
-  IMPLEMENT_BODY_V(NAME, EXPR, float   , float , int   , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR, float2  , float , int2  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR, float3  , float , int3  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR, float4  , float , int4  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR, float8  , float , int8  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR, float16 , float , int16 , int )  \
-  __IF_FP64(                                                    \
-  IMPLEMENT_BODY_V(NAME, EXPR, double  , double, long  , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR, double2 , double, long2 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR, double3 , double, long3 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR, double4 , double, long4 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR, double8 , double, long8 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR, double16, double, long16, long))
+#define DEFINE_BODY_V(NAME, EXPR)                                   \
+  IMPLEMENT_BODY_V(NAME, EXPR,  1, float   , float , int   , int )  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  2, float2  , float , int2  , int )  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  3, float3  , float , int3  , int )  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  4, float4  , float , int4  , int )  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  8, float8  , float , int8  , int )  \
+  IMPLEMENT_BODY_V(NAME, EXPR, 16, float16 , float , int16 , int )  \
+  __IF_FP64(                                                        \
+  IMPLEMENT_BODY_V(NAME, EXPR,  1, double  , double, long  , long)  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  2, double2 , double, long2 , long)  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  3, double3 , double, long3 , long)  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  4, double4 , double, long4 , long)  \
+  IMPLEMENT_BODY_V(NAME, EXPR,  8, double8 , double, long8 , long)  \
+  IMPLEMENT_BODY_V(NAME, EXPR, 16, double16, double, long16, long))
 
 #define CALL_FUNC_V(NAME)                       \
   NAME##_float   ();                            \
@@ -101,7 +102,6 @@ DEFINE_BODY_V
            stype s[16];
          } Tvec;
          Tvec val, good, val2;
-         int vecsize = vec_step(vtype);
          for (int n=0; n<vecsize; ++n) {
            if (input==0) {
              val.s[n]  = sign * values[(iter+n) % nvalues];

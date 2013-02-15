@@ -5,66 +5,67 @@
 // TESTING: min
 // TESTING: popcount
 
-#define IMPLEMENT_BODY_G(NAME, BODY, GTYPE, SGTYPE, UGTYPE, SUGTYPE)    \
-  void NAME##_##GTYPE()                                                 \
-  {                                                                     \
-    typedef GTYPE gtype;                                                \
-    typedef SGTYPE sgtype;                                              \
-    typedef UGTYPE ugtype;                                              \
-    typedef SUGTYPE sugtype;                                            \
-    char const *const typename = #GTYPE;                                \
-    BODY;                                                               \
+#define IMPLEMENT_BODY_G(NAME, BODY, SIZE, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
+  void NAME##_##GTYPE()                                                    \
+  {                                                                        \
+    typedef GTYPE gtype;                                                   \
+    typedef SGTYPE sgtype;                                                 \
+    typedef UGTYPE ugtype;                                                 \
+    typedef SUGTYPE sugtype;                                               \
+    const char * const typename = #GTYPE;                                  \
+    const int vecsize = SIZE;                                              \
+    BODY;                                                                  \
   }
-#define DEFINE_BODY_G(NAME, EXPR)                                       \
-  IMPLEMENT_BODY_G(NAME, EXPR, char    , char  , uchar   , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, char2   , char  , uchar2  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, char3   , char  , uchar3  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, char4   , char  , uchar4  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, char8   , char  , uchar8  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, char16  , char  , uchar16 , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uchar   , uchar , uchar   , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uchar2  , uchar , uchar2  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uchar3  , uchar , uchar3  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uchar4  , uchar , uchar4  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uchar8  , uchar , uchar8  , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uchar16 , uchar , uchar16 , uchar )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, short   , short , ushort  , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, short2  , short , ushort2 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, short3  , short , ushort3 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, short4  , short , ushort4 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, short8  , short , ushort8 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, short16 , short , ushort16, ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ushort  , ushort, ushort  , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ushort2 , ushort, ushort2 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ushort3 , ushort, ushort3 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ushort4 , ushort, ushort4 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ushort8 , ushort, ushort8 , ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ushort16, ushort, ushort16, ushort)      \
-  IMPLEMENT_BODY_G(NAME, EXPR, int     , int   , uint    , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, int2    , int   , uint2   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, int3    , int   , uint3   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, int4    , int   , uint4   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, int8    , int   , uint8   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, int16   , int   , uint16  , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uint    , uint  , uint    , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uint2   , uint  , uint2   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uint3   , uint  , uint3   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uint4   , uint  , uint4   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uint8   , uint  , uint8   , uint  )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, uint16  , uint  , uint16  , uint  )      \
+#define DEFINE_BODY_G(NAME, EXPR)                                           \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, char    , char  , uchar   , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, char2   , char  , uchar2  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, char3   , char  , uchar3  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, char4   , char  , uchar4  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, char8   , char  , uchar8  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, char16  , char  , uchar16 , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, uchar   , uchar , uchar   , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, uchar2  , uchar , uchar2  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, uchar3  , uchar , uchar3  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, uchar4  , uchar , uchar4  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, uchar8  , uchar , uchar8  , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, uchar16 , uchar , uchar16 , uchar )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, short   , short , ushort  , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, short2  , short , ushort2 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, short3  , short , ushort3 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, short4  , short , ushort4 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, short8  , short , ushort8 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, short16 , short , ushort16, ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, ushort  , ushort, ushort  , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, ushort2 , ushort, ushort2 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, ushort3 , ushort, ushort3 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, ushort4 , ushort, ushort4 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, ushort8 , ushort, ushort8 , ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, ushort16, ushort, ushort16, ushort)      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, int     , int   , uint    , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, int2    , int   , uint2   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, int3    , int   , uint3   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, int4    , int   , uint4   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, int8    , int   , uint8   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, int16   , int   , uint16  , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, uint    , uint  , uint    , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, uint2   , uint  , uint2   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, uint3   , uint  , uint3   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, uint4   , uint  , uint4   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, uint8   , uint  , uint8   , uint  )      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, uint16  , uint  , uint16  , uint  )      \
   __IF_INT64(                                                           \
-  IMPLEMENT_BODY_G(NAME, EXPR, long    , long  , ulong   , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, long2   , long  , ulong2  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, long3   , long  , ulong3  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, long4   , long  , ulong4  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, long8   , long  , ulong8  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, long16  , long  , ulong16 , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ulong   , ulong , ulong   , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ulong2  , ulong , ulong2  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ulong3  , ulong , ulong3  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )      \
-  IMPLEMENT_BODY_G(NAME, EXPR, ulong16 , ulong , ulong16 , ulong ))
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, long    , long  , ulong   , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, long2   , long  , ulong2  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, long3   , long  , ulong3  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, long4   , long  , ulong4  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, long8   , long  , ulong8  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, long16  , long  , ulong16 , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  1, ulong   , ulong , ulong   , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  2, ulong2  , ulong , ulong2  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  3, ulong3  , ulong , ulong3  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  4, ulong4  , ulong , ulong4  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR,  8, ulong8  , ulong , ulong8  , ulong )      \
+  IMPLEMENT_BODY_G(NAME, EXPR, 16, ulong16 , ulong , ulong16 , ulong ))
 
 #define CALL_FUNC_G(NAME)                       \
   NAME##_char    ();                            \
@@ -1154,7 +1155,6 @@ DEFINE_BODY_G
      Tvec sel, left, right;
      UTvec res_abs;
      Tvec res_bitselect, res_clz, res_max, res_min, res_popcount;
-     int vecsize = vec_step(gtype);
      for (int n=0; n<vecsize; ++n) {
        sel.s[n]   = randoms[(iter+n   ) % nrandoms];
        left.s[n]  = randoms[(iter+n+20) % nrandoms];
