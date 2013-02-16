@@ -115,7 +115,9 @@ int call_test(const char *name)
     goto error;
   }
 
-  retval = 0;
+  result = clFinish(queue);
+  if (result == CL_SUCCESS)
+    retval = 0;
 
 error:
 

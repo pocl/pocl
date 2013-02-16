@@ -171,8 +171,8 @@ def generate_default_conversion(src, dst, mode):
   close_conditional = conditional_guard(src, dst)
 
   # scalar conversions
-  print("""{DST} _cl_overloadable
-convert_{DST}{M}({SRC} x)
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+{DST} convert_{DST}{M}({SRC} x)
 {{
   return ({DST})x;
 }}
@@ -180,16 +180,16 @@ convert_{DST}{M}({SRC} x)
 
   # vector conversions, done through decomposition to components
   for size, half_size in half_sizes:
-    print("""{DST}{N} _cl_overloadable
-convert_{DST}{N}{M}({SRC}{N} x)
+    print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+{DST}{N} convert_{DST}{N}{M}({SRC}{N} x)
 {{
   return ({DST}{N})(convert_{DST}{H}(x.lo), convert_{DST}{H}(x.hi));
 }}
 """.format(SRC=src, DST=dst, N=size, H=half_size, M=mode))
 
   # 3-component vector conversions
-  print("""{DST}3 _cl_overloadable
-convert_{DST}3{M}({SRC}3 x)
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+{DST}3 convert_{DST}3{M}({SRC}3 x)
 {{
   return ({DST}3)(convert_{DST}2(x.s01), convert_{DST}(x.s2));
 }}""".format(SRC=src, DST=dst, M=mode))
@@ -223,8 +223,9 @@ def generate_saturated_conversion(src, dst, size):
   # Header
   print()
   close_conditional = conditional_guard(src, dst)
-  print("_cl_overloadable\n{DST}{N} convert_{DST}{N}_sat({SRC}{N} x)\n{{"
-    .format(DST=dst, SRC=src, N=size))
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+{DST}{N} convert_{DST}{N}_sat({SRC}{N} x)
+{{""".format(DST=dst, SRC=src, N=size))
 
   # FIXME: This is a work around for lack of select function with
   # signed third argument when the first two arguments are unsigned types.
@@ -294,8 +295,8 @@ def generate_saturated_conversion_with_rounding(src, dst, size, mode):
   close_conditional = conditional_guard(src, dst)
 
   # Body
-  print("""{DST}{N} _cl_overloadable
-convert_{DST}{N}_sat{M}({SRC}{N} x)
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+{DST}{N} convert_{DST}{N}_sat{M}({SRC}{N} x)
 {{
   return convert_{DST}{N}_sat(x);
 }}
@@ -330,8 +331,9 @@ def generate_float_conversion(src, dst, size, mode, sat):
   # Header
   print()
   close_conditional = conditional_guard(src, dst)
-  print("{DST}{N} _cl_overloadable\nconvert_{DST}{N}{S}{M}({SRC}{N} x)\n{{"
-    .format(SRC=src, DST=dst, N=size, M=mode, S=sat))
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+{DST}{N} convert_{DST}{N}{S}{M}({SRC}{N} x)
+{{""".format(SRC=src, DST=dst, N=size, M=mode, S=sat))
 
   # Perform conversion
   if dst in int_types:

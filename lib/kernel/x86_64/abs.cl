@@ -24,7 +24,7 @@
 #include "../templates.h"
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, UTYPE, EXPR)       \
-  UTYPE _cl_overloadable NAME(TYPE a)                   \
+  UTYPE _CL_OVERLOADABLE NAME(TYPE a)                   \
   {                                                     \
     typedef TYPE gtype;                                 \
     typedef UTYPE ugtype;                               \
@@ -32,7 +32,7 @@
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UTYPE, UPTYPE, LO) \
-  UTYPE _cl_overloadable NAME(TYPE a)                   \
+  UTYPE _CL_OVERLOADABLE NAME(TYPE a)                   \
   {                                                     \
     UPTYPE a1;                                          \
     a1.LO = a;                                          \
@@ -40,7 +40,7 @@
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, UTYPE, LO, HI)      \
-  UTYPE _cl_overloadable NAME(TYPE a)                   \
+  UTYPE _CL_OVERLOADABLE NAME(TYPE a)                   \
   {                                                     \
     return (UTYPE)(NAME(a.LO), NAME(a.HI));             \
   }

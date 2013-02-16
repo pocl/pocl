@@ -43,16 +43,18 @@
   NAME##_double8 ();                            \
   NAME##_double16();)
 
-
-
+#if __has_extension(c_generic_selections)
+# define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
+#else
+# define is_floating(T) ((T)0.1f > (T)0.0f)
+#endif
 #define is_signed(T)   ((T)-1 < (T)+1)
-#define is_floating(T) ((T)0.1f > (T)0.0f)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))
 
 DEFINE_BODY_V
 (test_fabs,
  ({
-   _cl_static_assert(stype, is_floating(stype));
+   _CL_STATIC_ASSERT(stype, is_floating(stype));
    float const values[] = {
      0.0f,
      0.1f,

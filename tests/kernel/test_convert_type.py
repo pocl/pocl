@@ -144,7 +144,7 @@ for t in all_types:
   if t in int64_types:
     print("\n#ifdef cles_khr_int64")
   print("""
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_{Type}_elements(char const* name, size_t sample, const {Type}* expected, const {Type}* actual, size_t n)
 {{
   for (size_t i = 0; i < n; ++i) {{

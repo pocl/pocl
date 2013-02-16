@@ -25,76 +25,76 @@
 
 #define IMPLEMENT_VLOAD_HALF(MOD)                       \
                                                         \
-  float _cl_overloadable                                \
+  float _CL_OVERLOADABLE                                \
   vload_half(size_t offset, const MOD half *p)          \
   {                                                     \
     return p[offset];                                   \
   }                                                     \
                                                         \
-  float2 _cl_overloadable                               \
+  float2 _CL_OVERLOADABLE                               \
   vload_half2(size_t offset, const MOD half *p)         \
   {                                                     \
     return (float2)(vload_half(0, &p[offset*2]),        \
                     vload_half(0, &p[offset*2+1]));     \
   }                                                     \
                                                         \
-  float3 _cl_overloadable                               \
+  float3 _CL_OVERLOADABLE                               \
   vload_half3(size_t offset, const MOD half *p)         \
   {                                                     \
     return (float3)(vload_half2(0, &p[offset*3]),       \
                     vload_half(0, &p[offset*3+2]));     \
   }                                                     \
                                                         \
-  float4 _cl_overloadable                               \
+  float4 _CL_OVERLOADABLE                               \
   vload_half4(size_t offset, const MOD half *p)         \
   {                                                     \
     return (float4)(vload_half2(0, &p[offset*4]),       \
                     vload_half2(0, &p[offset*4+2]));    \
   }                                                     \
                                                         \
-  float8 _cl_overloadable                               \
+  float8 _CL_OVERLOADABLE                               \
   vload_half8(size_t offset, const MOD half *p)         \
   {                                                     \
     return (float8)(vload_half4(0, &p[offset*8]),       \
                     vload_half4(0, &p[offset*8+4]));    \
   }                                                     \
                                                         \
-  float16 _cl_overloadable                              \
+  float16 _CL_OVERLOADABLE                              \
   vload_half16(size_t offset, const MOD half *p)        \
   {                                                     \
     return (float16)(vload_half8(0, &p[offset*16]),     \
                      vload_half8(0, &p[offset*16+8]));  \
   }                                                     \
                                                         \
-  float2 _cl_overloadable                               \
+  float2 _CL_OVERLOADABLE                               \
   vloada_half2(size_t offset, const MOD half *p)        \
   {                                                     \
     return (float2)(vload_half(0, &p[offset*2]),        \
                     vload_half(0, &p[offset*2+1]));     \
   }                                                     \
                                                         \
-  float3 _cl_overloadable                               \
+  float3 _CL_OVERLOADABLE                               \
   vloada_half3(size_t offset, const MOD half *p)        \
   {                                                     \
     return (float3)(vloada_half2(0, &p[offset*4]),      \
                     vload_half(0, &p[offset*4+2]));     \
   }                                                     \
                                                         \
-  float4 _cl_overloadable                               \
+  float4 _CL_OVERLOADABLE                               \
   vloada_half4(size_t offset, const MOD half *p)        \
   {                                                     \
     return (float4)(vloada_half2(0, &p[offset*4]),      \
                     vloada_half2(0, &p[offset*4+2]));   \
   }                                                     \
                                                         \
-  float8 _cl_overloadable                               \
+  float8 _CL_OVERLOADABLE                               \
   vloada_half8(size_t offset, const MOD half *p)        \
   {                                                     \
     return (float8)(vloada_half4(0, &p[offset*8]),      \
                     vloada_half4(0, &p[offset*8+4]));   \
   }                                                     \
                                                         \
-  float16 _cl_overloadable                              \
+  float16 _CL_OVERLOADABLE                              \
   vloada_half16(size_t offset, const MOD half *p)       \
   {                                                     \
     return (float16)(vloada_half8(0, &p[offset*16]),    \

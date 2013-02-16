@@ -116,15 +116,18 @@
   NAME##_ulong16 ();)
 
 
-
+#if __has_extension(c_generic_selections)
+# define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
+#else
+# define is_floating(T) ((T)0.1f > (T)0.0f)
+#endif
 #define is_signed(T)   ((T)-1 < (T)+1)
-#define is_floating(T) ((T)0.1f > (T)0.0f)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))
 
 DEFINE_BODY_G
 (test_rotate,
  ({
-   _cl_static_assert(sgtype, !is_floating(sgtype));
+   _CL_STATIC_ASSERT(sgtype, !is_floating(sgtype));
    int patterns[] = {0x01, 0x80, 0x77, 0xee};
    for (int p=0; p<4; ++p) {
      int const bits = count_bits(sgtype);

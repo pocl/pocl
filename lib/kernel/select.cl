@@ -108,7 +108,7 @@ IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong4, long4)
 IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong8, long8)
 IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong16, long16))
 
-#ifdef CLANG_OLDER_THAN_3_3
+#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ > 3))
 DEFINE_EXPR_V_VVJ(select, c ? b : a)
 #else
 /* This segfaults Clang 3.0, so we work around. */

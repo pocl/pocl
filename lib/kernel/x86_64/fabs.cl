@@ -39,13 +39,13 @@ DEFINE_EXPR_V_V(fabs,
 
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
-  TYPE _cl_overloadable NAME(TYPE a)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a)            \
   {                                             \
     return EXPR;                                \
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
-  TYPE _cl_overloadable NAME(TYPE a)                    \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a)                    \
   {                                                     \
     UPTYPE a1;                                          \
     a1.LO = a;                                          \
@@ -53,7 +53,7 @@ DEFINE_EXPR_V_V(fabs,
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)     \
-  TYPE _cl_overloadable NAME(TYPE a)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a)            \
   {                                             \
     return (TYPE)(NAME(a.LO), NAME(a.HI));      \
   }

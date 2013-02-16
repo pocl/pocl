@@ -27,35 +27,35 @@
 
 #define IMPLEMENT_VSTORE(TYPE, MOD)                     \
                                                         \
-  void _cl_overloadable                                 \
+  void _CL_OVERLOADABLE                                 \
   vstore2(TYPE##2 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
     p[offset*2] = data.lo;                              \
     p[offset*2+1] = data.hi;                            \
   }                                                     \
                                                         \
-  void _cl_overloadable                                 \
+  void _CL_OVERLOADABLE                                 \
   vstore3(TYPE##3 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
     vstore2(data.lo, 0, &p[offset*3]);                  \
     p[offset*3+2] = data.s2;                            \
   }                                                     \
                                                         \
-  void _cl_overloadable                                 \
+  void _CL_OVERLOADABLE                                 \
   vstore4(TYPE##4 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
     vstore2(data.lo, 0, &p[offset*4]);                  \
     vstore2(data.hi, 0, &p[offset*4+2]);                \
   }                                                     \
                                                         \
-  void _cl_overloadable                                 \
+  void _CL_OVERLOADABLE                                 \
   vstore8(TYPE##8 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
     vstore4(data.lo, 0, &p[offset*8]);                  \
     vstore4(data.hi, 0, &p[offset*8+4]);                \
   }                                                     \
                                                         \
-  void _cl_overloadable                                 \
+  void _CL_OVERLOADABLE                                 \
   vstore16(TYPE##16 data, size_t offset, MOD TYPE *p)   \
   {                                                     \
     vstore8(data.lo, 0, &p[offset*16]);                 \

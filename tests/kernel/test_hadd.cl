@@ -14,7 +14,7 @@
    overflowing. */
 #define DEFINE_SAFE_1(STYPE)                                            \
                                                                         \
-  STYPE##2 _cl_overloadable safe_normalize(STYPE##2 const a)            \
+  STYPE##2 _CL_OVERLOADABLE safe_normalize(STYPE##2 const a)            \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -25,7 +25,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##4 _cl_overloadable safe_normalize(STYPE##4 const a)            \
+  STYPE##4 _CL_OVERLOADABLE safe_normalize(STYPE##4 const a)            \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -43,7 +43,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE _cl_overloadable safe_extract(STYPE##2 const a)                 \
+  STYPE _CL_OVERLOADABLE safe_extract(STYPE##2 const a)                 \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -53,7 +53,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE _cl_overloadable safe_extract(STYPE##4 const a)                 \
+  STYPE _CL_OVERLOADABLE safe_extract(STYPE##4 const a)                 \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -66,7 +66,7 @@
     return safe_extract(a.lo);                                          \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_neg(STYPE##2 a)                        \
+  STYPE##2 _CL_OVERLOADABLE safe_neg(STYPE##2 a)                        \
   {                                                                     \
     STYPE##2 b;                                                         \
     b.s0 = - a.s0;                                                      \
@@ -74,7 +74,7 @@
     return safe_normalize(b);                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_abs(STYPE##2 const a)                  \
+  STYPE##2 _CL_OVERLOADABLE safe_abs(STYPE##2 const a)                  \
   {                                                                     \
     STYPE##2 b;                                                         \
     b = a;                                                              \
@@ -84,7 +84,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_add(STYPE##2 const a, STYPE##2 const b) \
+  STYPE##2 _CL_OVERLOADABLE safe_add(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
     c.s0 = a.s0 + b.s0;                                                 \
@@ -92,7 +92,7 @@
     return safe_normalize(c);                                           \
   }                                                                     \
                                                                         \
-  STYPE##4 _cl_overloadable safe_add(STYPE##4 const a, STYPE##4 const b) \
+  STYPE##4 _CL_OVERLOADABLE safe_add(STYPE##4 const a, STYPE##4 const b) \
   {                                                                     \
     STYPE##4 c;                                                         \
     c.s0 = a.s0 + b.s0;                                                 \
@@ -102,7 +102,7 @@
     return safe_normalize(c);                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_sub(STYPE##2 const a, STYPE##2 const b) \
+  STYPE##2 _CL_OVERLOADABLE safe_sub(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
     c.s0 = a.s0 - b.s0;                                                 \
@@ -110,7 +110,7 @@
     return safe_normalize(c);                                           \
   }                                                                     \
                                                                         \
-  STYPE##4 _cl_overloadable safe_mul(STYPE##2 const a, STYPE##2 const b) \
+  STYPE##4 _CL_OVERLOADABLE safe_mul(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##4 c00, c01, c10, c11;                                        \
     c00 = 0;                                                            \
@@ -131,7 +131,7 @@
     return c;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_max(STYPE##2 const a, STYPE##2 const b) \
+  STYPE##2 _CL_OVERLOADABLE safe_max(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
     if (a.s1 > b.s1 || (a.s1 == b.s1 && a.s0 >= b.s0)) {                \
@@ -142,7 +142,7 @@
     return c;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_min(STYPE##2 const a, STYPE##2 const b) \
+  STYPE##2 _CL_OVERLOADABLE safe_min(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
     if (a.s1 < b.s1 || (a.s1 == b.s1 && a.s0 <= b.s0)) {                \
@@ -153,7 +153,7 @@
     return c;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_clamp(STYPE##2 const a,                \
+  STYPE##2 _CL_OVERLOADABLE safe_clamp(STYPE##2 const a,                \
                                        STYPE##2 const alo, STYPE##2 const ahi) \
   {                                                                     \
     STYPE##2 b;                                                         \
@@ -167,7 +167,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_clamp(STYPE##4 const a,                \
+  STYPE##2 _CL_OVERLOADABLE safe_clamp(STYPE##4 const a,                \
                                        STYPE##2 const alo, STYPE##2 const ahi) \
   {                                                                     \
     STYPE##2 b;                                                         \
@@ -185,7 +185,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_rshift(STYPE##2 a)                     \
+  STYPE##2 _CL_OVERLOADABLE safe_rshift(STYPE##2 a)                     \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -198,7 +198,7 @@
     return safe_normalize(b);                                           \
   }                                                                     \
                                                                         \
-  STYPE##2 _cl_overloadable safe_hi(STYPE##4 a)                         \
+  STYPE##2 _CL_OVERLOADABLE safe_hi(STYPE##4 a)                         \
   {                                                                     \
     return safe_normalize(a.hi);                                        \
   }
@@ -207,7 +207,7 @@
 
 #define DEFINE_SAFE_2(TYPE, STYPE)                                      \
                                                                         \
-  STYPE##2 _cl_overloadable safe_create(TYPE const a)                   \
+  STYPE##2 _CL_OVERLOADABLE safe_create(TYPE const a)                   \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -220,7 +220,7 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
-  STYPE##4 _cl_overloadable safe_create4(TYPE const a)                  \
+  STYPE##4 _CL_OVERLOADABLE safe_create4(TYPE const a)                  \
   {                                                                     \
     STYPE const halfbits = 4*sizeof(STYPE);                             \
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
@@ -367,15 +367,18 @@ DEFINE_SAFE_2(ulong , long ))
   NAME##_ulong16 ();)
 
 
-
+#if __has_extension(c_generic_selections)
+# define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
+#else
+# define is_floating(T) ((T)0.1f > (T)0.0f)
+#endif
 #define is_signed(T)   ((T)-1 < (T)+1)
-#define is_floating(T) ((T)0.1f > (T)0.0f)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))
 
 DEFINE_BODY_G
 (test_hadd,
  ({
-   _cl_static_assert(sgtype, !is_floating(sgtype));
+   _CL_STATIC_ASSERT(sgtype, !is_floating(sgtype));
    uint const randoms[] = {
      0x00000000U,
      0x00000001U,

@@ -21,123 +21,123 @@
    THE SOFTWARE.
 */
 
-int _cl_overloadable any(char a)
+int _CL_OVERLOADABLE any(char a)
 {
   return a < (char)0;
 }
 
-int _cl_overloadable any(char2 a)
+int _CL_OVERLOADABLE any(char2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(char3 a)
+int _CL_OVERLOADABLE any(char3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int _cl_overloadable any(char4 a)
+int _CL_OVERLOADABLE any(char4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(char8 a)
+int _CL_OVERLOADABLE any(char8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(char16 a)
+int _CL_OVERLOADABLE any(char16 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(short a)
+int _CL_OVERLOADABLE any(short a)
 {
   return a < (short)0;
 }
 
-int _cl_overloadable any(short2 a)
+int _CL_OVERLOADABLE any(short2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(short3 a)
+int _CL_OVERLOADABLE any(short3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int _cl_overloadable any(short4 a)
+int _CL_OVERLOADABLE any(short4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(short8 a)
+int _CL_OVERLOADABLE any(short8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(short16 a)
+int _CL_OVERLOADABLE any(short16 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(int a)
+int _CL_OVERLOADABLE any(int a)
 {
   return a < 0;
 }
 
-int _cl_overloadable any(int2 a)
+int _CL_OVERLOADABLE any(int2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(int3 a)
+int _CL_OVERLOADABLE any(int3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int _cl_overloadable any(int4 a)
+int _CL_OVERLOADABLE any(int4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(int8 a)
+int _CL_OVERLOADABLE any(int8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(int16 a)
+int _CL_OVERLOADABLE any(int16 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
 #ifdef cles_khr_int64
-int _cl_overloadable any(long a)
+int _CL_OVERLOADABLE any(long a)
 {
   return a < 0L;
 }
 
-int _cl_overloadable any(long2 a)
+int _CL_OVERLOADABLE any(long2 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(long3 a)
+int _CL_OVERLOADABLE any(long3 a)
 {
   return any(a.s01) || any(a.s2);
 }
 
-int _cl_overloadable any(long4 a)
+int _CL_OVERLOADABLE any(long4 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(long8 a)
+int _CL_OVERLOADABLE any(long8 a)
 {
   return any(a.lo) || any(a.hi);
 }
 
-int _cl_overloadable any(long16 a)
+int _CL_OVERLOADABLE any(long16 a)
 {
   return any(a.lo) || any(a.hi);
 }
