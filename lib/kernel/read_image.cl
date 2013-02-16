@@ -1,8 +1,7 @@
+#ifndef _CL_HAS_IMAGE_ACCESS
+
 #include "templates.h"
-
 #include "image.h"
-
-#ifdef CLANG_OLDER_THAN_3_3
 
 float4 _CL_OVERLOADABLE read_imagef ( image2d_t image,
         sampler_t sampler,

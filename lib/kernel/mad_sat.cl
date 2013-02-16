@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#ifdef CLANG_OLDER_THAN_3_3
+#if (__clang_major__ == 3) && (__clang_minor__ <= 3)
 // Clang 3.3 crashes when generating this. Probably due to the
 // conversion (implicit conversions between vectors are not supported
 // anyhow).

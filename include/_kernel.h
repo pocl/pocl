@@ -22,10 +22,13 @@
    THE SOFTWARE.
 */
 
-#if __clang_major__ == 3 && (__clang_minor__ == 2 || __clang_minor__ == 1)
-#define CLANG_OLDER_THAN_3_3
+/* Language feature detection */
+#if (__clang_major__ == 3) && (__clang_minor__ >= 3)
+#  define _CL_HAS_EVENT_T
 #endif
-
+#if __has_feature(__opencl_image_access__)
+#  define _CL_HAS_IMAGE_ACCESS
+#endif
 
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
@@ -150,77 +153,64 @@ typedef struct error_undefined_type_double error_undefined_type_double;
 // better way? Should we also align the other vectors?
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
-
-#ifdef CLANG_OLDER_THAN_3_3
-typedef char char3  __attribute__((__ext_vector_type__(3), __aligned__(4)));
-#else
 typedef char char3  __attribute__((__ext_vector_type__(3)));
-#endif
 typedef char char4  __attribute__((__ext_vector_type__(4)));
 typedef char char8  __attribute__((__ext_vector_type__(8)));
 typedef char char16 __attribute__((__ext_vector_type__(16)));
 
 typedef uchar uchar2  __attribute__((__ext_vector_type__(2)));
-typedef uchar uchar3  __attribute__((__ext_vector_type__(3), __aligned__(4)));
+typedef uchar uchar3  __attribute__((__ext_vector_type__(3)));
 typedef uchar uchar4  __attribute__((__ext_vector_type__(4)));
 typedef uchar uchar8  __attribute__((__ext_vector_type__(8)));
 typedef uchar uchar16 __attribute__((__ext_vector_type__(16)));
 
 typedef short short2  __attribute__((__ext_vector_type__(2)));
-typedef short short3  __attribute__((__ext_vector_type__(3), __aligned__(8)));
+typedef short short3  __attribute__((__ext_vector_type__(3)));
 typedef short short4  __attribute__((__ext_vector_type__(4)));
 typedef short short8  __attribute__((__ext_vector_type__(8)));
 typedef short short16 __attribute__((__ext_vector_type__(16)));
 
 typedef ushort ushort2  __attribute__((__ext_vector_type__(2)));
-typedef ushort ushort3  __attribute__((__ext_vector_type__(3), __aligned__(8)));
+typedef ushort ushort3  __attribute__((__ext_vector_type__(3)));
 typedef ushort ushort4  __attribute__((__ext_vector_type__(4)));
 typedef ushort ushort8  __attribute__((__ext_vector_type__(8)));
 typedef ushort ushort16 __attribute__((__ext_vector_type__(16)));
 
 typedef int int2  __attribute__((__ext_vector_type__(2)));
-#ifdef CLANG_OLDER_THAN_3_3
-typedef int int3  __attribute__((__ext_vector_type__(3), __aligned__(16)));
-#else
 typedef int int3  __attribute__((__ext_vector_type__(3)));
-#endif
 typedef int int4  __attribute__((__ext_vector_type__(4)));
 typedef int int8  __attribute__((__ext_vector_type__(8)));
 typedef int int16 __attribute__((__ext_vector_type__(16)));
 
 typedef uint uint2  __attribute__((__ext_vector_type__(2)));
-typedef uint uint3  __attribute__((__ext_vector_type__(3), __aligned__(16)));
+typedef uint uint3  __attribute__((__ext_vector_type__(3)));
 typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
 #ifdef cles_khr_int64
 typedef long long2  __attribute__((__ext_vector_type__(2)));
-typedef long long3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
+typedef long long3  __attribute__((__ext_vector_type__(3)));
 typedef long long4  __attribute__((__ext_vector_type__(4)));
 typedef long long8  __attribute__((__ext_vector_type__(8)));
 typedef long long16 __attribute__((__ext_vector_type__(16)));
 
 typedef ulong ulong2  __attribute__((__ext_vector_type__(2)));
-typedef ulong ulong3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
+typedef ulong ulong3  __attribute__((__ext_vector_type__(3)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
 typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
-#ifdef CLANG_OLDER_THAN_3_3
-typedef float float3  __attribute__((__ext_vector_type__(3), __aligned__(16)));
-#else
 typedef float float3  __attribute__((__ext_vector_type__(3)));
-#endif
 typedef float float4  __attribute__((__ext_vector_type__(4)));
 typedef float float8  __attribute__((__ext_vector_type__(8)));
 typedef float float16 __attribute__((__ext_vector_type__(16)));
 
 #ifdef cl_khr_fp64
 typedef double double2  __attribute__((__ext_vector_type__(2)));
-typedef double double3  __attribute__((__ext_vector_type__(3), __aligned__(32)));
+typedef double double3  __attribute__((__ext_vector_type__(3)));
 typedef double double4  __attribute__((__ext_vector_type__(4)));
 typedef double double8  __attribute__((__ext_vector_type__(8)));
 typedef double double16 __attribute__((__ext_vector_type__(16)));
@@ -1874,8 +1864,7 @@ int printf(const /*constant*/ char * restrict format, ...)
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */
 
-#if defined(CLANG_OLDER_THAN_3_3)
-/* Clang 3.3 generates event_t as an opaque type. */
+#ifndef _CL_HAS_EVENT_T
 typedef uint event_t;
 #endif
 
@@ -1918,9 +1907,9 @@ __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
 // Image support
 
-#if defined(CLANG_OLDER_THAN_3_3)
-/* Clang 3.3 generates sampler_t as an opaque type. */
+#ifndef _CL_HAS_IMAGE_ACCESS
 typedef int sampler_t;
+typedef struct image2d_t_* image2d_t;
 #endif
 
 #define CLK_ADDRESS_NONE                0x00
@@ -1934,11 +1923,6 @@ typedef int sampler_t;
 
 #define CLK_FILTER_NEAREST              0x00
 #define CLK_FILTER_LINEAR               0x10
-
-#if defined(CLANG_OLDER_THAN_3_3)
-/* Clang 3.3 generates image2d_t as an opaque type. */
-typedef struct image2d_t_* image2d_t;
-#endif
 
 float4 _CL_OVERLOADABLE read_imagef( image2d_t image,
         sampler_t sampler,
@@ -1958,3 +1942,4 @@ void _CL_OVERLOADABLE write_imagei( image2d_t image,
 
 int get_image_width (image2d_t image);
 int get_image_height (image2d_t image);
+
