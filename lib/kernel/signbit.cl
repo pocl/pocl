@@ -42,7 +42,7 @@
 
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
-#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ > 3))
+#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ < 3))
 // Clang 3.2 and earlier crashes when generating this. Probably due to the
 // conversion *(jtype*)&a.
 IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
