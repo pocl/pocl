@@ -52,7 +52,7 @@
 DEFINE_BODY_V
 (test_fabs,
  ({
-   _cl_static_assert(stype, is_floating(stype));
+   _CL_STATIC_ASSERT(stype, is_floating(stype));
    float const values[] = {
      0.0f,
      0.1f,

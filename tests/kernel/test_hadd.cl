@@ -375,7 +375,7 @@ DEFINE_SAFE_2(ulong , long ))
 DEFINE_BODY_G
 (test_hadd,
  ({
-   _cl_static_assert(sgtype, !is_floating(sgtype));
+   _CL_STATIC_ASSERT(sgtype, !is_floating(sgtype));
    uint const randoms[] = {
      0x00000000U,
      0x00000001U,

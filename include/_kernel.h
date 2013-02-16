@@ -65,16 +65,44 @@
 #  error "cl_khr_fp64 requires cles_khr_int64"
 #endif
 
-/* Attributes suppored by Clang/SPIR */
-#define _CL_ALWAYSINLINE __attribute__((__always_inline__))
-#define _CL_NOINLINE __attribute__((__noinline__))
-#define _CL_OVERLOADABLE __attribute__((__overloadable__))
-#define _CL_READNONE __attribute__((__const__))
-#define _CL_READONLY __attribute__((__pure__))
-#define _CL_UNAVAILABLE __attribute__((__unavailable__))
+/* Function/type attributes suppored by Clang/SPIR */
+#if __has_attribute(__always_inline__)
+#  define _CL_ALWAYSINLINE __attribute__((__always_inline__))
+#else
+#  define _CL_ALWAYSINLINE
+#endif
+#if __has_attribute(__noinline__)
+#  define _CL_NOINLINE __attribute__((__noinline__))
+#else
+#  define _CL_NOINLINE
+#endif
+#if __has_attribute(__overloadable__)
+#  define _CL_OVERLOADABLE __attribute__((__overloadable__))
+#else
+#  define _CL_OVERLOADABLE
+#endif
+#if __has_attribute(__const__)
+#  define _CL_READNONE __attribute__((__const__))
+#else
+#  define _CL_READNONE
+#endif
+#if __has_attribute(__pure__)
+#  define _CL_READONLY __attribute__((__pure__))
+#else
+#  define _CL_READONLY
+#endif
+#if __has_attribute(__unavailable__)
+#  define _CL_UNAVAILABLE __attribute__((__unavailable__))
+#else
+#  define _CL_UNAVAILABLE
+#endif
 
 /* A static assert statement to catch inconsistencies at build time */
-#define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
+#if __has_extension(__c_static_assert__)
+#  define _CL_STATIC_ASSERT(_t, _x) _Static_assert(_x, #_t)
+#else
+#  define _CL_STATIC_ASSERT(_t, _x) typedef int __cl_ai##_t[(x) ? 1 : -1];
+#endif
 
 /* Use fixed address space id for all but local address space.
 
@@ -199,89 +227,89 @@ typedef double double16 __attribute__((__ext_vector_type__(16)));
 #endif
 
 /* Ensure the data types have the right sizes */
-_cl_static_assert(char  , sizeof(char  ) == 1);
-_cl_static_assert(char2 , sizeof(char2 ) == 2 *sizeof(char));
-_cl_static_assert(char3 , sizeof(char3 ) == 4 *sizeof(char));
-_cl_static_assert(char4 , sizeof(char4 ) == 4 *sizeof(char));
-_cl_static_assert(char8 , sizeof(char8 ) == 8 *sizeof(char));
-_cl_static_assert(char16, sizeof(char16) == 16*sizeof(char));
+_CL_STATIC_ASSERT(char  , sizeof(char  ) == 1);
+_CL_STATIC_ASSERT(char2 , sizeof(char2 ) == 2 *sizeof(char));
+_CL_STATIC_ASSERT(char3 , sizeof(char3 ) == 4 *sizeof(char));
+_CL_STATIC_ASSERT(char4 , sizeof(char4 ) == 4 *sizeof(char));
+_CL_STATIC_ASSERT(char8 , sizeof(char8 ) == 8 *sizeof(char));
+_CL_STATIC_ASSERT(char16, sizeof(char16) == 16*sizeof(char));
 
-_cl_static_assert(uchar , sizeof(uchar ) == 1);
-_cl_static_assert(uchar2 , sizeof(uchar2 ) == 2 *sizeof(uchar));
-_cl_static_assert(uchar3 , sizeof(uchar3 ) == 4 *sizeof(uchar));
-_cl_static_assert(uchar4 , sizeof(uchar4 ) == 4 *sizeof(uchar));
-_cl_static_assert(uchar8 , sizeof(uchar8 ) == 8 *sizeof(uchar));
-_cl_static_assert(uchar16, sizeof(uchar16) == 16*sizeof(uchar));
+_CL_STATIC_ASSERT(uchar , sizeof(uchar ) == 1);
+_CL_STATIC_ASSERT(uchar2 , sizeof(uchar2 ) == 2 *sizeof(uchar));
+_CL_STATIC_ASSERT(uchar3 , sizeof(uchar3 ) == 4 *sizeof(uchar));
+_CL_STATIC_ASSERT(uchar4 , sizeof(uchar4 ) == 4 *sizeof(uchar));
+_CL_STATIC_ASSERT(uchar8 , sizeof(uchar8 ) == 8 *sizeof(uchar));
+_CL_STATIC_ASSERT(uchar16, sizeof(uchar16) == 16*sizeof(uchar));
 
-_cl_static_assert(short , sizeof(short ) == 2);
-_cl_static_assert(short2 , sizeof(short2 ) == 2 *sizeof(short));
-_cl_static_assert(short3 , sizeof(short3 ) == 4 *sizeof(short));
-_cl_static_assert(short4 , sizeof(short4 ) == 4 *sizeof(short));
-_cl_static_assert(short8 , sizeof(short8 ) == 8 *sizeof(short));
-_cl_static_assert(short16, sizeof(short16) == 16*sizeof(short));
+_CL_STATIC_ASSERT(short , sizeof(short ) == 2);
+_CL_STATIC_ASSERT(short2 , sizeof(short2 ) == 2 *sizeof(short));
+_CL_STATIC_ASSERT(short3 , sizeof(short3 ) == 4 *sizeof(short));
+_CL_STATIC_ASSERT(short4 , sizeof(short4 ) == 4 *sizeof(short));
+_CL_STATIC_ASSERT(short8 , sizeof(short8 ) == 8 *sizeof(short));
+_CL_STATIC_ASSERT(short16, sizeof(short16) == 16*sizeof(short));
 
-_cl_static_assert(ushort, sizeof(ushort) == 2);
-_cl_static_assert(ushort2 , sizeof(ushort2 ) == 2 *sizeof(ushort));
-_cl_static_assert(ushort3 , sizeof(ushort3 ) == 4 *sizeof(ushort));
-_cl_static_assert(ushort4 , sizeof(ushort4 ) == 4 *sizeof(ushort));
-_cl_static_assert(ushort8 , sizeof(ushort8 ) == 8 *sizeof(ushort));
-_cl_static_assert(ushort16, sizeof(ushort16) == 16*sizeof(ushort));
+_CL_STATIC_ASSERT(ushort, sizeof(ushort) == 2);
+_CL_STATIC_ASSERT(ushort2 , sizeof(ushort2 ) == 2 *sizeof(ushort));
+_CL_STATIC_ASSERT(ushort3 , sizeof(ushort3 ) == 4 *sizeof(ushort));
+_CL_STATIC_ASSERT(ushort4 , sizeof(ushort4 ) == 4 *sizeof(ushort));
+_CL_STATIC_ASSERT(ushort8 , sizeof(ushort8 ) == 8 *sizeof(ushort));
+_CL_STATIC_ASSERT(ushort16, sizeof(ushort16) == 16*sizeof(ushort));
 
-_cl_static_assert(int   , sizeof(int   ) == 4);
-_cl_static_assert(int2 , sizeof(int2 ) == 2 *sizeof(int));
-_cl_static_assert(int3 , sizeof(int3 ) == 4 *sizeof(int));
-_cl_static_assert(int4 , sizeof(int4 ) == 4 *sizeof(int));
-_cl_static_assert(int8 , sizeof(int8 ) == 8 *sizeof(int));
-_cl_static_assert(int16, sizeof(int16) == 16*sizeof(int));
+_CL_STATIC_ASSERT(int   , sizeof(int   ) == 4);
+_CL_STATIC_ASSERT(int2 , sizeof(int2 ) == 2 *sizeof(int));
+_CL_STATIC_ASSERT(int3 , sizeof(int3 ) == 4 *sizeof(int));
+_CL_STATIC_ASSERT(int4 , sizeof(int4 ) == 4 *sizeof(int));
+_CL_STATIC_ASSERT(int8 , sizeof(int8 ) == 8 *sizeof(int));
+_CL_STATIC_ASSERT(int16, sizeof(int16) == 16*sizeof(int));
 
-_cl_static_assert(uint  , sizeof(uint  ) == 4);
-_cl_static_assert(uint2 , sizeof(uint2 ) == 2 *sizeof(uint));
-_cl_static_assert(uint3 , sizeof(uint3 ) == 4 *sizeof(uint));
-_cl_static_assert(uint4 , sizeof(uint4 ) == 4 *sizeof(uint));
-_cl_static_assert(uint8 , sizeof(uint8 ) == 8 *sizeof(uint));
-_cl_static_assert(uint16, sizeof(uint16) == 16*sizeof(uint));
+_CL_STATIC_ASSERT(uint  , sizeof(uint  ) == 4);
+_CL_STATIC_ASSERT(uint2 , sizeof(uint2 ) == 2 *sizeof(uint));
+_CL_STATIC_ASSERT(uint3 , sizeof(uint3 ) == 4 *sizeof(uint));
+_CL_STATIC_ASSERT(uint4 , sizeof(uint4 ) == 4 *sizeof(uint));
+_CL_STATIC_ASSERT(uint8 , sizeof(uint8 ) == 8 *sizeof(uint));
+_CL_STATIC_ASSERT(uint16, sizeof(uint16) == 16*sizeof(uint));
 
 #ifdef cles_khr_int64 
-_cl_static_assert(long  , sizeof(long  ) == 8);
-_cl_static_assert(long2 , sizeof(long2 ) == 2 *sizeof(long));
-_cl_static_assert(long3 , sizeof(long3 ) == 4 *sizeof(long));
-_cl_static_assert(long4 , sizeof(long4 ) == 4 *sizeof(long));
-_cl_static_assert(long8 , sizeof(long8 ) == 8 *sizeof(long));
-_cl_static_assert(long16, sizeof(long16) == 16*sizeof(long));
+_CL_STATIC_ASSERT(long  , sizeof(long  ) == 8);
+_CL_STATIC_ASSERT(long2 , sizeof(long2 ) == 2 *sizeof(long));
+_CL_STATIC_ASSERT(long3 , sizeof(long3 ) == 4 *sizeof(long));
+_CL_STATIC_ASSERT(long4 , sizeof(long4 ) == 4 *sizeof(long));
+_CL_STATIC_ASSERT(long8 , sizeof(long8 ) == 8 *sizeof(long));
+_CL_STATIC_ASSERT(long16, sizeof(long16) == 16*sizeof(long));
 
-_cl_static_assert(ulong  , sizeof(ulong  ) == 8);
-_cl_static_assert(ulong2 , sizeof(ulong2 ) == 2 *sizeof(ulong));
-_cl_static_assert(ulong3 , sizeof(ulong3 ) == 4 *sizeof(ulong));
-_cl_static_assert(ulong4 , sizeof(ulong4 ) == 4 *sizeof(ulong));
-_cl_static_assert(ulong8 , sizeof(ulong8 ) == 8 *sizeof(ulong));
-_cl_static_assert(ulong16, sizeof(ulong16) == 16*sizeof(ulong));
+_CL_STATIC_ASSERT(ulong  , sizeof(ulong  ) == 8);
+_CL_STATIC_ASSERT(ulong2 , sizeof(ulong2 ) == 2 *sizeof(ulong));
+_CL_STATIC_ASSERT(ulong3 , sizeof(ulong3 ) == 4 *sizeof(ulong));
+_CL_STATIC_ASSERT(ulong4 , sizeof(ulong4 ) == 4 *sizeof(ulong));
+_CL_STATIC_ASSERT(ulong8 , sizeof(ulong8 ) == 8 *sizeof(ulong));
+_CL_STATIC_ASSERT(ulong16, sizeof(ulong16) == 16*sizeof(ulong));
 #endif
 
 #ifdef cl_khr_fp16
-_cl_static_assert(half, sizeof(half) == 2);
+_CL_STATIC_ASSERT(half, sizeof(half) == 2);
 /* There are no vectors of type half */
 #endif
 
-_cl_static_assert(float , sizeof(float ) == 4);
-_cl_static_assert(float2 , sizeof(float2 ) == 2 *sizeof(float));
-_cl_static_assert(float3 , sizeof(float3 ) == 4 *sizeof(float));
-_cl_static_assert(float4 , sizeof(float4 ) == 4 *sizeof(float));
-_cl_static_assert(float8 , sizeof(float8 ) == 8 *sizeof(float));
-_cl_static_assert(float16, sizeof(float16) == 16*sizeof(float));
+_CL_STATIC_ASSERT(float , sizeof(float ) == 4);
+_CL_STATIC_ASSERT(float2 , sizeof(float2 ) == 2 *sizeof(float));
+_CL_STATIC_ASSERT(float3 , sizeof(float3 ) == 4 *sizeof(float));
+_CL_STATIC_ASSERT(float4 , sizeof(float4 ) == 4 *sizeof(float));
+_CL_STATIC_ASSERT(float8 , sizeof(float8 ) == 8 *sizeof(float));
+_CL_STATIC_ASSERT(float16, sizeof(float16) == 16*sizeof(float));
 
 #ifdef cl_khr_fp64
-_cl_static_assert(double, sizeof(double) == 8);
-_cl_static_assert(double2 , sizeof(double2 ) == 2 *sizeof(double));
-_cl_static_assert(double3 , sizeof(double3 ) == 4 *sizeof(double));
-_cl_static_assert(double4 , sizeof(double4 ) == 4 *sizeof(double));
-_cl_static_assert(double8 , sizeof(double8 ) == 8 *sizeof(double));
-_cl_static_assert(double16, sizeof(double16) == 16*sizeof(double));
+_CL_STATIC_ASSERT(double, sizeof(double) == 8);
+_CL_STATIC_ASSERT(double2 , sizeof(double2 ) == 2 *sizeof(double));
+_CL_STATIC_ASSERT(double3 , sizeof(double3 ) == 4 *sizeof(double));
+_CL_STATIC_ASSERT(double4 , sizeof(double4 ) == 4 *sizeof(double));
+_CL_STATIC_ASSERT(double8 , sizeof(double8 ) == 8 *sizeof(double));
+_CL_STATIC_ASSERT(double16, sizeof(double16) == 16*sizeof(double));
 #endif
 
-_cl_static_assert(size_t, sizeof(size_t) == sizeof(void*));
-_cl_static_assert(ptrdiff_t, sizeof(ptrdiff_t) == sizeof(void*));
-_cl_static_assert(intptr_t, sizeof(intptr_t) == sizeof(void*));
-_cl_static_assert(uintptr_t, sizeof(uintptr_t) == sizeof(void*));
+_CL_STATIC_ASSERT(size_t, sizeof(size_t) == sizeof(void*));
+_CL_STATIC_ASSERT(ptrdiff_t, sizeof(ptrdiff_t) == sizeof(void*));
+_CL_STATIC_ASSERT(intptr_t, sizeof(intptr_t) == sizeof(void*));
+_CL_STATIC_ASSERT(uintptr_t, sizeof(uintptr_t) == sizeof(void*));
 
 
 /* Conversion functions */

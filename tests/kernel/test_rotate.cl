@@ -124,7 +124,7 @@
 DEFINE_BODY_G
 (test_rotate,
  ({
-   _cl_static_assert(sgtype, !is_floating(sgtype));
+   _CL_STATIC_ASSERT(sgtype, !is_floating(sgtype));
    int patterns[] = {0x01, 0x80, 0x77, 0xee};
    for (int p=0; p<4; ++p) {
      int const bits = count_bits(sgtype);
