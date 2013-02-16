@@ -40,13 +40,13 @@ DEFINE_EXPR_V_VV(copysign,
 
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)    \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)    \
   {                                             \
     return EXPR;                                \
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)            \
   {                                                     \
     UPTYPE a1, b1;                                      \
     a1.LO = a;                                          \
@@ -55,7 +55,7 @@ DEFINE_EXPR_V_VV(copysign,
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)             \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)            \
   {                                                     \
     return (TYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));  \
   }

@@ -25,7 +25,7 @@
 // convert_* function calls
 
 #define IMPLEMENT_UPSAMPLE_LG_GUG(GTYPE, SGTYPE, UGTYPE, LGTYPE)        \
-  LGTYPE _cl_overloadable                                               \
+  LGTYPE _CL_OVERLOADABLE                                               \
   upsample(GTYPE a, UGTYPE b)                                           \
   {                                                                     \
     int bits = CHAR_BIT * sizeof(SGTYPE);                               \

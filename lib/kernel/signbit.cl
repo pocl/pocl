@@ -30,7 +30,7 @@
   })
 
 #define IMPLEMENT_DIRECT(NAME, VTYPE, STYPE, JTYPE, EXPR)       \
-  JTYPE _cl_overloadable NAME(VTYPE a)                          \
+  JTYPE _CL_OVERLOADABLE NAME(VTYPE a)                          \
   {                                                             \
     typedef VTYPE vtype;                                        \
     typedef STYPE stype;                                        \

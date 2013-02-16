@@ -27,31 +27,31 @@
 
 #define IMPLEMENT_VLOAD(TYPE, MOD)                                      \
                                                                         \
-  TYPE##2 _cl_overloadable                                              \
+  TYPE##2 _CL_OVERLOADABLE                                              \
   vload2(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
     return (TYPE##2)(p[offset*2], p[offset*2+1]);                       \
   }                                                                     \
                                                                         \
-  TYPE##3 _cl_overloadable                                              \
+  TYPE##3 _CL_OVERLOADABLE                                              \
   vload3(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
     return (TYPE##3)(vload2(0, &p[offset*3]), p[offset*3+2]);           \
   }                                                                     \
                                                                         \
-  TYPE##4 _cl_overloadable                                              \
+  TYPE##4 _CL_OVERLOADABLE                                              \
   vload4(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
     return (TYPE##4)(vload2(0, &p[offset*4]), vload2(0, &p[offset*4+2])); \
   }                                                                     \
                                                                         \
-  TYPE##8 _cl_overloadable                                              \
+  TYPE##8 _CL_OVERLOADABLE                                              \
   vload8(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
     return (TYPE##8)(vload4(0, &p[offset*8]), vload4(0, &p[offset*8+4])); \
   }                                                                     \
                                                                         \
-  TYPE##16 _cl_overloadable                                             \
+  TYPE##16 _CL_OVERLOADABLE                                             \
   vload16(size_t offset, const MOD TYPE *p)                             \
   {                                                                     \
     return (TYPE##16)(vload8(0, &p[offset*16]), vload8(0, &p[offset*16+8])); \

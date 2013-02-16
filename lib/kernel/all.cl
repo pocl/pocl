@@ -21,123 +21,123 @@
    THE SOFTWARE.
 */
 
-int _cl_overloadable all(char a)
+int _CL_OVERLOADABLE all(char a)
 {
   return a < (char)0;
 }
 
-int _cl_overloadable all(char2 a)
+int _CL_OVERLOADABLE all(char2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(char3 a)
+int _CL_OVERLOADABLE all(char3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int _cl_overloadable all(char4 a)
+int _CL_OVERLOADABLE all(char4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(char8 a)
+int _CL_OVERLOADABLE all(char8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(char16 a)
+int _CL_OVERLOADABLE all(char16 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(short a)
+int _CL_OVERLOADABLE all(short a)
 {
   return a < (short)0;
 }
 
-int _cl_overloadable all(short2 a)
+int _CL_OVERLOADABLE all(short2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(short3 a)
+int _CL_OVERLOADABLE all(short3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int _cl_overloadable all(short4 a)
+int _CL_OVERLOADABLE all(short4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(short8 a)
+int _CL_OVERLOADABLE all(short8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(short16 a)
+int _CL_OVERLOADABLE all(short16 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(int a)
+int _CL_OVERLOADABLE all(int a)
 {
   return a < 0;
 }
 
-int _cl_overloadable all(int2 a)
+int _CL_OVERLOADABLE all(int2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(int3 a)
+int _CL_OVERLOADABLE all(int3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int _cl_overloadable all(int4 a)
+int _CL_OVERLOADABLE all(int4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(int8 a)
+int _CL_OVERLOADABLE all(int8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(int16 a)
+int _CL_OVERLOADABLE all(int16 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
 #ifdef cles_khr_int64
-int _cl_overloadable all(long a)
+int _CL_OVERLOADABLE all(long a)
 {
   return a < 0L;
 }
 
-int _cl_overloadable all(long2 a)
+int _CL_OVERLOADABLE all(long2 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(long3 a)
+int _CL_OVERLOADABLE all(long3 a)
 {
   return all(a.s01) && all(a.s2);
 }
 
-int _cl_overloadable all(long4 a)
+int _CL_OVERLOADABLE all(long4 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(long8 a)
+int _CL_OVERLOADABLE all(long8 a)
 {
   return all(a.lo) && all(a.hi);
 }
 
-int _cl_overloadable all(long16 a)
+int _CL_OVERLOADABLE all(long16 a)
 {
   return all(a.lo) && all(a.hi);
 }

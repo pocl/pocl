@@ -21,12 +21,12 @@
    THE SOFTWARE.
 */
 
-float4 _cl_overloadable cross(float4 a, float4 b)
+float4 _CL_OVERLOADABLE cross(float4 a, float4 b)
 {
   return (float4)(cross(a.xyz, b.xyz), 0.0f);
 }
 
-float3 _cl_overloadable cross(float3 a, float3 b)
+float3 _CL_OVERLOADABLE cross(float3 a, float3 b)
 {
   return (float3)(a.y * b.z - a.z * b.y,
                   a.z * b.x - a.x * b.z,
@@ -34,12 +34,12 @@ float3 _cl_overloadable cross(float3 a, float3 b)
 }
 
 #ifdef cl_khr_fp64
-double4 _cl_overloadable cross(double4 a, double4 b)
+double4 _CL_OVERLOADABLE cross(double4 a, double4 b)
 {
   return (double4)(cross(a.xyz, b.xyz), 0.0f);
 }
 
-double3 _cl_overloadable cross(double3 a, double3 b)
+double3 _CL_OVERLOADABLE cross(double3 a, double3 b)
 {
   return (double3)(a.y * b.z - a.z * b.y,
                    a.z * b.x - a.x * b.z,

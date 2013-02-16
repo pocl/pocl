@@ -22,7 +22,7 @@
 */
 
 #define DEFINE_AS_TYPE(SRC, DST)                                        \
-  DST _cl_overloadable                                                  \
+  DST _CL_OVERLOADABLE                                                  \
   as_##DST(SRC a)                                                       \
   {                                                                     \
     /* This may not be safe: */                                         \
