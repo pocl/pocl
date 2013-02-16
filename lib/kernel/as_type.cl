@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-/* The as_type functions are implementing using union casts, which OpenCL
+/* The as_type functions are implemented using union casts, which OpenCL
  * supports as per 6.2.4.1 in the OpenCL 1.2 specification.
  *
  * These map down to the corresponding SPIR/LLVM IR bitcast instruction.

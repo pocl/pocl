@@ -25,8 +25,6 @@
 /* Language feature detection */
 #if (__clang_major__ == 3) && (__clang_minor__ >= 3)
 #  define _CL_HAS_EVENT_T
-#endif
-#if __has_feature(__opencl_image_access__)
 #  define _CL_HAS_IMAGE_ACCESS
 #endif
 
