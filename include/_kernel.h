@@ -68,7 +68,7 @@
 #  error "cl_khr_fp64 requires cles_khr_int64"
 #endif
 
-/* Function/type attributes suppored by Clang/SPIR */
+/* Function/type attributes supported by Clang/SPIR */
 #if __has_attribute(__always_inline__)
 #  define _CL_ALWAYSINLINE __attribute__((__always_inline__))
 #else
