@@ -1,6 +1,6 @@
 // TESTING: as_TYPEn
 
-__attribute__((__aligned__(128)))
+__attribute__((aligned(128)))
 constant char data[128] =
 {
   0xe4, 0xf9, 0xb4, 0x88, 0x19, 0x65, 0xa2, 0xb6,
@@ -21,6 +21,7 @@ constant char data[128] =
   0x45, 0x84, 0xdf, 0xe7, 0xd7, 0x1a, 0x32, 0x25,
 };
 
+_CL_NOINLINE
 void clear_bytes(uchar* p, uchar c, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -28,6 +29,7 @@ void clear_bytes(uchar* p, uchar c, size_t n)
   }
 }
 
+_CL_NOINLINE
 void compare_bytes(
     const char* name,
     const uchar* dst, size_t dst_size, size_t dst_elsize,

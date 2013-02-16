@@ -65,7 +65,13 @@
 #  error "cl_khr_fp64 requires cles_khr_int64"
 #endif
 
-
+/* Attributes suppored by Clang/SPIR */
+#define _CL_ALWAYSINLINE __attribute__((__always_inline__))
+#define _CL_NOINLINE __attribute__((__noinline__))
+#define _CL_OVERLOADABLE __attribute__((__overloadable__))
+#define _CL_READNONE __attribute__((__const__))
+#define _CL_READONLY __attribute__((__pure__))
+#define _CL_UNAVAILABLE __attribute__((__unavailable__))
 
 /* A static assert statement to catch inconsistencies at build time */
 #define _cl_static_assert(_t, _x) typedef int ai##_t[(_x) ? 1 : -1]
@@ -276,9 +282,6 @@ _cl_static_assert(size_t, sizeof(size_t) == sizeof(void*));
 _cl_static_assert(ptrdiff_t, sizeof(ptrdiff_t) == sizeof(void*));
 _cl_static_assert(intptr_t, sizeof(intptr_t) == sizeof(void*));
 _cl_static_assert(uintptr_t, sizeof(uintptr_t) == sizeof(void*));
-
-
-#define _CL_OVERLOADABLE __attribute__ ((__overloadable__))
 
 
 /* Conversion functions */

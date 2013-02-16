@@ -21,18 +21,20 @@
    THE SOFTWARE.
 */
 
+/* The as_type functions are implementing using union casts, which OpenCL
+ * supports as per 6.2.4.1 in the OpenCL 1.2 specification.
+ *
+ * These map down to the corresponding SPIR/LLVM IR bitcast instruction.
+ */
+
 #define DEFINE_AS_TYPE(SRC, DST)                                        \
-  DST _CL_OVERLOADABLE                                                  \
-  as_##DST(SRC a)                                                       \
+  _CL_ALWAYSINLINE _CL_OVERLOADABLE                                     \
+  DST as_##DST(SRC a)                                                   \
   {                                                                     \
-    /* This may not be safe: */                                         \
-    /* return *(DST*)&a; */                                             \
-    /* This should be safe, but is not officially supported in OpenCL: */ \
     union { SRC src; DST dst; } cvt;                                    \
     cvt.src = a;                                                        \
     return cvt.dst;                                                     \
   }
-
 
 /* 1 byte */
 

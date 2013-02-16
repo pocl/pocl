@@ -73,7 +73,7 @@ long double_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 
 
 #endif
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_char_elements(char const* name, size_t sample, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -85,7 +85,7 @@ void compare_char_elements(char const* name, size_t sample, const char* expected
   }
 }
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_uchar_elements(char const* name, size_t sample, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -97,7 +97,7 @@ void compare_uchar_elements(char const* name, size_t sample, const uchar* expect
   }
 }
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_short_elements(char const* name, size_t sample, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -109,7 +109,7 @@ void compare_short_elements(char const* name, size_t sample, const short* expect
   }
 }
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_ushort_elements(char const* name, size_t sample, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -121,7 +121,7 @@ void compare_ushort_elements(char const* name, size_t sample, const ushort* expe
   }
 }
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_int_elements(char const* name, size_t sample, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -133,7 +133,7 @@ void compare_int_elements(char const* name, size_t sample, const int* expected, 
   }
 }
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_uint_elements(char const* name, size_t sample, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -147,7 +147,7 @@ void compare_uint_elements(char const* name, size_t sample, const uint* expected
 
 #ifdef cles_khr_int64
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_long_elements(char const* name, size_t sample, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -163,7 +163,7 @@ void compare_long_elements(char const* name, size_t sample, const long* expected
 
 #ifdef cles_khr_int64
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_ulong_elements(char const* name, size_t sample, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -177,7 +177,7 @@ void compare_ulong_elements(char const* name, size_t sample, const ulong* expect
 
 #endif
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_float_elements(char const* name, size_t sample, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -191,7 +191,7 @@ void compare_float_elements(char const* name, size_t sample, const float* expect
 
 #ifdef cl_khr_fp64
 
-__attribute__((__noinline__))
+_CL_NOINLINE
 void compare_double_elements(char const* name, size_t sample, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
@@ -11811,5 +11811,21 @@ union { int8 value; int raw[8]; } qe, qa;
 qa.value = convert_int8_rtz((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8_rtz((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8_rtp((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-23, -23, -23, -23, 23, 24, 24, 24);
+compare_int_elements("convert_int8_rtp((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8_rtn((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-24, -24, -24, -23, 23, 23, 23, 23);
+compare_int_elements("convert_int8_rtn((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8_rte((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-24, -24, -23, -23, 23, 23, 24, 24);
+compare_int_elements("convert_int8_rte((float8))", 0, qe.raw, qa.raw, 8);
+
+qa.value = convert_int8((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
+compare_int_elements("convert_int8((float8))", 0, qe.raw, qa.raw, 8);
 
 }
