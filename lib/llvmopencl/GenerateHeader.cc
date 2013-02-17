@@ -23,13 +23,6 @@
 #include "config.h"
 #include "pocl.h"
 #include "Workgroup.h"
-#include "llvm/Argument.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Support/CommandLine.h"
@@ -38,8 +31,28 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #ifdef LLVM_3_1
 #include "llvm/Target/TargetData.h"
-#else
+#elif defined LLVM_3_2
 #include "llvm/DataLayout.h"
+#else
+#include "llvm/IR/DataLayout.h"
+#endif
+
+#if (defined LLVM_3_1 or defined LLVM_3_2)
+#include "llvm/Argument.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#else
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
 #endif
 
 using namespace std;
@@ -183,8 +196,9 @@ GenerateHeader::ProcessPointers(Function *F,
   
     is_image[i] = false;
     is_sampler[i] = false;
-    
-    if (const PointerType *p = dyn_cast<PointerType> (t)) {
+ 
+    const PointerType *p = dyn_cast<PointerType>(t);
+    if (p && !ii->hasByValAttr()) {
       is_pointer[i] = true;
       // index 0 is for function attributes, parameters start at 1.
       if (p->getAddressSpace() == POCL_ADDRESS_SPACE_GLOBAL ||

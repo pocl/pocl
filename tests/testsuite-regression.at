@@ -1,22 +1,22 @@
 
 AT_BANNER([Regression tests])
 
-AT_SETUP([phi nodes not replicated (repl) - lp:#927573])
+AT_SETUP([phi nodes not replicated (repl) - lp:927573])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_loop_phi_replication], 0)
 AT_CLEANUP
 
-AT_SETUP([phi nodes not replicated (loops) - lp:#927573])
+AT_SETUP([phi nodes not replicated (loops) - lp:927573])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_loop_phi_replication], 0)
 AT_CLEANUP
 
-AT_SETUP([issues with local pointers (repl) - lp:#918801])
+AT_SETUP([issues with local pointers (repl) - lp:918801])
 AT_KEYWORDS([regression locals tce])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_locals], 0)
 AT_CLEANUP
 
-AT_SETUP([issues with local pointers (loops) - lp:#918801])
+AT_SETUP([issues with local pointers (loops) - lp:918801])
 AT_KEYWORDS([regression locals tce])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_locals], 0)
 AT_CLEANUP
@@ -41,85 +41,105 @@ AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_simple_for_with_a_barrier], 0)
 AT_CLEANUP
 
-AT_SETUP([for-loop with computation after the brexit (repl) - lp:#938123])
+AT_SETUP([for-loop with computation after the brexit (repl) - lp:938123])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_multi_level_loops_with_barriers], 0)
 AT_CLEANUP
 
-AT_SETUP([for-loop with computation after the brexit (loops) - lp:#938123])
+AT_SETUP([for-loop with computation after the brexit (loops) - lp:938123])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_multi_level_loops_with_barriers], 0)
 AT_CLEANUP
 
-AT_SETUP([for-loop with a variable iteration count (repl) - lp:#938883])
+AT_SETUP([for-loop with a variable iteration count (repl) - lp:938883])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
 
-AT_SETUP([for-loop with a variable iteration count (loops) - lp:#938883])
+AT_SETUP([for-loop with a variable iteration count (loops) - lp:938883])
 AT_KEYWORDS([regression])
+#this broke on ppc in commit 525, for LLVM 3.1 
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&\
+  grep -q "define LLVM_3_1" $abs_top_builddir/config.h])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_for_with_var_iteration_count], 0)
 AT_CLEANUP
 
-AT_SETUP([early return before a barrier region (repl) - lp:#940248])
+AT_SETUP([early return before a barrier region (repl) - lp:940248])
 AT_KEYWORDS([regression early-return])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_early_return], 0)
 AT_CLEANUP
 
-AT_SETUP([early return before a barrier region (loops) - lp:#940248])
+AT_SETUP([early return before a barrier region (loops) - lp:940248])
 AT_KEYWORDS([regression early-return])
 #AT_SKIP_IF(true)
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_early_return], 0)
 AT_CLEANUP
 
-AT_SETUP([id-dependent computation before kernel exit (repl) - lp:#940549])
+AT_SETUP([id-dependent computation before kernel exit (repl) - lp:940549])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_id_dependent_computation], 0)
 AT_CLEANUP
 
-AT_SETUP([id-dependent computation before kernel exit (loops) - lp:#940549])
+AT_SETUP([id-dependent computation before kernel exit (loops) - lp:940549])
 AT_KEYWORDS([regression])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_id_dependent_computation], 0)
 AT_CLEANUP
 
-AT_SETUP([struct kernel arguments - lp:#987905])
-AT_XFAIL_IF(true)
+AT_SETUP([struct kernel arguments - lp:987905])
+AT_XFAIL_IF([true])
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_structs_as_args], 0)
 AT_CLEANUP
 
-AT_SETUP([barrier just before return (repl) - lp:#1012030])
+AT_SETUP([vector kernel arguments - lp:987905])
+AT_KEYWORDS([regression struct])
+AT_CHECK([$abs_top_builddir/tests/regression/test_vectors_as_args], 0)
+AT_CLEANUP
+
+AT_SETUP([barrier just before return (repl) - lp:1012030])
 AT_KEYWORDS([regression struct])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_barrier_before_return], 0)
 AT_CLEANUP
 
-AT_SETUP([barrier just before return (loops) - lp:#1012030])
+AT_SETUP([barrier just before return (loops) - lp:1012030])
 AT_KEYWORDS([regression struct])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_barrier_before_return], 0)
 AT_CLEANUP
 
-AT_SETUP([infinite loop (repl) - lp:#941558])
+AT_SETUP([infinite loop (repl) - lp:941558])
 AT_KEYWORDS([regression infinite-loop])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_infinite_loop], 0)
 AT_CLEANUP
 
-AT_SETUP([infinite loop (loops) - lp:#941558])
+AT_SETUP([infinite loop (loops) - lp:941558])
 AT_KEYWORDS([regression infinite-loop])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_infinite_loop], 0)
 AT_CLEANUP
 
-AT_SETUP([passing a constant array as an arg - lp:#1032203])
+AT_SETUP([passing a constant array as an arg - lp:1032203])
 AT_KEYWORDS([regression const-array])
 AT_CHECK([$abs_top_builddir/tests/regression/test_constant_array], 0)
 AT_CLEANUP
 
-AT_SETUP([undominated variable from conditional barrier handling (repl) - lp:#1045835])
+AT_SETUP([undominated variable from conditional barrier handling (repl) - lp:1045835])
 AT_KEYWORDS([regression undominated])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_undominated_variable], 0)
 AT_CLEANUP
 
-AT_SETUP([undominated variable from conditional barrier handling (loops) - lp:#1045835])
+AT_SETUP([undominated variable from conditional barrier handling (loops) - lp:1045835])
 AT_KEYWORDS([regression undominated])
+#this broke on ppc in commit 525, for LLVM 3.1
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&\
+  grep -q "define LLVM_3_1" $abs_top_builddir/config.h])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_undominated_variable], 0)
 AT_CLEANUP
 
+AT_SETUP([clSetKernelArg overwriting the previous kernel's args - lp:1075134])
+AT_KEYWORDS([regression setkernelarg])
+AT_CHECK([$abs_top_builddir/tests/regression/test_setargs], 0)
+AT_CLEANUP
+
+AT_SETUP([setting a buffer argument to NULL causes a segfault - lp:1109030])
+AT_KEYWORDS([regression nullarg])
+AT_CHECK([$abs_top_builddir/tests/regression/test_null_arg], 0)
+AT_CLEANUP

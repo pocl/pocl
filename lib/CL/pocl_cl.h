@@ -261,7 +261,7 @@ struct _cl_device_id {
 		   size_t size, void *host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (void *data, cl_mem_flags flags, void *ptr);
-  void (*read) (void *data, void *host_ptr, void *device_ptr, size_t cb);
+  void (*read) (void *data, void *host_ptr, const void *device_ptr, size_t cb);
   void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
                      const size_t *buffer_origin,
                      const size_t *host_origin, 
@@ -319,9 +319,10 @@ struct _cl_context {
   POCL_OBJECT;
   /* queries */
   cl_device_id *devices;
-  const cl_context_properties *properties;
+  cl_context_properties *properties;
   /* implementation */
   unsigned num_devices;
+  unsigned num_properties;
   /* some OpenCL apps (AMD OpenCL SDK at least) use a trial-error 
      approach for creating a context with a device type, and call 
      clReleaseContext for the result regardless if it failed or not. 
@@ -417,7 +418,9 @@ struct _cl_kernel {
   cl_int *arg_is_sampler;
   cl_uint num_locals;
   int *reqd_wg_size;
-  struct pocl_argument *arguments;
+  /* The kernel arguments that are set with clSetKernelArg().
+     These are copied to the command queue command at enqueue. */
+  struct pocl_argument *dyn_arguments;
   struct _cl_kernel *next;
 };
 

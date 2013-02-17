@@ -26,22 +26,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
+KERNEL_TARGET=@OCL_KERNEL_TARGET@
+TARGET_DIR=arm
 
 targetpkglibdir = $(pkglibdir)/arm
-targetpkglib_LIBRARIES = libkernel.a
-
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+targetpkglib_DATA = kernel-@OCL_KERNEL_TARGET@.bc
 
 include ../sources.mk
-
-nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
-
-RANLIB = @LLVM_RANLIB@
-AR = @LLVM_AR@
-
-CLANGFLAGS += -target armv7 -mfloat-abi=hard
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/arm/types.h
+all: kernel-@OCL_KERNEL_TARGET@.bc
 

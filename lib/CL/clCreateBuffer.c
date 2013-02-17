@@ -34,14 +34,93 @@ POname(clCreateBuffer)(cl_context context,
   cl_mem mem;
   cl_device_id device;
   void *device_ptr;
+  int errcode;
   unsigned i, j;
 
   if (context == NULL)
-    POCL_ERROR(CL_INVALID_CONTEXT);
+  {
+    errcode = CL_INVALID_CONTEXT;
+    goto ERROR;
+  }
 
   mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
+
+  if (size == 0)
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR_CLEAN_MEM;
+  }
+
+  if (flags == 0)
+    flags = CL_MEM_READ_WRITE;
+
+  /* validate flags */
+
+  if (flags > (1<<10)-1)
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR_CLEAN_MEM;
+  }
+
+  if (((flags & CL_MEM_READ_WRITE) &&
+      (flags & CL_MEM_WRITE_ONLY ||
+       flags & CL_MEM_READ_ONLY)) ||
+
+      ((flags & CL_MEM_READ_ONLY) &&
+      (flags & CL_MEM_WRITE_ONLY)) ||
+
+      ((flags & CL_MEM_USE_HOST_PTR) &&
+      (flags & CL_MEM_ALLOC_HOST_PTR ||
+       flags & CL_MEM_COPY_HOST_PTR)) || 
+
+      ((flags & CL_MEM_HOST_WRITE_ONLY) &&
+      (flags & CL_MEM_HOST_READ_ONLY)) ||
+
+      ((flags & CL_MEM_HOST_NO_ACCESS) &&
+      ((flags & CL_MEM_HOST_READ_ONLY) ||
+       (flags & CL_MEM_HOST_WRITE_ONLY))))
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR_CLEAN_MEM;
+  }
+
+  if (host_ptr == NULL)
+    {
+     if ((flags & CL_MEM_USE_HOST_PTR) ||
+         (flags & CL_MEM_COPY_HOST_PTR))
+     {
+        errcode = CL_INVALID_HOST_PTR;
+        goto ERROR_CLEAN_MEM;
+     }
+    }
+  else
+    {
+     if ((~flags & CL_MEM_USE_HOST_PTR) &&
+         (~flags & CL_MEM_COPY_HOST_PTR))
+     {
+        errcode = CL_INVALID_HOST_PTR;
+        goto ERROR_CLEAN_MEM;
+     }
+    }
+
+  for (i = 0; i < context->num_devices; ++i)
+    {
+      cl_ulong max_alloc;
+
+      POname(clGetDeviceInfo) (context->devices[i],
+          CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc, NULL);
+
+      if (size > max_alloc)
+      {
+        errcode = CL_INVALID_BUFFER_SIZE;
+        goto ERROR_CLEAN_MEM;
+      }
+    }
 
   POCL_INIT_OBJECT(mem);
   mem->parent = NULL;
@@ -57,8 +136,8 @@ POname(clCreateBuffer)(cl_context context,
   mem->device_ptrs = (void **) malloc(pocl_num_devices * sizeof(void *));
   if (mem->device_ptrs == NULL)
     {
-      free(mem);
-      POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_MEM;
     }  
 
   for (i = 0; i < pocl_num_devices; ++i)
@@ -72,13 +151,8 @@ POname(clCreateBuffer)(cl_context context,
       device_ptr = device->malloc(device->data, flags, size, host_ptr);
       if (device_ptr == NULL)
         {
-          for (j = 0; j < i; ++j)
-            {
-              device = context->devices[j];
-              device->free(device->data, flags, mem->device_ptrs[device->dev_id]);
-            }
-          free(mem);
-          POCL_ERROR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
+            errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+            goto ERROR_CLEAN_MEM_AND_DEVICE;
         }
       mem->device_ptrs[device->dev_id] = device_ptr;
       if (flags & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR))
@@ -95,5 +169,20 @@ POname(clCreateBuffer)(cl_context context,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return mem;
+
+ERROR_CLEAN_MEM_AND_DEVICE:
+  for (j = 0; j < i; ++j)
+    {
+      device = context->devices[j];
+      device->free(device->data, flags, mem->device_ptrs[device->dev_id]);
+    }
+ERROR_CLEAN_MEM:
+    free(mem);
+ERROR:
+    if(errcode_ret)
+    {
+        *errcode_ret = errcode;
+    }
+    return NULL;
 }
 POsym(clCreateBuffer)

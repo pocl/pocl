@@ -24,13 +24,13 @@
 #include "../templates.h"
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)    \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)    \
   {                                             \
     return EXPR;                                \
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)            \
   {                                                     \
     UPTYPE a1, b1;                                      \
     a1.LO = a;                                          \
@@ -39,7 +39,7 @@
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)             \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)            \
   {                                                     \
     return (TYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));  \
   }
@@ -49,42 +49,42 @@
 #define IMPLEMENT_MIN_DIRECT (a<=b ? a : b)
 #define IMPLEMENT_MIN_SSE41_CHAR16              \
   ({                                            \
-    __asm__ ("pminsb128 %[src], %[dst]" :       \
+    __asm__ ("pminsb %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE_UCHAR16               \
   ({                                            \
-    __asm__ ("pminub128 %[src], %[dst]" :       \
+    __asm__ ("pminub %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE_SHORT8                \
   ({                                            \
-    __asm__ ("pminsw128 %[src], %[dst]" :       \
+    __asm__ ("pminsw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE41_USHORT8             \
   ({                                            \
-    __asm__ ("pminuw128 %[src], %[dst]" :       \
+    __asm__ ("pminuw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE41_INT4                \
   ({                                            \
-    __asm__ ("pminsd128 %[src], %[dst]" :       \
+    __asm__ ("pminsd %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MIN_SSE41_UINT4               \
   ({                                            \
-    __asm__ ("pminud128 %[src], %[dst]" :       \
+    __asm__ ("pminud %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
@@ -230,6 +230,7 @@ IMPLEMENT_DIRECT(min, uint8 , IMPLEMENT_MIN_DIRECT)
 IMPLEMENT_DIRECT(min, uint16, IMPLEMENT_MIN_DIRECT)
 #endif
 
+#ifdef cles_khr_int64
 IMPLEMENT_DIRECT(min, long  , IMPLEMENT_MIN_DIRECT)
 IMPLEMENT_DIRECT(min, long2 , IMPLEMENT_MIN_DIRECT)
 IMPLEMENT_DIRECT(min, long3 , IMPLEMENT_MIN_DIRECT)
@@ -243,6 +244,7 @@ IMPLEMENT_DIRECT(min, ulong3 , IMPLEMENT_MIN_DIRECT)
 IMPLEMENT_DIRECT(min, ulong4 , IMPLEMENT_MIN_DIRECT)
 IMPLEMENT_DIRECT(min, ulong8 , IMPLEMENT_MIN_DIRECT)
 IMPLEMENT_DIRECT(min, ulong16, IMPLEMENT_MIN_DIRECT)
+#endif
 
 DEFINE_EXPR_G_GS(min, min(a, (gtype)b))
 
@@ -270,6 +272,7 @@ IMPLEMENT_DIRECT(min, float8 , IMPLEMENT_MIN_DIRECT_CAST)
 IMPLEMENT_DIRECT(min, float16, IMPLEMENT_MIN_DIRECT_CAST)
 #endif
 
+#ifdef cl_khr_fp64
 #ifdef __SSE2__
 IMPLEMENT_DIRECT(min, double  , IMPLEMENT_MIN_SSE2_DOUBLE)
 IMPLEMENT_DIRECT(min, double2 , IMPLEMENT_MIN_SSE2_DOUBLE2)
@@ -289,6 +292,7 @@ IMPLEMENT_DIRECT(min, double3 , IMPLEMENT_MIN_DIRECT_CAST)
 IMPLEMENT_DIRECT(min, double4 , IMPLEMENT_MIN_DIRECT_CAST)
 IMPLEMENT_DIRECT(min, double8 , IMPLEMENT_MIN_DIRECT_CAST)
 IMPLEMENT_DIRECT(min, double16, IMPLEMENT_MIN_DIRECT_CAST)
+#endif
 #endif
 
 DEFINE_EXPR_V_VS(min, min(a, (vtype)b))

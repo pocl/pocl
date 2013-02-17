@@ -25,10 +25,15 @@
 #include "BarrierTailReplication.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
+#include "llvm/InstrTypes.h"
+#include "llvm/Instructions.h"
+#else
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
+#endif
 
 #include <iostream>
 #include <algorithm>

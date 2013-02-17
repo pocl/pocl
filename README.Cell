@@ -37,6 +37,38 @@ Configure with:
 This makes pocl to use the 32bit mode for the
 kernel compilation.
 
+
+spu device driver
+-----------------
+
+Initial implememtation is in place. It uses libspe2 
+to communucate with the spus.
+
+A context for one (current status - to be improved upon)
+spu is created at driver initialization stage. In this image, 
+we allocate memory for the opencl global/local buffers. This
+memory chunk is managed by buffalloc in the driver. See 
+lib/CL/drivrs/cellspu/cellspu.h for a memory map.
+
+clRead/WriteBuffer can operate directly on this context, 
+as it can be memory mapped in the host, and loading an
+ELF into this context doesn't seem to overwrite unused/
+uninitialized areas.
+
+At run time, a __kernel_exec_cmd data structure is 
+filled, similar to as with the TCE driver, this control
+structure is copied into the context, and the SPU is
+started. The SPU has a similar wrapper function as the TTA
+to parse this structure.
+
+This is still unfinished. Major parts missing are:
+-get a non-trivial 'hello world' running (i.e. one with
+arguments).
+-multithreaded driver. spe_context_run *blocks*, so 
+we need at least 1 thread/spu. Possibly more - depends
+on how the kernel schedules the SPU contexts.
+
+
 to do
 -----
 * Fix the 64bit build. 

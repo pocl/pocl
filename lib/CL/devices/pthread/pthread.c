@@ -23,13 +23,13 @@
 */
 
 #include "pocl-pthread.h"
+#include "install-paths.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/stat.h>
 #include "utlist.h"
 
 #include "config.h"
@@ -38,8 +38,6 @@
 
 #include "bufalloc.h"
 #include <../dev_image.h>
-
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
@@ -81,6 +79,7 @@ struct thread_arguments {
   struct pocl_context pc;
   int last_gid_x; 
   pocl_workgroup workgroup;
+  struct pocl_argument *kernel_args;
 };
 
 struct data {
@@ -133,21 +132,27 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->max_samplers = 16;  
   device->max_constant_args = 8;
 
-  device->min_data_type_align_size = device->mem_base_addr_align = ALIGNMENT;
+  device->min_data_type_align_size = device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+
+  /* Note: The specification describes identifiers being delimited by
+     only a single space character. Some programs that check the device's
+     extension  string assume this rule. Future extenion additions should
+     ensure that there is no more than a single space between
+     identifiers. */
 
 #if SIZEOF_DOUBLE == 8
-#define DOUBLE_EXT "cl_khr_fp64"
+#define DOUBLE_EXT "cl_khr_fp64 "
 #else
 #define DOUBLE_EXT 
 #endif
 
 #if SIZEOF___FP16 == 2
-#define HALF_EXT "cl_khr_fp16"
+#define HALF_EXT "cl_khr_fp16 "
 #else
 #define HALF_EXT
 #endif
 
-  device->extensions = DOUBLE_EXT " " HALF_EXT " cl_khr_byte_addressable_store";
+  device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
@@ -250,7 +255,7 @@ pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *h
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (allocate_aligned_buffer (d, &b, ALIGNMENT, size) == 0)
+      if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
         {
           memcpy (b, host_ptr, size);
           return b;
@@ -264,7 +269,7 @@ pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *h
       return host_ptr;
     }
 
-  if (allocate_aligned_buffer (d, &b, ALIGNMENT, size) == 0)
+  if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
     return b;
   
   return NULL;
@@ -482,22 +487,9 @@ pocl_pthread_run
   if (access (module, F_OK) != 0)
     {
       char *llvm_ld;
-      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/linked.bc", tmpdir);
+                        "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
-      
-      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
-        llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
-      else
-        llvm_ld = "pocl-llvm-ld";
-      error = snprintf (command, COMMAND_LENGTH,
-			"%s --disable-opt -link-as-library -o %s %s/%s",
-                        llvm_ld, bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
-      
-      error = system(command);
-      assert (error == 0);
       
       error = snprintf (assembly, POCL_FILENAME_LENGTH,
 			"%s/parallel.s",
@@ -519,7 +511,7 @@ pocl_pthread_run
       // For the pthread device, use device type is always the same as the host. 
       error = snprintf (command, COMMAND_LENGTH,
 			CLANG " -target %s %s -c -o %s.o %s",
-			HOST_CPU,
+			OCL_KERNEL_TARGET,
 			HOST_CLANG_FLAGS,
 			module,
 			assembly);
@@ -614,6 +606,7 @@ pocl_pthread_run
     arguments[i].pc.group_id[0] = first_gid_x;
     arguments[i].workgroup = w;
     arguments[i].last_gid_x = last_gid_x;
+    arguments[i].kernel_args = cmd->command.run.arguments;
 
     /* TODO: pool of worker threads to avoid syscalls here */
     error = pthread_create (&threads[i],
@@ -663,11 +656,11 @@ workgroup_thread (void *p)
      To function 
      void setup_kernel_arg_array(void **arguments, cl_kernel kernel)
      or similar
-*/
+  */
   cl_kernel kernel = ta->kernel;
   for (i = 0; i < kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(ta->kernel_args[i]);
       if (kernel->arg_is_local[i])
         {
           arguments[i] = malloc (sizeof (void *));
@@ -679,10 +672,13 @@ workgroup_thread (void *p)
            that case we must pass the same NULL forward to the kernel.
            Otherwise, the user must have created a buffer with per device
            pointers stored in the cl_mem. */
-        if (al->value == NULL)
-          arguments[i] = NULL;
+        if (al->value == NULL) 
+          {
+            arguments[i] = malloc (sizeof (void *));
+            *(void **)arguments[i] = NULL;
+          }
         else
-          arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
       }
       else if (kernel->arg_is_image[i])
         {
@@ -711,11 +707,14 @@ workgroup_thread (void *p)
       else
         arguments[i] = al->value;
     }
+
+  /* Allocate the automatic local buffers which are implemented as implicit
+     extra arguments at the end of the kernel argument list. */
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(ta->kernel_args[i]);
       arguments[i] = malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
     }
@@ -743,7 +742,8 @@ workgroup_thread (void *p)
           pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
           free(arguments[i]);
         }
-      else if( kernel->arg_is_sampler[i] || kernel->arg_is_image[i] ) 
+      else if (kernel->arg_is_sampler[i] || kernel->arg_is_image[i] || 
+               (kernel->arg_is_pointer[i] && *(void**)arguments[i] == NULL))
         {
           free(arguments[i]);
         }

@@ -27,20 +27,33 @@
 #include "BarrierTailReplication.h"
 #include "WorkitemReplication.h"
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "config.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
-#else
+#include "llvm/BasicBlock.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Module.h"
 #endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -166,8 +179,10 @@ Workgroup::runOnModule(Module &M)
       
 #ifdef LLVM_3_1
     L->addFnAttr(Attribute::NoInline);
-#else
+#elif defined LLVM_3_2
     L->addFnAttr(Attributes::NoInline);
+#else
+    L->addFnAttr(Attribute::NoInline);
 #endif
 
     privatizeContext(M, L);
@@ -199,7 +214,7 @@ Workgroup::isKernelToProcess(const Function &F)
       return true;
 
     return false;
-  }
+  }  
 
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
     if (kernels->getOperand(i)->getOperand(0) == NULL)
@@ -250,7 +265,11 @@ createLauncher(Module &M, Function *F)
   for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i)  {
     arguments.push_back(ai);
     ++ai;
-  }
+  }  
+
+  /* Copy the function attributes to transfer noalias etc. from the
+     original kernel which will be inlined into the launcher. */
+  L->setAttributes(F->getAttributes());
 
   Value *ptr, *v;
   char s[STRING_LENGTH];
@@ -496,12 +515,23 @@ createWorkgroup(Module &M, Function *F)
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++ii) {
     Type *t = ii->getType();
-    
-    Value *gep = builder.CreateGEP(ai, 
-				   ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
+
+    Value *gep = builder.CreateGEP(ai,
+            ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
-    Value *bc = builder.CreateBitCast(pointer, t->getPointerTo());
-    arguments.push_back(builder.CreateLoad(bc));
+
+    /* If it's a pass by value pointer argument, we just pass the pointer
+     * as is to the function, no need to load form it first. */
+    Value *value;
+    if (ii->hasByValAttr()) {
+        value = builder.CreateBitCast(pointer, t);
+    }
+    else {
+        value = builder.CreateBitCast(pointer, t->getPointerTo());
+        value = builder.CreateLoad(value);
+    }
+
+    arguments.push_back(value);
     ++i;
   }
 
@@ -512,7 +542,7 @@ createWorkgroup(Module &M, Function *F)
 }
 
 /**
- * Creates a work group launcher more suitable for the proper
+ * Creates a work group launcher more suitable for the heterogeneous
  * host-device setup  (called KERNELNAME_workgroup_fast).
  *
  * 1) Pointer arguments are stored directly as pointers to the
@@ -546,24 +576,37 @@ createWorkgroupFast(Module &M, Function *F)
   SmallVector<Value*, 8> arguments;
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
-       ii != ee; ++ii) {
+       ii != ee; ++i, ++ii) {
     Type *t = ii->getType();
-    
     Value *gep = builder.CreateGEP(ai, 
-				   ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
+            ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
     Value *bc = NULL;
+     
     if (t->isPointerTy()) {
-      /* Assume the pointer is directly in the arg array. */
-      arguments.push_back(builder.CreateBitCast(pointer, t));
-    } else {
-      /* Assume the pointer points to the scalar data in the global         
-         memory. */
-      bc = builder.CreateBitCast
-        (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
-      arguments.push_back(builder.CreateLoad(bc));
+      if (!ii->hasByValAttr()) {
+        /* Assume the pointer is directly in the arg array. */
+        arguments.push_back(builder.CreateBitCast(pointer, t));
+        continue;
+      }
+
+      /* It's a pass by value pointer argument, use the underlying
+       * element type in subsequent load. */
+      t = t->getPointerElementType();
     }
-    ++i;
+
+    /* Assume the pointer points to data in the global memory space. */
+    bc = builder.CreateBitCast(pointer,
+            t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+
+    /* If it's a pass by value pointer argument, we just pass the pointer
+     * as is to the function, no need to load from it first. */
+    Value *value = builder.CreateBitCast(pointer, t->getPointerTo());
+    if (!ii->hasByValAttr()) {
+        value = builder.CreateLoad(value);
+    }
+    
+    arguments.push_back(value);
   }
 
   arguments.back() = ++ai;

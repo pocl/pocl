@@ -4,7 +4,7 @@
 #
 # The TCE (http://tce.cs.tut.fi) target.
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2013 Pekka Jääskeläinen 
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +24,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
+KERNEL_TARGET=tce-tut-llvm
+TARGET_DIR=tce
 
-targetpkglibdir = $(pkglibdir)/tce
-targetpkglib_LIBRARIES = libkernel.a
-
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+targetpkglibdir = ${pkglibdir}/tce
+targetpkglib_DATA = kernel-tce-tut-llvm.bc
 
 include ../sources.mk
 
-nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
+# TCE's software emulation chokes on the fmuladd intrinsics
+# generated automatically. Force it off for now until it's
+# supported more properly in TCE.
+if ! LLVM_3_1
+CLANGFLAGS += -ffp-contract=off -target tce-tut-llvm
+endif
 
-RANLIB = @LLVM_RANLIB@
-AR = @LLVM_AR@
 
-CLANGFLAGS += -target tce-tut-llvm
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/tce/types.h
+all: kernel-${KERNEL_TARGET}.bc
 

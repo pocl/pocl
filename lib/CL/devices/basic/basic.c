@@ -24,6 +24,7 @@
 
 #include "basic.h"
 #include "cpuinfo.h"
+#include "install-paths.h"
 
 #include <assert.h>
 #include <string.h>
@@ -31,14 +32,11 @@
 #include <unistd.h>
 #include <../dev_image.h>
 #include <sys/time.h>
-#include <sys/stat.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
-
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
 
 struct data {
   /* Currently loaded kernel. */
@@ -77,7 +75,7 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, ALIGNMENT, size) == 0)
+      if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
         {
           memcpy (b, host_ptr, size);
           return b;
@@ -91,7 +89,7 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
       return host_ptr;
     }
 
-  if (posix_memalign (&b, ALIGNMENT, size) == 0)
+  if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
     return b;
   
   return NULL;
@@ -157,24 +155,10 @@ pocl_basic_run
   if ( access (module, F_OK) != 0)
     {
       char *llvm_ld;
-      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/linked.bc", tmpdir);
+                        "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
-      
-      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
-        llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
-      else
-        llvm_ld = "pocl-llvm-ld";
-
-      error = snprintf (command, COMMAND_LENGTH,
-			"%s --disable-opt -link-as-library -o %s %s/%s",
-                        llvm_ld, bytecode, tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
-      
-      error = system(command);
-      assert (error == 0);
-      
+     
       error = snprintf (assembly, POCL_FILENAME_LENGTH,
 			"%s/parallel.s",
 			tmpdir);
@@ -194,7 +178,7 @@ pocl_basic_run
            
       error = snprintf (command, COMMAND_LENGTH,
 			CLANG " -target %s %s -c -o %s.o %s",
-			HOST_CPU,
+			OCL_KERNEL_TARGET,
 			HOST_CLANG_FLAGS,
 			module,
 			assembly);
@@ -228,10 +212,10 @@ pocl_basic_run
   for (i = 0; i < kernel->context->num_devices; ++i)
     {
       if (kernel->context->devices[i]->data == data)
-	{
-	  device = i;
-	  break;
-	}
+        {
+          device = i;
+          break;
+        }
     }
 
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
@@ -242,9 +226,12 @@ pocl_basic_run
 
   void *arguments[kernel->num_args + kernel->num_locals];
 
+  /* Process the kernel arguments. Convert the opaque buffer
+     pointers to real device pointers, allocate dynamic local 
+     memory buffers, etc. */
   for (i = 0; i < kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       if (kernel->arg_is_local[i])
         {
           arguments[i] = malloc (sizeof (void *));
@@ -257,7 +244,10 @@ pocl_basic_run
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
           if (al->value == NULL)
-            arguments[i] = NULL;
+            {
+              arguments[i] = malloc (sizeof (void *));
+              *(void **)arguments[i] = NULL;
+            }
           else
             arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device]);
         }
@@ -294,7 +284,7 @@ pocl_basic_run
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
     }

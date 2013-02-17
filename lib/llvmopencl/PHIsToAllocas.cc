@@ -30,9 +30,12 @@
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
-#else
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
 #endif
 
 namespace {

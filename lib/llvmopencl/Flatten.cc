@@ -21,14 +21,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "config.h"
 #include <iostream>
 #include <string>
 #include "Workgroup.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
+#include "llvm/Module.h"
+#else
+#include "llvm/IR/Module.h"
+#endif
 
 using namespace llvm;
 
@@ -78,11 +82,17 @@ Flatten::runOnModule(Module &M)
 #ifdef LLVM_3_1
           f->removeFnAttr(Attribute::AlwaysInline);
           f->addFnAttr(Attribute::NoInline);
-#else
+#elif defined LLVM_3_2
           AttrBuilder b;
           f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::AlwaysInline)));
-          AttrBuilder c;
           f->addFnAttr(Attributes::NoInline);
+#else
+          AttributeSet attrs;
+          f->removeAttributes(
+              AttributeSet::FunctionIndex, 
+              attrs.addAttribute(M.getContext(), AttributeSet::FunctionIndex, Attribute::AlwaysInline));
+
+          f->addFnAttr(Attribute::NoInline);
 #endif
 
           f->setLinkage(llvm::GlobalValue::ExternalLinkage);
@@ -96,10 +106,16 @@ Flatten::runOnModule(Module &M)
 #ifdef LLVM_3_1
           f->removeFnAttr(Attribute::NoInline);
           f->addFnAttr(Attribute::AlwaysInline);
-#else
+#elif defined LLVM_3_2
           AttrBuilder b;
           f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::NoInline)));
           f->addFnAttr(Attributes::AlwaysInline);
+#else
+          AttributeSet attrs;
+          f->removeAttributes(
+              AttributeSet::FunctionIndex, 
+              attrs.addAttribute(M.getContext(), AttributeSet::FunctionIndex, Attribute::NoInline));
+          f->addFnAttr(Attribute::AlwaysInline);
 #endif
 
           f->setLinkage(llvm::GlobalValue::InternalLinkage);

@@ -25,76 +25,76 @@
 
 #define IMPLEMENT_VSTORE_HALF(MOD, SUFFIX)                              \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstore_half##SUFFIX(float data, size_t offset, MOD half *p)           \
   {                                                                     \
     p[offset] = data;                                                   \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstore_half2##SUFFIX(float2 data, size_t offset, MOD half *p)         \
   {                                                                     \
     vstore_half##SUFFIX(data.lo, 0, &p[offset*2]);                      \
     vstore_half##SUFFIX(data.hi, 0, &p[offset*2+1]);                    \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstore_half3##SUFFIX(float3 data, size_t offset, MOD half *p)         \
   {                                                                     \
     vstore_half2##SUFFIX(data.lo, 0, &p[offset*3]);                     \
     vstore_half##SUFFIX(data.s2, 0, &p[offset*3+2]);                    \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstore_half4##SUFFIX(float4 data, size_t offset, MOD half *p)         \
   {                                                                     \
     vstore_half2##SUFFIX(data.lo, 0, &p[offset*4]);                     \
     vstore_half2##SUFFIX(data.hi, 0, &p[offset*4+2]);                   \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstore_half8##SUFFIX(float8 data, size_t offset, MOD half *p)         \
   {                                                                     \
     vstore_half4##SUFFIX(data.lo, 0, &p[offset*8]);                     \
     vstore_half4##SUFFIX(data.hi, 0, &p[offset*8+4]);                   \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstore_half16##SUFFIX(float16 data, size_t offset, MOD half *p)       \
   {                                                                     \
     vstore_half8##SUFFIX(data.lo, 0, &p[offset*16]);                    \
     vstore_half8##SUFFIX(data.hi, 0, &p[offset*16+8]);                  \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstorea_half2##SUFFIX(float2 data, size_t offset, MOD half *p)        \
   {                                                                     \
     vstore_half##SUFFIX(data.lo, 0, &p[offset*2]);                      \
     vstore_half##SUFFIX(data.hi, 0, &p[offset*2+1]);                    \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstorea_half3##SUFFIX(float3 data, size_t offset, MOD half *p)        \
   {                                                                     \
     vstorea_half2##SUFFIX(data.lo, 0, &p[offset*3]);                    \
     vstore_half##SUFFIX(data.s2, 0, &p[offset*3+2]);                    \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstorea_half4##SUFFIX(float4 data, size_t offset, MOD half *p)        \
   {                                                                     \
     vstorea_half2##SUFFIX(data.lo, 0, &p[offset*4]);                    \
     vstorea_half2##SUFFIX(data.hi, 0, &p[offset*4+2]);                  \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstorea_half8##SUFFIX(float8 data, size_t offset, MOD half *p)        \
   {                                                                     \
     vstorea_half4##SUFFIX(data.lo, 0, &p[offset*8]);                    \
     vstorea_half4##SUFFIX(data.hi, 0, &p[offset*8+4]);                  \
   }                                                                     \
                                                                         \
-  void _cl_overloadable                                                 \
+  void _CL_OVERLOADABLE                                                 \
   vstorea_half16##SUFFIX(float16 data, size_t offset, MOD half *p)      \
   {                                                                     \
     vstorea_half8##SUFFIX(data.lo, 0, &p[offset*16]);                   \

@@ -1,7 +1,8 @@
 ##                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos
+# Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
+#                         Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-AC_PREREQ([2.61])
-AC_INIT([pocl], [0.7-pre], [pocl-devel@lists.sourceforge.net])
+AC_PREREQ([2.64])
+AC_INIT([pocl], [0.8-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -32,6 +33,17 @@ AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
+
+AM_CONDITIONAL([DARWIN_HOST_OS], false)
+case $host_os in
+  darwin* )
+    AM_CONDITIONAL([DARWIN_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+         ;;
+  *)
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
+         ;;
+esac
 
 # check for tools
 PKG_PROG_PKG_CONFIG
@@ -59,11 +71,17 @@ LT_INIT
 LD_FLAGS_BIN=""
 
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.1])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.2])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
+LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
+
+AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
+
+AM_CONDITIONAL([LLVM_3_1], test "$LLVM_VERSION" == "3.1")
+
 
 case "$LLVM_VERSION" in
      3.1)
@@ -79,11 +97,29 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM 3.1.
+Unsupported LLVM version. Please use LLVM 3.1 or 3.2.
    ])
    LLVM_VERSION=
    ;;
 esac
+
+LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
+
+if test ! -e $LLVM_SHARED_LIB_FILE;
+then
+        AC_MSG_WARN([
+$LLVM_SHARED_LIB_FILE not found. 
+Recompile and install LLVM after ./configure --enable-shared.
+Read the INSTALL file for details.])
+fi
+
+LLVM_RTTI_CHECK=$($LLVM_CONFIG --cxxflags | grep -i "\-fno-rtti")
+
+if test x"$LLVM_RTTI_CHECK" != x; then
+AC_MSG_WARN([Your LLVM was not built with RTTI. 
+You should rebuild LLVM with 'make REQUIRES_RTTI=1'. 
+See the INSTALL file for more information.])
+fi
 
 AC_ARG_ENABLE([region-allocator],
 [AS_HELP_STRING([--disable-region-allocator], 
@@ -248,6 +284,13 @@ if test x"$icd" != xno; then :
     [ OCL_ICD_available=yes 
       AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
     [:])
+  # Check for the ICD loader library. There doesn't seem to be
+  # a symbol that is available only in the ICD loaders. Thus,
+  # this check is passed also in case libOpenCL is the implementation,
+  # not the loader.
+  AC_CHECK_LIB([OpenCL], [clGetPlatformIDs], [:], [
+    AC_MSG_ERROR([Could not find an ICD loader. Please install one or add --disable-icd (see README for details).])
+    ])
 fi
 
 AS_CASE(["$icd,$OCL_ICD_available"],
@@ -386,49 +429,15 @@ AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
-# look for the TCE library (needed for the ttasim device driver)
-
-AC_PATH_PROG([TCE_CONFIG], [tce-config])
-
-if test ! -z "$TCE_CONFIG"; then
-
-AC_PATH_PROG([TCECC], [tcecc])
-
-AC_LANG([C++])
-
-AC_LANG_CONFTEST(
-[AC_LANG_PROGRAM(
-  [[#include <Application.hh>]],
-  [Application::initialize()])
-])
-
-  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
-  then
-        TCE_LIBRARY=ok
-  fi
-
-fi
-
-if test -z "$TCECC" || \
-   test -z "$TCE_CONFIG" || \
-   test -z "$TCE_LIBRARY"; then
-
-AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
-
-else
-
-AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
-AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
-AC_SUBST([TCE_AVAILABLE], ["1"])
-LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
-fi
-
-AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
-
 # libtool dynamic library handling library
+old_LIBS="$LIBS"
+LIBS=
 AC_SEARCH_LIBS([lt_dlsym], [ltdl], [], [
 AC_MSG_ERROR([unable to find the libtool dl library (usually libltdl-dev)])
 ])
+LTDL_LIBS="$LIBS"
+AC_SUBST([LTDL_LIBS])
+LIBS="$old_LIBS"
 
 # Following checks are related to the build system for devices (clang and so),
 # and not for building the host code.
@@ -453,6 +462,13 @@ AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
 
 test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
 
+PKG_CHECK_MODULES([GLEW], [glew], 
+  [
+    AC_DEFINE([HAVE_GLEW], [],
+        [Defined if The OpenGL Extension Wrangler library is found])
+  ],
+  [AC_MSG_NOTICE([libGLEW not found. A few tests will not work])])
+
 # Checks for programs.
 AC_DEFUN([LLVM_PROG], [
   AC_ARG_VAR([$1], [$3])
@@ -474,76 +490,20 @@ LLVM_PROG([LLC], [llc], [LLVM static compiler])
 LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
 LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
 LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
+LLVM_PROG([LLVM_LINK], [llvm-link], [LLVM IR linker])
 # $CLANG and $LLC are needed by config/xclang
 export CLANG
 export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
-
-#
 # Targets.
-# Note - there are two kinds of targets: the autoconf cross compilation target
-# which is actually the host in OpenCL terms, 
-# and the OpenCL target, i.e. the compute node architecture. With basic and pthread
-# OCL devices, all these three are one and the same.
-
-AC_ARG_ENABLE( [targets],
-               [AS_HELP_STRING( [--enable-targets],
-                                [Comma-separated list of OCL target devices to compile the 
-                                 kernel library against.] ) ],
-               ,
-               enableval=all)
-
-#TODO: check for bad targets...
-if test "x$enableval" == "xall" 
-then  
-  OCL_TARGETS="arm x86_64 powerpc powerpc64 tce cellspu"
-else
-  OCL_TARGETS=$(echo $enableval | tr ',' ' ')
-fi
-AC_SUBST([OCL_TARGETS])
-
-#Kludge for Powerpc. Seems most tested PowerPC platforms (read: debian on Cell)
-#run in 32 bit mode per default. So for powerpc, do not use the host cpu unless
-#user overrides. See Readme.Cell
-default_target=$host_cpu
-AC_ARG_ENABLE([ppc64],
-              AS_HELP_STRING([--enable-ppc64],
-                             [If on PowerPC, use 64 bit runtime, not the 32bit one.]),
-              ,
-              [if test x"$host_cpu" = x"powerpc64"
-               then
-                 default_target="powerpc"
-               fi
-              ] )
- 
-kernel_dir=$default_target
-
-AC_CONFIG_FILES([lib/kernel/arm/Makefile
-                 lib/kernel/tce/Makefile
-                 lib/kernel/cellspu/Makefile
-                 lib/kernel/powerpc/Makefile
-                 lib/kernel/powerpc64/Makefile
-                 lib/kernel/x86_64/Makefile])
-
-AC_ARG_ENABLE([arm-cortex-a8],
-        [AS_HELP_STRING([--enable-arm-cortex-a8],
-         [Optimize the ARM OpenCL kernel library for the Cortex A8 instruction set.])],
-        [
-         ARM_CLANG_FLAGS="$ARM_CLANG_FLAGS -mcpu=cortex-a8"
-         ARM_LLC_FLAGS="-relocation-model=pic -mcpu=cortex-a8 -mattr=+neon"
-         AC_MSG_NOTICE([optimizing the ARM kernel library for the Cortex A8 instruction set.])
-        ]
-)
-
-case $target_cpu in
-  arm*)   
-    TARGET_CLANG_FLAGS="$TARGET_CLANG_FLAGS $ARM_CLANG_FLAGS"
-    TARGET_LLC_FLAGS="$TARGET_LLC_FLAGS $ARM_LLC_FLAGS"
-    ;;
-esac
-
+# This is the target architecture of the basic and pthreads devices.
+# These always are the same arch as host (in current pocl implementation).
+# Also, this is the autoconf "host".
+# We have: 
+# target triplet: the OCL device target triple
+# kernel dir: where to search for the ocl lib kernel
 HOST_LLC_FLAGS="-relocation-model=pic"
 HOST_LD_FLAGS="-shared"
 
@@ -561,45 +521,54 @@ case $host_os in
 esac
 AC_SUBST([ICD_LD_FLAGS])
 
-
 case $host_cpu in
   armv7l)
-    #armv7l seems a popular host_cpu in distros. Clang uses armv7, though
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
+    #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+    OCL_KERNEL_TARGET="armv7"
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target armv7 -mfloat-abi=hard -fPIC"
-    default_target="armv7"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard -fPIC"
     kernel_dir="arm"
+    CL_DEVICE_ADDRESS_BITS=32
     ;;
-  x86_64)
+  amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=$host
+    kernel_dir="x86_64"
+    CL_DEVICE_ADDRESS_BITS=64
     ;;
+  i?86)
+    AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=$host
+    kernel_dir="x86_64"
+    CL_DEVICE_ADDRESS_BITS=32
+    ;;
+ 
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    kernel_dir="tce"
     ;;
 
-  powerpc64)
+  powerpc*)
+    #on all tested operating systems with PowerPC, the processor is 64bit,
+    #but the operating system is 32 bit. Therefore, when on powerpc, always build
+    #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    kernel_dir="powerpc"
+    OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
+    CL_DEVICE_ADDRESS_BITS=32
     ;;
   *)
-    AC_MSG_NOTICE([unknown host, using the generic kernel lib])
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
 esac
+OCL_TARGETS=$kernel_dir
 
-#kludge, when waiting for a solution to the host/target/device issue.
-if test x"$default_target"x = xpowerpcx
-then
-    AC_MSG_NOTICE([using the ppc unoptimized kernel lib for the native device])
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target powerpc "
-    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    kernel_dir="powerpc"
-    host="powerpc-unknown-linux-gnu"
-fi	
 
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
@@ -619,7 +588,9 @@ AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
 AC_SUBST([HOST], [$host])
 AC_DEFINE_UNQUOTED([HOST], "$host", [The host triple.])
 AC_SUBST([HOST_CPU], [$host_cpu])
-AC_DEFINE_UNQUOTED([HOST_CPU], "$default_target", [The host CPU type.])
+AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
+AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
@@ -635,8 +606,90 @@ AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
                    ["$HOST_LD_FLAGS"],
                    [Parameter to compiler to generate loadable module.])
 
-AC_CONFIG_FILES(lib/kernel/${TARGET}/Makefile:lib/kernel/Makefile.target.in)
-AC_CONFIG_FILES([lib/kernel/${HOST}/Makefile:lib/kernel/Makefile.host.in])
+AC_SUBST([POCL_DEVICE_ADDRESS_BITS], [$CL_DEVICE_ADDRESS_BITS])
+AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
+                   [$CL_DEVICE_ADDRESS_BITS],
+                   [Value based on host processor, for basic and pthreads devices])
+
+
+####################################################################
+# Determine which device drivers to build.
+
+OCL_DRIVERS="basic pthreads"
+
+# look for the TCE library (needed for the ttasim device driver)
+AC_PATH_PROG([TCE_CONFIG], [tce-config])
+
+if test ! -z "$TCE_CONFIG"; then
+
+AC_PATH_PROG([TCECC], [tcecc])
+
+AC_LANG([C++])
+
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS=`$TCE_CONFIG --libs --cxxflags --includes`
+
+AC_MSG_CHECKING([for TCE])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <Application.hh> ]],
+    [[ Application::initialize() ]]
+  )],
+  [AC_MSG_RESULT(yes)
+  [TCE_LIBRARY=ok]],
+  [AC_MSG_RESULT(no)])
+
+CXXFLAGS=$old_CXXFLAGS
+
+fi
+
+if test -z "$TCECC" || \
+   test -z "$TCE_CONFIG" || \
+   test -z "$TCE_LIBRARY"; then
+
+AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
+
+else
+
+AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
+AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
+AC_SUBST([TCE_AVAILABLE], ["1"])
+LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
+OCL_DRIVERS="$OCL_DRIVERS tce"
+OCL_TARGETS="$OCL_TARGETS tce"
+fi
+
+AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
+
+
+# Check if CellSPU support is found
+# The libspe version requirement is not strict. This is the only one tested.
+PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
+  [
+    AC_MSG_NOTICE([libspe2 found.])
+    LIBSPE_AVAILABLE=yes
+    OCL_DRIVERS="$OCL_DRIVERS spu"
+    OCL_TARGETS="$OCL_TARGETS cellspu"
+    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+  ],
+  [
+    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
+    LIBSPE_AVAILABLE=no
+  ])
+
+AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
+
+AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
+
+AC_SUBST([OCL_TARGETS])
+
+AC_CONFIG_FILES([lib/kernel/arm/Makefile
+                 lib/kernel/tce/Makefile
+                 lib/kernel/cellspu/Makefile
+                 lib/kernel/powerpc/Makefile
+                 lib/kernel/powerpc64/Makefile
+                 lib/kernel/x86_64/Makefile])
+
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
@@ -649,15 +702,30 @@ if test x"$prefix" = xNONE; then
   fi
 fi
 
-AC_DEFINE_UNQUOTED([POCL_INSTALLATION_ROOT],["$prefix"],[The installation directory])
-AC_DEFINE_UNQUOTED([POCL_INSTALLED_DATA],["$prefix/share/pocl"],[The installation directory])
-AC_SUBST([POCL_INSTALLED_DATA], $prefix/share/pocl)
-AC_DEFINE_UNQUOTED([LLVM_LD], ["pocl-llvm-ld"],[LLVM linker binary])
-AC_SUBST([LLVM_LD], [pocl-llvm-ld])
-
-# Checks for libraries.
-
 # Checks for header files.
+
+# Checks for library features.
+AC_LANG([C++])
+
+AC_MSG_CHECKING([for aligned_alloc])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[ #include <stdlib.h> ]],
+        [[ void* p = aligned_alloc(0, 0); ]]
+    )],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_ALIGNED_ALLOC], [], [Defined if aligned_alloc is available.])],
+    [AC_MSG_RESULT(no)])
+
+AC_MSG_CHECKING([for posix_memalign])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[ #include <stdlib.h> ]],
+        [[ int r = posix_memalign(NULL, 0, 0); ]]
+    )],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_POSIX_MEMALIGN], [], [Defined if posix_memalign is available.])],
+    [AC_MSG_RESULT(no)])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_LANG([C])
@@ -688,7 +756,6 @@ AC_SUBST([TARGET_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
 AC_CHECK_SIZEOF([void *])
 AC_SUBST([TARGET_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
-AC_CONFIG_FILES([include/${TARGET}/types.h:include/types.target.in])
 
 AS_UNSET([ac_cv_sizeof_long])
 AS_UNSET([ac_cv_sizeof___fp16])
@@ -706,10 +773,11 @@ AC_SUBST([HOST_SIZEOF_DOUBLE], [$ac_cv_sizeof_double])
 AC_CHECK_SIZEOF([void *])
 AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
-AC_CONFIG_FILES([include/${HOST}/types.h:include/types.host.in])
-
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
+AS_IF([test $ac_cv_alignof_float16 -gt $ac_cv_alignof_double16],
+      [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_FLOAT16], [Defined to greatest expected alignment for extended types, in bytes.])],
+      [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_DOUBLE16], [Defined to greatest expected alignment for extended types, in bytes.])])
 
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])
@@ -732,10 +800,19 @@ LDFLAGS="$old_LDFLAGS"
 
 AC_C_BIGENDIAN
 
-# The libtool library version string to use (passed to --version-info).
+# The libtool library version string to use (passed to -version-info).
+# See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
+# libpocl.so should get only API additions as we are implementing a standard.
 # 0:0:0 == 0.6
-# 1:0:0 == 0.7
-AC_SUBST([LIB_VERSION], ["1:0:0"])
+# 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
+# 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
+AC_SUBST([LIB_VERSION], ["2:0:1"])
+
+# The kernel compiler opt plugin shared library, however, changes more 
+# drastically. Let's try to follow the similar 'current' numbering as
+# pocl and perhaps tune the 'revision' and 'age' later.
+AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["2:0:1"])
+
 AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
@@ -765,7 +842,6 @@ AC_CONFIG_FILES([Makefile
                  examples/standalone/Makefile
                  examples/trig/Makefile
                  examples/scalarwave/Makefile
-                 examples/kernel/Makefile
                  examples/opencl-book-samples/Makefile
                  examples/Rodinia/Makefile
                  examples/Parboil/Makefile
@@ -774,14 +850,15 @@ AC_CONFIG_FILES([Makefile
                  examples/EinsteinToolkit/Makefile
                  scripts/Makefile
                  tests/Makefile
+                 tests/kernel/Makefile
                  tests/regression/Makefile
                  tests/workgroup/Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
+                 tests/tce/fp16/Makefile
                  tests/cell/Makefile
                  tests/cell/hello/Makefile
-                 tools/llvm-ld/Makefile
                  ])
 
 AC_OUTPUT
@@ -823,11 +900,7 @@ else
 fi
 echo
 
-if test ! -z $TCE_AVAILABLE;
-then
- echo "Enabling the TCE device driver."
- echo
-fi
+echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES
 echo
 

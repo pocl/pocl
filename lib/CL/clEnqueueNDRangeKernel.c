@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clEnqueueNDRangeKernel()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012 Pekka Jääskeläinen / Tampere Univ. of Tech.
+                 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,11 @@
    THE SOFTWARE.
 */
 
+#include "config.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "utlist.h"
+#include "install-paths.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -55,7 +58,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   char parallel_filename[POCL_FILENAME_LENGTH];
   size_t n;
   int i, count;
-  struct stat buf;
   char command[COMMAND_LENGTH];
   int error;
   struct pocl_context pc;
@@ -207,8 +209,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (access (parallel_filename, F_OK) != 0) 
     {
 
-      if (stat(BUILDDIR "/scripts/" POCL_WORKGROUP, &buf) == 0)
+      if (getenv("POCL_BUILDING") != NULL)
         pocl_wg_script = BUILDDIR "/scripts/" POCL_WORKGROUP;
+      else if (access(PKGDATADIR "/" POCL_WORKGROUP, X_OK) == 0)
+        pocl_wg_script = PKGDATADIR "/" POCL_WORKGROUP;
       else
         pocl_wg_script = POCL_WORKGROUP;
 
@@ -279,6 +283,38 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->command.run.tmp_dir = strdup(tmpdir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
+  /* Copy the currently set kernel arguments because the same kernel 
+     object can be reused for new launches with different arguments. */
+  command_node->command.run.arguments = 
+    (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
+                                     sizeof (struct pocl_argument));
+
+  for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
+    {
+      struct pocl_argument *arg = &command_node->command.run.arguments[i];
+      size_t arg_alloc_size = kernel->dyn_arguments[i].size;
+      arg->size = arg_alloc_size;
+
+      if (kernel->dyn_arguments[i].value == NULL)
+        {
+          arg->value = NULL;
+        }
+      else
+        {
+          /* FIXME: this is a cludge to determine an acceptable alignment,
+           * we should probably extract the argument alignment from the
+           * LLVM bytecode during kernel header generation. */
+          size_t arg_alignment = pocl_size_ceil2(arg_alloc_size);
+          if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
+            arg_alignment = MAX_EXTENDED_ALIGNMENT;
+          if (arg_alloc_size < arg_alignment)
+            arg_alloc_size = arg_alignment;
+         
+          arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
+          memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
+        }
+    }
+
   command_node->next = NULL; 
   
   POname(clRetainCommandQueue) (command_queue);
@@ -289,7 +325,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
      queued kernel has been executed. */
   for (i = 0; i < kernel->num_args; ++i)
   {
-    struct pocl_argument *al = &(kernel->arguments[i]);
+    struct pocl_argument *al = &(kernel->dyn_arguments[i]);
     if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
       ++command_node->command.run.arg_buffer_count;
   }
@@ -300,7 +336,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   count = 0;
   for (i = 0; i < kernel->num_args; ++i)
   {
-    struct pocl_argument *al = &(kernel->arguments[i]);
+    struct pocl_argument *al = &(kernel->dyn_arguments[i]);
     if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
       {
         cl_mem buf;
@@ -308,7 +344,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
 #endif
         buf = *(cl_mem *) (al->value);
-        POname(clRetainMemObject) (buf);
+        if (buf != NULL)
+          POname(clRetainMemObject) (buf);
         command_node->command.run.arg_buffers[count] = buf;
         ++count;
       }

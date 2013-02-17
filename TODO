@@ -11,9 +11,7 @@ High priority:
 Medium priority:
     * complete the kernel runtime library.   
     * complete the host runtime library.
-    * create workgroups by looping instead of fully unrolling for
-      flexible WG parallelization (1.0)
-    * device supporting ATI cards.
+    * device supporting AMD GPU cards.
     * Check all the function pointers in the ICD dispatch struct.
 
 Low priority:
@@ -90,3 +88,43 @@ Other
 * build system should use $(CXX) everywhere,
   now some parts assume g++ and it fails if 
   only c++ is installed
+* use the loop vectorizer capabilities of 
+  LLVM 3.2+ by ensuring the wiloop structures are 
+  vectorizable
+* use SPIR as the Clang target to unify ABI etc.
+  to fix the structs-as-values etc. Then a target-specific
+  IR emission phase should exploit target-specific 
+  optimizations (SPIR->POCL KERNEL COMPILER->LLVM IR->ASM?)
+* clear the target/device/host hassle: 
+
+pthread and basic device drivers always use the same CPU as 
+the host. 
+
+Rest of the devices (most likely) require an explicit target 
+anyways (e.g. tce, spu, ...). They use a separately built
+kernel library, but for pthread/dthread the default built
+could be used. 
+
+Per-target overriding of kernel builtin functions should be still 
+kept intact to enable use of target-specif inline assembly and 
+intrinsics for wanted builtin functions. 
+
+If the default kernel library is built we can exploit llc's 
+automatic CPU feature detection and tuning for the kernel library of the 
+current default (the one clang/llvm was compiled for) cpu in
+pthread/basic device drivers. 
+
+
+Optimization opportunities
+--------------------------
+* Even when using an in-order queue, schedule kernels
+  in parallel in case their input buffers are not depending
+  on the unfinished ones (should be legal per OpenCL 1.2 5.11).
+* Compile for-loops without barriers like for-loops with
+  barriers are, to produce better parallelizable code without
+  fully unrolling everything. The difficulty is to detect when
+  it's legal to do so (no diverging work-items when barrier is
+  placed).
+
+  
+  

@@ -1,0 +1,11 @@
+To enable the AMD APP SDK tests:
+
+1) run 'make AMD-APP-SDK-v2.8-RC-lnx64.tgz' to download the SDK
+2) configure pocl, it should now detect the AMD benchmark and
+   enable it
+3) call 'make check TESTSUITEFLAGS="-k amdsdk"', it should build 
+   the AMD cases and run the pocl test suite for the AMD SDK.
+
+After this you can run tools/scripts/benchmark.py to produce
+performance numbers.
+

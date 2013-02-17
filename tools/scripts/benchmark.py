@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # 
-# Copyright (c) 2012 Pekka Jääskeläinen
+# Copyright (c) 2012-2013 Pekka Jääskeläinen
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -27,6 +27,15 @@
 # Requires the ocl-icd as the icd loader. It uses its OCL_ICD_VENDORS env
 # to limit the choice of the OpenCL implementation to only the benchmarked 
 # one.
+#
+# Run this from the pocl top source directory. For example:
+#
+# tools/scripts/benchmark.py /etc/OpenCL/vendors_intel_only
+#
+# This runs the test suite with pocl and with the ICD found in the given
+# directory. It assumes the directory contains only one ICD file. In this
+# case it could be the Intel's OpenCL. If you run the benchmark
+# without the parameter, it measures only pocl execution times.
 
 import sys
 import os
@@ -37,6 +46,13 @@ import datetime
 import platform
 
 from subprocess import Popen, PIPE
+
+# With POCL we can reuse the old compilation results by
+# leaving the kernel compiler temp directories and rerunning
+# the same OpenCL app. However, it makes the comparison
+# unfair as the vendor's implementation cannot do similar
+# automated compiler caching.
+POCL_EXCLUDE_COMPILATION_TIME = False
 
 # How many times each case is repeated. The best result is picked from these.
 REPEAT_COUNT = 5
@@ -146,10 +162,16 @@ class BenchmarkCase(object):
         """Executes the benchmark case given number of times and returns the
         best result."""
         best = None
+        if POCL_EXCLUDE_COMPILATION_TIME:
+            temp_dir = tempfile.mkdtemp(suffix=self.name)
+            os.environ['POCL_LEAVE_TEMP_DIRS'] = '1'
+            os.environ['POCL_TEMP_DIR'] = temp_dir
+
         for t in range(times):
             result = self.run()
             if best is None or result.kernel_run_time < best.kernel_run_time:
                 best = result
+
         return best            
 
     def get_kernel_runtime(self):
@@ -188,10 +210,17 @@ class AMDBenchmarkCase(BenchmarkCase):
         return float(lines[i].split()[time_column])
 
     def run(self):
-        os.chdir(POCL_SRC_ROOT_PATH + "/" + self.test_root_dir)
-        timeout, self.stdout, self.stderr, rc = run_cmd(self.name + "/build/debug/x86_64/" + self.command)
+        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir
+        os.chdir(directory)
+        # Iterate 10 times to amortize the kernel compilation time.
+        # In a real application, the kernel compilation overheads can be excluded 
+        # (to some extent, at least) by using the binary API of OpenCL, so it 
+        # should be realistc to exclude it.
+        cmd = self.name + "/build/debug/x86_64/" + self.command + " -i 10"
+        timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
         if timeout or rc != 0:
-            sys.stderr.write(self.name + " FAIL (rc %d timeout).\n" % rc % timeout)
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( cmd, directory, rc) )
             sys.exit(1)
         
         result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
@@ -214,7 +243,7 @@ class EinsteinToolkitCase(BenchmarkCase):
         os.chdir(POCL_SRC_ROOT_PATH + "/" + self.test_root_dir)
         timeout, self.stdout, self.stderr, rc = run_cmd("./EinsteinToolkit")
         if timeout or rc != 0:
-            sys.stderr.write(self.name + " FAIL (rc %d timeout).\n" % rc % timeout)
+            sys.stderr.write(self.name + " FAIL (rc %d).\n" % rc)
             sys.exit(1)
         
         result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
@@ -259,7 +288,7 @@ def print_environment_info():
 
     sys.stdout.write("date: " + datetime.datetime.now().strftime("%Y-%m-%d") + "\n")
     sys.stdout.write("LLVM: " + llvm_version + "\n");
-    sys.stdout.write(" cpu: " + cpumodel + "\n\n")
+    sys.stdout.write(" CPU: " + cpumodel + "\n\n")
 
 
 
@@ -286,6 +315,7 @@ if __name__ == "__main__":
         sys.stdout.flush()
 
         os.environ['OCL_ICD_VENDORS'] = pocl_ocl_dir
+        os.environ['POCL_BUILDING'] = '1'
 
         result_pocl = case.repeat(REPEAT_COUNT)
         sys.stdout.write(("%.3f" % result_pocl.kernel_run_time).ljust(colwidths[1]))

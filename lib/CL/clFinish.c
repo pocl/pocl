@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "utlist.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -97,6 +98,13 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
             }
           free (node->command.run.arg_buffers);
           free (node->command.run.tmp_dir);
+          for (i = 0; i < node->command.run.kernel->num_args + 
+                 node->command.run.kernel->num_locals; ++i)
+          {
+            pocl_aligned_free (node->command.run.arguments[i].value);
+          }
+          free (node->command.run.arguments);
+          
           POname(clReleaseKernel)(node->command.run.kernel);
           break;  
         case CL_COMMAND_MARKER:

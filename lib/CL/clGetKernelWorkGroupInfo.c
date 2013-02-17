@@ -51,10 +51,6 @@ POname(clGetKernelWorkGroupInfo)
   else
     device = kernel->context->devices[0];
 
-  /* the wording of the specs is ambiguous - if param_value is NULL, do we need to check that param_name is valid? */
-  if (param_value == NULL)
-    return CL_INVALID_VALUE;
-
   switch (param_name)
     {
     case CL_KERNEL_WORK_GROUP_SIZE: 
@@ -85,12 +81,12 @@ POname(clGetKernelWorkGroupInfo)
       for (i = 0; i < kernel->num_args; ++i)
         {
           if (!kernel->arg_is_local[i]) continue;
-          local_size += kernel->arguments[i].size;
+          local_size += kernel->dyn_arguments[i].size;
         }
       /* Count the automatic locals. */
       for (i = 0; i < kernel->num_locals; ++i)
         {
-          local_size += kernel->arguments[kernel->num_args + i].size;
+          local_size += kernel->dyn_arguments[kernel->num_args + i].size;
         }
 #if 0
       printf("### local memory usage %d\n", local_size);
@@ -98,8 +94,11 @@ POname(clGetKernelWorkGroupInfo)
       POCL_RETURN_KERNEL_WG_INFO(cl_ulong, local_size);
     }
       
-    default:  
+    case CL_KERNEL_PRIVATE_MEM_SIZE:
       POCL_ABORT_UNIMPLEMENTED();
+
+    default:
+      return CL_INVALID_VALUE;
     }
   return CL_SUCCESS;
 }

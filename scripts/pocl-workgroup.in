@@ -2,6 +2,7 @@
 # pocl-workgroup - Parallelize a kernel from an OpenCL bytecode file.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
+#               2011-2013 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -76,30 +77,25 @@ case $target in
   powerpc-*)   target_dir="powerpc";;
   powerpc64-*) target_dir="powerpc64";;
   tce-*)       target_dir="tce";;
+  i?86*)       target_dir="x86_64";;
   x86_64-*)    target_dir="x86_64";;
 esac
 
-llvm_ld="pocl-llvm-ld"
-if [ -f @abs_top_builddir@/tools/llvm-ld/pocl-llvm-ld ]
-then
-  llvm_ld="@abs_top_builddir@/tools/llvm-ld/pocl-llvm-ld"
-fi
+full_target_dir="@pkglibdir@/${target_dir}"
+# BEGIN REMOVE ONCE INSTALLED
+# Fixing full_target_dir until the script is installed
+full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
+# END REMOVE ONCE INSTALLED
 
-if [ -f @abs_top_builddir@/lib/kernel/${target_dir}/libkernel.a ]
-then
-    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@abs_top_builddir@/lib/kernel/${target_dir} -lkernel
-else
-    ${llvm_ld} --disable-opt -o ${linked_out} -b ${linked_bc} $1 -L@pkglibdir@/${target_dir} -lkernel
-fi
-rm ${linked_out}
+@LLVM_LINK@ -o ${linked_bc}  $1 "$full_target_dir"/kernel-$target.bc 
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
 pocl_lib=@pkglibdir@/llvmopencl.so
-if [ -f @abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so ]
-then
-    pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
-fi
+# BEGIN REMOVE ONCE INSTALLED
+# Fixing pocl_lib until the script is installed
+pocl_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
+# END REMOVE ONCE INSTALLED
 
 OPT_SWITCH="-O3"
 
@@ -130,12 +126,22 @@ then
 EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-mem-ops-only"
 fi
 
+#EXTRA_OPTS+="-vectorize-loops"
+
+WG_VECTORIZER=""
+if test "x$POCL_WORK_GROUP_METHOD" = "xloopvec";
+then
+export POCL_WORK_GROUP_METHOD=loops
+export POCL_WILOOPS_MAX_UNROLL_COUNT=1
+WG_VECTORIZER="-vectorize-loops -vectorizer-min-trip-count 1"
+fi
+
 #set -x
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
+    -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} ${WG_VECTORIZER} \
     ${EXTRA_OPTS} -instcombine -header=${header} -o ${output_file} ${linked_bc}
 
 #set +x

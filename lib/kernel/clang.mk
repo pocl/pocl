@@ -54,10 +54,12 @@ LLAS_COMPILE = $(LLVM_AS) $(LLVMFLAGS) $(LLVM_DEFS) \
 .SUFFIX: .cl .ll
 
 .cl.o:
+	$(AM_V_at)$(mkdir_p) $(DEPDIR)
 	$(AM_V_CLANG_CL)$(CLANG_CL_COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 
 .c.o:
+	$(AM_V_at)$(mkdir_p) $(DEPDIR)
 	$(AM_V_CLANG_C)$(CLANG_C_COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 

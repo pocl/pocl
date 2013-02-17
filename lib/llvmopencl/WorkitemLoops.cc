@@ -1,7 +1,7 @@
 // LLVM function pass to create a loop that runs all the work items 
 // in a work group.
 // 
-// Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+// Copyright (c) 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,21 +30,31 @@
 #include "config.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Target/TargetData.h"
-#else
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#include "llvm/ValueSymbolTable.h"
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#include "llvm/ValueSymbolTable.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #endif
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/ValueSymbolTable.h"
 
 #include "WorkitemHandlerChooser.h"
 
@@ -178,7 +188,8 @@ WorkitemLoops::runOnFunction(Function &F)
 
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
 WorkitemLoops::CreateLoopAround
-(llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
+(ParallelRegion &region,
+ llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
  bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
  bool addIncBlock) 
 {
@@ -307,7 +318,28 @@ WorkitemLoops::CreateLoopAround
       (IntegerType::get(C, size_t_width), 
        LocalSizeForDim)));
       
-  builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+  Instruction *loopBranch =
+      builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+
+  /* Add the metadata to mark a parallel loop. The metadata 
+     refer to a loop-unique dummy metadata that is not merged
+     automatically. */
+
+  /* This creation of the identifier metadata is copied from
+     LLVM's MDBuilder::createAnonymousTBAARoot(). */
+  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Value*>());
+  MDNode *Root = MDNode::get(C, Dummy);
+  // At this point we have
+  //   !0 = metadata !{}            <- dummy
+  //   !1 = metadata !{metadata !0} <- root
+  // Replace the dummy operand with the root node itself and delete the dummy.
+  Root->replaceOperandWith(0, Root);
+  MDNode::deleteTemporary(Dummy);
+  // We now have
+  //   !1 = metadata !{metadata !1} <- self-referential root
+
+  loopBranch->setMetadata("llvm.loop.parallel", Root);
+  region.AddParallelLoopMetadata(Root);
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -396,6 +428,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
     llvm::ValueToValueMapTy reference_map;
     ParallelRegion *original = (*i);
+
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### handling region:" << std::endl;
     original->dumpNames();    
@@ -486,13 +519,13 @@ WorkitemLoops::ProcessFunction(Function &F)
       }
 
     if (LocalSizeX > 1)
-      l = CreateLoopAround(l.first, l.second, peelFirst, localIdX, LocalSizeX, !unrolled);
+      l = CreateLoopAround(*original, l.first, l.second, peelFirst, localIdX, LocalSizeX, !unrolled);
 
     if (LocalSizeY > 1)
-      l = CreateLoopAround(l.first, l.second, false, localIdY, LocalSizeY);
+      l = CreateLoopAround(*original, l.first, l.second, false, localIdY, LocalSizeY);
 
     if (LocalSizeZ > 1)
-      l = CreateLoopAround(l.first, l.second, false, localIdZ, LocalSizeZ);
+      l = CreateLoopAround(*original, l.first, l.second, false, localIdZ, LocalSizeZ);
 
     /* Loop edges coming from another region mean B-loops which means 
        we have to fix the loop edge to jump to the beginning of the wi-loop 
@@ -839,7 +872,7 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
 {
     /* TODO: rematerialization:
 
-       If the instructions is a load from a scalar global, we need
+       If the instruction is a load from a scalar global, we need
        not context save it but should just (re)load. This
        covers loads from the temporary _local_id_x etc. variables. 
 

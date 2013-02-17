@@ -23,7 +23,12 @@
 #ifndef _POCL_PHIS_TO_ALLOCAS_H
 #define _POCL_PHIS_TO_ALLOCAS_H
 
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Function.h"
+#else
+#include "llvm/IR/Function.h"
+#endif
 #include "llvm/Pass.h"
 
 namespace llvm {

@@ -20,12 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "LoopBarriers.h"
-#include "Barrier.h"
-#include "Workgroup.h"
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#else
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#endif
+
+#include "LoopBarriers.h"
+#include "Barrier.h"
+#include "Workgroup.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <iostream>
 

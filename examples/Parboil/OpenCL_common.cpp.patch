@@ -1,0 +1,11 @@
+--- OpenCL_common.cpp	2013-02-05 16:51:53.458366127 +0200
++++ parboil/benchmarks/bfs/src/opencl_base/OpenCL_common.cpp	2013-02-05 16:54:02.674616150 +0200
+@@ -40,7 +40,7 @@
+       if (reqDeviceType != NULL) {
+         OCL_SIMPLE_ERRCK_RETVAL( clGetDeviceInfo(clDevice, CL_DEVICE_TYPE, sizeof(cl_device_type), &clDeviceType, NULL));
+         if (*reqDeviceType != CL_DEVICE_TYPE_ALL) {
+-          if (*reqDeviceType != clDeviceType) {
++          if (*reqDeviceType & clDeviceType == 0) {
+             canSatisfy = false;
+           }
+         }

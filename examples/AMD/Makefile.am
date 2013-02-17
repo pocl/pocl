@@ -38,13 +38,14 @@ amd_app_dir=$(testsuite_src_dir)/samples/opencl/cl/app
 all: $(testsuite_src_dir) build
 
 $(testsuite_src_dir): AMD-APP-SDK-v2.8-RC-lnx64.tgz
-	test -d $(testsuite_src_dir) || tar xzf AMD-APP-SDK-v2.8-RC-lnx64.tgz
+	test -d $(testsuite_src_dir) || (cd $(testsuite_pocl_dir) && tar xzf AMD-APP-SDK-v2.8-RC-lnx64.tgz)
 
-build:
+build: $(testsuite_src_dir) 
 	cd $(testsuite_src_dir)/samples/opencl/SDKUtil && \
-	patch -sNp0 < $(testsuite_pocl_dir)/SDKApplication.cpp.patch && cd .. && \
-	find . -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' && \
-	$(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
+	( patch -sNp0 < $(testsuite_pocl_dir)/SDKApplication.cpp.patch || true ) && \
+	cd .. && \
+	find -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' && \
+	LDFLAGS=-lX11 $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
 
 test_AESEncryptDecrypt: 
 	cd $(amd_app_dir)/AESEncryptDecrypt && \

@@ -30,7 +30,7 @@
   })
 
 #define IMPLEMENT_DIRECT(NAME, VTYPE, STYPE, JTYPE, EXPR)       \
-  JTYPE _cl_overloadable NAME(VTYPE a)                          \
+  JTYPE _CL_OVERLOADABLE NAME(VTYPE a)                          \
   {                                                             \
     typedef VTYPE vtype;                                        \
     typedef STYPE stype;                                        \
@@ -42,7 +42,11 @@
 
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
+#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ < 3))
+// Clang 3.2 and earlier crashes when generating this. Probably due to the
+// conversion *(jtype*)&a.
 IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
+#endif
 IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)

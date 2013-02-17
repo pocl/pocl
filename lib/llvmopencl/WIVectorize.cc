@@ -37,11 +37,6 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Target/TargetData.h"
-#else
-#include "llvm/IRBuilder.h"
-#include "llvm/TypeBuilder.h"
-#include "llvm/DataLayout.h"
-#endif
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -49,8 +44,38 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Metadata.h"
+#elif defined LLVM_3_2
+#include "llvm/IRBuilder.h"
+#include "llvm/TypeBuilder.h"
+#include "llvm/DataLayout.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Type.h"
+#include "llvm/Metadata.h"
+#include "llvm/TargetTransformInfo.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#endif
+#include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -67,14 +92,17 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Transforms/Vectorize.h"
-#include "llvm/Metadata.h"
 #include <algorithm>
 #include <map>
 #include <iostream>
 using namespace llvm;
 
+static cl::opt<bool>
+IgnoreTargetInfo("wi-vectorize-ignore-target-info",  cl::init(true),
+  cl::Hidden, cl::desc("Ignore target information"));
+
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(1), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(3), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -106,15 +134,15 @@ NoFP("wi-vectorize-no-fp", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point operations"));
 
 static cl::opt<bool>
-NoCMP("wi-vectorize-no-cmp", cl::init(true), cl::Hidden,
+NoCMP("wi-vectorize-no-cmp", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize comparison operations"));
 
 static cl::opt<bool>
-NoCount("wi-vectorize-no-counters", cl::init(true), cl::Hidden,
+NoCount("wi-vectorize-no-counters", cl::init(false), cl::Hidden,
   cl::desc("Forbid vectorization based no loop counter "
           "arithmetic"));
 static cl::opt<bool>
-NoGEP("wi-vectorize-no-GEP", cl::init(true), cl::Hidden,
+NoGEP("wi-vectorize-no-GEP", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize getelementpointer operations"));
 
 #ifndef NDEBUG
@@ -165,8 +193,14 @@ namespace {
     ScalarEvolution *SE;
 #ifdef LLVM_3_1
     TargetData *TD;
+#elif defined LLVM_3_2
+    DataLayout *TD;
+    TargetTransformInfo *TTI;
+    const VectorTargetTransformInfo *VTTI;    
 #else
     DataLayout *TD;
+    TargetTransformInfo *TTI;
+    const TargetTransformInfo *VTTI;
 #endif
     DenseMap<Value*, Value*> storedSources;
     DenseMap<std::pair<int,int>, ValueVector*> stridedOps;    
@@ -328,8 +362,16 @@ namespace {
       SE = &getAnalysis<ScalarEvolution>();
 #ifdef LLVM_3_1
       TD = getAnalysisIfAvailable<TargetData>();
+#elif defined LLVM_3_2
+      TD = getAnalysisIfAvailable<DataLayout>();
+      TTI = IgnoreTargetInfo ? 0 :
+        getAnalysisIfAvailable<TargetTransformInfo>();
+      VTTI = TTI ? TTI->getVectorTargetTransformInfo() : 0;        
 #else
       TD = getAnalysisIfAvailable<DataLayout>();
+      TTI = IgnoreTargetInfo ? 0 :
+        getAnalysisIfAvailable<TargetTransformInfo>();
+      VTTI = TTI;
 #endif
       
       bool changed = false;      
@@ -374,6 +416,17 @@ namespace {
           MemOpsOnly = true;
           vectorizeTwice = true;
       }
+#if 0      
+#ifdef LLVM_3_3
+      if (TTI) {
+          std::cerr << " settign new vector width" << std::endl;
+          unsigned WidestRegister = TTI->getRegisterBitWidth(true);      
+          VectorWidth = WidestRegister/32;
+          std::cerr << VectorWidth << std::endl;
+      }
+#endif      
+#endif
+
       for (unsigned v = 2, n = 1; v <= VectorWidth;
           v *= 2, ++n) {
           DEBUG(dbgs() << "WIV: fusing memm only in loop #" << n << 
@@ -437,14 +490,27 @@ namespace {
     }
     // This returns the vector type that holds a pair of the provided type.
     // If the provided type is already a vector, then its length is doubled.
-    static inline VectorType *getVecTypeForPair(Type *ElemTy) {
+    static inline VectorType *getVecTypeForPair(Type *ElemTy, Type *Elem2Ty) {
+      assert(ElemTy->getScalarType() == Elem2Ty->getScalarType() &&
+             "Cannot form vector from incompatible scalar types");
+      Type *STy = ElemTy->getScalarType();
+
+      unsigned numElem;
       if (VectorType *VTy = dyn_cast<VectorType>(ElemTy)) {
-        unsigned numElem = VTy->getNumElements();
-        return VectorType::get(ElemTy->getScalarType(), numElem*2);
+        numElem = VTy->getNumElements();
+      } else {
+        numElem = 1;
       }
 
-      return VectorType::get(ElemTy, 2);
+      if (VectorType *VTy = dyn_cast<VectorType>(Elem2Ty)) {
+        numElem += VTy->getNumElements();
+      } else {
+        numElem += 1;
+      }
+
+      return VectorType::get(STy, numElem);
     }
+    
     std::string getReplacementName(Instruction *I, bool IsInput, unsigned o,
                         unsigned n = 0) {
         if (!I->hasName())
@@ -482,7 +548,64 @@ namespace {
         
       return 1;
     }
-
+    // Returns the cost of the provided instruction using VTTI.
+    // This does not handle loads and stores.
+    unsigned getInstrCost(unsigned Opcode, Type *T1, Type *T2) {
+#ifdef LLVM_3_1
+        return 1;
+#else
+      switch (Opcode) {
+      default: break;
+      case Instruction::GetElementPtr:
+        // We mark this instruction as zero-cost because scalar GEPs are usually
+        // lowered to the intruction addressing mode. At the moment we don't
+        // generate vector GEPs.
+        return 0;
+      case Instruction::Br:
+        return VTTI->getCFInstrCost(Opcode);
+      case Instruction::PHI:
+        return 0;
+      case Instruction::Add:
+      case Instruction::FAdd:
+      case Instruction::Sub:
+      case Instruction::FSub:
+      case Instruction::Mul:
+      case Instruction::FMul:
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::FDiv:
+      case Instruction::URem:
+      case Instruction::SRem:
+      case Instruction::FRem:
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor:
+        return VTTI->getArithmeticInstrCost(Opcode, T1);
+      case Instruction::Select:
+      case Instruction::ICmp:
+      case Instruction::FCmp:
+        return VTTI->getCmpSelInstrCost(Opcode, T1, T2);
+      case Instruction::ZExt:
+      case Instruction::SExt:
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::FPExt:
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+      case Instruction::Trunc:
+      case Instruction::FPTrunc:
+      case Instruction::BitCast:
+      case Instruction::ShuffleVector:
+        return VTTI->getCastInstrCost(Opcode, T1, T2);
+      }
+      return 1;
+#endif      
+    }     
     // This determines the relative offset of two loads or stores, returning
     // true if the offset could be determined to be some constant value.
     // For example, if OffsetInElmts == 1, then J accesses the memory directly
@@ -491,13 +614,17 @@ namespace {
     // have the same type.
     bool getPairPtrInfo(Instruction *I, Instruction *J,
         Value *&IPtr, Value *&JPtr, unsigned &IAlignment, unsigned &JAlignment,
+        unsigned &IAddressSpace, unsigned &JAddressSpace,
         int64_t &OffsetInElmts) {
       OffsetInElmts = 0;
-      if (isa<LoadInst>(I)) {
-        IPtr = cast<LoadInst>(I)->getPointerOperand();
-        JPtr = cast<LoadInst>(J)->getPointerOperand();
-        IAlignment = cast<LoadInst>(I)->getAlignment();
-        JAlignment = cast<LoadInst>(J)->getAlignment();
+      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        LoadInst *LJ = cast<LoadInst>(J);
+        IPtr = LI->getPointerOperand();
+        JPtr = LJ->getPointerOperand();
+        IAlignment = LI->getAlignment();
+        JAlignment = LJ->getAlignment();
+        IAddressSpace = LI->getPointerAddressSpace();
+        JAddressSpace = LJ->getPointerAddressSpace();        
       } else if (isa<GetElementPtrInst>(I)) {
         Instruction::op_iterator it = cast<GetElementPtrInst>(I)->idx_begin();
         IPtr = *it;
@@ -508,10 +635,13 @@ namespace {
         IAlignment = 0;
         JAlignment = 0;        
       } else {
-        IPtr = cast<StoreInst>(I)->getPointerOperand();
-        JPtr = cast<StoreInst>(J)->getPointerOperand();
-        IAlignment = cast<StoreInst>(I)->getAlignment();
-        JAlignment = cast<StoreInst>(J)->getAlignment();
+        StoreInst *SI = cast<StoreInst>(I), *SJ = cast<StoreInst>(J);
+        IPtr = SI->getPointerOperand();
+        JPtr = SJ->getPointerOperand();
+        IAlignment = SI->getAlignment();
+        JAlignment = SJ->getAlignment();
+        IAddressSpace = SI->getPointerAddressSpace();
+        JAddressSpace = SJ->getPointerAddressSpace();     
       }
       if ((isa<GetElementPtrInst>(I) && !SE->isSCEVable(IPtr->getType())) 
           || (isa<GetElementPtrInst>(J) && !SE->isSCEVable(JPtr->getType()))) {
@@ -1016,7 +1146,32 @@ namespace {
         }
         return true;
     }
+    static inline void getInstructionTypes(Instruction *I,
+                                           Type *&T1, Type *&T2) {
+      if (isa<StoreInst>(I)) {
+        // For stores, it is the value type, not the pointer type that matters
+        // because the value is what will come from a vector register.
+  
+        Value *IVal = cast<StoreInst>(I)->getValueOperand();
+        T1 = IVal->getType();
+      } else {
+        T1 = I->getType();
+      }
+  
+      if (I->isCast())
+        T2 = cast<CastInst>(I)->getSrcTy();
+      else
+        T2 = T1;
 
+      if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
+        T2 = SI->getCondition()->getType();
+      } else if (ShuffleVectorInst *SI = dyn_cast<ShuffleVectorInst>(I)) {
+        T2 = SI->getOperand(0)->getType();
+      } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
+        T2 = CI->getOperand(0)->getType();
+      }
+    }
+    
   // This function returns true if the two provided instructions are compatible
   // (meaning that they can be fused into a vector instruction). This assumes
   // that I has already been determined to be vectorizable and that J is not
@@ -1030,43 +1185,26 @@ namespace {
     // but are otherwise the same.
     LoadInst *LI, *LJ;
     StoreInst *SI, *SJ;
-    if ((LI = dyn_cast<LoadInst>(I)) && (LJ = dyn_cast<LoadInst>(J))) {
-      if (I->getType() != J->getType()) {
-        return false;
-      }
-
-      if (LI->getPointerOperand()->getType() !=
-            LJ->getPointerOperand()->getType() ||
-          LI->isVolatile() != LJ->isVolatile() ||
-          LI->getOrdering() != LJ->getOrdering() ||
-          LI->getSynchScope() != LJ->getSynchScope()) {
-            return false; 
-      }
-    } else if ((SI = dyn_cast<StoreInst>(I)) && (SJ = dyn_cast<StoreInst>(J))) {
-      if (SI->getValueOperand()->getType() !=
-            SJ->getValueOperand()->getType() ||
-          SI->getPointerOperand()->getType() !=
-            SJ->getPointerOperand()->getType() ||
-          SI->isVolatile() != SJ->isVolatile() ||
-          SI->getOrdering() != SJ->getOrdering() ||
-          SI->getSynchScope() != SJ->getSynchScope()) {
-            return false;
-      }
-    } else if (!J->isSameOperationAs(I)) {
+    if (!J->isSameOperationAs(I)) {
       return false;
     }
-    // FIXME: handle addsub-type operations!
+    Type *IT1, *IT2, *JT1, *JT2;
+    getInstructionTypes(I, IT1, IT2);
+    getInstructionTypes(J, JT1, JT2);
 
     if (IsSimpleLoadStore || isa<GetElementPtrInst>(I)) {
       Value *IPtr, *JPtr;
-      unsigned IAlignment, JAlignment;
+      unsigned IAlignment, JAlignment, IAddressSpace, JAddressSpace;
       int64_t OffsetInElmts = 0;
       bool foundPointer = 
-          getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment, OffsetInElmts);
+          getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment, 
+                 IAddressSpace, JAddressSpace, OffsetInElmts);
       if ( foundPointer && abs64(OffsetInElmts) == 1) {         
-            if (AlignedOnly) {
-            Type *aType = isa<StoreInst>(I) ?
-                cast<StoreInst>(I)->getValueOperand()->getType() : I->getType();
+            Type *aTypeI = isa<StoreInst>(I) ?
+              cast<StoreInst>(I)->getValueOperand()->getType() : I->getType();
+            Type *aTypeJ = isa<StoreInst>(J) ?
+              cast<StoreInst>(J)->getValueOperand()->getType() : J->getType();
+            Type *VType = getVecTypeForPair(aTypeI, aTypeJ);                
             // An aligned load or store is possible only if the instruction
             // with the lower offset has an alignment suitable for the
             // vector type.
@@ -1074,12 +1212,35 @@ namespace {
             unsigned BottomAlignment = IAlignment;
             if (OffsetInElmts < 0) BottomAlignment = JAlignment;
 
-            Type *VType = getVecTypeForPair(aType);
             unsigned VecAlignment = TD->getPrefTypeAlignment(VType);
-            if (BottomAlignment < VecAlignment) {
+            if (AlignedOnly) {            
+                if (BottomAlignment < VecAlignment) {
+                    return false;
+                }
+            }
+#ifndef LLVM_3_1            
+            if (VTTI) {
+              unsigned ICost = VTTI->getMemoryOpCost(I->getOpcode(), I->getType(),
+                                                     IAlignment, IAddressSpace);
+              unsigned JCost = VTTI->getMemoryOpCost(J->getOpcode(), J->getType(),
+                                                     JAlignment, JAddressSpace);
+              unsigned VCost = VTTI->getMemoryOpCost(I->getOpcode(), VType,
+                                                     BottomAlignment,
+                                                     IAddressSpace);
+              if (VCost > ICost + JCost)
                 return false;
-            }
-            }
+
+              // We don't want to fuse to a type that will be split, even
+              // if the two input types will also be split and there is no other
+              // associated cost.
+              unsigned VParts = VTTI->getNumberOfParts(VType);
+              if (VParts > 1)
+                return false;
+              else if (!VParts && VCost == ICost + JCost)
+                return false;
+
+            }   
+#endif                     
       } else if(foundPointer && abs64(OffsetInElmts)>1){
           if (isa<GetElementPtrInst>(I)) {
               return true;
@@ -1118,7 +1279,32 @@ namespace {
       return isa<Constant>(I->getOperand(2)) &&
              isa<Constant>(J->getOperand(2));
       // FIXME: We may want to vectorize non-constant shuffles also.
+#ifdef LLVM_3_1             
     }
+#else    
+    }  else if (VTTI) {
+      unsigned ICost = getInstrCost(I->getOpcode(), IT1, IT2);
+      unsigned JCost = getInstrCost(J->getOpcode(), JT1, JT2);
+      Type *VT1 = getVecTypeForPair(IT1, JT1),
+           *VT2 = getVecTypeForPair(IT2, JT2);
+      unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2);
+
+      if (VCost > ICost + JCost) {
+        return false;
+      }
+      // We don't want to fuse to a type that will be split, even
+      // if the two input types will also be split and there is no other
+      // associated cost.
+      unsigned VParts1 = VTTI->getNumberOfParts(VT1),
+               VParts2 = VTTI->getNumberOfParts(VT2);
+      if (VParts1 > 1 || VParts2 > 1)
+        return false;
+      else if ((!VParts1 || !VParts2) && VCost == ICost + JCost)
+        return false;
+
+      //CostSavings = ICost + JCost - VCost;
+    }
+#endif    
     // The powi intrinsic is special because only the first argument is
     // vectorized, the second arguments must be equal.
     CallInst *CI = dyn_cast<CallInst>(I);
@@ -1867,7 +2053,11 @@ namespace {
              << *J->first << " <-> " << *J->second << "} of depth " <<
              MaxDepth << " and size " << PrunedTree.size() <<
             " (effective size: " << EffSize << ")\n");
+#if defined LLVM_3_1      
       if (MaxDepth >= ReqChainDepth && EffSize > BestEffSize) {
+#else          
+      if ((VTTI || MaxDepth >= ReqChainDepth) && EffSize > BestEffSize) {          
+#endif          
         BestMaxDepth = MaxDepth;
         BestEffSize = EffSize;
         BestTree = PrunedTree;
@@ -1943,9 +2133,13 @@ namespace {
                      Instruction *I, Instruction *J, unsigned o,
                      bool FlipMemInputs) {
     Value *IPtr, *JPtr;
-    unsigned IAlignment, JAlignment;
+    unsigned IAlignment, JAlignment, IAddressSpace, JAddressSpace;
     int64_t OffsetInElmts;
+
+    // Note: the analysis might fail here, that is why the pair order has
+    // been precomputed (OffsetInElmts must be unused here).
     (void) getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
+                          IAddressSpace, JAddressSpace,
                           OffsetInElmts);
 
     // The pointer value is taken to be the one with the lowest offset.
@@ -1962,12 +2156,14 @@ namespace {
     if (isa<BitCastInst>(VPtr)) {
         VPtr = cast<BitCastInst>(VPtr)->getOperand(0);
     }
-    Type *ArgType = cast<PointerType>(IPtr->getType())->getElementType();
-    Type *VArgType = getVecTypeForPair(ArgType);
+    Type *ArgTypeI = cast<PointerType>(IPtr->getType())->getElementType();
+    Type *ArgTypeJ = cast<PointerType>(JPtr->getType())->getElementType();
+    Type *VArgType = getVecTypeForPair(ArgTypeI, ArgTypeJ);
     Type *VArgPtrType = PointerType::get(VArgType,
       cast<PointerType>(IPtr->getType())->getAddressSpace());
     BitCastInst* b =  new BitCastInst(VPtr, VArgPtrType, getReplacementName(I, true, o),
                         /* insert before */ FlipMemInputs ? J : I);
+    
     if (I->getMetadata("wi") != NULL) {
       b->setMetadata("wi", I->getMetadata("wi"));
       b->setMetadata("wi_counter", I->getMetadata("wi_counter"));
@@ -2000,9 +2196,9 @@ namespace {
     // This is the shuffle mask. We need to append the second
     // mask to the first, and the numbers need to be adjusted.
 
-    Type *ArgType = I->getType();
-    Type *VArgType = getVecTypeForPair(ArgType);
-
+    Type *ArgTypeI = I->getType();
+    Type *ArgTypeJ = J->getType();
+    Type *VArgType = getVecTypeForPair(ArgTypeI, ArgTypeJ);
     // Get the total number of elements in the fused vector type.
     // By definition, this must equal the number of elements in
     // the final mask.
@@ -2042,7 +2238,8 @@ namespace {
 
       // Compute the fused vector type for this operand
     Type *ArgType = I->getOperand(o)->getType();
-    VectorType *VArgType = getVecTypeForPair(ArgType);
+    Type *ArgTypeJ = J->getOperand(o)->getType();
+    VectorType *VArgType = getVecTypeForPair(ArgType, ArgTypeJ);
     Instruction *L = I, *H = J;
     if (FlipMemInputs) {
       L = J;
@@ -2277,15 +2474,16 @@ namespace {
         ReplacedOperands[o] = getReplacementPointerInput(Context, I, J, o,
                                 FlipMemInputs);
         continue;
-      }else if (isa<CallInst>(I)) {
+      } else if (isa<CallInst>(I)) {
         Function *F = cast<CallInst>(I)->getCalledFunction();
         unsigned IID = F->getIntrinsicID();
         if (o == NumOperands-1) {
           BasicBlock &BB = *I->getParent();
 
           Module *M = BB.getParent()->getParent();
-          Type *ArgType = I->getType();
-          Type *VArgType = getVecTypeForPair(ArgType);
+          Type *ArgTypeI = I->getType();
+          Type *ArgTypeJ = J->getType();
+          Type *VArgType = getVecTypeForPair(ArgTypeI, ArgTypeJ);
 
           // FIXME: is it safe to do this here?
           ReplacedOperands[o] = Intrinsic::getDeclaration(M,
@@ -2326,10 +2524,11 @@ namespace {
         continue;
 
       Value *IPtr, *JPtr;
-      unsigned IAlignment, JAlignment;
+      unsigned IAlignment, JAlignment, IAddressSpace, JAddressSpace;
       int64_t OffsetInElmts;
-      if (!getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
-                          OffsetInElmts) || abs64(OffsetInElmts) != 1) {
+      if (!getPairPtrInfo(
+              I, J, IPtr, JPtr, IAlignment, JAlignment, IAddressSpace, 
+              JAddressSpace, OffsetInElmts) || abs64(OffsetInElmts) != 1) {
           if (!isa<GetElementPtrInst>(I))
             llvm_unreachable("Pre-fusion pointer analysis failed");
       }
@@ -2355,7 +2554,9 @@ namespace {
       AA->replaceWithNewValue(J, K);
     } else {
       Type *IType = I->getType();
-      Type *VType = getVecTypeForPair(IType);
+      Type *JType = J->getType();
+
+      VectorType *VType = getVecTypeForPair(IType, JType);
 
       if (IType->isVectorTy()) {
           unsigned numElem = cast<VectorType>(IType)->getNumElements();
@@ -2442,8 +2643,6 @@ namespace {
         // Move this instruction
         Instruction *InstToMove = L; ++L;
 
-        /*std::cerr << "WIV: moving: "; InstToMove->dump();
-        std::cerr << " to after " ; InsertionPt->dump();*/
         InstToMove->removeFromParent();
         InstToMove->insertAfter(InsertionPt);
         InsertionPt = InstToMove;
@@ -2575,7 +2774,7 @@ namespace {
           K->setMetadata("wi_counter", I->getMetadata("wi_counter"));
       }
       if (!isa<StoreInst>(K))
-        K->mutateType(getVecTypeForPair(I->getType()));
+        K->mutateType(getVecTypeForPair(I->getType(), J->getType()));
 
       for (unsigned o = 0; o < NumOperands; ++o)
         K->setOperand(o, ReplacedOperands[o]);

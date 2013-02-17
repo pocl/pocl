@@ -1,0 +1,33 @@
+Problems found by Piglit testing framework
+==========================================
+
+by: Victor Oliveira
+
+http://people.freedesktop.org/~nh/piglit/
+
+API
+---
+
+- clCreateKernel with non-existent kernel name
+- build options support is incomplete
+- clang accepts invalid opencl version in command-line
+- unimplemented parts in clReleaseProgram
+- unimplemented parts in clRetainEvent and clReleaseEvent
+- clGetProgramBuildInfo returns an empty string
+
+Execute
+-------
+
+- increment and decrement vector types (e.g. int4)
+- implicit conversion between vector types (e.g. int4 -> float4)
+
+Unimplemented
+-------------
+
+- clGetProgramInfo
+- clGetMemObjectInfo
+- clCreateSampler
+- clGetImageInfo
+- clGetEventInfo
+- clCreateKernelsInProgram
+- clGetContextInfo

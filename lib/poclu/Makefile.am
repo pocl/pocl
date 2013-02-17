@@ -2,7 +2,7 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/poclu.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
+# Copyright (c) 2011-2013 Universidad Rey Juan Carlos and 
 #                         Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,4 +28,5 @@ lib_LTLIBRARIES = libpoclu.la
 libpoclu_la_SOURCES = poclu_bswap.c
 
 libpoclu_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include 
-libpoclu_la_LDFLAGS = --version-info ${LIB_VERSION}
+libpoclu_la_LDFLAGS = -version-info ${LIB_VERSION}
+libpoclu_la_LIBADD = ../CL/libpocl.la

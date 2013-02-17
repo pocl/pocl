@@ -21,63 +21,63 @@
    THE SOFTWARE.
 */
 
-float _cl_overloadable dot(float a, float b)
+float _CL_OVERLOADABLE dot(float a, float b)
 {
   return a * b;
 }
 
-float _cl_overloadable dot(float2 a, float2 b)
+float _CL_OVERLOADABLE dot(float2 a, float2 b)
 {
   return a.lo * b.lo + a.hi * b.hi;
 }
 
-float _cl_overloadable dot(float3 a, float3 b)
+float _CL_OVERLOADABLE dot(float3 a, float3 b)
 {
   return dot(a.s01, b.s01) + a.s2 * b.s2;
 }
 
-float _cl_overloadable dot(float4 a, float4 b)
+float _CL_OVERLOADABLE dot(float4 a, float4 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-float _cl_overloadable dot(float8 a, float8 b)
+float _CL_OVERLOADABLE dot(float8 a, float8 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-float _cl_overloadable dot(float16 a, float16 b)
+float _CL_OVERLOADABLE dot(float16 a, float16 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
 #ifdef cl_khr_fp64
-double _cl_overloadable dot(double a, double b)
+double _CL_OVERLOADABLE dot(double a, double b)
 {
   return a * b;
 }
 
-double _cl_overloadable dot(double2 a, double2 b)
+double _CL_OVERLOADABLE dot(double2 a, double2 b)
 {
   return a.lo * b.lo + a.hi * b.hi;
 }
 
-double _cl_overloadable dot(double3 a, double3 b)
+double _CL_OVERLOADABLE dot(double3 a, double3 b)
 {
   return dot(a.s01, b.s01) + a.s2 * b.s2;
 }
 
-double _cl_overloadable dot(double4 a, double4 b)
+double _CL_OVERLOADABLE dot(double4 a, double4 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-double _cl_overloadable dot(double8 a, double8 b)
+double _CL_OVERLOADABLE dot(double8 a, double8 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 
-double _cl_overloadable dot(double16 a, double16 b)
+double _CL_OVERLOADABLE dot(double16 a, double16 b)
 {
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }

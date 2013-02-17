@@ -20,9 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
+#else
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
+#endif
+
 #include "llvm/Support/Casting.h"
 
 #define BARRIER_FUNCTION_NAME "pocl.barrier"

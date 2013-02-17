@@ -28,12 +28,16 @@
 #include "config.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
-#else
+#include "llvm/ValueSymbolTable.h"
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
+#include "llvm/ValueSymbolTable.h"
+#else
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #endif
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/ValueSymbolTable.h"
 
 #include <set>
 #include <sstream>
@@ -408,6 +412,49 @@ ParallelRegion::Verify()
   return true;
 }
 
+/**
+ * Adds metadata to all the memory instructions to denote
+ * they originate from a parallel loop.
+ *
+ * Due to nested parallel loops, there can be multiple loop
+ * references.
+ *
+ * Format:
+ * llvm.mem.parallel_loop_access !0
+ *
+ * !0 { metadata !0 }
+ *
+ * In a 2-nested loop:
+ *
+ * llvm.mem.parallel_loop_access !0
+ *
+ * !0 { metadata !1, metadata !2}
+ * !1 { metadata !1 }
+ * !2 { metadata !2 }
+ */
+void
+ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
+ 
+  for (iterator i = begin(), e = end(); i != e; ++i) {
+    BasicBlock* bb = *i;      
+    for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
+         ii != ee; ii++) {
+      if (ii->mayReadOrWriteMemory()) {
+        std::vector<Value*> loopIds;
+        MDNode *oldIds = ii->getMetadata("llvm.mem.parallel_loop_access");
+        if (oldIds != NULL) {
+          for (unsigned i = 0; i < oldIds->getNumOperands(); ++i) {
+            loopIds.push_back(oldIds->getOperand(i));
+          }
+        }
+        loopIds.push_back(identifier);
+        ii->setMetadata("llvm.mem.parallel_loop_access", 
+                        MDNode::get(bb->getContext(), loopIds));
+      }
+    }
+  }
+}
+
 void
 ParallelRegion::AddIDMetadata(
     llvm::LLVMContext& context, 
@@ -433,7 +480,7 @@ ParallelRegion::AddIDMetadata(
     MDNode* md = MDNode::get(context, v);              
     
     for (iterator i = begin(), e = end(); i != e; ++i) {
-      BasicBlock* bb= *i;      
+      BasicBlock* bb = *i;      
       for (BasicBlock::iterator ii = bb->begin();
             ii != bb->end(); ii++) {
         Value *v3[] = {
@@ -572,10 +619,14 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
+#if (defined LLVM_3_1 or defined LLVM_3_2)
     AttrListPtr func_printf_PAL;
+#else
+    AttributeSet func_printf_PAL;
+#endif
     {
-      SmallVector<AttributeWithIndex, 4> Attrs;
 #ifdef LLVM_3_1
+      SmallVector<AttributeWithIndex, 4> Attrs;
       AttributeWithIndex PAWI;
       PAWI.Index = 1U; 
       PAWI.Attrs = Attribute::NoCapture;
@@ -584,10 +635,14 @@ ParallelRegion::InjectPrintF
       PAWI.Attrs = Attribute::NoUnwind;
       Attrs.push_back(PAWI);
       func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
-#else
+#elif defined LLVM_3_2
+      SmallVector<AttributeWithIndex, 4> Attrs;
       Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attributes::NoCapture));
       Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attributes::NoUnwind));
       func_printf_PAL = AttrListPtr::get(M->getContext(), Attrs);
+#else
+      func_printf_PAL.addAttribute( M->getContext(), 1U, Attribute::NoCapture);
+      func_printf_PAL.addAttribute( M->getContext(), 4294967295U, Attribute::NoUnwind);
 #endif
     }
     printfFunc->setAttributes(func_printf_PAL);

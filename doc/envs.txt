@@ -1,5 +1,10 @@
 pocl supports some environment variables to control its behavior as follows:
 
+POCL_BUILDING
+
+If set, the pocl helper scripts are searched first from the
+pocl build directory.
+
 POCL_DEVICES and POCL_DEVICEn_PARAMETERS
 
 POCL_DEVICES is a space separated list of the device instances to be enabled. 
@@ -100,6 +105,11 @@ multiple work items. Legal values:
               times of which maximum can be controlled with
               POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
               variable (default is to not perform unrolling).
+
+    loopvec -- Create work-item for-loops (see 'loops') and execute 
+               the LLVM LoopVectorizer. The loops are not unrolled
+               but the unrolling decision is left to the generic
+               LLVM passes.
 
     repl   -- Replicate and chain all work items. This results
               in more easily scalarizable private variables.

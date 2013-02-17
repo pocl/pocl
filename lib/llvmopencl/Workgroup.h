@@ -23,7 +23,12 @@
 #ifndef _POCL_WORKGROUP_H
 #define _POCL_WORKGROUP_H
 
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Module.h"
+#else
+#include "llvm/IR/Module.h"
+#endif
 #include "llvm/Pass.h"
 
 namespace pocl {

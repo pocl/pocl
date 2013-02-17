@@ -41,7 +41,7 @@ GEN_PROTOTYPES (basic)
 #define POCL_DEVICES_PTHREAD {	 					\
   POCL_DEVICE_ICD_DISPATCH     						\
   POCL_OBJECT_INIT, \
-  CL_DEVICE_TYPE_CPU, /* type */					\
+  CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT, /* type */					\
   0, /* vendor_id */							\
   0, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
@@ -66,7 +66,7 @@ GEN_PROTOTYPES (basic)
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE, /* preferred_vector_width_double */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF  , /* preferred_vector_width_half */ \
   0, /* max_clock_frequency */						\
-  0, /* address_bits */							\
+  POCL_DEVICE_ADDRESS_BITS, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
   CL_FALSE, /* image_support */						\
   0, /* max_read_image_args */						\
@@ -124,7 +124,7 @@ GEN_PROTOTYPES (basic)
   NULL, /* build_program */ \
   NULL, /* data */                                  \
   KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */  \
-  HOST, /* llvm_target_triplet */                         \
+  OCL_KERNEL_TARGET, /* llvm_target_triplet */                         \
   0     /* dev_id */                                    \
 }
 

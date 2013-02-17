@@ -26,10 +26,16 @@
 
 #include "BarrierBlock.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/BasicBlock.h"
+#include "llvm/LLVMContext.h"
+#else
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/LLVMContext.h"
+#endif
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
 
@@ -75,6 +81,8 @@ class Kernel;
                        std::size_t x = 0, 
                        std::size_t y = 0, 
                        std::size_t z = 0);
+
+    void AddParallelLoopMetadata(llvm::MDNode *identifier);
 
     bool HasBlock(llvm::BasicBlock *bb);
 

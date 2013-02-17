@@ -1,7 +1,8 @@
 /* pocl.h - global pocl declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   
+                 2011-2013 Pekka Jääskeläinen / Tampere University of Technology
+  
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
@@ -21,6 +22,14 @@
    THE SOFTWARE.
 */
 
+/**
+ * @file pocl.h
+ * 
+ * The declarations in this file are such that are used both in the
+ * libpocl implementation CL and the kernel compiler. Others should be
+ * moved to pocl_cl.h of lib/CL or under the kernel compiler dir. 
+ * @todo Check if there are extra declarations here that could be moved.
+ */
 #ifndef POCL_H
 #define POCL_H
 
@@ -42,7 +51,6 @@ struct _mem_mapping {
   mem_mapping_t *prev, *next;
 };
 
-
 // Command Queue datatypes
 
 // clEnqueueNDRangeKernel
@@ -56,6 +64,7 @@ typedef struct
   cl_mem *arg_buffers;
   int arg_buffer_count;
   struct pocl_context pc;
+  struct pocl_argument *arguments;
 } _cl_command_run;
 
 // clEnqueueReadBuffer

@@ -37,13 +37,20 @@ POname(clCreateProgramWithSource)(cl_context context,
   unsigned size;
   char *source;
   unsigned i;
+  int errcode;
 
   if (count == 0)
-    POCL_ERROR(CL_INVALID_VALUE);
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
 
   program = (cl_program) malloc(sizeof(struct _cl_program));
   if (program == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
 
   POCL_INIT_OBJECT(program);
 
@@ -51,7 +58,10 @@ POname(clCreateProgramWithSource)(cl_context context,
   for (i = 0; i < count; ++i)
     {
       if (strings[i] == NULL)
-        POCL_ERROR(CL_INVALID_VALUE);
+      {
+        errcode = CL_INVALID_VALUE;
+        goto ERROR_CLEAN_PROGRAM;
+      }
 
       if (lengths == NULL)
         size += strlen(strings[i]);
@@ -63,7 +73,10 @@ POname(clCreateProgramWithSource)(cl_context context,
   
   source = (char *) malloc(size + 1);
   if (source == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR_CLEAN_PROGRAM;
+  }
 
   program->source = source;
   program->compiler_options = NULL;
@@ -105,5 +118,14 @@ POname(clCreateProgramWithSource)(cl_context context,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return program;
+
+ERROR_CLEAN_PROGRAM:
+  free(program);
+ERROR:
+  if(errcode_ret)
+  {
+    *errcode_ret = errcode;
+  }
+  return NULL;
 }
 POsym(clCreateProgramWithSource)

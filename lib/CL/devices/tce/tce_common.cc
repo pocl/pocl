@@ -1,6 +1,6 @@
 /* tce_common.cc - common functionality over the different TCE/TTA device drivers.
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,9 @@
 #include "pocl_util.h"
 
 #include "config.h"
+#include "install-paths.h"
 
 #include <unistd.h>
-#include <sys/stat.h>
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE
@@ -257,43 +257,39 @@ pocl_tce_run
   if (access (assemblyFileName.c_str(), F_OK) != 0)
     {
       char *llvm_ld;
-      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/linked.bc", cmd->command.run.tmp_dir);
-      assert (error >= 0);
-      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
-        llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
-      else
-        llvm_ld = "pocl-llvm-ld";
-
-      error = snprintf (command, COMMAND_LENGTH,
-		  "%s --disable-opt -link-as-library -o %s %s/%s",
-                        llvm_ld,
-                        bytecode, cmd->command.run.tmp_dir, 
-                        POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
+                        "%s/%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
       
-      error = system(command);
-      assert (error == 0);
-      
+      std::string poclIncludePathSwitch = "";
       std::string deviceMainSrc = "";
+      if (getenv("POCL_BUILDING") != NULL)
+        {
+          deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
+          poclIncludePathSwitch = " -I " SRCDIR "/include";
+        }
+      else 
+        {
+          assert(access(PKGDATADIR "/tta_device_main.c", R_OK) == 0);
+          deviceMainSrc = PKGDATADIR "/tta_device_main.c";
+          poclIncludePathSwitch = " -I " PKGINCLUDEDIR;
 
-      if (access (BUILDDIR "/lib/CL/devices/tce/tta_device_main.c", R_OK) == 0)
-        deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
-      else
-        deviceMainSrc = POCL_INSTALLED_DATA "/tta_device_main.c";
+        }
      
       std::string kernelObjSrc = "";
       kernelObjSrc += cmd->command.run.tmp_dir;
       kernelObjSrc += "/../descriptor.so.kernel_obj.c";
 
+      TCEString extraFlags = "";
+      if (getenv("POCL_TCECC_EXTRA_FLAGS") != NULL)
+        extraFlags += " " + TCEString(getenv("POCL_TCECC_EXTRA_FLAGS"));
+
       /* TODO: add the launcher code + main */
       /* At this point the kernel has been fully linked. */
       std::string buildCmd = 
-        std::string("tcecc --vector-backend -llwpr -I ") + SRCDIR + "/include " + deviceMainSrc + " " + 
+        std::string("tcecc --vector-backend -llwpr ") + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
         userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
         " -k " + kernelMdSymbolName +
-        " -g -O3 -o " + assemblyFileName;
+        " -g -O3 -o " + assemblyFileName + " " + extraFlags;
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
@@ -328,7 +324,7 @@ pocl_tce_run
 
   for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
     {
-      al = &(cmd->command.run.kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_is_local[i])
         {
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
@@ -374,7 +370,7 @@ pocl_tce_run
        i < cmd->command.run.kernel->num_args + cmd->command.run.kernel->num_locals;
        ++i) 
     {
-      al = &(cmd->command.run.kernel->arguments[i]);
+      al = &(cmd->command.run.arguments[i]);
       chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
       if (local_chunk == NULL)
         POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");

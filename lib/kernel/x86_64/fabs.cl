@@ -39,13 +39,13 @@ DEFINE_EXPR_V_V(fabs,
 
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
-  TYPE _cl_overloadable NAME(TYPE a)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a)            \
   {                                             \
     return EXPR;                                \
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
-  TYPE _cl_overloadable NAME(TYPE a)                    \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a)                    \
   {                                                     \
     UPTYPE a1;                                          \
     a1.LO = a;                                          \
@@ -53,7 +53,7 @@ DEFINE_EXPR_V_V(fabs,
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)     \
-  TYPE _cl_overloadable NAME(TYPE a)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a)            \
   {                                             \
     return (TYPE)(NAME(a.LO), NAME(a.HI));      \
   }
@@ -124,6 +124,7 @@ IMPLEMENT_DIRECT(fabs, float8 , IMPLEMENT_FABS_DIRECT)
 IMPLEMENT_DIRECT(fabs, float16, IMPLEMENT_FABS_DIRECT)
 #endif
 
+#ifdef cl_khr_fp64
 #ifdef __SSE2__
 IMPLEMENT_UPCAST(fabs, double  , double2, lo)
 IMPLEMENT_DIRECT(fabs, double2 , IMPLEMENT_FABS_SSE2_DOUBLE2)
@@ -143,4 +144,5 @@ IMPLEMENT_DIRECT(fabs, double3 , IMPLEMENT_FABS_DIRECT)
 IMPLEMENT_DIRECT(fabs, double4 , IMPLEMENT_FABS_DIRECT)
 IMPLEMENT_DIRECT(fabs, double8 , IMPLEMENT_FABS_DIRECT)
 IMPLEMENT_DIRECT(fabs, double16, IMPLEMENT_FABS_DIRECT)
+#endif
 #endif

@@ -67,32 +67,37 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
   Kernel *K = cast<Kernel> (&F);
   Initialize(K);
 
+  std::string method = "auto";
   if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
     {
-      std::string method(getenv("POCL_WORK_GROUP_METHOD"));
+      method = getenv("POCL_WORK_GROUP_METHOD");
       if (method == "repl" || method == "workitemrepl")
         chosenHandler_ = POCL_WIH_FULL_REPLICATION;
       else if (method == "loops" || method == "workitemloops")
         chosenHandler_ = POCL_WIH_LOOPS;
       else if (method != "auto")
         {
-          std::cerr << "Unknown work group method. Using 'auto'." << std::endl;
+          std::cerr << "Unknown work group generation method. Using 'auto'." << std::endl;
+          method = "auto";
         }
     }
 
-  size_t ReplThreshold = 2;
-  if (getenv("POCL_FULL_REPLICATION_THRESHOLD") != NULL) 
+  if (method == "auto") 
     {
-      ReplThreshold = atoi(getenv("POCL_FULL_REPLICATION_THRESHOLD"));
-    }
-
-  if (LocalSizeX*LocalSizeY*LocalSizeZ <= ReplThreshold)
-    {
-      chosenHandler_ = POCL_WIH_FULL_REPLICATION;
-    }
-  else
-    {
-      chosenHandler_ = POCL_WIH_LOOPS;
+      size_t ReplThreshold = 2;
+      if (getenv("POCL_FULL_REPLICATION_THRESHOLD") != NULL) 
+      {
+        ReplThreshold = atoi(getenv("POCL_FULL_REPLICATION_THRESHOLD"));
+      }
+      
+      if (LocalSizeX*LocalSizeY*LocalSizeZ <= ReplThreshold)
+        {
+          chosenHandler_ = POCL_WIH_FULL_REPLICATION;
+        }
+      else
+        {
+          chosenHandler_ = POCL_WIH_LOOPS;
+        }
     }
 
   return false;

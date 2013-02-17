@@ -28,8 +28,10 @@
 #include "config.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
-#else
+#elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
+#else
+#include "llvm/IR/IRBuilder.h"
 #endif
 
 //#define DEBUG_PR_CREATION

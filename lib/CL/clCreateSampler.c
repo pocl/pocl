@@ -8,14 +8,21 @@ POname(clCreateSampler)(cl_context          context,
                 cl_int *            errcode_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
+  int errcode;
   cl_sampler sampler;
 
   if (context == NULL)
-    POCL_ERROR(CL_INVALID_CONTEXT);
+  {
+    errcode = CL_INVALID_CONTEXT;
+    goto ERROR;
+  }
   
   sampler = (cl_sampler) malloc(sizeof(struct _cl_sampler));
   if (sampler == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
   
   if (normalized_coords == CL_TRUE)
     POCL_ABORT_UNIMPLEMENTED();
@@ -32,5 +39,14 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->filter_mode = filter_mode;
   
   return sampler;
+
+ERROR_CLEAN_SAMPLER:
+  free(sampler);
+ERROR:
+  if(errcode_ret)
+  {
+    *errcode_ret = errcode;
+  }
+    return NULL;
 }
 POsym(clCreateSampler)

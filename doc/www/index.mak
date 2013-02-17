@@ -1,5 +1,5 @@
 <%inherit file="basic_page.makt" />
-<p>Portable OpenCL (pocl) is a MIT-licensed open source implementation of the OpenCL 
+<p>Portable Computing Language (pocl) aims to become a MIT-licensed open source implementation of the OpenCL 
 standard which can be easily adapted for new targets and devices, both for homogeneous
 CPU and heterogenous GPUs/accelerators.</p>
 
@@ -13,11 +13,21 @@ compiler that can generate multi-work-item work-group functions that exploit
 various types of parallel hardware resources: VLIW, superscalar, SIMD, SIMT,
 multicore, multithread ...</p>
 
-<p>In addition to providing a portable open source implementation of OpenCL, another 
-goal of the project is to serve as a research platform for issues in parallel
-programming on heterogeneous platforms.</p>
+<p>Additional purpose of the project is to serve as a research platform for issues 
+in parallel programming on heterogeneous platforms.</p>
 
-<h2>Current status (2012-12-07)</h2>
+<h1>News</h1>
+
+<h2>2013-02-04: Project renamed to POrtable Computing Language (pocl) </h2>
+
+<p>The project was renamed to POrtable Computing Language (pocl) to avoid trademark
+uncertainties (was: Portable OpenCL). It's still pronounced "pogle"! :)</p>
+
+<h2>2013-01-09: 0.7 released!</h2>
+
+<p>The source package, the change log, and the release annoucement are <a href="/downloads">here</a>.</p> 
+
+<h1>Current status (2013-01-01)</h1>
 
 <p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
 unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new tested applications.</p>
@@ -42,11 +52,10 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li>PowerPC64/Linux (host&amp;device)</li>
   <li>PowerPC32/Linux (host&amp;device)</li>
   <li>ARM v7/Linux (host&amp;device)</li>
-  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> (host X86_64&amp;instruction set simulator+FPGA-over-PCIe prototype as a device</li>
+  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> in heterogeneous host-device setups.</li>
 </ul>
-
   
-<h2>Feature highlights (2012-12-07)</h2>
+<h1>Feature highlights (2013-01-01)</h1>
 <ul>
   <li>icd support</li>
   <li>configurable list of devices</li>

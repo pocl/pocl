@@ -1,16 +1,19 @@
-# include clang support
-include $(top_srcdir)/lib/kernel/clang.mk
-
 CLANGFLAGS = -emit-llvm
-AM_CLANG_CLFLAGS = -include $(top_srcdir)/include/_kernel.h
 
+#Search the .cl,.c and .ll sources first from this (target specific) directory, then
+#the one-up (generic) directory. This allows to override the generic implementation 
+#simply by adding a similarlily named file in the target specific directory
+vpath %.cl @srcdir@:@srcdir@/..
+vpath %.c @srcdir@:@srcdir@/..
+vpath %.ll @srcdir@:@srcdir@/..
+
+
+LKERNEL_HDRS=templates.h image.h
 # Nodist here because these files should be included
 # to the distribution only once, from the root kernel
 # makefile.
-libkernel_SRCS =				\
-	templates.h				\
+LKERNEL_SRCS= \
 	barrier.ll				\
-	image.h					\
 	get_work_dim.c				\
 	get_global_size.c			\
 	get_global_id.c				\
@@ -21,7 +24,6 @@ libkernel_SRCS =				\
 	get_global_offset.c			\
 	as_type.cl				\
 	atomics.cl				\
-	convert_type.cl				\
 	acos.cl					\
 	acosh.cl				\
 	acospi.cl				\
@@ -35,6 +37,7 @@ libkernel_SRCS =				\
 	atanpi.cl				\
 	cbrt.cl					\
 	ceil.cl					\
+	convert_type.cl				\
 	copysign.cl				\
 	cos.cl					\
 	cosh.cl					\
@@ -148,6 +151,27 @@ libkernel_SRCS =				\
 	get_image_width.cl			\
 	get_image_height.cl     
 
+OBJ_L=$(LKERNEL_SRCS:.cl=.bc)
+OBJ_C=$(OBJ_L:.ll=.bc)
+OBJ=$(OBJ_C:.c=.bc)
+
+OBJ:LKERNEL_SRCS
+
+#libkernel_SRCS = $LIBKERNEL_SOURCES
+
+#rules to compile the different kernel library source file types into LLVM bitcode
+.c.bc:
+	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
+.cl.bc:
+	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h \
+		-include ${abs_top_srcdir}/include/_kernel.h
+
+CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
+
+kernel-${KERNEL_TARGET}.bc: ${OBJ}
+	llvm-link -o $@ $^
+
+
 # We need an explicitly rule to overwrite automake guess about LEX file :-(
-barrier.o: barrier.ll
-	$(AM_V_LLAS)$(LLAS_COMPILE) -o $@ $<
+barrier.bc: barrier.ll
+	@LLVM_AS@ -o $@ $<

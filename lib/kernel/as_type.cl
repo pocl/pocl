@@ -21,18 +21,20 @@
    THE SOFTWARE.
 */
 
+/* The as_type functions are implemented using union casts, which OpenCL
+ * supports as per 6.2.4.1 in the OpenCL 1.2 specification.
+ *
+ * These map down to the corresponding SPIR/LLVM IR bitcast instruction.
+ */
+
 #define DEFINE_AS_TYPE(SRC, DST)                                        \
-  DST _cl_overloadable                                                  \
-  as_##DST(SRC a)                                                       \
+  _CL_ALWAYSINLINE _CL_OVERLOADABLE                                     \
+  DST as_##DST(SRC a)                                                   \
   {                                                                     \
-    /* This may not be safe: */                                         \
-    /* return *(DST*)&a; */                                             \
-    /* This should be safe, but is not officially supported in OpenCL: */ \
     union { SRC src; DST dst; } cvt;                                    \
     cvt.src = a;                                                        \
     return cvt.dst;                                                     \
   }
-
 
 /* 1 byte */
 
@@ -61,6 +63,8 @@ DEFINE_AS_TYPE_2(ushort)
 #define DEFINE_AS_TYPE_4(DST)                   \
   DEFINE_AS_TYPE(DST, char4)                    \
   DEFINE_AS_TYPE(DST, uchar4)                   \
+  DEFINE_AS_TYPE(DST, char3)                    \
+  DEFINE_AS_TYPE(DST, uchar3)                   \
   DEFINE_AS_TYPE(DST, short2)                   \
   DEFINE_AS_TYPE(DST, ushort2)                  \
   DEFINE_AS_TYPE(DST, int)                      \
@@ -69,6 +73,8 @@ DEFINE_AS_TYPE_2(ushort)
 
 DEFINE_AS_TYPE_4(char4)
 DEFINE_AS_TYPE_4(uchar4)
+DEFINE_AS_TYPE_4(char3)
+DEFINE_AS_TYPE_4(uchar3)
 DEFINE_AS_TYPE_4(short2)
 DEFINE_AS_TYPE_4(ushort2)
 DEFINE_AS_TYPE_4(int)
@@ -82,6 +88,8 @@ DEFINE_AS_TYPE_4(float)
   DEFINE_AS_TYPE(DST, uchar8)                   \
   DEFINE_AS_TYPE(DST, short4)                   \
   DEFINE_AS_TYPE(DST, ushort4)                  \
+  DEFINE_AS_TYPE(DST, short3)                   \
+  DEFINE_AS_TYPE(DST, ushort3)                  \
   DEFINE_AS_TYPE(DST, int2)                     \
   DEFINE_AS_TYPE(DST, uint2)                    \
   __IF_INT64(                                   \
@@ -95,6 +103,8 @@ DEFINE_AS_TYPE_8(char8)
 DEFINE_AS_TYPE_8(uchar8)
 DEFINE_AS_TYPE_8(short4)
 DEFINE_AS_TYPE_8(ushort4)
+DEFINE_AS_TYPE_8(short3)
+DEFINE_AS_TYPE_8(ushort3)
 DEFINE_AS_TYPE_8(int2)
 DEFINE_AS_TYPE_8(uint2)
 __IF_INT64(
@@ -113,10 +123,13 @@ DEFINE_AS_TYPE_8(double))
   DEFINE_AS_TYPE(DST, ushort8)                  \
   DEFINE_AS_TYPE(DST, int4)                     \
   DEFINE_AS_TYPE(DST, uint4)                    \
+  DEFINE_AS_TYPE(DST, int3)                     \
+  DEFINE_AS_TYPE(DST, uint3)                    \
   __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long2)                    \
   DEFINE_AS_TYPE(DST, ulong2))                  \
   DEFINE_AS_TYPE(DST, float4)                   \
+  DEFINE_AS_TYPE(DST, float3)                   \
   __IF_FP64(                                    \
   DEFINE_AS_TYPE(DST, double2))
 
@@ -126,10 +139,13 @@ DEFINE_AS_TYPE_16(short8)
 DEFINE_AS_TYPE_16(ushort8)
 DEFINE_AS_TYPE_16(int4)
 DEFINE_AS_TYPE_16(uint4)
+DEFINE_AS_TYPE_16(int3)
+DEFINE_AS_TYPE_16(uint3)
 __IF_INT64(
 DEFINE_AS_TYPE_16(long2)
 DEFINE_AS_TYPE_16(ulong2))
 DEFINE_AS_TYPE_16(float4)
+DEFINE_AS_TYPE_16(float3)
 __IF_FP64(
 DEFINE_AS_TYPE_16(double2))
 
@@ -142,10 +158,13 @@ DEFINE_AS_TYPE_16(double2))
   DEFINE_AS_TYPE(DST, uint8)                    \
   __IF_INT64(                                   \
   DEFINE_AS_TYPE(DST, long4)                    \
-  DEFINE_AS_TYPE(DST, ulong4))                  \
+  DEFINE_AS_TYPE(DST, ulong4)                   \
+  DEFINE_AS_TYPE(DST, long3)                    \
+  DEFINE_AS_TYPE(DST, ulong3))                  \
   DEFINE_AS_TYPE(DST, float8)                   \
   __IF_FP64(                                    \
-  DEFINE_AS_TYPE(DST, double4))
+  DEFINE_AS_TYPE(DST, double4)                  \
+  DEFINE_AS_TYPE(DST, double3))
 
 DEFINE_AS_TYPE_32(short16)
 DEFINE_AS_TYPE_32(ushort16)
@@ -153,10 +172,13 @@ DEFINE_AS_TYPE_32(int8)
 DEFINE_AS_TYPE_32(uint8)
 __IF_INT64(
 DEFINE_AS_TYPE_32(long4)
-DEFINE_AS_TYPE_32(ulong4))
+DEFINE_AS_TYPE_32(ulong4)
+DEFINE_AS_TYPE_32(long3)
+DEFINE_AS_TYPE_32(ulong3))
 DEFINE_AS_TYPE_32(float8)
 __IF_FP64(
-DEFINE_AS_TYPE_32(double4))
+DEFINE_AS_TYPE_32(double4)
+DEFINE_AS_TYPE_32(double3))
 
 /* 64 bytes */
 

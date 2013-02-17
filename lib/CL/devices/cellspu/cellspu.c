@@ -22,22 +22,23 @@
 */
 
 #include "cellspu.h"
+#include "install-paths.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <../dev_image.h>
 #include <sys/time.h>
-#include <sys/stat.h>
+
+#include <libspe2.h>
+#include "pocl_device.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
 
-#define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
-
-#define DEBUG_CELLSPU_DRIVER
+//#define DEBUG_CELLSPU_DRIVER
 
 struct data {
   /* Currently loaded kernel. */
@@ -45,6 +46,13 @@ struct data {
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
 };
+
+//TODO: global, or per-device?
+spe_context_ptr_t spe_context;
+//TODO: this certainly should be per-program (per kernel?)
+spe_program_handle_t *hello_spu;
+//TODO: again - not global...
+memory_region_t spe_local_mem;
 
 void
 pocl_cellspu_init (cl_device_id device, const char* parameters)
@@ -59,8 +67,27 @@ pocl_cellspu_init (cl_device_id device, const char* parameters)
 
   device->global_mem_size = 256*1024;
   device->max_mem_alloc_size = device->global_mem_size / 2;
+
+  // TODO: find the API docs. what are the params?
+  spe_context = spe_context_create(0,NULL);
+  if (spe_context == NULL) perror("spe_context_create fails");
+  
+  // initialize the SPE local storage allocator. 
+  init_mem_region( &spe_local_mem, CELLSPU_OCL_BUFFERS_START, device->max_mem_alloc_size); 
+
 }
 
+/* 
+ * Allocate a chunk for kernel local variables.
+ */
+void *
+cellspu_malloc_local (void *device_data, size_t size)
+{
+  struct data* d = (struct data*)device_data;
+  chunk_info_t *chunk = alloc_buffer (&spe_local_mem, size);
+  return (void*) chunk;
+
+}
 void *
 pocl_cellspu_malloc (void *device_data, cl_mem_flags flags,
 		     size_t size, void *host_ptr)
@@ -68,16 +95,14 @@ pocl_cellspu_malloc (void *device_data, cl_mem_flags flags,
   void *b;
   struct data* d = (struct data*)device_data;
 
-  POCL_ABORT_UNIMPLEMENTED();
-
-#if 0
-  chunk_info_t *chunk = alloc_buffer (&d->global_mem, size);
+  //TODO: unglobalify spe_local_mem
+  chunk_info_t *chunk = alloc_buffer (&spe_local_mem, size);
   if (chunk == NULL) return NULL;
 
 #ifdef DEBUG_CELLSPU_DRIVER
-  printf("host: malloc %x (host) %d (device) size: %u\n", host_ptr, chunk->start_address, size);
+  printf("host: malloc %x (host) %x (device) size: %u\n", host_ptr, chunk->start_address, size);
 #endif
-
+#if 0
   if ((flags & CL_MEM_COPY_HOST_PTR) ||  
       ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL))
     {
@@ -87,9 +112,9 @@ pocl_cellspu_malloc (void *device_data, cl_mem_flags flags,
       d->copyHostToDevice(host_ptr, chunk->start_address, size);
       return (void*) chunk;
     }
-  return (void*) chunk;
 #endif
-  return NULL;
+  return (void*) chunk;
+
 }
 
 void
@@ -106,23 +131,33 @@ pocl_cellspu_free (void *data, cl_mem_flags flags, void *ptr)
 void
 pocl_cellspu_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
 {
-  POCL_ABORT_UNIMPLEMENTED();
+	chunk_info_t *chunk = (chunk_info_t*)device_ptr;
+	assert( chunk->is_allocated  && "cellspu: writing to an ullacoated memory?");
 
-  if (host_ptr == device_ptr)
-    return;
+#ifdef DEBUG_CELLSPU_DRIVER
+	printf("cellspu: read %d bytes to %x (host) from %x (device)\n", cb, host_ptr,chunk->start_address);
+#endif
+	void *mmap_base=spe_ls_area_get( spe_context );
+	memcpy( host_ptr, mmap_base+(chunk->start_address), cb);
 
-  memcpy (host_ptr, device_ptr, cb);
+}
+
+/* write 'bytes' of bytes from *host_a to SPU local storage area. */
+void cellspu_memwrite( void *lsa, const void *host_a, size_t bytes )
+{	
+#ifdef DEBUG_CELLSPU_DRIVER
+	printf("cellspu: write %d bytes from %x (host) to %x (device)\n", bytes, host_a,lsa);
+#endif
+	void *mmap_base=spe_ls_area_get( spe_context );
+	memcpy( (void*)(mmap_base+(int)lsa), (const void*)host_a, bytes);
 }
 
 void
 pocl_cellspu_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 {
-  POCL_ABORT_UNIMPLEMENTED();
-
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy (device_ptr, host_ptr, cb);
+	chunk_info_t *chunk = (chunk_info_t*)device_ptr;
+	assert( chunk->is_allocated  && "cellspu: writing to an ullacoated memory?");
+        cellspu_memwrite( (void*)(chunk->start_address), host_ptr, cb );
 }
 
 
@@ -146,6 +181,8 @@ pocl_cellspu_run
   char* tmpdir = cmd->command.run.tmp_dir;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
+  const char* kern_func = kernel->function_name;
+  unsigned int entry = SPE_DEFAULT_ENTRY;
 
   assert (data != NULL);
   d = (struct data *) data;
@@ -155,16 +192,25 @@ pocl_cellspu_run
      "%s/parallel.so", tmpdir);
   assert (error >= 0);
 
+  // This is the entry to the kenrel. We currently hard-code it
+  // into the SPU binary. Resulting in only one entry-point per 
+  // SPU image.
+  // TODO: figure out which function to call given what conditions
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+            "_%s_workgroup_fast", kernel->function_name);
+
+
   if ( access (module, F_OK) != 0)
     {
       char *llvm_ld;
-      struct stat st;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/linked.bc", tmpdir);
       assert (error >= 0);
       
-      if (stat( BUILDDIR "/tools/llvm-ld/pocl-llvm-ld", &st) == 0) 
+      if (getenv("POCL_BUILDING") != NULL)
         llvm_ld = BUILDDIR "/tools/llvm-ld/pocl-llvm-ld";
+      else if (access(PKGLIBEXECDIR "/pocl-llvm-ld", X_OK) == 0)
+        llvm_ld = PKGLIBEXECDIR "/pocl-llvm-ld";
       else
         llvm_ld = "pocl-llvm-ld";
 
@@ -189,65 +235,76 @@ pocl_cellspu_run
 			assembly,
 			bytecode);
       assert (error >= 0);
-      
       error = system (command);
       assert (error == 0);
            
+
+      // Compile the assembly version of the OCL kernel with the
+      // C wrapper to get a spulet
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -c -o %s.o %s",
+			"spu-gcc lib/CL/devices/cellspu/spe_wrap.c -o %s %s "
+			" -Xlinker --defsym -Xlinker _ocl_buffer=%d"
+			" -Xlinker --defsym -Xlinker kernel_command=%d"
+			" -I . -D_KERNEL=%s -std=c99",
 			module,
-			assembly);
+			assembly, 
+			CELLSPU_OCL_BUFFERS_START,
+			CELLSPU_KERNEL_CMD_ADDR,
+			workgroup_string);
       assert (error >= 0);
-      
+#ifdef DEBUG_CELLSPU_DRIVER
+      printf("compiling: %s\n", command); fflush(stdout); 
+#endif
       error = system (command);
       assert (error == 0);
 
-      error = snprintf (command, COMMAND_LENGTH,
-                       "ld " HOST_LD_FLAGS " -o %s %s.o",
-                       module,
-                       module);
-      assert (error >= 0);
-
-      error = system (command);
-      assert (error == 0);
     }
       
-  d->current_dlhandle = lt_dlopen (module);
-  if (d->current_dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
-      abort();
-    }
+    // Load the SPU with the newly generated binary
+    hello_spu = spe_image_open( (const char*)module );
+    if( spe_program_load( spe_context, hello_spu) )
+        perror("spe_program_load fails");
+    
+//
+//  /* Find which device number within the context correspond
+//     to current device.  */
+//  for (i = 0; i < kernel->context->num_devices; ++i)
+//    {
+//      if (kernel->context->devices[i]->data == data)
+//	{
+//	  device = i;
+//	  break;
+//	}
+//    }
+//
 
-  d->current_kernel = kernel;
+  // This structure gets passed to the device.
+  // It contains all the info needed to run a kernel  
+  __kernel_exec_cmd dev_cmd;
+  dev_cmd.work_dim = cmd->command.run.pc.work_dim;
+  dev_cmd.num_groups[0] = cmd->command.run.pc.num_groups[0];
+  dev_cmd.num_groups[1] = cmd->command.run.pc.num_groups[1];
+  dev_cmd.num_groups[2] = cmd->command.run.pc.num_groups[2];
 
-  /* Find which device number within the context correspond
-     to current device.  */
-  for (i = 0; i < kernel->context->num_devices; ++i)
-    {
-      if (kernel->context->devices[i]->data == data)
-	{
-	  device = i;
-	  break;
-	}
-    }
+  dev_cmd.global_offset[0] = cmd->command.run.pc.global_offset[0];
+  dev_cmd.global_offset[1] = cmd->command.run.pc.global_offset[1];
+  dev_cmd.global_offset[2] = cmd->command.run.pc.global_offset[2];
 
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_%s_workgroup", kernel->function_name);
-  
-  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
-  assert (w != NULL);
 
-  void *arguments[kernel->num_args + kernel->num_locals];
+  // the code below is lifted from pthreads :) 
+  uint32_t *arguments = dev_cmd.args;
 
   for (i = 0; i < kernel->num_args; ++i)
     {
-      al = &(kernel->arguments[i]);
+      al = &(kernel->dyn_arguments[i]);
       if (kernel->arg_is_local[i])
         {
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_cellspu_malloc(data, 0, al->size, NULL);
+          chunk_info_t* local_chunk = cellspu_malloc_local (d, al->size);
+          if (local_chunk == NULL)
+            POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
+
+          dev_cmd.args[i] = local_chunk->start_address;
+
         }
       else if (kernel->arg_is_pointer[i])
         {
@@ -256,63 +313,96 @@ pocl_cellspu_run
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
           if (al->value == NULL)
-            arguments[i] = NULL;
+            arguments[i] = (uint32_t)NULL;
           else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device]);
+            arguments[i] = \
+              ((chunk_info_t*)((*(cl_mem *)\
+                (al->value))->device_ptrs[0]))->start_address;
+		//TODO: '0' above is the device number... don't hard-code!
         }
       else if (kernel->arg_is_image[i])
         {
-          dev_image2d_t di;      
-          cl_mem mem = *(cl_mem*)al->value;
-          di.data = &((*(cl_mem *) (al->value))->device_ptrs[device]);
-          di.data = ((*(cl_mem *) (al->value))->device_ptrs[device]);
-          di.width = mem->image_width;
-          di.height = mem->image_height;
-          di.rowpitch = mem->image_row_pitch;
-          di.order = mem->image_channel_order;
-          di.data_type = mem->image_channel_data_type;
-          void* devptr = pocl_cellspu_malloc(data, 0, sizeof(dev_image2d_t), NULL);
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr; 
-          pocl_cellspu_write (data, &di, devptr, sizeof(dev_image2d_t));
+          POCL_ABORT_UNIMPLEMENTED();
+//          dev_image2d_t di;      
+//          cl_mem mem = *(cl_mem*)al->value;
+//          di.data = &((*(cl_mem *) (al->value))->device_ptrs[device]);
+//          di.data = ((*(cl_mem *) (al->value))->device_ptrs[device]);
+//          di.width = mem->image_width;
+//          di.height = mem->image_height;
+//          di.rowpitch = mem->image_row_pitch;
+//          di.order = mem->image_channel_order;
+//          di.data_type = mem->image_channel_data_type;
+//          void* devptr = pocl_cellspu_malloc(data, 0, sizeof(dev_image2d_t), NULL);
+//          arguments[i] = malloc (sizeof (void *));
+//          *(void **)(arguments[i]) = devptr; 
+//          pocl_cellspu_write (data, &di, devptr, sizeof(dev_image2d_t));
         }
       else if (kernel->arg_is_sampler[i])
         {
-          dev_sampler_t ds;
-          
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_cellspu_malloc(data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_cellspu_write (data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t));
+          POCL_ABORT_UNIMPLEMENTED();
+//          dev_sampler_t ds;
+//          
+//          arguments[i] = malloc (sizeof (void *));
+//          *(void **)(arguments[i]) = pocl_cellspu_malloc(data, 0, sizeof(dev_sampler_t), NULL);
+//          pocl_cellspu_write (data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t));
         }
       else
         {
-          arguments[i] = al->value;
+          arguments[i] = (uint32_t)al->value;
         }
     }
+
+  // allocate memory for kernel local variables
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(kernel->arguments[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_cellspu_malloc(data, 0, al->size, NULL);
+      al = &(kernel->dyn_arguments[i]);
+      arguments[i] = (uint32_t)malloc (sizeof (void *));
+      *(void **)(arguments[i]) = cellspu_malloc_local(data, al->size);
     }
 
-  for (z = 0; z < pc->num_groups[2]; ++z)
-    {
-      for (y = 0; y < pc->num_groups[1]; ++y)
-        {
-          for (x = 0; x < pc->num_groups[0]; ++x)
-            {
-              pc->group_id[0] = x;
-              pc->group_id[1] = y;
-              pc->group_id[2] = z;
+  // the main loop on the spe needs an auxiliary struct for to get the 
+  // number of arguments and such. 
+  __kernel_metadata kmd;
+  strncpy( kmd.name, workgroup_string, sizeof( kmd.name ) );  
+  kmd.num_args = kernel->num_args;
+  kmd.num_locals = kernel->num_locals;
+  // TODO: fill in the rest, if used by the spu main function.
 
-              w (arguments, pc);
+  // TODO malloc_local should be given the 'device data'. as long as teh 
+  // spu context is global this is ok.
+  void *chunk = cellspu_malloc_local( NULL, sizeof(__kernel_metadata) ); 
+  void *kernel_area = ((chunk_info_t*)chunk)->start_address;
+  cellspu_memwrite( kernel_area, &kmd, sizeof(__kernel_metadata) );
+  dev_cmd.kernel = kernel_area;
+  
+  // finish up the command, send it to SPE
+  dev_cmd.status =POCL_KST_READY;
+  cellspu_memwrite( (void*)CELLSPU_KERNEL_CMD_ADDR, &dev_cmd, sizeof(__kernel_exec_cmd) );
+       
+  // Execute code on SPU. This starts with the main() in the spu - see spe_wrap.c
+  if (spe_context_run(spe_context,&entry,0,NULL,NULL,NULL) < 0)
+    perror("context_run error");
 
-            }
-        }
-    }
+//  for (z = 0; z < pc->num_groups[2]; ++z)
+//    {
+//      for (y = 0; y < pc->num_groups[1]; ++y)
+//        {
+//          for (x = 0; x < pc->num_groups[0]; ++x)
+//            {
+//              pc->group_id[0] = x;
+//              pc->group_id[1] = y;
+//              pc->group_id[2] = z;
+//
+//              w (arguments, pc);
+//
+//            }
+//        }
+//    }
+
+
+  // Clean-up ? 
   for (i = 0; i < kernel->num_args; ++i)
     {
       if (kernel->arg_is_local[i])

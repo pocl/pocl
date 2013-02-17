@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "install-paths.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -41,24 +42,41 @@ POname(clCreateKernel)(cl_program program,
   FILE *binary_file;
   size_t n;
   char descriptor_filename[POCL_FILENAME_LENGTH];
-  struct stat buf;
   char command[COMMAND_LENGTH];
+  int errcode;
   int error;
   lt_dlhandle dlhandle = NULL;
   int i;
   int device_i;
+  char* pocl_kernel_fmt;
   
   if (program == NULL || program->num_devices == 0)
-    POCL_ERROR(CL_INVALID_PROGRAM);
+  {
+    errcode = CL_INVALID_PROGRAM;
+    goto ERROR;
+  }
 
   if (program->binaries == NULL || program->binary_sizes == NULL)
-    POCL_ERROR(CL_INVALID_PROGRAM_EXECUTABLE);
+  {
+    errcode = CL_INVALID_PROGRAM_EXECUTABLE;
+    goto ERROR;
+  }
 
   kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
 
   POCL_INIT_OBJECT (kernel);
+
+  if (getenv("POCL_BUILDING") != NULL)
+    pocl_kernel_fmt = BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s";
+  else if (access(PKGDATADIR "/" POCL_KERNEL, X_OK) == 0)
+    pocl_kernel_fmt = PKGDATADIR "/" POCL_KERNEL " -k %s -t %s -o %s %s";
+  else
+    pocl_kernel_fmt = POCL_KERNEL " -k %s -t %s -o %s %s";
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
@@ -81,44 +99,50 @@ POname(clCreateKernel)(cl_program program,
                        "%s/kernel.bc",
                        tmpdir);
       if (error < 0)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       binary_file = fopen(binary_filename, "w+");
       if (binary_file == NULL)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       n = fwrite(program->binaries[device_i], 1,
                  program->binary_sizes[device_i], binary_file);
-      if (n < program->binary_sizes[device_i])
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
-  
       fclose(binary_file);
 
-      error = snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
-                       "%s/%s/descriptor.so", device_tmpdir, kernel_name);
-      if (error < 0)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      if (n < program->binary_sizes[device_i])
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
+  
 
-      if (stat(BUILDDIR "/scripts/" POCL_KERNEL, &buf) == 0)
-        error = snprintf(command, COMMAND_LENGTH,
-                         BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s",
-                         kernel_name,
-                         program->devices[device_i]->llvm_target_triplet,
-                         descriptor_filename,
-                         binary_filename);
-      else
-        error = snprintf(command, COMMAND_LENGTH,
-                         POCL_KERNEL " -k %s -t %s -o %s %s",
-                         kernel_name,
-                         program->devices[device_i]->llvm_target_triplet,
-                         descriptor_filename,
-                         binary_filename);
+      error |= snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
+                       "%s/%s/descriptor.so", device_tmpdir, kernel_name);
+
+      error |= snprintf(command, COMMAND_LENGTH,
+                       pocl_kernel_fmt,
+                       kernel_name,
+                       program->devices[device_i]->llvm_target_triplet,
+                       descriptor_filename,
+                       binary_filename);
       if (error < 0)
-        POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       error = system(command);
       if (error != 0)
-        POCL_ERROR(CL_INVALID_KERNEL_NAME);
+      {
+        errcode = CL_INVALID_KERNEL_NAME;
+        goto ERROR_CLEAN_KERNEL;
+      }
 
       if (dlhandle == NULL)
         {
@@ -131,7 +155,8 @@ POname(clCreateKernel)(cl_program program,
               fprintf(stderr, 
                       "Error loading the kernel descriptor from %s (lt_dlerror(): %s)\n", 
                       descriptor_filename, lt_dlerror());
-              POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+              errcode = CL_OUT_OF_HOST_MEMORY;
+              goto ERROR_CLEAN_KERNEL;
             }
         }
     }
@@ -148,23 +173,24 @@ POname(clCreateKernel)(cl_program program,
   kernel->arg_is_image = lt_dlsym(dlhandle, "_arg_is_image");
   kernel->arg_is_sampler = lt_dlsym(dlhandle, "_arg_is_sampler");
   kernel->num_locals = *(cl_uint *) lt_dlsym(dlhandle, "_num_locals");
-  kernel->arguments =
+  /* Temporary store for the arguments that are set with clSetKernelArg. */
+  kernel->dyn_arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   kernel->next = NULL;
 
-  /* Initialize kernel arguments (in case the user doesn't). */
+  /* Initialize kernel "dynamic" arguments (in case the user doesn't). */
   for (i = 0; i < kernel->num_args; ++i)
     {
-      kernel->arguments[i].value = NULL;
-      kernel->arguments[i].size = 0;
+      kernel->dyn_arguments[i].value = NULL;
+      kernel->dyn_arguments[i].size = 0;
     }
 
   /* Fill up automatic local arguments. */
   for (i = 0; i < kernel->num_locals; ++i)
     {
-      kernel->arguments[kernel->num_args + i].value = NULL;
-      kernel->arguments[kernel->num_args + i].size =
+      kernel->dyn_arguments[kernel->num_args + i].value = NULL;
+      kernel->dyn_arguments[kernel->num_args + i].size =
         ((unsigned *) lt_dlsym(dlhandle, "_local_sizes"))[i];
     }
 
@@ -177,5 +203,18 @@ POname(clCreateKernel)(cl_program program,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return kernel;
+
+ERROR_CLEAN_KERNEL_AND_CONTENTS:
+  free(kernel->function_name);
+  free(kernel->name);
+  free(kernel->dyn_arguments);
+ERROR_CLEAN_KERNEL:
+  free(kernel);
+ERROR:
+  if(errcode_ret != NULL)
+  {
+    *errcode_ret = errcode;
+  }
+  return NULL;
 }
 POsym(clCreateKernel)

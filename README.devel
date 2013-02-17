@@ -63,7 +63,24 @@ built, tests are done through the ICD loader.
 
 IMPORTANT: using the ICD for in tree 'make check' requires the ocl-icd loader.
 Other ICD loaders wont be able to work in tree (they require the ICD config
-file to be installed in the system)
+file to be installed in the system).
+
+ocl-icd can be downloaded from https://forge.imag.fr/projects/ocl-icd/. It
+allows overriding the path from which the icd files are searched which is
+used to select only the OpenCL library in the build tree of pocl for
+the make check. Note, however, if you run the tests or examples manually
+this overriding is not done automatically. To direct the ocl-icd to use
+only the pocl in the build tree, export the following environment
+variable in your shell:
+
+  export OCL_ICD_VENDORS="PATH_TO_THE_POCL_BUILD_TREE/ocl-vendors"
+
+Inside the 'ocl-vendors' directory there's a single .icd file which is
+generated to point to the pocl library in the build tree.
+
+If you want use the pocl from the build tree, you must also export POCL_BUILDING=1 
+so pocl searches for its utility scripts from the build tree first, then the 
+installation location. The "make check" testsuite does this automatically.
 
 To test as much as possible link options, it is recommended to configure
 pocl two times and run "make check" with both. One should be configurated with:

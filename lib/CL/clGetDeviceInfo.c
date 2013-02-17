@@ -197,8 +197,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PROFILE                           : 
     POCL_RETURN_DEVICE_INFO_STR(device->profile);
   case CL_DEVICE_VERSION                           : 
-    POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
-
+    POCL_RETURN_DEVICE_INFO_STR("OpenCL 1.2"); 
   case CL_DEVICE_EXTENSIONS                        : 
     POCL_RETURN_DEVICE_INFO_STR(device->extensions);
   case CL_DEVICE_PLATFORM                          :
@@ -231,7 +230,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
-    POCL_RETURN_DEVICE_INFO_STR("1.2");
+    POCL_RETURN_DEVICE_INFO_STR("OpenCL C 1.2");
   }
   return CL_INVALID_VALUE;
 }

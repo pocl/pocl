@@ -1,0 +1,31 @@
+piglit test suite contains OpenCL tests which are useful to
+get working.
+
+I (Pekka Jääskeläinen) have pushed a branch of piglit with some
+fixes to issues in piglit found along the way. That branch should
+be used to test pocl until all fixes are merged upstream.
+
+So, here's how to run the piglit suite against pocl:
+
+git clone http://www.cs.tut.fi/~pjaaskel/piglit.git
+# to get the upstream repo: git clone git://anongit.freedesktop.org/piglit
+
+cd piglit
+ccmake .
+# It should open the cmake's curses GUI. Select only the CL tests and
+# deselect waffle.
+
+# Build the piglit test framework
+make
+
+# Setup ocl-icd to use the build tree pocl
+export OCL_ICD_VENDORS=LOCATION_TO_POCL_ROOT/ocl-vendors
+
+# Run the OCL test suite
+./piglit-run.py tests/all_cl.tests results/all
+
+# Produce a summary HTML page of the results
+./piglit-summary-html.py summary/pocl results/all/main
+
+# Now under summary/pocl there should be index.html etc. which
+# can be used to browse the test results and logs.

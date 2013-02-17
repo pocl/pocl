@@ -29,13 +29,39 @@ POname(clCreateCommandQueue)(cl_context context,
                      cl_command_queue_properties properties,
                      cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  int i;
+  int errcode;
+  cl_bool found;
+
+  /* validate flags */
+  if (properties > (1<<2)-1)
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
+
   /* we don't handle out-of-order queues yet */
   if (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
-    POCL_ERROR(CL_INVALID_QUEUE_PROPERTIES);
+  {
+    errcode = CL_INVALID_QUEUE_PROPERTIES;
+    goto ERROR;
+  }
+
+  for (i=0; i<context->num_devices; i++)
+    if (context->devices[i] == device)
+      found = CL_TRUE;
+
+  if (found == CL_FALSE)
+  {
+    errcode = CL_INVALID_DEVICE; 
+  }
 
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+  {
+    errcode = CL_OUT_OF_HOST_MEMORY;
+    goto ERROR;
+  }
   
   POCL_INIT_OBJECT(command_queue);
 
@@ -47,5 +73,12 @@ POname(clCreateCommandQueue)(cl_context context,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return command_queue;
+
+ERROR:
+    if(errcode_ret)
+    {
+        *errcode_ret = errcode;
+    }
+    return NULL;
 }
 POsym(clCreateCommandQueue)

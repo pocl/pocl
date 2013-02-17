@@ -24,7 +24,7 @@
 #include "../templates.h"
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, UTYPE, EXPR)       \
-  UTYPE _cl_overloadable NAME(TYPE a)                   \
+  UTYPE _CL_OVERLOADABLE NAME(TYPE a)                   \
   {                                                     \
     typedef TYPE gtype;                                 \
     typedef UTYPE ugtype;                               \
@@ -32,7 +32,7 @@
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UTYPE, UPTYPE, LO) \
-  UTYPE _cl_overloadable NAME(TYPE a)                   \
+  UTYPE _CL_OVERLOADABLE NAME(TYPE a)                   \
   {                                                     \
     UPTYPE a1;                                          \
     a1.LO = a;                                          \
@@ -40,7 +40,7 @@
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, UTYPE, LO, HI)      \
-  UTYPE _cl_overloadable NAME(TYPE a)                   \
+  UTYPE _CL_OVERLOADABLE NAME(TYPE a)                   \
   {                                                     \
     return (UTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
@@ -176,6 +176,7 @@ IMPLEMENT_DIRECT(abs, uint4 , uint4 , IMPLEMENT_ABS_DIRECT_UNSIGNED)
 IMPLEMENT_DIRECT(abs, uint8 , uint8 , IMPLEMENT_ABS_DIRECT_UNSIGNED)
 IMPLEMENT_DIRECT(abs, uint16, uint16, IMPLEMENT_ABS_DIRECT_UNSIGNED)
 
+#ifdef cles_khr_int64 
 IMPLEMENT_DIRECT(abs, long  , ulong  , IMPLEMENT_ABS_DIRECT)
 IMPLEMENT_DIRECT(abs, long2 , ulong2 , IMPLEMENT_ABS_DIRECT)
 IMPLEMENT_DIRECT(abs, long3 , ulong3 , IMPLEMENT_ABS_DIRECT)
@@ -189,3 +190,5 @@ IMPLEMENT_DIRECT(abs, ulong3 , ulong3 , IMPLEMENT_ABS_DIRECT_UNSIGNED)
 IMPLEMENT_DIRECT(abs, ulong4 , ulong4 , IMPLEMENT_ABS_DIRECT_UNSIGNED)
 IMPLEMENT_DIRECT(abs, ulong8 , ulong8 , IMPLEMENT_ABS_DIRECT_UNSIGNED)
 IMPLEMENT_DIRECT(abs, ulong16, ulong16, IMPLEMENT_ABS_DIRECT_UNSIGNED)
+#endif
+

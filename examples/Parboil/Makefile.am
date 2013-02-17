@@ -67,7 +67,8 @@ build-prepare: $(testsuite_src_dir)
 	grep opencl | \
 	xargs sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g'
 	@cd ${testsuite_pocl_dir} && patch -sNp0 < opencl.mk.patch > /dev/null || true
-	cd ${testsuite_src_dir} && patch -sNp0 < ${testsuite_pocl_dir}/benchmarks.patch > /dev/null || true
+	@cd ${testsuite_pocl_dir} && patch -sNp0 < OpenCL_common.cpp.patch > /dev/null || true
+	@cd ${testsuite_src_dir} && patch -sNp0 < ${testsuite_pocl_dir}/benchmarks.patch > /dev/null || true
 	@echo -e "OPENCL_PATH=${abs_top_srcdir}/\nOPENCL_LIB_PATH=${abs_top_builddir}/lib/CL/.libs" > ${testsuite_src_dir}/common/Makefile.conf
 	@echo -e "APP_CFLAGS=-DCL_USE_DEPRECATED_OPENCL_1_1_APIS" >> ${testsuite_src_dir}/common/Makefile.conf
 	@echo -e "APP_CXXFLAGS=-DCL_USE_DEPRECATED_OPENCL_1_1_APIS" >> ${testsuite_src_dir}/common/Makefile.conf
@@ -109,7 +110,7 @@ build-sad: build-prepare
 run-sad: 
 	cd ${testsuite_src_dir} ; ./parboil run sad opencl_base default
 
-build-bfs: build-prepare
+build-bfs: build-prepare parboil/benchmarks/bfs/src/opencl_base/OpenCL_common.cpp
 	cd ${testsuite_src_dir} ; ./parboil compile bfs opencl_base 
 
 run-bfs: 

@@ -18,12 +18,21 @@
 
 #define DEBUG_TYPE "break-constgeps"
 
-#include "llvm/ADT/Statistic.h"
+#include "config.h"
+#if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Constants.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
+#else
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#endif
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/InstIterator.h"
 
 #include "BreakConstantGEPs.h"
@@ -61,7 +70,9 @@ static RegisterPass<BreakConstantGEPs> P ("break-constgeps",
 static ConstantExpr *
 hasConstantGEP (Value * V) {
   if (ConstantExpr * CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::GetElementPtr) {
+      if (CE->getOpcode() == Instruction::GetElementPtr ||
+          CE->getOpcode() == Instruction::BitCast) 
+      {
       return CE;
     } else {
       for (unsigned index = 0; index < CE->getNumOperands(); ++index) {

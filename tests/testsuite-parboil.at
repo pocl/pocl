@@ -16,7 +16,7 @@ AT_BANNER([Parboil tests])
 
 POAT_PB_SETUP([spmv])
 #This fails when pocl has ICD enabled. 
-AT_XFAIL_IF([grep -q "#define HAVE_OCL_ICD 1" $abs_top_srcdir/config.h])
+AT_XFAIL_IF([grep -q "#define HAVE_OCL_ICD 1" $abs_top_builddir/config.h])
 POAT_PB_CHECK_BUILD([spmv])
 AT_CHECK_UNQUOTED([make run-spmv -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
@@ -28,8 +28,6 @@ POAT_PB_CHECK_BUILD([stencil])
 AT_CHECK_UNQUOTED([make run-stencil -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
 ])
-# Result verification error
-AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([tpacf])
@@ -72,7 +70,6 @@ AT_XFAIL_IF(true)
 AT_CLEANUP
 
 POAT_PB_SETUP([bfs], [bfs-parboil long])
-#AT_SKIP_IF([true])
 POAT_PB_CHECK_BUILD([bfs])
 AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil 2>&1 | grep Pass], 0,
 [Pass

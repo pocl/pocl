@@ -24,13 +24,13 @@
 #include "../templates.h"
 
 #define IMPLEMENT_DIRECT(NAME, TYPE, EXPR)      \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)    \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)    \
   {                                             \
     return EXPR;                                \
   }
 
 #define IMPLEMENT_UPCAST(NAME, TYPE, UPTYPE, LO)        \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)            \
   {                                                     \
     UPTYPE a1, b1;                                      \
     a1.LO = a;                                          \
@@ -39,7 +39,7 @@
   }
 
 #define IMPLEMENT_SPLIT(NAME, TYPE, LO, HI)             \
-  TYPE _cl_overloadable NAME(TYPE a, TYPE b)            \
+  TYPE _CL_OVERLOADABLE NAME(TYPE a, TYPE b)            \
   {                                                     \
     return (TYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));  \
   }
@@ -49,42 +49,42 @@
 #define IMPLEMENT_MAX_DIRECT (a>=b ? a : b)
 #define IMPLEMENT_MAX_SSE41_CHAR16              \
   ({                                            \
-    __asm__ ("pmaxsb128 %[src], %[dst]" :       \
+    __asm__ ("pmaxsb %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE_UCHAR16               \
   ({                                            \
-    __asm__ ("pmaxub128 %[src], %[dst]" :       \
+    __asm__ ("pmaxub %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE_SHORT8                \
   ({                                            \
-    __asm__ ("pmaxsw128 %[src], %[dst]" :       \
+    __asm__ ("pmaxsw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE41_USHORT8             \
   ({                                            \
-    __asm__ ("pmaxuw128 %[src], %[dst]" :       \
+    __asm__ ("pmaxuw %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE41_INT4                \
   ({                                            \
-    __asm__ ("pmaxsd128 %[src], %[dst]" :       \
+    __asm__ ("pmaxsd %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
   })
 #define IMPLEMENT_MAX_SSE41_UINT4               \
   ({                                            \
-    __asm__ ("pmaxud128 %[src], %[dst]" :       \
+    __asm__ ("pmaxud %[src], %[dst]" :          \
              [dst] "+x" (a) :                   \
              [src] "x" (b));                    \
     a;                                          \
@@ -230,6 +230,7 @@ IMPLEMENT_DIRECT(max, uint8 , IMPLEMENT_MAX_DIRECT)
 IMPLEMENT_DIRECT(max, uint16, IMPLEMENT_MAX_DIRECT)
 #endif
 
+#ifdef cles_khr_int64
 IMPLEMENT_DIRECT(max, long  , IMPLEMENT_MAX_DIRECT)
 IMPLEMENT_DIRECT(max, long2 , IMPLEMENT_MAX_DIRECT)
 IMPLEMENT_DIRECT(max, long3 , IMPLEMENT_MAX_DIRECT)
@@ -243,6 +244,7 @@ IMPLEMENT_DIRECT(max, ulong3 , IMPLEMENT_MAX_DIRECT)
 IMPLEMENT_DIRECT(max, ulong4 , IMPLEMENT_MAX_DIRECT)
 IMPLEMENT_DIRECT(max, ulong8 , IMPLEMENT_MAX_DIRECT)
 IMPLEMENT_DIRECT(max, ulong16, IMPLEMENT_MAX_DIRECT)
+#endif
 
 DEFINE_EXPR_G_GS(max, max(a, (gtype)b))
 
@@ -270,6 +272,7 @@ IMPLEMENT_DIRECT(max, float8 , IMPLEMENT_MAX_DIRECT_CAST)
 IMPLEMENT_DIRECT(max, float16, IMPLEMENT_MAX_DIRECT_CAST)
 #endif
 
+#ifdef cl_khr_fp64
 #ifdef __SSE2__
 IMPLEMENT_DIRECT(max, double  , IMPLEMENT_MAX_SSE2_DOUBLE)
 IMPLEMENT_DIRECT(max, double2 , IMPLEMENT_MAX_SSE2_DOUBLE2)
@@ -289,6 +292,7 @@ IMPLEMENT_DIRECT(max, double3 , IMPLEMENT_MAX_DIRECT_CAST)
 IMPLEMENT_DIRECT(max, double4 , IMPLEMENT_MAX_DIRECT_CAST)
 IMPLEMENT_DIRECT(max, double8 , IMPLEMENT_MAX_DIRECT_CAST)
 IMPLEMENT_DIRECT(max, double16, IMPLEMENT_MAX_DIRECT_CAST)
+#endif
 #endif
 
 DEFINE_EXPR_V_VS(max, max(a, (vtype)b))
