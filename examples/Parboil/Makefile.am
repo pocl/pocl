@@ -63,7 +63,7 @@ build-prepare: $(testsuite_src_dir)
 # The OpenCL benchmarks want GPU devices. Change to CPU devices using
 # sed.
 	@cd $(testsuite_src_dir) && \
-	find -name "*.c" -o -name "*.cc" -o -name "*.cpp" | \
+	find . -name "*.c" -o -name "*.cc" -o -name "*.cpp" | \
 	grep opencl | \
 	xargs sed -i 's/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g'
 	@cd ${testsuite_pocl_dir} && patch -sNp0 < opencl.mk.patch > /dev/null || true
