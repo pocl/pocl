@@ -268,15 +268,21 @@ POname(clBuildProgram)(cl_program program,
 
   return CL_SUCCESS;
 
+  /* Set pointers to NULL during cleanup so that clProgramRelease won't
+   * cause a double free. */
+
 ERROR_CLEAN_BINARIES:
   for(i = 0; i < device_i; i++)
   {
-    free(program->binaries[i]); 
+    free(program->binaries[i]);
+    program->binaries[i] = NULL;
   }
 ERROR_CLEAN_PROGRAM:
   free(program->binaries);
+  program->binaries = NULL;
   free(program->binary_sizes);
+  program->binary_sizes = NULL;
 ERROR:
-    return errcode;
+  return errcode;
 }
 POsym(clBuildProgram)
