@@ -36,8 +36,11 @@
 #  undef  CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
 #  define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
 // Define macros that would otherwise be undefined on Apple systems
+#  undef  CL_API_SUFFIX__VERSION_1_2
 #  define CL_API_SUFFIX__VERSION_1_2
+#  undef  CL_EXT_SUFFIX__VERSION_1_2
 #  define CL_EXT_SUFFIX__VERSION_1_2
+#  undef  CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #  define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #else
 // We do not want warning when using 1.0 and 1.1 deprecated function:
