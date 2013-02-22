@@ -44,7 +44,7 @@ build: $(testsuite_src_dir)
 	cd $(testsuite_pocl_dir) && \
 	( patch -sNp1 < $(testsuite_pocl_dir)/AMDSDK.patch || true ) && \
 	cd $(testsuite_src_dir)/samples/opencl/ && \
-	find -name "*.cl" | xargs sed -i 's/cl_amd_fp64/cl_khr_fp64/g' && \
+	find . -name "*.cl" | xargs perl -pi -e 's/cl_amd_fp64/cl_khr_fp64/g' && \
 	LDFLAGS=-lX11 $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
 
 test_AESEncryptDecrypt: 
