@@ -1,0 +1,129 @@
+diff --git a/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk b/make/openclsdkdefs.mk
+index bab044a..0ecaca1 100755
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk
+@@ -31,7 +31,7 @@ else
+    endif
+ endif
+ 
+-
++ISINTEL = true
+ # What CPU and mode?
+ ifeq ($(findstring WOW64, $(UNAME)), WOW64)
+   BITS = 64
+@@ -45,12 +45,21 @@ else
+ ifeq ($(findstring x86_64, $(UNAME)), x86_64)
+   BITS = 64
+ else
++ifeq ($(findstring ppc, $(UNAME)), ppc)
++  BITS = 32
++  ISINTEL = false
++else
++ifeq ($(findstring armv, $(UNAME)), armv)
++  BITS = 32
++  ISINTEL = false
++else
+   $(error Unknown CPU)
+ endif
+ endif
+ endif
+ endif
+-
++endif
++endif
+ # Override bitness with user specified value 
+ ifdef bitness 
+ ifeq ($(bitness), 32)
+@@ -231,11 +240,6 @@ endif
+ 	CPPAMP_LLIBS   := 
+ else 
+ ifeq ($(OS), lnx) # Linux settings 
+-  ifeq ($(BITS), 64)
+-  else
+-    CFLAGS += -m32 -msse2
+-    LDFLAGS += -m32
+-  endif
+ ifdef INTEL
+   CC                := icpc
+ else
+@@ -263,7 +267,7 @@ endif
+ ifdef MINGW
+   LDFLAGS           += -L/usr/X11R6/lib 
+ else
+-  LDFLAGS           += -lpthread -ldl -L/usr/X11R6/lib 
++  LDFLAGS           += -lpthread -ldl -L/usr/X11R6/lib $(shell pkg-config --silence-errors --libs-only-L ocl-icd)
+ endif
+   LD_LIBDIR_FLAG    := -L
+   LD_SHARED_FLAG    := -shared   
+@@ -305,7 +309,8 @@ endif
+ BUILDDIR := build
+ DEBUG_DIR := debug
+ RELEASE_DIR := release
+-X86_DIR := x86
++#we don't want to have a separate directory for each platform, and we don't expect to do multi arch builds in pocl
++X86_DIR := x86_64
+ X86_64_DIR := x86_64
+ ifeq ($(BITS), 64)
+ CPU_ARCH = x86_64
+@@ -325,7 +330,8 @@ BOLT_LIBDIRS = "$(AMDAPPSDKROOT)/lib/$(CPU_ARCH)"
+ CAL_LIBDIRS = "$(AMDAPPSDKROOT)/lib"
+ CPPAMP_LIBDIRS = 
+ 
+-LIBDIRS = $(DEPTH)/lib/$(CPU_ARCH) $(DEPTH)/TempSDKUtil/lib/$(CPU_ARCH) 
++#LIBDIRS = $(DEPTH)/lib/$(CPU_ARCH)
++LIBDIRS = $(DEPTH)/TempSDKUtil/lib/$(CPU_ARCH) 
+ CL_SUFFIX	   	   := .cl
+ CLC				   := clc
+ 
+diff --git a/samples/opencl/SDKUtil/SDKApplication.cpp b/samples/opencl/SDKUtil/SDKApplication.cpp
+index 1d37f9d..8d18be9 100755
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/SDKUtil/SDKApplication.cpp
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/SDKUtil/SDKApplication.cpp
+@@ -345,7 +345,8 @@ int SDKSample::validatePlatformAndDeviceOptions()
+                 gpu = false;
+             }
+ 
+-            clReleaseContext(context);
++            if (context != NULL)
++                clReleaseContext(context);
+         }
+ 
+         // Get device count
+diff --git a/samples/opencl/cl/app/Makefile b/samples/opencl/cl/app/Makefile
+index e713bc5..60fcd6a 100755
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app/Makefile
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app/Makefile
+@@ -40,8 +40,6 @@ SUBDIRS = AESEncryptDecrypt\
+ 	  DeviceFission \
+ 	  LUDecomposition \
+ 	  BlackScholesDP \
+-	  BufferBandwidth \
+-	  ImageBandwidth \
+ 	  TransferOverlap \
+ 	  AtomicCounters \
+ 	  BinomialOptionMultiGPU \
+@@ -54,6 +52,11 @@ SUBDIRS = AESEncryptDecrypt\
+ 	  AdvancedMultiGPU \
+ 	  MemoryModel
+ 
++#these tests are programmed with intel intrinsics
++ifeq ($(ISINTEL), "true")
++SUBDIRS += BufferBandwidth \
++	   ImageBandwidth 
++endif
+ 
+ ifneq ($(OS), lnx)
+ SUBDIRS += SimpleDX10 SimpleDX11 OpenCLService
+diff --git a/samples/opencl/cpp_cl/app/IntroStaticCPPKernel/IntroStaticCPPKernel.cpp b/samples/opencl/cpp_cl/app/IntroStaticCPPKernel/IntroStaticCPPKernel.cpp
+index d310168..32358da 100755
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cpp_cl/app/IntroStaticCPPKernel/IntroStaticCPPKernel.cpp
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cpp_cl/app/IntroStaticCPPKernel/IntroStaticCPPKernel.cpp
+@@ -20,6 +20,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ #include <iostream>
+ #include <fstream>
+ #include <string>
++#include <cstdlib>
+ 
+ 
+ using namespace cl;
+
