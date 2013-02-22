@@ -9,6 +9,8 @@ m4_define([POAT_AMDSDK_SETUP],[
 AT_BANNER([AMD APP SDK tests])
 
 POAT_AMDSDK_SETUP([aesencryptdecrypt])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_AESEncryptDecrypt -sC $abs_top_builddir/examples/AMD | grep "Encryption Passed"], 0, 
 [Encryption Passed!
 ])
@@ -35,12 +37,16 @@ AT_CHECK_UNQUOTED([make test_BinarySearch -sC $abs_top_builddir/examples/AMD | g
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([binomialoption])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BinomialOption -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholes])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -50,12 +56,16 @@ POAT_AMDSDK_SETUP([blackscholesdp])
 AT_KEYWORDS([cl_amd_fp64])
 #this causes assert on LLVM 3.1
 AT_SKIP_IF([ grep "#define LLVM_3_1" $abs_top_srcdir/config.h ])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([boxfilter])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BoxFilter -sC $abs_top_builddir/examples/AMD | egrep "Passed|failed"], 0, 
 [Passed!
 Verifying results...Passed!
@@ -63,6 +73,8 @@ Verifying results...Passed!
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([dct])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_DCT -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -85,6 +97,8 @@ AT_CHECK_UNQUOTED([make test_DwtHaar1D -sC $abs_top_builddir/examples/AMD | grep
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([fastwalshtransform])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_FastWalshTransform -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -115,6 +129,8 @@ HelloWorld
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([histogram])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_Histogram -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])     
@@ -145,6 +161,8 @@ AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMD | gre
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([matrixmul])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_MatrixMultiplication -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -159,6 +177,8 @@ AT_CHECK_UNQUOTED([make test_MatrixMulImage -sC $abs_top_builddir/examples/AMD |
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([matrixtranspose])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_MatrixTranspose -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -198,12 +218,16 @@ AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMD | grep Pas
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([prefixsum])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_PrefixSum -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([quasirandomsequence])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_QuasiRandomSequence -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -218,18 +242,24 @@ AT_CHECK_UNQUOTED([make test_RadixSort -sC $abs_top_builddir/examples/AMD | grep
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([recursivegaussian])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_RecursiveGaussian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([reduction])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_Reduction -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([scanlargearrays])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 # Fails with vectorization. With wiloops and no unrolling, the vectorization won't apply.
 #AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=1 make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
@@ -252,6 +282,8 @@ AT_CHECK_UNQUOTED([make test_SimpleImage -sC $abs_top_builddir/examples/AMD | gr
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([sobelfilter])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_SobelFilter -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])     
@@ -278,6 +310,8 @@ AT_CHECK_UNQUOTED([make test_TransferOverlap -sC $abs_top_builddir/examples/AMD 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([urng])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_URNG -sC $abs_top_builddir/examples/AMD | grep Passed | cut -c -7], 0, 
 [Passed! 
 ])     
