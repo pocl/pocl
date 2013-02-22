@@ -284,13 +284,17 @@ if test x"$icd" != xno; then :
     [ OCL_ICD_available=yes 
       AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
     [:])
-  # Check for the ICD loader library. There doesn't seem to be
+  # In case pkg-config could not find ocl-icd above, try the system default.
+  # This test will fail if e.g. ocl-icd is installed to a non-standard location,
+  # so skip it if pkg-config succeeded. There doesn't seem to be
   # a symbol that is available only in the ICD loaders. Thus,
   # this check is passed also in case libOpenCL is the implementation,
   # not the loader.
-  AC_CHECK_LIB([OpenCL], [clGetPlatformIDs], [:], [
-    AC_MSG_ERROR([Could not find an ICD loader. Please install one or add --disable-icd (see README for details).])
-    ])
+  if test x"$OCL_ICD_available" != xyes; then :
+    AC_CHECK_LIB([OpenCL], [clGetPlatformIDs], [:], [
+      AC_MSG_ERROR([Could not find an ICD loader. Please install one or add --disable-icd (see README for details).])
+      ])
+  fi
 fi
 
 AS_CASE(["$icd,$OCL_ICD_available"],
