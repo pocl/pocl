@@ -63,6 +63,8 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_KEYWORDS([conversion tce])
 AT_DATA([expout],
 [Running test test_convert_type...
@@ -86,6 +88,10 @@ AT_SETUP([Kernel functions fabs signbit copysign])
 # Fails because signbit compilation crashes with Clang 3.3 and is thus
 # not available.
 AT_XFAIL_IF([ grep -q "#define LLVM_3_3" $abs_top_builddir/config.h ])
+# Fails also when doubles are missing
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_fabs...
