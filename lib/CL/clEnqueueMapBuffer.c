@@ -119,7 +119,11 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
     {
       _cl_command_node *cmd = malloc(sizeof(_cl_command_node));
       if (cmd == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
+        {
+          if (errcode_ret)
+            *errcode_ret = CL_OUT_OF_HOST_MEMORY;
+          return NULL;
+        }
 
       cmd->type = CL_COMMAND_MAP_BUFFER;
       cmd->command.map.buffer = buffer;
