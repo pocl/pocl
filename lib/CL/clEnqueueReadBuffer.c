@@ -58,7 +58,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   if (num_events_in_wait_list == 0 && event_wait_list != NULL)
     return CL_INVALID_EVENT_WAIT_LIST;
 
-  for(i=0; i<event_wait_list; i++)
+  for(i=0; i<num_events_in_wait_list; i++)
     if (event_wait_list[i] == NULL)
       return CL_INVALID_EVENT_WAIT_LIST;
 
