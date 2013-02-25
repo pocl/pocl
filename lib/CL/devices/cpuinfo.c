@@ -23,6 +23,7 @@
 */
 
 #include <pocl_cl.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "config.h"
