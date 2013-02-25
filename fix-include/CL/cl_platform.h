@@ -22,6 +22,7 @@
 */
 
 #include_next <CL/cl_platform.h>
+
 #ifdef __APPLE__
 // We do not want warning when using 1.0 and 1.1 deprecated function:
 // we use it on purpose in order to provide backward compatibility
@@ -35,10 +36,6 @@
 #  define CL_EXT_SUFFIX__VERSION_1_1
 #  undef  CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
 #  define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
-// Define macros that would otherwise be undefined on Apple systems
-#  define CL_API_SUFFIX__VERSION_1_2
-#  define CL_EXT_SUFFIX__VERSION_1_2
-#  define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #else
 // We do not want warning when using 1.0 and 1.1 deprecated function:
 // we use it on purpose in order to provide backward compatibility
@@ -47,4 +44,3 @@
 #  undef  CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #  define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #endif
-

@@ -27,9 +27,25 @@
 // however, this generates warnings
 // pragmas are here to avoid the warnings
 // but g++ has a bug for now: http://bug.debian.org/686178
-#pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wcpp"
-#  define CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#  include_next <CL/cl.hpp>
-#pragma GCC diagnostic pop
 
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+
+#if defined __clang__
+
+#  pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-W#warnings"
+#    include_next <CL/cl.hpp>
+#  pragma clang diagnostic pop
+
+#elif defined GCC_VERSION && GCC_VERSION >= 40600
+
+#  pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wcpp"
+#    include_next <CL/cl.hpp>
+#  pragma GCC diagnostic pop
+
+#else
+
+#  include_next <CL/cl.hpp>
+
+#endif
