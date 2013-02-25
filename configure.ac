@@ -225,6 +225,13 @@ if test "$enable_testsuite_amd" = "yes" ; then
   fi
 fi
 
+#All ViennaCL tests use doubles, thus they fail on these platforms
+case $host_cpu in
+  arm* | powerpc* | x86 | i?86 )
+    AC_MSG_WARN([Looks like this host doesn't support doubles. Disabling all ViennaCL tests])
+    enable_testsuite_viennacl=no
+    ;;
+esac
 
 AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
