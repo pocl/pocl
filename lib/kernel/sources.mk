@@ -6,7 +6,7 @@ CLANGFLAGS = -emit-llvm
 vpath %.cl @srcdir@:@srcdir@/..
 vpath %.c @srcdir@:@srcdir@/..
 vpath %.ll @srcdir@:@srcdir@/..
-
+vpath %.h @top_srcdir@/include:@srcdir@:@srcdir@/..
 
 LKERNEL_HDRS=templates.h image.h
 # Nodist here because these files should be included
@@ -160,9 +160,9 @@ OBJ:LKERNEL_SRCS
 #libkernel_SRCS = $LIBKERNEL_SOURCES
 
 #rules to compile the different kernel library source file types into LLVM bitcode
-.c.bc:
+%.bc: %.c ${TARGET_DIR}/types.h
 	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
-.cl.bc:
+%.bc: %.cl ${TARGET_DIR}/types.h _kernel.h
 	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h \
 		-include ${abs_top_srcdir}/include/_kernel.h
 
