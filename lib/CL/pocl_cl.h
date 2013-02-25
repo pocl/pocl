@@ -396,7 +396,7 @@ struct _cl_program {
   size_t *binary_sizes; 
   unsigned char **binaries; 
   /* Temp directory (relative to CWD) where the kernel files reside. */
-  const char *temp_dir;
+  char *temp_dir;
   /* implementation */
   cl_kernel kernels;
 };
@@ -405,8 +405,8 @@ struct _cl_kernel {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
-  const char *function_name;
-  const char *name;
+  char *function_name;
+  char *name;
   cl_uint num_args;
   cl_context context;
   cl_program program;
