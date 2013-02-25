@@ -52,11 +52,11 @@ POname(clBuildProgram)(cl_program program,
   int error;
   unsigned char *binary;
   unsigned real_num_devices;
-  cl_device_id *real_device_list;
+  const cl_device_id *real_device_list;
   /* The default build script for .cl files. */
   char *pocl_build_script;
   int device_i = 0;
-  char *user_options = "";
+  const char *user_options = "";
 
   if (program == NULL)
   {
