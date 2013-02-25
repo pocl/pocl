@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include "utlist.h"
+#include "cpuinfo.h"
+#include "topology/pocl_topology.h"
 
 #include "config.h"
 
