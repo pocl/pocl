@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_J_V(ilogb)
+DEFINE_BUILTIN_K_V(ilogb)
