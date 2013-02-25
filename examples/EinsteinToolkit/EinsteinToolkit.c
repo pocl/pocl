@@ -930,12 +930,12 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
     
     mem_cctkGH =
       clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctkGH, cctkGH, NULL);
+                     sizeof *cctkGH, (cGH*)cctkGH, NULL);
     assert(mem_cctkGH);
     
     mem_cctk_parameters =
       clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctk_parameters, cctk_parameters, NULL);
+                     sizeof *cctk_parameters, (cctk_parameters_t*)cctk_parameters, NULL);
     assert(mem_cctk_parameters);
   }
   
@@ -1127,12 +1127,12 @@ int exec_ML_BSSN_CL_RHS2(char              const* const program_source,
     
     mem_cctkGH =
       clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctkGH, cctkGH, NULL);
+                     sizeof *cctkGH, (cGH*)cctkGH, NULL);
     assert(mem_cctkGH);
     
     mem_cctk_parameters =
       clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctk_parameters, cctk_parameters, NULL);
+                     sizeof *cctk_parameters, (cctk_parameters_t*)cctk_parameters, NULL);
     assert(mem_cctk_parameters);
   }
   
