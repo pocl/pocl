@@ -23,11 +23,24 @@
 
 #include_next <CL/cl_platform.h>
 
+#ifdef __APPLE__
 // We do not want warning when using 1.0 and 1.1 deprecated function:
 // we use it on purpose in order to provide backward compatibility
-#undef  CL_EXTENSION_WEAK_LINK
-#define CL_EXTENSION_WEAK_LINK
-#undef  CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
-#define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
-#undef  CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
-#define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
+#  undef  CL_EXTENSION_WEAK_LINK
+#  define CL_EXTENSION_WEAK_LINK
+#  undef  CL_EXT_SUFFIX__VERSION_1_0
+#  define CL_EXT_SUFFIX__VERSION_1_0
+#  undef  CL_API_SUFFIX__VERSION_1_1
+#  define CL_API_SUFFIX__VERSION_1_1
+#  undef  CL_EXT_SUFFIX__VERSION_1_1
+#  define CL_EXT_SUFFIX__VERSION_1_1
+#  undef  CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
+#  define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
+#else
+// We do not want warning when using 1.0 and 1.1 deprecated function:
+// we use it on purpose in order to provide backward compatibility
+#  undef  CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
+#  define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
+#  undef  CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
+#  define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
+#endif
