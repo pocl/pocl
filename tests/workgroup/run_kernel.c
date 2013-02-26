@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/opencl.h>
+#include "poclu.h"
 
 /**
  * The test kernels are assumed to:
@@ -82,8 +83,7 @@ main (int argc, char **argv)
   global_work_size[1] = local_work_size[1];
   global_work_size[2] = local_work_size[2];
   
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
-				    NULL, NULL, NULL); 
+  context = poclu_create_any_context();
   if (context == (cl_context)0) 
     return -1; 
 

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
+#include "poclu.h"
 
 void 
 delete_memobjs(cl_mem *memobjs, int n) 
@@ -27,8 +28,7 @@ exec_trig_kernel(const char *program_source,
   float c = 7.3; // a scalar number to test non-pointer args
  
   // create the OpenCL context on a GPU device 
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
-				    NULL, NULL, NULL); 
+  context = poclu_create_any_context();
   if (context == (cl_context)0) 
     return -1; 
  

@@ -20,18 +20,18 @@
 // function table, but the registered function can be then only stubs
 // (perhaps with a warning) or even NULL (in this case, a program using
 // OCL 1.1 function will crash: ICD Loaders does not do any check)
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#  define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 
-#ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#error CL_USE_DEPRECATED_OPENCL_1_1_APIS not in use
-#endif
+#  ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#    error CL_USE_DEPRECATED_OPENCL_1_1_APIS not in use
+#  endif
 
-#pragma GCC visibility push(hidden)
+#  pragma GCC visibility push(hidden)
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
-#pragma GCC visibility pop
+#  pragma GCC visibility pop
 
-#define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
+#  define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
+#  define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
 
 /* Define the ICD dispatch structure that gets filled below. 
  * Prefer to get it from ocl-icd, as that has compile time type checking

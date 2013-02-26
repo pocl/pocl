@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <CL/opencl.h>
+#include "poclu.h"
 
 #ifndef SRCDIR
 #  define SRCDIR="."
@@ -67,8 +68,7 @@ int call_test(const char *name)
   source_file = NULL;
 
   /* setup an OpenCL context and command queue using default device */
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_ALL,
-      NULL, NULL, NULL);
+  context = poclu_create_any_context();
   if (!context) {
     puts("clCreateContextFromType call failed\n");
     goto error;

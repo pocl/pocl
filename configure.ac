@@ -309,7 +309,7 @@ AS_CASE(["$icd,$OCL_ICD_available"],
   [*,yes], [ icd=yes
     AC_MSG_NOTICE([enabling ICD extension build]) ],
   [check,no], [ icd=no
-    AC_MSG_NOTICE([disabling ICD extension build (ocd-icd not available)]) ],
+    AC_MSG_NOTICE([disabling ICD extension build (ocl-icd not available)]) ],
   [yes,no], [AC_MSG_WARN([enabling ICD, but the testsuite will not work! (ocl-icd not available)])],
   [AC_MSG_ERROR([Invalid value for --enable-icd])]) 
 

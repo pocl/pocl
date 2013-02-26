@@ -25,7 +25,7 @@
 noinst_PROGRAMS = trig
 
 trig_SOURCES = trig.c trig_exec.c trig.cl
-trig_LDADD = @OPENCL_LIBS@ -lm
+trig_LDADD = @OPENCL_LIBS@ -lm ../../lib/poclu/libpoclu.la
 trig_CFLAGS = @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

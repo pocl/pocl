@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #include <CL/opencl.h>
-
+#include "poclu.h"
 
 
 #define GRID_GRANULARITY 2
@@ -38,8 +38,7 @@ exec_scalarwave_kernel(char      const *const program_source,
   if (!initialised) {
     initialised = 1;
     
-    context =
-      clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, NULL, NULL, NULL);
+    context = poclu_create_any_context();
     if (!context) return -1;
     
     size_t ndevices;

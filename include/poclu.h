@@ -30,9 +30,6 @@
 extern "C" {
 #endif
 
-/*uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
-  float byteswap_float (float word, char should_swap); */
-
 /**
  * Byte swap functions for endianness swapping between the host
  * (current CPU) and a target device.
@@ -58,6 +55,14 @@ poclu_bswap_cl_float_array(cl_device_id device, cl_float* array, size_t num_elem
 
 void
 poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_elements);
+
+/**
+ * Misc. helper functions for streamlining OpenCL API usage. 
+ */
+
+/* Create a context in the first platform found. */
+cl_context
+poclu_create_any_context();
 
 #ifdef __cplusplus
 }
