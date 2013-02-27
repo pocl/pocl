@@ -825,26 +825,26 @@ void barrier (cl_mem_fence_flags flags);
   int8  _CL_OVERLOADABLE NAME(float8  );        \
   int16 _CL_OVERLOADABLE NAME(float16 );        \
   __IF_FP64(                                    \
-  int   _CL_OVERLOADABLE NAME(double  );        \
-  int2  _CL_OVERLOADABLE NAME(double2 );        \
-  int3  _CL_OVERLOADABLE NAME(double3 );        \
-  int4  _CL_OVERLOADABLE NAME(double4 );        \
-  int8  _CL_OVERLOADABLE NAME(double8 );        \
-  int16 _CL_OVERLOADABLE NAME(double16);)
-#define _CL_DECLARE_FUNC_K_V(NAME)              \
-  int    _CL_OVERLOADABLE NAME(float   );       \
-  int2   _CL_OVERLOADABLE NAME(float2  );       \
-  int3   _CL_OVERLOADABLE NAME(float3  );       \
-  int4   _CL_OVERLOADABLE NAME(float4  );       \
-  int8   _CL_OVERLOADABLE NAME(float8  );       \
-  int16  _CL_OVERLOADABLE NAME(float16 );       \
-  __IF_FP64(                                    \
   int    _CL_OVERLOADABLE NAME(double  );       \
   long2  _CL_OVERLOADABLE NAME(double2 );       \
   long3  _CL_OVERLOADABLE NAME(double3 );       \
   long4  _CL_OVERLOADABLE NAME(double4 );       \
   long8  _CL_OVERLOADABLE NAME(double8 );       \
   long16 _CL_OVERLOADABLE NAME(double16);)
+#define _CL_DECLARE_FUNC_K_V(NAME)              \
+  int   _CL_OVERLOADABLE NAME(float   );        \
+  int2  _CL_OVERLOADABLE NAME(float2  );        \
+  int3  _CL_OVERLOADABLE NAME(float3  );        \
+  int4  _CL_OVERLOADABLE NAME(float4  );        \
+  int8  _CL_OVERLOADABLE NAME(float8  );        \
+  int16 _CL_OVERLOADABLE NAME(float16 );        \
+  __IF_FP64(                                    \
+  int   _CL_OVERLOADABLE NAME(double  );        \
+  int2  _CL_OVERLOADABLE NAME(double2 );        \
+  int3  _CL_OVERLOADABLE NAME(double3 );        \
+  int4  _CL_OVERLOADABLE NAME(double4 );        \
+  int8  _CL_OVERLOADABLE NAME(double8 );        \
+  int16 _CL_OVERLOADABLE NAME(double16);)
 #define _CL_DECLARE_FUNC_S_V(NAME)              \
   float  _CL_OVERLOADABLE NAME(float   );       \
   float  _CL_OVERLOADABLE NAME(float2  );       \
@@ -968,7 +968,7 @@ _CL_DECLARE_FUNC_V_VV(fmod)
 _CL_DECLARE_FUNC_V_VPV(fract)
 // frexp
 _CL_DECLARE_FUNC_V_VV(hypot)
-_CL_DECLARE_FUNC_J_V(ilogb)
+_CL_DECLARE_FUNC_K_V(ilogb)
 _CL_DECLARE_FUNC_V_VJ(ldexp)
 _CL_DECLARE_FUNC_V_VI(ldexp)
 _CL_DECLARE_FUNC_V_V(lgamma)
@@ -1513,13 +1513,13 @@ _CL_DECLARE_FUNC_J_VV(isgreaterequal)
 _CL_DECLARE_FUNC_J_VV(isless)
 _CL_DECLARE_FUNC_J_VV(islessequal)
 _CL_DECLARE_FUNC_J_VV(islessgreater)
-_CL_DECLARE_FUNC_J_VV(isfinite)
-_CL_DECLARE_FUNC_J_VV(isinf)
-_CL_DECLARE_FUNC_J_VV(isnan)
-_CL_DECLARE_FUNC_J_VV(isnormal)
+_CL_DECLARE_FUNC_J_V(isfinite)
+_CL_DECLARE_FUNC_J_V(isinf)
+_CL_DECLARE_FUNC_J_V(isnan)
+_CL_DECLARE_FUNC_J_V(isnormal)
 _CL_DECLARE_FUNC_J_VV(isordered)
 _CL_DECLARE_FUNC_J_VV(isunordered)
-_CL_DECLARE_FUNC_K_V(signbit)
+_CL_DECLARE_FUNC_J_V(signbit)
 _CL_DECLARE_FUNC_I_IG(any)
 _CL_DECLARE_FUNC_I_IG(all)
 _CL_DECLARE_FUNC_G_GGG(bitselect)
