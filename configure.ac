@@ -688,7 +688,8 @@ AC_CONFIG_FILES([lib/kernel/arm/Makefile
                  lib/kernel/cellspu/Makefile
                  lib/kernel/powerpc/Makefile
                  lib/kernel/powerpc64/Makefile
-                 lib/kernel/x86_64/Makefile])
+                 lib/kernel/x86_64/Makefile
+                 lib/kernel/vecmathlib/Makefile])
 
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
