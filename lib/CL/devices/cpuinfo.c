@@ -1,6 +1,7 @@
 /* cpuinfo.h - parsing of /proc/cpuinfo for OpenCL device info
 
    Copyright (c) 2012 Pekka Jääskeläinen
+                 2013 Kalle Raiskila
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +23,70 @@
 */
 
 #include <pocl_cl.h>
+#include <string.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "cpuinfo.h"
 
 const char* cpuinfo = "/proc/cpuinfo";
 #define MAX_CPUINFO_SIZE 64*1024
 //#define DEBUG_POCL_CPUINFO
 
+//Linux' cpufrec interface
+const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
+
+#define PPC_FREQSTRING "clock"
+#define X86_FREQSTRING "cpu MHz"
+
+/** 
+ * Read the CPU maximum frequency from the Linux cpufreq interface.
+ * If cpufreq is not available on current host processor, returns -1.
+ * 
+ * @return CPU maximum frequency in MHz, or -1 if cpufreq is not avaialble.
+ */
+int pocl_cpufreq_get_max()
+{
+  int retval=-1;
+  if (access (cpufreq_file, R_OK) != 0)
+    return -1;
+
+  FILE *f = fopen (cpufreq_file, "r");
+  fscanf(f, "%d", &retval);
+  fclose(f);  
+
+  // Hz to MHz
+  retval /= 1000000; 
+#ifdef DEBUG_POCL_CPUINFO
+  printf("CPU max frequency (from cpufreq): %d\n", retval);
+#endif
+  return retval;
+}
+
 /**
  * Detects the maximum clock frequency of the CPU by parsing the cpuinfo.
  *
- * Assumes all cores have the same max clock freq.
+ * Assumes all cores have the same max clock freq. On some platforms, 
+ * /proc/cpuinfo does not provide max CPU frequecny (ARM pandaboard), 
+ * others give the *current* frequency, not the max (x86_64).
  *
- * @return The clock frequency, or -1 if couldn't figure it out.
+ * @return The clock frequency in MHz, or -1 if couldn't figure it out.
  */
 int
 pocl_cpuinfo_detect_max_clock_frequency() {
+  int cpufreq=-1;
+  char *freqstring;
+  
+  // First try to get the result from cpufreq interface.
+  cpufreq = pocl_cpufreq_get_max();
+  if( cpufreq != -1 )
+    return cpufreq;
+  
+  // /proc/cpuinfo varies depending on the kernel architecture, adapt
+  if (strcmp(HOST_CPU, "powerpc64")==0)
+    freqstring = PPC_FREQSTRING;
+  else 
+    freqstring = X86_FREQSTRING;
 
   if (access (cpuinfo, R_OK) != 0) 
       return -1;
@@ -56,7 +104,7 @@ pocl_cpuinfo_detect_max_clock_frequency() {
          system. In Meego Harmattan on ARM it prints Processor instead of
          processor */
       char* p = contents;
-      if ((p = strstr (p, "cpu MHz")) != NULL &&
+      if ((p = strstr (p, freqstring)) != NULL &&
           (p = strstr (p, ": ")) != NULL)
         {
           if (sscanf (p, ": %f", &freq) == 0)

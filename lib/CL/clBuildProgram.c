@@ -52,11 +52,11 @@ POname(clBuildProgram)(cl_program program,
   int error;
   unsigned char *binary;
   unsigned real_num_devices;
-  cl_device_id *real_device_list;
+  const cl_device_id *real_device_list;
   /* The default build script for .cl files. */
   char *pocl_build_script;
   int device_i = 0;
-  char *user_options = "";
+  const char *user_options = "";
 
   if (program == NULL)
   {
@@ -268,15 +268,21 @@ POname(clBuildProgram)(cl_program program,
 
   return CL_SUCCESS;
 
+  /* Set pointers to NULL during cleanup so that clProgramRelease won't
+   * cause a double free. */
+
 ERROR_CLEAN_BINARIES:
   for(i = 0; i < device_i; i++)
   {
-    free(program->binaries[i]); 
+    free(program->binaries[i]);
+    program->binaries[i] = NULL;
   }
 ERROR_CLEAN_PROGRAM:
   free(program->binaries);
+  program->binaries = NULL;
   free(program->binary_sizes);
+  program->binary_sizes = NULL;
 ERROR:
-    return errcode;
+  return errcode;
 }
 POsym(clBuildProgram)

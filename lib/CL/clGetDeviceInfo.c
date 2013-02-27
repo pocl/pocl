@@ -136,15 +136,15 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->max_mem_alloc_size);
   case CL_DEVICE_IMAGE2D_MAX_WIDTH                 : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->image2d_max_width);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image2d_max_width);
   case CL_DEVICE_IMAGE2D_MAX_HEIGHT                :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->image2d_max_height);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image2d_max_height);
   case CL_DEVICE_IMAGE3D_MAX_WIDTH                 : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->image3d_max_width);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_width);
   case CL_DEVICE_IMAGE3D_MAX_HEIGHT                : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->image3d_max_height);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_height);
   case CL_DEVICE_IMAGE3D_MAX_DEPTH                 :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->image3d_max_depth);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_depth);
   case CL_DEVICE_MAX_PARAMETER_SIZE                : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->max_parameter_size);
   case CL_DEVICE_MAX_SAMPLERS                      : 
@@ -197,7 +197,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PROFILE                           : 
     POCL_RETURN_DEVICE_INFO_STR(device->profile);
   case CL_DEVICE_VERSION                           : 
-    POCL_RETURN_DEVICE_INFO_STR("OpenCL 1.2"); 
+    POCL_RETURN_DEVICE_INFO_STR(device->version); 
   case CL_DEVICE_EXTENSIONS                        : 
     POCL_RETURN_DEVICE_INFO_STR(device->extensions);
   case CL_DEVICE_PLATFORM                          :

@@ -1,6 +1,6 @@
-/* cl.h - fix for the Kronos header
+/* poclu_misc - misc generic OpenCL helper functions
 
-   Copyright (c) 2012 Vincent Danjean <Vincent.Danjean@ens-lyon.org>
+   Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,25 +21,31 @@
    THE SOFTWARE.
 */
 
-// We do not want warnings when defining CL_USE_DEPRECATED_OPENCL_1_1_APIS
-// Note: works with gcc but not g++. See bug http://bugs.debian.org/686178
+#include "poclu.h"
+#include <CL/opencl.h>
+#include "config.h"
 
-#if defined __clang__
+cl_context
+poclu_create_any_context() 
+{
+  int i;
+  cl_platform_id* platforms = (cl_platform_id*)malloc(sizeof(cl_platform_id));
 
-#  pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-W#warnings"
-#    include_next <CL/cl.h>
-#  pragma clang diagnostic pop
+  clGetPlatformIDs(1, platforms, &i);
+  if (i == 0)
+    return (cl_context)0;
 
-#elif defined GCC_VERSION && GCC_VERSION >= 40600
+  cl_context_properties properties[] = 
+    {CL_CONTEXT_PLATFORM, 
+     (cl_context_properties)platforms[0], 
+     0};
 
-#  pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wcpp"
-#    include_next <CL/cl.h>
-#  pragma GCC diagnostic pop
+  // create the OpenCL context on any available OCL device 
+  cl_context context = clCreateContextFromType(
+      properties, 
+      CL_DEVICE_TYPE_ALL,
+      NULL, NULL, NULL); 
 
-#else
-
-#  include_next <CL/cl.h>
-
-#endif
+  free (platforms);
+  return context;
+}

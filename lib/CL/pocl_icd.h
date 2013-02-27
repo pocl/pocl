@@ -20,18 +20,18 @@
 // function table, but the registered function can be then only stubs
 // (perhaps with a warning) or even NULL (in this case, a program using
 // OCL 1.1 function will crash: ICD Loaders does not do any check)
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#  define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 
-#ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#error CL_USE_DEPRECATED_OPENCL_1_1_APIS not in use
-#endif
+#  ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#    error CL_USE_DEPRECATED_OPENCL_1_1_APIS not in use
+#  endif
 
-#pragma GCC visibility push(hidden)
+#  pragma GCC visibility push(hidden)
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
-#pragma GCC visibility pop
+#  pragma GCC visibility pop
 
-#define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
+#  define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
+#  define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
 
 /* Define the ICD dispatch structure that gets filled below. 
  * Prefer to get it from ocl-icd, as that has compile time type checking
@@ -41,7 +41,7 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #include <ocl_icd.h>
 #else
 struct _cl_icd_dispatch {
-	void *funcptr[73];
+	void *funcptr[122];
 };
 #endif
 
@@ -61,7 +61,7 @@ struct _cl_icd_dispatch {
   &POclReleaseContext,          \
   &POclGetContextInfo,          \
   &POclCreateCommandQueue,      \
-  &POclRetainCommandQueue,      \
+  &POclRetainCommandQueue, /* 10 */           \
   &POclReleaseCommandQueue,     \
   &POclGetCommandQueueInfo,     \
   NULL /*clSetCommandQueueProperty*/, \
@@ -71,7 +71,7 @@ struct _cl_icd_dispatch {
   &POclRetainMemObject,         \
   &POclReleaseMemObject,        \
   &POclGetSupportedImageFormats,\
-  &POclGetMemObjectInfo,        \
+  &POclGetMemObjectInfo, /* 20 */             \
   &POclGetImageInfo,            \
   &POclCreateSampler,           \
   &POclRetainSampler,           \
@@ -81,7 +81,7 @@ struct _cl_icd_dispatch {
   &POclCreateProgramWithBinary, \
   &POclRetainProgram,           \
   &POclReleaseProgram,          \
-  &POclBuildProgram,            \
+  &POclBuildProgram, /* 30 */ \
   &POclUnloadCompiler,          \
   &POclGetProgramInfo,          \
   &POclGetProgramBuildInfo,     \
@@ -91,7 +91,7 @@ struct _cl_icd_dispatch {
   &POclReleaseKernel,           \
   &POclSetKernelArg,            \
   &POclGetKernelInfo,           \
-  &POclGetKernelWorkGroupInfo,  \
+  &POclGetKernelWorkGroupInfo, /* 40 */       \
   &POclWaitForEvents,           \
   &POclGetEventInfo,            \
   &POclRetainEvent,             \
@@ -101,7 +101,7 @@ struct _cl_icd_dispatch {
   &POclFinish,                  \
   &POclEnqueueReadBuffer,       \
   &POclEnqueueWriteBuffer,      \
-  &POclEnqueueCopyBuffer,       \
+  &POclEnqueueCopyBuffer, /* 50 */  \
   &POclEnqueueReadImage,        \
   &POclEnqueueWriteImage,       \
   &POclEnqueueCopyImage,        \
@@ -111,7 +111,7 @@ struct _cl_icd_dispatch {
   &POclEnqueueMapImage,         \
   &POclEnqueueUnmapMemObject,   \
   &POclEnqueueNDRangeKernel,    \
-  &POclEnqueueTask,             \
+  &POclEnqueueTask, /* 60 */  \
   &POclEnqueueNativeKernel,     \
   &POclEnqueueMarker,           \
   &POclEnqueueWaitForEvents,    \
@@ -121,7 +121,7 @@ struct _cl_icd_dispatch {
   &POclCreateFromGLTexture2D,   \
   &POclCreateFromGLTexture3D,   \
   NULL, /* &POclCreateFromGLRenderbuffer, */ \
-  NULL, /* &POclGetGLObjectInfo,         */ \
+  NULL, /* &POclGetGLObjectInfo,  70       */ \
   NULL, /* &POclGetGLTextureInfo,        */ \
   NULL, /* &POclEnqueueAcquireGLObjects, */ \
   NULL, /* &POclEnqueueReleaseGLObjects, */ \
@@ -141,13 +141,13 @@ struct _cl_icd_dispatch {
   &POclEnqueueWriteBufferRect,  \
   &POclEnqueueCopyBufferRect,   \
   NULL, /* &POclCreateSubDevicesEXT,     */ \
-  NULL, /* &POclRetainDeviceEXT,         */ \
-  NULL, /* &POclReleaseDeviceEXT,        */ \
+  &POclRetainDevice, /* &POclRetainDeviceEXT,         */ \
+  &POclReleaseDevice, /* &POclReleaseDeviceEXT,        */ \
   NULL, /* &clUnknown92 */      \
   NULL, /* &POclCreateSubDevices,        */ \
-  NULL, /* &POclRetainDevice,            */ \
-  NULL, /* &POclReleaseDevice,           */ \
-  &POclCreateImage,             \
+  &POclRetainDevice,                      \
+  &POclReleaseDevice,                     \
+  &POclCreateImage,                               \
   NULL, /* &POclCreateProgramWithBuiltInKernels, */ \
   NULL, /* &POclCompileProgram,          */ \
   NULL, /* &POclLinkProgram,             */ \

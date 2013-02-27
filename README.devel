@@ -61,9 +61,13 @@ The --enable-tests-with-icd configure option allows to choose how tests are
 linked to pocl when running the 'make check' target. By default, if the ICD is
 built, tests are done through the ICD loader.
 
-IMPORTANT: using the ICD for in tree 'make check' requires the ocl-icd loader.
-Other ICD loaders wont be able to work in tree (they require the ICD config
-file to be installed in the system).
+IMPORTANT: using the ICD for in tree 'make check' requires an icd loader that
+allows overriding the icd search path. Other ICD loaders wont be able to work 
+in tree (they require the ICD config file to be installed in the system).
+There are now two options for such a loder: the open source ocl-icd loader and 
+the Khronos supplied loader with a patch applied.
+
+OCL-ICD
 
 ocl-icd can be downloaded from https://forge.imag.fr/projects/ocl-icd/. It
 allows overriding the path from which the icd files are searched which is
@@ -78,7 +82,35 @@ variable in your shell:
 Inside the 'ocl-vendors' directory there's a single .icd file which is
 generated to point to the pocl library in the build tree.
 
-If you want use the pocl from the build tree, you must also export POCL_BUILDING=1 
+KHRONOS ICD LOADER
+
+The ICD loader supplied by Khronos can be used for pocl development
+by applying a minor patch that enables overriding the ICD search
+path as explained above (OCL-ICD). 
+
+The steps to build and install the Khronos ICD loader so it can
+be used to run the pocl test suite:
+
+1) Download the loader from http://www.khronos.org/opencl/ 
+   Unpack it. Copy the OpenCL headers to inc/CL like instructed
+   in inc/README.txt.
+
+2) Apply a patch from the pocl checkout:
+   cd icd
+   patch -p1 ~/pocl/tools/scripts/khronos-icd-loader.patch
+   
+3) Build it with 'make'.
+
+4) Copy the loader to a library search path:
+   sudo cp bin/libOpenCL* /usr/lib
+
+Now it should use the Khronos loader for ICD dispatching and
+you (and the pocl build system) should be able to override the 
+icd search path with OCL_ICD_VENDORS environment variable.
+
+USING POCL FROM THE BUILD TREE
+
+If you want use the pocl from the build tree, you must export POCL_BUILDING=1 
 so pocl searches for its utility scripts from the build tree first, then the 
 installation location. The "make check" testsuite does this automatically.
 

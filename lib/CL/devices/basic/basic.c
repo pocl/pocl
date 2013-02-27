@@ -24,6 +24,7 @@
 
 #include "basic.h"
 #include "cpuinfo.h"
+#include "topology/pocl_topology.h"
 #include "install-paths.h"
 
 #include <assert.h>

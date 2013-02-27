@@ -25,8 +25,8 @@
 
 lib_LTLIBRARIES = libpoclu.la
 
-libpoclu_la_SOURCES = poclu_bswap.c
+libpoclu_la_SOURCES = poclu_bswap.c poclu_misc.c
 
 libpoclu_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include 
 libpoclu_la_LDFLAGS = -version-info ${LIB_VERSION}
-libpoclu_la_LIBADD = ../CL/libpocl.la
+#libpoclu_la_LIBADD = ../CL/libpocl.la

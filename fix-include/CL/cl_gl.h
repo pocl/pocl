@@ -23,12 +23,21 @@
 
 // We do not want warnings when defining CL_USE_DEPRECATED_OPENCL_1_1_APIS
 // Note: works with gcc but not g++. See bug http://bugs.debian.org/686178
-#if defined(GCC_VERSION) && GCC_VERSION >= 40600
 
-#pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wcpp"
-#  include_next <CL/cl_gl.h>
-#pragma GCC diagnostic pop
+
+#if defined __clang__
+
+#  pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-W#warnings"
+#    include_next <CL/cl_gl.h>
+#  pragma clang diagnostic pop
+
+#elif defined GCC_VERSION && GCC_VERSION >= 40600
+
+#  pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wcpp"
+#    include_next <CL/cl_gl.h>
+#  pragma GCC diagnostic pop
 
 #else
 

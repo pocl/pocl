@@ -4,7 +4,7 @@
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
 
-[changes updated from bzr log until 2013-02-10]
+[changes updated from bzr log until 2013-02-27]
 
 Overall
 -------
@@ -30,16 +30,29 @@ Major bugfixes
 - SPIR/LLVM IR 'byval' attributes are now handled correctly on
   kernel function arguments, allowing for structs and oversized
   vectors to be passed in with value semantics.
+- Fixed to work with the latest Khronos OpenCL headers for 1.2.
+  Some issues fixed with the new cl.hpp.
+- The ICD dispatch table was too small which might have caused
+  "interesting" behavior when calling the later functions in
+  the table and not using ocl-icd as the dispatcher.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------
 - Return correctly formatted CL_DEVICE_VERSION and
   CL_DEVICE_OPENCL_C_VERSION.
+- clGetDeviceInfo: Use the 'cpufreq' sys interface of Linux for 
+  querying the CPU clock frequency, if available.
 
 OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 -------------------------------------------------------------------
 - convert_type* builtins now generated with a Python script by
   Victor Oliveira.
+
+ICD
+---
+- Fixed pocl tests to work when executed through the Khronos 
+  supplied icd loader (needs a patch applied to the loader be able to
+  override the .icd search path).
 
 Misc.
 -----

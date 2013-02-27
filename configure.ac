@@ -225,6 +225,13 @@ if test "$enable_testsuite_amd" = "yes" ; then
   fi
 fi
 
+#All ViennaCL tests use doubles, thus they fail on these platforms
+case $host_cpu in
+  arm* | powerpc* | x86 | i?86 )
+    AC_MSG_WARN([Looks like this host doesn't support doubles. Disabling all ViennaCL tests])
+    enable_testsuite_viennacl=no
+    ;;
+esac
 
 AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
@@ -284,13 +291,17 @@ if test x"$icd" != xno; then :
     [ OCL_ICD_available=yes 
       AC_DEFINE([HAVE_OCL_ICD], [1], [Defined to 1 if ocl-icd is found on system]) ],
     [:])
-  # Check for the ICD loader library. There doesn't seem to be
+  # In case pkg-config could not find ocl-icd above, try the system default.
+  # This test will fail if e.g. ocl-icd is installed to a non-standard location,
+  # so skip it if pkg-config succeeded. There doesn't seem to be
   # a symbol that is available only in the ICD loaders. Thus,
   # this check is passed also in case libOpenCL is the implementation,
   # not the loader.
-  AC_CHECK_LIB([OpenCL], [clGetPlatformIDs], [:], [
-    AC_MSG_ERROR([Could not find an ICD loader. Please install one or add --disable-icd (see README for details).])
-    ])
+  if test x"$OCL_ICD_available" != xyes; then :
+    AC_CHECK_LIB([OpenCL], [clGetPlatformIDs], [:], [
+      AC_MSG_ERROR([Could not find an ICD loader. Please install one or add --disable-icd (see README for details).])
+      ])
+  fi
 fi
 
 AS_CASE(["$icd,$OCL_ICD_available"],
@@ -298,7 +309,7 @@ AS_CASE(["$icd,$OCL_ICD_available"],
   [*,yes], [ icd=yes
     AC_MSG_NOTICE([enabling ICD extension build]) ],
   [check,no], [ icd=no
-    AC_MSG_NOTICE([disabling ICD extension build (ocd-icd not available)]) ],
+    AC_MSG_NOTICE([disabling ICD extension build (ocl-icd not available)]) ],
   [yes,no], [AC_MSG_WARN([enabling ICD, but the testsuite will not work! (ocl-icd not available)])],
   [AC_MSG_ERROR([Invalid value for --enable-icd])]) 
 

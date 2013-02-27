@@ -238,11 +238,11 @@
   {                                                     \
     return __builtin_##NAME(a);                         \
   }                                                     \
-  IMPLEMENT_BUILTIN_J_V(NAME, int2 , double2 , lo, hi)  \
-  IMPLEMENT_BUILTIN_J_V(NAME, int3 , double3 , lo, s2)  \
-  IMPLEMENT_BUILTIN_J_V(NAME, int4 , double4 , lo, hi)  \
-  IMPLEMENT_BUILTIN_J_V(NAME, int8 , double8 , lo, hi)  \
-  IMPLEMENT_BUILTIN_J_V(NAME, int16, double16, lo, hi))
+  IMPLEMENT_BUILTIN_J_V(NAME, long2 , double2 , lo, hi) \
+  IMPLEMENT_BUILTIN_J_V(NAME, long3 , double3 , lo, s2) \
+  IMPLEMENT_BUILTIN_J_V(NAME, long4 , double4 , lo, hi) \
+  IMPLEMENT_BUILTIN_J_V(NAME, long8 , double8 , lo, hi) \
+  IMPLEMENT_BUILTIN_J_V(NAME, long16, double16, lo, hi))
 
 #define IMPLEMENT_BUILTIN_K_V(NAME, JTYPE, VTYPE, LO, HI)       \
   JTYPE __attribute__ ((overloadable))                          \
@@ -267,11 +267,11 @@
   {                                                     \
     return __builtin_##NAME(a);                         \
   }                                                     \
-  IMPLEMENT_BUILTIN_K_V(NAME, long2 , double2 , lo, hi) \
-  IMPLEMENT_BUILTIN_K_V(NAME, long3 , double3 , lo, s2) \
-  IMPLEMENT_BUILTIN_K_V(NAME, long4 , double4 , lo, hi) \
-  IMPLEMENT_BUILTIN_K_V(NAME, long8 , double8 , lo, hi) \
-  IMPLEMENT_BUILTIN_K_V(NAME, long16, double16, lo, hi))
+  IMPLEMENT_BUILTIN_K_V(NAME, int2 , double2 , lo, hi)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int3 , double3 , lo, s2)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int4 , double4 , lo, hi)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int8 , double8 , lo, hi)  \
+  IMPLEMENT_BUILTIN_K_V(NAME, int16, double16, lo, hi))
 
 /******************************************************************************/
 

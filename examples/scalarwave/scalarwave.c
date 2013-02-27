@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #include <CL/opencl.h>
-
+#include "poclu.h"
 
 
 #define GRID_GRANULARITY 2
@@ -38,8 +38,7 @@ exec_scalarwave_kernel(char      const *const program_source,
   if (!initialised) {
     initialised = 1;
     
-    context =
-      clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, NULL, NULL, NULL);
+    context = poclu_create_any_context();
     if (!context) return -1;
     
     size_t ndevices;
@@ -74,15 +73,15 @@ exec_scalarwave_kernel(char      const *const program_source,
   if (!mem_phi) return -1;
   cl_mem const mem_phi_p =
     clCreateBuffer(context, CL_MEM_COPY_HOST_PTR,
-                   npoints*sizeof(*phi_p), phi_p, NULL);
+                   npoints*sizeof(*phi_p), (cl_double*)phi_p, NULL);
   if (!mem_phi_p) return -1;
   cl_mem const mem_phi_p_p =
     clCreateBuffer(context, CL_MEM_COPY_HOST_PTR,
-                   npoints*sizeof(*phi_p_p), phi_p_p, NULL);
+                   npoints*sizeof(*phi_p_p), (cl_double*)phi_p_p, NULL);
   if (!mem_phi_p_p) return -1;
   cl_mem const mem_grid =
     clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                   sizeof(*grid), grid, NULL);
+                   sizeof(*grid), (grid_t*)grid, NULL);
   if (!mem_grid) return -1;
   
   int ierr;

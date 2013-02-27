@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
+#include <poclu.h>
 
 void 
 delete_memobjs(cl_mem *memobjs, int n) 
@@ -24,12 +25,7 @@ exec_dot_product_kernel(const char *program_source,
   size_t       cb; 
   cl_int       err; 
   int          i;
- 
-  // create the OpenCL context on any available OCL device 
-  context = clCreateContextFromType(
-      NULL, 
-      CL_DEVICE_TYPE_ALL,
-      NULL, NULL, NULL); 
+  context = poclu_create_any_context();
   if (context == (cl_context)0) 
     return -1; 
  

@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/opencl.h>
+#include "poclu.h"
 
 #define WIDTH 256
 #define HEIGHT 4096
@@ -81,8 +82,7 @@ main (void)
 	input[i * WIDTH + j] = drand48();
     }
   
-  context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_CPU, 
-				    NULL, NULL, NULL); 
+  context = poclu_create_any_context();
   if (context == (cl_context)0) 
     return -1; 
 

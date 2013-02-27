@@ -9,6 +9,8 @@ m4_define([POAT_AMDSDK_SETUP],[
 AT_BANNER([AMD APP SDK tests])
 
 POAT_AMDSDK_SETUP([aesencryptdecrypt])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_AESEncryptDecrypt -sC $abs_top_builddir/examples/AMD | grep "Encryption Passed"], 0, 
 [Encryption Passed!
 ])
@@ -41,6 +43,8 @@ AT_CHECK_UNQUOTED([make test_BinomialOption -sC $abs_top_builddir/examples/AMD |
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholes])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -50,12 +54,16 @@ POAT_AMDSDK_SETUP([blackscholesdp])
 AT_KEYWORDS([cl_amd_fp64])
 #this causes assert on LLVM 3.1
 AT_SKIP_IF([ grep "#define LLVM_3_1" $abs_top_srcdir/config.h ])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([boxfilter])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BoxFilter -sC $abs_top_builddir/examples/AMD | egrep "Passed|failed"], 0, 
 [Passed!
 Verifying results...Passed!
@@ -218,6 +226,8 @@ AT_CHECK_UNQUOTED([make test_RadixSort -sC $abs_top_builddir/examples/AMD | grep
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([recursivegaussian])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_RecursiveGaussian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -252,6 +262,8 @@ AT_CHECK_UNQUOTED([make test_SimpleImage -sC $abs_top_builddir/examples/AMD | gr
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([sobelfilter])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_SobelFilter -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])     
@@ -278,6 +290,8 @@ AT_CHECK_UNQUOTED([make test_TransferOverlap -sC $abs_top_builddir/examples/AMD 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([urng])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_URNG -sC $abs_top_builddir/examples/AMD | grep Passed | cut -c -7], 0, 
 [Passed! 
 ])     

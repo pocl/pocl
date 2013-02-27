@@ -25,7 +25,7 @@
 noinst_PROGRAMS = example2
 
 example2_SOURCES = example2.c example2.cl
-example2_LDADD = @OPENCL_LIBS@
+example2_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 example2_CFLAGS = @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
