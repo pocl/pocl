@@ -30,6 +30,11 @@ Major bugfixes
 - SPIR/LLVM IR 'byval' attributes are now handled correctly on
   kernel function arguments, allowing for structs and oversized
   vectors to be passed in with value semantics.
+- Fixed to work with the latest Khronos OpenCL headers for 1.2.
+  Some issues fixed with the new cl.hpp.
+- The ICD dispatch table was too small which might have caused
+  "interesting" behavior when calling the later functions in
+  the table and not using ocl-icd as the dispatcher.
 
 OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -------------------------------------------------------

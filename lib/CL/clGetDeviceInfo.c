@@ -197,7 +197,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PROFILE                           : 
     POCL_RETURN_DEVICE_INFO_STR(device->profile);
   case CL_DEVICE_VERSION                           : 
-    POCL_RETURN_DEVICE_INFO_STR("OpenCL 1.2"); 
+    POCL_RETURN_DEVICE_INFO_STR(device->version); 
   case CL_DEVICE_EXTENSIONS                        : 
     POCL_RETURN_DEVICE_INFO_STR(device->extensions);
   case CL_DEVICE_PLATFORM                          :

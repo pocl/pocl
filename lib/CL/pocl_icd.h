@@ -41,7 +41,7 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #include <ocl_icd.h>
 #else
 struct _cl_icd_dispatch {
-	void *funcptr[73];
+	void *funcptr[122];
 };
 #endif
 
@@ -61,7 +61,7 @@ struct _cl_icd_dispatch {
   &POclReleaseContext,          \
   &POclGetContextInfo,          \
   &POclCreateCommandQueue,      \
-  &POclRetainCommandQueue,      \
+  &POclRetainCommandQueue, /* 10 */           \
   &POclReleaseCommandQueue,     \
   &POclGetCommandQueueInfo,     \
   NULL /*clSetCommandQueueProperty*/, \
@@ -71,7 +71,7 @@ struct _cl_icd_dispatch {
   &POclRetainMemObject,         \
   &POclReleaseMemObject,        \
   &POclGetSupportedImageFormats,\
-  &POclGetMemObjectInfo,        \
+  &POclGetMemObjectInfo, /* 20 */             \
   &POclGetImageInfo,            \
   &POclCreateSampler,           \
   &POclRetainSampler,           \
@@ -81,7 +81,7 @@ struct _cl_icd_dispatch {
   &POclCreateProgramWithBinary, \
   &POclRetainProgram,           \
   &POclReleaseProgram,          \
-  &POclBuildProgram,            \
+  &POclBuildProgram, /* 30 */ \
   &POclUnloadCompiler,          \
   &POclGetProgramInfo,          \
   &POclGetProgramBuildInfo,     \
@@ -91,7 +91,7 @@ struct _cl_icd_dispatch {
   &POclReleaseKernel,           \
   &POclSetKernelArg,            \
   &POclGetKernelInfo,           \
-  &POclGetKernelWorkGroupInfo,  \
+  &POclGetKernelWorkGroupInfo, /* 40 */       \
   &POclWaitForEvents,           \
   &POclGetEventInfo,            \
   &POclRetainEvent,             \
@@ -101,7 +101,7 @@ struct _cl_icd_dispatch {
   &POclFinish,                  \
   &POclEnqueueReadBuffer,       \
   &POclEnqueueWriteBuffer,      \
-  &POclEnqueueCopyBuffer,       \
+  &POclEnqueueCopyBuffer, /* 50 */  \
   &POclEnqueueReadImage,        \
   &POclEnqueueWriteImage,       \
   &POclEnqueueCopyImage,        \
@@ -111,7 +111,7 @@ struct _cl_icd_dispatch {
   &POclEnqueueMapImage,         \
   &POclEnqueueUnmapMemObject,   \
   &POclEnqueueNDRangeKernel,    \
-  &POclEnqueueTask,             \
+  &POclEnqueueTask, /* 60 */  \
   &POclEnqueueNativeKernel,     \
   &POclEnqueueMarker,           \
   &POclEnqueueWaitForEvents,    \
@@ -121,7 +121,7 @@ struct _cl_icd_dispatch {
   &POclCreateFromGLTexture2D,   \
   &POclCreateFromGLTexture3D,   \
   NULL, /* &POclCreateFromGLRenderbuffer, */ \
-  NULL, /* &POclGetGLObjectInfo,         */ \
+  NULL, /* &POclGetGLObjectInfo,  70       */ \
   NULL, /* &POclGetGLTextureInfo,        */ \
   NULL, /* &POclEnqueueAcquireGLObjects, */ \
   NULL, /* &POclEnqueueReleaseGLObjects, */ \
@@ -141,13 +141,13 @@ struct _cl_icd_dispatch {
   &POclEnqueueWriteBufferRect,  \
   &POclEnqueueCopyBufferRect,   \
   NULL, /* &POclCreateSubDevicesEXT,     */ \
-  NULL, /* &POclRetainDeviceEXT,         */ \
-  NULL, /* &POclReleaseDeviceEXT,        */ \
+  &POclRetainDevice, /* &POclRetainDeviceEXT,         */ \
+  &POclReleaseDevice, /* &POclReleaseDeviceEXT,        */ \
   NULL, /* &clUnknown92 */      \
   NULL, /* &POclCreateSubDevices,        */ \
-  NULL, /* &POclRetainDevice,            */ \
-  NULL, /* &POclReleaseDevice,           */ \
-  &POclCreateImage,             \
+  &POclRetainDevice,                      \
+  &POclReleaseDevice,                     \
+  &POclCreateImage,                               \
   NULL, /* &POclCreateProgramWithBuiltInKernels, */ \
   NULL, /* &POclCompileProgram,          */ \
   NULL, /* &POclLinkProgram,             */ \

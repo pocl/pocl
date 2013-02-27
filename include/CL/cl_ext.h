@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2010 The Khronos Group Inc.
+ * Copyright (c) 2008 - 2012 The Khronos Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and/or associated documentation files (the
@@ -39,9 +39,6 @@ extern "C" {
 #else
 	#include <CL/cl.h>
 #endif
-
-/* cl_khr_fp64 extension - no extension #define since it has no functions  */
-#define CL_DEVICE_DOUBLE_FP_CONFIG                  0x1032
 
 /* cl_khr_fp16 extension - no extension #define since it has no functions  */
 #define CL_DEVICE_HALF_FP_CONFIG                    0x1033
@@ -118,6 +115,48 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clIcdGetPlatformIDsKHR_fn)(
     cl_uint *        /* num_platforms */);
 
 
+/* Extension: cl_khr_image2D_buffer
+ *
+ * This extension allows a 2D image to be created from a cl_mem buffer without a copy.
+ * The type associated with a 2D image created from a buffer in an OpenCL program is image2d_t.
+ * Both the sampler and sampler-less read_image built-in functions are supported for 2D images
+ * and 2D images created from a buffer.  Similarly, the write_image built-ins are also supported
+ * for 2D images created from a buffer.
+ *
+ * When the 2D image from buffer is created, the client must specify the width,
+ * height, image format (i.e. channel order and channel data type) and optionally the row pitch
+ *
+ * The pitch specified must be a multiple of CL_DEVICE_IMAGE_PITCH_ALIGNMENT pixels.
+ * The base address of the buffer must be aligned to CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT pixels.
+ */
+    
+/*************************************
+ * cl_khr_initalize_memory extension *
+ *************************************/
+    
+#define CL_CONTEXT_MEMORY_INITIALIZE_KHR            0x200E
+    
+    
+/**************************************
+ * cl_khr_terminate_context extension *
+ **************************************/
+    
+#define CL_DEVICE_TERMINATE_CAPABILITY_KHR          0x200F
+#define CL_CONTEXT_TERMINATE_KHR                    0x2010
+
+#define cl_khr_terminate_context 1
+extern CL_API_ENTRY cl_int CL_API_CALL clTerminateContextKHR(cl_context /* context */) CL_EXT_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clTerminateContextKHR_fn)(cl_context /* context */) CL_EXT_SUFFIX__VERSION_1_2;
+    
+    
+/*
+ * Extension: cl_khr_spir
+ *
+ * This extension adds support to create an OpenCL program object from a 
+ * Standard Portable Intermediate Representation (SPIR) instance
+ */
+
 /******************************************
 * cl_nv_device_attribute_query extension *
 ******************************************/
@@ -135,7 +174,6 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clIcdGetPlatformIDsKHR_fn)(
 * cl_amd_device_attribute_query *
 *********************************/
 #define CL_DEVICE_PROFILING_TIMER_OFFSET_AMD        0x4036
-
 
 #ifdef CL_VERSION_1_1
    /***********************************
