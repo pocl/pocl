@@ -212,8 +212,6 @@
 #if defined(linux) || defined(__APPLE__) || defined(__MACOSX)
 #include <alloca.h>
 
-#include <emmintrin.h>
-#include <xmmintrin.h>
 #endif // linux
 
 #include <cstring>
