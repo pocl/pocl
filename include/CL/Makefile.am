@@ -22,6 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+#force the patching of cl.hpp.in - 
+BUILT_SOURCES = cl.hpp
+#note - this gets run on ever build, so don't fail if patch detects a
+#previously applied patch  
+cl.hpp: cl.hpp.in
+	patch -sNp2 cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch -o cl.hpp
+
 if INSTALL_OPENCL_HEADERS
 library_includedir = $(includedir)/CL
 library_include_HEADERS = cl.h cl_ext.h			\

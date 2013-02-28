@@ -1,0 +1,20 @@
+--- include/CL/cl.hpp.in	2013-02-28 15:32:09.000000000 +0200
++++ include/CL/cl.hpp	2013-02-28 15:32:41.000000000 +0200
+@@ -212,8 +212,6 @@
+ #if defined(linux) || defined(__APPLE__) || defined(__MACOSX)
+ #include <alloca.h>
+ 
+-#include <emmintrin.h>
+-#include <xmmintrin.h>
+ #endif // linux
+ 
+ #include <cstring>
+@@ -1035,7 +1033,7 @@
+ #endif // !_WIN32
+     }
+ 
+-    inline void fence() { _mm_mfence(); }
++    inline void fence() { __sync_synchronize(); }
+ }; // namespace detail
+ 
+     
