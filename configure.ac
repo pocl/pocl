@@ -223,6 +223,10 @@ if test "$enable_testsuite_amd" = "yes" ; then
     AC_MSG_WARN([disabling AMD APP SDK testsuite as the 2.8 lnx64 package not in '$srcdir/examples/AMD'.])
     enable_testsuite_amd=no
   fi
+  PKG_CHECK_MODULES([SDL], [sdl >= 1.2], [:], 
+    [ AC_MSG_WARN([pkg-config could not find libSDL, AMD APP SDK testsuite is not used ]) 
+      enable_testsuite_amd=no
+    ])
 fi
 
 #All ViennaCL tests use doubles, thus they fail on these platforms
