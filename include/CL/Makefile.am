@@ -26,8 +26,8 @@
 BUILT_SOURCES = cl.hpp
 #note - this gets run on ever build, so don't fail if patch detects a
 #previously applied patch  
-cl.hpp: cl.hpp.in
-	patch -sNp2 cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch -o cl.hpp
+cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in
+	patch -sNp2 $< $(top_srcdir)/tools/patches/khronos_cl.hpp.patch -o cl.hpp || true
 
 if INSTALL_OPENCL_HEADERS
 library_includedir = $(includedir)/CL
