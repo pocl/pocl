@@ -84,6 +84,11 @@ public:
     pthread_mutex_init (&lock, NULL);
     pthread_cond_init (&simulation_start_cond, NULL);
     pthread_create (&ttasim_thread, NULL, pocl_ttasim_thread, this);
+
+    //fill in the pocl device descriptor table
+    //TODO: check if this is correct - spec says this is the minimum allowable
+    dev->max_mem_alloc_size=(global_as->end()-global_as->start())/4;
+
   }
 
   ~TTASimDevice() {

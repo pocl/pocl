@@ -264,7 +264,7 @@ pocl_tce_run
       std::string deviceMainSrc = "";
       if (getenv("POCL_BUILDING") != NULL)
         {
-          deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
+          deviceMainSrc = SRCDIR "/lib/CL/devices/tce/tta_device_main.c";
           poclIncludePathSwitch = " -I " SRCDIR "/include";
         }
       else 
