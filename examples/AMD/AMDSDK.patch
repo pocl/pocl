@@ -1,5 +1,5 @@
 diff --git a/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk b/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk
-index bab044a..daf9c20 100755
+index bab044a..f17f393 100755
 --- a/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk
 +++ b/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkdefs.mk
 @@ -31,7 +31,7 @@ else
@@ -51,7 +51,7 @@ index bab044a..daf9c20 100755
    LDFLAGS           += -L/usr/X11R6/lib 
  else
 -  LDFLAGS           += -lpthread -ldl -L/usr/X11R6/lib 
-+  LDFLAGS           += -lpthread -ldl -L/usr/X11R6/lib -lSDL $(shell pkg-config --silence-errors --libs-only-L ocl-icd sdl)
++  LDFLAGS           += -lpthread -ldl -L/usr/X11R6/lib $(shell pkg-config --silence-errors --libs-only-L ocl-icd sdl)
  endif
    LD_LIBDIR_FLAG    := -L
    LD_SHARED_FLAG    := -shared   
@@ -74,6 +74,19 @@ index bab044a..daf9c20 100755
 +LIBDIRS = $(DEPTH)/TempSDKUtil/lib/$(CPU_ARCH) 
  CL_SUFFIX	   	   := .cl
  CLC				   := clc
+ 
+diff --git a/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkrules.mk b/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkrules.mk
+index 606d035..a5c6152 100755
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkrules.mk
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/make/openclsdkrules.mk
+@@ -132,7 +132,7 @@ endif
+ endif
+ 
+ 
+-LDFLAGS += $(ADDSDKLIBS) 
++LDFLAGS += $(ADDSDKLIBS) -lSDL
+ LDFLAGS += $(ADDSDKLIBDIRS) 
+ CFLAGS += $(ADDSDKINCDIRS) 
  
 diff --git a/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/SDKUtil/SDKApplication.cpp b/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/SDKUtil/SDKApplication.cpp
 index 1d37f9d..8d18be9 100755

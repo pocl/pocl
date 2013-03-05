@@ -42,7 +42,6 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholes])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
