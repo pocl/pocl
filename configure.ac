@@ -899,7 +899,9 @@ else
    echo "Not installing pocl.icd to /etc/OpenCL/vendors. This means that"
    echo "your ICD loader probably will not find pocl. See README for details."
   else
-   echo "'make check' will fail if it is run before 'make install'" 
+   echo "'make check' might fail if it is run before 'make install' unless" 
+   echo "your ICD loader supports the OCL_ICD_VENDORS environment variable"
+   echo "please consult README.devel for details."
   fi
  else
   echo "Using ocl-icd to run checks inside build tree."
