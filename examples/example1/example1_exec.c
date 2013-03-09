@@ -12,7 +12,7 @@ delete_memobjs(cl_mem *memobjs, int n)
  
 int 
 exec_dot_product_kernel(const char *program_source, 
-                        int n, cl_float4 *srcA, cl_float4 *srcB, cl_float4 *dst) 
+                        int n, cl_float4 *srcA, cl_float4 *srcB, cl_float *dst) 
 { 
   cl_context  context; 
   cl_command_queue cmd_queue; 
@@ -167,7 +167,7 @@ exec_dot_product_kernel(const char *program_source,
     } 
   for (i = 0; i < n; ++i)
     {
-      poclu_bswap_cl_float_array(devices[0], (cl_float*)&dst[i], 4);
+      poclu_bswap_cl_float_array(devices[0], (cl_float*)&dst[i], 1);
       poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcA[i], 4);
       poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcB[i], 4);
     }
