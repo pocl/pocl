@@ -216,7 +216,7 @@ class AMDBenchmarkCase(BenchmarkCase):
         # In a real application, the kernel compilation overheads can be excluded 
         # (to some extent, at least) by using the binary API of OpenCL, so it 
         # should be realistc to exclude it.
-        cmd = self.name + "/build/debug/x86_64/" + self.command + " -i 10"
+        cmd = self.name + "/build/debug/x86_64/" + self.command + " -i 1"
         timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
         if timeout or rc != 0:
             sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
@@ -255,23 +255,26 @@ pocl_ocl_dir = POCL_SRC_ROOT_PATH + "/ocl-vendors"
 amd_benchmarks = \
     [AMDBenchmarkCase("AESEncryptDecrypt", "AESEncryptDecrypt -t -q"),
      AMDBenchmarkCase("BitonicSort", "BitonicSort -q -t -x 1048576"),
-     AMDBenchmarkCase("BinarySearch", "BinarySearch -q -t -x 5242880000"),
+     AMDBenchmarkCase("BinarySearch", "BinarySearch -q -t -x 67108864"),
      AMDBenchmarkCase("BinomialOption", "BinomialOption -q -t -x 10000"),
-     AMDBenchmarkCase("BlackScholes", "BlackScholes -q -t -x 16777216"),
+     AMDBenchmarkCase("BlackScholes", "BlackScholes -q -t -x 6777216"),
      AMDBenchmarkCase("DCT", "DCT -q -t -x 4000 -y 4000"),
-     AMDBenchmarkCase("FastWalshTransform", "FastWalshTransform -q -t -x 134217728"),
+     AMDBenchmarkCase("FastWalshTransform", "FastWalshTransform -q -t -x 4217728"),
      AMDBenchmarkCase("FloydWarshall", "FloydWarshall -q -t -x 512"),
-     AMDBenchmarkCase("Histogram", "Histogram -t -x 15000 -y 15000 -q"),
+     AMDBenchmarkCase("Histogram", "Histogram -t -x 1500 -y 1500 -q"),
      AMDBenchmarkCase("Mandelbrot", "Mandelbrot -t -x 8192 -y 8192 -q"),
-     AMDBenchmarkCase("MatrixTranspose", "MatrixTranspose -t -x 12288 -y 12288 -q"),
-     AMDBenchmarkCase("MatrixMultiplication", "MatrixMultiplication -q -t -x 1024 -y 1024 -z 2048"),
+     AMDBenchmarkCase("MatrixTranspose", "MatrixTranspose -t -x 4096 -y 4096 -q"),
+     #This gives garbage execution times for some reason
+     #AMDBenchmarkCase("MatrixMultiplication", "MatrixMultiplication -q -t -x 1024 -y 1024 -z 2048"),
      AMDBenchmarkCase("NBody", "NBody -t -x 19968 -q"),
-     AMDBenchmarkCase("QuasiRandomSequence", "QuasiRandomSequence -q -t -y 10200 -x 10000"),
-     AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
-     AMDBenchmarkCase("Reduction", "Reduction -q -t -x 400000000"),
+     AMDBenchmarkCase("QuasiRandomSequence", "QuasiRandomSequence -q -t -y 1000 -x 1000"),
+     #This is marked as XFAIL, but seems to work randomly when run here
+     #AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
+     AMDBenchmarkCase("Reduction", "Reduction -q -t -x 40000000"),
      AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 512000")]
 
-benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
+#benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
+benchmarks = amd_benchmarks 
     
 def print_environment_info():
     timeout, llvm_version, stderr, rc = run_cmd("llvm-config --version")
