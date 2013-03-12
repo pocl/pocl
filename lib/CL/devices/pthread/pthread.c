@@ -509,7 +509,7 @@ pocl_pthread_run
       
       error = system (command);
       assert (error == 0);
-           
+          
       // For the pthread device, use device type is always the same as the host. 
       error = snprintf (command, COMMAND_LENGTH,
 			CLANG " -target %s %s -c -o %s.o %s",
@@ -522,8 +522,9 @@ pocl_pthread_run
       error = system (command);
       assert (error == 0);
 
+
       error = snprintf (command, COMMAND_LENGTH,
-                       "ld " HOST_LD_FLAGS " -o %s %s.o",
+                       LINK_CMD " " HOST_LD_FLAGS " -o %s %s.o",
                        module,
                        module);
       assert (error >= 0);

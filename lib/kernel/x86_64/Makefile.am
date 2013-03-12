@@ -29,8 +29,10 @@ targetpkglibdir = $(pkglibdir)/x86_64
 targetpkglib_DATA = kernel-@TARGET@.bc
 
 if USE_VECMATHLIB
+SECONDARY_VPATH = ../vecmathlib/pocl
 include ../sources-vecmathlib.mk
 else
+SECONDARY_VPATH = .
 include ../sources.mk
 endif
 

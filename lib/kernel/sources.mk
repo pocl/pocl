@@ -26,10 +26,11 @@ CLANGFLAGS = -emit-llvm
 #Search the .cl,.c and .ll sources first from this (target specific) directory, then
 #the one-up (generic) directory. This allows to override the generic implementation 
 #simply by adding a similarly named file in the target specific directory
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+vpath %.cl @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
+vpath %.c @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
+vpath %.ll @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
 vpath %.h @top_srcdir@/include:@srcdir@:@srcdir@/..
+vpath %.cc @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
 
 LKERNEL_HDRS=templates.h image.h
 # Nodist here because these files should be included
@@ -172,7 +173,8 @@ LKERNEL_SRCS= \
 	read_image.cl				\
 	write_image.cl				\
 	get_image_width.cl			\
-	get_image_height.cl     
+	get_image_height.cl     \
+	${LKERNEL_EXTRA_SRCS}
 
 OBJ_L=$(LKERNEL_SRCS:.cl=.bc)
 OBJ_C=$(OBJ_L:.ll=.bc)

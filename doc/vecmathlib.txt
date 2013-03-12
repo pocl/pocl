@@ -10,8 +10,11 @@ Then pocl configure script should now detect that you want to compile
 vecmathlib, and the x86_64 kernel is tried to be built using vecmathlib's
 versions for the math built-ins.
 
-Currently it doesn't compile for me (Pekka) because of some C++ header
-issues. It's a work in progress.
+Known issues
+------------
+
+* clang++ does not work with libstdc++ shipped with Debian 6.0 in 
+-std=gnu++11 mode that is required by vecmathlib.
 
 
 

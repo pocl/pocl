@@ -530,6 +530,7 @@ AC_COMPILE_IFELSE(
    if test -r $srcdir/lib/kernel/vecmathlib/pocl/pow.cc; then
       use_vecmathlib=yes
    fi
+   AC_DEFINE_UNQUOTED([CLANGPP], ["$CLANGPP"], [clang++ executable.])
   ],
   [AC_MSG_RESULT(no)
    CLANGPP=""])

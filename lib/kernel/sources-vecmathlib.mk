@@ -23,13 +23,7 @@
 # This file should be included from the Makefile.am of the target kernel
 # library in case vecmathlib versions of the builtins are wanted.
 
-include ../sources.mk
-
-vpath %.cl @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
-vpath %.cc @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
-
-LKERNEL_SRCS += acos.cc \
+LKERNEL_EXTRA_SRCS = acos.cc \
 	acosh.cc 	\
 	asin.cc	 	\
 	asinh.cc	\
@@ -74,3 +68,4 @@ LKERNEL_SRCS += acos.cc \
 	tanh.cc		\
 	trunc.cc
 
+include ../sources.mk
