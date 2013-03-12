@@ -493,7 +493,44 @@ AC_DEFUN([LLVM_PROG], [
   ])
 ])
 
+AC_DEFUN([LLVM_PROG_WARN], [
+  AC_ARG_VAR([$1], [$3])
+  AC_PATH_PROGS([$1], [$2 $2-$LLVM_VERSION], , [$LLVM_BINDIR:$PATH])
+  AS_IF([test -z "$$1"], [
+    AC_MSG_WARN([cannot find LLVM binary '$2' in '$LLVM_BINDIR' nor \$PATH])
+  ])
+])
+
 LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
+
+# Check for a functioning clang++. It is needed to compile faster math 
+# builtins from vecmathlib.
+LLVM_PROG_WARN([CLANGPP], [clang++])
+
+if test ! -z "$CLANGPP"; then
+
+# Test that clang++ can compile a simple C++ program.
+
+AC_LANG([C++])
+
+old_CXX=$CXX
+CXX=$CLANGPP
+
+AC_MSG_CHECKING([that clang++ works])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <iostream> ]],
+    [[ std::cout << "Hello clang++ world!" << std::endl ]]
+  )],
+  [AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)
+   CLANGPP=""])
+
+CXX=$old_CXX
+
+fi
+
+AM_CONDITIONAL([CLANGPP_AVAILABLE], test ! -z $CLANGPP)
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
@@ -506,6 +543,8 @@ LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
 LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
 LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
 LLVM_PROG([LLVM_LINK], [llvm-link], [LLVM IR linker])
+
+
 # $CLANG and $LLC are needed by config/xclang
 export CLANG
 export LLC
@@ -675,7 +714,6 @@ OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
-
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
