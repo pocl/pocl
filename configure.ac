@@ -515,6 +515,8 @@ AC_LANG([C++])
 
 old_CXX=$CXX
 CXX=$CLANGPP
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="-std=gnu++11"
 
 AC_MSG_CHECKING([that clang++ works])
 AC_COMPILE_IFELSE(
@@ -522,17 +524,18 @@ AC_COMPILE_IFELSE(
     [[ #include <iostream> ]],
     [[ std::cout << "Hello clang++ world!" << std::endl ]]
   )],
-  [AC_MSG_RESULT(yes)],
-  [AC_MSG_RESULT(no)
-   CLANGPP=""])
-
-   CXX=$old_CXX
-
+  [AC_MSG_RESULT(yes)
    # The vecmathlib repo should be checked out under lib/kernel
    # and the pocl directory should have the generated files in place.
    if test -r $srcdir/lib/kernel/vecmathlib/pocl/pow.cc; then
       use_vecmathlib=yes
    fi
+  ],
+  [AC_MSG_RESULT(no)
+   CLANGPP=""])
+
+   CXX=$old_CXX
+   CXXFLAGS=$old_CXXFLAGS
 
 fi
 
