@@ -526,11 +526,18 @@ AC_COMPILE_IFELSE(
   [AC_MSG_RESULT(no)
    CLANGPP=""])
 
-CXX=$old_CXX
+   CXX=$old_CXX
+
+   # The vecmathlib repo should be checked out under lib/kernel
+   # and the pocl directory should have the generated files in place.
+   if test -r $srcdir/lib/kernel/vecmathlib/pocl/pow.cc; then
+      use_vecmathlib=yes
+   fi
 
 fi
 
 AM_CONDITIONAL([CLANGPP_AVAILABLE], test ! -z $CLANGPP)
+AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
@@ -954,6 +961,11 @@ else
  echo "Linking directly with libpocl will not work."
 fi
 echo
+
+if test x"$use_vecmathlib" == xyes;
+then
+ echo "Using vecmathlib math builtins."
+fi
 
 echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES

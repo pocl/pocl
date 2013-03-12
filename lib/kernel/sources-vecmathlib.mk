@@ -1,8 +1,6 @@
-# Process this file with automake to produce Makefile.in (in this,
-# and all subdirectories).
-# Makefile.am for pocl/lib/kernel/x86_64.
+# sources.mk - Makefile definitions for the including the vecmathlib implementations
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,19 +19,58 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+#
+# This file should be included from the Makefile.am of the target kernel
+# library in case vecmathlib versions of the builtins are wanted.
 
-KERNEL_TARGET=@TARGET@
-TARGET_DIR=x86_64
-
-targetpkglibdir = $(pkglibdir)/x86_64
-targetpkglib_DATA = kernel-@TARGET@.bc
-
-if USE_VECMATHLIB
-include ../sources-vecmathlib.mk
-else
 include ../sources.mk
-endif
 
+vpath %.cl @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
+vpath %.c @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
+vpath %.cc @srcdir@:@srcdir@/../vecmathlib/pocl:@srcdir@/..
 
-all: kernel-@TARGET@.bc
+LKERNEL_SRCS += acos.cc \
+	acosh.cc 	\
+	asin.cc	 	\
+	asinh.cc	\
+	atan.cc		\
+	atanh.cc	\
+	cbrt.cc		\
+	ceil.cc		\
+	copysign.cc	\
+	cos.cc		\
+	cosh.cc		\
+	exp10.cc	\
+	exp2.cc		\
+	exp.cc		\
+	expm1.cc	\
+	fabs.cc		\
+	fdim.cc		\
+	floor.cc	\
+	fma.cc		\
+	fmax.cc		\
+	fmin.cc		\
+	fmod.cc		\
+	hypot.cc	\
+	ilogb_.cc	\
+	isfinite.cc	\
+	isinf.cc	\
+	isnan.cc	\
+	isnormal.cc	\
+	ldexp_.cc	\
+	log10.cc	\
+	log1p.cc	\
+	log2.cc		\
+	log.cc		\
+	pow.cc		\
+	remainder.cc	\
+	round.cc	\
+	rsqrt.cc	\
+	signbit.cc	\
+	sin.cc		\
+	sinh.cc		\
+	sqrt.cc		\
+	tan.cc		\
+	tanh.cc		\
+	trunc.cc
 

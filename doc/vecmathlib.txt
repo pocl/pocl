@@ -1,0 +1,16 @@
+Vecmathlib implementations for the built-in math lib can be compiled in 
+as follows:
+
+a) ensure you have clang++ installed and functions
+b) check out the vecmathlib project under 'kernel'
+c) generate the pocl files using ./generate-files.py under
+   vecmathlib/pocl
+
+Then pocl configure script should detect that you want to compile
+vecmathlib and tries to compile its versions as a replacement for the math
+builtins.
+
+Currently it doesn't compile for me (Pekka) because some C++ header
+issues. It's a work in progress.
+
+

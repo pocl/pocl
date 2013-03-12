@@ -1,8 +1,31 @@
+# sources.mk - a template for the target overridden kernel library makefiles
+# 
+# Copyright (c) 2011-2013 Universidad Rey Juan Carlos
+#                         Pekka Jääskeläinen / Tampere University of Technology
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 CLANGFLAGS = -emit-llvm
 
 #Search the .cl,.c and .ll sources first from this (target specific) directory, then
 #the one-up (generic) directory. This allows to override the generic implementation 
-#simply by adding a similarlily named file in the target specific directory
+#simply by adding a similarly named file in the target specific directory
 vpath %.cl @srcdir@:@srcdir@/..
 vpath %.c @srcdir@:@srcdir@/..
 vpath %.ll @srcdir@:@srcdir@/..
@@ -153,7 +176,8 @@ LKERNEL_SRCS= \
 
 OBJ_L=$(LKERNEL_SRCS:.cl=.bc)
 OBJ_C=$(OBJ_L:.ll=.bc)
-OBJ=$(OBJ_C:.c=.bc)
+OBJ_CC=$(OBJ_C:.cc=.cc.bc)
+OBJ=$(OBJ_CC:.c=.bc)
 
 OBJ:LKERNEL_SRCS
 
@@ -166,11 +190,14 @@ OBJ:LKERNEL_SRCS
 	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h \
 		-include ${abs_top_srcdir}/include/_kernel.h
 
+# -isystem /usr/include/c++/4.4 -isystem /usr/include/c++/4.4/x86_64-linux-gnu -std=c++0x
+%.cc.bc: %.cc 
+	@CLANGPP@ -std=gnu++11 -emit-llvm -c -target ${KERNEL_TARGET} -o $@ $< 
+
 CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 
 kernel-${KERNEL_TARGET}.bc: ${OBJ}
 	llvm-link -o $@ $^
-
 
 # We need an explicitly rule to overwrite automake guess about LEX file :-(
 barrier.bc: barrier.ll
