@@ -1,4 +1,4 @@
-# Testsuite for Portable OpenCL.
+# Testsuite for pocl.
 #
 # Makefile.am for pocl/lib/kernel.
 # 

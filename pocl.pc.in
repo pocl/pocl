@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: Portable OpenCL
-Description: Portable OpenCL
+Name: Portable Computing Language
+Description: Portable Computing Language
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lpocl @LD_FLAGS_BIN@
 Cflags: -I${includedir} @PTHREAD_CFLAGS@
