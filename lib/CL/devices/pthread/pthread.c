@@ -522,9 +522,10 @@ pocl_pthread_run
       error = system (command);
       assert (error == 0);
 
-
+      // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-                       LINK_CMD " " HOST_LD_FLAGS " -o %s %s.o",
+                       LINK_CMD " -target "OCL_KERNEL_TARGET 
+                       " " HOST_LD_FLAGS " -o %s %s.o",
                        module,
                        module);
       assert (error >= 0);
