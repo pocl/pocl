@@ -12,6 +12,7 @@ Overall
 - Removed the depedency on llvm-ld (which was copied to
   pocl-llvm-ld to pocl tree). Now uses llvm-link instead.
 - Project renamed to Portable Computing Language (pocl).
+- Luxmark v2.0 now works.
 
 Major bugfixes
 --------------

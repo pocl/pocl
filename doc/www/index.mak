@@ -34,7 +34,7 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
 
 <p>Patch contributions welcomed, of course!</p>
 
-<p>The following OpenCL applications are tested regularly in the pocl test suite:</p>
+<p>The following OpenCL applications are known to work with pocl:</p>
 
 <ul>
   <li><a href="http://viennacl.sourceforge.net/">ViennaCL</a> 1.3.1 examples</li>
@@ -42,6 +42,7 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li><a href="http://impact.crhc.illinois.edu/parboil.aspx">Parboil</a> Benchmarks (most of them)</a>
   <li><a href="https://code.google.com/p/opencl-book-samples/">OpenCL Programming Guide</a> book samples (most of them)</a>
   <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.8</a> OpenCL samples (most of them)</a>
+  <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
 
 </ul>
 

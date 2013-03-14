@@ -1,7 +1,7 @@
 /* basic.c - a minimalistic pocl device driver layer implementation
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
+                           Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -153,7 +153,7 @@ pocl_basic_run
      "%s/parallel.so", tmpdir);
   assert (error >= 0);
 
-  if ( access (module, F_OK) != 0)
+  if (access (module, F_OK) != 0)
     {
       char *llvm_ld;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
@@ -223,7 +223,12 @@ pocl_basic_run
             "_%s_workgroup", kernel->function_name);
   
   w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
-  assert (w != NULL);
+  if (w == NULL)
+    {
+      printf("pocl error: could not load the work-group function '%s' in module '%s'.\n",
+	     workgroup_string, module);
+      abort();
+    }
 
   void *arguments[kernel->num_args + kernel->num_locals];
 

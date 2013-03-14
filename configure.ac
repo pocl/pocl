@@ -80,13 +80,7 @@ LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
-AM_CONDITIONAL([LLVM_3_1], test "$LLVM_VERSION" == "3.1")
-
-
 case "$LLVM_VERSION" in
-     3.1)
-     AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
-   ;;
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
    ;;
@@ -97,7 +91,7 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM 3.1 or 3.2.
+Unsupported LLVM version. Please use LLVM 3.2 or later.
    ])
    LLVM_VERSION=
    ;;

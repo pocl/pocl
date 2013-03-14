@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_S_VV(length, sqrt(dot(a, a)))
+DEFINE_EXPR_S_V(length, sqrt(dot(a, a)))

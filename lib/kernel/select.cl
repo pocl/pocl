@@ -33,89 +33,179 @@
    instruction. It might be worth investigating fixing this.
 */
 
-#define IMPLEMENT_SELECT_SCALAR(GTYPE) \
-  GTYPE __attribute__ ((overloadable)) \
-  select(GTYPE a, GTYPE b, GTYPE c)    \
-  {                                    \
-     return c ? b : a;                 \
+/* We implement the scalar and the vector version separately, because
+   the scalar version selects on the condition being non-zero, while
+   the vector version selects on the condition's MSB (i.e. sign
+   bit). */
+
+#define IMPLEMENT_SELECT_SCALAR(GTYPE, UIGTYPE) \
+  GTYPE __attribute__ ((overloadable))          \
+  select(GTYPE a, GTYPE b, UIGTYPE c)           \
+  {                                             \
+    return c ? b : a;                           \
   }
 
-IMPLEMENT_SELECT_SCALAR(char)
-IMPLEMENT_SELECT_SCALAR(uchar)
-IMPLEMENT_SELECT_SCALAR(short)
-IMPLEMENT_SELECT_SCALAR(ushort)
-IMPLEMENT_SELECT_SCALAR(int)
-IMPLEMENT_SELECT_SCALAR(uint)
+IMPLEMENT_SELECT_SCALAR(char  , char  )
+IMPLEMENT_SELECT_SCALAR(char  , uchar )
+IMPLEMENT_SELECT_SCALAR(uchar , char  )
+IMPLEMENT_SELECT_SCALAR(uchar , uchar )
+IMPLEMENT_SELECT_SCALAR(short , short )
+IMPLEMENT_SELECT_SCALAR(short , ushort)
+IMPLEMENT_SELECT_SCALAR(ushort, short )
+IMPLEMENT_SELECT_SCALAR(ushort, ushort)
+IMPLEMENT_SELECT_SCALAR(int   , int   )
+IMPLEMENT_SELECT_SCALAR(int   , uint  )
+IMPLEMENT_SELECT_SCALAR(uint  , int   )
+IMPLEMENT_SELECT_SCALAR(uint  , uint  )
 __IF_INT64(
-IMPLEMENT_SELECT_SCALAR(long)
-IMPLEMENT_SELECT_SCALAR(ulong))
+IMPLEMENT_SELECT_SCALAR(long  , long  )
+IMPLEMENT_SELECT_SCALAR(long  , ulong )
+IMPLEMENT_SELECT_SCALAR(ulong , long  )
+IMPLEMENT_SELECT_SCALAR(ulong , ulong ))
+IMPLEMENT_SELECT_SCALAR(float , int   )
+IMPLEMENT_SELECT_SCALAR(float , uint  )
+/* __IF_FP16( */
+/* IMPLEMENT_SELECT_SCALAR(half  , short ) */
+/* IMPLEMENT_SELECT_SCALAR(half  , ushort)) */
+__IF_FP64(
+IMPLEMENT_SELECT_SCALAR(double, long  )
+IMPLEMENT_SELECT_SCALAR(double, ulong ))
 
-#define IMPLEMENT_SELECT_VECTOR_SIGNED(GTYPE) \
-  GTYPE __attribute__ ((overloadable))        \
-  select(GTYPE a, GTYPE b, GTYPE c)           \
-  {                                           \
-     return (c < (GTYPE)0) ? b : a;           \
+
+
+#define IMPLEMENT_SELECT_VECTOR(GTYPE, UIGTYPE, IGTYPE) \
+  GTYPE __attribute__ ((overloadable))                  \
+  select(GTYPE a, GTYPE b, UIGTYPE c)                   \
+  {                                                     \
+    return *(IGTYPE*)&c < (IGTYPE)0 ? b : a;            \
   }
 
-IMPLEMENT_SELECT_VECTOR_SIGNED(char2)
-IMPLEMENT_SELECT_VECTOR_SIGNED(char3)
-IMPLEMENT_SELECT_VECTOR_SIGNED(char4)
-IMPLEMENT_SELECT_VECTOR_SIGNED(char8)
-IMPLEMENT_SELECT_VECTOR_SIGNED(char16)
-IMPLEMENT_SELECT_VECTOR_SIGNED(short2)
-IMPLEMENT_SELECT_VECTOR_SIGNED(short3)
-IMPLEMENT_SELECT_VECTOR_SIGNED(short4)
-IMPLEMENT_SELECT_VECTOR_SIGNED(short8)
-IMPLEMENT_SELECT_VECTOR_SIGNED(short16)
-IMPLEMENT_SELECT_VECTOR_SIGNED(int2)
-IMPLEMENT_SELECT_VECTOR_SIGNED(int3)
-IMPLEMENT_SELECT_VECTOR_SIGNED(int4)
-IMPLEMENT_SELECT_VECTOR_SIGNED(int8)
-IMPLEMENT_SELECT_VECTOR_SIGNED(int16)
+IMPLEMENT_SELECT_VECTOR(char2  , char2  , char2 )
+IMPLEMENT_SELECT_VECTOR(char2  , uchar2 , char2 )
+IMPLEMENT_SELECT_VECTOR(uchar2 , char2  , char2 )
+IMPLEMENT_SELECT_VECTOR(uchar2 , uchar2 , char2 )
+IMPLEMENT_SELECT_VECTOR(short2 , short2 , short2)
+IMPLEMENT_SELECT_VECTOR(short2 , ushort2, short2)
+IMPLEMENT_SELECT_VECTOR(ushort2, short2 , short2)
+IMPLEMENT_SELECT_VECTOR(ushort2, ushort2, short2)
+IMPLEMENT_SELECT_VECTOR(int2   , int2   , int2  )
+IMPLEMENT_SELECT_VECTOR(int2   , uint2  , int2  )
+IMPLEMENT_SELECT_VECTOR(uint2  , int2   , int2  )
+IMPLEMENT_SELECT_VECTOR(uint2  , uint2  , int2  )
 __IF_INT64(
-IMPLEMENT_SELECT_VECTOR_SIGNED(long2)
-IMPLEMENT_SELECT_VECTOR_SIGNED(long3)
-IMPLEMENT_SELECT_VECTOR_SIGNED(long4)
-IMPLEMENT_SELECT_VECTOR_SIGNED(long8)
-IMPLEMENT_SELECT_VECTOR_SIGNED(long16))
+IMPLEMENT_SELECT_VECTOR(long2  , long2  , long2 )
+IMPLEMENT_SELECT_VECTOR(long2  , ulong2 , long2 )
+IMPLEMENT_SELECT_VECTOR(ulong2 , long2  , long2 )
+IMPLEMENT_SELECT_VECTOR(ulong2 , ulong2 , long2 ))
+__IF_FP16(
+IMPLEMENT_SELECT_VECTOR(half2  , short2 , short2)
+IMPLEMENT_SELECT_VECTOR(half2  , ushort2, short2))
+IMPLEMENT_SELECT_VECTOR(float2 , int2   , int2  )
+IMPLEMENT_SELECT_VECTOR(float2 , uint2  , int2  )
+__IF_FP64(
+IMPLEMENT_SELECT_VECTOR(double2, long2  , long2 )
+IMPLEMENT_SELECT_VECTOR(double2, ulong2 , long2 ))
 
-#define IMPLEMENT_SELECT_VECTOR_UNSIGNED(UGTYPE, IGTYPE) \
-  UGTYPE __attribute__ ((overloadable))                  \
-  select(UGTYPE a, UGTYPE b, UGTYPE c)                   \
-  {                                                      \
-     return (as_##IGTYPE(c) < (IGTYPE)0) ? b : a;        \
-  }
-
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uchar2, char2)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uchar3, char3)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uchar4, char4)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uchar8, char8)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uchar16, char16)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ushort2, short2)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ushort3, short3)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ushort4, short4)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ushort8, short8)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ushort16, short16)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uint2, int2)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uint3, int3)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uint4, int4)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uint8, int8)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(uint16, int16)
+IMPLEMENT_SELECT_VECTOR(char3  , char3  , char3 )
+IMPLEMENT_SELECT_VECTOR(char3  , uchar3 , char3 )
+IMPLEMENT_SELECT_VECTOR(uchar3 , char3  , char3 )
+IMPLEMENT_SELECT_VECTOR(uchar3 , uchar3 , char3 )
+IMPLEMENT_SELECT_VECTOR(short3 , short3 , short3)
+IMPLEMENT_SELECT_VECTOR(short3 , ushort3, short3)
+IMPLEMENT_SELECT_VECTOR(ushort3, short3 , short3)
+IMPLEMENT_SELECT_VECTOR(ushort3, ushort3, short3)
+IMPLEMENT_SELECT_VECTOR(int3   , int3   , int3  )
+IMPLEMENT_SELECT_VECTOR(int3   , uint3  , int3  )
+IMPLEMENT_SELECT_VECTOR(uint3  , int3   , int3  )
+IMPLEMENT_SELECT_VECTOR(uint3  , uint3  , int3  )
 __IF_INT64(
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong2, long2)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong3, long3)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong4, long4)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong8, long8)
-IMPLEMENT_SELECT_VECTOR_UNSIGNED(ulong16, long16))
+IMPLEMENT_SELECT_VECTOR(long3  , long3  , long3 )
+IMPLEMENT_SELECT_VECTOR(long3  , ulong3 , long3 )
+IMPLEMENT_SELECT_VECTOR(ulong3 , long3  , long3 )
+IMPLEMENT_SELECT_VECTOR(ulong3 , ulong3 , long3 ))
+__IF_FP16(
+IMPLEMENT_SELECT_VECTOR(half3  , short3 , short3)
+IMPLEMENT_SELECT_VECTOR(half3  , ushort3, short3))
+IMPLEMENT_SELECT_VECTOR(float3 , int3   , int3  )
+IMPLEMENT_SELECT_VECTOR(float3 , uint3  , int3  )
+__IF_FP64(
+IMPLEMENT_SELECT_VECTOR(double3, long3  , long3 )
+IMPLEMENT_SELECT_VECTOR(double3, ulong3 , long3 ))
 
-#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ > 3))
-DEFINE_EXPR_V_VVJ(select, c ? b : a)
-#else
-/* This segfaults Clang 3.0, so we work around. */
-DEFINE_EXPR_V_VVJ(select,
-                  ({
-                    jtype result = c ? *(jtype*)&b : *(jtype*)&a;
-                    *(vtype*)&result;
-                  }))
-#endif
+IMPLEMENT_SELECT_VECTOR(char4  , char4  , char4 )
+IMPLEMENT_SELECT_VECTOR(char4  , uchar4 , char4 )
+IMPLEMENT_SELECT_VECTOR(uchar4 , char4  , char4 )
+IMPLEMENT_SELECT_VECTOR(uchar4 , uchar4 , char4 )
+IMPLEMENT_SELECT_VECTOR(short4 , short4 , short4)
+IMPLEMENT_SELECT_VECTOR(short4 , ushort4, short4)
+IMPLEMENT_SELECT_VECTOR(ushort4, short4 , short4)
+IMPLEMENT_SELECT_VECTOR(ushort4, ushort4, short4)
+IMPLEMENT_SELECT_VECTOR(int4   , int4   , int4  )
+IMPLEMENT_SELECT_VECTOR(int4   , uint4  , int4  )
+IMPLEMENT_SELECT_VECTOR(uint4  , int4   , int4  )
+IMPLEMENT_SELECT_VECTOR(uint4  , uint4  , int4  )
+__IF_INT64(
+IMPLEMENT_SELECT_VECTOR(long4  , long4  , long4 )
+IMPLEMENT_SELECT_VECTOR(long4  , ulong4 , long4 )
+IMPLEMENT_SELECT_VECTOR(ulong4 , long4  , long4 )
+IMPLEMENT_SELECT_VECTOR(ulong4 , ulong4 , long4 ))
+__IF_FP16(
+IMPLEMENT_SELECT_VECTOR(half4  , short4 , short4)
+IMPLEMENT_SELECT_VECTOR(half4  , ushort4, short4))
+IMPLEMENT_SELECT_VECTOR(float4 , int4   , int4  )
+IMPLEMENT_SELECT_VECTOR(float4 , uint4  , int4  )
+__IF_FP64(
+IMPLEMENT_SELECT_VECTOR(double4, long4  , long4 )
+IMPLEMENT_SELECT_VECTOR(double4, ulong4 , long4 ))
 
+IMPLEMENT_SELECT_VECTOR(char8  , char8  , char8 )
+IMPLEMENT_SELECT_VECTOR(char8  , uchar8 , char8 )
+IMPLEMENT_SELECT_VECTOR(uchar8 , char8  , char8 )
+IMPLEMENT_SELECT_VECTOR(uchar8 , uchar8 , char8 )
+IMPLEMENT_SELECT_VECTOR(short8 , short8 , short8)
+IMPLEMENT_SELECT_VECTOR(short8 , ushort8, short8)
+IMPLEMENT_SELECT_VECTOR(ushort8, short8 , short8)
+IMPLEMENT_SELECT_VECTOR(ushort8, ushort8, short8)
+IMPLEMENT_SELECT_VECTOR(int8   , int8   , int8  )
+IMPLEMENT_SELECT_VECTOR(int8   , uint8  , int8  )
+IMPLEMENT_SELECT_VECTOR(uint8  , int8   , int8  )
+IMPLEMENT_SELECT_VECTOR(uint8  , uint8  , int8  )
+__IF_INT64(
+IMPLEMENT_SELECT_VECTOR(long8  , long8  , long8 )
+IMPLEMENT_SELECT_VECTOR(long8  , ulong8 , long8 )
+IMPLEMENT_SELECT_VECTOR(ulong8 , long8  , long8 )
+IMPLEMENT_SELECT_VECTOR(ulong8 , ulong8 , long8 ))
+__IF_FP16(
+IMPLEMENT_SELECT_VECTOR(half8  , short8 , short8)
+IMPLEMENT_SELECT_VECTOR(half8  , ushort8, short8))
+IMPLEMENT_SELECT_VECTOR(float8 , int8   , int8  )
+IMPLEMENT_SELECT_VECTOR(float8 , uint8  , int8  )
+__IF_FP64(
+IMPLEMENT_SELECT_VECTOR(double8, long8  , long8 )
+IMPLEMENT_SELECT_VECTOR(double8, ulong8 , long8 ))
+
+IMPLEMENT_SELECT_VECTOR(char16  , char16  , char16 )
+IMPLEMENT_SELECT_VECTOR(char16  , uchar16 , char16 )
+IMPLEMENT_SELECT_VECTOR(uchar16 , char16  , char16 )
+IMPLEMENT_SELECT_VECTOR(uchar16 , uchar16 , char16 )
+IMPLEMENT_SELECT_VECTOR(short16 , short16 , short16)
+IMPLEMENT_SELECT_VECTOR(short16 , ushort16, short16)
+IMPLEMENT_SELECT_VECTOR(ushort16, short16 , short16)
+IMPLEMENT_SELECT_VECTOR(ushort16, ushort16, short16)
+IMPLEMENT_SELECT_VECTOR(int16   , int16   , int16  )
+IMPLEMENT_SELECT_VECTOR(int16   , uint16  , int16  )
+IMPLEMENT_SELECT_VECTOR(uint16  , int16   , int16  )
+IMPLEMENT_SELECT_VECTOR(uint16  , uint16  , int16  )
+__IF_INT64(
+IMPLEMENT_SELECT_VECTOR(long16  , long16  , long16 )
+IMPLEMENT_SELECT_VECTOR(long16  , ulong16 , long16 )
+IMPLEMENT_SELECT_VECTOR(ulong16 , long16  , long16 )
+IMPLEMENT_SELECT_VECTOR(ulong16 , ulong16 , long16 ))
+__IF_FP16(
+IMPLEMENT_SELECT_VECTOR(half16  , short16 , short16)
+IMPLEMENT_SELECT_VECTOR(half16  , ushort16, short16))
+IMPLEMENT_SELECT_VECTOR(float16 , int16   , int16  )
+IMPLEMENT_SELECT_VECTOR(float16 , uint16  , int16  )
+__IF_FP64(
+IMPLEMENT_SELECT_VECTOR(double16, long16  , long16 )
+IMPLEMENT_SELECT_VECTOR(double16, ulong16 , long16 ))
