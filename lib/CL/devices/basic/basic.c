@@ -26,6 +26,7 @@
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
 #include "install-paths.h"
+#include "common.h"
 
 #include <assert.h>
 #include <string.h>
@@ -131,9 +132,7 @@ pocl_basic_run
 {
   struct data *d;
   int error;
-  char bytecode[POCL_FILENAME_LENGTH];
-  char assembly[POCL_FILENAME_LENGTH];
-  char module[POCL_FILENAME_LENGTH];
+  const char *module_fn;
   char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
@@ -148,63 +147,16 @@ pocl_basic_run
   assert (data != NULL);
   d = (struct data *) data;
 
-  error = snprintf 
-    (module, POCL_FILENAME_LENGTH,
-     "%s/parallel.so", tmpdir);
-  assert (error >= 0);
-
-  if (access (module, F_OK) != 0)
-    {
-      char *llvm_ld;
-      error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
-     
-      error = snprintf (assembly, POCL_FILENAME_LENGTH,
-			"%s/parallel.s",
-			tmpdir);
-      assert (error >= 0);
+  module_fn = llvm_codegen (tmpdir);
       
-      // "-relocation-model=dynamic-no-pic" is a magic string,
-      // I do not know why it has to be there to produce valid
-      // sos on x86_64
-      error = snprintf (command, COMMAND_LENGTH,
-			LLC " " HOST_LLC_FLAGS " -o %s %s",
-			assembly,
-			bytecode);
-      assert (error >= 0);
-      
-      error = system (command);
-      assert (error == 0);
-           
-      error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target %s %s -c -o %s.o %s",
-			OCL_KERNEL_TARGET,
-			HOST_CLANG_FLAGS,
-			module,
-			assembly);
-      assert (error >= 0);
-      
-      error = system (command);
-      assert (error == 0);
-
-      error = snprintf (command, COMMAND_LENGTH,
-                       "ld " HOST_LD_FLAGS " -o %s %s.o",
-                       module,
-                       module);
-      assert (error >= 0);
-
-      error = system (command);
-      assert (error == 0);
-    }
-      
-  d->current_dlhandle = lt_dlopen (module);
+  d->current_dlhandle = lt_dlopen (module_fn);
   if (d->current_dlhandle == NULL)
     {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module, lt_dlerror());
+      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module_fn, lt_dlerror());
       printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
       abort();
     }
+
 
   d->current_kernel = kernel;
 
@@ -226,9 +178,10 @@ pocl_basic_run
   if (w == NULL)
     {
       printf("pocl error: could not load the work-group function '%s' in module '%s'.\n",
-	     workgroup_string, module);
+	     workgroup_string, module_fn);
       abort();
     }
+  free ((void*) module_fn);
 
   void *arguments[kernel->num_args + kernel->num_locals];
 
