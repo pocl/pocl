@@ -44,6 +44,7 @@ import signal
 import time
 import datetime
 import platform
+import argparse
 
 from subprocess import Popen, PIPE
 
@@ -303,7 +304,18 @@ def print_environment_info():
 
 if __name__ == "__main__":
 
-    vendor_ocl_dir = sys.argv[1] if len(sys.argv) == 2 else None        
+    parser = argparse.ArgumentParser('Benchmark pocl')
+    parser.add_argument('ocl_dir', metavar='dir', default="", nargs='?',
+                        help='Directory that contains comparison OCL .icd file')
+    parser.add_argument('-o', metavar='log file', dest='logfile', default="",
+                        help='Write log to this file, instead of stdout')
+    args=parser.parse_args()
+ 
+    #vendor_ocl_dir = sys.argv[1] if len(sys.argv) == 2 else None     
+    vendor_ocl_dir = args.ocl_dir if args.ocl_dir != "" else None
+
+    if args.logfile != "":
+      sys.stdout = open(args.logfile, 'w')
 
     results = []
 
