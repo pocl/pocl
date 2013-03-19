@@ -16,5 +16,9 @@ Known issues
 * clang++ does not work with libstdc++ shipped with Debian 6.0 in 
 -std=gnu++11 mode that is required by vecmathlib.
 
+* clamp.cl does not include (signed, signed, signed) implementation that
+  is available in the pocl's default implementation. It is used from 
+  pocl for now.
+
 
 
