@@ -28,7 +28,7 @@ SECONDARY_VPATH = ../vecmathlib/pocl
 EXCLUDE_SRC_FILES = acos.cl acosh.cl asinh.cl atanh.cl cbrt.cl cosh.cl \
 	exp10.cl exp.cl expm1.cl fdim.cl fmod.cl hypot.cl isfinite.cl \
 	isinf.cl isnan.cl isnormal.cl log10.cl log1p.cl remainder.cl \
-	rsqrt.cl signbit.cl sinh.cl tanh.cl
+	rsqrt.cl signbit.cl sinh.cl tanh.cl fabs.cl
 
 LKERNEL_EXTRA_SRCS = acos.cc \
 	acosh.cc 	\
