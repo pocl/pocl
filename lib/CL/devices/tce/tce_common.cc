@@ -148,6 +148,7 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   if (global_size < 0)
     POCL_ABORT("Not enough space in the global memory with the assumed unallocated space.\n");
   parent->global_mem_size = global_size;
+  parent->max_mem_alloc_size = global_size;
 
   init_mem_region 
     (&local_mem, (memory_address_t)local_as->start(), parent->local_mem_size);
@@ -264,7 +265,7 @@ pocl_tce_run
       std::string deviceMainSrc = "";
       if (getenv("POCL_BUILDING") != NULL)
         {
-          deviceMainSrc = BUILDDIR "/lib/CL/devices/tce/tta_device_main.c";
+          deviceMainSrc = SRCDIR "/lib/CL/devices/tce/tta_device_main.c";
           poclIncludePathSwitch = " -I " SRCDIR "/include";
         }
       else 

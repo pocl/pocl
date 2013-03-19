@@ -44,6 +44,7 @@ import signal
 import time
 import datetime
 import platform
+import argparse
 
 from subprocess import Popen, PIPE
 
@@ -255,23 +256,26 @@ pocl_ocl_dir = POCL_SRC_ROOT_PATH + "/ocl-vendors"
 amd_benchmarks = \
     [AMDBenchmarkCase("AESEncryptDecrypt", "AESEncryptDecrypt -t -q"),
      AMDBenchmarkCase("BitonicSort", "BitonicSort -q -t -x 1048576"),
-     AMDBenchmarkCase("BinarySearch", "BinarySearch -q -t -x 5242880000"),
+     AMDBenchmarkCase("BinarySearch", "BinarySearch -q -t -x 8388608"),
      AMDBenchmarkCase("BinomialOption", "BinomialOption -q -t -x 10000"),
-     AMDBenchmarkCase("BlackScholes", "BlackScholes -q -t -x 16777216"),
-     AMDBenchmarkCase("DCT", "DCT -q -t -x 4000 -y 4000"),
-     AMDBenchmarkCase("FastWalshTransform", "FastWalshTransform -q -t -x 134217728"),
+     AMDBenchmarkCase("BlackScholes", "BlackScholes -q -t -x 1694304"),
+     AMDBenchmarkCase("DCT", "DCT -q -t -x 2000 -y 2000"),
+     AMDBenchmarkCase("FastWalshTransform", "FastWalshTransform -q -t -x 1054432"),
      AMDBenchmarkCase("FloydWarshall", "FloydWarshall -q -t -x 512"),
-     AMDBenchmarkCase("Histogram", "Histogram -t -x 15000 -y 15000 -q"),
+     AMDBenchmarkCase("Histogram", "Histogram -t -x 1500 -y 1500 -q"),
      AMDBenchmarkCase("Mandelbrot", "Mandelbrot -t -x 8192 -y 8192 -q"),
-     AMDBenchmarkCase("MatrixTranspose", "MatrixTranspose -t -x 12288 -y 12288 -q"),
-     AMDBenchmarkCase("MatrixMultiplication", "MatrixMultiplication -q -t -x 1024 -y 1024 -z 2048"),
+     AMDBenchmarkCase("MatrixTranspose", "MatrixTranspose -t -x 1024 -y 1024 -q"),
+     #This gives garbage execution times for some reason
+     #AMDBenchmarkCase("MatrixMultiplication", "MatrixMultiplication -q -t -x 1024 -y 1024 -z 2048"),
      AMDBenchmarkCase("NBody", "NBody -t -x 19968 -q"),
-     AMDBenchmarkCase("QuasiRandomSequence", "QuasiRandomSequence -q -t -y 10200 -x 10000"),
-     AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
-     AMDBenchmarkCase("Reduction", "Reduction -q -t -x 400000000"),
-     AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 512000")]
+     AMDBenchmarkCase("QuasiRandomSequence", "QuasiRandomSequence -q -t -y 1000 -x 1000"),
+     #This is marked as XFAIL, but seems to work randomly when run here
+     #AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
+     AMDBenchmarkCase("Reduction", "Reduction -q -t -x 5000000"),
+     AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 128000")]
 
-benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
+#benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
+benchmarks = amd_benchmarks 
     
 def print_environment_info():
     timeout, llvm_version, stderr, rc = run_cmd("llvm-config --version")
@@ -285,6 +289,12 @@ def print_environment_info():
             if "model name" in line:
                 cpumodel = line.split(":")[1].strip()
                 break
+        #the PowerPC cpuinfo lacks "model name"
+        if cpumodel == "":
+            for line in lines:
+                if "cpu" in line:
+                    cpumodel = line.split(":")[1].strip()
+                    break 
 
     sys.stdout.write("date: " + datetime.datetime.now().strftime("%Y-%m-%d") + "\n")
     sys.stdout.write("LLVM: " + llvm_version + "\n");
@@ -294,7 +304,18 @@ def print_environment_info():
 
 if __name__ == "__main__":
 
-    vendor_ocl_dir = sys.argv[1] if len(sys.argv) == 2 else None        
+    parser = argparse.ArgumentParser('Benchmark pocl')
+    parser.add_argument('ocl_dir', metavar='dir', default="", nargs='?',
+                        help='Directory that contains comparison OCL .icd file')
+    parser.add_argument('-o', metavar='log file', dest='logfile', default="",
+                        help='Write log to this file, instead of stdout')
+    args=parser.parse_args()
+ 
+    #vendor_ocl_dir = sys.argv[1] if len(sys.argv) == 2 else None     
+    vendor_ocl_dir = args.ocl_dir if args.ocl_dir != "" else None
+
+    if args.logfile != "":
+      sys.stdout = open(args.logfile, 'w')
 
     results = []
 

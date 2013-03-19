@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
-#define COMMAND_LENGTH 1024
+#define COMMAND_LENGTH 4096
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
@@ -201,7 +201,7 @@ POname(clBuildProgram)(cl_program program,
             }
           else
             {
-              error = system(command);
+	      error = system(command);
             }
 
           if (error != 0)

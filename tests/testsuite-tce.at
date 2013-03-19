@@ -3,16 +3,16 @@ AT_BANNER([TCE tests])
 
 AT_SETUP([A basic ttasim driver test])
 AT_KEYWORDS([tce tta ttasim])
-AT_SKIP_IF([! grep -c "define TCE_AVAILABLE" $abs_top_srcdir/config.h])
-AT_CHECK([make -s -C $abs_top_srcdir/tests/tce/ttasim run | egrep -v "^make"], 0, 
+AT_SKIP_IF([! grep -c "define TCE_AVAILABLE" $abs_top_builddir/config.h])
+AT_CHECK([make -s -C $abs_top_builddir/tests/tce/ttasim run | egrep -v "^make"], 0, 
 [PING23456.000000 2000001OK
 ])
 AT_CLEANUP
 AT_SETUP([Half-precision floats on ttasim])
 AT_XFAIL_IF(true)
 AT_KEYWORDS([tce tta ttasim])
-AT_SKIP_IF([! grep -c "define TCE_AVAILABLE" $abs_top_srcdir/config.h])
-AT_CHECK([make -s -C $abs_top_srcdir/tests/tce/fp16 run | egrep -v "^make"], 0, 
+AT_SKIP_IF([! grep -c "define TCE_AVAILABLE" $abs_top_builddir/config.h])
+AT_CHECK([make -s -C $abs_top_builddir/tests/tce/fp16 run | egrep -v "^make"], 0, 
 [2.500000
 ])
 AT_CLEANUP

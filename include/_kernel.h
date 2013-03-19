@@ -82,7 +82,9 @@
 #else
 #  define _CL_OVERLOADABLE
 #endif
-#if __has_attribute(__const__)
+#if (__clang_major__ == 3) && (__clang_minor__ >= 2)
+/* This causes an error with Clang 3.1: */
+/* #if __has_attribute(__const__) */
 #  define _CL_READNONE __attribute__((__const__))
 #else
 #  define _CL_READNONE
@@ -198,6 +200,14 @@ typedef ulong ulong3  __attribute__((__ext_vector_type__(3)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
 typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
+#endif
+
+#ifdef cl_khr_fp16
+typedef half half2  __attribute__((__ext_vector_type__(2)));
+typedef half half3  __attribute__((__ext_vector_type__(3)));
+typedef half half4  __attribute__((__ext_vector_type__(4)));
+typedef half half8  __attribute__((__ext_vector_type__(8)));
+typedef half half16 __attribute__((__ext_vector_type__(16)));
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
@@ -685,20 +695,48 @@ void barrier (cl_mem_fence_flags flags);
   double4  _CL_OVERLOADABLE NAME(double, double, double4 );     \
   double8  _CL_OVERLOADABLE NAME(double, double, double8 );     \
   double16 _CL_OVERLOADABLE NAME(double, double, double16);)
-#define _CL_DECLARE_FUNC_V_VVJ(NAME)                            \
-  float    _CL_OVERLOADABLE NAME(float   , float   , int   );   \
-  float2   _CL_OVERLOADABLE NAME(float2  , float2  , int2  );   \
-  float3   _CL_OVERLOADABLE NAME(float3  , float3  , int3  );   \
-  float4   _CL_OVERLOADABLE NAME(float4  , float4  , int4  );   \
-  float8   _CL_OVERLOADABLE NAME(float8  , float8  , int8  );   \
-  float16  _CL_OVERLOADABLE NAME(float16 , float16 , int16 );   \
-  __IF_FP64(                                                    \
-  double   _CL_OVERLOADABLE NAME(double  , double  , long  );   \
-  double2  _CL_OVERLOADABLE NAME(double2 , double2 , long2 );   \
-  double3  _CL_OVERLOADABLE NAME(double3 , double3 , long3 );   \
-  double4  _CL_OVERLOADABLE NAME(double4 , double4 , long4 );   \
-  double8  _CL_OVERLOADABLE NAME(double8 , double8 , long8 );   \
-  double16 _CL_OVERLOADABLE NAME(double16, double16, long16);)
+#define _CL_DECLARE_FUNC_V_VVJ(NAME)                                    \
+  __IF_FP16(                                                            \
+  /*half     _CL_OVERLOADABLE NAME(half    , half    , short  );*/      \
+  half2    _CL_OVERLOADABLE NAME(half2   , half2   , short2 );          \
+  half3    _CL_OVERLOADABLE NAME(half3   , half3   , short3 );          \
+  half4    _CL_OVERLOADABLE NAME(half4   , half4   , short4 );          \
+  half8    _CL_OVERLOADABLE NAME(half8   , half8   , short8 );          \
+  half16   _CL_OVERLOADABLE NAME(half16  , half16  , short16);)         \
+  float    _CL_OVERLOADABLE NAME(float   , float   , int    );          \
+  float2   _CL_OVERLOADABLE NAME(float2  , float2  , int2   );          \
+  float3   _CL_OVERLOADABLE NAME(float3  , float3  , int3   );          \
+  float4   _CL_OVERLOADABLE NAME(float4  , float4  , int4   );          \
+  float8   _CL_OVERLOADABLE NAME(float8  , float8  , int8   );          \
+  float16  _CL_OVERLOADABLE NAME(float16 , float16 , int16  );          \
+  __IF_FP64(                                                            \
+  double   _CL_OVERLOADABLE NAME(double  , double  , long   );          \
+  double2  _CL_OVERLOADABLE NAME(double2 , double2 , long2  );          \
+  double3  _CL_OVERLOADABLE NAME(double3 , double3 , long3  );          \
+  double4  _CL_OVERLOADABLE NAME(double4 , double4 , long4  );          \
+  double8  _CL_OVERLOADABLE NAME(double8 , double8 , long8  );          \
+  double16 _CL_OVERLOADABLE NAME(double16, double16, long16 );)
+#define _CL_DECLARE_FUNC_V_VVU(NAME)                                    \
+  __IF_FP16(                                                            \
+  /*half     _CL_OVERLOADABLE NAME(half    , half    , ushort  );*/     \
+  half2    _CL_OVERLOADABLE NAME(half2   , half2   , ushort2 );         \
+  half3    _CL_OVERLOADABLE NAME(half3   , half3   , ushort3 );         \
+  half4    _CL_OVERLOADABLE NAME(half4   , half4   , ushort4 );         \
+  half8    _CL_OVERLOADABLE NAME(half8   , half8   , ushort8 );         \
+  half16   _CL_OVERLOADABLE NAME(half16  , half16  , ushort16);)        \
+  float    _CL_OVERLOADABLE NAME(float   , float   , uint    );         \
+  float2   _CL_OVERLOADABLE NAME(float2  , float2  , uint2   );         \
+  float3   _CL_OVERLOADABLE NAME(float3  , float3  , uint3   );         \
+  float4   _CL_OVERLOADABLE NAME(float4  , float4  , uint4   );         \
+  float8   _CL_OVERLOADABLE NAME(float8  , float8  , uint8   );         \
+  float16  _CL_OVERLOADABLE NAME(float16 , float16 , uint16  );         \
+  __IF_FP64(                                                            \
+  double   _CL_OVERLOADABLE NAME(double  , double  , ulong   );         \
+  double2  _CL_OVERLOADABLE NAME(double2 , double2 , ulong2  );         \
+  double3  _CL_OVERLOADABLE NAME(double3 , double3 , ulong3  );         \
+  double4  _CL_OVERLOADABLE NAME(double4 , double4 , ulong4  );         \
+  double8  _CL_OVERLOADABLE NAME(double8 , double8 , ulong8  );         \
+  double16 _CL_OVERLOADABLE NAME(double16, double16, ulong16 );)
 #define _CL_DECLARE_FUNC_V_U(NAME)              \
   float    _CL_OVERLOADABLE NAME(uint   );      \
   float2   _CL_OVERLOADABLE NAME(uint2  );      \
@@ -1210,6 +1248,106 @@ _CL_DECLARE_FUNC_F_F(native_tan)
   ulong4   _CL_OVERLOADABLE NAME(ulong4  , ulong4  , ulong4  ); \
   ulong8   _CL_OVERLOADABLE NAME(ulong8  , ulong8  , ulong8  ); \
   ulong16  _CL_OVERLOADABLE NAME(ulong16 , ulong16 , ulong16 );)
+#define _CL_DECLARE_FUNC_G_GGIG(NAME)                                   \
+  char     _CL_OVERLOADABLE NAME(char    , char    , char    );         \
+  char2    _CL_OVERLOADABLE NAME(char2   , char2   , char2   );         \
+  char3    _CL_OVERLOADABLE NAME(char3   , char3   , char3   );         \
+  char4    _CL_OVERLOADABLE NAME(char4   , char4   , char4   );         \
+  char8    _CL_OVERLOADABLE NAME(char8   , char8   , char8   );         \
+  char16   _CL_OVERLOADABLE NAME(char16  , char16  , char16  );         \
+  uchar    _CL_OVERLOADABLE NAME(uchar   , uchar   , char    );         \
+  uchar2   _CL_OVERLOADABLE NAME(uchar2  , uchar2  , char2   );         \
+  uchar3   _CL_OVERLOADABLE NAME(uchar3  , uchar3  , char3   );         \
+  uchar4   _CL_OVERLOADABLE NAME(uchar4  , uchar4  , char4   );         \
+  uchar8   _CL_OVERLOADABLE NAME(uchar8  , uchar8  , char8   );         \
+  uchar16  _CL_OVERLOADABLE NAME(uchar16 , uchar16 , char16  );         \
+  short    _CL_OVERLOADABLE NAME(short   , short   , short   );         \
+  short2   _CL_OVERLOADABLE NAME(short2  , short2  , short2  );         \
+  short3   _CL_OVERLOADABLE NAME(short3  , short3  , short3  );         \
+  short4   _CL_OVERLOADABLE NAME(short4  , short4  , short4  );         \
+  short8   _CL_OVERLOADABLE NAME(short8  , short8  , short8  );         \
+  short16  _CL_OVERLOADABLE NAME(short16 , short16 , short16 );         \
+  ushort   _CL_OVERLOADABLE NAME(ushort  , ushort  , short   );         \
+  ushort2  _CL_OVERLOADABLE NAME(ushort2 , ushort2 , short2  );         \
+  ushort3  _CL_OVERLOADABLE NAME(ushort3 , ushort3 , short3  );         \
+  ushort4  _CL_OVERLOADABLE NAME(ushort4 , ushort4 , short4  );         \
+  ushort8  _CL_OVERLOADABLE NAME(ushort8 , ushort8 , short8  );         \
+  ushort16 _CL_OVERLOADABLE NAME(ushort16, ushort16, short16 );         \
+  int      _CL_OVERLOADABLE NAME(int     , int     , int     );         \
+  int2     _CL_OVERLOADABLE NAME(int2    , int2    , int2    );         \
+  int3     _CL_OVERLOADABLE NAME(int3    , int3    , int3    );         \
+  int4     _CL_OVERLOADABLE NAME(int4    , int4    , int4    );         \
+  int8     _CL_OVERLOADABLE NAME(int8    , int8    , int8    );         \
+  int16    _CL_OVERLOADABLE NAME(int16   , int16   , int16   );         \
+  uint     _CL_OVERLOADABLE NAME(uint    , uint    , int     );         \
+  uint2    _CL_OVERLOADABLE NAME(uint2   , uint2   , int2    );         \
+  uint3    _CL_OVERLOADABLE NAME(uint3   , uint3   , int3    );         \
+  uint4    _CL_OVERLOADABLE NAME(uint4   , uint4   , int4    );         \
+  uint8    _CL_OVERLOADABLE NAME(uint8   , uint8   , int8    );         \
+  uint16   _CL_OVERLOADABLE NAME(uint16  , uint16  , int16   );         \
+  __IF_INT64(                                                           \
+  long     _CL_OVERLOADABLE NAME(long    , long    , long    );         \
+  long2    _CL_OVERLOADABLE NAME(long2   , long2   , long2   );         \
+  long3    _CL_OVERLOADABLE NAME(long3   , long3   , long3   );         \
+  long4    _CL_OVERLOADABLE NAME(long4   , long4   , long4   );         \
+  long8    _CL_OVERLOADABLE NAME(long8   , long8   , long8   );         \
+  long16   _CL_OVERLOADABLE NAME(long16  , long16  , long16  );         \
+  ulong    _CL_OVERLOADABLE NAME(ulong   , ulong   , long    );         \
+  ulong2   _CL_OVERLOADABLE NAME(ulong2  , ulong2  , long2   );         \
+  ulong3   _CL_OVERLOADABLE NAME(ulong3  , ulong3  , long3   );         \
+  ulong4   _CL_OVERLOADABLE NAME(ulong4  , ulong4  , long4   );         \
+  ulong8   _CL_OVERLOADABLE NAME(ulong8  , ulong8  , long8   );         \
+  ulong16  _CL_OVERLOADABLE NAME(ulong16 , ulong16 , long16  );)
+#define _CL_DECLARE_FUNC_G_GGUG(NAME)                                   \
+  char     _CL_OVERLOADABLE NAME(char    , char    , uchar    );        \
+  char2    _CL_OVERLOADABLE NAME(char2   , char2   , uchar2   );        \
+  char3    _CL_OVERLOADABLE NAME(char3   , char3   , uchar3   );        \
+  char4    _CL_OVERLOADABLE NAME(char4   , char4   , uchar4   );        \
+  char8    _CL_OVERLOADABLE NAME(char8   , char8   , uchar8   );        \
+  char16   _CL_OVERLOADABLE NAME(char16  , char16  , uchar16  );        \
+  uchar    _CL_OVERLOADABLE NAME(uchar   , uchar   , uchar    );        \
+  uchar2   _CL_OVERLOADABLE NAME(uchar2  , uchar2  , uchar2   );        \
+  uchar3   _CL_OVERLOADABLE NAME(uchar3  , uchar3  , uchar3   );        \
+  uchar4   _CL_OVERLOADABLE NAME(uchar4  , uchar4  , uchar4   );        \
+  uchar8   _CL_OVERLOADABLE NAME(uchar8  , uchar8  , uchar8   );        \
+  uchar16  _CL_OVERLOADABLE NAME(uchar16 , uchar16 , uchar16  );        \
+  short    _CL_OVERLOADABLE NAME(short   , short   , ushort   );        \
+  short2   _CL_OVERLOADABLE NAME(short2  , short2  , ushort2  );        \
+  short3   _CL_OVERLOADABLE NAME(short3  , short3  , ushort3  );        \
+  short4   _CL_OVERLOADABLE NAME(short4  , short4  , ushort4  );        \
+  short8   _CL_OVERLOADABLE NAME(short8  , short8  , ushort8  );        \
+  short16  _CL_OVERLOADABLE NAME(short16 , short16 , ushort16 );        \
+  ushort   _CL_OVERLOADABLE NAME(ushort  , ushort  , ushort   );        \
+  ushort2  _CL_OVERLOADABLE NAME(ushort2 , ushort2 , ushort2  );        \
+  ushort3  _CL_OVERLOADABLE NAME(ushort3 , ushort3 , ushort3  );        \
+  ushort4  _CL_OVERLOADABLE NAME(ushort4 , ushort4 , ushort4  );        \
+  ushort8  _CL_OVERLOADABLE NAME(ushort8 , ushort8 , ushort8  );        \
+  ushort16 _CL_OVERLOADABLE NAME(ushort16, ushort16, ushort16 );        \
+  int      _CL_OVERLOADABLE NAME(int     , int     , uint     );        \
+  int2     _CL_OVERLOADABLE NAME(int2    , int2    , uint2    );        \
+  int3     _CL_OVERLOADABLE NAME(int3    , int3    , uint3    );        \
+  int4     _CL_OVERLOADABLE NAME(int4    , int4    , uint4    );        \
+  int8     _CL_OVERLOADABLE NAME(int8    , int8    , uint8    );        \
+  int16    _CL_OVERLOADABLE NAME(int16   , int16   , uint16   );        \
+  uint     _CL_OVERLOADABLE NAME(uint    , uint    , uint     );        \
+  uint2    _CL_OVERLOADABLE NAME(uint2   , uint2   , uint2    );        \
+  uint3    _CL_OVERLOADABLE NAME(uint3   , uint3   , uint3    );        \
+  uint4    _CL_OVERLOADABLE NAME(uint4   , uint4   , uint4    );        \
+  uint8    _CL_OVERLOADABLE NAME(uint8   , uint8   , uint8    );        \
+  uint16   _CL_OVERLOADABLE NAME(uint16  , uint16  , uint16   );        \
+  __IF_INT64(                                                           \
+  long     _CL_OVERLOADABLE NAME(long    , long    , ulong    );        \
+  long2    _CL_OVERLOADABLE NAME(long2   , long2   , ulong2   );        \
+  long3    _CL_OVERLOADABLE NAME(long3   , long3   , ulong3   );        \
+  long4    _CL_OVERLOADABLE NAME(long4   , long4   , ulong4   );        \
+  long8    _CL_OVERLOADABLE NAME(long8   , long8   , ulong8   );        \
+  long16   _CL_OVERLOADABLE NAME(long16  , long16  , ulong16  );        \
+  ulong    _CL_OVERLOADABLE NAME(ulong   , ulong   , ulong    );        \
+  ulong2   _CL_OVERLOADABLE NAME(ulong2  , ulong2  , ulong2   );        \
+  ulong3   _CL_OVERLOADABLE NAME(ulong3  , ulong3  , ulong3   );        \
+  ulong4   _CL_OVERLOADABLE NAME(ulong4  , ulong4  , ulong4   );        \
+  ulong8   _CL_OVERLOADABLE NAME(ulong8  , ulong8  , ulong8   );        \
+  ulong16  _CL_OVERLOADABLE NAME(ulong16 , ulong16 , ulong16  );)
 #define _CL_DECLARE_FUNC_G_GS(NAME)                     \
   char2    _CL_OVERLOADABLE NAME(char2   , char  );     \
   char3    _CL_OVERLOADABLE NAME(char3   , char  );     \
@@ -1524,8 +1662,10 @@ _CL_DECLARE_FUNC_I_IG(any)
 _CL_DECLARE_FUNC_I_IG(all)
 _CL_DECLARE_FUNC_G_GGG(bitselect)
 _CL_DECLARE_FUNC_V_VVV(bitselect)
-_CL_DECLARE_FUNC_G_GGG(select)
+_CL_DECLARE_FUNC_G_GGIG(select)
+_CL_DECLARE_FUNC_G_GGUG(select)
 _CL_DECLARE_FUNC_V_VVJ(select)
+_CL_DECLARE_FUNC_V_VVU(select)
 
 
 /* Vector Functions */

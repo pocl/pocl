@@ -1759,7 +1759,7 @@
   <address-space name="global">
     <width>8</width>
     <min-address>0</min-address>
-    <max-address>1048575</max-address>
+    <max-address>268435455</max-address>
     <numerical-id>3</numerical-id>
     <numerical-id>5</numerical-id>
   </address-space>

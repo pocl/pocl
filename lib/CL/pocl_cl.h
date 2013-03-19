@@ -59,6 +59,12 @@
 # endif
 #endif
 
+#ifdef CLANGPP
+#define LINK_CMD CLANGPP
+#else
+#define LINK_CMD CLANG
+#endif
+
 /* Debugging macros. Also macros for marking unimplemented parts of specs or
    untested parts of the implementation. */
 
@@ -496,5 +502,8 @@ struct _cl_sampler {
             command_queue->device->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
+
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
     
 #endif /* POCL_CL_H */

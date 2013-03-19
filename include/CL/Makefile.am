@@ -22,6 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+#force the patching of cl.hpp.in - 
+BUILT_SOURCES = cl.hpp
+#note - this gets run on every build, so don't fail if patch detects a
+#previously applied patch. The copy is a workaround for OSX's 'patch'
+cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in
+	cp $< __tmp_header && \
+	(patch -sNp2 __tmp_header $(top_srcdir)/tools/patches/khronos_cl.hpp.patch -o cl.hpp || true) && \
+	rm __tmp_header
+
 if INSTALL_OPENCL_HEADERS
 library_includedir = $(includedir)/CL
 library_include_HEADERS = cl.h cl_ext.h			\

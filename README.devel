@@ -38,6 +38,21 @@ passed in the command line such as:
 All such special environment variables can be seen with the --help option
 of the configure script.
 
+USING LLVM SVN
+
+It's highly recommended to use the latest development version of LLVM
+when developing pocl.
+
+However, as llvm-svn is a moving target, new revisions might break pocl
+compilation. The latest LLVM trunk revision pocl has been tested 
+successfully with is:    
+
+176627
+
+The test suite (make check) should pass with this revision with
+xfails used to mark known-broken tests.
+
+
 TEST SUITE
 
 Before changes are committed to the mainline, all tests in the 'make check'

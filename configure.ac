@@ -80,13 +80,7 @@ LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
-AM_CONDITIONAL([LLVM_3_1], test "$LLVM_VERSION" == "3.1")
-
-
 case "$LLVM_VERSION" in
-     3.1)
-     AC_DEFINE([LLVM_3_1], [], "Using LLVM 3.1")
-   ;;
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
    ;;
@@ -97,7 +91,7 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM 3.1 or 3.2.
+Unsupported LLVM version. Please use LLVM 3.2 or later.
    ])
    LLVM_VERSION=
    ;;
@@ -223,6 +217,10 @@ if test "$enable_testsuite_amd" = "yes" ; then
     AC_MSG_WARN([disabling AMD APP SDK testsuite as the 2.8 lnx64 package not in '$srcdir/examples/AMD'.])
     enable_testsuite_amd=no
   fi
+  PKG_CHECK_MODULES([SDL], [sdl >= 1.2], [:], 
+    [ AC_MSG_WARN([pkg-config could not find libSDL, AMD APP SDK testsuite is not used ]) 
+      enable_testsuite_amd=no
+    ])
 fi
 
 #All ViennaCL tests use doubles, thus they fail on these platforms
@@ -310,7 +308,7 @@ AS_CASE(["$icd,$OCL_ICD_available"],
     AC_MSG_NOTICE([enabling ICD extension build]) ],
   [check,no], [ icd=no
     AC_MSG_NOTICE([disabling ICD extension build (ocl-icd not available)]) ],
-  [yes,no], [AC_MSG_WARN([enabling ICD, but the testsuite will not work! (ocl-icd not available)])],
+  [yes,no], [AC_MSG_WARN([enabling ICD, but the testsuite might not work! (ocl-icd not available)])],
   [AC_MSG_ERROR([Invalid value for --enable-icd])]) 
 
 if test x"$icd" = xyes; then
@@ -489,7 +487,55 @@ AC_DEFUN([LLVM_PROG], [
   ])
 ])
 
+AC_DEFUN([LLVM_PROG_WARN], [
+  AC_ARG_VAR([$1], [$3])
+  AC_PATH_PROGS([$1], [$2 $2-$LLVM_VERSION], , [$LLVM_BINDIR:$PATH])
+  AS_IF([test -z "$$1"], [
+    AC_MSG_WARN([cannot find LLVM binary '$2' in '$LLVM_BINDIR' nor \$PATH])
+  ])
+])
+
 LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
+
+# Check for a functioning clang++. It is needed to compile faster math 
+# builtins from vecmathlib.
+LLVM_PROG_WARN([CLANGPP], [clang++])
+
+if test ! -z "$CLANGPP"; then
+
+# Test that clang++ can compile a simple C++ program.
+
+AC_LANG([C++])
+
+old_CXX=$CXX
+CXX=$CLANGPP
+old_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="-std=gnu++11"
+
+AC_MSG_CHECKING([that clang++ works])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <iostream> ]],
+    [[ std::cout << "Hello clang++ world!" << std::endl ]]
+  )],
+  [AC_MSG_RESULT(yes)
+   # The vecmathlib repo should be checked out under lib/kernel
+   # and the pocl directory should have the generated files in place.
+   if test -r $srcdir/lib/kernel/vecmathlib/pocl/pow.cc; then
+      use_vecmathlib=yes
+   fi
+   AC_DEFINE_UNQUOTED([CLANGPP], ["$CLANGPP"], [clang++ executable.])
+  ],
+  [AC_MSG_RESULT(no)
+   CLANGPP=""])
+
+   CXX=$old_CXX
+   CXXFLAGS=$old_CXXFLAGS
+
+fi
+
+AM_CONDITIONAL([CLANGPP_AVAILABLE], test ! -z $CLANGPP)
+AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
@@ -502,6 +548,8 @@ LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
 LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
 LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
 LLVM_PROG([LLVM_LINK], [llvm-link], [LLVM IR linker])
+
+
 # $CLANG and $LLC are needed by config/xclang
 export CLANG
 export LLC
@@ -671,7 +719,6 @@ OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
-
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
@@ -896,7 +943,9 @@ else
    echo "Not installing pocl.icd to /etc/OpenCL/vendors. This means that"
    echo "your ICD loader probably will not find pocl. See README for details."
   else
-   echo "'make check' will fail if it is run before 'make install'" 
+   echo "'make check' might fail if it is run before 'make install' unless" 
+   echo "your ICD loader supports the OCL_ICD_VENDORS environment variable"
+   echo "please consult README.devel for details."
   fi
  else
   echo "Using ocl-icd to run checks inside build tree."
@@ -911,6 +960,11 @@ else
  echo "Linking directly with libpocl will not work."
 fi
 echo
+
+if test x"$use_vecmathlib" == xyes;
+then
+ echo "Using vecmathlib math builtins."
+fi
 
 echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES

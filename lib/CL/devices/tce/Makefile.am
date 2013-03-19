@@ -31,7 +31,7 @@ libpocl_devices_tce_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VE
 
 libpocl_devices_tce_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/fix-include -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL
+-I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS)
 
 dist_pkgdata_DATA = tta_device_main.c
 

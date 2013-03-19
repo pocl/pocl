@@ -1,0 +1,21 @@
+date: 2013-03-16
+LLVM: 3.2svn
+ CPU: Cell Broadband Engine, altivec supported
+
+case                     pocl    
+AESEncryptDecrypt        27.250  
+BitonicSort              4.709   
+BinarySearch             3.030   
+BinomialOption           4.518   
+BlackScholes             0.161   
+DCT                      4.728   
+FastWalshTransform       2.434   
+FloydWarshall            3.374   
+Histogram                4.643   
+Mandelbrot               4.318   
+MatrixTranspose          5.157   
+NBody                    43.670  
+QuasiRandomSequence      2.841   
+Reduction                6.937   
+SimpleConvolution        2.557   
+

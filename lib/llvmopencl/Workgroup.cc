@@ -525,8 +525,7 @@ createWorkgroup(Module &M, Function *F)
     Value *value;
     if (ii->hasByValAttr()) {
         value = builder.CreateBitCast(pointer, t);
-    }
-    else {
+    } else {
         value = builder.CreateBitCast(pointer, t->getPointerTo());
         value = builder.CreateLoad(value);
     }
@@ -601,7 +600,8 @@ createWorkgroupFast(Module &M, Function *F)
 
     /* If it's a pass by value pointer argument, we just pass the pointer
      * as is to the function, no need to load from it first. */
-    Value *value = builder.CreateBitCast(pointer, t->getPointerTo());
+    Value *value = builder.CreateBitCast(
+        pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
     if (!ii->hasByValAttr()) {
         value = builder.CreateLoad(value);
     }

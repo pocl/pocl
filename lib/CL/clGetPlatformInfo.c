@@ -65,13 +65,13 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_PLATFORM_INFO_STR("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
-      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2 POCL " PACKAGE_VERSION);
+      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2 pocl " PACKAGE_VERSION);
 
     case CL_PLATFORM_NAME:
-      POCL_RETURN_PLATFORM_INFO_STR("Portable OpenCL");
+      POCL_RETURN_PLATFORM_INFO_STR("Portable Computing Language");
 
     case CL_PLATFORM_VENDOR:
-      POCL_RETURN_PLATFORM_INFO_STR("The POCL project");
+      POCL_RETURN_PLATFORM_INFO_STR("The pocl project");
 
     case CL_PLATFORM_EXTENSIONS:
       // TODO: do we want to list all suppoted extensions *here*, or in some header?.

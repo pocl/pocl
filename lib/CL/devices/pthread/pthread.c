@@ -33,7 +33,7 @@
 #include "utlist.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
-
+#include "common.h"
 #include "config.h"
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
@@ -63,9 +63,6 @@
 
 /* CUSTOM_BUFFER_ALLOCATOR */
 #endif
-
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
@@ -465,9 +462,6 @@ pocl_pthread_run
 {
   struct data *d;
   int error;
-  char bytecode[POCL_FILENAME_LENGTH];
-  char assembly[POCL_FILENAME_LENGTH];
-  char module[POCL_FILENAME_LENGTH];
   char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
@@ -475,71 +469,23 @@ pocl_pthread_run
   size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
+  const char *module_fn;
   char* tmpdir = cmd->command.run.tmp_dir;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
 
   d = (struct data *) data;
 
-  error = snprintf 
-    (module, POCL_FILENAME_LENGTH,
-     "%s/parallel.so", tmpdir);
-  assert (error >= 0);
-
-  if (access (module, F_OK) != 0)
-    {
-      char *llvm_ld;
-      error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
+  module_fn = llvm_codegen (tmpdir);
       
-      error = snprintf (assembly, POCL_FILENAME_LENGTH,
-			"%s/parallel.s",
-			tmpdir);
-      assert (error >= 0);
-      
-      // "-relocation-model=dynamic-no-pic" is a magic string,
-      // I do not know why it has to be there to produce valid
-      // sos on x86_64
-      error = snprintf (command, COMMAND_LENGTH,
-			LLC " " HOST_LLC_FLAGS " -o %s %s",
-			assembly,
-			bytecode);
-      assert (error >= 0);
-      
-      error = system (command);
-      assert (error == 0);
-           
-      // For the pthread device, use device type is always the same as the host. 
-      error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target %s %s -c -o %s.o %s",
-			OCL_KERNEL_TARGET,
-			HOST_CLANG_FLAGS,
-			module,
-			assembly);
-      assert (error >= 0);
-      
-      error = system (command);
-      assert (error == 0);
-
-      error = snprintf (command, COMMAND_LENGTH,
-                       "ld " HOST_LD_FLAGS " -o %s %s.o",
-                       module,
-                       module);
-      assert (error >= 0);
-
-      error = system (command);
-      assert (error == 0);
-    }
-      
-  d->current_dlhandle = lt_dlopen (module);
+  d->current_dlhandle = lt_dlopen (module_fn);
   if (d->current_dlhandle == NULL)
     {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module, lt_dlerror());
+      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module_fn, lt_dlerror());
       printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
       abort();
     }
-
+  free ((void*)module_fn);
   d->current_kernel = kernel;
 
   /* Find which device number within the context correspond
