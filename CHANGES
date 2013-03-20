@@ -37,15 +37,20 @@ Major bugfixes
   "interesting" behavior when calling the later functions in
   the table and not using ocl-icd as the dispatcher.
 
-OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
--------------------------------------------------------
+Platform Layer implementations (OpenCL 1.2 Chapter 4)
+-----------------------------------------------------
 - Return correctly formatted CL_DEVICE_VERSION and
   CL_DEVICE_OPENCL_C_VERSION.
 - clGetDeviceInfo: Use the 'cpufreq' sys interface of Linux for 
   querying the CPU clock frequency, if available.
 
-OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
--------------------------------------------------------------------
+The OpenCL Runtime (OpenCL 1.2 Chapter 5)
+-----------------------------------------
+- clGetEventInfo: Querying the command type, command queue,
+  and the reference count of the event.
+
+Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+----------------------------------------------------------
 - convert_type* builtins now generated with a Python script by
   Victor Oliveira.
 
