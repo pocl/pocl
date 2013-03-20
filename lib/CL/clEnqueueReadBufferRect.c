@@ -81,6 +81,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
+      (*event)->command_type = CL_COMMAND_READ_BUFFER;
 
       POname(clRetainCommandQueue) (command_queue);
 

@@ -434,7 +434,7 @@ struct _cl_event {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   cl_command_queue queue;
-  _cl_command_node* command;
+  cl_command_type command_type;
 
   /* The execution status of the command this event is monitoring. */
   cl_int status;

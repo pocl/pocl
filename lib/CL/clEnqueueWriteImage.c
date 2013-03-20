@@ -13,13 +13,30 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
                     cl_uint             num_events_in_wait_list,
                     const cl_event *    event_wait_list,
                     cl_event *          event) CL_API_SUFFIX__VERSION_1_0
-  {
-    return pocl_write_image(image,
-                            command_queue->device,
-                            origin,
-                            region,
-                            host_row_pitch,
-                            host_slice_pitch, 
-                            ptr);
-  }
+{
+  cl_int status;
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc(sizeof(struct _cl_event));
+      if (*event == NULL)
+	return CL_OUT_OF_HOST_MEMORY; 
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      (*event)->command_type = CL_COMMAND_READ_BUFFER;
+      
+      POname(clRetainCommandQueue) (command_queue);
+      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_SUBMITTED;
+      POCL_UPDATE_EVENT_RUNNING;
+    }
+  status = pocl_write_image(image,
+			    command_queue->device,
+			    origin,
+			    region,
+			    host_row_pitch,
+			    host_slice_pitch, 
+			    ptr);
+  POCL_UPDATE_EVENT_COMPLETE;
+  return status;
+}
 POsym(clEnqueueWriteImage)

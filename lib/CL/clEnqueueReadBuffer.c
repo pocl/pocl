@@ -78,6 +78,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY; 
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
+      (*event)->command_type = CL_COMMAND_READ_BUFFER;
+
       POname(clRetainCommandQueue) (command_queue);
 
       POCL_UPDATE_EVENT_QUEUED;
@@ -101,7 +103,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
           // ensure our buffer is not freed yet
           POname(clRetainMemObject) (buffer);
           POname(clFinish)(command_queue);
-        }
+        }      
       /* TODO: offset computation doesn't work in case the ptr is not 
          a direct pointer */
       POCL_UPDATE_EVENT_SUBMITTED;

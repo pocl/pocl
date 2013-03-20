@@ -39,6 +39,7 @@ CL_API_SUFFIX__VERSION_1_0
     return CL_OUT_OF_HOST_MEMORY; 
   POCL_INIT_OBJECT(*event);
   (*event)->queue = command_queue;
+  (*event)->command_type = CL_COMMAND_MARKER;
   POname(clRetainCommandQueue) (command_queue);
   POCL_UPDATE_EVENT_QUEUED;
 

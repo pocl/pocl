@@ -264,8 +264,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POname(clRetainCommandQueue) (command_queue);
-      (*event)->command = command_node;
-      (*event)->command->event = *event;
+      (*event)->command_type = command_node->type;
+      command_node->event = *event;
 
       POCL_UPDATE_EVENT_QUEUED;
     }
