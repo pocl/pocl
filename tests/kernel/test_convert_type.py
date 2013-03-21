@@ -117,11 +117,19 @@ for f in float_types:
    0.0{S},  0.25{S},  0.5{S},  0.75{S},  1.0{S},  1.25{S},  1.5{S},  1.75{S}
 }};
 
+#ifdef cl_khr_fp64
 {F} {F}_sat_offsets[16] =
 {{
    0.0{S}, ({F})CHAR_MAX, ({F})CHAR_MIN, ({F})UCHAR_MAX, ({F})SHRT_MIN, ({F})SHRT_MAX, ({F})USHRT_MAX, ({F})INT_MAX,
    ({F})INT_MIN, ({F})UINT_MAX, ({F})LONG_MAX, ({F})LONG_MIN, ({F})ULONG_MAX, 0.0{S}, 1.0e15{S}, -1.0e15{S}
 }};
+#else
+{F} {F}_sat_offsets[13] =
+{{
+   0.0{S}, ({F})CHAR_MAX, ({F})CHAR_MIN, ({F})UCHAR_MAX, ({F})SHRT_MIN, ({F})SHRT_MAX, ({F})USHRT_MAX, ({F})INT_MAX,
+   ({F})INT_MIN, ({F})UINT_MAX, 0.0{S}, 1.0e15{S}, -1.0e15{S}
+}};
+#endif
 
 
 const size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
@@ -241,23 +249,23 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
 
 print("""
 union { int8 value; int raw[8]; } qe, qa;
-qa.value = convert_int8_rtz((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rtz((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8_rtz((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rtp((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rtp((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-23, -23, -23, -23, 23, 24, 24, 24);
 compare_int_elements("convert_int8_rtp((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rtn((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rtn((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-24, -24, -24, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8_rtn((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rte((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rte((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-24, -24, -23, -23, 23, 23, 24, 24);
 compare_int_elements("convert_int8_rte((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8((float8))", 0, qe.raw, qa.raw, 8);
 """)
