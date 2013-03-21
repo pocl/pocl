@@ -512,10 +512,14 @@ CXX=$CLANGPP
 old_CXXFLAGS=$CXXFLAGS
 CXXFLAGS="-std=gnu++11"
 
+# The namespace std { class type_info; } is needed for older libstdc++
+# versions such as the 4.4 in Debian 6.0.
+# http://lists.cs.uiuc.edu/pipermail/cfe-dev/2011-February/013207.html
 AC_MSG_CHECKING([that clang++ works])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
-    [[ #include <iostream> ]],
+    [[ namespace std { class type_info; }
+       #include <iostream> ]],
     [[ std::cout << "Hello clang++ world!" << std::endl ]]
   )],
   [AC_MSG_RESULT(yes)
