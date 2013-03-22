@@ -368,7 +368,11 @@ DEFINE_SAFE_2(ulong , long ))
 
 
 #if __has_extension(c_generic_selections)
-# define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
+ #ifdef cl_khr_fp64
+ # define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
+ #else
+ # define is_floating(T) _Generic((T)0, float: 1, default: 0)
+ #endif 
 #else
 # define is_floating(T) ((T)0.1f > (T)0.0f)
 #endif

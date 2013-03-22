@@ -33,11 +33,19 @@ float float_values[16] =
    0.0f,  0.25f,  0.5f,  0.75f,  1.0f,  1.25f,  1.5f,  1.75f
 };
 
+#ifdef cl_khr_fp64
 float float_sat_offsets[16] =
 {
    0.0f, (float)CHAR_MAX, (float)CHAR_MIN, (float)UCHAR_MAX, (float)SHRT_MIN, (float)SHRT_MAX, (float)USHRT_MAX, (float)INT_MAX,
    (float)INT_MIN, (float)UINT_MAX, (float)LONG_MAX, (float)LONG_MIN, (float)ULONG_MAX, 0.0f, 1.0e15f, -1.0e15f
 };
+#else
+float float_sat_offsets[13] =
+{
+   0.0f, (float)CHAR_MAX, (float)CHAR_MIN, (float)UCHAR_MAX, (float)SHRT_MIN, (float)SHRT_MAX, (float)USHRT_MAX, (float)INT_MAX,
+   (float)INT_MIN, (float)UINT_MAX, 0.0f, 1.0e15f, -1.0e15f
+};
+#endif
 
 
 const size_t float_values_length = sizeof(float_values) / sizeof(float_values[0]);
@@ -56,11 +64,19 @@ double double_values[16] =
    0.0,  0.25,  0.5,  0.75,  1.0,  1.25,  1.5,  1.75
 };
 
+#ifdef cl_khr_fp64
 double double_sat_offsets[16] =
 {
    0.0, (double)CHAR_MAX, (double)CHAR_MIN, (double)UCHAR_MAX, (double)SHRT_MIN, (double)SHRT_MAX, (double)USHRT_MAX, (double)INT_MAX,
    (double)INT_MIN, (double)UINT_MAX, (double)LONG_MAX, (double)LONG_MIN, (double)ULONG_MAX, 0.0, 1.0e15, -1.0e15
 };
+#else
+double double_sat_offsets[13] =
+{
+   0.0, (double)CHAR_MAX, (double)CHAR_MIN, (double)UCHAR_MAX, (double)SHRT_MIN, (double)SHRT_MAX, (double)USHRT_MAX, (double)INT_MAX,
+   (double)INT_MIN, (double)UINT_MAX, 0.0, 1.0e15, -1.0e15
+};
+#endif
 
 
 const size_t double_values_length = sizeof(double_values) / sizeof(double_values[0]);
@@ -11808,23 +11824,23 @@ kernel void test_convert_type()
 #endif
 
 union { int8 value; int raw[8]; } qe, qa;
-qa.value = convert_int8_rtz((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rtz((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8_rtz((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rtp((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rtp((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-23, -23, -23, -23, 23, 24, 24, 24);
 compare_int_elements("convert_int8_rtp((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rtn((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rtn((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-24, -24, -24, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8_rtn((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rte((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8_rte((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-24, -24, -23, -23, 23, 23, 24, 24);
 compare_int_elements("convert_int8_rte((float8))", 0, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8((float8)(-23.67, -23.50, -23.35, -23.0, 23.0, 23.35, 23.50, 23.67));
+qa.value = convert_int8((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
 compare_int_elements("convert_int8((float8))", 0, qe.raw, qa.raw, 8);
 

@@ -24,10 +24,15 @@ POname(clGetEventInfo)(cl_event          event ,
   {
   case CL_EVENT_COMMAND_EXECUTION_STATUS:
     POCL_RETURN_EVENT_INFO (cl_int, event->status);
+  case CL_EVENT_COMMAND_QUEUE:
+    POCL_RETURN_EVENT_INFO(cl_command_queue, event->queue);
+  case CL_EVENT_COMMAND_TYPE:
+    POCL_RETURN_EVENT_INFO(cl_command_type, event->command_type);
+  case CL_EVENT_REFERENCE_COUNT:
+    POCL_RETURN_EVENT_INFO(cl_uint, event->pocl_refcount);
   default:
     break;
   }
-  POCL_ABORT_UNIMPLEMENTED();
-  return CL_SUCCESS;
+  return CL_INVALID_VALUE;
 }
 POsym(clGetEventInfo)

@@ -18,6 +18,19 @@ POname(clEnqueueCopyBufferToImage)(cl_command_queue  command_queue,
     if (region[2] != 1) //3D image
       POCL_ABORT_UNIMPLEMENTED();
     
+    if (event != NULL)
+      {
+        *event = (cl_event)malloc(sizeof(struct _cl_event));
+        if (*event == NULL)
+          return CL_OUT_OF_HOST_MEMORY; 
+        POCL_INIT_OBJECT(*event);
+        (*event)->queue = command_queue;
+        POname(clRetainCommandQueue) (command_queue);
+        (*event)->command_type = CL_COMMAND_COPY_BUFFER_TO_IMAGE;
+        POCL_UPDATE_EVENT_QUEUED;
+        POCL_UPDATE_EVENT_RUNNING;
+      }
+
     int dev_elem_size = sizeof(cl_float);
     int dev_channels = 4;
     
@@ -45,7 +58,9 @@ POname(clEnqueueCopyBufferToImage)(cl_command_queue  command_queue,
         temp+src_offset);
     
     free(temp);
-    
+
+    POCL_UPDATE_EVENT_COMPLETE;
+
     return ret_code;
   }
 POsym(clEnqueueCopyBufferToImage) 
