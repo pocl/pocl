@@ -176,11 +176,13 @@ LKERNEL_SRCS_DEFAULT= \
 	get_image_height.cl     
 
 # The standard list of kernel sources can be modified with
-# EXCLUDE_SRC_FILES, which removes files from the standard list and
+# EXCLUDE_SRC_FILES, which removes files from the standard list, and
 # LKERNEL_EXTRA_SRCS, which adds extra files to the source list.
 LKERNEL_SRCS = $(filter-out ${EXCLUDE_SRC_FILES}, ${LKERNEL_SRCS_DEFAULT} ) \
 	${LKERNEL_EXTRA_SRCS}
 
+# TODO: why are .cc files compiled to .cc.bc, while all other files
+# are compiled to .bc?
 OBJ_L=$(LKERNEL_SRCS:.cl=.bc)
 OBJ_C=$(OBJ_L:.ll=.bc)
 OBJ_CC=$(OBJ_C:.cc=.cc.bc)
@@ -195,7 +197,7 @@ OBJ:LKERNEL_SRCS
 	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
 %.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
 	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
-%.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
+%.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
 	@CLANGXX@ -std=c++11 -fno-exceptions -emit-llvm ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o $@ $< -include ../../../include/${TARGET_DIR}/types.h
 
 CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}

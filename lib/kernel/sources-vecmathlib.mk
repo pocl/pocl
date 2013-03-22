@@ -32,7 +32,8 @@ EXCLUDE_SRC_FILES = acos.cl acosh.cl asinh.cl atanh.cl cbrt.cl cosh.cl \
 	ceil.cl copysign.cl cos.cl exp2.cl floor.cl log2.cl log.cl \
 	pow.cl round.cl sin.cl sqrt.cl tan.cl trunc.cl
 
-LKERNEL_EXTRA_SRCS = acos.cc \
+LKERNEL_EXTRA_SRCS =	\
+	acos.cc		\
 	acosh.cc 	\
 	asin.cc	 	\
 	asinh.cc	\
