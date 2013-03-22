@@ -191,15 +191,12 @@ OBJ:LKERNEL_SRCS
 #libkernel_SRCS = $LIBKERNEL_SOURCES
 
 #rules to compile the different kernel library source file types into LLVM bitcode
-%.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
-	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
 %.bc: %.cl @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
-	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h \
-		-include ${abs_top_srcdir}/include/_kernel.h
-
-%.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h 
-	@CLANGXX@ -std=gnu++11 -fno-exceptions -emit-llvm ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} \
-	-include ../../../include/${TARGET_DIR}/types.h -o $@ $<  
+	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
+%.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
+	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
+%.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
+	@CLANGXX@ -std=c++11 -fno-exceptions -emit-llvm ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o $@ $< -include ../../../include/${TARGET_DIR}/types.h
 
 CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 
