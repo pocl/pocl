@@ -23,6 +23,8 @@
 
 #include "templates.h"
 
+/* __builtin_clz() is undefined for 0 */
+
 #define __builtin_clz0hh(n)  ({ char __n=(n); __n==0 ? 8 : (__builtin_clzs((short)(__n) & 0xff) - 8); })
 #define __builtin_clz0h(n)   ({ short __n=(n); __n==0 ? 16 : __builtin_clzs(__n); })
 #define __builtin_clz0(n)    ({ int __n=(n); __n==0 ? 32 : __builtin_clz(__n); })
