@@ -561,6 +561,9 @@ void barrier (cl_mem_fence_flags flags);
 #define FLT_MIN        0x1.0p-126f
 #define FLT_EPSILON    0x1.0p-23f
 
+#define FP_ILOGB0   INT_MIN
+#define FP_ILOGBNAN INT_MAX
+
 #define M_E_F        2.71828182845904523536028747135f
 #define M_LOG2E_F    1.44269504088896340735992468100f
 #define M_LOG10E_F   0.434294481903251827651128918917f
