@@ -23,6 +23,7 @@
    THE SOFTWARE.
 */
 #include "common.h"
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -74,6 +75,8 @@ llvm_codegen (const char* tmpdir) {
 			bytecode);
       assert (error >= 0);
       
+      /* printf("[pocl] executing [%s]\n", command); */
+      /* fflush(stdout); */
       error = system (command);
       assert (error == 0);
           
@@ -86,6 +89,8 @@ llvm_codegen (const char* tmpdir) {
 			assembly);
       assert (error >= 0);
       
+      /* printf("[pocl] executing [%s]\n", command); */
+      /* fflush(stdout); */
       error = system (command);
       assert (error == 0);
 
@@ -97,6 +102,8 @@ llvm_codegen (const char* tmpdir) {
                        module);
       assert (error >= 0);
 
+      /* printf("[pocl] executing [%s]\n", command); */
+      /* fflush(stdout); */
       error = system (command);
       assert (error == 0);
     }
