@@ -23,11 +23,12 @@
 
 #include "templates.h"
 
-#define __builtin_popcounthh  __builtin_popcount
-#define __builtin_popcounth   __builtin_popcount
-#define __builtin_popcountuhh __builtin_popcount
-#define __builtin_popcountuh  __builtin_popcount
-#define __builtin_popcountu   __builtin_popcount
-#define __builtin_popcountul  __builtin_popcountl
+#define __builtin_popcounthh(n)  __builtin_popcount((int)(n) & 0xff)
+#define __builtin_popcounth(n)   __builtin_popcount((int)(n) & 0xffff)
+
+#define __builtin_popcountuhh(n) __builtin_popcounthh(n)
+#define __builtin_popcountuh(n)  __builtin_popcounth(n)
+#define __builtin_popcountu(n)   __builtin_popcount(n)
+#define __builtin_popcountul(n)  __builtin_popcountl(n)
 
 DEFINE_BUILTIN_G_G(popcount)

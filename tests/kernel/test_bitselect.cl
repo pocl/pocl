@@ -1189,30 +1189,26 @@ DEFINE_BODY_G
          is_signed(sgtype) ?
          (left.s[n] & signbit ? -left.s[n] : left.s[n]) :
          left.s[n];
-       equal = equal && res_abs.s[n] == absval;
-     }
-     if (!equal) {
-       printf("FAIL: abs type=%s a=0x%08x c=0x%08x\n",
-              typename,
-              (uint)left.s[0],
-              (uint)res_abs.s[0]);
-       return;
+       if (res_abs.s[n] != absval) {
+         equal = false;
+         printf("FAIL: abs(a)[%d] type=%s a=0x%08x want=0x%08x got=0x%08x\n",
+                n, typename,
+                (uint)left.s[n], (uint)absval,
+                (uint)res_abs.s[n]);
+       }
      }
      // bitselect
-     equal = true;
      for (int n=0; n<vecsize; ++n) {
-       equal = equal && ((res_bitselect.s[n] & ~sel.s[n]) == (left.s[n]  & ~sel.s[n]));
-       equal = equal && ((res_bitselect.s[n] &  sel.s[n]) == (right.s[n] &  sel.s[n]));
-     }
-     if (!equal) {
-       printf("FAIL: bitselect type=%s a=0x%08x b=0x%08x c=0x%08x c=0x%08x\n",
-              typename,
-              (uint)left.s[0], (uint)right.s[0], (uint)sel.s[0],
-              (uint)res_bitselect.s[0]);
-       return;
+       sgtype selval = (left.s[n] & ~sel.s[n]) | (right.s[n] & sel.s[n]);
+       if (res_bitselect.s[n] != selval) {
+         equal = false;
+         printf("FAIL: bitselect(a,b,c)[%d] type=%s a=0x%08x b=0x%08x c=0x%08x want=0x%08x got=0x%08x\n",
+                n, typename,
+                (uint)left.s[n], (uint)right.s[n], (uint)sel.s[n], (uint)selval,
+                (uint)res_bitselect.s[n]);
+       }
      }
      // clz
-     equal = true;
      for (int n=0; n<vecsize; ++n) {
        int b=0;
        while (b<bits) {
@@ -1220,54 +1216,52 @@ DEFINE_BODY_G
          if (left.s[n] & mask) break;
          ++b;
        }
-       equal = equal && res_clz.s[n] == (sgtype)b;
-     }
-     if (!equal) {
-       printf("FAIL: clz type=%s a=0x%08x a=0x%08x\n",
-              typename,
-              (uint)left.s[0], (uint)res_clz.s[0]);
-       return;
+       if (res_clz.s[n] != (sgtype)b) {
+         equal = false;
+         printf("FAIL: clz(a)[%d] type=%s a=0x%08x want=0x%08x got=0x%08x\n",
+                n, typename,
+                (uint)left.s[n], (uint)b,
+                (uint)res_clz.s[n]);
+       }
      }
      // max
-     equal = true;
      for (int n=0; n<vecsize; ++n) {
-       equal = equal && res_max.s[n] == (left.s[n] > right.s[n] ? left.s[n] : right.s[n]);
-     }
-     if (!equal) {
-       printf("FAIL: max type=%s a=0x%08x b=0x%08x c=0x%08x\n",
-              typename,
-              (uint)left.s[0], (uint)right.s[0],
-              (uint)res_max.s[0]);
-       return;
+       sgtype maxval = left.s[n] > right.s[n] ? left.s[n] : right.s[n];
+       if (res_max.s[n] != maxval) {
+         equal = false;
+         printf("FAIL: max(a,b)[%d] type=%s a=0x%08x b=0x%08x want=0x%08x got=0x%08x\n",
+                n, typename,
+                (uint)left.s[n], (uint)right.s[n], (uint)maxval,
+                (uint)res_max.s[n]);
+       }
      }
      // min
-     equal = true;
      for (int n=0; n<vecsize; ++n) {
-       equal = equal && res_min.s[n] == (left.s[n] < right.s[n] ? left.s[n] : right.s[n]);
-     }
-     if (!equal) {
-       printf("FAIL: min type=%s a=0x%08x b=0x%08x c=0x%08x\n",
-              typename,
-              (uint)left.s[0], (uint)right.s[0],
-              (uint)res_min.s[0]);
-       return;
+       sgtype minval = left.s[n] < right.s[n] ? left.s[n] : right.s[n];
+       if (res_min.s[n] != minval) {
+         equal = false;
+         printf("FAIL: min(a,b)[%d] type=%s a=0x%08x b=0x%08x want=0x%08x got=0x%08x\n",
+                n, typename,
+                (uint)left.s[n], (uint)right.s[n], (uint)minval,
+                (uint)res_min.s[n]);
+       }
      }
      // popcount
-     equal = true;
      for (int n=0; n<vecsize; ++n) {
        int c=0;
        for (int b=0; b<bits; ++b) {
          sgtype mask = (sgtype)1 << (sgtype)b;
          if (left.s[n] & mask) ++c;
        }
-       equal = equal && res_popcount.s[n] == (sgtype)c;
+       if (res_popcount.s[n] != (sgtype)c) {
+         equal = false;
+         printf("FAIL: popcount(a)[%d] type=%s a=0x%08x want=0x%08x got=0x%08x\n",
+                n, typename,
+                (uint)left.s[n], (uint)c,
+                (uint)res_clz.s[n]);
+       }
      }
-     if (!equal) {
-       printf("FAIL: popcount type=%s a=0x%08x a=0x%08x\n",
-              typename,
-              (uint)left.s[0], (uint)res_clz.s[0]);
-       return;
-     }
+     if (!equal) return;
    }
  })
  )

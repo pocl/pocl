@@ -23,11 +23,16 @@
 
 #include "templates.h"
 
-#define __builtin_clzhh  __builtin_clz
-#define __builtin_clzh   __builtin_clz
-#define __builtin_clzuhh __builtin_clz
-#define __builtin_clzuh  __builtin_clz
-#define __builtin_clzu   __builtin_clz
-#define __builtin_clzul  __builtin_clzl
+#define __builtin_clz0hh(n)  ({ char __n=(n); __n==0 ? 8 : (__builtin_clzs((short)(__n) & 0xff) - 8); })
+#define __builtin_clz0h(n)   ({ short __n=(n); __n==0 ? 16 : __builtin_clzs(__n); })
+#define __builtin_clz0(n)    ({ int __n=(n); __n==0 ? 32 : __builtin_clz(__n); })
+#define __builtin_clz0l(n)   ({ long __n=(n); __n==0 ? 64 : __builtin_clzl(__n); })
 
-DEFINE_BUILTIN_G_G(clz)
+#define __builtin_clz0uhh(n) __builtin_clz0hh(n)
+#define __builtin_clz0uh(n)  __builtin_clz0h(n)
+#define __builtin_clz0u(n)   __builtin_clz0(n)
+#define __builtin_clz0ul(n)  __builtin_clz0l(n)
+
+#define clz0 clz
+DEFINE_BUILTIN_G_G(clz0)
+#undef clz0
