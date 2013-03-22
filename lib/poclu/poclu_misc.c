@@ -28,7 +28,7 @@
 cl_context
 poclu_create_any_context() 
 {
-  int i;
+  cl_uint i;
   cl_platform_id* platforms = (cl_platform_id*)malloc(sizeof(cl_platform_id));
 
   clGetPlatformIDs(1, platforms, &i);

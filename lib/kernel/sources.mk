@@ -197,9 +197,8 @@ OBJ:LKERNEL_SRCS
 	@CLANG@ -emit-llvm -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h \
 		-include ${abs_top_srcdir}/include/_kernel.h
 
-# -isystem /usr/include/c++/4.4 -isystem /usr/include/c++/4.4/x86_64-linux-gnu -std=c++0x
 %.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h 
-	@CLANGPP@ -std=gnu++11 -fno-exceptions -emit-llvm ${CLANGPP_FLAGS} -c -target ${KERNEL_TARGET} \
+	@CLANGXX@ -std=gnu++11 -fno-exceptions -emit-llvm ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} \
 	-include ../../../include/${TARGET_DIR}/types.h -o $@ $<  
 
 CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}

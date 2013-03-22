@@ -499,18 +499,19 @@ LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
 
 # Check for a functioning clang++. It is needed to compile faster math 
 # builtins from vecmathlib.
-LLVM_PROG_WARN([CLANGPP], [clang++])
+LLVM_PROG_WARN([CLANGXX], [clang++])
 
-if test ! -z "$CLANGPP"; then
-
+if test ! -z "$CLANGXX"; then
 # Test that clang++ can compile a simple C++ program.
+
+: ${CLANGXX_FLAGS:="-std=gnu++11"}
 
 AC_LANG([C++])
 
 old_CXX=$CXX
-CXX=$CLANGPP
+CXX=$CLANGXX
 old_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="-std=gnu++11"
+CXXFLAGS=$CLANGXX_FLAGS
 
 AC_MSG_CHECKING([that clang++ works])
 AC_COMPILE_IFELSE(
@@ -524,17 +525,19 @@ AC_COMPILE_IFELSE(
    if test -r $srcdir/lib/kernel/vecmathlib/pocl/pow.cc; then
       use_vecmathlib=yes
    fi
-   AC_DEFINE_UNQUOTED([CLANGPP], ["$CLANGPP"], [clang++ executable.])
+   AC_DEFINE_UNQUOTED([CLANGXX], ["$CLANGXX"], [clang++ executable])
+   AC_DEFINE_UNQUOTED([CLANGXX_FLAGS], ["$CLANGXX_FLAGS"], [clang++ compiler flags])
   ],
   [AC_MSG_RESULT(no)
-   CLANGPP=""])
+   CLANGXX=""
+   CLANGXX_FLAGS=""])
 
-   CXX=$old_CXX
-   CXXFLAGS=$old_CXXFLAGS
+CXX=$old_CXX
+CXXFLAGS=$old_CXXFLAGS
 
 fi
 
-AM_CONDITIONAL([CLANGPP_AVAILABLE], test ! -z $CLANGPP)
+AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])

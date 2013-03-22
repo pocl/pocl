@@ -37,4 +37,3 @@ endif
 
 
 all: kernel-@TARGET@.bc
-

@@ -26,4 +26,3 @@ typedef int ptrdiff_t;
 typedef int intptr_t;
 typedef uint uintptr_t;
 #endif
-
