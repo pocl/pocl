@@ -1143,6 +1143,59 @@
   IMPLEMENT_EXPR_G_GS(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )   \
   IMPLEMENT_EXPR_G_GS(NAME, EXPR, ulong16 , ulong , ulong16 , ulong ))
 
+#define IMPLEMENT_EXPR_G_GSS(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
+  GTYPE __attribute__ ((overloadable))                                  \
+  NAME(GTYPE a, SGTYPE b, SGTYPE c)                                     \
+  {                                                                     \
+    typedef GTYPE gtype;                                                \
+    typedef SGTYPE sgtype;                                              \
+    typedef UGTYPE ugtype;                                              \
+    typedef SUGTYPE sugtype;                                            \
+    return EXPR;                                                        \
+  }
+#define DEFINE_EXPR_G_GSS(NAME, EXPR)                                   \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, char2   , char  , uchar2  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, char3   , char  , uchar3  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, char4   , char  , uchar4  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, char8   , char  , uchar8  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, char16  , char  , uchar16 , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uchar2  , uchar , uchar2  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uchar3  , uchar , uchar3  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uchar4  , uchar , uchar4  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uchar8  , uchar , uchar8  , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uchar16 , uchar , uchar16 , uchar )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, short2  , short , ushort2 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, short3  , short , ushort3 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, short4  , short , ushort4 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, short8  , short , ushort8 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, short16 , short , ushort16, ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ushort2 , ushort, ushort2 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ushort3 , ushort, ushort3 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ushort4 , ushort, ushort4 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ushort8 , ushort, ushort8 , ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ushort16, ushort, ushort16, ushort)  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, int2    , int   , uint2   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, int3    , int   , uint3   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, int4    , int   , uint4   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, int8    , int   , uint8   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, int16   , int   , uint16  , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uint2   , uint  , uint2   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uint3   , uint  , uint3   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uint4   , uint  , uint4   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uint8   , uint  , uint8   , uint  )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, uint16  , uint  , uint16  , uint  )  \
+  __IF_INT64(                                                           \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, long2   , long  , ulong2  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, long3   , long  , ulong3  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, long4   , long  , ulong4  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, long8   , long  , ulong8  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, long16  , long  , ulong16 , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ulong2  , ulong , ulong2  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ulong3  , ulong , ulong3  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ulong4  , ulong , ulong4  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ulong8  , ulong , ulong8  , ulong )  \
+  IMPLEMENT_EXPR_G_GSS(NAME, EXPR, ulong16 , ulong , ulong16 , ulong ))
+
 #define IMPLEMENT_EXPR_UG_GG(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
   UGTYPE __attribute__ ((overloadable))                                 \
   NAME(GTYPE a, GTYPE b)                                                \
