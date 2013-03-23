@@ -77,7 +77,7 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 # Fails due to buggy clz/pocount and bitselect functions.
-AT_XFAIL_IF([true])
+#AT_XFAIL_IF([true])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_bitselect...

@@ -29133,14 +29133,14 @@ char convert_char_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char_sat(x);
 }
 
@@ -29187,14 +29187,14 @@ char2 convert_char2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char2(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char2_sat(x);
 }
 
@@ -29241,14 +29241,14 @@ char3 convert_char3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char3(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char3_sat(x);
 }
 
@@ -29295,14 +29295,14 @@ char4 convert_char4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char4(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char4_sat(x);
 }
 
@@ -29349,14 +29349,14 @@ char8 convert_char8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char8(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char8_sat(x);
 }
 
@@ -29403,14 +29403,14 @@ char16 convert_char16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char16(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char16_sat(x);
 }
 
@@ -29457,14 +29457,14 @@ uchar convert_uchar_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar_sat(x);
 }
 
@@ -29511,14 +29511,14 @@ uchar2 convert_uchar2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar2(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar2_sat(x);
 }
 
@@ -29565,14 +29565,14 @@ uchar3 convert_uchar3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar3(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar3_sat(x);
 }
 
@@ -29619,14 +29619,14 @@ uchar4 convert_uchar4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar4(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar4_sat(x);
 }
 
@@ -29673,14 +29673,14 @@ uchar8 convert_uchar8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar8(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar8_sat(x);
 }
 
@@ -29727,14 +29727,14 @@ uchar16 convert_uchar16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar16(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar16_sat(x);
 }
 
@@ -29781,14 +29781,14 @@ short convert_short_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short_sat(x);
 }
 
@@ -29835,14 +29835,14 @@ short2 convert_short2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short2(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short2_sat(x);
 }
 
@@ -29889,14 +29889,14 @@ short3 convert_short3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short3(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short3_sat(x);
 }
 
@@ -29943,14 +29943,14 @@ short4 convert_short4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short4(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short4_sat(x);
 }
 
@@ -29997,14 +29997,14 @@ short8 convert_short8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short8(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short8_sat(x);
 }
 
@@ -30051,14 +30051,14 @@ short16 convert_short16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short16(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short16_sat(x);
 }
 
@@ -30105,14 +30105,14 @@ ushort convert_ushort_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort_sat(x);
 }
 
@@ -30159,14 +30159,14 @@ ushort2 convert_ushort2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort2(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort2_sat(x);
 }
 
@@ -30213,14 +30213,14 @@ ushort3 convert_ushort3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort3(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort3_sat(x);
 }
 
@@ -30267,14 +30267,14 @@ ushort4 convert_ushort4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort4(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort4_sat(x);
 }
 
@@ -30321,14 +30321,14 @@ ushort8 convert_ushort8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort8(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort8_sat(x);
 }
 
@@ -30375,14 +30375,14 @@ ushort16 convert_ushort16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort16(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort16_sat(x);
 }
 
@@ -30429,14 +30429,14 @@ int convert_int_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int_sat(x);
 }
 
@@ -30483,14 +30483,14 @@ int2 convert_int2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int2(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int2_sat(x);
 }
 
@@ -30537,14 +30537,14 @@ int3 convert_int3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int3(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int3_sat(x);
 }
 
@@ -30591,14 +30591,14 @@ int4 convert_int4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int4(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int4_sat(x);
 }
 
@@ -30645,14 +30645,14 @@ int8 convert_int8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int8(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int8_sat(x);
 }
 
@@ -30699,14 +30699,14 @@ int16 convert_int16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int16(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int16_sat(x);
 }
 
@@ -30753,14 +30753,14 @@ uint convert_uint_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint_sat(x);
 }
 
@@ -30807,14 +30807,14 @@ uint2 convert_uint2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint2(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint2_sat(x);
 }
 
@@ -30861,14 +30861,14 @@ uint3 convert_uint3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint3(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint3_sat(x);
 }
 
@@ -30915,14 +30915,14 @@ uint4 convert_uint4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint4(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint4_sat(x);
 }
 
@@ -30969,14 +30969,14 @@ uint8 convert_uint8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint8(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint8_sat(x);
 }
 
@@ -31023,14 +31023,14 @@ uint16 convert_uint16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint16(x);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint16_sat(x);
 }
 
@@ -31082,7 +31082,7 @@ long convert_long_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long(x);
 }
 #endif
@@ -31091,7 +31091,7 @@ long convert_long_rte(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long_sat(x);
 }
 #endif
@@ -31152,7 +31152,7 @@ long2 convert_long2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long2(x);
 }
 #endif
@@ -31161,7 +31161,7 @@ long2 convert_long2_rte(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long2_sat(x);
 }
 #endif
@@ -31222,7 +31222,7 @@ long3 convert_long3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long3(x);
 }
 #endif
@@ -31231,7 +31231,7 @@ long3 convert_long3_rte(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long3_sat(x);
 }
 #endif
@@ -31292,7 +31292,7 @@ long4 convert_long4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long4(x);
 }
 #endif
@@ -31301,7 +31301,7 @@ long4 convert_long4_rte(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long4_sat(x);
 }
 #endif
@@ -31362,7 +31362,7 @@ long8 convert_long8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long8(x);
 }
 #endif
@@ -31371,7 +31371,7 @@ long8 convert_long8_rte(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long8_sat(x);
 }
 #endif
@@ -31432,7 +31432,7 @@ long16 convert_long16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long16(x);
 }
 #endif
@@ -31441,7 +31441,7 @@ long16 convert_long16_rte(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long16_sat(x);
 }
 #endif
@@ -31502,7 +31502,7 @@ ulong convert_ulong_sat_rtz(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong(x);
 }
 #endif
@@ -31511,7 +31511,7 @@ ulong convert_ulong_rte(float x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(float x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong_sat(x);
 }
 #endif
@@ -31572,7 +31572,7 @@ ulong2 convert_ulong2_sat_rtz(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong2(x);
 }
 #endif
@@ -31581,7 +31581,7 @@ ulong2 convert_ulong2_rte(float2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(float2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong2_sat(x);
 }
 #endif
@@ -31642,7 +31642,7 @@ ulong3 convert_ulong3_sat_rtz(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong3(x);
 }
 #endif
@@ -31651,7 +31651,7 @@ ulong3 convert_ulong3_rte(float3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(float3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong3_sat(x);
 }
 #endif
@@ -31712,7 +31712,7 @@ ulong4 convert_ulong4_sat_rtz(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong4(x);
 }
 #endif
@@ -31721,7 +31721,7 @@ ulong4 convert_ulong4_rte(float4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(float4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong4_sat(x);
 }
 #endif
@@ -31782,7 +31782,7 @@ ulong8 convert_ulong8_sat_rtz(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong8(x);
 }
 #endif
@@ -31791,7 +31791,7 @@ ulong8 convert_ulong8_rte(float8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(float8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong8_sat(x);
 }
 #endif
@@ -31852,7 +31852,7 @@ ulong16 convert_ulong16_sat_rtz(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong16(x);
 }
 #endif
@@ -31861,7 +31861,7 @@ ulong16 convert_ulong16_rte(float16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(float16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong16_sat(x);
 }
 #endif
@@ -31922,7 +31922,7 @@ char convert_char_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char(x);
 }
 #endif
@@ -31931,7 +31931,7 @@ char convert_char_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char_sat(x);
 }
 #endif
@@ -31992,7 +31992,7 @@ char2 convert_char2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char2(x);
 }
 #endif
@@ -32001,7 +32001,7 @@ char2 convert_char2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char2_sat(x);
 }
 #endif
@@ -32062,7 +32062,7 @@ char3 convert_char3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char3(x);
 }
 #endif
@@ -32071,7 +32071,7 @@ char3 convert_char3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char3_sat(x);
 }
 #endif
@@ -32132,7 +32132,7 @@ char4 convert_char4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char4(x);
 }
 #endif
@@ -32141,7 +32141,7 @@ char4 convert_char4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char4_sat(x);
 }
 #endif
@@ -32202,7 +32202,7 @@ char8 convert_char8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char8(x);
 }
 #endif
@@ -32211,7 +32211,7 @@ char8 convert_char8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char8_sat(x);
 }
 #endif
@@ -32272,7 +32272,7 @@ char16 convert_char16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char16(x);
 }
 #endif
@@ -32281,7 +32281,7 @@ char16 convert_char16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_char16_sat(x);
 }
 #endif
@@ -32342,7 +32342,7 @@ uchar convert_uchar_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar(x);
 }
 #endif
@@ -32351,7 +32351,7 @@ uchar convert_uchar_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar_sat(x);
 }
 #endif
@@ -32412,7 +32412,7 @@ uchar2 convert_uchar2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar2(x);
 }
 #endif
@@ -32421,7 +32421,7 @@ uchar2 convert_uchar2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar2_sat(x);
 }
 #endif
@@ -32482,7 +32482,7 @@ uchar3 convert_uchar3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar3(x);
 }
 #endif
@@ -32491,7 +32491,7 @@ uchar3 convert_uchar3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar3_sat(x);
 }
 #endif
@@ -32552,7 +32552,7 @@ uchar4 convert_uchar4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar4(x);
 }
 #endif
@@ -32561,7 +32561,7 @@ uchar4 convert_uchar4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar4_sat(x);
 }
 #endif
@@ -32622,7 +32622,7 @@ uchar8 convert_uchar8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar8(x);
 }
 #endif
@@ -32631,7 +32631,7 @@ uchar8 convert_uchar8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar8_sat(x);
 }
 #endif
@@ -32692,7 +32692,7 @@ uchar16 convert_uchar16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar16(x);
 }
 #endif
@@ -32701,7 +32701,7 @@ uchar16 convert_uchar16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uchar16_sat(x);
 }
 #endif
@@ -32762,7 +32762,7 @@ short convert_short_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short(x);
 }
 #endif
@@ -32771,7 +32771,7 @@ short convert_short_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short_sat(x);
 }
 #endif
@@ -32832,7 +32832,7 @@ short2 convert_short2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short2(x);
 }
 #endif
@@ -32841,7 +32841,7 @@ short2 convert_short2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short2_sat(x);
 }
 #endif
@@ -32902,7 +32902,7 @@ short3 convert_short3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short3(x);
 }
 #endif
@@ -32911,7 +32911,7 @@ short3 convert_short3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short3_sat(x);
 }
 #endif
@@ -32972,7 +32972,7 @@ short4 convert_short4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short4(x);
 }
 #endif
@@ -32981,7 +32981,7 @@ short4 convert_short4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short4_sat(x);
 }
 #endif
@@ -33042,7 +33042,7 @@ short8 convert_short8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short8(x);
 }
 #endif
@@ -33051,7 +33051,7 @@ short8 convert_short8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short8_sat(x);
 }
 #endif
@@ -33112,7 +33112,7 @@ short16 convert_short16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short16(x);
 }
 #endif
@@ -33121,7 +33121,7 @@ short16 convert_short16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_short16_sat(x);
 }
 #endif
@@ -33182,7 +33182,7 @@ ushort convert_ushort_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort(x);
 }
 #endif
@@ -33191,7 +33191,7 @@ ushort convert_ushort_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort_sat(x);
 }
 #endif
@@ -33252,7 +33252,7 @@ ushort2 convert_ushort2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort2(x);
 }
 #endif
@@ -33261,7 +33261,7 @@ ushort2 convert_ushort2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort2_sat(x);
 }
 #endif
@@ -33322,7 +33322,7 @@ ushort3 convert_ushort3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort3(x);
 }
 #endif
@@ -33331,7 +33331,7 @@ ushort3 convert_ushort3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort3_sat(x);
 }
 #endif
@@ -33392,7 +33392,7 @@ ushort4 convert_ushort4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort4(x);
 }
 #endif
@@ -33401,7 +33401,7 @@ ushort4 convert_ushort4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort4_sat(x);
 }
 #endif
@@ -33462,7 +33462,7 @@ ushort8 convert_ushort8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort8(x);
 }
 #endif
@@ -33471,7 +33471,7 @@ ushort8 convert_ushort8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort8_sat(x);
 }
 #endif
@@ -33532,7 +33532,7 @@ ushort16 convert_ushort16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort16(x);
 }
 #endif
@@ -33541,7 +33541,7 @@ ushort16 convert_ushort16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ushort16_sat(x);
 }
 #endif
@@ -33602,7 +33602,7 @@ int convert_int_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int(x);
 }
 #endif
@@ -33611,7 +33611,7 @@ int convert_int_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int_sat(x);
 }
 #endif
@@ -33672,7 +33672,7 @@ int2 convert_int2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int2(x);
 }
 #endif
@@ -33681,7 +33681,7 @@ int2 convert_int2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int2_sat(x);
 }
 #endif
@@ -33742,7 +33742,7 @@ int3 convert_int3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int3(x);
 }
 #endif
@@ -33751,7 +33751,7 @@ int3 convert_int3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int3_sat(x);
 }
 #endif
@@ -33812,7 +33812,7 @@ int4 convert_int4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int4(x);
 }
 #endif
@@ -33821,7 +33821,7 @@ int4 convert_int4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int4_sat(x);
 }
 #endif
@@ -33882,7 +33882,7 @@ int8 convert_int8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int8(x);
 }
 #endif
@@ -33891,7 +33891,7 @@ int8 convert_int8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int8_sat(x);
 }
 #endif
@@ -33952,7 +33952,7 @@ int16 convert_int16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int16(x);
 }
 #endif
@@ -33961,7 +33961,7 @@ int16 convert_int16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_int16_sat(x);
 }
 #endif
@@ -34022,7 +34022,7 @@ uint convert_uint_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint(x);
 }
 #endif
@@ -34031,7 +34031,7 @@ uint convert_uint_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint_sat(x);
 }
 #endif
@@ -34092,7 +34092,7 @@ uint2 convert_uint2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint2(x);
 }
 #endif
@@ -34101,7 +34101,7 @@ uint2 convert_uint2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint2_sat(x);
 }
 #endif
@@ -34162,7 +34162,7 @@ uint3 convert_uint3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint3(x);
 }
 #endif
@@ -34171,7 +34171,7 @@ uint3 convert_uint3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint3_sat(x);
 }
 #endif
@@ -34232,7 +34232,7 @@ uint4 convert_uint4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint4(x);
 }
 #endif
@@ -34241,7 +34241,7 @@ uint4 convert_uint4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint4_sat(x);
 }
 #endif
@@ -34302,7 +34302,7 @@ uint8 convert_uint8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint8(x);
 }
 #endif
@@ -34311,7 +34311,7 @@ uint8 convert_uint8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint8_sat(x);
 }
 #endif
@@ -34372,7 +34372,7 @@ uint16 convert_uint16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint16(x);
 }
 #endif
@@ -34381,7 +34381,7 @@ uint16 convert_uint16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_uint16_sat(x);
 }
 #endif
@@ -34442,7 +34442,7 @@ long convert_long_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long(x);
 }
 #endif
@@ -34451,7 +34451,7 @@ long convert_long_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long_sat(x);
 }
 #endif
@@ -34512,7 +34512,7 @@ long2 convert_long2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long2(x);
 }
 #endif
@@ -34521,7 +34521,7 @@ long2 convert_long2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long2_sat(x);
 }
 #endif
@@ -34582,7 +34582,7 @@ long3 convert_long3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long3(x);
 }
 #endif
@@ -34591,7 +34591,7 @@ long3 convert_long3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long3_sat(x);
 }
 #endif
@@ -34652,7 +34652,7 @@ long4 convert_long4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long4(x);
 }
 #endif
@@ -34661,7 +34661,7 @@ long4 convert_long4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long4_sat(x);
 }
 #endif
@@ -34722,7 +34722,7 @@ long8 convert_long8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long8(x);
 }
 #endif
@@ -34731,7 +34731,7 @@ long8 convert_long8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long8_sat(x);
 }
 #endif
@@ -34792,7 +34792,7 @@ long16 convert_long16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long16(x);
 }
 #endif
@@ -34801,7 +34801,7 @@ long16 convert_long16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_long16_sat(x);
 }
 #endif
@@ -34862,7 +34862,7 @@ ulong convert_ulong_sat_rtz(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong(x);
 }
 #endif
@@ -34871,7 +34871,7 @@ ulong convert_ulong_rte(double x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(double x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong_sat(x);
 }
 #endif
@@ -34932,7 +34932,7 @@ ulong2 convert_ulong2_sat_rtz(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong2(x);
 }
 #endif
@@ -34941,7 +34941,7 @@ ulong2 convert_ulong2_rte(double2 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(double2 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong2_sat(x);
 }
 #endif
@@ -35002,7 +35002,7 @@ ulong3 convert_ulong3_sat_rtz(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong3(x);
 }
 #endif
@@ -35011,7 +35011,7 @@ ulong3 convert_ulong3_rte(double3 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(double3 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong3_sat(x);
 }
 #endif
@@ -35072,7 +35072,7 @@ ulong4 convert_ulong4_sat_rtz(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong4(x);
 }
 #endif
@@ -35081,7 +35081,7 @@ ulong4 convert_ulong4_rte(double4 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(double4 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong4_sat(x);
 }
 #endif
@@ -35142,7 +35142,7 @@ ulong8 convert_ulong8_sat_rtz(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong8(x);
 }
 #endif
@@ -35151,7 +35151,7 @@ ulong8 convert_ulong8_rte(double8 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(double8 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong8_sat(x);
 }
 #endif
@@ -35212,7 +35212,7 @@ ulong16 convert_ulong16_sat_rtz(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong16(x);
 }
 #endif
@@ -35221,7 +35221,7 @@ ulong16 convert_ulong16_rte(double16 x)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(double16 x)
 {
-  x = rint(x);
+  x = round(x);
   return convert_ulong16_sat(x);
 }
 #endif

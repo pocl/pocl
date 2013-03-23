@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf8 -*-
 
 # OpenCL built-in library: type conversion functions
 #
@@ -321,7 +322,7 @@ for src in int_types:
 # rounding rules.
 #
 # These functions rely on the use of abs, ceil, fabs, floor,
-# nextafter, sign, rint and the above generated conversion functions.
+# nextafter, sign, round and the above generated conversion functions.
 #
 # Only conversions to integers can have saturation.
 #
@@ -337,7 +338,7 @@ def generate_float_conversion(src, dst, size, mode, sat):
   # Perform conversion
   if dst in int_types:
     if mode == '_rte':
-      print("  x = rint(x);");
+      print("  x = round(x);");
     elif mode == '_rtp':
       print("  x = ceil(x);");
     elif mode == '_rtn':
@@ -383,3 +384,4 @@ for src in types:
     for size in vector_sizes:
       for mode in rounding_modes:
         generate_float_conversion(src, dst, size, mode, '')
+
