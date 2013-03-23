@@ -146,10 +146,17 @@ DEFINE_BODY_G
          Tvec shl, shr, rot;
          for (int n=0; n<vecsize; ++n) {
            shift.s[n] = shiftbase + n*shiftoffset;
-           val.s[n]  = 0;
-           shl.s[n]  = 0;
-           shr.s[n]  = 0;
-           rot.s[n]  = 0;
+           // Scalar shift operations undergo integer promotion, i.e.
+           // the arguments are converted to int if they are smaller
+           // than int. Therefore, overflowing shift counts are
+           // interpreted differently.
+           if ((vecsize==1) & (sizeof(sgtype) < sizeof(int))) {
+             shift.s[n] &= bits-1;
+           }
+           val.s[n] = 0;
+           shl.s[n] = 0;
+           shr.s[n] = 0;
+           rot.s[n] = 0;
            for (int b=bits; b>=0; --b) {
              int bl = b - (shift.s[n] & (bits-1));
              int br = b + (shift.s[n] & (bits-1));
