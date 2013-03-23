@@ -101,8 +101,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
-# Fails because of missing mad_sat, hadd, and rhadd.
-AT_XFAIL_IF([true])
 AT_KEYWORDS([tce])
 AT_DATA([expout],
 [Running test test_hadd...
@@ -123,6 +121,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_rotate], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Trigonometric functions])
+AT_XFAIL_IF([true])
 AT_DATA([expout],
 [f(0.000000, 0.000000, 0.000000, 0.000000) = (1.000000, 1.000000, 1.000000, 1.000000)
 f(1.000000, 1.000000, 1.000000, 1.000000) = (8.300000, 8.300000, 8.300000, 8.300000)

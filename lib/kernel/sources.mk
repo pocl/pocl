@@ -23,9 +23,16 @@
 
 CLANGFLAGS = -emit-llvm
 
-#Search the .cl,.c and .ll sources first from this (target specific) directory, then
-#the one-up (generic) directory. This allows to override the generic implementation 
-#simply by adding a similarly named file in the target specific directory
+# Search the .cl,.c and .ll sources first from this (target specific) directory, then
+# the one-up (generic) directory. This allows to override the generic implementation 
+# simply by adding a similarly named file in the target specific directory
+
+# NOTE: GNU make always searches from '.' first which can be problematic in case
+# one wants to override the files in the device-specific directory. To circumvent
+# this one can override a default file with a more accurate path, e.g.,
+# vecmathlib/pocl/fmax.cl. This overrides a possible fmax.cl found in the current
+# directory by one from the VML.  TODO: dependency tracking does not work
+# in that case because the .bc is not created in the directory where the source is.
 vpath %.cl @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
 vpath %.c @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
 vpath %.ll @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
@@ -187,6 +194,7 @@ LKERNEL_SRCS = $(filter-out ${EXCLUDE_SRC_FILES}, ${LKERNEL_SRCS_DEFAULT} ) \
 OBJ_L=$(LKERNEL_SRCS:.cl=.bc)
 OBJ_C=$(OBJ_L:.ll=.bc)
 OBJ_CC=$(OBJ_C:.cc=.cc.bc)
+
 OBJ=$(OBJ_CC:.c=.bc)
 
 OBJ:LKERNEL_SRCS
@@ -195,16 +203,17 @@ OBJ:LKERNEL_SRCS
 
 #rules to compile the different kernel library source file types into LLVM bitcode
 %.bc: %.cl @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
-	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
+	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
 %.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
-	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ../../../include/${TARGET_DIR}/types.h
+	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ../../../include/${TARGET_DIR}/types.h
 %.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
-	@CLANGXX@ -std=c++11 -fno-exceptions -emit-llvm ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o $@ $< -include ../../../include/${TARGET_DIR}/types.h
+	@CLANGXX@ -std=c++11 -fno-exceptions -emit-llvm ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ../../../include/${TARGET_DIR}/types.h
 
-CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
+CLEANFILES = kernel-${KERNEL_TARGET}.bc ${notdir ${OBJ}}
 
+# Optimize the bitcode library to speed up optimization times for the OpenCL kernels.
 kernel-${KERNEL_TARGET}.bc: ${OBJ}
-	llvm-link -o $@ $^
+	@LLVM_LINK@ ${notdir $^} -o - | @LLVM_OPT@ -O3 -o $@
 
 # We need an explicitly rule to overwrite automake guess about LEX file :-(
 barrier.bc: barrier.ll
