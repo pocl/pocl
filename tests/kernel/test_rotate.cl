@@ -169,9 +169,12 @@ DEFINE_BODY_G
            equal = equal && res.s[n] == shl.s[n];
          }
          if (!equal) {
-           printf("FAIL: shift left (<<) type=%s pattern=0x%x shiftbase=%d shiftoffset=%d res=0x%08x good=0x%08x\n",
-                  typename, patterns[p], shiftbase, shiftoffset,
-                  (uint)res.s[0], (uint)shl.s[0]);
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: shift left (<<) type=%s pattern=0x%x shiftbase=%d shiftoffset=%d val=0x%08x count=0x%08x res=0x%08x good=0x%08x\n",
+                    typename, patterns[p], shiftbase, shiftoffset,
+                    (uint)val.s[n], (uint)shift.s[n],
+                    (uint)res.s[n], (uint)shl.s[n]);
+           }
            return;
          }
          /* shift right */
@@ -181,9 +184,12 @@ DEFINE_BODY_G
            equal = equal && res.s[n] == shr.s[n];
          }
          if (!equal) {
-           printf("FAIL: shift right (>>) type=%s pattern=0x%x shiftbase=%d shiftoffset=%d res=0x%08x good=0x%08x\n",
-                  typename, patterns[p], shiftbase, shiftoffset,
-                  (uint)res.s[0], (uint)shr.s[0]);
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: shift right (>>) type=%s pattern=0x%x shiftbase=%d shiftoffset=%d val=0x%08x count=0x%08x res=0x%08x good=0x%08x\n",
+                    typename, patterns[p], shiftbase, shiftoffset,
+                    (uint)val.s[n], (uint)shift.s[n],
+                    (uint)res.s[n], (uint)shr.s[n]);
+           }
            return;
          }
          /* rotate */
@@ -193,9 +199,12 @@ DEFINE_BODY_G
            equal = equal && res.s[n] == rot.s[n];
          }
          if (!equal) {
-           printf("FAIL: rotate type=%s pattern=0x%x shiftbase=%d shiftoffset=%d res=0x%08x good=0x%08x\n",
-                  typename, patterns[p], shiftbase, shiftoffset,
-                  (uint)res.s[0], (uint)rot.s[0]);
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: rotate type=%s pattern=0x%x shiftbase=%d shiftoffset=%d val=0x%08x count=0x%08x res=0x%08x good=0x%08x\n",
+                    typename, patterns[p], shiftbase, shiftoffset,
+                    (uint)val.s[n], (uint)shift.s[n],
+                    (uint)res.s[n], (uint)rot.s[n]);
+           }
            return;
          }
        }
