@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 DIST_SUBDIRS = tce x86_64 powerpc powerpc64 cellspu arm
-SUBDIRS = @OCL_TARGETS@ vecmathlib
+SUBDIRS = @OCL_TARGETS@ 
 
 # The source files in this dir are not built directly
 # but are used with the target specific subdirs as
