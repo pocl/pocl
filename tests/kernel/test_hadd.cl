@@ -21,7 +21,7 @@
     STYPE const halfmask = halfmax - (STYPE)1;                          \
     STYPE##2 b;                                                         \
     b.s0 = a.s0 & halfmask;                                             \
-    b.s1 = a.s1 + (a.s0 >> halfbits);                                   \
+    b.s1 = a.s1 + (STYPE)(a.s0 >> halfbits);                            \
     return b;                                                           \
   }                                                                     \
                                                                         \
@@ -34,11 +34,11 @@
     STYPE##4 b;                                                         \
     tmp = a.s0;                                                         \
     b.s0 = tmp & halfmask;                                              \
-    tmp = tmp >> (halfbits + a.s1);                                     \
+    tmp = (STYPE)(tmp >> halfbits) + a.s1;                              \
     b.s1 = tmp & halfmask;                                              \
-    tmp = tmp >> (halfbits + a.s2);                                     \
+    tmp = (STYPE)(tmp >> halfbits) + a.s2;                              \
     b.s2 = tmp & halfmask;                                              \
-    tmp = tmp >> (halfbits + a.s3);                                     \
+    tmp = (STYPE)(tmp >> halfbits) + a.s3;                              \
     b.s3 = tmp;                                                         \
     return b;                                                           \
   }                                                                     \
@@ -49,7 +49,7 @@
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
     STYPE const halfmask = halfmax - (STYPE)1;                          \
     STYPE b;                                                            \
-    b = a.s0 | a.s1 << halfbits;                                        \
+    b = a.s0 | (STYPE)(a.s1 << halfbits);                               \
     return b;                                                           \
   }                                                                     \
                                                                         \
@@ -59,7 +59,7 @@
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
     STYPE const halfmask = halfmax - (STYPE)1;                          \
     STYPE b;                                                            \
-    if (safe_extract(a.hi) != 0) {                                      \
+    if (safe_extract(a.hi) != 0 && safe_extract(a.hi) != -1) {          \
       printf("FAIL: safe_extract [%d,%d,%d,%d]\n",                      \
              (int)a.s0, (int)a.s1, (int)a.s2, (int)a.s3);               \
     }                                                                   \
@@ -71,6 +71,16 @@
     STYPE##2 b;                                                         \
     b.s0 = - a.s0;                                                      \
     b.s1 = - a.s1;                                                      \
+    return safe_normalize(b);                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##4 _CL_OVERLOADABLE safe_neg(STYPE##4 a)                        \
+  {                                                                     \
+    STYPE##4 b;                                                         \
+    b.s0 = - a.s0;                                                      \
+    b.s1 = - a.s1;                                                      \
+    b.s2 = - a.s2;                                                      \
+    b.s3 = - a.s3;                                                      \
     return safe_normalize(b);                                           \
   }                                                                     \
                                                                         \
@@ -110,24 +120,39 @@
     return safe_normalize(c);                                           \
   }                                                                     \
                                                                         \
-  STYPE##4 _CL_OVERLOADABLE safe_mul(STYPE##2 const a, STYPE##2 const b) \
+  STYPE##2 _CL_OVERLOADABLE safe_create(STYPE const a);                 \
+  STYPE##2 _CL_OVERLOADABLE safe_minimul(STYPE const a, STYPE const b)  \
   {                                                                     \
+    STYPE##2 tmp1 = safe_create((STYPE)(a * (STYPE)(b & (STYPE)1)));    \
+    STYPE##2 tmp2 = safe_create((STYPE)(a * (STYPE)(b >> (STYPE)1)));   \
+    STYPE##2 res;                                                       \
+    res = safe_add(tmp1, safe_add(tmp2, tmp2));                         \
+    return res;                                                         \
+  }                                                                     \
+                                                                        \
+  STYPE##4 _CL_OVERLOADABLE safe_mul(STYPE##2 a, STYPE##2 b)            \
+  {                                                                     \
+    bool a_neg = a.s1 < (STYPE)0;                                       \
+    bool b_neg = b.s1 < (STYPE)0;                                       \
+    a = safe_abs(a);                                                    \
+    b = safe_abs(b);                                                    \
     STYPE##4 c00, c01, c10, c11;                                        \
     c00 = 0;                                                            \
-    c00.s0 = a.s0 * b.s0;                                               \
+    c00.s01 = safe_minimul(a.s0, b.s0);                                 \
     c00 = safe_normalize(c00);                                          \
     c01 = 0;                                                            \
-    c01.s1 = a.s0 * b.s1;                                               \
+    c01.s12 = safe_minimul(a.s0, b.s1);                                 \
     c01 = safe_normalize(c01);                                          \
     c10 = 0;                                                            \
-    c10.s1 = a.s1 * b.s0;                                               \
+    c10.s12 = safe_minimul(a.s1, b.s0);                                 \
     c10 = safe_normalize(c10);                                          \
     c11 = 0;                                                            \
-    c11.s2 = a.s1 * b.s1;                                               \
+    c11.s23 = safe_minimul(a.s1, b.s1);                                 \
     c11 = safe_normalize(c11);                                          \
     STYPE##4 c;                                                         \
     c = safe_add(safe_add(c00, c01),                                    \
                  safe_add(c10, c11));                                   \
+    if (a_neg ^ b_neg) c = safe_neg(c);                                 \
     return c;                                                           \
   }                                                                     \
                                                                         \
@@ -213,10 +238,14 @@
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
     STYPE const halfmask = halfmax - (STYPE)1;                          \
     STYPE##2 b;                                                         \
+    /* input may be unsigned */                                         \
     b.s0 = a & (TYPE)halfmask;                                          \
     b.s1 = a >> (TYPE)halfbits;                                         \
     b = safe_normalize(b);                                              \
-    if ((TYPE)safe_extract(b) != a) printf("FAIL: safe_create %d\n", (int)a); \
+    if ((TYPE)safe_extract(b) != a) {                                   \
+      printf("FAIL: safe_create %d (got %d)\n",                         \
+             (int)a, (int)(TYPE)safe_extract(b));                       \
+    }                                                                   \
     return b;                                                           \
   }                                                                     \
                                                                         \
@@ -226,10 +255,22 @@
     STYPE const halfmax = (STYPE)1 << halfbits;                         \
     STYPE const halfmask = halfmax - (STYPE)1;                          \
     STYPE##4 b;                                                         \
-    b = 0;                                                              \
-    b.lo = safe_create(a);                                              \
+    /* input may be unsigned */                                         \
+    TYPE tmp = a;                                                       \
+    b.s0 = tmp & (TYPE)halfmask;                                        \
+    tmp >>= halfbits;                                                   \
+    b.s1 = tmp & (TYPE)halfmask;                                        \
+    tmp >>= halfbits;                                                   \
+    b.s2 = tmp & (TYPE)halfmask;                                        \
+    tmp >>= halfbits;                                                   \
+    b.s3 = tmp;                                                         \
     b = safe_normalize(b);                                              \
-    if ((TYPE)safe_extract(b) != a) printf("FAIL: safe_create4 %d\n", (int)a); \
+    if ((TYPE)safe_extract(b) != a) {                                   \
+      printf("FAIL: safe_create4 sz=%d sg=%d %d (got %d) [%d,%d,%d,%d]\n", \
+             (int)sizeof(TYPE), (int)((TYPE)-1<(TYPE)0),                \
+             (int)a, (int)(TYPE)safe_extract(b),                        \
+             (int)b.s0, (int)b.s1, (int)b.s2, (int)b.s3);               \
+    }                                                                   \
     return b;                                                           \
   }
 
@@ -1470,6 +1511,7 @@ DEFINE_BODY_G
      res_mad_hi.v   = mad_hi  (x.v, y.v, z.v);
      res_mul_hi.v   = mul_hi  (x.v, y.v);
      res_rhadd.v    = rhadd   (x.v, y.v);
+     bool error = false;
      bool equal;
      // abs
      equal = true;
@@ -1484,7 +1526,7 @@ DEFINE_BODY_G
                 (int)x.s[n],
                 (int)good_abs.s[n], (int)res_abs.s[n]);
        }
-       return;
+       error = true;
      }
      // abs_diff
      equal = true;
@@ -1499,7 +1541,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n],
                 (int)good_abs_diff.s[n], (int)res_abs_diff.s[n]);
        }
-       return;
+       error = true;
      }
      // add_sat
      equal = true;
@@ -1514,7 +1556,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n],
                 (int)good_add_sat.s[n], (int)res_add_sat.s[n]);
        }
-       return;
+       error = true;
      }
      // hadd
      equal = true;
@@ -1529,7 +1571,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n],
                 (int)good_hadd.s[n], (int)res_hadd.s[n]);
        }
-       return;
+       error = true;
      }
      // mad_hi
      equal = true;
@@ -1544,7 +1586,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n], (int)z.s[n],
                 (int)good_mad_hi.s[n], (int)res_mad_hi.s[n]);
        }
-       return;
+       error = true;
      }
      // mad_sat
      equal = true;
@@ -1559,7 +1601,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n], (int)z.s[n],
                 (int)good_mad_sat.s[n], (int)res_mad_sat.s[n]);
        }
-       return;
+       error = true;
      }
      // mul_hi
      equal = true;
@@ -1574,7 +1616,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n],
                 (int)good_mul_hi.s[n], (int)res_mul_hi.s[n]);
        }
-       return;
+       error = true;
      }
      // rhadd
      equal = true;
@@ -1589,7 +1631,7 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n],
                 (int)good_rhadd.s[n], (int)res_rhadd.s[n]);
        }
-       return;
+       error = true;
      }
      // sub_sat
      equal = true;
@@ -1604,8 +1646,9 @@ DEFINE_BODY_G
                 (int)x.s[n], (int)y.s[n],
                 (int)good_sub_sat.s[n], (int)res_sub_sat.s[n]);
        }
-       return;
+       error = true;
      }
+     if (error) return;
    }
  })
  )
