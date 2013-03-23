@@ -26,7 +26,7 @@
 // Decompose a and b into their upper and lower halves.
 //    C is 2^(N/2), where N is the number of bits in our datatype.
 //    al, bl, ah, bh are signed (if the datatype is signed).
-//    signed:   -C/2 <= xl, xh < C/2
+//    signed:   0 <= xl < C;   -C/2 <= xh < C/2
 //    unsigned: 0 <= xl, xh < C
 // This yields:
 //    a = ah C + al
@@ -38,13 +38,23 @@
 // This yields ah bh, plus possibly a carry from the mixed term.
 // Note that none of the multiplications can overflow.
 
-#define SHI(x) (((x) - SLO(x)) >> (sgtype)(bits/2))
-#define SLO(x) (((x) << (sgtype)(bits/2)) >> (sgtype)(bits/2))
-#define SCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) + (lo))
+#define SLO(x)                                                          \
+  ((gtype)(x) & (gtype)(((sgtype)1 << (sgtype)(bits/2)) - (sgtype)1))
+#define SHI(x) ((gtype)(x) >> (sgtype)(bits/2))
+#define SHI1(x) ((gtype)(x) >> (sgtype)(bits/2-1))
+// #define SCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) | (lo))
+#define SUHI(x) ((ugtype)(x) >> (sugtype)(bits/2))
 
-#define UHI(x) ((x) >> (sgtype)(bits/2))
-#define ULO(x) ((x) & (sgtype)(bits/2 - 1))
-#define UCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) | (lo))
+#define ULO(x)                                                          \
+  ((gtype)(x) & (gtype)(((sgtype)1 << (sgtype)(bits/2)) - (sgtype)1))
+#define UHI(x) ((gtype)(x) >> (sgtype)(bits/2))
+#define UHI1(x) ((gtype)(x) >> (sgtype)(bits/2-1))
+// #define UCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) | (lo))
+
+#define U2S(x) ({ union { gtype s; ugtype u; } conv; conv.u=(x); conv.s; })
+#define S2U(x) ({ union { gtype s; ugtype u; } conv; conv.s=(x); conv.u; })
+
+
 
 DEFINE_EXPR_G_GG(mul_hi,
                  (sgtype)-1 < (sgtype)0 ?
@@ -58,12 +68,13 @@ DEFINE_EXPR_G_GG(mul_hi,
                    gtype ahbh = ah * bh;
                    gtype ahbl = ah * bl;
                    gtype albh = al * bh;
-                   gtype albl = al * bl;
+                   ugtype albl = S2U(al) * S2U(bl);
                    // gtype abll = SLO(albl);
                    // gtype ablh = SLO(abhl + albh + SHI(albl));
                    // gtype abhl = SLO(ahbh + SHI(abhl + albh + SHI(albl)));
                    // gtype abhh = SHI(ahbh + SHI(abhl + albh + SHI(albl)));
-                   gtype abh = ahbh + SHI(ahbl + albh + SHI(albl));
+                   gtype abh =
+                     ahbh + SHI1(hadd(ahbl, (gtype)(albh + U2S(SUHI(albl)))));
                    abh;
                  }) :
                  /* unsigned */
@@ -81,6 +92,7 @@ DEFINE_EXPR_G_GG(mul_hi,
                    // gtype ablh = ULO(abhl + albh + UHI(albl));
                    // gtype abhl = ULO(ahbh + UHI(abhl + albh + UHI(albl)));
                    // gtype abhh = UHI(ahbh + UHI(abhl + albh + UHI(albl)));
-                   gtype abh = ahbh + UHI(ahbl + albh + UHI(albl));
+                   gtype abh =
+                     ahbh + UHI1(hadd(ahbl, (gtype)(albh + UHI(albl))));
                    abh;
                  }))
