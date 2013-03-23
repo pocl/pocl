@@ -94,6 +94,16 @@
     return b;                                                           \
   }                                                                     \
                                                                         \
+  STYPE##4 _CL_OVERLOADABLE safe_abs(STYPE##4 const a)                  \
+  {                                                                     \
+    STYPE##4 b;                                                         \
+    b = a;                                                              \
+    if (b.s3 < (STYPE)0) {                                              \
+      b = safe_neg(b);                                                  \
+    }                                                                   \
+    return b;                                                           \
+  }                                                                     \
+                                                                        \
   STYPE##2 _CL_OVERLOADABLE safe_add(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
@@ -221,6 +231,27 @@
     b.s0 >>= (STYPE)1;                                                  \
     b.s1 >>= (STYPE)1;                                                  \
     return safe_normalize(b);                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##2 _CL_OVERLOADABLE safe_lo(STYPE##2 a)                         \
+  {                                                                     \
+    STYPE const halfbits = 4*sizeof(STYPE);                             \
+    STYPE const halfmax = (STYPE)1 << halfbits;                         \
+    STYPE const halfmask = halfmax - (STYPE)1;                          \
+    bool a_neg = a.s1<(STYPE)0;                                         \
+    a = safe_abs(a);                                                    \
+    if (a.s1 >= halfmax) a.s1 &= halfmask;                              \
+    if (a_neg) a = safe_neg(a);                                         \
+    return a;                                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##2 _CL_OVERLOADABLE safe_lo(STYPE##4 a)                         \
+  {                                                                     \
+    bool a_neg = a.s3<(STYPE)0;                                         \
+    a = safe_abs(a);                                                    \
+    STYPE##2 res = safe_normalize(a.lo);                                \
+    if (a_neg) res = safe_neg(res);                                     \
+    return res;                                                         \
   }                                                                     \
                                                                         \
   STYPE##2 _CL_OVERLOADABLE safe_hi(STYPE##4 a)                         \
@@ -1485,12 +1516,16 @@ DEFINE_BODY_G
        good_hadd.s[n] =
          safe_extract(safe_rshift(safe_add(safe_create(x.s[n]),
                                            safe_create(y.s[n]))));
+       /* good_mad_hi.s[n] = */
+       /*   safe_extract(safe_clamp(safe_add(safe_hi(safe_mul(safe_create(x.s[n]), */
+       /*                                                     safe_create(y.s[n]))), */
+       /*                                    safe_create(z.s[n])), */
+       /*                           safe_create(tmin), */
+       /*                           safe_create(tmax))); */
        good_mad_hi.s[n] =
-         safe_extract(safe_clamp(safe_add(safe_hi(safe_mul(safe_create(x.s[n]),
-                                                           safe_create(y.s[n]))),
-                                          safe_create(z.s[n])),
-                                 safe_create(tmin),
-                                 safe_create(tmax)));
+         safe_extract(safe_lo(safe_add(safe_hi(safe_mul(safe_create(x.s[n]),
+                                                        safe_create(y.s[n]))),
+                                       safe_create(z.s[n]))));
        good_mul_hi.s[n] =
          safe_extract(safe_hi(safe_mul(safe_create(x.s[n]),
                                        safe_create(y.s[n]))));
