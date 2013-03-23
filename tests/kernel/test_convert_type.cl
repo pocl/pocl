@@ -51,7 +51,7 @@ float float_sat_offsets[13] =
 const size_t float_values_length = sizeof(float_values) / sizeof(float_values[0]);
 int float_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
 int float_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-int float_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 2, 2 };
+int float_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
 int float_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
 int float_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
 
@@ -82,7 +82,7 @@ double double_sat_offsets[13] =
 const size_t double_values_length = sizeof(double_values) / sizeof(double_values[0]);
 long double_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
 long double_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-long double_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 2, 2 };
+long double_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
 long double_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
 long double_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
 
