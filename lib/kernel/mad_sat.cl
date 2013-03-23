@@ -21,32 +21,44 @@
    THE SOFTWARE.
 */
 
-#if (__clang_major__ == 3) && (__clang_minor__ <= 3)
-// Clang 3.3 crashes when generating this. Probably due to the
-// conversion (implicit conversions between vectors are not supported
-// anyhow).
-
 #include "templates.h"
+
+
 
 // Decompose a and b into their upper and lower halves.
 //    C is 2^(N/2), where N is the number of bits in our datatype.
 //    al, bl, ah, bh are signed (if the datatype is signed).
+//    signed:   0 <= xl < C;   -C/2 <= xh < C/2
+//    unsigned: 0 <= xl, xh < C
 // This yields:
 //    a = ah C + al
 //    b = bh C + bl
-//    c = ch C + cl
-// The mad operation can then be written as:
-//    a b + c = (ah C + al) (bh C + bl) + (ch C + cl)
-//            = ah bh C C + (ah bl + al bh + ch) C + al bl + cl
+// The multiplication can then be written as:
+//    a b = (ah C + al) (bh C + bl)
+//        = ah bh C C + (ah bl + al bh) C + al bl
 // Note that none of the multiplications can overflow.
 
-#define SHI(x) (((x) - SLO(x)) >> (sgtype)(bits/2))
-#define SLO(x) (((x) << (sgtype)(bits/2)) >> (sgtype)(bits/2))
-#define SCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) + (lo))
+#define SLO(x)                                                          \
+  ((gtype)(x) & (gtype)(((sgtype)1 << (sgtype)(bits/2)) - (sgtype)1))
+#define SHI(x) ((gtype)(x) >> (sgtype)(bits/2))
+#define SHI1(x) ((gtype)(x) >> (sgtype)(bits/2-1))
+#define SULO(x)                                                         \
+  ((ugtype)(x) & (ugtype)(((sugtype)1 << (sugtype)(bits/2)) - (sugtype)1))
+#define SUHI(x) ((ugtype)(x) >> (sugtype)(bits/2))
+#define SCOMBINE(hi,lo)                                         \
+  ((gtype)((gtype)((hi) << (sgtype)(bits/2)) + (gtype)(lo)))
 
-#define UHI(x) ((x) >> (sgtype)(bits/2))
-#define ULO(x) ((x) & (sgtype)(bits/2 - 1))
-#define UCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) | (lo))
+#define ULO(x)                                                          \
+  ((gtype)(x) & (gtype)(((sgtype)1 << (sgtype)(bits/2)) - (sgtype)1))
+#define UHI(x) ((gtype)(x) >> (sgtype)(bits/2))
+#define UHI1(x) ((gtype)(x) >> (sgtype)(bits/2-1))
+#define UCOMBINE(hi,lo)                                         \
+  ((gtype)((gtype)((hi) << (sgtype)(bits/2)) + (gtype)(lo)))
+
+#define U2S(x) ({ union { gtype s; ugtype u; } conv; conv.u=(x); conv.s; })
+#define S2U(x) ({ union { gtype s; ugtype u; } conv; conv.s=(x); conv.u; })
+
+
 
 DEFINE_EXPR_G_GGG(mad_sat,
                   (sgtype)-1 < (sgtype)0 ?
@@ -54,7 +66,7 @@ DEFINE_EXPR_G_GGG(mad_sat,
                   ({
                     int bits = CHAR_BIT * sizeof(sgtype);
                     gtype min = (sgtype)1 << (sgtype)(bits-1);
-                    gtype max = min + (sgtype)1;
+                    gtype max = min - (sgtype)1;
                     gtype ah = SHI(a);
                     gtype al = SLO(a);
                     gtype bh = SHI(b);
@@ -64,13 +76,18 @@ DEFINE_EXPR_G_GGG(mad_sat,
                     gtype ahbh = ah * bh;
                     gtype ahbl = ah * bl;
                     gtype albh = al * bh;
-                    gtype albl = al * bl;
-                    gtype abcll = SLO(albl + cl);
-                    gtype abclh = SLO(ahbl + albh + ch + SHI(albl + cl));
-                    gtype abch = ahbh + SHI(ahbl + albh + ch + SHI(albl + cl));
-                    abch == (gtype)0 ?
+                    ugtype albl = S2U(al) * S2U(bl);
+                    /* ugtype abcll = SULO(albl + S2U(cl)); */
+                    /* gtype abclh = SLO(ahbl + ch + albh + SUHI(albl + S2U(cl))); */
+                    ugtype alblcl = albl + S2U(cl);
+                    gtype abcl = SCOMBINE(ahbl + albh + ch, U2S(alblcl));
+                    gtype abch =
+                      ahbh + SHI1(hadd((gtype)(ahbl + ch),
+                                       (gtype)(albh + U2S(SUHI(alblcl)))));
+                    ((abch == (gtype)0  && abcl >= (gtype)0) ||
+                     (abch == (gtype)-1 && abcl <  (gtype)0)) ?
                       /* no overflow */
-                      SCOMBINE(abclh, abcll) :
+                      abcl :
                       /* overflow */
                       abch>=(gtype)0 ? max : min;
                   }) :
@@ -88,14 +105,15 @@ DEFINE_EXPR_G_GGG(mad_sat,
                     gtype ahbl = ah * bl;
                     gtype albh = al * bh;
                     gtype albl = al * bl;
-                    gtype abcll = ULO(albl + cl);
-                    gtype abclh = ULO(ahbl + albh + ch + UHI(albl + cl));
-                    gtype abch = ahbh + UHI(ahbl + albh + ch + UHI(albl + cl));
+                    /* gtype abcll = ULO(albl + cl); */
+                    /* gtype abclh = ULO(ahbl + albh + ch + UHI(albl + cl)); */
+                    gtype abcl = UCOMBINE(ahbl + albh + ch, albl + cl);
+                    gtype abch =
+                      ahbh + UHI1(hadd((gtype)(ahbl + ch),
+                                       (gtype)(albh + UHI(albl + cl))));
                     abch == (gtype)0 ?
                       /* no overflow */
-                      UCOMBINE(abclh, abcll) :
+                      abcl :
                       /* overflow */
                       max;
                   }))
-
-#endif

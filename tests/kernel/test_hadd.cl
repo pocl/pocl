@@ -66,6 +66,16 @@
     return safe_extract(a.lo);                                          \
   }                                                                     \
                                                                         \
+  bool _CL_OVERLOADABLE safe_isneg(STYPE##2 a)                          \
+  {                                                                     \
+    return a.s1<(STYPE)0;                                               \
+  }                                                                     \
+                                                                        \
+  bool _CL_OVERLOADABLE safe_isneg(STYPE##4 a)                          \
+  {                                                                     \
+    return a.s3<(STYPE)0;                                               \
+  }                                                                     \
+                                                                        \
   STYPE##2 _CL_OVERLOADABLE safe_neg(STYPE##2 a)                        \
   {                                                                     \
     STYPE##2 b;                                                         \
@@ -88,7 +98,7 @@
   {                                                                     \
     STYPE##2 b;                                                         \
     b = a;                                                              \
-    if (b.s1 < (STYPE)0) {                                              \
+    if (safe_isneg(b)) {                                                \
       b = safe_neg(b);                                                  \
     }                                                                   \
     return b;                                                           \
@@ -98,7 +108,7 @@
   {                                                                     \
     STYPE##4 b;                                                         \
     b = a;                                                              \
-    if (b.s3 < (STYPE)0) {                                              \
+    if (safe_isneg(b)) {                                                \
       b = safe_neg(b);                                                  \
     }                                                                   \
     return b;                                                           \
@@ -130,6 +140,16 @@
     return safe_normalize(c);                                           \
   }                                                                     \
                                                                         \
+  STYPE##4 _CL_OVERLOADABLE safe_sub(STYPE##4 const a, STYPE##4 const b) \
+  {                                                                     \
+    STYPE##4 c;                                                         \
+    c.s0 = a.s0 - b.s0;                                                 \
+    c.s1 = a.s1 - b.s1;                                                 \
+    c.s2 = a.s2 - b.s2;                                                 \
+    c.s3 = a.s3 - b.s3;                                                 \
+    return safe_normalize(c);                                           \
+  }                                                                     \
+                                                                        \
   STYPE##2 _CL_OVERLOADABLE safe_create(STYPE const a);                 \
   STYPE##2 _CL_OVERLOADABLE safe_minimul(STYPE const a, STYPE const b)  \
   {                                                                     \
@@ -142,8 +162,8 @@
                                                                         \
   STYPE##4 _CL_OVERLOADABLE safe_mul(STYPE##2 a, STYPE##2 b)            \
   {                                                                     \
-    bool a_neg = a.s1 < (STYPE)0;                                       \
-    bool b_neg = b.s1 < (STYPE)0;                                       \
+    bool a_neg = safe_isneg(a);                                         \
+    bool b_neg = safe_isneg(b);                                         \
     a = safe_abs(a);                                                    \
     b = safe_abs(b);                                                    \
     STYPE##4 c00, c01, c10, c11;                                        \
@@ -160,8 +180,7 @@
     c11.s23 = safe_minimul(a.s1, b.s1);                                 \
     c11 = safe_normalize(c11);                                          \
     STYPE##4 c;                                                         \
-    c = safe_add(safe_add(c00, c01),                                    \
-                 safe_add(c10, c11));                                   \
+    c = safe_add(safe_add(c00, c01), safe_add(c10, c11));               \
     if (a_neg ^ b_neg) c = safe_neg(c);                                 \
     return c;                                                           \
   }                                                                     \
@@ -169,10 +188,21 @@
   STYPE##2 _CL_OVERLOADABLE safe_max(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
-    if (a.s1 > b.s1 || (a.s1 == b.s1 && a.s0 >= b.s0)) {                \
-      c = a;                                                            \
-    } else {                                                            \
+    if (safe_isneg(safe_sub(a, b))) {                                   \
       c = b;                                                            \
+    } else {                                                            \
+      c = a;                                                            \
+    }                                                                   \
+    return c;                                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##4 _CL_OVERLOADABLE safe_max(STYPE##4 const a, STYPE##4 const b) \
+  {                                                                     \
+    STYPE##4 c;                                                         \
+    if (safe_isneg(safe_sub(a, b))) {                                   \
+      c = b;                                                            \
+    } else {                                                            \
+      c = a;                                                            \
     }                                                                   \
     return c;                                                           \
   }                                                                     \
@@ -180,7 +210,18 @@
   STYPE##2 _CL_OVERLOADABLE safe_min(STYPE##2 const a, STYPE##2 const b) \
   {                                                                     \
     STYPE##2 c;                                                         \
-    if (a.s1 < b.s1 || (a.s1 == b.s1 && a.s0 <= b.s0)) {                \
+    if (safe_isneg(safe_sub(a, b))) {                                   \
+      c = a;                                                            \
+    } else {                                                            \
+      c = b;                                                            \
+    }                                                                   \
+    return c;                                                           \
+  }                                                                     \
+                                                                        \
+  STYPE##4 _CL_OVERLOADABLE safe_min(STYPE##4 const a, STYPE##4 const b) \
+  {                                                                     \
+    STYPE##4 c;                                                         \
+    if (safe_isneg(safe_sub(a, b))) {                                   \
       c = a;                                                            \
     } else {                                                            \
       c = b;                                                            \
@@ -191,33 +232,13 @@
   STYPE##2 _CL_OVERLOADABLE safe_clamp(STYPE##2 const a,                \
                                        STYPE##2 const alo, STYPE##2 const ahi) \
   {                                                                     \
-    STYPE##2 b;                                                         \
-    if (a.s1 < alo.s1 || (a.s1 == alo.s1 && a.s0 < alo.s0)) {           \
-      b = alo;                                                          \
-    } else if (a.s1 > ahi.s1 || (a.s1 == ahi.s1 && a.s0 > ahi.s0)) {    \
-      b = ahi;                                                          \
-    } else {                                                            \
-      b = a;                                                            \
-    }                                                                   \
-    return b;                                                           \
+    return safe_max(alo, safe_min(ahi, a));                             \
   }                                                                     \
                                                                         \
-  STYPE##2 _CL_OVERLOADABLE safe_clamp(STYPE##4 const a,                \
-                                       STYPE##2 const alo, STYPE##2 const ahi) \
+  STYPE##4 _CL_OVERLOADABLE safe_clamp(STYPE##4 const a,                \
+                                       STYPE##4 const alo, STYPE##4 const ahi) \
   {                                                                     \
-    STYPE##2 b;                                                         \
-    if (a.s3 < 0 || a.s2 < 0 ||                                         \
-        a.s1 < alo.s1 || (a.s1 == alo.s1 && a.s0 < alo.s0))             \
-    {                                                                   \
-      b = alo;                                                          \
-    } else if (a.s3 > 0 || a.s2 > 0 ||                                  \
-               a.s1 > ahi.s1 || (a.s1 == ahi.s1 && a.s0 > ahi.s0))      \
-    {                                                                   \
-      b = ahi;                                                          \
-    } else {                                                            \
-      b = safe_normalize(a.lo);                                         \
-    }                                                                   \
-    return b;                                                           \
+    return safe_max(alo, safe_min(ahi, a));                             \
   }                                                                     \
                                                                         \
   STYPE##2 _CL_OVERLOADABLE safe_rshift(STYPE##2 a)                     \
@@ -1506,8 +1527,8 @@ DEFINE_BODY_G
          safe_extract(safe_clamp(safe_add(safe_mul(safe_create(x.s[n]),
                                                    safe_create(y.s[n])),
                                           safe_create4(z.s[n])),
-                                 safe_create(tmin),
-                                 safe_create(tmax)));
+                                 safe_create4(tmin),
+                                 safe_create4(tmax)));
        good_sub_sat.s[n] =
          safe_extract(safe_clamp(safe_sub(safe_create(x.s[n]),
                                           safe_create(y.s[n])),

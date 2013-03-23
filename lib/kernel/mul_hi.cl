@@ -23,6 +23,8 @@
 
 #include "templates.h"
 
+
+
 // Decompose a and b into their upper and lower halves.
 //    C is 2^(N/2), where N is the number of bits in our datatype.
 //    al, bl, ah, bh are signed (if the datatype is signed).
@@ -34,22 +36,22 @@
 // The multiplication can then be written as:
 //    a b = (ah C + al) (bh C + bl)
 //        = ah bh C C + (ah bl + al bh) C + al bl
-// Since we are interested in the upper half, we divide this by C C.
-// This yields ah bh, plus possibly a carry from the mixed term.
 // Note that none of the multiplications can overflow.
 
 #define SLO(x)                                                          \
   ((gtype)(x) & (gtype)(((sgtype)1 << (sgtype)(bits/2)) - (sgtype)1))
 #define SHI(x) ((gtype)(x) >> (sgtype)(bits/2))
 #define SHI1(x) ((gtype)(x) >> (sgtype)(bits/2-1))
-// #define SCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) | (lo))
 #define SUHI(x) ((ugtype)(x) >> (sugtype)(bits/2))
+#define SCOMBINE(hi,lo)                                         \
+  ((gtype)((gtype)((hi) << (sgtype)(bits/2)) + (gtype)(lo)))
 
 #define ULO(x)                                                          \
   ((gtype)(x) & (gtype)(((sgtype)1 << (sgtype)(bits/2)) - (sgtype)1))
 #define UHI(x) ((gtype)(x) >> (sgtype)(bits/2))
 #define UHI1(x) ((gtype)(x) >> (sgtype)(bits/2-1))
-// #define UCOMBINE(hi,lo) (((hi) << (sgtype)(bits/2)) | (lo))
+#define UCOMBINE(hi,lo)                                         \
+  ((gtype)((gtype)((hi) << (sgtype)(bits/2)) + (gtype)(lo)))
 
 #define U2S(x) ({ union { gtype s; ugtype u; } conv; conv.u=(x); conv.s; })
 #define S2U(x) ({ union { gtype s; ugtype u; } conv; conv.s=(x); conv.u; })
