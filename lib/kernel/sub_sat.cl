@@ -36,7 +36,7 @@ DEFINE_EXPR_G_GG(sub_sat,
                  ({
                    int bits = CHAR_BIT * sizeof(sgtype);
                    gtype min = (sgtype)1 << (sgtype)(bits-1);
-                   gtype max = min + (sgtype)1;
+                   gtype max = min - (sgtype)1;
                    (a^b) >= (gtype)0 ?
                      /* same sign: no overflow/underflow */
                      a-b :
