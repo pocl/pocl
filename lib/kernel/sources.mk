@@ -120,6 +120,7 @@ LKERNEL_SRCS_DEFAULT= \
 	hadd.cl					\
 	rhadd.cl				\
 	clamp.cl				\
+	clamp_int.cl				\
 	clz.cl					\
 	mad_hi.cl				\
 	mad_sat.cl				\
