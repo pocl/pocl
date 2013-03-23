@@ -59,8 +59,8 @@
 # endif
 #endif
 
-#ifdef CLANGPP
-#define LINK_CMD CLANGPP
+#ifdef CLANGXX
+#define LINK_CMD CLANGXX
 #else
 #define LINK_CMD CLANG
 #endif

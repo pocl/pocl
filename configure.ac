@@ -550,6 +550,7 @@ AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
 LLVM_PROG([OPT], [opt], [LLVM optimizer])
+LLVM_PROG([LLVM_OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLC], [llc], [LLVM static compiler])
 LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
 LLVM_PROG([LLVM_RANLIB], [llvm-ranlib], [index generator for LLVM archive])
