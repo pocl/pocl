@@ -1,5 +1,5 @@
 __kernel void
-trig(__global const float4 *a, __global float4 *b, float c )
+trig(__global const float4 *a, __global float4 *b, float c)
 {
   int gid = get_global_id(0);
   

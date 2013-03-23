@@ -73,7 +73,7 @@ main (void)
       srcA[i].s3 = i;
       switch (i % 5) {
       case 0: dstS[i] = cosf((float)i); break;
-      case 1: dstS[i] = fabsf((float)i) + 7.3; break;
+      case 1: dstS[i] = fabsf((float)i) + 7.3f; break;
       case 2: dstS[i] = sinf((float)i); break;
       case 3: dstS[i] = sqrtf((float)i); break;
       case 4: dstS[i] = tanf((float)i); break;
@@ -84,13 +84,14 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      printf ("f(%f, %f, %f, %f) = (%f, %f, %f, %f)\n",
+      printf ("f(%.7f, %.7f, %.7f, %.7f) = (%.7f, %.7f, %.7f, %.7f), expecting %.7f\n",
 	      srcA[i].s0, srcA[i].s1, srcA[i].s2, srcA[i].s3,
-	      dst[i].s0, dst[i].s1, dst[i].s2, dst[i].s3);
-      if (dst[i].s0 != dstS[i] ||
-          dst[i].s1 != dstS[i] ||
-          dst[i].s2 != dstS[i] ||
-          dst[i].s3 != dstS[i])
+	      dst[i].s0, dst[i].s1, dst[i].s2, dst[i].s3,
+              dstS[i]);
+      if (fabsf(dst[i].s0 - dstS[i]) > 1.0e-6f ||
+          fabsf(dst[i].s1 - dstS[i]) > 1.0e-6f ||
+          fabsf(dst[i].s2 - dstS[i]) > 1.0e-6f ||
+          fabsf(dst[i].s3 - dstS[i]) > 1.0e-6f)
 	{
 	  printf ("FAIL\n");
 	  return -1;

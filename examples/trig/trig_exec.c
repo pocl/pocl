@@ -25,7 +25,7 @@ exec_trig_kernel(const char *program_source,
   size_t       cb; 
   cl_int       err; 
 
-  float c = 7.3; // a scalar number to test non-pointer args
+  float c = 7.3f; // a scalar number to test non-pointer args
  
   // create the OpenCL context on a GPU device 
   context = poclu_create_any_context();
