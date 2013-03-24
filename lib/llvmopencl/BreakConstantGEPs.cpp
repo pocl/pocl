@@ -36,6 +36,7 @@
 #include "llvm/Support/InstIterator.h"
 
 #include "BreakConstantGEPs.h"
+#include "Workgroup.h"
 
 #include <iostream>
 #include <map>
@@ -236,6 +237,9 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
 //
 bool
 BreakConstantGEPs::runOnFunction (Function & F) {
+
+  if (!pocl::Workgroup::isKernelToProcess(F)) return false;   
+
   bool modified = false;
 
   // Worklist of values to check for constant GEP expressions
