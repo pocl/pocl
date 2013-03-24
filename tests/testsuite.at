@@ -121,7 +121,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_rotate], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Trigonometric functions])
-AT_XFAIL_IF([true])
 AT_DATA([expout],
 [OK
 ])
