@@ -935,6 +935,8 @@ void barrier (cl_mem_fence_flags flags);
    */
 #define cos _cl_cos
 #define fma _cl_fma
+#define fmax _cl_fmax
+#define fmin _cl_fmin
 #define pow _cl_pow
 #define sin _cl_sin
 #define sqrt _cl_sqrt
@@ -993,11 +995,11 @@ _CL_DECLARE_FUNC_V_V(floor)
 #define _cl_fast_fma mad
 _CL_DECLARE_FUNC_V_VVV(_cl_std_fma)
 #if __FAST__RELAXED__MATH__
-#  define fmax _cl_fast_fmax
-#  define fmin _cl_fast_fmin
+#  define _cl_fmax _cl_fast_fmax
+#  define _cl_fmin _cl_fast_fmin
 #else
-#  define fmax _cl_std_fmax
-#  define fmin _cl_std_fmin
+#  define _cl_fmax _cl_std_fmax
+#  define _cl_fmin _cl_std_fmin
 #endif
 #define _cl_fast_fmax max
 #define _cl_fast_fmin min
