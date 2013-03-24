@@ -544,6 +544,10 @@ fi
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
+if test x"$use_vecmathlib" = xyes; then
+  AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
+fi
+
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])

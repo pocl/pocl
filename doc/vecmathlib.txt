@@ -1,24 +1,12 @@
-Vecmathlib implementations for the built-in math lib can be compiled in 
+Vecmathlib implementations for the math lib can be used 
 as follows:
 
 a) ensure you have a functional clang++ installed 
-b) 'git clone' the vecmathlib project under 'kernel'
-c) generate the pocl files using ./generate-files.py under
+b) 'git clone' the vecmathlib project under 'kernel'.
+   Revision 07450b7 (from 2013-03-24) has been used succesfully.
+c) generate the pocl wrappers using ./generate-files.py under
    vecmathlib/pocl
 
 Then pocl configure script should now detect that you want to compile
-vecmathlib, and the x86_64 kernel is tried to be built using vecmathlib's
+vecmathlib, and the x86_64 kernel is be built using vecmathlib's
 versions for the math built-ins.
-
-Known issues
-------------
-
-* clang++ does not work with libstdc++ shipped with Debian 6.0 in 
--std=gnu++11 mode that is required by vecmathlib.
-
-* clamp.cl does not include (signed, signed, signed) implementation that
-  is available in the pocl's default implementation. It is used from 
-  pocl for now.
-
-
-

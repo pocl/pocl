@@ -4,7 +4,7 @@
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
 
-[changes updated from bzr log until 2013-02-27]
+[changes updated from bzr log until 2013-03-24]
 
 Overall
 -------
@@ -13,6 +13,11 @@ Overall
   pocl-llvm-ld to pocl tree). Now uses llvm-link instead.
 - Project renamed to Portable Computing Language (pocl).
 - Luxmark v2.0 now works.
+- x86_64 can now use efficient math built-in function
+  implementations from the vecmathlib project to avoid libm 
+  calls and to exploit the SIMD instructions more efficiently
+  in case of vector datatypes in the kernel.
+- Dropped support for LLVM/Clang v3.1.
 
 Major bugfixes
 --------------
@@ -53,6 +58,11 @@ Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 ----------------------------------------------------------
 - convert_type* builtins now generated with a Python script by
   Victor Oliveira.
+- length() fingerprint was assuming two arguments instead of one.
+- The kernel bitcode library is now optimized when built in pocl. Speeds
+  up kernel optimization for cases which use the kernel functions
+  a lot.
+- Fix mul_hi() implementation
 
 ICD
 ---
