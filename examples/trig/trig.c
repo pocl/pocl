@@ -84,15 +84,17 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      printf ("f(%.7f, %.7f, %.7f, %.7f) = (%.7f, %.7f, %.7f, %.7f), expecting %.7f\n",
-	      srcA[i].s0, srcA[i].s1, srcA[i].s2, srcA[i].s3,
-	      dst[i].s0, dst[i].s1, dst[i].s2, dst[i].s3,
-              dstS[i]);
       if (fabsf(dst[i].s0 - dstS[i]) > 1.0e-6f ||
           fabsf(dst[i].s1 - dstS[i]) > 1.0e-6f ||
           fabsf(dst[i].s2 - dstS[i]) > 1.0e-6f ||
           fabsf(dst[i].s3 - dstS[i]) > 1.0e-6f)
 	{
+          printf ("input:    [%.7f, %.7f, %.7f, %.7f]\n"
+                  "output:   [%.7f, %.7f, %.7f, %.7f]\n"
+                  "expected: [%.7f, %.7f, %.7f, %.7f]\n",
+                  srcA[i].s0, srcA[i].s1, srcA[i].s2, srcA[i].s3,
+                  dst[i].s0, dst[i].s1, dst[i].s2, dst[i].s3,
+                  dstS[i], dstS[i], dstS[i], dstS[i]);
 	  printf ("FAIL\n");
 	  return -1;
 	}
