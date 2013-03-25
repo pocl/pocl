@@ -1,6 +1,7 @@
 /* OpenCL built-in library: rint()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
+                      Perimeter Institute for Theoretical Physics
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
