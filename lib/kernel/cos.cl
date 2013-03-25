@@ -26,4 +26,3 @@
 DEFINE_BUILTIN_V_V(cos)
 
 DEFINE_EXPR_F_F(half_cos, cos(a))
-DEFINE_EXPR_F_F(native_cos, cos(a))

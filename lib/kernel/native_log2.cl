@@ -1,6 +1,6 @@
-/* OpenCL built-in library: log2()
+/* OpenCL built-in library: native_log2()
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011-2013 Erik Schnetter
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(log2)
-
-DEFINE_EXPR_F_F(half_log2, log2(a))
+DEFINE_EXPR_F_F(native_log2, log2(a))

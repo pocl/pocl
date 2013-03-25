@@ -940,8 +940,7 @@ void barrier (cl_mem_fence_flags flags);
 #define pow _cl_pow
 #define sin _cl_sin
 #define sqrt _cl_sqrt
-
-#if !defined(LLVM_3_1)
+#define fmod _cl_fmod
 #define acos _cl_acos
 #define asin _cl_asin
 #define atan _cl_atan
@@ -958,7 +957,6 @@ void barrier (cl_mem_fence_flags flags);
 #define round _cl_round
 #define tan _cl_tan
 #define trunc _cl_trunc
-#endif
 
 _CL_DECLARE_FUNC_V_V(acos)
 _CL_DECLARE_FUNC_V_V(acosh)
@@ -973,7 +971,7 @@ _CL_DECLARE_FUNC_V_V(atanh)
 _CL_DECLARE_FUNC_V_V(atanpi)
 _CL_DECLARE_FUNC_V_V(cbrt)
 _CL_DECLARE_FUNC_V_V(ceil)
-_CL_DECLARE_FUNC_V_VV(copysign)
+_CL_DECLARE_FUNC_V_VV(_cl_copysign)
 _CL_DECLARE_FUNC_V_V(cos)
 _CL_DECLARE_FUNC_V_V(cosh)
 _CL_DECLARE_FUNC_V_V(cospi)
@@ -1007,7 +1005,11 @@ _CL_DECLARE_FUNC_V_VV(_cl_std_fmax)
 _CL_DECLARE_FUNC_V_VS(_cl_std_fmax)
 _CL_DECLARE_FUNC_V_VV(_cl_std_fmin)
 _CL_DECLARE_FUNC_V_VS(_cl_std_fmin)
-_CL_DECLARE_FUNC_V_VV(fmod)
+_CL_DECLARE_FUNC_V_VV(_cl_fmax)
+_CL_DECLARE_FUNC_V_VS(_cl_fmax)
+_CL_DECLARE_FUNC_V_VV(_cl_fmin)
+_CL_DECLARE_FUNC_V_VS(_cl_fmin)
+_CL_DECLARE_FUNC_V_VV(_cl_fmod)
 _CL_DECLARE_FUNC_V_VPV(fract)
 // frexp
 _CL_DECLARE_FUNC_V_VV(hypot)

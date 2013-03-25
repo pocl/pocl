@@ -117,6 +117,8 @@ LKERNEL_EXTRA_SRCS =	\
 	sqrt.cc		\
 	tan.cc		\
 	tanh.cc		\
-	trunc.cc
+	trunc.cc	\
+	vecmathlib/pocl/fmin.cl \
+	vecmathlib/pocl/fmax.cl 
 
 include ../sources.mk

@@ -100,7 +100,9 @@ LKERNEL_SRCS_DEFAULT= \
 	maxmag.cl				\
 	minmag.cl				\
 	nan.cl					\
-	nextafter.cl				\
+	native_cos.cl 			\
+	native_log2.cl 			\
+	nextafter.cl			\
 	pow.cl					\
 	pown.cl					\
 	powr.cl					\

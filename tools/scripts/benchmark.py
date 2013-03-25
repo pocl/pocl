@@ -44,7 +44,8 @@ import signal
 import time
 import datetime
 import platform
-import argparse
+import optparse
+from optparse import OptionParser
 
 from subprocess import Popen, PIPE
 
@@ -152,8 +153,9 @@ def run_cmd(command, inputStream = ""):
 
 
 class BenchmarkCase(object):
-    def __init__(self, name):
+    def __init__(self, name, wg_method="auto"):
         self.name = name
+        self.wg_method = "auto"
 
     # Returns the execution time in seconds.
     def execution_time(self):
@@ -167,6 +169,7 @@ class BenchmarkCase(object):
             temp_dir = tempfile.mkdtemp(suffix=self.name)
             os.environ['POCL_LEAVE_TEMP_DIRS'] = '1'
             os.environ['POCL_TEMP_DIR'] = temp_dir
+            os.environ['POCL_WORK_GROUP_METHOD'] = wg_method
 
         for t in range(times):
             result = self.run()
@@ -183,11 +186,11 @@ class BenchmarkResult(object):
         self.kernel_run_time = kernel_run_time
 
 class AMDBenchmarkCase(BenchmarkCase):
-    def __init__(self, name, command):
-        super(AMDBenchmarkCase, self).__init__(name)
+    def __init__(self, name, command, wg_method="auto"):
+        super(AMDBenchmarkCase, self).__init__(name, wg_method)
         self.stdout = ""
         self.test_root_dir = "examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app"
-        self.command = command
+        self.command = command        
 
     def get_kernel_runtime(self, stdout):
         lines = stdout.split("\n")
@@ -304,12 +307,12 @@ def print_environment_info():
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser('Benchmark pocl')
-    parser.add_argument('ocl_dir', metavar='dir', default="", nargs='?',
+    parser = optparse.OptionParser('usage: %prog [options]')
+    parser.add_option('--ocl_dir', type="string", metavar='dir', default="", 
                         help='Directory that contains comparison OCL .icd file')
-    parser.add_argument('-o', metavar='log file', dest='logfile', default="",
+    parser.add_option('-o', type="string", metavar='log file', dest='logfile', default="",
                         help='Write log to this file, instead of stdout')
-    args=parser.parse_args()
+    args, free_args = parser.parse_args()
  
     #vendor_ocl_dir = sys.argv[1] if len(sys.argv) == 2 else None     
     vendor_ocl_dir = args.ocl_dir if args.ocl_dir != "" else None
