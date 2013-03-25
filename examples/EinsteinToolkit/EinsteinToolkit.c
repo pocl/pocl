@@ -1340,25 +1340,29 @@ int main(int argc, char** argv)
   
   
   printf("Begin timing %d iterations...\n", niters);
-  struct timeval tv0;
-  gettimeofday(&tv0, NULL);
+  double min_elapsed = HUGE_VAL;
+  double avg_elapsed = 0.0;
   for (int n=0; n<niters; ++n) {
+    struct timeval tv0;
+    gettimeofday(&tv0, NULL);
     exec_ML_BSSN_CL_RHS1(source1, &cctkGH, &cctk_parameters, &cctk_arguments);
     exec_ML_BSSN_CL_RHS2(source2, &cctkGH, &cctk_parameters, &cctk_arguments);
+    struct timeval tv1;
+    gettimeofday(&tv1, NULL);
+    double const elapsed =
+      (tv1.tv_sec + 1.0e-6 * tv1.tv_usec) -
+      (tv0.tv_sec + 1.0e-6 * tv0.tv_usec);
+    min_elapsed = elapsed < min_elapsed ? elapsed : min_elapsed;
+    avg_elapsed += elapsed;
   }
-  struct timeval tv1;
-  gettimeofday(&tv1, NULL);
+  avg_elapsed /= niters;
   printf("End timing\n");
   
-  
-  
-  double const elapsed =
-    (tv1.tv_sec + 1.0e-6 * tv1.tv_usec) -
-    (tv0.tv_sec + 1.0e-6 * tv0.tv_usec);
   int const npoints =
     cctkGH.cctk_lsh[0] * cctkGH.cctk_lsh[1] * cctkGH.cctk_lsh[2];
-  double const time_per_point = elapsed / niters / npoints;
-  printf("Total elapsed time: %g sec\n", elapsed);
+  double const time_per_point = min_elapsed / npoints;
+  printf("Average elapsed time: %g sec\n", avg_elapsed);
+  printf("Minimum elapsed time: %g sec\n", min_elapsed);
   printf("RESULT: Time per grid point update: %g usec\n",
          1.0e+6 * time_per_point);
   double const flop_per_point = 3400.0;
