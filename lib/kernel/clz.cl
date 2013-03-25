@@ -42,17 +42,17 @@
 /* __builtin_clz() is undefined for 0 */
 
 #if __has_builtin(__builtin_clzc)
-#  define __builtin_clz0hh(n)                           \
-  ({ char __n=(n); __n==0 ? 8 : __builtin_clzc(__n); })
+#  define __builtin_clz0uhh(n)                                  \
+  ({ uchar __n=(n); __n==0 ? 8 : __builtin_clzc(__n); })
 #elif __has_builtin(__builtin_clzs)
-#  define __builtin_clz0hh(n)                   \
-  ((char)(__builtin_clz0h((char)(n)) - 8))
+#  define __builtin_clz0uhh(n)                  \
+  (__builtin_clz0uh((uchar)(n)) - 8)
 #elif __has_builtin(__builtin_clz)
-#  define __builtin_clz0hh(n)                   \
-  ((char)(__builtin_clz0((char)(n)) - 24))
+#  define __builtin_clz0uhh(n)                  \
+  (__builtin_clz0u((uchar)(n)) - 24)
 #else
-#  define __builtin_clz0hh(n) ({                \
-      ushort __n=(n);                           \
+#  define __builtin_clz0uhh(n) ({               \
+      uchar __n=(n);                            \
       __n |= __n >> 1;                          \
       __n |= __n >> 2;                          \
       __n |= __n >> 4;                          \
@@ -61,13 +61,13 @@
 #endif
 
 #if __has_builtin(__builtin_clzs)
-#  define __builtin_clz0h(n)                                    \
-  ({ short __n=(n); __n==0 ? 16 : __builtin_clzs(__n); })
+#  define __builtin_clz0uh(n)                                   \
+  ({ ushort __n=(n); __n==0 ? 16 : __builtin_clzs(__n); })
 #elif __has_builtin(__builtin_clz)
-#  define __builtin_clz0h(n)                    \
-  ((short)(__builtin_clz0((short)(n)) - 16))
+#  define __builtin_clz0uh((ushort)(n))         \
+  (__builtin_clz0u(n) - 16)
 #else
-#  define __builtin_clz0h(n) ({                 \
+#  define __builtin_clz0uh(n) ({                 \
       ushort __n=(n);                           \
       __n |= __n >> 1;                          \
       __n |= __n >> 2;                          \
@@ -78,10 +78,10 @@
 #endif
 
 #if __has_builtin(__builtin_clz)
-#  define __builtin_clz0(n)                               \
-  ({ int __n=(n); __n==0 ? 32 : __builtin_clz(__n); })
+#  define __builtin_clz0u(n)                            \
+  ({ uint __n=(n); __n==0 ? 32 : __builtin_clz(__n); })
 #else
-#  define __builtin_clz0(n) ({                  \
+#  define __builtin_clz0u(n) ({                  \
       uint __n=(n);                             \
       __n |= __n >> 1;                          \
       __n |= __n >> 2;                          \
@@ -93,10 +93,10 @@
 #endif
 
 #if __has_builtin(__builtin_clzl)
-#  define __builtin_clz0l(n)                                      \
-  ({ long __n=(n); __n==0 ? 64 : __builtin_clzl(__n); })
+#  define __builtin_clz0ul(n)                                   \
+  ({ ulong __n=(n); __n==0 ? 64 : __builtin_clzl(__n); })
 #else
-#  define __builtin_clz0l(n) ({                 \
+#  define __builtin_clz0ul(n) ({                 \
       ulong __n=(n);                            \
       __n |= __n >> 1;                          \
       __n |= __n >> 2;                          \
@@ -108,10 +108,10 @@
     })
 #endif
 
-#define __builtin_clz0uhh(n) __builtin_clz0hh(n)
-#define __builtin_clz0uh(n)  __builtin_clz0h(n)
-#define __builtin_clz0u(n)   __builtin_clz0(n)
-#define __builtin_clz0ul(n)  __builtin_clz0l(n)
+#define __builtin_clz0hh(n) __builtin_clz0uhh(n)
+#define __builtin_clz0h(n)  __builtin_clz0uh(n)
+#define __builtin_clz0(n)   __builtin_clz0u(n)
+#define __builtin_clz0l(n)  __builtin_clz0ul(n)
 
 #define clz0 clz
 DEFINE_BUILTIN_G_G(clz0)
