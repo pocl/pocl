@@ -23,8 +23,8 @@
 
 #include "templates.h"
 
-#define __builtin_popcounthh(n)  __builtin_popcount((int)(n) & 0xff)
-#define __builtin_popcounth(n)   __builtin_popcount((int)(n) & 0xffff)
+#define __builtin_popcounthh(n)  ((char)__builtin_popcount((int)(n) & 0xff))
+#define __builtin_popcounth(n)   ((short)__builtin_popcount((int)(n) & 0xffff))
 
 #define __builtin_popcountuhh(n) __builtin_popcounthh(n)
 #define __builtin_popcountuh(n)  __builtin_popcounth(n)
