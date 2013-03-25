@@ -153,8 +153,9 @@ def run_cmd(command, inputStream = ""):
 
 
 class BenchmarkCase(object):
-    def __init__(self, name):
+    def __init__(self, name, wg_method="auto"):
         self.name = name
+        self.wg_method = "auto"
 
     # Returns the execution time in seconds.
     def execution_time(self):
@@ -168,6 +169,7 @@ class BenchmarkCase(object):
             temp_dir = tempfile.mkdtemp(suffix=self.name)
             os.environ['POCL_LEAVE_TEMP_DIRS'] = '1'
             os.environ['POCL_TEMP_DIR'] = temp_dir
+            os.environ['POCL_WORK_GROUP_METHOD'] = wg_method
 
         for t in range(times):
             result = self.run()
@@ -184,11 +186,11 @@ class BenchmarkResult(object):
         self.kernel_run_time = kernel_run_time
 
 class AMDBenchmarkCase(BenchmarkCase):
-    def __init__(self, name, command):
-        super(AMDBenchmarkCase, self).__init__(name)
+    def __init__(self, name, command, wg_method="auto"):
+        super(AMDBenchmarkCase, self).__init__(name, wg_method)
         self.stdout = ""
         self.test_root_dir = "examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app"
-        self.command = command
+        self.command = command        
 
     def get_kernel_runtime(self, stdout):
         lines = stdout.split("\n")
