@@ -23,12 +23,90 @@
 
 #include "templates.h"
 
+/* These implementations return 8*sizeof(TYPE) when the input is 0 */
+
+/* The explicit implementations are taken from
+   <http://aggregate.org/MAGIC/>:
+   
+   @techreport{magicalgorithms,
+   author={Henry Gordon Dietz},
+   title={{The Aggregate Magic Algorithms}},
+   institution={University of Kentucky},
+   howpublished={Aggregate.Org online technical report},
+   date={2013-03-25},
+   URL={http://aggregate.org/MAGIC/}
+   }
+*/
+
+
 /* __builtin_clz() is undefined for 0 */
 
-#define __builtin_clz0hh(n)  ({ char __n=(n); __n==0 ? 8 : (__builtin_clzs((short)(__n) & 0xff) - 8); })
-#define __builtin_clz0h(n)   ({ short __n=(n); __n==0 ? 16 : __builtin_clzs(__n); })
-#define __builtin_clz0(n)    ({ int __n=(n); __n==0 ? 32 : __builtin_clz(__n); })
-#define __builtin_clz0l(n)   ({ long __n=(n); __n==0 ? 64 : __builtin_clzl(__n); })
+#if __has_builtin(__builtin_clzc)
+#  define __builtin_clz0hh(n)                           \
+  ({ char __n=(n); __n==0 ? 8 : __builtin_clzc(__n); })
+#elif __has_builtin(__builtin_clzs)
+#  define __builtin_clz0hh(n)                   \
+  ((char)(__builtin_clz0h((char)(n)) - 8))
+#elif __has_builtin(__builtin_clz)
+#  define __builtin_clz0hh(n)                   \
+  ((char)(__builtin_clz0((char)(n)) - 24))
+#else
+#  define __builtin_clz0hh(n) ({                \
+      ushort __n=(n);                           \
+      __n |= __n >> 1;                          \
+      __n |= __n >> 2;                          \
+      __n |= __n >> 4;                          \
+      8 - popcount(__n);                        \
+    })
+#endif
+
+#if __has_builtin(__builtin_clzs)
+#  define __builtin_clz0h(n)                                    \
+  ({ short __n=(n); __n==0 ? 16 : __builtin_clzs(__n); })
+#elif __has_builtin(__builtin_clz)
+#  define __builtin_clz0h(n)                    \
+  ((short)(__builtin_clz0((short)(n)) - 16))
+#else
+#  define __builtin_clz0h(n) ({                 \
+      ushort __n=(n);                           \
+      __n |= __n >> 1;                          \
+      __n |= __n >> 2;                          \
+      __n |= __n >> 4;                          \
+      __n |= __n >> 8;                          \
+      16 - popcount(__n);                       \
+    })
+#endif
+
+#if __has_builtin(__builtin_clz)
+#  define __builtin_clz0(n)                               \
+  ({ int __n=(n); __n==0 ? 32 : __builtin_clz(__n); })
+#else
+#  define __builtin_clz0(n) ({                  \
+      uint __n=(n);                             \
+      __n |= __n >> 1;                          \
+      __n |= __n >> 2;                          \
+      __n |= __n >> 4;                          \
+      __n |= __n >> 8;                          \
+      __n |= __n >> 16;                         \
+      32 - popcount(__n);                       \
+    })
+#endif
+
+#if __has_builtin(__builtin_clzl)
+#  define __builtin_clz0l(n)                                      \
+  ({ long __n=(n); __n==0 ? 64 : __builtin_clzl(__n); })
+#else
+#  define __builtin_clz0l(n) ({                 \
+      ulong __n=(n);                            \
+      __n |= __n >> 1;                          \
+      __n |= __n >> 2;                          \
+      __n |= __n >> 4;                          \
+      __n |= __n >> 8;                          \
+      __n |= __n >> 16;                         \
+      __n |= __n >> 32;                         \
+      64 - popcount(__n);                       \
+    })
+#endif
 
 #define __builtin_clz0uhh(n) __builtin_clz0hh(n)
 #define __builtin_clz0uh(n)  __builtin_clz0h(n)
