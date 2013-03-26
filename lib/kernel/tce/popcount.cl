@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#include "../templates.h"
 
 /* These explicit implementations are taken from
    <http://aggregate.org/MAGIC/>:

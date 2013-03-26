@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#include "../templates.h"
 
 /* These implementations return 8*sizeof(TYPE) when the input is 0 */
 
