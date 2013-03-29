@@ -243,11 +243,9 @@ AT_CHECK_UNQUOTED([make test_QuasiRandomSequence -sC $abs_top_builddir/examples/
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([radixsort])
-# Expected Error: Device does not support cl_khr_byte_addressable_store extension!
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_RadixSort -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
-])     
+], ignore)     
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([recursivegaussian])
