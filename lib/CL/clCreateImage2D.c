@@ -24,6 +24,9 @@
 #include "assert.h"
 #include "pocl_image_util.h"
 
+/* TODO: 
+   this should be refactored so it calls clCreateBuffer() for
+   the most part of the implementation. */
 CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage2D)(cl_context              context,
                 cl_mem_flags            flags,
@@ -87,9 +90,9 @@ CL_API_SUFFIX__VERSION_1_0
   int host_channels;
   
   if (order == CL_RGBA)
-    host_channels=4;
+    host_channels = 4;
   else if (order == CL_R)
-    host_channels=1;
+    host_channels = 1;
   else
     POCL_ABORT_UNIMPLEMENTED();
   
@@ -124,13 +127,13 @@ CL_API_SUFFIX__VERSION_1_0
         {
           size_t origin[3] = { 0, 0, 0 };
           size_t region[3] = { width, height, 1 };
-          pocl_write_image( mem,
-                            context->devices[i],
-                            origin,
-                            region,
-                            0,
-                            1,
-                            host_ptr );
+          pocl_write_image(mem,
+			   context->devices[i],
+			   origin,
+			   region,
+			   0,
+			   1,
+			   host_ptr);
         }
     }
 
