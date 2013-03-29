@@ -103,6 +103,8 @@ class Kernel;
     llvm::Instruction* LocalIDYLoad();
     llvm::Instruction* LocalIDZLoad();
 
+    void LocalizeIDLoads();
+
   private:
     llvm::Instruction* LocalIDXLoadInstr;
     llvm::Instruction* LocalIDYLoadInstr;

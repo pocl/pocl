@@ -15,9 +15,6 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_AESEncryptDecrypt -sC $
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([aesencryptdecrypt-loops])
-# The optimized kernel library (has to be a get_local_id or similar) trigger a kernel
-# compiler bug with the wiloops method. Works with 'repl'.
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_AESEncryptDecrypt -sC $abs_top_builddir/examples/AMD | grep "Encryption Passed"], 0, 
 [Encryption Passed!
 ])
@@ -50,7 +47,6 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_BinomialOption -sC $abs
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([binomialoption-loops])
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_BinomialOption -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -142,7 +138,6 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_Histogram -sC $abs_top_
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([histogram-loops])
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_Histogram -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])     
@@ -201,7 +196,6 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_MemoryModel -sC $abs_to
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([memorymodel-loops])
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_MemoryModel -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])

@@ -109,7 +109,7 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
      the same BB is replicated multiple times and it gets
      the same name (only the BB name will be autorenamed
      by LLVM). This causes the variable references to become
-     broken. This hack ensures the BB suffices are unique
+     broken. This hack ensures the BB suffixes are unique
      before cloning so each path gets their own value
      names. Split points can be such paths.*/
   static std::map<std::string, int> cloneCounts;
@@ -148,6 +148,7 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 #ifdef DEBUG_REPLICATE
   Verify();
 #endif
+  LocalizeIDLoads();
 
   return new_region;
 }
@@ -351,6 +352,8 @@ ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entr
       }
     }
   }
+
+  new_region->LocalizeIDLoads();
 
   assert(new_region->Verify());
 
@@ -738,5 +741,69 @@ ParallelRegion::InjectVariablePrintouts()
           args.push_back(instruction);
           InjectPrintF(instruction->getParent()->getTerminator(), "variable %s == %x\n", args);
         }
+    }
+}
+
+/**
+ * Localizes all the loads to the the work-item identifiers.
+ *
+ * In case the code inside the region queries the WI id, it
+ * should not (re)use one that is loaded in another region, but
+ * one that is loaded in the same region. Otherwise, it ends
+ * up using the last id the previous PR work-item loop got.
+ * This caused problems in cases where the local id was stored
+ * to a temporary variable in an earlier region and that temp
+ * was reused later.
+ *
+ * The function scans for all loads from the local id variables
+ * and converts them to loads inside the parallel region.
+ */
+void
+ParallelRegion::LocalizeIDLoads() 
+{
+  /* The local id loads inside the parallel region. */
+  llvm::Instruction* LocalIDXLoadInstr = LocalIDXLoad();
+  llvm::Instruction* LocalIDYLoadInstr = LocalIDYLoad();
+  llvm::Instruction* LocalIDZLoadInstr = LocalIDZLoad();
+  llvm::Module *M = LocalIDXLoadInstr->getParent()->getParent()->getParent();
+  llvm::Value *localIdZ = M->getNamedGlobal(POCL_LOCAL_ID_Z_GLOBAL);
+  llvm::Value *localIdY = M->getNamedGlobal(POCL_LOCAL_ID_Y_GLOBAL);
+  llvm::Value *localIdX = M->getNamedGlobal(POCL_LOCAL_ID_X_GLOBAL);
+
+  assert (localIdZ != NULL && localIdY != NULL && localIdX != NULL &&
+	  "The local id globals were not created.");
+
+  for (ParallelRegion::iterator i = begin();
+       i != end(); ++i)
+    {
+      llvm::BasicBlock *bb = *i;
+      for (llvm::BasicBlock::iterator instrI = bb->begin();
+           instrI != bb->end(); ++instrI) 
+        {
+	  llvm::Instruction *instr = instrI;
+	  if (instr == LocalIDXLoadInstr ||
+	      instr == LocalIDYLoadInstr ||
+	      instr == LocalIDZLoadInstr) continue;
+
+	  /* Search all operands of the instruction. If any of them is
+	     using a local id, replace it with the intra-PR load from the
+	     id variable. */
+          for (unsigned opr = 0; opr < instr->getNumOperands(); ++opr)
+            {
+	      llvm::LoadInst *load = 
+		dyn_cast<llvm::LoadInst>(instr->getOperand(opr));
+	      if (load == NULL) continue;
+	      if (load == LocalIDXLoadInstr ||
+		  load == LocalIDYLoadInstr ||
+		  load == LocalIDZLoadInstr) continue;
+	      
+	      if (load->getPointerOperand() == localIdZ)
+		instr->setOperand(opr, LocalIDZLoadInstr);
+	      if (load->getPointerOperand() == localIdY)
+		instr->setOperand(opr, LocalIDYLoadInstr);
+	      if (load->getPointerOperand() == localIdX)
+		instr->setOperand(opr, LocalIDXLoadInstr);
+	    }
+	}
     }
 }

@@ -1,5 +1,5 @@
-// LLVM function pass to create a loop that runs all the work items 
-// in a work group.
+// LLVM function pass to create loops that run all the work items 
+// in a work group while respecting barrier synchronization points.
 // 
 // Copyright (c) 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
 // 
@@ -132,7 +132,10 @@ WorkitemLoops::runOnFunction(Function &F)
 
   changed |= fixUndominatedVariableUses(DT, F);
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
+#if 0
+  // Estimate the amount of context data needed to be stored
+  // in stack.
+
   //std::cerr << "### processed:" << std::endl;
   //F.viewCFGOnly();
   TargetData &TD = getAnalysis<TargetData>();
@@ -146,7 +149,8 @@ WorkitemLoops::runOnFunction(Function &F)
       assert (a != NULL);
       assert (isa<ConstantInt>(s));
       llvm::ConstantInt *size = dyn_cast<llvm::ConstantInt>(s);
-      totalContext += size->getZExtValue() * TD.getTypeAllocSize(a->getAllocatedType());
+      totalContext += 
+	size->getZExtValue() * TD.getTypeAllocSize(a->getAllocatedType());
   }
   std::cerr << "### total context data needed " << totalContext << " bytes" 
             << std::endl;
@@ -182,7 +186,7 @@ WorkitemLoops::runOnFunction(Function &F)
 #endif
 
   // this breaks cutcp/Parboil
-  //changed |= pocl::WorkitemHandler::runOnFunction(F);
+  // changed |= pocl::WorkitemHandler::runOnFunction(F);
   return changed;
 }
 
@@ -457,7 +461,6 @@ WorkitemLoops::ProcessFunction(Function &F)
 #endif
         ParallelRegion *replica = 
           original->replicate(reference_map, ".peeled_wi");
-        
         replica->chainAfter(original);    
         replica->purge();
         
@@ -542,8 +545,6 @@ WorkitemLoops::ProcessFunction(Function &F)
               (original->entryBB(), l.first);
           }
       }
-
-    //F.viewCFGOnly();
   }
 
   // for the peeled regions we need to add a prologue
@@ -555,6 +556,7 @@ WorkitemLoops::ProcessFunction(Function &F)
        i != e; ++i) 
   {
     ParallelRegion *pr = (*i);
+
     if (!peeledRegion[pr]) continue;
     pr->insertPrologue(0, 0, 0);
     builder.SetInsertPoint(pr->entryBB()->getFirstInsertionPt());
@@ -578,7 +580,7 @@ WorkitemLoops::ProcessFunction(Function &F)
  * the given region and are used outside the region.
  *
  * Each such variable gets a slot in the stack frame. The variable
- * is restored from the stack whenever its used.
+ * is restored from the stack whenever it's used.
  *
  */
 void
@@ -612,14 +614,8 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
            instr != bb->end(); ++instr) 
         {
           llvm::Instruction *instruction = instr;
-          if (!ShouldBeContextSaved(instruction)) 
-            {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-              std::cerr << "### can be rematerialized, not context saving:" << std::endl;
-              instruction->dump();
-#endif
-              continue;
-            }
+
+	  if (ShouldNotBeContextSaved(instr)) continue;
 
           for (Instruction::use_iterator ui = instruction->use_begin(),
                  ue = instruction->use_end();
@@ -633,7 +629,8 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
               if (instructionsInRegion.find(user) == instructionsInRegion.end() &&
                   RegionOfBlock(user->getParent()) != NULL)
                 {
-#ifdef DEBUG_WORK_ITEM_LOOPS
+		  //#ifdef DEBUG_WORK_ITEM_LOOPS
+#if 0
                   std::cerr << "### instr used in another region" << std::endl;
                   instr->dump();
                   ParallelRegion *region = RegionOfBlock(user->getParent());
@@ -785,8 +782,8 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
  * The LLVM should optimize these away but it would improve
  * the readability of the output during debugging.
  * TODO: rematerialize some values such as extended values of global 
- * variables or kernel argument values instead of allocating stack
- * space for them
+ * variables (especially global id which is computed from local id) or kernel 
+ * argument values instead of allocating stack space for them
  */
 void
 WorkitemLoops::AddContextSaveRestore
@@ -868,22 +865,10 @@ WorkitemLoops::AddContextSaveRestore
 }
 
 bool
-WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
+WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
 {
-    /* TODO: rematerialization:
-
-       If the instruction is a load from a scalar global, we need
-       not context save it but should just (re)load. This
-       covers loads from the temporary _local_id_x etc. variables. 
-
-       Also rematerialize "cheap" computations.
-    */
-
     /*
-      Loads from non-indexed scalar global addresses are known not to be 
-      ID-dependent.
-
-      Especially _local_id_x loads should not be replicated as it leads to
+      _local_id loads should not be replicated as it leads to
       problems in conditional branch case where the header node
       of the region is shared across the branches and thus the
       header node's ID loads might get context saved which leads
@@ -894,8 +879,8 @@ WorkitemLoops::ShouldBeContextSaved(llvm::Instruction *instr)
         (load->getPointerOperand() == localIdZ ||
          load->getPointerOperand() == localIdY ||
          load->getPointerOperand() == localIdX))
-      return false;
-    return true;
+      return true;
+    return false;
 }
 
 llvm::BasicBlock *

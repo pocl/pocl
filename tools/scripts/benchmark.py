@@ -51,10 +51,9 @@ from subprocess import Popen, PIPE
 
 # With POCL we can reuse the old compilation results by
 # leaving the kernel compiler temp directories and rerunning
-# the same OpenCL app. However, it makes the comparison
-# unfair as the vendor's implementation cannot do similar
-# automated compiler caching.
-POCL_EXCLUDE_COMPILATION_TIME = False
+# the same OpenCL app. This simulates a compiler cache in pocl.
+# At least NVIDIA OpenCL has a ccache in their implementation.
+POCL_EXCLUDE_COMPILATION_TIME = True
 
 # How many times each case is repeated. The best result is picked from these.
 REPEAT_COUNT = 5
@@ -169,7 +168,8 @@ class BenchmarkCase(object):
             temp_dir = tempfile.mkdtemp(suffix=self.name)
             os.environ['POCL_LEAVE_TEMP_DIRS'] = '1'
             os.environ['POCL_TEMP_DIR'] = temp_dir
-            os.environ['POCL_WORK_GROUP_METHOD'] = wg_method
+
+        os.environ['POCL_WORK_GROUP_METHOD'] = self.wg_method
 
         for t in range(times):
             result = self.run()
@@ -256,7 +256,29 @@ class EinsteinToolkitCase(BenchmarkCase):
 
 pocl_ocl_dir = POCL_SRC_ROOT_PATH + "/ocl-vendors"
 
+# Benchmarks that exercise the kernel. As big input sets as possible.
 amd_benchmarks = \
+    [AMDBenchmarkCase("AESEncryptDecrypt", "AESEncryptDecrypt -t -q"),
+     AMDBenchmarkCase("BitonicSort", "BitonicSort -q -t -x 1048576"),
+     AMDBenchmarkCase("BinarySearch", "BinarySearch -q -t -x 5242880000"),
+     AMDBenchmarkCase("BinomialOption", "BinomialOption -q -t -x 10000"),
+     AMDBenchmarkCase("BlackScholes", "BlackScholes -q -t -x 16777216"),
+     AMDBenchmarkCase("DCT", "DCT -q -t -x 4000 -y 4000"),
+     AMDBenchmarkCase("FastWalshTransform", "FastWalshTransform -q -t -x 134217728"),
+     AMDBenchmarkCase("FloydWarshall", "FloydWarshall -q -t -x 512"),
+     AMDBenchmarkCase("Histogram", "Histogram -t -x 15000 -y 15000 -q"),
+     AMDBenchmarkCase("Mandelbrot", "Mandelbrot -t -x 8192 -y 8192 -q"),
+     AMDBenchmarkCase("MatrixTranspose", "MatrixTranspose -t -x 12288 -y 12288 -q"),
+     #This gives garbage execution times for some reason
+     AMDBenchmarkCase("MatrixMultiplication", "MatrixMultiplication -q -t -x 1024 -y 1024 -z 2048"),
+     AMDBenchmarkCase("NBody", "NBody -t -x 19968 -q"),
+     AMDBenchmarkCase("QuasiRandomSequence", "QuasiRandomSequence -q -t -y 10200 -x 10000"),
+     AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
+     AMDBenchmarkCase("Reduction", "Reduction -q -t -x 400000000"),
+     AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 512000")]
+
+# Benchmarks tuned for low memory targers. E.g., smaller input sets.
+amd_benchmarks_lowmem = \
     [AMDBenchmarkCase("AESEncryptDecrypt", "AESEncryptDecrypt -t -q"),
      AMDBenchmarkCase("BitonicSort", "BitonicSort -q -t -x 1048576"),
      AMDBenchmarkCase("BinarySearch", "BinarySearch -q -t -x 8388608"),
@@ -276,9 +298,6 @@ amd_benchmarks = \
      #AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
      AMDBenchmarkCase("Reduction", "Reduction -q -t -x 5000000"),
      AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 128000")]
-
-#benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
-benchmarks = amd_benchmarks 
     
 def print_environment_info():
     timeout, llvm_version, stderr, rc = run_cmd("llvm-config --version")
@@ -312,6 +331,9 @@ if __name__ == "__main__":
                         help='Directory that contains comparison OCL .icd file')
     parser.add_option('-o', type="string", metavar='log file', dest='logfile', default="",
                         help='Write log to this file, instead of stdout')
+    parser.add_option('--lightweight', action="store_true", dest='lightweight', default=False,
+                      help='Use a lightweight test suite for platforms with low memory.')
+
     args, free_args = parser.parse_args()
  
     #vendor_ocl_dir = sys.argv[1] if len(sys.argv) == 2 else None     
@@ -333,6 +355,11 @@ if __name__ == "__main__":
         #sys.stdout.write("pocl perf.".ljust(colwidths[3]))
     sys.stdout.write("\n")
     sys.stdout.flush()
+
+    if args.lightweight:
+        benchmarks = amd_benchmarks_lowmem
+    else:
+        benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
 
     for case in benchmarks:
         sys.stdout.write(case.name.ljust(colwidths[0]))

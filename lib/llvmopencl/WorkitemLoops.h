@@ -92,7 +92,7 @@ namespace pocl {
 
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
 
-    bool ShouldBeContextSaved(llvm::Instruction *instr);
+    bool ShouldNotBeContextSaved(llvm::Instruction *instr);
 
     std::map<llvm::Instruction*, unsigned> tempInstructionIds;
     size_t tempInstructionIndex;
