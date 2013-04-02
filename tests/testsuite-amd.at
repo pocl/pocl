@@ -53,7 +53,6 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_BinomialOption -sC $ab
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([blackscholes])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -78,8 +77,6 @@ Verifying results...Passed!
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([dct])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_DCT -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -182,8 +179,6 @@ AT_CHECK_UNQUOTED([make test_MatrixMulImage -sC $abs_top_builddir/examples/AMD |
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([matrixtranspose])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_MatrixTranspose -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -229,8 +224,6 @@ AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMD | grep Pas
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([prefixsum])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_PrefixSum -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -255,8 +248,6 @@ AT_CHECK_UNQUOTED([make test_RecursiveGaussian -sC $abs_top_builddir/examples/AM
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([reduction])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_Reduction -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -264,9 +255,6 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([scanlargearrays])
 # Fails with vectorization. With wiloops and no unrolling, the vectorization won't apply.
-#AT_XFAIL_IF(true)
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=1 make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
