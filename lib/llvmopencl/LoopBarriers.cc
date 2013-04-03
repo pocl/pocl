@@ -1,6 +1,8 @@
-// LLVM function pass add required barriers to loops.
+// LLVM loop pass that adds required and "recommended" implicit barriers to 
+// loops.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012-2013 Pekka Jääskeläinen / Tampere University of Technology
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +32,13 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #endif
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <iostream>
 
 #include "LoopBarriers.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include <iostream>
+#include "VariableUniformityAnalysis.h"
 
 //#define DEBUG_LOOP_BARRIERS
 
@@ -55,6 +58,8 @@ LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
+  AU.addRequired<VariableUniformityAnalysis>();
+  AU.addPreserved<VariableUniformityAnalysis>();
 }
 
 bool
@@ -76,6 +81,10 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
 bool
 LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
 {
+  bool isBLoop = false;
+  bool changed = false;
+  changed |= AddInnerLoopBarrier(L, LPM);
+
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
        i != e; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
@@ -127,7 +136,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           // are probably running before BTR.
           Barrier::Create(latch->getTerminator());
           latch->setName(latch->getName() + ".latchbarrier");
-          return true;
+          return changed;
         }
 
         // Modified code from llvm::LoopBase::getLoopLatch to
@@ -150,7 +159,6 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
             }
           }
         }
-
         return true;
       }
     }
@@ -174,5 +182,45 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
       return true;
     }
 
+  return changed;
+}
+
+/**
+ * Adds a barrier to the beginning of the loop body to force its treatment 
+ * similarly to a loop with work-group barriers.
+ *
+ * This allows parallelizing work-items across the work-group per kernel
+ * for-loop iteration, potentially leading to easier horizontal vectorization.
+ * The idea is similar to loop switching where the work-item loop is 
+ * switched with the kernel for-loop.
+ *
+ * We need to make sure it is legal to add the barrier, though. The
+ * OpenCL barrier semantics require either all or none of the WIs to
+ * reach the barrier at each iteration. This is satisfied when
+ *
+ * a) loop exit condition must not depend on the WI and 
+ * b) all or none of the WIs should enter the loop
+ */
+bool
+LoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM) {
+
+  VariableUniformityAnalysis &VUA = 
+    getAnalysis<VariableUniformityAnalysis>();
+
+  BasicBlock *brexit = L->getExitingBlock();
+  if (brexit != NULL) return false; /* Multiple exit points */
+
+  llvm::Function *f = brexit->getParent();
+  if (llvm::PHINode *inductionVar = L->getCanonicalInductionVariable()) {
+    VUA.setUniform(f, inductionVar);
+  }
+  
+  llvm::BranchInst *br = dyn_cast<llvm::BranchInst>(brexit->getTerminator());  
+  if (br && br->isConditional() &&
+      VUA.isUniform(f, br->getCondition())) {
+    Barrier::Create(brexit->getTerminator());   
+    return true;
+  }
+  
   return false;
 }

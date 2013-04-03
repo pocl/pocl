@@ -182,7 +182,8 @@ WorkitemHandler::dominatesUse
    the costly dominance analysis.
 */
 bool
-WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Function &F) 
+WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, 
+                                            llvm::Function &F) 
 {
   bool changed = false;
   DT->runOnFunction(F);
