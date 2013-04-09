@@ -39,6 +39,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   unsigned total_binary_size;
   unsigned char *pos;
   int i;
+  int j;
   int errcode;
 
   if (device_list == NULL || num_devices == 0 || lengths == NULL)
@@ -63,6 +64,37 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       }
       total_binary_size += lengths[i];
     }
+
+  // check for invalid devices in device_list[].
+  for (i = 0; i < num_devices; i++)
+    {
+      int found = 0;
+      for (j = 0; j < context->num_devices; j++)
+	{
+	  found |= context->devices[i] == device_list[i];
+	}
+      if (!found)
+	{
+	  errcode = CL_INVALID_DEVICE;
+	  goto ERROR;
+	}
+    }
+
+  // check for duplicates in device_list[].
+  for (i = 0; i < context->num_devices; i++)
+    {
+      int count = 0;
+      for (j = 0; j < num_devices; j++)
+	{
+	  count += context->devices[i] == device_list[j];
+	}
+      // duplicate devices
+      if (count > 1)
+	{
+	  errcode = CL_INVALID_DEVICE;
+	  goto ERROR;
+	}
+    }
   
   if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
   {
@@ -86,9 +118,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
-
-  if (context->num_devices != num_devices)
-    POCL_ABORT_UNIMPLEMENTED();
 
   program->context = context;
   program->num_devices = num_devices;
