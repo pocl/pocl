@@ -76,7 +76,8 @@ namespace pocl {
     llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
     llvm::Instruction *AddContextRestore
         (llvm::Value *val, llvm::Instruction *alloca, 
-         llvm::Instruction *before=NULL);
+         llvm::Instruction *before=NULL, 
+         bool isAlloca=false);
     llvm::Instruction *GetContextArray(llvm::Instruction *val);
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *>

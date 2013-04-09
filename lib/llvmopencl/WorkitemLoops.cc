@@ -133,30 +133,6 @@ WorkitemLoops::runOnFunction(Function &F)
   changed |= fixUndominatedVariableUses(DT, F);
 
 #if 0
-  // Estimate the amount of context data needed to be stored
-  // in stack.
-
-  //std::cerr << "### processed:" << std::endl;
-  //F.viewCFGOnly();
-  TargetData &TD = getAnalysis<TargetData>();
-
-  size_t totalContext = 0;
-  for (StrInstructionMap::iterator i = contextArrays.begin();
-       i != contextArrays.end(); ++i)
-  {
-      llvm::AllocaInst *a = dyn_cast<llvm::AllocaInst>((*i).second);
-      llvm::Value *s = a->getArraySize();
-      assert (a != NULL);
-      assert (isa<ConstantInt>(s));
-      llvm::ConstantInt *size = dyn_cast<llvm::ConstantInt>(s);
-      totalContext += 
-	size->getZExtValue() * TD.getTypeAllocSize(a->getAllocatedType());
-  }
-  std::cerr << "### total context data needed " << totalContext << " bytes" 
-            << std::endl;
-#endif
-
-#if 0
   /* Split large BBs so we can print the Dot without it crashing. */
   bool fchanged = false;
   const int MAX_INSTRUCTIONS_PER_BB = 70;
@@ -185,8 +161,9 @@ WorkitemLoops::runOnFunction(Function &F)
   //F.viewCFG();
 #endif
 
-  // this breaks cutcp/Parboil
-  // changed |= pocl::WorkitemHandler::runOnFunction(F);
+  // this breaks cutcp/Parboil and some AMD cases (to debug)
+  changed |= pocl::WorkitemHandler::runOnFunction(F);
+
   return changed;
 }
 
@@ -615,7 +592,7 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
         {
           llvm::Instruction *instruction = instr;
 
-	  if (ShouldNotBeContextSaved(instr)) continue;
+          if (ShouldNotBeContextSaved(instr)) continue;
 
           for (Instruction::use_iterator ui = instruction->use_begin(),
                  ue = instruction->use_end();
@@ -629,13 +606,6 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
               if (instructionsInRegion.find(user) == instructionsInRegion.end() &&
                   RegionOfBlock(user->getParent()) != NULL)
                 {
-		  //#ifdef DEBUG_WORK_ITEM_LOOPS
-#if 0
-                  std::cerr << "### instr used in another region" << std::endl;
-                  instr->dump();
-                  ParallelRegion *region = RegionOfBlock(user->getParent());
-                  if (region != NULL) region->dumpNames();
-#endif                  
                   instructionsToFix.push_back(instruction);
                   break;
                 }
@@ -660,6 +630,16 @@ llvm::Instruction *
 WorkitemLoops::AddContextSave
 (llvm::Instruction *instruction, llvm::Instruction *alloca)
 {
+
+  if (isa<AllocaInst>(instruction))
+    {
+      /* If the variable to be context saved is itself an alloca,
+         we have created one big alloca that stores the data of all the 
+         work-items and return pointers to that array. Thus, we need
+         no initialization code other than the context data alloca itself. */
+      return NULL;
+    }
+
   /* Save the produced variable to the array. */
   BasicBlock::iterator definition = dyn_cast<Instruction>(instruction);
 
@@ -685,7 +665,8 @@ WorkitemLoops::AddContextSave
 
 llvm::Instruction *
 WorkitemLoops::AddContextRestore
-(llvm::Value *val, llvm::Instruction *alloca, llvm::Instruction *before)
+(llvm::Value *val, llvm::Instruction *alloca, llvm::Instruction *before, 
+ bool isAlloca)
 {
   assert (val != NULL);
   IRBuilder<> builder(alloca);
@@ -716,8 +697,17 @@ WorkitemLoops::AddContextRestore
   gepArgs.push_back(region->LocalIDZLoad());
   gepArgs.push_back(region->LocalIDYLoad());
   gepArgs.push_back(region->LocalIDXLoad());
-          
-  return builder.CreateLoad(builder.CreateGEP(alloca, gepArgs));
+
+
+  llvm::Instruction *gep = 
+    dyn_cast<Instruction>(builder.CreateGEP(alloca, gepArgs));
+  if (isAlloca) {
+    /* In case the context saved instruction was an alloca, we created a
+       context array with pointed-to elements, and now want to return a pointer 
+       to the elements to emulate the original alloca. */
+    return gep;
+  }           
+  return builder.CreateLoad(gep);
 }
 
 /**
@@ -757,9 +747,26 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
 
   IRBuilder<> builder(instruction->getParent()->getParent()->getEntryBlock().getFirstInsertionPt());
 
-  llvm::Type *scalart = instruction->getType();
+  llvm::Type *elementType;
+  if (isa<AllocaInst>(instruction))
+    {
+      /* If the variable to be context saved was itself an alloca,
+         create one big alloca that stores the data of all the 
+         work-items and directly return pointers to that array.
+         This enables moving all the allocas to the entry node without
+         breaking the parallel loop.
+         Otherwise we would rely on a dynamic alloca to allocate 
+         unique stack space to all the work-items when its wiloop
+         iteration is executed. */
+      elementType = 
+        dyn_cast<AllocaInst>(instruction)->getType()->getElementType();
+    } 
+  else 
+    {
+      elementType = instruction->getType();
+    }
   llvm::Type *contextArrayType = 
-    ArrayType::get(ArrayType::get(ArrayType::get(scalart, LocalSizeX), LocalSizeY), LocalSizeZ);
+    ArrayType::get(ArrayType::get(ArrayType::get(elementType, LocalSizeX), LocalSizeY), LocalSizeZ);
 
   /* Allocate the context data array for the variable. */
   llvm::Instruction *alloca = 
@@ -787,14 +794,25 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
  */
 void
 WorkitemLoops::AddContextSaveRestore
-(llvm::Instruction *instruction, const InstructionIndex& instructionsInRegion)
-{
+(llvm::Instruction *instruction, const InstructionIndex& instructionsInRegion) {
+
   /* Allocate the context data array for the variable. */
   llvm::Instruction *alloca = GetContextArray(instruction);
   llvm::Instruction *theStore = AddContextSave(instruction, alloca);
 
   InstructionVec uses;
-  /* Restore the produced variable before each use outside the region. */
+  /* Restore the produced variable before each use to ensure the correct context
+     copy is used.
+     
+     We could add the restore only to other regions outside the 
+     variable defining region and use the original variable in the defining
+     region due to the SSA virtual registers being unique. However,
+     alloca variables can be redefined also in the same region, thus we 
+     need to ensure the correct alloca context position is written, not
+     the original unreplicated one. These variables can be generated by
+     volatile variables, private arrays, and due to the PHIs to allocas
+     pass.
+  */
 
   /* Find out the uses to fix first as fixing them invalidates
      the iterator. */
@@ -805,7 +823,6 @@ WorkitemLoops::AddContextSaveRestore
       Instruction *user;
       if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
       if (user == theStore) continue;
-      if (instructionsInRegion.find(user) != instructionsInRegion.end()) continue;
       uses.push_back(user);
     }
 
@@ -855,7 +872,9 @@ WorkitemLoops::AddContextSaveRestore
           assert (incomingBB != NULL);
           contextRestoreLocation = incomingBB->getTerminator();
         }
-      llvm::Value *loadedValue = AddContextRestore(user, alloca, contextRestoreLocation);
+      llvm::Value *loadedValue = 
+        AddContextRestore
+        (user, alloca, contextRestoreLocation, isa<AllocaInst>(instruction));
       user->replaceUsesOfWith(instruction, loadedValue);
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### done, the user was converted to:" << std::endl;

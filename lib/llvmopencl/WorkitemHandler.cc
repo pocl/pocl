@@ -69,8 +69,9 @@ WorkitemHandler::runOnFunction(Function &F)
   // Move all alloca instruction of the function to the 
   // beginning of the first basic block of the function.
   // This solves problem with dynamic stack objects that are 
-  // not supported by the TCE target.
-  Function::iterator I                   = F.begin();
+  // not supported by the TCE target. TODO: move this to a
+  // separate LLVM pass.
+  Function::iterator I = F.begin();
   Instruction *firstInsertionPt = (I++)->getFirstInsertionPt();
     
   bool changed = false;
