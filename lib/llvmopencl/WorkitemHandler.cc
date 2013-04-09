@@ -66,24 +66,7 @@ WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID)
 bool
 WorkitemHandler::runOnFunction(Function &F)
 {
-  // Move all alloca instruction of the function to the 
-  // beginning of the first basic block of the function.
-  // This solves problem with dynamic stack objects that are 
-  // not supported by the TCE target.
-  Function::iterator I                   = F.begin();
-  Instruction *firstInsertionPt = (I++)->getFirstInsertionPt();
-    
-  bool changed = false;
-  for (Function::iterator E = F.end(); I != E; ++I) {
-    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
-      AllocaInst *allocaInst = dyn_cast<AllocaInst>(BI++);
-      if (allocaInst && isa<ConstantInt>(allocaInst->getArraySize())) {
-        allocaInst->moveBefore(firstInsertionPt);
-        changed = true;
-      }
-    }
-  }
-  return changed;
+  return false;
 }
 
 void

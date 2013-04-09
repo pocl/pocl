@@ -1492,7 +1492,7 @@ namespace {
                 }
                 Instruction* original = NULL;
                 for (unsigned o = 0; o < K->getNumOperands(); ++o) {
-                    if (!isa<ConstantInt>(K->getOperand(o))) {
+                    if (isa<Instruction>(K->getOperand(o))) {
                         original = cast<Instruction>(K->getOperand(o));
                     }
                 }

@@ -55,6 +55,7 @@ AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions as_type])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
 [Running test test_as_type...
@@ -104,7 +105,6 @@ AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd
 #Fails on tce due to bug #1160383
 #AT_KEYWORDS([tce])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q arm])
 AT_DATA([expout],
 [Running test test_hadd...
 OK

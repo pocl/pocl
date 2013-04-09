@@ -45,6 +45,7 @@ llvmopencl_la_SOURCES = Barrier.h						\
 						PHIsToAllocas.h PHIsToAllocas.cc \
 						BreakConstantGEPs.h BreakConstantGEPs.cpp \
 						WorkitemHandlerChooser.h WorkitemHandlerChooser.cc \
-						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc
+						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc \
+						AllocasToEntry.h AllocasToEntry.cc
 
 #llvmopencl_la_LIBADD += @LIBS_LLVMTRANSFORMUTILS@

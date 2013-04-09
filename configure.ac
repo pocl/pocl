@@ -633,6 +633,8 @@ case $host_cpu in
     kernel_dir="powerpc"
     OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
+    #TODO: not all PowerPCs have Altivec?
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
     ;;
   *)
     AC_MSG_ERROR([unknown/unsupported host $host])

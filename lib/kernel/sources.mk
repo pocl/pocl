@@ -205,7 +205,7 @@ OBJ:LKERNEL_SRCS
 
 #rules to compile the different kernel library source file types into LLVM bitcode
 %.bc: %.cl @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
-	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
+	@CLANG@ -emit-llvm ${CLFLAGS} -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
 %.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
 	@CLANG@ -emit-llvm ${CLFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ../../../include/${TARGET_DIR}/types.h
 %.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
