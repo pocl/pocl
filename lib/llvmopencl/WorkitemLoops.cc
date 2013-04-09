@@ -112,8 +112,6 @@ WorkitemLoops::runOnFunction(Function &F)
 
   tempInstructionIndex = 0;
 
-  llvm::Module *M = F.getParent();
-
 #if 0
   std::cerr << "### original:" << std::endl;
   F.viewCFG();
@@ -160,9 +158,6 @@ WorkitemLoops::runOnFunction(Function &F)
 
   //F.viewCFG();
 #endif
-
-  // this breaks cutcp/Parboil and some AMD cases (to debug)
-  changed |= pocl::WorkitemHandler::runOnFunction(F);
 
   return changed;
 }
@@ -622,7 +617,7 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
       (*i)->dump();
 #endif 
       llvm::Instruction *instructionToFix = *i;
-      AddContextSaveRestore(instructionToFix, instructionsInRegion);
+      AddContextSaveRestore(instructionToFix);
     }
 }
 
@@ -794,7 +789,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
  */
 void
 WorkitemLoops::AddContextSaveRestore
-(llvm::Instruction *instruction, const InstructionIndex& instructionsInRegion) {
+(llvm::Instruction *instruction) {
 
   /* Allocate the context data array for the variable. */
   llvm::Instruction *alloca = GetContextArray(instruction);

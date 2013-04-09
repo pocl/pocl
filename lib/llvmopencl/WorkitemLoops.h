@@ -69,9 +69,7 @@ namespace pocl {
     virtual bool ProcessFunction(llvm::Function &F);
 
     void FixMultiRegionVariables(ParallelRegion *region);
-    void AddContextSaveRestore
-        (llvm::Instruction *instruction, 
-         const InstructionIndex& instructionsInRegion);
+    void AddContextSaveRestore(llvm::Instruction *instruction);
 
     llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
     llvm::Instruction *AddContextRestore
