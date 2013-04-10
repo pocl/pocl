@@ -40,15 +40,15 @@ AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/forloops_2_2_1_1.stdout)
 ])
 AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/forloops_2_2_1_1.stdout)
 ])
 AT_CLEANUP
 
