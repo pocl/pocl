@@ -924,7 +924,6 @@ namespace {
       ShouldContinue = getCandidatePairs(BB, Start, CandidatePairs,
                                          PairableInsts);
       if (PairableInsts.empty()) return false;
-
       // Now we have a map of all of the pairable instructions and we need to
       // select the best possible pairing. A good pairing is one such that the
       // users of the pair are also paired. This defines a (directed) forest
@@ -936,11 +935,11 @@ namespace {
 
       std::multimap<ValuePair, ValuePair> ConnectedPairs;
       computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
-
+      
       // Build the pairable-instruction dependency map
       DenseSet<ValuePair> PairableInstUsers;
       buildDepMap(BB, CandidatePairs, PairableInsts, PairableInstUsers);
-
+      
       // There is now a graph of the connected pairs. For each variable, pick
       // the pairing with the largest tree meeting the depth requirement on at
       // least one branch. Then select all pairings that are part of that tree
@@ -950,7 +949,7 @@ namespace {
       DenseMap<Value *, Value *> ChosenPairs;
       choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
         PairableInstUsers, ChosenPairs);
-
+      
       if (ChosenPairs.empty())
           return false;
       
@@ -1426,6 +1425,11 @@ namespace {
     for (std::multimap<int, ValueVector*>::iterator insIt = temporary.begin();
          insIt != temporary.end(); insIt++) {
         ValueVector* tmpVec = (*insIt).second;
+        // Prevent creation of vectors shorter then the vector width in case
+        // vectorization of asymetric counters is disabled.
+        if (tmpVec->size() % 2 != 0 && NoCount) {
+            continue;
+        }
             
         if (tmpVec->size() % 2 != 0 && !MemOpsOnly) {
 
@@ -1447,11 +1451,29 @@ namespace {
             // With NoCount set to false, the vectorization of loop counter
             // arithmetic is allowed, creating better bitcode, but when mapped
             // to TTA, performance is much worse.
-            
+
             Instruction* tmp = cast<Instruction>((*tmpVec)[0]);                        
             if ( !(tmpVec->size() == 1 || 
                 tmp->getType()->isVectorTy() ||
-                tmp->getOpcode() != Instruction::Add)) {                
+                tmp->getOpcode() != Instruction::Add)) { 
+                
+                bool identity = false;
+                bool argumentOperand = false;
+                // If none of the arguments to add is constant
+                // we do not replace it with identity, neither if operand
+                // is function argument since that can be used in different
+                // blocks.
+                for (unsigned o = 0; o < tmp->getNumOperands(); ++o) {
+                    if (isa<ConstantInt>(tmp->getOperand(o))) {
+                        identity = true;
+                    }
+                    if (isa<Argument>(tmp->getOperand(o))) {
+                        argumentOperand = true;
+                    }                    
+                }
+                if (!identity || argumentOperand) 
+                    continue;
+                
                 Instruction* K = tmp->clone();
                 if ((*tmpVec)[0]->hasName()) {
                     std::string name = (*tmpVec)[0]->getName().str() + "_temp_0";
@@ -1490,15 +1512,16 @@ namespace {
                               ConstantInt::get(K->getOperand(o)->getType(), 0));
                     }
                 }
-                Instruction* original = NULL;
+                
+                Value* original = NULL;
                 for (unsigned o = 0; o < K->getNumOperands(); ++o) {
-                    if (isa<Instruction>(K->getOperand(o))) {
-                        original = cast<Instruction>(K->getOperand(o));
+                    if (!isa<PHINode>(K->getOperand(o)) &&
+                        isa<Instruction>(K->getOperand(o))) {
+                        original = K->getOperand(o);
                     }
                 }
                 if (original != NULL) {
-                    K->insertAfter(original);                                    
-                    bool changed = false;
+                    K->insertAfter(cast<Instruction>(original));
                     std::vector<User*> usesToReplace;
                     for (Value::use_iterator it = original->use_begin();
                          it != original->use_end();
@@ -1511,17 +1534,19 @@ namespace {
                                         usedInVec = true;
                                         break;
                                     }
-                                }                                       
+                                }
                             }
-                            if (!usedInVec) {                                                     
+                            if (!usedInVec) {
                                 usesToReplace.push_back(*it);
                             }
                         }
-                    }
+                    }                    
                     for (unsigned int j = 0; j < usesToReplace.size(); j++) {
                        usesToReplace[j]->replaceUsesOfWith(original, K);
                     }
-                }                
+                } else {
+                    K->insertBefore(tmp);
+                }
                 tmpVec->insert(tmpVec->begin(), K);
             }
         }
