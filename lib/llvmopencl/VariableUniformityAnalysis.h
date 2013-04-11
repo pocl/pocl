@@ -37,7 +37,7 @@ namespace pocl {
    * Analyses the variables in the function to figure out if a variable
    * value is
    *
-   * a) 'uniform', i.e., always same for all work-items
+   * a) 'uniform', i.e., always same for all work-items in the *same work-group*
    * b) 'varying', i.e., somehow dependent on the work-item id 
    * 
    * For safety, 'variable' is assumed, unless certain of a).
@@ -52,10 +52,18 @@ namespace pocl {
     virtual bool runOnFunction(llvm::Function &F);
     virtual bool isUniform(llvm::Function *f, llvm::Value* v);
     virtual void setUniform(llvm::Function *f, llvm::Value *v, bool isUniform=true);
+    virtual void analyzeBBDivergence(llvm::Function *f, 
+                                     llvm::BasicBlock *bb, 
+                                     llvm::BasicBlock *previousUniformBB);
 
   private:
+
+    bool isUniformityAnalyzed(llvm::Function *f, llvm::Value *val) const;
+
     typedef std::map<llvm::Value*, bool> UniformityIndex;
-    mutable std::map<llvm::Function *, UniformityIndex> uniformityCache_;
+    typedef std::map<llvm::Function *, UniformityIndex> UniformityCache;
+    mutable UniformityCache uniformityCache_;
+
   };
 }
 

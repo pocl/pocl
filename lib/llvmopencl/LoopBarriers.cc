@@ -40,7 +40,7 @@
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
 
-//#define DEBUG_LOOP_BARRIERS
+#define DEBUG_LOOP_BARRIERS
 
 using namespace llvm;
 using namespace pocl;
@@ -83,16 +83,35 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
 {
   bool isBLoop = false;
   bool changed = false;
-  changed |= AddInnerLoopBarrier(L, LPM);
 
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
-       i != e; ++i) {
+       i != e && !isBLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
       if (isa<Barrier>(j)) {
-        // Found a barrier on this loop, proceed:
-        // 1) add a barrier on the loop header.
-        // 2) add a barrier on the latches
+          isBLoop = true;
+          break;
+      }
+    }
+  }
+
+  if (!isBLoop) {
+      /* Let's try to add an implicit barrier inside the loop to make
+         the kernel loops be horizontally parallelized using the 
+         b-loop parallel region formation. */
+      isBLoop = AddInnerLoopBarrier(L, LPM);
+      changed = isBLoop;
+  }      
+
+  for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
+       i != e && isBLoop; ++i) {
+    for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
+         j != e; ++j) {
+      if (isa<Barrier>(j)) {
+
+        // Found a barrier in this loop:
+        // 1) add a barrier in the loop header.
+        // 2) add a barrier in the latches
         
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
@@ -196,31 +215,70 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
  *
  * We need to make sure it is legal to add the barrier, though. The
  * OpenCL barrier semantics require either all or none of the WIs to
- * reach the barrier at each iteration. This is satisfied when
+ * reach the barrier at each iteration. This is satisfied at least when
  *
- * a) loop exit condition must not depend on the WI and 
- * b) all or none of the WIs should enter the loop
+ * a) loop exit condition does not depend on the WI and 
+ * b) all or none of the WIs always enter the loop
  */
 bool
 LoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM) {
 
+  /* Only add barriers to the innermost loops. */
+
+  if (L->getSubLoops().size() > 0)
+    return false;
+
+#ifdef DEBUG_LOOP_BARRIERS
+  std::cerr << "### trying to add a loop barrier to force horizontal parallelization" 
+            << std::endl;
+#endif
+
+  BasicBlock *brexit = L->getExitingBlock();
+  if (brexit == NULL) return false; /* Multiple exit points */
+
+  llvm::BasicBlock *loopEntry = L->getHeader();
+  if (loopEntry == NULL) return false; /* Multiple entries blocks? */
+
+  llvm::Function *f = brexit->getParent();
+
   VariableUniformityAnalysis &VUA = 
     getAnalysis<VariableUniformityAnalysis>();
 
-  BasicBlock *brexit = L->getExitingBlock();
-  if (brexit != NULL) return false; /* Multiple exit points */
-
-  llvm::Function *f = brexit->getParent();
-  if (llvm::PHINode *inductionVar = L->getCanonicalInductionVariable()) {
-    VUA.setUniform(f, inductionVar);
+  /* Check if the whole loop construct is executed by all or none of the
+     work-items. */
+  if (!VUA.isUniform(f, loopEntry)) {
+#ifdef DEBUG_LOOP_BARRIERS
+    std::cerr << "### the loop is not uniform because loop entry '"
+              << loopEntry->getName().str() << "' is not uniform" << std::endl;
+    
+#endif
+    return false;
   }
-  
+
+  /* Check the branch condition predicate. If it is uniform, we know the loop 
+     is  executed the same number of times for all WIs. */
   llvm::BranchInst *br = dyn_cast<llvm::BranchInst>(brexit->getTerminator());  
   if (br && br->isConditional() &&
       VUA.isUniform(f, br->getCondition())) {
+
     Barrier::Create(brexit->getTerminator());   
+#ifdef DEBUG_LOOP_BARRIERS
+    std::cerr << "### added an inner-loop barrier to the loop" << std::endl << std::endl;
+#endif
     return true;
+  } else {
+#ifdef DEBUG_LOOP_BARRIERS
+    if (br && br->isConditional() && !VUA.isUniform(f, br->getCondition())) {
+      std::cerr << "### loop condition not uniform" << std::endl;
+      br->getCondition()->dump();
+    }
+#endif
+
   }
+
+#ifdef DEBUG_LOOP_BARRIERS
+  std::cerr << "### cannot add an inner-loop barrier to the loop" << std::endl << std::endl;
+#endif
   
   return false;
 }
