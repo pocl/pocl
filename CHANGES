@@ -41,6 +41,7 @@ Major bugfixes
 - The ICD dispatch table was too small which might have caused
   "interesting" behavior when calling the later functions in
   the table and not using ocl-icd as the dispatcher.
+- Several kernel compiler bugs fixed.
 
 Platform Layer implementations (OpenCL 1.2 Chapter 4)
 -----------------------------------------------------

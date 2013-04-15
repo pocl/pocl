@@ -113,10 +113,15 @@ AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_build
 AT_CLEANUP
 
 AT_SETUP([a loop with two paths to the latch (full replication)])
-AT_XFAIL_IF([true])
-AT_DATA([expout],
-[OK
-])
 AT_KEYWORDS([twolatchpaths workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0, expout)
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/for_bug_1_2_1_1.stdout)
+])
+AT_CLEANUP
+
+AT_SETUP([a loop with two paths to the latch (loops)])
+AT_KEYWORDS([twolatchpaths workgroup])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/for_bug_1_2_1_1.stdout)
+])
 AT_CLEANUP
