@@ -40,7 +40,7 @@
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
 
-#define DEBUG_LOOP_BARRIERS
+//#define DEBUG_LOOP_BARRIERS
 
 using namespace llvm;
 using namespace pocl;

@@ -364,12 +364,19 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
           // Get value for original incoming edge and add new predicate.
           Value *v = phi->getIncomingValueForBlock(b);
           Value *new_v = reference_map[v];
-          if (new_b == NULL) {
-            // csanchez: This could happen AFAIU if the value for this
-            // incoming edge is not in the original tail (i.e. comes
-            // from the common part of the CFG before the tails split).
-            // But unsure so I am adding an assert for the moment.
+          if (new_v == NULL) {
+            /* This case can happen at least when replicating a latch 
+               block in a b-loop. The value produced might be from a common
+               path before the replicated part. Then just use the original value.*/
+            new_v = v;
+#if 0
+            std::cerr << "### could not find a replacement block for phi node ("
+                      << b->getName().str() << ")" << std::endl;
+            phi->dump();
+            v->dump();
+            f->viewCFG();
             assert (0);
+#endif
           }
           phi->addIncoming(new_v, new_b);
         }

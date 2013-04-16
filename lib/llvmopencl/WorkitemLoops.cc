@@ -378,6 +378,10 @@ WorkitemLoops::ProcessFunction(Function &F)
   }
 #endif
 
+  /* Count how many parallel regions share each entry node to
+     detect diverging regions that need to be peeled. */
+  std::map<llvm::BasicBlock*, int> entryCounts;
+
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
@@ -389,6 +393,7 @@ WorkitemLoops::ProcessFunction(Function &F)
     region->dumpNames();    
 #endif
     FixMultiRegionVariables(region);
+    entryCounts[region->entryBB()]++;
   }
 
 #if 0
@@ -413,11 +418,16 @@ WorkitemLoops::ProcessFunction(Function &F)
 
     /* In case of conditional barriers, the first iteration
        has to be peeled so we know which branch to execute
-       (with the loop). We know it's such a region in case
-       the region exit does not post dominate the entry.
-       That is, there will be two branches from the same
-       entry. */
-    bool peelFirst = !PDT->dominates(original->exitBB(), original->entryBB());
+       with the work item loop. In case there are more than one
+       parallel region sharing an entry BB, it's a diverging
+       region.
+
+       Post dominance of entry by exit does not work in case the
+       region is inside a loop and the exit block is in the path
+       towards the loop exit (and the function exit).
+    */
+    bool peelFirst =  entryCounts[original->entryBB()] > 1;
+    
     peeledRegion[original] = peelFirst;
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *> l;

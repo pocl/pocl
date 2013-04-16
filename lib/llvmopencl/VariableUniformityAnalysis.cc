@@ -46,7 +46,7 @@
 #include "VariableUniformityAnalysis.h"
 #include "Barrier.h"
 
-#define DEBUG_UNIFORMITY_ANALYSIS
+//#define DEBUG_UNIFORMITY_ANALYSIS
 
 namespace pocl {
 

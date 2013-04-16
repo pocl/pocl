@@ -209,6 +209,11 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
               std::cout << "### found a barrier inside the loop:" << std::endl;
               std::cout << barrier->getName().str() << std::endl;
 #endif
+              if (loop_barrier != NULL) {
+                // there can be multiple latches and each have their barrier,
+                // save the previously found inner loop barrier
+                exit_blocks.push_back(loop_barrier);
+              }
               loop_barrier = barrier;
             }
           else

@@ -40,15 +40,15 @@ AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/forloops_2_2_1_1.stdout)
 ])
 AT_CLEANUP
 
 AT_SETUP([Unbarriered for loops (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0, stdout)
-AT_CHECK([cat stdout | wc -l | sed 's/ *//'], 0, [4
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel forloops.cl 2 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/forloops_2_2_1_1.stdout)
 ])
 AT_CLEANUP
 
@@ -119,9 +119,23 @@ AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_t
 ])
 AT_CLEANUP
 
+AT_SETUP([a loop with two paths to the latch (full replication)])
+AT_KEYWORDS([twolatchpaths workgroup])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/for_bug_1_2_1_1.stdout)
+])
+AT_CLEANUP
+
 AT_SETUP([Forcing horizontal parallelization to some outer loops (loops)])
 AT_KEYWORDS([workgroup outerlooppar])
 AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel outerlooppar.cl 2 2 1 1], 0, 
 [$(cat $abs_top_srcdir/tests/workgroup/outerlooppar_2_2_1_1.stdout)
+])
+AT_CLEANUP
+
+AT_SETUP([a loop with two paths to the latch (loops)])
+AT_KEYWORDS([twolatchpaths workgroup])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/for_bug_1_2_1_1.stdout)
 ])
 AT_CLEANUP
