@@ -139,7 +139,7 @@ fi
 #set -x
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -loop-barriers \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} ${OPT_SWITCH} ${WG_VECTORIZER} \
     ${EXTRA_OPTS} -instcombine -header=${header} -o ${output_file} ${linked_bc}

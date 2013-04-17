@@ -41,7 +41,6 @@ namespace pocl {
     llvm::DominatorTree *DT;
 
     bool ProcessLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
-    bool AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM);
   };
 }
 

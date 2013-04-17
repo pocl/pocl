@@ -1,5 +1,4 @@
-// LLVM loop pass that adds required and "recommended" implicit barriers to 
-// loops.
+// LLVM loop pass that adds required barriers to loops.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2013 Pekka Jääskeläinen / Tampere University of Technology
@@ -38,7 +37,6 @@
 #include "LoopBarriers.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "VariableUniformityAnalysis.h"
 
 //#define DEBUG_LOOP_BARRIERS
 
@@ -58,8 +56,6 @@ LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
 }
 
 bool
@@ -94,14 +90,6 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
       }
     }
   }
-
-  if (!isBLoop) {
-      /* Let's try to add an implicit barrier inside the loop to make
-         the kernel loops be horizontally parallelized using the 
-         b-loop parallel region formation. */
-      isBLoop = AddInnerLoopBarrier(L, LPM);
-      changed = isBLoop;
-  }      
 
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
        i != e && isBLoop; ++i) {
@@ -204,81 +192,3 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
   return changed;
 }
 
-/**
- * Adds a barrier to the beginning of the loop body to force its treatment 
- * similarly to a loop with work-group barriers.
- *
- * This allows parallelizing work-items across the work-group per kernel
- * for-loop iteration, potentially leading to easier horizontal vectorization.
- * The idea is similar to loop switching where the work-item loop is 
- * switched with the kernel for-loop.
- *
- * We need to make sure it is legal to add the barrier, though. The
- * OpenCL barrier semantics require either all or none of the WIs to
- * reach the barrier at each iteration. This is satisfied at least when
- *
- * a) loop exit condition does not depend on the WI and 
- * b) all or none of the WIs always enter the loop
- */
-bool
-LoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM) {
-
-  /* Only add barriers to the innermost loops. */
-
-  if (L->getSubLoops().size() > 0)
-    return false;
-
-#ifdef DEBUG_LOOP_BARRIERS
-  std::cerr << "### trying to add a loop barrier to force horizontal parallelization" 
-            << std::endl;
-#endif
-
-  BasicBlock *brexit = L->getExitingBlock();
-  if (brexit == NULL) return false; /* Multiple exit points */
-
-  llvm::BasicBlock *loopEntry = L->getHeader();
-  if (loopEntry == NULL) return false; /* Multiple entries blocks? */
-
-  llvm::Function *f = brexit->getParent();
-
-  VariableUniformityAnalysis &VUA = 
-    getAnalysis<VariableUniformityAnalysis>();
-
-  /* Check if the whole loop construct is executed by all or none of the
-     work-items. */
-  if (!VUA.isUniform(f, loopEntry)) {
-#ifdef DEBUG_LOOP_BARRIERS
-    std::cerr << "### the loop is not uniform because loop entry '"
-              << loopEntry->getName().str() << "' is not uniform" << std::endl;
-    
-#endif
-    return false;
-  }
-
-  /* Check the branch condition predicate. If it is uniform, we know the loop 
-     is  executed the same number of times for all WIs. */
-  llvm::BranchInst *br = dyn_cast<llvm::BranchInst>(brexit->getTerminator());  
-  if (br && br->isConditional() &&
-      VUA.isUniform(f, br->getCondition())) {
-
-    Barrier::Create(brexit->getTerminator());   
-#ifdef DEBUG_LOOP_BARRIERS
-    std::cerr << "### added an inner-loop barrier to the loop" << std::endl << std::endl;
-#endif
-    return true;
-  } else {
-#ifdef DEBUG_LOOP_BARRIERS
-    if (br && br->isConditional() && !VUA.isUniform(f, br->getCondition())) {
-      std::cerr << "### loop condition not uniform" << std::endl;
-      br->getCondition()->dump();
-    }
-#endif
-
-  }
-
-#ifdef DEBUG_LOOP_BARRIERS
-  std::cerr << "### cannot add an inner-loop barrier to the loop" << std::endl << std::endl;
-#endif
-  
-  return false;
-}
