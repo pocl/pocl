@@ -25,7 +25,11 @@
 #include <sstream>
 #include <iostream>
 
-#include <llvm/Instructions.h>
+#ifdef LLVM_3_2
+# include <llvm/Instructions.h>
+#else
+# include <llvm/IR/Instructions.h>
+#endif
 
 #include "AllocasToEntry.h"
 
