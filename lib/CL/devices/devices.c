@@ -42,10 +42,12 @@
 struct _cl_device_id* pocl_devices = NULL;
 int pocl_num_devices = 0;
 
-#ifdef TCE_AVAILABLE
+#if defined TCE_AVAILABLE && defined BUILD_SPU
 #define POCL_NUM_DEVICE_TYPES 4
-#else
+#elif defined TCE_AVAILABLE || defined BUILD_SPU
 #define POCL_NUM_DEVICE_TYPES 3
+#else
+#define POCL_NUM_DEVICE_TYPES 2
 #endif
 
 /* All device drivers available to the pocl. */
