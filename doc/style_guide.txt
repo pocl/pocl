@@ -1,0 +1,20 @@
+coding style
+============
+
+The coding style of the pocl is a bit mixed, but the
+following main principles shall be followed:
+
+1) In the C code (all the code base except for the LLVM modules),
+   follow the GNU style.
+
+   http://www.gnu.org/prep/standards/html_node/Writing-C.html
+
+2) In the LLVM passes (C++), follow the LLVM coding guidelines
+   so it is easy to upstream general code to the LLVM project 
+   at any point.
+
+   http://llvm.org/docs/CodingStandards.html
+
+It's known that the pocl code base does not adhere to these principles,
+but the aim is to gradually fix this.
+

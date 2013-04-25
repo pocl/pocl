@@ -1,6 +1,6 @@
-// Header for Workgroup.cc module pass.
+// Header for LLVMUtils, useful common LLVM-related functionality.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2013 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,29 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKGROUP_H
-#define _POCL_WORKGROUP_H
+#ifndef _POCL_LLVM_UTILS_H
+#define _POCL_LLVM_UTILS_H
 
-#include "config.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
-#include "llvm/Module.h"
-#else
-#include "llvm/IR/Module.h"
-#endif
-#include "llvm/Pass.h"
+#include <map>
 
-namespace pocl {
-  class Workgroup : public llvm::ModulePass {  
-  public:
-    static char ID;
-
-    Workgroup() : ModulePass(ID) {}
-
-    virtual bool runOnModule(llvm::Module &M);
-
-    static bool isKernelToProcess(const llvm::Function &F);
-
-  };
+namespace llvm {
+    class Module;
+    class Function;
 }
+
+typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
+
+void
+regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
 #endif

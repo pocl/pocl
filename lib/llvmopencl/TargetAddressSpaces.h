@@ -1,6 +1,7 @@
-// Header for Workgroup.cc module pass.
+// Header for TargetAddressSpaces, an LLVM pass that converts the
+// generic address space ids to the target specific ones.
 // 
-// Copyright (c) 2011 Universidad Rey Juan Carlos
+// Copyright (c) 2013 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,28 +21,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKGROUP_H
-#define _POCL_WORKGROUP_H
+#ifndef _POCL_TARGET_ADDRESS_SPACES_H
+#define _POCL_TARGET_ADDRESS_SPACES_H
 
 #include "config.h"
 #if (defined LLVM_3_1 or defined LLVM_3_2)
-#include "llvm/Module.h"
+#include "llvm/Function.h"
 #else
-#include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
 #endif
+
 #include "llvm/Pass.h"
 
 namespace pocl {
-  class Workgroup : public llvm::ModulePass {  
+  /* pocl uses the fixed address space ids forced by the clang's
+     -ffake-address-space-map internally until the end to be able to
+     detect the different OpenCL address spaces ambiguously, regardless
+     of the target. This pass converts the fake address space ids to
+     the target-specific ones, if required by the code generator of that
+     target. */       
+  class TargetAddressSpaces : public llvm::ModulePass {
   public:
     static char ID;
 
-    Workgroup() : ModulePass(ID) {}
+    TargetAddressSpaces();
+    virtual ~TargetAddressSpaces() {};
 
-    virtual bool runOnModule(llvm::Module &M);
-
-    static bool isKernelToProcess(const llvm::Function &F);
-
+    virtual bool runOnModule(llvm::Module &M);    
   };
 }
 

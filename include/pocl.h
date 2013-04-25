@@ -37,10 +37,17 @@
 
 #include "pocl_device.h"
 
+/*
+ * During pocl kernel compiler transformations we use the fixed address 
+ * space ids of clang's -ffake-address-space-map to mark the different 
+ * address spaces to keep the processing target-independent. These
+ * are converted to the target's address space map (if any), in a final
+ * kernel compiler pass.
+ */
 #define POCL_ADDRESS_SPACE_PRIVATE 0
-#define POCL_ADDRESS_SPACE_GLOBAL 3
-#define POCL_ADDRESS_SPACE_LOCAL 4
-#define POCL_ADDRESS_SPACE_CONSTANT 5
+#define POCL_ADDRESS_SPACE_GLOBAL 1
+#define POCL_ADDRESS_SPACE_LOCAL 2
+#define POCL_ADDRESS_SPACE_CONSTANT 3
 
 typedef struct _mem_mapping mem_mapping_t;
 /* represents a single buffer to host memory mapping */

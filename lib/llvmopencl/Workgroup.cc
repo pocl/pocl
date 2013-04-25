@@ -79,6 +79,7 @@ static void createWorkgroupFast(Module &M, Function *F);
 // extern cl::opt<string> Header;
 // extern cl::list<int> LocalSize;
 
+/* The kernel to process in this kernel compiler launch. */
 cl::opt<string>
 KernelName("kernel",
        cl::desc("Kernel function name"),
@@ -168,18 +169,12 @@ Workgroup::runOnModule(Module &M)
     if (!i->isDeclaration())
       i->setLinkage(Function::InternalLinkage);
   }
-  //   BI.addFunction(i);
-  // }
-
-  // BI.inlineFunctions();
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
     Function *L = createLauncher(M, i);
       
-#ifdef LLVM_3_1
-    L->addFnAttr(Attribute::NoInline);
-#elif defined LLVM_3_2
+#if defined LLVM_3_2
     L->addFnAttr(Attributes::NoInline);
 #else
     L->addFnAttr(Attribute::NoInline);
@@ -199,32 +194,6 @@ Workgroup::runOnModule(Module &M)
   ReturnInst::Create(M.getContext(), 0, bb);
   
   return true;
-}
-
-bool
-Workgroup::isKernelToProcess(const Function &F)
-{
-  const Module *m = F.getParent();
-
-  NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
-  if (kernels == NULL) {
-    if (KernelName == "")
-      return true;
-    if (F.getName() == KernelName)
-      return true;
-
-    return false;
-  }  
-
-  for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
-    if (kernels->getOperand(i)->getOperand(0) == NULL)
-      continue; // globaldce might have removed uncalled kernels
-    Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
-    if (&F == k)
-      return true;
-  }
-
-  return false;
 }
 
 /**
@@ -613,4 +582,35 @@ createWorkgroupFast(Module &M, Function *F)
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
+}
+
+
+/**
+ * Returns true in case the given function is a kernel that
+ * should be processed by the kernel compiler.
+ */
+bool
+Workgroup::isKernelToProcess(const Function &F)
+{
+  const Module *m = F.getParent();
+
+  NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
+  if (kernels == NULL) {
+    if (KernelName == "")
+      return true;
+    if (F.getName() == KernelName)
+      return true;
+
+    return false;
+  }  
+
+  for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
+    if (kernels->getOperand(i)->getOperand(0) == NULL)
+      continue; // globaldce might have removed uncalled kernels
+    Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
+    if (&F == k)
+      return true;
+  }
+
+  return false;
 }

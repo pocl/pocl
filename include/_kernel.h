@@ -2,6 +2,9 @@
    functions declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2011-2013 Pekka Jääskeläinen / TUT
+   Copyright (c) 2011-2013 Erik Schnetter <eschnetter@perimeterinstitute.ca>
+                           Perimeter Institute for Theoretical Physics
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -106,24 +109,6 @@
 #else
 #  define _CL_STATIC_ASSERT(_t, _x) typedef int __cl_ai##_t[(x) ? 1 : -1];
 #endif
-
-/* Use fixed address space id for all but local address space.
-
-   This is to ensure we do not lose the information of the
-   OpenCL address space in the Clang for targets (basically regular CPUs)
-   that map all them to 0. 
-
-   local is left as is because it needs special handling in Clang.
-   Automated local variables must be converted by it to special global
-   variables which are handled by pocl kernel compiler passes.
-
-   This mess will be cleaned up at latest when SPIR and its standard
-   address space numbers gets finished and implemented in Clang. */
-#define __global __attribute__ ((address_space(3))) 
-#define __constant __attribute__ ((address_space(5))) 
-
-#define global __attribute__ ((address_space(3)))
-#define constant __attribute__ ((address_space(5))) 
 
 typedef enum {
   CLK_LOCAL_MEM_FENCE = 0x1,

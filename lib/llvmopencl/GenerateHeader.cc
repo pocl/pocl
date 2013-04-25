@@ -55,12 +55,12 @@
 #include "llvm/IR/Module.h"
 #endif
 
+#include "LLVMUtils.h"
+
 using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-typedef SmallVector<std::pair<Function *, Function *>, 8> KernelPairVector;
-static void regenerate_kernel_metadata(Module &M, KernelPairVector &kernels);
 
 cl::opt<string>
 Header("header",
@@ -94,11 +94,7 @@ static RegisterPass<GenerateHeader> X("generate-header",
 void
 GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#ifdef LLVM_3_1
-  AU.addRequired<TargetData>();
-#else
   AU.addRequired<DataLayout>();
-#endif
 }
 
 bool
@@ -109,7 +105,7 @@ GenerateHeader::runOnModule(Module &M)
   // store the new and old kernel pairs in order to regenerate
   // all the metadata that used to point to the unmodified
   // kernels
-  KernelPairVector kernels;
+  FunctionMapping kernels;
 
   string ErrorInfo;
   raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
@@ -126,8 +122,7 @@ GenerateHeader::runOnModule(Module &M)
     Function *new_kernel = ProcessAutomaticLocals(F, out);
     if (new_kernel != F)
       changed = true;
-
-    kernels.push_back(std::make_pair(F, new_kernel));
+    kernels[F] = new_kernel;
   }
 
   if (changed)
@@ -135,7 +130,7 @@ GenerateHeader::runOnModule(Module &M)
       regenerate_kernel_metadata(M, kernels);
 
       /* Delete the old kernels. */
-      for (KernelPairVector::const_iterator i = kernels.begin(),
+      for (FunctionMapping::const_iterator i = kernels.begin(),
              e = kernels.end(); i != e; ++i) 
         {
           Function *old_kernel = (*i).first;
@@ -211,15 +206,15 @@ GenerateHeader::ProcessPointers(Function *F,
       is_local[i] = false;
     }
   
-    if( t->isPointerTy() ) {
-      if( t->getPointerElementType()->isStructTy() ) {
+    if (t->isPointerTy()) {
+      if (t->getPointerElementType()->isStructTy()) {
         string name = t->getPointerElementType()->getStructName().str();
-        if( name == "struct.image2d_t_" ) { // TODO image3d?
+        if (name == "struct.image2d_t_") { // TODO image3d?
           is_image[i] = true;
           is_pointer[i] = false;
           is_local[i] = false;
         }
-        if( name == "struct.sampler_t_" ) {
+        if (name == "struct.sampler_t_") {
           is_sampler[i] = true;
           is_pointer[i] = false;
           is_local[i] = false;
@@ -269,11 +264,7 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
                                        raw_fd_ostream &out)
 {
   Module *M = F->getParent();
-#ifdef LLVM_3_1
-  TargetData &TD = getAnalysis<TargetData>();
-#else
   DataLayout &TD = getAnalysis<DataLayout>();
-#endif
   
   SmallVector<GlobalVariable *, 8> locals;
 
@@ -287,11 +278,7 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
          e = M->global_end();
        i != e; ++i) {
     std::string funcName = "";
-#ifdef LLVM_3_0
-    funcName = F->getNameStr();
-#else
     funcName = F->getName().str();
-#endif
     if (i->getName().startswith(funcName + ".")) {
       // Additional checks might be needed here. For now
       // we assume any global starting with kernel name
@@ -347,58 +334,3 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
   return new_kernel;
 }
 
-
-/**
- * Regenerates the metadata that points to the original kernel
- * (of which finger print was modified) to point to the new
- * kernel.
- *
- * Only checks if the first operand of the metadata is the kernel
- * function.
- */
-void
-regenerate_kernel_metadata(Module &M, KernelPairVector &kernels)
-{
-  // reproduce the opencl.kernel_wg_size_info metadata
-  NamedMDNode *wg_sizes = M.getNamedMetadata("opencl.kernel_wg_size_info");
-  if (wg_sizes != NULL && wg_sizes->getNumOperands() > 0) 
-    {
-      for (std::size_t mni = 0; mni < wg_sizes->getNumOperands(); ++mni)
-        {
-          MDNode *wgsizeMD = dyn_cast<MDNode>(wg_sizes->getOperand(mni));
-          for (KernelPairVector::const_iterator i = kernels.begin(),
-                 e = kernels.end(); i != e; ++i) 
-            {
-              Function *old_kernel = (*i).first;
-              Function *new_kernel = (*i).second;
-              if (old_kernel == new_kernel || wgsizeMD->getNumOperands() == 0 ||
-                  dyn_cast<Function>(wgsizeMD->getOperand(0)) != old_kernel) 
-                continue;
-              // found a wg size metadata that points to the old kernel, copy its
-              // operands except the first one to a new MDNode
-              SmallVector<Value*, 8> operands;
-              operands.push_back(new_kernel);
-              for (unsigned opr = 1; opr < wgsizeMD->getNumOperands(); ++opr)
-                {
-                  operands.push_back(wgsizeMD->getOperand(opr));
-                }
-              MDNode *new_wg_md = MDNode::get(M.getContext(), operands);
-              wg_sizes->addOperand(new_wg_md);
-            } 
-        }
-    }
-
-  // reproduce the opencl.kernels metadata
-  NamedMDNode *nmd = M.getNamedMetadata("opencl.kernels");
-  if (nmd)
-    M.eraseNamedMetadata(nmd);
-
-  nmd = M.getOrInsertNamedMetadata("opencl.kernels");
-  for (KernelPairVector::const_iterator i = kernels.begin(),
-         e = kernels.end();
-       i != e; ++i) 
-    {
-      MDNode *md = MDNode::get(M.getContext(), ArrayRef<Value *>((*i).second));
-      nmd->addOperand(md);
-    }
-}
