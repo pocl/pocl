@@ -11,36 +11,36 @@ constant ushort ushort_values[6] = { 0, 1, 0, USHRT_MAX, 0 / 2, USHRT_MAX / 2 };
 constant int int_values[6] = { 0, 1, INT_MIN, INT_MAX, INT_MIN / 2, INT_MAX / 2 };
 constant uint uint_values[6] = { 0, 1, 0, UINT_MAX, 0 / 2, UINT_MAX / 2 };
 
-const size_t char_values_length = sizeof(char_values) / sizeof(char_values[0]);
-const size_t uchar_values_length = sizeof(uchar_values) / sizeof(uchar_values[0]);
-const size_t short_values_length = sizeof(short_values) / sizeof(short_values[0]);
-const size_t ushort_values_length = sizeof(ushort_values) / sizeof(ushort_values[0]);
-const size_t int_values_length = sizeof(int_values) / sizeof(int_values[0]);
-const size_t uint_values_length = sizeof(uint_values) / sizeof(uint_values[0]);
+constant size_t char_values_length = sizeof(char_values) / sizeof(char_values[0]);
+constant size_t uchar_values_length = sizeof(uchar_values) / sizeof(uchar_values[0]);
+constant size_t short_values_length = sizeof(short_values) / sizeof(short_values[0]);
+constant size_t ushort_values_length = sizeof(ushort_values) / sizeof(ushort_values[0]);
+constant size_t int_values_length = sizeof(int_values) / sizeof(int_values[0]);
+constant size_t uint_values_length = sizeof(uint_values) / sizeof(uint_values[0]);
 
 #ifdef cles_khr_int64
 constant long long_values[6] = { 0, 1, LONG_MIN, LONG_MAX, LONG_MIN / 2, LONG_MAX / 2 };
 constant ulong ulong_values[6] = { 0, 1, 0, ULONG_MAX, 0 / 2, ULONG_MAX / 2 };
 
-const size_t long_values_length = sizeof(long_values) / sizeof(long_values[0]);
-const size_t ulong_values_length = sizeof(ulong_values) / sizeof(ulong_values[0]);
+constant size_t long_values_length = sizeof(long_values) / sizeof(long_values[0]);
+constant size_t ulong_values_length = sizeof(ulong_values) / sizeof(ulong_values[0]);
 
 #endif
 
-float float_values[16] =
+constant float float_values[16] =
 {
   -2.0f, -1.75f, -1.5f, -1.25f, -1.0f, -0.75f, -0.5f, -0.25f,
    0.0f,  0.25f,  0.5f,  0.75f,  1.0f,  1.25f,  1.5f,  1.75f
 };
 
 #ifdef cl_khr_fp64
-float float_sat_offsets[16] =
+constant float float_sat_offsets[16] =
 {
    0.0f, (float)CHAR_MAX, (float)CHAR_MIN, (float)UCHAR_MAX, (float)SHRT_MIN, (float)SHRT_MAX, (float)USHRT_MAX, (float)INT_MAX,
    (float)INT_MIN, (float)UINT_MAX, (float)LONG_MAX, (float)LONG_MIN, (float)ULONG_MAX, 0.0f, 1.0e15f, -1.0e15f
 };
 #else
-float float_sat_offsets[13] =
+constant float float_sat_offsets[13] =
 {
    0.0f, (float)CHAR_MAX, (float)CHAR_MIN, (float)UCHAR_MAX, (float)SHRT_MIN, (float)SHRT_MAX, (float)USHRT_MAX, (float)INT_MAX,
    (float)INT_MIN, (float)UINT_MAX, 0.0f, 1.0e15f, -1.0e15f
@@ -48,30 +48,30 @@ float float_sat_offsets[13] =
 #endif
 
 
-const size_t float_values_length = sizeof(float_values) / sizeof(float_values[0]);
-int float_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-int float_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-int float_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
-int float_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
-int float_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
+constant size_t float_values_length = sizeof(float_values) / sizeof(float_values[0]);
+constant int float_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
+constant int float_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
+constant int float_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
+constant int float_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
+constant int float_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
 
 
 #ifdef cl_khr_fp64
 
-double double_values[16] =
+constant double double_values[16] =
 {
   -2.0, -1.75, -1.5, -1.25, -1.0, -0.75, -0.5, -0.25,
    0.0,  0.25,  0.5,  0.75,  1.0,  1.25,  1.5,  1.75
 };
 
 #ifdef cl_khr_fp64
-double double_sat_offsets[16] =
+constant double double_sat_offsets[16] =
 {
    0.0, (double)CHAR_MAX, (double)CHAR_MIN, (double)UCHAR_MAX, (double)SHRT_MIN, (double)SHRT_MAX, (double)USHRT_MAX, (double)INT_MAX,
    (double)INT_MIN, (double)UINT_MAX, (double)LONG_MAX, (double)LONG_MIN, (double)ULONG_MAX, 0.0, 1.0e15, -1.0e15
 };
 #else
-double double_sat_offsets[13] =
+constant double double_sat_offsets[13] =
 {
    0.0, (double)CHAR_MAX, (double)CHAR_MIN, (double)UCHAR_MAX, (double)SHRT_MIN, (double)SHRT_MAX, (double)USHRT_MAX, (double)INT_MAX,
    (double)INT_MIN, (double)UINT_MAX, 0.0, 1.0e15, -1.0e15
@@ -79,12 +79,12 @@ double double_sat_offsets[13] =
 #endif
 
 
-const size_t double_values_length = sizeof(double_values) / sizeof(double_values[0]);
-long double_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-long double_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-long double_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
-long double_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
-long double_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
+constant size_t double_values_length = sizeof(double_values) / sizeof(double_values[0]);
+constant long double_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
+constant long double_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
+constant long double_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
+constant long double_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
+constant long double_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
 
 
 #endif

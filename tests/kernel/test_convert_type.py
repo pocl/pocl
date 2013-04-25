@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2013 Victor Oliveira <victormatheus@gmail.com>
 # Copyright (c) 2013 Jesse Towner <jessetowner@lavabit.com>
@@ -99,7 +99,7 @@ for types in [int32_types, int64_types]:
     print(*values, sep=", ", end=" };\n")
   print()
   for t in types:
-    print("const size_t {0}_values_length = sizeof({0}_values) / sizeof({0}_values[0]);".format(t))
+    print("constant size_t {0}_values_length = sizeof({0}_values) / sizeof({0}_values[0]);".format(t))
   if types == int64_types:
     print("\n#endif")
 
@@ -111,20 +111,20 @@ for f in float_types:
   if f == 'double':
     print("\n#ifdef cl_khr_fp64")
   print("""
-{F} {F}_values[16] =
+constant {F} {F}_values[16] =
 {{
   -2.0{S}, -1.75{S}, -1.5{S}, -1.25{S}, -1.0{S}, -0.75{S}, -0.5{S}, -0.25{S},
    0.0{S},  0.25{S},  0.5{S},  0.75{S},  1.0{S},  1.25{S},  1.5{S},  1.75{S}
 }};
 
 #ifdef cl_khr_fp64
-{F} {F}_sat_offsets[16] =
+constant {F} {F}_sat_offsets[16] =
 {{
    0.0{S}, ({F})CHAR_MAX, ({F})CHAR_MIN, ({F})UCHAR_MAX, ({F})SHRT_MIN, ({F})SHRT_MAX, ({F})USHRT_MAX, ({F})INT_MAX,
    ({F})INT_MIN, ({F})UINT_MAX, ({F})LONG_MAX, ({F})LONG_MIN, ({F})ULONG_MAX, 0.0{S}, 1.0e15{S}, -1.0e15{S}
 }};
 #else
-{F} {F}_sat_offsets[13] =
+constant {F} {F}_sat_offsets[13] =
 {{
    0.0{S}, ({F})CHAR_MAX, ({F})CHAR_MIN, ({F})UCHAR_MAX, ({F})SHRT_MIN, ({F})SHRT_MAX, ({F})USHRT_MAX, ({F})INT_MAX,
    ({F})INT_MIN, ({F})UINT_MAX, 0.0{S}, 1.0e15{S}, -1.0e15{S}
@@ -132,12 +132,12 @@ for f in float_types:
 #endif
 
 
-const size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
-{I} {F}_rounded_values[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
-{I} {F}_rounded_values_rtz[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
-{I} {F}_rounded_values_rte[16] = {{ -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 2, 2 }};
-{I} {F}_rounded_values_rtp[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 }};
-{I} {F}_rounded_values_rtn[16] = {{ -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 }};
+constant size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
+constant {I} {F}_rounded_values[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
+constant {I} {F}_rounded_values_rtz[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
+constant {I} {F}_rounded_values_rte[16] = {{ -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 }};
+constant {I} {F}_rounded_values_rtp[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 }};
+constant {I} {F}_rounded_values_rtn[16] = {{ -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 }};
 """.format(F=f, S=float_suffix[f], I=float_int_type[f]))
   if f == 'double':
     print("\n#endif")
