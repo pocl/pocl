@@ -113,8 +113,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_hadd 2>&1], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
-# Fails because of bugs in rotate.
-AT_XFAIL_IF([true])
 AT_KEYWORDS([tce rotate])
 AT_DATA([expout],
 [Running test test_rotate...
