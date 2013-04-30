@@ -156,7 +156,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
   } while (fchanged);
 
-  //F.viewCFG();
+  F.viewCFG();
 #endif
 
   return changed;

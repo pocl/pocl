@@ -138,10 +138,16 @@ fi
 
 #set -x
 
+# -disable-simplify-libcalls was added because of TCE (it doesn't have
+# a runtime linker which could link the libs later on), but it might
+# also be harmful for wg-vectorization where we want to try to vectorize
+# the code it wants to convert e.g. to a memset or a memcpy
+
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
-    -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -target-address-spaces \
+    -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
+    -target-address-spaces \
     ${OPT_SWITCH} ${WG_VECTORIZER} ${EXTRA_OPTS} -instcombine -header=${header} -o ${output_file} ${linked_bc}
 
 #set +x

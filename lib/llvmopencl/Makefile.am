@@ -47,6 +47,7 @@ llvmopencl_la_SOURCES = Barrier.h						\
 						WorkitemHandlerChooser.h WorkitemHandlerChooser.cc \
 						AllocasToEntry.h AllocasToEntry.cc \
 						TargetAddressSpaces.h TargetAddressSpaces.cc \
-						LLVMUtils.cc LLVMUtils.h
+						LLVMUtils.cc LLVMUtils.h \
+						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc 
 
 #llvmopencl_la_LIBADD += @LIBS_LLVMTRANSFORMUTILS@

@@ -112,10 +112,24 @@ AT_KEYWORDS([b-loop workgroup])
 AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel tricky_for.cl 1 2 1 1], 0, expout)
 AT_CLEANUP
 
+AT_SETUP([Forcing horizontal parallelization to some outer loops (repl)])
+AT_KEYWORDS([workgroup outerlooppar])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel outerlooppar.cl 2 2 1 1], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/outerlooppar_2_2_1_1.stdout)
+])
+AT_CLEANUP
+
 AT_SETUP([a loop with two paths to the latch (full replication)])
 AT_KEYWORDS([twolatchpaths workgroup])
 AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0,
 [$(cat $abs_top_srcdir/tests/workgroup/for_bug_1_2_1_1.stdout)
+])
+AT_CLEANUP
+
+AT_SETUP([Forcing horizontal parallelization to some outer loops (loops)])
+AT_KEYWORDS([workgroup outerlooppar])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel outerlooppar.cl 2 2 1 1], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/outerlooppar_2_2_1_1.stdout)
 ])
 AT_CLEANUP
 

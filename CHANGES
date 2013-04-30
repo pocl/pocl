@@ -4,11 +4,12 @@
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
 
-[changes updated from bzr log until 2013-03-24]
+[changes checked from bzr history until 2013-03-24]
 
 Overall
 -------
 
+- Dropped support for LLVM/Clang v3.1.
 - Removed the depedency on llvm-ld (which was copied to
   pocl-llvm-ld to pocl tree). Now uses llvm-link instead.
 - Project renamed to Portable Computing Language (pocl).
@@ -17,7 +18,10 @@ Overall
   implementations from the vecmathlib project to avoid libm 
   calls and to exploit the SIMD instructions more efficiently
   in case of vector datatypes in the kernel.
-- Dropped support for LLVM/Clang v3.1.
+- Parallelize kernel inner loops "horizontally", if possible.
+  This converts possibly sequential inner kernel loops to parallel 
+  loops by effectively performing "loop interchange" of the
+  work-item loop and the kernel's inner loop.
 
 Major bugfixes
 --------------
