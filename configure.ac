@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-AC_PREREQ([2.64])
+AC_PREREQ([2.63])
 AC_INIT([pocl], [0.8-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
@@ -359,7 +359,7 @@ if test x"$tests_with_icd" = xyes; then
   PKG_CHECK_MODULES([OPENCL], [OpenCL >= 1.2], 
   [], 
   [
-    AC_MSG_WARN([Tests through ICD loaded enabled but OpenCL.pc file installed by ocl-icd seems missing])
+    AC_MSG_WARN([Tests through ICD loader enabled, but OpenCL.pc file installed by ocl-icd seems missing])
     if test -z "$OPENCL_LIBS"; then
       OPENCL_LIBS="-lOpenCL"
     fi
