@@ -38,6 +38,10 @@
 
 #include "VariableUniformityAnalysis.h"
 
+#include <iostream>
+
+//#define DEBUG_ILOOP_BARRIERS
+
 using namespace llvm;
 using namespace pocl;
 
@@ -118,7 +122,7 @@ ImplicitLoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LP
   if (L->getSubLoops().size() > 0)
     return false;
 
-#ifdef DEBUG_LOOP_BARRIERS
+#ifdef DEBUG_ILOOP_BARRIERS
   std::cerr << "### trying to add a loop barrier to force horizontal parallelization" 
             << std::endl;
 #endif
@@ -137,7 +141,7 @@ ImplicitLoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LP
   /* Check if the whole loop construct is executed by all or none of the
      work-items. */
   if (!VUA.isUniform(f, loopEntry)) {
-#ifdef DEBUG_LOOP_BARRIERS
+#ifdef DEBUG_ILOOP_BARRIERS
     std::cerr << "### the loop is not uniform because loop entry '"
               << loopEntry->getName().str() << "' is not uniform" << std::endl;
     
@@ -152,12 +156,12 @@ ImplicitLoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LP
       VUA.isUniform(f, br->getCondition())) {
 
     Barrier::Create(brexit->getTerminator());   
-#ifdef DEBUG_LOOP_BARRIERS
+#ifdef DEBUG_ILOOP_BARRIERS
     std::cerr << "### added an inner-loop barrier to the loop" << std::endl << std::endl;
 #endif
     return true;
   } else {
-#ifdef DEBUG_LOOP_BARRIERS
+#ifdef DEBUG_ILOOP_BARRIERS
     if (br && br->isConditional() && !VUA.isUniform(f, br->getCondition())) {
       std::cerr << "### loop condition not uniform" << std::endl;
       br->getCondition()->dump();
@@ -166,7 +170,7 @@ ImplicitLoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LP
 
   }
 
-#ifdef DEBUG_LOOP_BARRIERS
+#ifdef DEBUG_ILOOP_BARRIERS
   std::cerr << "### cannot add an inner-loop barrier to the loop" << std::endl << std::endl;
 #endif
   
