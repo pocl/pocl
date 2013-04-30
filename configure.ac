@@ -591,15 +591,22 @@ case $host_os in
     ;;  
 esac
 AC_SUBST([ICD_LD_FLAGS])
-
 case $host_cpu in
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
-    #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
-    OCL_KERNEL_TARGET="armv7"
+    # check for gnueabihf, and set clang target accordingly
+    case $host in
+      armv7l*gnueabihf)
+         OCL_KERNEL_TARGET="armv7l-unknown-linux-gnueabihf"
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
+      *)
+         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+         OCL_KERNEL_TARGET="armv7";;
+    esac
+
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard -fPIC"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard"
     kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
