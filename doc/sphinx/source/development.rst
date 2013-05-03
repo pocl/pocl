@@ -49,7 +49,7 @@ However, as llvm-svn is a moving target, new revisions might break
 pocl compilation. The latest LLVM trunk revision pocl has been tested
 successfully with is:
 
-**176627**
+**180999**
 
 The test suite (make check) should pass with this revision with xfails
 used to mark known-broken tests.
