@@ -111,12 +111,6 @@ for f in float_types:
   if f == 'double':
     print("\n#ifdef cl_khr_fp64")
   print("""
-constant {F} {F}_values[16] =
-{{
-  -2.0{S}, -1.75{S}, -1.5{S}, -1.25{S}, -1.0{S}, -0.75{S}, -0.5{S}, -0.25{S},
-   0.0{S},  0.25{S},  0.5{S},  0.75{S},  1.0{S},  1.25{S},  1.5{S},  1.75{S}
-}};
-
 #ifdef cl_khr_fp64
 constant {F} {F}_sat_offsets[16] =
 {{
@@ -131,13 +125,14 @@ constant {F} {F}_sat_offsets[13] =
 }};
 #endif
 
+constant {F} {F}_values            [17] = {{ -2.0{S}, -1.75{S}, -1.5{S}, -1.25{S}, -1.0{S}, -0.75{S}, -0.5{S}, -0.25{S}, 0.0{S}, 0.25{S}, 0.5{S}, 0.75{S}, 1.0{S}, 1.25{S}, 1.5{S}, 1.75{S}, 2.0{S} }};
+constant {I} {F}_rounded_values    [17] = {{ -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      }};
+constant {I} {F}_rounded_values_rtz[17] = {{ -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      }};
+constant {I} {F}_rounded_values_rte[17] = {{ -2     , -2      , -2     , -1      , -1     , -1      ,  0     ,  0      , 0     , 0      , 0     , 1      , 1     , 1      , 2     , 2      , 2      }};
+constant {I} {F}_rounded_values_rtp[17] = {{ -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 1      , 1     , 1      , 1     , 2      , 2     , 2      , 2      }};
+constant {I} {F}_rounded_values_rtn[17] = {{ -2     , -2      , -2     , -2      , -1     , -1      , -1     , -1      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      }};
 
 constant size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
-constant {I} {F}_rounded_values[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
-constant {I} {F}_rounded_values_rtz[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 }};
-constant {I} {F}_rounded_values_rte[16] = {{ -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 }};
-constant {I} {F}_rounded_values_rtp[16] = {{ -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 }};
-constant {I} {F}_rounded_values_rtn[16] = {{ -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 }};
 """.format(F=f, S=float_suffix[f], I=float_int_type[f]))
   if f == 'double':
     print("\n#endif")

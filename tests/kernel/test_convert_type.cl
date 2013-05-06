@@ -27,12 +27,6 @@ constant size_t ulong_values_length = sizeof(ulong_values) / sizeof(ulong_values
 
 #endif
 
-constant float float_values[16] =
-{
-  -2.0f, -1.75f, -1.5f, -1.25f, -1.0f, -0.75f, -0.5f, -0.25f,
-   0.0f,  0.25f,  0.5f,  0.75f,  1.0f,  1.25f,  1.5f,  1.75f
-};
-
 #ifdef cl_khr_fp64
 constant float float_sat_offsets[16] =
 {
@@ -47,22 +41,17 @@ constant float float_sat_offsets[13] =
 };
 #endif
 
+constant float float_values            [17] = { -2.0f, -1.75f, -1.5f, -1.25f, -1.0f, -0.75f, -0.5f, -0.25f, 0.0f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
+constant int float_rounded_values    [17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
+constant int float_rounded_values_rtz[17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
+constant int float_rounded_values_rte[17] = { -2     , -2      , -2     , -1      , -1     , -1      ,  0     ,  0      , 0     , 0      , 0     , 1      , 1     , 1      , 2     , 2      , 2      };
+constant int float_rounded_values_rtp[17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 1      , 1     , 1      , 1     , 2      , 2     , 2      , 2      };
+constant int float_rounded_values_rtn[17] = { -2     , -2      , -2     , -2      , -1     , -1      , -1     , -1      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
 
 constant size_t float_values_length = sizeof(float_values) / sizeof(float_values[0]);
-constant int float_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-constant int float_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-constant int float_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
-constant int float_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
-constant int float_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
 
 
 #ifdef cl_khr_fp64
-
-constant double double_values[16] =
-{
-  -2.0, -1.75, -1.5, -1.25, -1.0, -0.75, -0.5, -0.25,
-   0.0,  0.25,  0.5,  0.75,  1.0,  1.25,  1.5,  1.75
-};
 
 #ifdef cl_khr_fp64
 constant double double_sat_offsets[16] =
@@ -78,13 +67,14 @@ constant double double_sat_offsets[13] =
 };
 #endif
 
+constant double double_values            [17] = { -2.0, -1.75, -1.5, -1.25, -1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0 };
+constant long double_rounded_values    [17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
+constant long double_rounded_values_rtz[17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
+constant long double_rounded_values_rte[17] = { -2     , -2      , -2     , -1      , -1     , -1      ,  0     ,  0      , 0     , 0      , 0     , 1      , 1     , 1      , 2     , 2      , 2      };
+constant long double_rounded_values_rtp[17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 1      , 1     , 1      , 1     , 2      , 2     , 2      , 2      };
+constant long double_rounded_values_rtn[17] = { -2     , -2      , -2     , -2      , -1     , -1      , -1     , -1      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
 
 constant size_t double_values_length = sizeof(double_values) / sizeof(double_values[0]);
-constant long double_rounded_values[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-constant long double_rounded_values_rtz[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
-constant long double_rounded_values_rte[16] = { -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2 };
-constant long double_rounded_values_rtp[16] = { -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2 };
-constant long double_rounded_values_rtn[16] = { -2, -2, -2, -2, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1 };
 
 
 #endif
