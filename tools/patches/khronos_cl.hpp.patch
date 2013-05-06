@@ -18,3 +18,15 @@
  }; // namespace detail
  
      
+@@ -1128,7 +1129,9 @@
+             return err;
+         }
+ 
+-        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
++        for (std::size_t i=0; i<required/sizeof(cl_device_id); ++i) {
++            memcpy(&(*param)[i], &value[i], sizeof(cl_device_id));
++        }
+         return CL_SUCCESS;
+     }
+ };
+
