@@ -20,6 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef POCL_LOOP_BARRIERS_H
+#define POCL_LOOP_BARRIERS_H
+
 #include "llvm/Analysis/LoopPass.h"
 #include <set>
 
@@ -40,3 +43,5 @@ namespace pocl {
     bool ProcessLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
   };
 }
+
+#endif

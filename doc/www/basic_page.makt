@@ -36,7 +36,7 @@
         <ul id="menu_item_list">
           <li class="menu_item"><a href="index.html" class="menu_link">Main</a></li>
           <li class="menu_item"><a href="download.html" class="menu_link">Download</a></li>
-          <li class="menu_item"><a href="documentation.html" class="menu_link">Documentation</a></li>
+          <li class="menu_item"><a href="docs/html" class="menu_link">Documentation</a></li>
           <li class="menu_item"><a href="discussion.html" class="menu_link">Discussion</a></li>
 ##          <li class="menu_item"><a href="publications.html" class="menu_link">Publications</a></li>
         </ul>

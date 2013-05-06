@@ -1,6 +1,7 @@
-// LLVM function pass add required barriers to loops.
+// LLVM loop pass that adds required barriers to loops.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012-2013 Pekka Jääskeläinen / Tampere University of Technology
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +31,12 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #endif
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <iostream>
 
 #include "LoopBarriers.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include <iostream>
 
 //#define DEBUG_LOOP_BARRIERS
 
@@ -76,14 +77,29 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
 bool
 LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
 {
+  bool isBLoop = false;
+  bool changed = false;
+
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
-       i != e; ++i) {
+       i != e && !isBLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
       if (isa<Barrier>(j)) {
-        // Found a barrier on this loop, proceed:
-        // 1) add a barrier on the loop header.
-        // 2) add a barrier on the latches
+          isBLoop = true;
+          break;
+      }
+    }
+  }
+
+  for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
+       i != e && isBLoop; ++i) {
+    for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
+         j != e; ++j) {
+      if (isa<Barrier>(j)) {
+
+        // Found a barrier in this loop:
+        // 1) add a barrier in the loop header.
+        // 2) add a barrier in the latches
         
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already 
@@ -127,7 +143,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
           // are probably running before BTR.
           Barrier::Create(latch->getTerminator());
           latch->setName(latch->getName() + ".latchbarrier");
-          return true;
+          return changed;
         }
 
         // Modified code from llvm::LoopBase::getLoopLatch to
@@ -150,7 +166,6 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
             }
           }
         }
-
         return true;
       }
     }
@@ -174,5 +189,6 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
       return true;
     }
 
-  return false;
+  return changed;
 }
+
