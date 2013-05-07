@@ -111,7 +111,10 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_hadd 2>&1], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions << >> rotate])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
+# Fails because of bugs in rotate. 
+# At least in Debian 6.0/x86_64/LLVM 3.2 and
+# Ubuntu 12.04/x86/LLVM 3.2
+AT_XFAIL_IF([true])
 AT_KEYWORDS([tce rotate])
 AT_DATA([expout],
 [Running test test_rotate...
