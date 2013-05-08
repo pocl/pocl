@@ -24,6 +24,7 @@
 
 #force the patching of cl.hpp.in - 
 BUILT_SOURCES = cl.hpp
+CLEANFILES = ${BUILT_SOURCES}
 #note - this gets run on every build, so don't fail if patch detects a
 #previously applied patch. The copy is a workaround for OSX's 'patch'
 cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in
