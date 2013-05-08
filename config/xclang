@@ -52,5 +52,13 @@ then
 fi
 
 $CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
-$LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
+
+# Adjust $LLC call for hard-float in case the build is that
+case "$build" in
+arm*gnueabihf)
+   $LLC -mtriple=$build -float-abi=hard -o $tmpdir/xclang.s $tmpdir/xclang.bc;;
+*)
+   $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc;;
+esac
+
 exec $CLANG -target $build $output $tmpdir/xclang.s

@@ -45,6 +45,8 @@ fi
 
 target_dir=${target}
 case $target in
+  arm*gnueabihf)    target_dir="arm"
+                    target="armv7l-unknown-linux-gnueabihf";;
   arm*)        target_dir="arm"
                target="armv7";;
   cellspu-*)   target_dir="cellspu";;
