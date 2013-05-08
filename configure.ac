@@ -693,7 +693,13 @@ OCL_DRIVERS="basic pthreads"
 # look for the TCE library (needed for the ttasim device driver)
 AC_PATH_PROG([TCE_CONFIG], [tce-config])
 
-if test ! -z "$TCE_CONFIG"; then
+AC_ARG_ENABLE([tce],
+              [AS_HELP_STRING([--disable-tce], 
+                              [Do not build TCE driver, even if TCE is found.])],
+              [try_tce="$enableval"],
+              [try_tce="yes"])
+            
+if test ! -z "$TCE_CONFIG" -a x"$try_tce" = xyes; then
 
 AC_PATH_PROG([TCECC], [tcecc])
 
