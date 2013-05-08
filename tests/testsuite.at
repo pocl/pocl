@@ -64,7 +64,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_as_type], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
