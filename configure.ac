@@ -85,8 +85,11 @@ case "$LLVM_VERSION" in
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
    ;;
      3.3*)
-     AC_DEFINE([LLVM_3_3], [], "Using LLVM svn (upcoming 3.3)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.3)")     
+     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3 RC")     
+   ;; 
+     3.4*)
+     AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
+     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
    ;;   
      *)
    AC_MSG_ERROR(
@@ -504,7 +507,7 @@ LLVM_PROG_WARN([CLANGXX], [clang++])
 if test ! -z "$CLANGXX"; then
 # Test that clang++ can compile a simple C++ program.
 
-: ${CLANGXX_FLAGS:="-std=gnu++11"}
+: ${CLANGXX_FLAGS:="-std=c++11"}
 
 AC_LANG([C++])
 
@@ -591,15 +594,22 @@ case $host_os in
     ;;  
 esac
 AC_SUBST([ICD_LD_FLAGS])
-
 case $host_cpu in
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
-    #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
-    OCL_KERNEL_TARGET="armv7"
+    # check for gnueabihf, and set clang target accordingly
+    case $host in
+      armv7l*gnueabihf)
+         OCL_KERNEL_TARGET="armv7l-unknown-linux-gnueabihf"
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
+      *)
+         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+         OCL_KERNEL_TARGET="armv7";;
+    esac
+
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard -fPIC"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard"
     kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
@@ -693,7 +703,13 @@ OCL_DRIVERS="basic pthreads"
 # look for the TCE library (needed for the ttasim device driver)
 AC_PATH_PROG([TCE_CONFIG], [tce-config])
 
-if test ! -z "$TCE_CONFIG"; then
+AC_ARG_ENABLE([tce],
+              [AS_HELP_STRING([--disable-tce], 
+                              [Do not build TCE driver, even if TCE is found.])],
+              [try_tce="$enableval"],
+              [try_tce="yes"])
+            
+if test ! -z "$TCE_CONFIG" -a x"$try_tce" = xyes; then
 
 AC_PATH_PROG([TCECC], [tcecc])
 
