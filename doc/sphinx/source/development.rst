@@ -112,7 +112,7 @@ explained above (OCL-ICD).
 The steps to build and install the Khronos ICD loader so it can be
 used to run the pocl test suite:
 
-#. Download the loader from http://www.khronos.org/opencl/ Unpack
+#. Download the loader from http://www.khronos.org/registry/cl Unpack
    it. Copy the OpenCL headers to inc/CL like instructed in
    inc/README.txt.
 #. Apply a patch from the pocl checkout: 
