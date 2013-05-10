@@ -154,3 +154,19 @@ AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=loops $abs_top_buil
 [$(cat $abs_top_srcdir/tests/workgroup/multilatch_bloop_1_3_1_1.stdout)
 ])
 AT_CLEANUP
+
+AT_SETUP([workgroup_sizes: work-items get wrong ids (full replication)])
+AT_KEYWORDS([id])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel print_all_ids.cl 1 1 1 4 | sort], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/print_all_ids_114114.txt)
+])
+AT_CLEANUP
+
+
+AT_SETUP([workgroup_sizes: work-items get wrong ids (loop)])
+AT_KEYWORDS([id])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel print_all_ids.cl 1 1 1 4 | sort], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/print_all_ids_114114.txt)
+])
+AT_XFAIL_IF([true])
+AT_CLEANUP
