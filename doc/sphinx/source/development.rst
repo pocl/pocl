@@ -117,7 +117,7 @@ used to run the pocl test suite:
    inc/README.txt.
 #. Apply a patch from the pocl checkout: 
    cd icd 
-   patch -p1 ~/pocl/tools/scripts/khronos-icd-loader.patch
+   patch -p1 ~/pocl/tools/patches/khronos-icd-loader.patch
 #. Build it with 'make'.
 #. Copy the loader to a library search path: sudo cp bin/libOpenCL* /usr/lib
 
