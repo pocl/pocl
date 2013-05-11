@@ -18,3 +18,14 @@
  }; // namespace detail
  
      
+@@ -1128,7 +1128,8 @@
+             return err;
+         }
+ 
+-        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
++        param->resize(required/sizeof(cl_device_id));
++        memcpy(&(*param)[0], value, required);
+         return CL_SUCCESS;
+     }
+ };
+
