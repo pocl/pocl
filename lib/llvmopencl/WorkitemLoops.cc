@@ -480,27 +480,31 @@ WorkitemLoops::ProcessFunction(Function &F)
             unrollCount /= 2;
           }
 
-        ParallelRegion *prev = original;
-        llvm::BasicBlock *lastBB = 
-          AppendIncBlock(original->exitBB(), localIdX);
-        original->AddBlockAfter(lastBB, original->exitBB());
-        original->SetExitBB(lastBB);
+        if (unrollCount > 1) {
+            ParallelRegion *prev = original;
+            llvm::BasicBlock *lastBB = 
+                AppendIncBlock(original->exitBB(), localIdX);
+            original->AddBlockAfter(lastBB, original->exitBB());
+            original->SetExitBB(lastBB);
 
-        if (AddWIMetadata)
-          original->AddIDMetadata(F.getContext(), 0);
-
-        for (int c = 1; c < unrollCount; ++c) 
-          {
-            ParallelRegion *unrolled = 
-              original->replicate(reference_map, ".unrolled_wi");
-            unrolled->chainAfter(prev);
-            prev = unrolled;
-            lastBB = unrolled->exitBB();
             if (AddWIMetadata)
-              unrolled->AddIDMetadata(F.getContext(), c);
+                original->AddIDMetadata(F.getContext(), 0);
+
+            for (int c = 1; c < unrollCount; ++c) 
+            {
+                ParallelRegion *unrolled = 
+                    original->replicate(reference_map, ".unrolled_wi");
+                unrolled->chainAfter(prev);
+                prev = unrolled;
+                lastBB = unrolled->exitBB();
+                if (AddWIMetadata)
+                    unrolled->AddIDMetadata(F.getContext(), c);
+            }
+            unrolled = true;
+            l = std::make_pair(original->entryBB(), lastBB);
+        } else {
+            l = std::make_pair(original->entryBB(), original->exitBB());
         }
-        unrolled = true;
-        l = std::make_pair(original->entryBB(), lastBB);
       }
 
     if (LocalSizeX > 1)

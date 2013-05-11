@@ -152,8 +152,6 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([ludecomposition])
 AT_KEYWORDS([cl_amd_fp64])
-# a verification error
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
