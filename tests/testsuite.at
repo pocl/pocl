@@ -86,8 +86,9 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
 # Fails because signbit compilation crashes with Clang 3.3 and is thus
-# not available.
-AT_XFAIL_IF([ grep -q "#define LLVM_3_3" $abs_top_builddir/config.h ])
+# not available.   The VML version at least seems to work now.
+AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h && \
+ ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([])
 AT_DATA([expout],
@@ -113,7 +114,7 @@ AT_SETUP([Kernel functions << >> rotate])
 # Fails because of bugs in rotate. 
 # At least in Debian 6.0/x86_64/LLVM 3.2 and
 # Ubuntu 12.04/x86/LLVM 3.2
-AT_XFAIL_IF([true])
+AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 AT_KEYWORDS([tce rotate])
 AT_DATA([expout],
 [Running test test_rotate...

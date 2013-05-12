@@ -3,7 +3,7 @@ m4_define([POAT_AMDSDK_SETUP],[
   AT_KEYWORDS([amdsdk $1 $2])
   AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" amd "*],[false],[:])])
   # AMD APP SDK tests require ICD loader with
-  AT_SKIP_IF([! grep -q "#define BUILD_ICD" $abs_top_srcdir/config.h])
+  AT_SKIP_IF([! grep -q "#define BUILD_ICD" $abs_top_builddir/config.h])
 ])
 
 AT_BANNER([AMD APP SDK tests])
