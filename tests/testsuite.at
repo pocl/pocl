@@ -85,9 +85,11 @@ AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel tes
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
-# Fails because signbit compilation crashes with Clang 3.3 and is thus
+# Fails because signbit compilation crashes with Clang 3.3 and 3.4 and is thus
 # not available.   The VML version at least seems to work now.
 AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h && \
+ ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h && \
  ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([])
@@ -103,6 +105,8 @@ AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd
 #AT_KEYWORDS([tce])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+#fails with: undefined symbol: _Z5rhaddcc. Probably related to the crash mentioned in the fabs test above.
+AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
