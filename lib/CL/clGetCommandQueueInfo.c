@@ -68,3 +68,4 @@ POname(clGetCommandQueueInfo)(cl_command_queue      command_queue ,
   }
   return CL_INVALID_VALUE;
 }
+POsym(clGetCommandQueueInfo)
