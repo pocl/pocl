@@ -3,7 +3,7 @@ m4_define([POAT_AMDSDK_SETUP],[
   AT_KEYWORDS([amdsdk $1 $2])
   AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" amd "*],[false],[:])])
   # AMD APP SDK tests require ICD loader with
-  AT_SKIP_IF([! grep -q "#define BUILD_ICD" $abs_top_srcdir/config.h])
+  AT_SKIP_IF([! grep -q "#define BUILD_ICD" $abs_top_builddir/config.h])
 ])
 
 AT_BANNER([AMD APP SDK tests])
@@ -152,6 +152,9 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([ludecomposition])
 AT_KEYWORDS([cl_amd_fp64])
+#test uses doubles
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)

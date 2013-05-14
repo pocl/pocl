@@ -73,6 +73,18 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type], 0, expout)
 AT_CLEANUP
 
+# This reproduces an issue that looks like an LLVM code gen issue.
+AT_SETUP([Kernel functions min and max when the operands are of different sign])
+AT_KEYWORDS([min_max])
+AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
+AT_DATA([expout],
+[Running test test_min_max...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_min_max], 0, expout)
+AT_CLEANUP
+
+
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 #Fails on tce due to bug #1160383
 #AT_KEYWORDS([tce])
@@ -85,9 +97,12 @@ AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel tes
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit copysign])
-# Fails because signbit compilation crashes with Clang 3.3 and is thus
-# not available.
-AT_XFAIL_IF([ grep -q "#define LLVM_3_3" $abs_top_builddir/config.h ])
+# Fails because signbit compilation crashes with Clang 3.3 and 3.4 and is thus
+# not available.   The VML version at least seems to work now.
+AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h && \
+ ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h && \
+ ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([])
 AT_DATA([expout],
@@ -102,6 +117,8 @@ AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd
 #AT_KEYWORDS([tce])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+#fails with: undefined symbol: _Z5rhaddcc. Probably related to the crash mentioned in the fabs test above.
+AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
@@ -113,7 +130,7 @@ AT_SETUP([Kernel functions << >> rotate])
 # Fails because of bugs in rotate. 
 # At least in Debian 6.0/x86_64/LLVM 3.2 and
 # Ubuntu 12.04/x86/LLVM 3.2
-AT_XFAIL_IF([true])
+AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 AT_KEYWORDS([tce rotate])
 AT_DATA([expout],
 [Running test test_rotate...
