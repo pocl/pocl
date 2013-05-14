@@ -158,7 +158,7 @@ IMPLEMENT_DIRECT(max, char16, IMPLEMENT_MAX_DIRECT)
 
 IMPLEMENT_DIRECT(max, uchar  , IMPLEMENT_MAX_DIRECT)
 #ifdef __SSE__
-IMPLEMENT_UPCAST(max, uchar2 , uchar4 ,lo)
+IMPLEMENT_UPCAST(max, uchar2 , uchar4 , lo)
 IMPLEMENT_UPCAST(max, uchar3 , uchar4 , s012)
 IMPLEMENT_UPCAST(max, uchar4 , uchar8 , lo)
 IMPLEMENT_UPCAST(max, uchar8 , uchar16, lo)
