@@ -70,42 +70,42 @@
 // register
 #define IMPLEMENT_CEIL_SSE41_FLOAT                      \
   ({                                                    \
-    __asm__ ("roundss %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundss %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
              [mode] "n" (_MM_FROUND_CEIL));             \
     a;                                                  \
   })
 #define IMPLEMENT_CEIL_SSE41_FLOAT4                     \
   ({                                                    \
-    __asm__ ("roundps %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundps %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
              [mode] "n" (_MM_FROUND_CEIL));             \
     a;                                                  \
   })
 #define IMPLEMENT_CEIL_AVX_FLOAT8                       \
   ({                                                    \
-    __asm__ ("roundps256 %[dst], %[dst], %[mode]" :     \
+    __asm__ ("vroundps %[mode], %[dst], %[dst]" :       \
              [dst] "+x" (a) :                           \
              [mode] "n" (_MM_FROUND_CEIL));             \
     a;                                                  \
   })
 #define IMPLEMENT_CEIL_SSE41_DOUBLE                     \
   ({                                                    \
-    __asm__ ("roundsd %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundsd %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
              [mode] "n" (_MM_FROUND_CEIL));             \
     a;                                                  \
   })
 #define IMPLEMENT_CEIL_SSE41_DOUBLE2                    \
   ({                                                    \
-    __asm__ ("roundpd %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundpd %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
              [mode] "n" (_MM_FROUND_CEIL));             \
     a;                                                  \
   })
 #define IMPLEMENT_CEIL_AVX_DOUBLE4                      \
   ({                                                    \
-    __asm__ ("roundpd256 %[dst], %[dst], %[mode]" :     \
+    __asm__ ("vroundpd %[mode], %[dst], %[dst]" :       \
              [dst] "+x" (a) :                           \
              [mode] "n" (_MM_FROUND_CEIL));             \
     a;                                                  \

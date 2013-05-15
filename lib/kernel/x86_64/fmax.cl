@@ -63,7 +63,7 @@
   })
 #define IMPLEMENT_FMAX_AVX_FLOAT8               \
   ({                                            \
-    __asm__ ("maxps256 %[src], %[dst]" :        \
+    __asm__ ("vmaxps %[src], %[dst], %[dst]" :  \
              [dst] "+x" (a) :                   \
              [src] "xm" (b));                   \
     a;                                          \
@@ -84,7 +84,7 @@
   })
 #define IMPLEMENT_FMAX_AVX_DOUBLE4              \
   ({                                            \
-    __asm__ ("maxpd256 %[src], %[dst]" :        \
+    __asm__ ("vmaxpd %[src], %[dst], %[dst]" :  \
              [dst] "+x" (a) :                   \
              [src] "xm" (b));                   \
     a;                                          \

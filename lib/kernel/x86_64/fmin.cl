@@ -63,7 +63,7 @@
   })
 #define IMPLEMENT_FMIN_AVX_FLOAT8               \
   ({                                            \
-    __asm__ ("minps256 %[src], %[dst]" :        \
+    __asm__ ("vminps %[src], %[dst], %[dst]" :  \
              [dst] "+x" (a) :                   \
              [src] "xm" (b));                   \
     a;                                          \
@@ -84,7 +84,7 @@
   })
 #define IMPLEMENT_FMIN_AVX_DOUBLE4              \
   ({                                            \
-    __asm__ ("minpd256 %[src], %[dst]" :        \
+    __asm__ ("vminpd %[src], %[dst], %[dst]" :  \
              [dst] "+x" (a) :                   \
              [src] "xm" (b));                   \
     a;                                          \
