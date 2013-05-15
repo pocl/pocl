@@ -75,6 +75,9 @@ AT_CLEANUP
 
 # This reproduces an issue that looks like an LLVM code gen issue.
 AT_SETUP([Kernel functions min and max when the operands are of different sign])
+# This produces an LLVM 3.3 bug that appears only with Intel CPUs without SSE4.2.
+# http://llvm.org/bugs/show_bug.cgi?id=15977
+AT_SKIP_IF([true])
 AT_KEYWORDS([min_max])
 AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
 AT_DATA([expout],
