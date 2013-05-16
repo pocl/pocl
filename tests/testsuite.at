@@ -139,6 +139,9 @@ AT_SETUP([Kernel functions << >> rotate])
 AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 # tce fails currently this test so removed it from the keywords.
 # https://bugs.launchpad.net/tce/+bug/1180309
+#LLVM 3.3 regression on ppc - looks like an optimization+ppc codegen bug
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
+             grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
 AT_KEYWORDS([rotate])
 AT_DATA([expout],
 [Running test test_rotate...
