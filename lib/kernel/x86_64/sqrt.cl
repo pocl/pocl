@@ -65,7 +65,7 @@
   })
 #define IMPLEMENT_SQRT_AVX_FLOAT8               \
   ({                                            \
-    __asm__ ("sqrtps256 %[dst], %[dst]" :       \
+    __asm__ ("vsqrtps %[dst], %[dst]" :         \
              [dst] "+x" (a));                   \
     a;                                          \
   })
@@ -83,7 +83,7 @@
   })
 #define IMPLEMENT_SQRT_AVX_DOUBLE4              \
   ({                                            \
-    __asm__ ("sqrtpd256 %[dst], %[dst]" :       \
+    __asm__ ("vsqrtpd %[dst], %[dst]" :         \
              [dst] "+x" (a));                   \
     a;                                          \
   })

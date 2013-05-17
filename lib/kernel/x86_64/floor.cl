@@ -68,46 +68,46 @@
 // Using only a single asm operand leads to better code, since LLVM
 // doesn't seem to allocate input and output operands to the same
 // register
-#define IMPLEMENT_FLOOR_SSE41_FLOAT                      \
+#define IMPLEMENT_FLOOR_SSE41_FLOAT                     \
   ({                                                    \
-    __asm__ ("roundss %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundss %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
-             [mode] "n" (_MM_FROUND_FLOOR));             \
+             [mode] "n" (_MM_FROUND_FLOOR));            \
     a;                                                  \
   })
-#define IMPLEMENT_FLOOR_SSE41_FLOAT4                     \
+#define IMPLEMENT_FLOOR_SSE41_FLOAT4                    \
   ({                                                    \
-    __asm__ ("roundps %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundps %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
-             [mode] "n" (_MM_FROUND_FLOOR));             \
+             [mode] "n" (_MM_FROUND_FLOOR));            \
     a;                                                  \
   })
-#define IMPLEMENT_FLOOR_AVX_FLOAT8                       \
+#define IMPLEMENT_FLOOR_AVX_FLOAT8                      \
   ({                                                    \
-    __asm__ ("roundps256 %[dst], %[dst], %[mode]" :     \
+    __asm__ ("vroundps %[mode], %[dst], %[dst]" :       \
              [dst] "+x" (a) :                           \
-             [mode] "n" (_MM_FROUND_FLOOR));             \
+             [mode] "n" (_MM_FROUND_FLOOR));            \
     a;                                                  \
   })
-#define IMPLEMENT_FLOOR_SSE41_DOUBLE                     \
+#define IMPLEMENT_FLOOR_SSE41_DOUBLE                    \
   ({                                                    \
-    __asm__ ("roundsd %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundsd %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
-             [mode] "n" (_MM_FROUND_FLOOR));             \
+             [mode] "n" (_MM_FROUND_FLOOR));            \
     a;                                                  \
   })
-#define IMPLEMENT_FLOOR_SSE41_DOUBLE2                    \
+#define IMPLEMENT_FLOOR_SSE41_DOUBLE2                   \
   ({                                                    \
-    __asm__ ("roundpd %[dst], %[dst], %[mode]" :        \
+    __asm__ ("roundpd %[mode], %[dst], %[dst]" :        \
              [dst] "+x" (a) :                           \
-             [mode] "n" (_MM_FROUND_FLOOR));             \
+             [mode] "n" (_MM_FROUND_FLOOR));            \
     a;                                                  \
   })
-#define IMPLEMENT_FLOOR_AVX_DOUBLE4                      \
+#define IMPLEMENT_FLOOR_AVX_DOUBLE4                     \
   ({                                                    \
-    __asm__ ("roundpd256 %[dst], %[dst], %[mode]" :     \
+    __asm__ ("vroundpd %[mode], %[dst], %[dst]" :       \
              [dst] "+x" (a) :                           \
-             [mode] "n" (_MM_FROUND_FLOOR));             \
+             [mode] "n" (_MM_FROUND_FLOOR));            \
     a;                                                  \
   })
 
