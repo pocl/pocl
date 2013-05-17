@@ -27,7 +27,7 @@ BUILT_SOURCES = cl.hpp
 CLEANFILES = ${BUILT_SOURCES}
 #note - this gets run on every build, so don't fail if patch detects a
 #previously applied patch. The copy is a workaround for OSX's 'patch'
-cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in
+cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
 	cp $< __tmp_header && \
 	(patch -sNp2 __tmp_header $(top_srcdir)/tools/patches/khronos_cl.hpp.patch -o cl.hpp || true) && \
 	rm __tmp_header
