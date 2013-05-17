@@ -18,14 +18,56 @@
  }; // namespace detail
  
      
-@@ -1128,7 +1128,8 @@
-             return err;
-         }
- 
+@@ -1114,23 +1114,7 @@
+ template <typename Func>
+ struct GetInfoHelper<Func, VECTOR_CLASS<cl::Device> >
+ {
+-    static cl_int get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param)
+-    {
+-        ::size_t required;
+-        cl_int err = f(name, 0, NULL, &required);
+-        if (err != CL_SUCCESS) {
+-            return err;
+-        }
+-
+-        cl_device_id* value = (cl_device_id*) alloca(required);
+-        err = f(name, required, value, NULL);
+-        if (err != CL_SUCCESS) {
+-            return err;
+-        }
+-
 -        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
-+        param->resize(required/sizeof(cl_device_id));
-+        memcpy(&(*param)[0], value, required);
-         return CL_SUCCESS;
-     }
+-        return CL_SUCCESS;
+-    }
++    static cl_int get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param);
  };
+ 
+ // Specialized for getInfo<CL_PROGRAM_BINARIES>
+@@ -1990,6 +1974,26 @@
+ #endif // #if defined(CL_VERSION_1_1)
+ };
+ 
++template <typename Func>
++cl_int detail::GetInfoHelper<Func, VECTOR_CLASS<cl::Device> >::
++    get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param)
++    {
++        ::size_t required;
++        cl_int err = f(name, 0, NULL, &required);
++        if (err != CL_SUCCESS) {
++            return err;
++        }
++
++        cl_device_id* value = (cl_device_id*) alloca(required);
++        err = f(name, required, value, NULL);
++        if (err != CL_SUCCESS) {
++            return err;
++        }
++
++        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
++        return CL_SUCCESS;
++    }
++
+ /*! \brief Class interface for cl_platform_id.
+  *
+  *  \note Copies of these objects are inexpensive, since they don't 'own'
 
