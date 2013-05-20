@@ -407,5 +407,27 @@ int pocl_basic_get_supported_image_formats( cl_context context,
                                             cl_image_format *image_formats, 
                                             cl_uint *num_image_formats)
 {
+     if ( context == NULL )
+        return CL_INVALID_CONTEXT;
+    
+    if ( image_formats == NULL && num_image_formats == NULL )
+        return CL_INVALID_VALUE;
 
+    /* first call: return num_elements */
+    if ( image_formats == NULL ){    
+        *num_image_formats = sizeof(supported_image_formats) 
+            / sizeof(cl_image_format);
+        return CL_SUCCESS;
+    }
+    
+    /* second call */
+    if ( num_entries == 0 && image_formats != NULL )
+        return CL_INVALID_VALUE;
+    /*
+    memcpy (
+        image_formats, &supported_image_formats, 
+        num_entries * sizeof(cl_image_format) );
+    */
+    image_formats = &supported_image_formats; */
+    return CL_SUCCESS; 
 }
