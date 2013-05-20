@@ -66,6 +66,11 @@
                         size_t offset, size_t size, void *host_ptr); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
   int pocl_##__DRV__##_build_program (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);\
+  int pocl_##_DRV_##_get_supported_image_formats (cl_context context,\ 
+                                               cl_mem_flags flags,\
+                                               cl_uint num_entries,\ 
+                                               cl_image_format *image_formats,\ 
+                                               cl_uint *num_image_formats);\
   _Pragma ("GCC visibility pop")                                        \
 
 

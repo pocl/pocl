@@ -400,3 +400,12 @@ pocl_basic_get_timer_value (void *data)
   gettimeofday(&current, NULL);  
   return (current.tv_sec * 1000000 + current.tv_usec)*1000;
 }
+
+int pocl_basic_get_supported_image_formats( cl_context context, 
+                                            cl_mem_flags flags,
+                                            cl_uint num_entries,
+                                            cl_image_format *image_formats, 
+                                            cl_uint *num_image_formats)
+{
+
+}
