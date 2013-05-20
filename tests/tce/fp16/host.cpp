@@ -39,10 +39,19 @@ kernelSourceCode[] =
 "int putchar(int c);\n"
 "kernel \n"
 "void test_kernel(float a) {\n"
-"    half h1 = (half)(a);\n"
-"    half h2 = -4.f;\n"
-"    float bar = (float)(h1*h1+h2+h2+h2+5.5f);\n" // 3*3-4-4-4+5.5=2.5
-"    printf(\"%f\\n\",bar);\n"
+"   half h1 = (half)(a);\n"
+"   half h2 = -4.f;\n"
+"   float bar = (float)(h1*h1+h2+h2+h2+5.5f);\n" // 3*3-4-4-4+5.5=2.5
+"   half bar1 = 0.0f;\n"
+"   for (int i = 0; i < 2; i++) { \n"
+"     bar1 += (float)(h1*h1+h2+h2+h2+5.5f);\n" // 3*3-4-4-4+5.5=2.5
+"     h1 += a;\n"
+//if the assignment is done here, it works:
+//"     float bar = bar1;\n"
+"     barrier(CLK_LOCAL_MEM_FENCE);\n"
+"     float bar = bar1;\n"
+"     printf(\"%f\\n\", bar);\n"
+"   }\n"
 "}\n";
 
 int
@@ -95,7 +104,7 @@ main(void)
         queue.enqueueNDRangeKernel(
             kernel, 
             cl::NullRange, 
-            cl::NDRange(1),
+            cl::NDRange(8),
             cl::NullRange,
             NULL, &enqEvent);
 	queue.finish();
