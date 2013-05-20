@@ -127,6 +127,7 @@ GEN_PROTOTYPES (basic)
   pocl_basic_run, /* run */                         \
   pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* build_program */ \
+  NULL, /* get_supported_image_formats */ \
   NULL, /* data */                                      \
   KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */    \
   OCL_KERNEL_TARGET, /* llvm_target_triplet */                           \

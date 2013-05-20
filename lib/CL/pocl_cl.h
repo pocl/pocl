@@ -308,6 +308,12 @@ struct _cl_device_id {
   /* Can be used to override the default action for initial .cl to .bc build. */
   int (*build_program) (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);
 
+    /* return supported image formats */
+   int (*get_supported_image_formats) (cl_context context, cl_mem_flags flags,
+                                       cl_uint num_entries, 
+                                       cl_image_format *image_formats, 
+                                       cl_uint *num_image_formats);
+
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
