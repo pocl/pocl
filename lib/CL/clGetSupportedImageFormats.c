@@ -10,7 +10,7 @@ POname(clGetSupportedImageFormats)(cl_context           context,
 {
 
 
-int i, j, k;
+    int i, j, k;
     cl_device_id device_id;
     cl_image_format **dev_image_formats = 0;
     cl_uint *dev_num_image_formats = 0;
@@ -88,7 +88,7 @@ int i, j, k;
             }
         }
         
-        if ( nextreff ){ 
+        if ( reff_found ){ 
             /* if we get here reff is part of intersect */ 
             
             /* if second call */
@@ -98,7 +98,7 @@ int i, j, k;
             ++formatCount;
         }   
     }
-
+    
     if ( num_image_formats != NULL ){
         *num_image_formats = formatCount;
     }
@@ -112,7 +112,7 @@ CLEAN_MEM_N_RETURN:
     }
     free ( dev_num_image_formats );
     return errcode;
-
+    
 } 
 
 /*
@@ -159,5 +159,5 @@ CLEAN_MEM_N_RETURN:
    
    return CL_SUCCESS;
 */
-}
+
 POsym(clGetSupportedImageFormats)

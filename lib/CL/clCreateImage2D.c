@@ -31,13 +31,40 @@ CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage2D)(cl_context              context,
                 cl_mem_flags            flags,
                 const cl_image_format * image_format,
-                size_t                  width,
-                size_t                  height,
+                size_t                  image_width,
+                size_t                  image_height,
                 size_t                  image_row_pitch, 
                 void *                  host_ptr,
                 cl_int *                errcode_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
+
+    cl_image_desc img_desc;
+    img_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    img_desc.image_width = image_width;
+    img_desc.image_height = image_height; 
+    img_desc.image_depth = 1;
+    img_desc.image_array_size = 1;
+    img_desc.image_row_pitch = image_row_pitch;
+    if (host_ptr == NULL){
+        img_desc.image_slice_pitch = 0;
+    }else{
+        img_desc.image_slice_pitch = image_row_pitch * image_height;
+    }
+    img_desc.num_mip_levels = 0;
+    img_desc.num_samples = 0;
+    img_desc.buffer = 0;
+    
+    return POname(clCreateImage)(context, 
+                                 flags, 
+                                 image_format, 
+                                 &img_desc,
+                                 host_ptr, 
+                                 errcode_ret);   
+
+
+/*
+
   cl_mem mem;
   cl_device_id device_id;
   void *device_ptr;
@@ -118,7 +145,7 @@ CL_API_SUFFIX__VERSION_1_0
             goto ERROR_CLEAN_MEM_AND_DEV;
         }
       mem->device_ptrs[i] = device_ptr;
-      /* The device allocator allocated from a device-host shared memory. */
+      // The device allocator allocated from a device-host shared memory. 
       if (flags & CL_MEM_ALLOC_HOST_PTR ||
           flags & CL_MEM_USE_HOST_PTR)
         POCL_ABORT_UNIMPLEMENTED();
@@ -158,6 +185,7 @@ ERROR:
   {
     *errcode_ret = errcode;
   }
-  return NULL;
+  return NULL; */
 }
+
 POsym(clCreateImage2D) 
