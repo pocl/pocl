@@ -22,95 +22,97 @@ POname(clGetSupportedImageFormats)(cl_context           context,
     int formatCount = 0;
     
     if (context == NULL && context->num_devices == 0)
-        return CL_INVALID_CONTEXT;
+      return CL_INVALID_CONTEXT;
     
     if (image_type != CL_MEM_OBJECT_IMAGE2D)
-        return CL_INVALID_VALUE;
+      return CL_INVALID_VALUE;
     
     if (num_entries == 0 && image_formats != NULL)
-        return CL_INVALID_VALUE;
+      return CL_INVALID_VALUE;
     
     dev_image_formats = calloc ( context->num_devices, sizeof(void*) );
     dev_num_image_formats = calloc ( context->num_devices, sizeof(cl_uint));
     
     if (dev_image_formats == NULL || dev_num_image_formats == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
+      return CL_OUT_OF_HOST_MEMORY;
 
     for (i = 0; i < context->num_devices; ++i)
-    {    
+      {    
         device_id = context->devices[i];
-
+        
         /* get num of entries */
-        errcode = device_id->get_supported_image_formats(
-            context, flags, 0, NULL, &dev_num_image_formats[i]);
+        errcode = device_id->get_supported_image_formats(context, flags, 0, 
+                                                         NULL, &dev_num_image_formats[i]);
         
         if ( errcode != CL_SUCCESS)
-            goto CLEAN_MEM_N_RETURN;
+          goto CLEAN_MEM_N_RETURN;
         
-        dev_image_formats[i] = malloc ( 
-            dev_num_image_formats[i] * sizeof(cl_image_format) );
+        dev_image_formats[i] = malloc(dev_num_image_formats[i] * 
+                                      sizeof(cl_image_format) );
         
         if( &dev_num_image_formats[i] == NULL)
-            goto CLEAN_MEM_N_RETURN;
+          goto CLEAN_MEM_N_RETURN;
 
         /* get actual entries */
-        errcode = device_id->get_supported_image_formats(
-            context, flags, dev_num_image_formats[i], 
-            dev_image_formats[i], NULL);
+        errcode = device_id->get_supported_image_formats(context, flags, 
+                                                      dev_num_image_formats[i], 
+                                                      dev_image_formats[i], 
+                                                      NULL);
         
         if (errcode != CL_SUCCESS)
-            goto CLEAN_MEM_N_RETURN;
-    }
-
+          goto CLEAN_MEM_N_RETURN;
+      }
+    
     /* intersect of supported formats over devices */
     /* compare dev[0] sup. formats to all other devices sup. formats */
-    for ( i = 0; i < dev_num_image_formats[0]; i++ ){
-        
+    for ( i = 0; i < dev_num_image_formats[0]; i++ )
+      {
         reff_found = 1; /* init */
         reff = dev_image_formats[0][i];
         
         /* devices[1..*] */
-        for (j = 1; i < context->num_devices && reff_found; j++){
-            
+        for (j = 1; i < context->num_devices && reff_found; j++)
+          {
             reff_found = 0;
             /* sup. devices[j] image formats [0..*]   */
-            for(k = 0; k < dev_num_image_formats[j]; k++){
-                
+            for(k = 0; k < dev_num_image_formats[j]; k++)
+              {
                 toReff = dev_image_formats[j][k];
                 if( reff.image_channel_order == toReff.image_channel_order &&
                     reff.image_channel_data_type == 
-                    toReff.image_channel_data_type ){
-                
+                    toReff.image_channel_data_type )
+                  {
                     /* reff found in current device -> next device */
                     reff_found = 1;
                     break;
-                }
-            }
-        }
-        
-        if ( reff_found ){ 
+                  }
+              }
+          }
+        if ( reff_found )
+          { 
             /* if we get here reff is part of intersect */ 
             
             /* if second call */
             if ( image_formats != NULL && formatCount <= num_entries )
-                image_formats[formatCount] = reff;
+              image_formats[formatCount] = reff;
             
             ++formatCount;
-        }   
-    }
+          }   
+      }
     
-    if ( num_image_formats != NULL ){
+    if ( num_image_formats != NULL )
+      {
         *num_image_formats = formatCount;
-    }
-
-
+      }
+    
     
 CLEAN_MEM_N_RETURN:
-    free ( dev_image_formats );
-    for(i = 0; i < context->num_devices; i++){
-        free ( &dev_num_image_formats[i] );
-    }
     free ( dev_num_image_formats );
+    for(i = 0; i < context->num_devices; i++)
+      {
+        free ( dev_image_formats[i] );
+      }
+    free ( dev_image_formats );
     return errcode;
     
 } 

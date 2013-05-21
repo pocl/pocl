@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clCreateImage()
 
-   Copyright (c) 2012 Timo Viitanen
+   Copyright (c) 2012 Timo Viitanen, 2013 Ville Korhonen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,8 @@ CL_API_SUFFIX__VERSION_1_2
     cl_device_id device_id;
     void *device_ptr;
     unsigned i, j;
+    cl_uint num_entries = 0;
+    cl_image_format *supported_image_formats;
     int size;
     int errcode;
     int row_pitch;
@@ -44,33 +46,64 @@ CL_API_SUFFIX__VERSION_1_2
     cl_channel_order ch_order = image_format->image_channel_order;
     int dev_elem_size;
     int dev_channels;
-    cl_uint num_entries = 0;
-
-    if (context == NULL) {
-        errcode = CL_INVALID_CONTEXT;
+    
+    
+        
+    if (context == NULL) 
+      {
+      errcode = CL_INVALID_CONTEXT;
         goto ERROR;
-    }  
-
-    if (image_desc == NULL){
+      }  
+    
+    if (image_desc == NULL)
+      {
         errcode = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
         goto ERROR;
-    }
+      }
 
     if (image_desc->num_mip_levels != 0 || 
         image_desc->num_samples != 0 )
         POCL_ABORT_UNIMPLEMENTED();
         
         
-    /* This function call breaks every thing....
-    err_code = getSupportedImageFormats(context, flags, image_desc->image_type,
-                                        0, NULL, &num_entries );
+    errcode = POname(clGetSupportedImageFormats)
+      (context, flags, image_desc->image_type, 0, NULL, &num_entries);
     
-    if (errcode == CL_SUCCESS) {
-        printf("get supported images onnistui\n");
-    }else{
-        printf("get supported images ei onnistunut\n");
-    }
-    */
+    if (errcode != CL_SUCCESS || num_entries == 0) 
+      {
+        goto ERROR;
+      } 
+
+    supported_image_formats = malloc( num_entries * sizeof(cl_image_format) );
+    if (supported_image_formats == NULL)
+      {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR;
+      }
+    
+    errcode = POname(clGetSupportedImageFormats)
+      (context, flags, image_desc->image_type, num_entries, 
+       supported_image_formats, NULL);
+    
+    if (errcode != CL_SUCCESS )
+      {
+        goto ERROR_CLEAN_MEM_AND_DEV;
+      }
+
+    for( i = 0; i < num_entries; i++)
+      {
+        if ( supported_image_formats[i].image_channel_order == 
+             image_format->image_channel_order &&
+             supported_image_formats[i].image_channel_data_type ==
+             image_format->image_channel_data_type )
+          {
+            goto TYPE_SUPPORTED;
+          }
+      }
+    errcode = CL_INVALID_VALUE;
+    goto ERROR_CLEAN_MEM_AND_DEV;
+
+TYPE_SUPPORTED:
 
     if (image_desc->image_type != CL_MEM_OBJECT_IMAGE2D &&
         image_desc->image_type != CL_MEM_OBJECT_IMAGE3D)
@@ -78,35 +111,31 @@ CL_API_SUFFIX__VERSION_1_2
 
     mem = (cl_mem) malloc(sizeof(struct _cl_mem));
     if (mem == NULL)
-    {
+      {
         errcode = CL_OUT_OF_HOST_MEMORY;
         goto ERROR_CLEAN_MEM;
-    }
-    
-    
-    
+      }
+        
     /* element size */
     if (ch_type == CL_SNORM_INT8 || ch_type == CL_UNORM_INT8 ||
-        ch_type == CL_SIGNED_INT8 || ch_type == CL_UNSIGNED_INT8 ){
+        ch_type == CL_SIGNED_INT8 || ch_type == CL_UNSIGNED_INT8 )
+      {
         dev_elem_size = 1; /* 1 byte */
-    }
+      }
     else if (ch_type == CL_UNSIGNED_INT32 || 
-             ch_type == CL_FLOAT || ch_type == CL_UNORM_INT_101010 ){
+             ch_type == CL_FLOAT || ch_type == CL_UNORM_INT_101010 )
+      {
         dev_elem_size = 4; /* 32bit -> 4 bytes */
-    }
+      }
     else if (ch_type == CL_SNORM_INT16 || ch_type == CL_UNORM_INT16 ||
              ch_type == CL_SIGNED_INT16 || ch_type == CL_UNSIGNED_INT16 ||
-             ch_type == CL_UNORM_SHORT_555 || ch_type == CL_UNORM_SHORT_565){
+             ch_type == CL_UNORM_SHORT_555 || ch_type == CL_UNORM_SHORT_565)
+      {
         dev_elem_size = 2; /* 16bit -> 2 bytes */
-    }
+      }
 
-    /* channels */
-    
-
-    /*jotain hyvin hämärää*/
-    
     size = image_desc->image_width * image_desc->image_height * 
-        dev_elem_size * dev_channels;
+      dev_elem_size * dev_channels;
     
 
     POCL_INIT_OBJECT(mem);
