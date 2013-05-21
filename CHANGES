@@ -23,6 +23,7 @@ Overall
   This converts possibly sequential inner kernel loops to parallel 
   loops by effectively performing "loop interchange" of the
   work-item loop and the kernel's inner loop.
+- Added VexCL tests to the test suite.
 
 Major bugfixes
 --------------

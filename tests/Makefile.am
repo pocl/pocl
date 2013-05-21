@@ -49,7 +49,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at \
 	testsuite-rodinia.at testsuite-tce.at testsuite-runtime.at \
 	testsuite-workgroup.at testsuite-parboil.at testsuite-amd.at \
-	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in
+	testsuite-vexcl.at $(srcdir)/package.m4 $(TESTSUITE) atlocal.in
 DISTCLEANFILES = atconfig
 TESTSUITE = $(srcdir)/testsuite
 
@@ -69,6 +69,7 @@ AUTOTEST = $(AUTOM4TE) --language=autotest
 $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/testsuite-samples.at $(srcdir)/testsuite-regression.at \
 	$(srcdir)/testsuite-tce.at $(srcdir)/testsuite-viennacl.at \
 	$(srcdir)/testsuite-rodinia.at $(srcdir)/testsuite-parboil.at $(srcdir)/testsuite-amd.at \
-	$(srcdir)/testsuite-runtime.at $(srcdir)/testsuite-workgroup.at $(srcdir)/package.m4
+	$(srcdir)/testsuite-runtime.at $(srcdir)/testsuite-workgroup.at \
+	$(srcdir)/testsuite-vexcl.at $(srcdir)/package.m4 
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
