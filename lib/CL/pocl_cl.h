@@ -254,7 +254,8 @@ struct _cl_device_id {
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
-  char *name; 
+  char *short_name; 
+  char *long_name; 
   char *vendor;
   char *driver_version;
   char *profile;

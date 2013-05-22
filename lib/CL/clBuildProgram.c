@@ -160,7 +160,7 @@ POname(clBuildProgram)(cl_program program,
           program->binaries[device_i] = NULL;
           cl_device_id device = real_device_list[device_i];
           snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, device->name);
+                    program->temp_dir, device->short_name);
           mkdir (device_tmpdir, S_IRWXU);
 
           snprintf 
@@ -245,7 +245,7 @@ POname(clBuildProgram)(cl_program program,
       for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
           error = snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, real_device_list[device_i]->name);
+                    program->temp_dir, real_device_list[device_i]->short_name);
           MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
 
           error = mkdir (device_tmpdir, S_IRWXU);

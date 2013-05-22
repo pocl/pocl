@@ -112,7 +112,8 @@ GEN_PROTOTYPES (cellspu)
   CL_EXEC_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
-  "cellspu", /* name */							\
+  "cellspu", /* short_name */							\
+  0, /* long_name */							\
   "STI", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
   "EMBEDDED_PROFILE", /* profile */						\

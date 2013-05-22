@@ -207,6 +207,36 @@ pocl_cpuinfo_detect_compute_unit_count() {
 }
 
 void
+pocl_cpuinfo_append_cpu_name(cl_device_id device)
+{
+  #define MAX_MODEL_LEN 128
+  char model[MAX_MODEL_LEN];
+
+  /* If something fails here, have this as backup solution.
+   * short_name is in the .data anyways.*/
+  device->long_name = device->short_name;
+  
+  if (access (cpuinfo, R_OK) != 0) return;
+  FILE *f = fopen (cpuinfo, "r");
+  char contents[MAX_CPUINFO_SIZE];
+  int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
+  contents[num_read]='\0';
+  char *start=strstr(contents, "model name\t:");
+  if (start==NULL) return;
+  start+=strlen("model name\t:");
+  char *end = strchr(start, '\n'); 
+  if (end==NULL) return;
+  
+  int len = strlen(device->short_name)+(end-start)+3;
+  char *new_name = (char*)malloc(len);
+  snprintf( new_name, len, "%s: %s", device->short_name, start);
+  // This overwrites the device name, but that is a static buffer, so we cannot free it.
+  // TODO: are devices reallocated several times?
+  device->long_name = new_name;
+
+}
+
+void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
   if ((device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count()) == -1)
@@ -214,4 +244,6 @@ pocl_cpuinfo_detect_device_info(cl_device_id device)
 
   if ((device->max_clock_frequency = pocl_cpuinfo_detect_max_clock_frequency()) == -1)
     device->max_clock_frequency = 0;
+
+  pocl_cpuinfo_append_cpu_name(device);
 }

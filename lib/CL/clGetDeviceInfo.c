@@ -187,7 +187,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_uint, device->queue_properties);
    
   case CL_DEVICE_NAME:
-    POCL_RETURN_DEVICE_INFO_STR(device->name);
+    POCL_RETURN_DEVICE_INFO_STR(device->long_name);
    
   case CL_DEVICE_VENDOR                            : 
     POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */

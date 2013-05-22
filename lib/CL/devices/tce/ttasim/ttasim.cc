@@ -72,7 +72,8 @@ public:
       {
         if (snprintf (dev_name, 256, "ttasim%d", device_count) < 0)
           POCL_ABORT("Unable to generate the device name string.");
-        dev->name = strdup(dev_name);  
+        //TODO: this probably should be long_name, but is this used for something?
+        dev->short_name = strdup(dev_name);  
       }
     ++device_count;
 

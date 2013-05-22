@@ -84,7 +84,7 @@ POname(clCreateKernel)(cl_program program,
         POname(clRetainKernel) (kernel);
 
       snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                program->temp_dir, program->devices[device_i]->name);
+                program->temp_dir, program->devices[device_i]->short_name);
 
       /* If there is no device dir for this device, the program was
          not built for that device in clBuildProgram. This seems to
