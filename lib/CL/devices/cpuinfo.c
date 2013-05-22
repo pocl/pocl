@@ -55,8 +55,8 @@ int pocl_cpufreq_get_max()
   fscanf(f, "%d", &retval);
   fclose(f);  
 
-  // Hz to MHz
-  retval /= 1000000; 
+  // KHz to MHz
+  retval /= 1000; 
 #ifdef DEBUG_POCL_CPUINFO
   printf("CPU max frequency (from cpufreq): %d\n", retval);
 #endif
