@@ -88,6 +88,19 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_min_max], 0, expout)
 AT_CLEANUP
 
+# This reproduces an issue that looks like an LLVM code gen issue.
+AT_SETUP([A saturating conversion from long to uint])
+AT_KEYWORDS([convert_sat_regression])
+# Possibly an LLVM code gen bug. Need to test in different machines with 
+# different SSEs supported.
+AT_XFAIL_IF([true])
+AT_DATA([expout],
+[Running test test_convert_sat_regression...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_sat_regression], 0, expout)
+AT_CLEANUP
+
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 #Fails on tce due to bug #1160383
