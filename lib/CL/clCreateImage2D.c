@@ -43,14 +43,10 @@ CL_API_SUFFIX__VERSION_1_0
     img_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
     img_desc.image_width = image_width;
     img_desc.image_height = image_height; 
-    img_desc.image_depth = 1;
+    img_desc.image_depth = 0;
     img_desc.image_array_size = 1;
     img_desc.image_row_pitch = image_row_pitch;
-    if (host_ptr == NULL){
-        img_desc.image_slice_pitch = 0;
-    }else{
-        img_desc.image_slice_pitch = image_row_pitch * image_height;
-    }
+    img_desc.image_slice_pitch = 0;
     img_desc.num_mip_levels = 0;
     img_desc.num_samples = 0;
     img_desc.buffer = 0;

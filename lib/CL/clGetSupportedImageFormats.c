@@ -13,7 +13,7 @@ POname(clGetSupportedImageFormats)(cl_context           context,
     int i, j, k;
     cl_device_id device_id;
     cl_image_format **dev_image_formats = 0;
-    cl_uint *dev_num_image_formats = 0;
+    int *dev_num_image_formats = 0;
     int errcode = 0;
     
     cl_image_format reff;
@@ -24,14 +24,11 @@ POname(clGetSupportedImageFormats)(cl_context           context,
     if (context == NULL && context->num_devices == 0)
       return CL_INVALID_CONTEXT;
     
-    if (image_type != CL_MEM_OBJECT_IMAGE2D)
-      return CL_INVALID_VALUE;
-    
     if (num_entries == 0 && image_formats != NULL)
       return CL_INVALID_VALUE;
     
     dev_image_formats = calloc ( context->num_devices, sizeof(void*) );
-    dev_num_image_formats = calloc ( context->num_devices, sizeof(cl_uint));
+    dev_num_image_formats = calloc ( context->num_devices, sizeof(int));
     
     if (dev_image_formats == NULL || dev_num_image_formats == NULL)
       return CL_OUT_OF_HOST_MEMORY;
@@ -42,7 +39,7 @@ POname(clGetSupportedImageFormats)(cl_context           context,
         
         /* get num of entries */
         errcode = device_id->get_supported_image_formats(context, flags, 0, 
-                                                         NULL, &dev_num_image_formats[i]);
+                                             NULL, &dev_num_image_formats[i]);
         
         if ( errcode != CL_SUCCESS)
           goto CLEAN_MEM_N_RETURN;
