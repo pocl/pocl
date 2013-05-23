@@ -239,6 +239,21 @@ if test "$enable_testsuite_vexcl" = "yes" ; then
     AC_MSG_WARN([disabling VexCL testsuite as the git branch is not in '$srcdir/examples/VexCL/vexcl'.])
     enable_testsuite_vexcl=no
   fi
+
+  AX_BOOST_BASE([1.52.0], [], [
+    AC_MSG_WARN(
+    [boost library v1.52+ not found. VexCL tests disabled])
+    enable_testsuite_vexcl=no
+  ])
+fi
+
+if test "$enable_testsuite_viennacl" = "yes" ; then
+  # Check for software and sources for ViennaCL
+  AX_BOOST_BASE([1.42.0], [], [
+    AC_MSG_WARN(
+    [boost library v1.42+ not found. ViennaCL tests disabled])
+    enable_testsuite_viennacl=no
+  ])
 fi
 
 #All ViennaCL tests use doubles, thus they fail on these platforms
