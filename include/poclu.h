@@ -70,13 +70,14 @@ poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_el
 cl_context
 poclu_create_any_context();
 
-/* Convert single precision floating point value to half float */
+/**
+ * cl_half related helpers.
+ */
 cl_half
-poclu_convert_float_half(cl_float value);
+poclu_float_to_cl_half(float value);
 
-/* Convert single precision floating point array to half float array */
-void
-poclu_convert_float_array_half_array(cl_float* input, cl_half* output, size_t size);
+float
+poclu_cl_half_to_float(cl_half value);
 
 #ifdef __cplusplus
 }

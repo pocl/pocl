@@ -1,6 +1,7 @@
-/* poclu_misc - misc generic OpenCL helper functions
+/* cl_half - helper functions for the cl_half datatype
 
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
+                      Timo Viitanen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,55 +22,63 @@
    THE SOFTWARE.
 */
 
+#include <math.h>
 #include "poclu.h"
 #include <CL/opencl.h>
+#include <stdint.h>
 #include "config.h"
 
-cl_context
-poclu_create_any_context() 
+typedef union 
 {
-  cl_uint i;
-  cl_platform_id* platforms = (cl_platform_id*)malloc(sizeof(cl_platform_id));
-
-  clGetPlatformIDs(1, platforms, &i);
-  if (i == 0)
-    return (cl_context)0;
-
-  cl_context_properties properties[] = 
-    {CL_CONTEXT_PLATFORM, 
-     (cl_context_properties)platforms[0], 
-     0};
-
-  // create the OpenCL context on any available OCL device 
-  cl_context context = clCreateContextFromType(
-      properties, 
-      CL_DEVICE_TYPE_ALL,
-      NULL, NULL, NULL); 
-
-  free (platforms);
-  return context;
-}
-
+  int32_t i;
+  float f;
+} FloatConvUnion;
 
 cl_half
-poclu_convert_float_half(cl_float value) {
-    union {
-        int i;
-        cl_float f;
-    } u;
-    u.f = value;
-    int binary16 = (u.i & 0x007FFFFF) >> 13;
-    binary16 |=(u.i & 0x07800000) >> 13;
-    binary16 |=(u.i & 0x40000000) >> 16;
-    binary16 |=(u.i & 0x80000000) >> 16;
-    return binary16;
+poclu_float_to_cl_half(float value) 
+{
+  FloatConvUnion u;
+  u.f = value;
+  cl_half half = (u.i & 0x007FFFFF) >> 13;
+  half |=(u.i & 0x07800000) >> 13;
+  half |=(u.i & 0x40000000) >> 16;
+  half |=(u.i & 0x80000000) >> 16;
+  // TODO saturate overflows to inf
+  return half;
 }
 
-void
-poclu_convert_float_array_half_array(cl_float* input, cl_half* output, size_t size) {
-  unsigned int i;  
-  for (i = 0; i < size; ++i) 
-    {
-      output[i] = poclu_convert_float_half(input[i]);
-    }    
+#ifndef INFINITY
+#define INFINITY 1.0/0.0
+#endif
+
+#ifndef NAN
+#define NAN 0.0/0.0
+#endif
+
+float
+poclu_cl_half_to_float(cl_half value) 
+{
+  if (value == 0xFC00) {
+    return -INFINITY;
+  }
+  if (value == 0x7C00) {
+    return INFINITY;
+  }
+
+  int sgn = ((value & 0x8000) >> 15);
+  int exp = (value & 0x7C00) >> 10;
+  int mant = value & 0x03FF;
+
+  if (exp == 0x1F && mant != 0) {
+    return NAN;
+  }
+
+  float v = (exp == 0) ? mant : mant | 0x0400; // 1.x if not denormal
+  v /= 0x400;
+  float mul = exp2(exp - 15);
+  v *= mul;
+  if (sgn) {
+    v *= -1;
+  }
+  return v;
 }
