@@ -49,3 +49,27 @@ poclu_create_any_context()
   free (platforms);
   return context;
 }
+
+
+cl_half
+poclu_convert_float_half(cl_float value) {
+    union {
+        int i;
+        cl_float f;
+    } u;
+    u.f = value;
+    int binary16 = (u.i & 0x007FFFFF) >> 13;
+    binary16 |=(u.i & 0x07800000) >> 13;
+    binary16 |=(u.i & 0x40000000) >> 16;
+    binary16 |=(u.i & 0x80000000) >> 16;
+    return binary16;
+}
+
+void
+poclu_convert_float_array_half_array(cl_float* input, cl_half* output, size_t size) {
+  unsigned int i;  
+  for (i = 0; i < size; ++i) 
+    {
+      output[i] = poclu_convert_float_half(input[i]);
+    }    
+}
