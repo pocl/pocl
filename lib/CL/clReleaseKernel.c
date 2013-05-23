@@ -26,11 +26,12 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
+  int new_refcount;
   cl_kernel *pk;
 
-  POCL_RELEASE_OBJECT (kernel);
+  POCL_RELEASE_OBJECT (kernel, new_refcount);
 
-  if (kernel->pocl_refcount == 0)
+  if (new_refcount == 0)
     {
 
       if (kernel->program != NULL)
