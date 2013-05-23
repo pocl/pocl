@@ -229,9 +229,9 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
   char *end = strchr(start, '\n'); 
   if (end==NULL) return;
   
-  int len = strlen(device->short_name)+(end-start)+3;
+  int len = strlen(device->short_name)+(end-start)+2;
   char *new_name = (char*)malloc(len);
-  snprintf( new_name, len, "%s: %s", device->short_name, start);
+  snprintf( new_name, len, "%s-%s", device->short_name, start);
   // This overwrites the device name, but that is a static buffer, so we cannot free it.
   // TODO: are devices reallocated several times?
   device->long_name = new_name;
