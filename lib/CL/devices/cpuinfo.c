@@ -223,9 +223,9 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
   char contents[MAX_CPUINFO_SIZE];
   int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
   contents[num_read]='\0';
-  char *start=strstr(contents, MODELSTRING"\t:");
+  char *start=strstr(contents, MODELSTRING"\t: ");
   if (start==NULL) return;
-  start+=strlen(MODELSTRING"\t:");
+  start+=strlen(MODELSTRING"\t: ");
   char *end = strchr(start, '\n'); 
   if (end==NULL) return;
   
