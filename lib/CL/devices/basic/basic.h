@@ -73,7 +73,7 @@ GEN_PROTOTYPES (basic)
   0, /* max_clock_frequency */						\
   POCL_DEVICE_ADDRESS_BITS, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
-  CL_FALSE, /* image_support */						\
+  CL_TRUE, /* image_support */						\
   0, /* max_read_image_args */						\
   0, /* max_write_image_args */						\
   0, /* image2d_max_width */						\

@@ -630,7 +630,7 @@ workgroup_thread (void *p)
       }
       else if (kernel->arg_is_image[i])
         {
-          dev_image2d_t di;      
+          /* dev_image2d_t di;      
           cl_mem mem = *(cl_mem*)al->value;
           di.data = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
           di.data = ((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
@@ -638,11 +638,13 @@ workgroup_thread (void *p)
           di.height = mem->image_height;
           di.rowpitch = mem->image_row_pitch;
           di.order = mem->image_channel_order;
-          di.data_type = mem->image_channel_data_type;
-          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image2d_t), NULL);
+          di.data_type = mem->image_channel_data_type; */
+          dev_image_t di;
+          fill_dev_image_t(&di, al, ta->device);
+          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
-          pocl_pthread_write( ta->data, &di, devptr, sizeof(dev_image2d_t) );
+          pocl_pthread_write( ta->data, &di, devptr, sizeof(dev_image_t) );
         }
       else if (kernel->arg_is_sampler[i])
         {

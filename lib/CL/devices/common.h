@@ -26,6 +26,7 @@
 #define POCL_COMMON_H
 
 #include "pocl_cl.h"
+#include "dev_image.h"
 
 /* Determine preferred vector sizes */
 #if defined(__AVX__)
@@ -73,5 +74,8 @@
 #define POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF POCL_DEVICES_NATIVE_VECTOR_WIDTH_SHORT
 
 const char* llvm_codegen (const char* tmpdir);
+
+void fill_dev_image_t(dev_image_t* di, struct pocl_argument* parg, 
+                      cl_int device);
 
 #endif

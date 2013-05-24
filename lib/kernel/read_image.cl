@@ -29,6 +29,39 @@ float4 _CL_OVERLOADABLE read_imagef ( image2d_t image,
 
   return color;
 }
+/* *************************************
+float4 _CL_OVERLOADABLE read_imagef ( image2d_t image, int2 coord ) {
+             
+}
+
+
+float4 _CL_OVERLOADABLE read_imagef ( image2d_array_t image, int4 coord ) {
+       
+}
+
+float4 _CL_OVERLOADABLE read_imagef ( image2d_array_t image, 
+       sampler_t sampler, int4 coord ) {
+       
+}
+
+float4 _CL_OVERLOADABLE read_imagef ( image2d_array_t image, 
+       sampler_t sampler, float4 coord ) {
+
+}
+
+************************** */
+
+
+
+
+
+uint4 _CL_OVERLOADABLE read_imageui ( image2d_t image, sampler_t sampler, 
+      int2 coord ){
+      
+      uint4 color = ((uint4*)image->data)[ coord.x + coord.y*image->rowpitch ];
+
+      return color;    
+}
 
 #endif
 

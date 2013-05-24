@@ -347,7 +347,7 @@ pocl_basic_run
         }
       else if (kernel->arg_is_image[i])
         {
-          dev_image2d_t di;      
+          /*dev_image2d_t di;      
           cl_mem mem = *(cl_mem*)al->value;
           di.data = &((*(cl_mem *) (al->value))->device_ptrs[device]);
           di.data = ((*(cl_mem *) (al->value))->device_ptrs[device]);
@@ -355,11 +355,14 @@ pocl_basic_run
           di.height = mem->image_height;
           di.rowpitch = mem->image_row_pitch;
           di.order = mem->image_channel_order;
-          di.data_type = mem->image_channel_data_type;
-          void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image2d_t), NULL);
+          di.data_type = mem->image_channel_data_type; */
+          dev_image_t di;
+          fill_dev_image_t(&di, al, device);
+
+          void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
-          pocl_basic_write (data, &di, devptr, sizeof(dev_image2d_t));
+          pocl_basic_write (data, &di, devptr, sizeof(dev_image_t));
         }
       else if (kernel->arg_is_sampler[i])
         {
