@@ -93,7 +93,8 @@ AT_CLEANUP
 
 AT_SETUP([vector kernel arguments - lp:987905])
 AT_KEYWORDS([regression vectorarg])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&
+             grep -q "define LLVM_3_2" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | egrep -q '686'])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | egrep -q 'x86_64'])
 AT_CHECK([$abs_top_builddir/tests/regression/test_vectors_as_args], 0)
