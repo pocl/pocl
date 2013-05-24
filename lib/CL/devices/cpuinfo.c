@@ -218,22 +218,27 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
    * short_name is in the .data anyways.*/
   device->long_name = device->short_name;
   
-  if (access (cpuinfo, R_OK) != 0) return;
+  /* read contents of /proc/cpuinfo */
+  if (access (cpuinfo, R_OK) != 0) 
+    return;
   FILE *f = fopen (cpuinfo, "r");
   char contents[MAX_CPUINFO_SIZE];
   int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
   contents[num_read]='\0';
-  char *start=strstr(contents, MODELSTRING"\t: ");
-  if (start==NULL) return;
-  start+=strlen(MODELSTRING"\t: ");
-  char *end = strchr(start, '\n'); 
-  if (end==NULL) return;
+
+  /* find the cpu description */
+  char *start=strstr (contents, MODELSTRING"\t: ");
+  if (start == NULL) 
+    return;
+  start += strlen (MODELSTRING"\t: ");
+  char *end = strchr (start, '\n'); 
+  if (end == NULL) 
+    return;
   
-  int len = strlen(device->short_name)+(end-start)+2;
-  char *new_name = (char*)malloc(len);
-  snprintf( new_name, len, "%s-%s", device->short_name, start);
-  // This overwrites the device name, but that is a static buffer, so we cannot free it.
-  // TODO: are devices reallocated several times?
+  /* create the descriptive long_name for device */
+  int len = strlen (device->short_name) + (end-start) + 2;
+  char *new_name = (char*)malloc (len);
+  snprintf (new_name, len, "%s-%s", device->short_name, start);
   device->long_name = new_name;
 
 }

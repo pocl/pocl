@@ -68,8 +68,9 @@ public:
     simulatorCLI(simulator.frontend()), debuggerRequested(false),
     shutdownRequested(false) {
     char dev_name[256];
+
     const char *adf = strrchr(adfName, '/');
-    if (adf!=NULL && *adf!=NULL) adf++;
+    if (adf != NULL && *adf != NULL) adf++;
     if (snprintf (dev_name, 256, "ttasim-%s", adf) < 0)
       POCL_ABORT("Unable to generate the device name string.");
     dev->long_name = strdup(dev_name);  
