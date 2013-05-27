@@ -27,6 +27,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 {
+  int new_refcount;
   cl_device_id device_id;
   unsigned i;
   mem_mapping_t *mapping, *temp;
@@ -34,7 +35,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   if (memobj == NULL)
     return CL_INVALID_MEM_OBJECT;
 
-  POCL_RELEASE_OBJECT(memobj);
+  POCL_RELEASE_OBJECT(memobj, new_refcount);
 
   /* OpenCL 1.2 Page 118:
 
@@ -44,7 +45,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
      with memobj are deleted.
   */
 
-  if (memobj->pocl_refcount == 0) 
+  if (new_refcount == 0) 
     {
       if (memobj->parent == NULL) 
         {
@@ -57,10 +58,10 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         } else 
         {
           /* a sub buffer object does not free the memory from
-             the device */
-          POCL_RELEASE_OBJECT(memobj->parent);
+             the device */          
+          POCL_RELEASE_OBJECT(memobj->parent, new_refcount);
         }
-      POCL_RELEASE_OBJECT(memobj->context);
+      POCL_RELEASE_OBJECT(memobj->context, new_refcount);
       DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
         {
           free (mapping);

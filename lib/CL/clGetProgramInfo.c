@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -34,6 +35,13 @@ POname(clGetProgramInfo)(cl_program program,
   int i;
   switch (param_name)
   {
+  case CL_PROGRAM_REFERENCE_COUNT:
+    POCL_RETURN_GETINFO(cl_uint, (cl_uint)program->pocl_refcount);
+    break;
+  case CL_PROGRAM_CONTEXT:
+    POCL_RETURN_GETINFO(cl_context, program->context);
+    break;
+
   case CL_PROGRAM_SOURCE:
     {
       size_t const value_size = strlen(program->source) + 1;

@@ -71,7 +71,7 @@ LT_INIT
 LD_FLAGS_BIN=""
 
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.2 llvm-config-3.3])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.3 llvm-config-3.4 llvm-config-3.2 ])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -239,6 +239,21 @@ if test "$enable_testsuite_vexcl" = "yes" ; then
     AC_MSG_WARN([disabling VexCL testsuite as the git branch is not in '$srcdir/examples/VexCL/vexcl'.])
     enable_testsuite_vexcl=no
   fi
+
+  AX_BOOST_BASE([1.52.0], [], [
+    AC_MSG_WARN(
+    [boost library v1.52+ not found. VexCL tests disabled])
+    enable_testsuite_vexcl=no
+  ])
+fi
+
+if test "$enable_testsuite_viennacl" = "yes" ; then
+  # Check for software and sources for ViennaCL
+  AX_BOOST_BASE([1.42.0], [], [
+    AC_MSG_WARN(
+    [boost library v1.42+ not found. ViennaCL tests disabled])
+    enable_testsuite_viennacl=no
+  ])
 fi
 
 #All ViennaCL tests use doubles, thus they fail on these platforms
