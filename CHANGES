@@ -1,6 +1,13 @@
 0.9  unreleased
 ===============
 
+[changes checked from bzr history until 2013-05-23]
+
+Misc.
+-----
+- poclu: helpers for converting between the C float and OpenCL cl_half
+  types
+
 0.8  unreleased
 ===============
 

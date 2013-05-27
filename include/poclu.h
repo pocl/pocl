@@ -40,6 +40,9 @@ extern "C" {
 cl_int
 poclu_bswap_cl_int(cl_device_id device, cl_int original);
 
+cl_half
+poclu_bswap_cl_half(cl_device_id device, cl_half original);
+
 cl_float
 poclu_bswap_cl_float(cl_device_id device, cl_float original);
 
@@ -49,6 +52,9 @@ poclu_bswap_cl_float2(cl_device_id device, cl_float2 original);
 /* In-place swapping of arrays. */
 void
 poclu_bswap_cl_int_array(cl_device_id device, cl_int* array, size_t num_elements);
+
+void
+poclu_bswap_cl_half_array(cl_device_id device, cl_half* array, size_t num_elements);
 
 void
 poclu_bswap_cl_float_array(cl_device_id device, cl_float* array, size_t num_elements);
@@ -63,6 +69,15 @@ poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_el
 /* Create a context in the first platform found. */
 cl_context
 poclu_create_any_context();
+
+/**
+ * cl_half related helpers.
+ */
+cl_half
+poclu_float_to_cl_half(float value);
+
+float
+poclu_cl_half_to_float(cl_half value);
 
 #ifdef __cplusplus
 }

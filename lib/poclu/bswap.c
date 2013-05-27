@@ -63,6 +63,14 @@ poclu_bswap_cl_int(cl_device_id device, cl_int original)
   return original;
 }
 
+cl_half
+poclu_bswap_cl_half(cl_device_id device, cl_half original)
+{
+  if (!needs_swap (device)) return original;
+  GENERIC_BYTESWAP (cl_half, original);
+  return original;
+}
+
 cl_float
 poclu_bswap_cl_float(cl_device_id device, cl_float original)
 {
@@ -80,6 +88,18 @@ poclu_bswap_cl_int_array(cl_device_id device, cl_int* array,
   for (i = 0; i < num_elements; ++i) 
     {
       GENERIC_BYTESWAP (cl_int, array[i]);
+    }
+}
+
+void
+poclu_bswap_cl_half_array(cl_device_id device, cl_half* array, 
+                           size_t num_elements)
+{
+  size_t i;
+  if (!needs_swap (device)) return;
+  for (i = 0; i < num_elements; ++i) 
+    {
+      GENERIC_BYTESWAP (cl_half, array[i]);
     }
 }
 
