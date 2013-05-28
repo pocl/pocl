@@ -85,7 +85,7 @@ main(void)
 
         cl::Device device = devices.at(0);
 
-        assert (device.getInfo<CL_DEVICE_NAME>() == "ttasim");
+        assert (strncmp(device.getInfo<CL_DEVICE_NAME>().c_str(), "ttasim", 6)==0 );
 
         a = poclu_bswap_cl_float (device(), a);
         b = poclu_bswap_cl_int (device(), b);

@@ -98,7 +98,7 @@ pocl_init_devices()
 
       for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
         {
-          if (strcmp(pocl_device_types[i].name, token) == 0)
+          if (strcmp(pocl_device_types[i].short_name, token) == 0)
             {
               /* Check if there are device-specific parameters set in the
                  POCL_DEVICEn_PARAMETERS env. */
