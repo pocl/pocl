@@ -31,12 +31,13 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
+  int new_refcount;
   cl_kernel k;
   char *env = NULL;
 
-  POCL_RELEASE_OBJECT (program);
+  POCL_RELEASE_OBJECT (program, new_refcount);
 
-  if (program->pocl_refcount == 0)
+  if (new_refcount == 0)
     {
 
       /* Mark all kernels as having no program.
@@ -48,7 +49,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           k->program = NULL;
         }
 
-      POCL_RELEASE_OBJECT (program->context);
+      POCL_RELEASE_OBJECT (program->context, new_refcount);
       free (program->source);
       if (program->binaries != NULL)
         {

@@ -160,7 +160,7 @@ POname(clBuildProgram)(cl_program program,
           program->binaries[device_i] = NULL;
           cl_device_id device = real_device_list[device_i];
           snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, device->name);
+                    program->temp_dir, device->short_name);
           mkdir (device_tmpdir, S_IRWXU);
 
           snprintf 
@@ -244,20 +244,21 @@ POname(clBuildProgram)(cl_program program,
          memory in the clBuildWithBinary(). Dump them to the files. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
-          error = snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, real_device_list[device_i]->name);
-          MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
+          int count;
+          count = snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
+                    program->temp_dir, real_device_list[device_i]->short_name);
+          MEM_ASSERT(count >= POCL_FILENAME_LENGTH, ERROR_CLEAN_PROGRAM);
 
           error = mkdir (device_tmpdir, S_IRWXU);
           MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
 
-          error = snprintf 
+          count = snprintf 
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
-          MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
+          MEM_ASSERT(count >= POCL_FILENAME_LENGTH, ERROR_CLEAN_PROGRAM);
 
           binary_file = fopen(binary_file_name, "w");
-          MEM_ASSERT(binary_file, ERROR_CLEAN_PROGRAM);
+          MEM_ASSERT(binary_file == NULL, ERROR_CLEAN_PROGRAM);
 
           fwrite (program->binaries[device_i], 1, program->binary_sizes[device_i],
                   binary_file);

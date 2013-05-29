@@ -162,7 +162,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     return CL_INVALID_EVENT_WAIT_LIST;
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%s/%lu-%lu-%lu.%lu-%lu-%lu", 
-            kernel->program->temp_dir, command_queue->device->name, 
+            kernel->program->temp_dir, command_queue->device->short_name, 
             kernel->name, 
             local_x, local_y, local_z, offset_x, offset_y, offset_z);
   mkdir (tmpdir, S_IRWXU);
@@ -170,7 +170,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   error = snprintf
     (kernel_filename, POCL_FILENAME_LENGTH,
      "%s/%s/%s/kernel.bc", kernel->program->temp_dir, 
-     command_queue->device->name, kernel->name);
+     command_queue->device->short_name, kernel->name);
 
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;

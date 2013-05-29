@@ -36,8 +36,17 @@ const char* cpuinfo = "/proc/cpuinfo";
 //Linux' cpufrec interface
 const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
 
-#define PPC_FREQSTRING "clock"
-#define X86_FREQSTRING "cpu MHz"
+/* Strings to parse in /proc/cpuinfo. Else branch is for x86, x86_64 */
+#if   defined  __powerpc__
+ #define FREQSTRING "clock"
+ #define MODELSTRING "cpu\t"
+#elif defined __arm__
+ #define FREQSTRING " "
+ #define MODELSTRING "Processor"
+#else
+ #define FREQSTRING "cpu MHz"
+ #define MODELSTRING "model name"
+#endif
 
 /** 
  * Read the CPU maximum frequency from the Linux cpufreq interface.
@@ -75,18 +84,11 @@ int pocl_cpufreq_get_max()
 int
 pocl_cpuinfo_detect_max_clock_frequency() {
   int cpufreq=-1;
-  char *freqstring;
   
   // First try to get the result from cpufreq interface.
   cpufreq = pocl_cpufreq_get_max();
   if( cpufreq != -1 )
     return cpufreq;
-  
-  // /proc/cpuinfo varies depending on the kernel architecture, adapt
-  if (strcmp(HOST_CPU, "powerpc64")==0)
-    freqstring = PPC_FREQSTRING;
-  else 
-    freqstring = X86_FREQSTRING;
 
   if (access (cpuinfo, R_OK) != 0) 
       return -1;
@@ -104,7 +106,7 @@ pocl_cpuinfo_detect_max_clock_frequency() {
          system. In Meego Harmattan on ARM it prints Processor instead of
          processor */
       char* p = contents;
-      if ((p = strstr (p, freqstring)) != NULL &&
+      if ((p = strstr (p, FREQSTRING)) != NULL &&
           (p = strstr (p, ": ")) != NULL)
         {
           if (sscanf (p, ": %f", &freq) == 0)
@@ -207,6 +209,41 @@ pocl_cpuinfo_detect_compute_unit_count() {
 }
 
 void
+pocl_cpuinfo_append_cpu_name(cl_device_id device)
+{
+  #define MAX_MODEL_LEN 128
+  char model[MAX_MODEL_LEN];
+
+  /* If something fails here, have this as backup solution.
+   * short_name is in the .data anyways.*/
+  device->long_name = device->short_name;
+  
+  /* read contents of /proc/cpuinfo */
+  if (access (cpuinfo, R_OK) != 0) 
+    return;
+  FILE *f = fopen (cpuinfo, "r");
+  char contents[MAX_CPUINFO_SIZE];
+  int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
+  contents[num_read]='\0';
+
+  /* find the cpu description */
+  char *start=strstr (contents, MODELSTRING"\t: ");
+  if (start == NULL) 
+    return;
+  start += strlen (MODELSTRING"\t: ");
+  char *end = strchr (start, '\n'); 
+  if (end == NULL) 
+    return;
+  
+  /* create the descriptive long_name for device */
+  int len = strlen (device->short_name) + (end-start) + 2;
+  char *new_name = (char*)malloc (len);
+  snprintf (new_name, len, "%s-%s", device->short_name, start);
+  device->long_name = new_name;
+
+}
+
+void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
   if ((device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count()) == -1)
@@ -214,4 +251,6 @@ pocl_cpuinfo_detect_device_info(cl_device_id device)
 
   if ((device->max_clock_frequency = pocl_cpuinfo_detect_max_clock_frequency()) == -1)
     device->max_clock_frequency = 0;
+
+  pocl_cpuinfo_append_cpu_name(device);
 }

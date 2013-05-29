@@ -26,9 +26,10 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
+  int new_refcount;
   POname(clFlush)(command_queue);
-  POCL_RELEASE_OBJECT(command_queue);
-  if (command_queue->pocl_refcount == 0)
+  POCL_RELEASE_OBJECT(command_queue, new_refcount);
+  if (new_refcount == 0)
     {
       free (command_queue);
       /* TODO: should clReleaseContext()? */

@@ -104,7 +104,8 @@ GEN_PROTOTYPES (basic)
   CL_EXEC_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
-  "basic", /* name */							\
+  "basic", /* short_name */							\
+  0, /* long_name */							\
   "pocl", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
   "FULL_PROFILE", /* profile */						\

@@ -96,7 +96,8 @@ GEN_PROTOTYPES (ttasim)
   CL_EXEC_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
-  "ttasim", /* name */							\
+  "ttasim", /* short_name */							\
+  0, /* long_name */							\
   "TTA-Based Co-design Environment", /* vendor */							\
   PACKAGE_VERSION, /* driver_version */						\
   "EMBEDDED_PROFILE", /* profile */						\

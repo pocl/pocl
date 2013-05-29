@@ -88,6 +88,16 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_min_max], 0, expout)
 AT_CLEANUP
 
+# This was a an LLVM 3.3 code gen bug.
+AT_SETUP([A saturating conversion from long to uint])
+AT_KEYWORDS([convert_sat_regression])
+AT_DATA([expout],
+[Running test test_convert_sat_regression...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_sat_regression], 0, expout)
+AT_CLEANUP
+
 
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 #Fails on tce due to bug #1160383

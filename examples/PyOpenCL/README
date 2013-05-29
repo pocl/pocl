@@ -1,0 +1,49 @@
+Installation:
+
+$ git clone --recursive git://github.com/inducer/pyopencl
+$ apt-get install python-pip python-virtualenv
+
+  (or equivalent, for example:
+  curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+  sudo python get-pip.py 
+  sudo pip install virtualenv)
+
+$ virtualenv --system-site-packages mypy
+$ source mypy/bin/activate
+$ cd pyopencl
+$ ./configure.py
+[Edit siteconf.py to taste--for example to find CL headers.]
+$ python setup.py install
+
+Update:
+
+$ source mypy/bin/activate
+$ cd pyopencl
+$ git pull
+$ git submodule update
+$ python setup.py install
+
+Run test:
+
+$ source mypy/bin/activate
+$ cd pyopencl/test
+$ PYOPENCL_NO_CACHE=1 PYOPENCL_TEST=portable py.test -v --tb=native
+
+'PYOPENCL_NO_CACHE=1' turns off binary caching (aka use of
+clCreateProgramWithBinary), which pocl doesn't appear to
+support. (results in 'out of host memory' error)
+
+'PYOPENCL_TEST=portable' restricts the test run to pocl.
+
+You can also append individual test_*.py files to that command line to
+only run these tests. Many of the algorithmic tests are already looking
+pretty good.
+
+test_wrapper.py on the other hand is pretty brutal. It tests a few
+corner cases (all GetInfo queries, invalid kernel names, ...) and
+crashes with SIGSEGV pretty much immediately.
+
+Thank you for your work on pocl. I'm lurking on the pocl list if you
+need me to help somehow.
+
+--Andreas Klöckner @ pocl-devel ML
