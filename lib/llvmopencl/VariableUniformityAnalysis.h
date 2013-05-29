@@ -56,6 +56,8 @@ namespace pocl {
                                      llvm::BasicBlock *bb, 
                                      llvm::BasicBlock *previousUniformBB);
 
+    virtual bool shouldBePrivatized(llvm::Function *f, llvm::Value *val);
+
   private:
 
     bool isUniformityAnalyzed(llvm::Function *f, llvm::Value *val) const;

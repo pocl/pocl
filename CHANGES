@@ -3,6 +3,12 @@
 
 [changes checked from bzr history until 2013-05-23]
 
+Performance
+-----------
+- kernel compiler now tries to avoid replicating uniform variables,
+  this leads to less context data to be saved per work-item and cleaner
+  kernel bitcode for later optimizations
+
 Misc.
 -----
 - poclu: helpers for converting between the C float and OpenCL cl_half

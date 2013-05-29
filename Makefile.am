@@ -40,7 +40,7 @@ do_subst = sed -e 's,[@]libdir[@],$(libdir),g'
 if FREEBSD_HOST_OS
 do_subst += -e 's,so.VER,so.2,g'
 else
-do_subst += -e 's,so.VER,so.1.1.0,g'
+do_subst += -e 's,so.VER,so.1.2.0,g'
 endif
 
 pocl.icd:

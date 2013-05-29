@@ -71,6 +71,8 @@
 
 //#define DEBUG_WORK_ITEM_LOOPS
 
+#include "VariableUniformityAnalysis.h"
+
 using namespace llvm;
 using namespace pocl;
 
@@ -93,7 +95,13 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 #else
   AU.addRequired<DataLayout>();
 #endif
+
+  AU.addRequired<VariableUniformityAnalysis>();
+  AU.addPreserved<VariableUniformityAnalysis>();
+
   AU.addRequired<pocl::WorkitemHandlerChooser>();
+  AU.addPreserved<pocl::WorkitemHandlerChooser>();
+
 }
 
 bool
@@ -902,12 +910,40 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
       header node's ID loads might get context saved which leads
       to egg-chicken problems. 
     */
+  if (isa<BranchInst>(instr)) return true;
+
     llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
     if (load != NULL &&
         (load->getPointerOperand() == localIdZ ||
          load->getPointerOperand() == localIdY ||
          load->getPointerOperand() == localIdX))
       return true;
+
+    VariableUniformityAnalysis &VUA = 
+      getAnalysis<VariableUniformityAnalysis>();
+
+    /* In case of uniform variables (same for all work-items),
+       there is no point to create a context array slot for them,
+       but just use the original value everywhere. 
+
+       Allocas are problematic: they include the de-phi induction
+       variables of the b-loops. In those case each work item 
+       has a separate loop iteration variable in the LLVM IR but
+       which is really a parallel region loop invariant. But
+       because we cannot separate such loop invariant variables
+       at this point sensibly, let's just replicate the iteration
+       variable to each work item and hope the latter optimizations
+       reduce them back to a single induction variable outside the
+       parallel loop.   
+*/
+    if (!VUA.shouldBePrivatized(instr->getParent()->getParent(), instr)) {
+#if DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### based on VUA, not context saving:";
+      instr->dump();
+#endif     
+      return true;
+    } 
+
     return false;
 }
 

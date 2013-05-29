@@ -73,7 +73,7 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
       method = getenv("POCL_WORK_GROUP_METHOD");
       if (method == "repl" || method == "workitemrepl")
         chosenHandler_ = POCL_WIH_FULL_REPLICATION;
-      else if (method == "loops" || method == "workitemloops")
+      else if (method == "loops" || method == "workitemloops" || method == "loopvec")
         chosenHandler_ = POCL_WIH_LOOPS;
       else if (method != "auto")
         {

@@ -91,7 +91,7 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
      divergence analysis. */
   uniformityCache_[&F].clear();  
 
-  /* Mark the canonican induction variable PHI as uniform. 
+  /* Mark the canonical induction variable PHI as uniform. 
      If there's a canonical induction variable in loops, the variable
      update for each iteration should be uniform. Note: this does not yet imply
      all the work-items execute the loop same number of times! */
@@ -112,6 +112,35 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
   //  F.viewCFG();
   return false;
 }
+
+/**
+ * Returns true in case the value should be privatized, e.g., a copy
+ * should be created for each parallel work-item.
+ *
+ * This is not the same as !isUniform() because of some of the allocas.
+ * Specifically, the loop iteration variables are sometimes uniform, 
+ * that is, each work item sees the same induction variable value at every iteration, 
+ * but the variables should be still replicated to avoid multiple increments
+ * of the same induction variable by each work-item.
+ */
+bool
+VariableUniformityAnalysis::shouldBePrivatized
+(llvm::Function *f, llvm::Value *val) {
+  if (!isUniform(f, val)) return true;
+  
+  /* Check if the value is stored in stack (is an alloca or writes to an alloca). */
+  /* It should be enough to context save the initial alloca and the stores to
+     make sure each work-item gets their own stack slot and they are updated.
+     How the value (based on which of those allocas) is computed does not matter as
+     we are deadling with uniform computation. */
+
+  if (isa<AllocaInst>(val)) return true;
+
+  if (isa<StoreInst>(val) && 
+      isa<AllocaInst>(dyn_cast<StoreInst>(val)->getPointerOperand())) return true;
+  return false;  
+}
+
 
 /**  
  * BB divergence analysis.
@@ -246,8 +275,8 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
        loops. 
 
        Currently the following case is white listed:
-       a) are scalars
-       b) are accesses only with load and stores (e.g. address not taken)
+       a) are scalars, and
+       b) are accessed only with load and stores (e.g. address not taken), and
        c) stored data is uniform
 
        Because alloca data can be modified in loops and thus be dependent on
@@ -289,8 +318,8 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
       uniformityCache_ = backupCache;
     }
     setUniform(f, v, isUniformAlloca);
-
-      return isUniformAlloca;
+    
+    return isUniformAlloca;
   }
 
   /* TODO: global memory loads are uniform in case they are accessing
