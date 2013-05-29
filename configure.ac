@@ -35,10 +35,15 @@ AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
 
 AM_CONDITIONAL([DARWIN_HOST_OS], false)
+AM_CONDITIONAL([FREEBSD_HOST_OS], false)
 case $host_os in
   darwin* )
     AM_CONDITIONAL([DARWIN_HOST_OS], true)
     AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+         ;;
+  freebsd* )
+    AM_CONDITIONAL([FREEBSD_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
          ;;
   *)
     AC_SUBST([LIBRARY_SUFFIX], [".so"] )
