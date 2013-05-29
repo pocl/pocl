@@ -2039,7 +2039,12 @@ __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
 #ifndef _CL_HAS_IMAGE_ACCESS
 typedef int sampler_t;
-typedef struct image2d_t_* image2d_t;
+typedef struct dev_image_t* image2d_t;
+typedef struct dev_image_t* image3d_t;
+typedef struct dev_image_t* image1d_t;
+typedef struct dev_image_t* image1d_buffer_t;
+typedef struct dev_image_t* image2d_array_t;
+typedef struct dev_image_t* image1d_array_t;
 #endif
 
 #define CLK_ADDRESS_NONE                0x00
@@ -2065,16 +2070,71 @@ float4 _CL_OVERLOADABLE read_imagef( image2d_t image,
 uint4 _CL_OVERLOADABLE read_imageui ( image2d_t image, sampler_t sampler, 
                                       int2 coord );
 
+uint4 _CL_OVERLOADABLE read_imageui ( image2d_t image, sampler_t sampler, 
+                                      int4 coord );
+
+int4 _CL_OVERLOADABLE read_imagei ( image2d_t image, sampler_t sampler, 
+                                     int2 coord );
+
+
 
 
 
 void _CL_OVERLOADABLE write_imagef( image2d_t image,
-        int2 coord,
-        float4 color);
+                                    int2 coord,
+                                    float4 color);
 
 void _CL_OVERLOADABLE write_imagei( image2d_t image,
-        int2 coord,
-        int4 color);
+                                    int2 coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imagef ( image2d_array_t image,
+                                     int4 coord,
+                                     float4 color);
+
+void _CL_OVERLOADABLE write_imagei ( image2d_array_t image,
+                                     int4 coord,
+                                     int4 color);
+
+void _CL_OVERLOADABLE write_imageui ( image2d_array_t image,
+                                      int4 coord,
+                                      uint4 color);
+
+void _CL_OVERLOADABLE write_imagef ( image1d_t image,
+                                     int coord,
+                                     float4 color);
+
+void _CL_OVERLOADABLE write_imagei ( image1d_t image,
+                                     int coord,
+                                     int4 color);
+
+void _CL_OVERLOADABLE write_imageui ( image1d_t image, 
+                                      int coord, 
+                                      uint4 color);
+
+void _CL_OVERLOADABLE write_imagef ( image1d_buffer_t image, 
+                                     int coord, 
+                                     float4 color);
+
+void _CL_OVERLOADABLE write_imagei ( image1d_buffer_t image,
+                                     int coord,
+                                     int4 color);
+
+void _CL_OVERLOADABLE write_imageui ( image1d_buffer_t image,
+                                      int coord,
+                                      uint4 color);
+
+void _CL_OVERLOADABLE write_imagef ( image1d_array_t image,
+                                     int2 coord,
+                                     float4 color);
+
+void _CL_OVERLOADABLE write_imagei ( image1d_array_t image,
+                                     int2 coord,
+                                     int4 color);
+
+void _CL_OVERLOADABLE write_imageui ( image1d_array_t image,
+                                      int2 coord,
+                                      uint4 color);
 
 int get_image_width (image2d_t image);
 int get_image_height (image2d_t image);

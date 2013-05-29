@@ -347,15 +347,6 @@ pocl_basic_run
         }
       else if (kernel->arg_is_image[i])
         {
-          /*dev_image2d_t di;      
-          cl_mem mem = *(cl_mem*)al->value;
-          di.data = &((*(cl_mem *) (al->value))->device_ptrs[device]);
-          di.data = ((*(cl_mem *) (al->value))->device_ptrs[device]);
-          di.width = mem->image_width;
-          di.height = mem->image_height;
-          di.rowpitch = mem->image_row_pitch;
-          di.order = mem->image_channel_order;
-          di.data_type = mem->image_channel_data_type; */
           dev_image_t di;
           fill_dev_image_t(&di, al, device);
 

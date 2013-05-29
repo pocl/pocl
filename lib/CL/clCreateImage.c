@@ -90,7 +90,6 @@ CL_API_SUFFIX__VERSION_1_2
 
     if (errcode != CL_SUCCESS || num_entries == 0) 
       {
-        printf("joku hämminki getimageformaatissa\n");
         goto ERROR;
       } 
 
@@ -139,33 +138,10 @@ TYPE_SUPPORTED:
     printf("image_slice_pitch %d\n", image_desc->image_slice_pitch);
     printf("host_ptr %u\n \n", host_ptr);
 
-    /* element size */
-    if (ch_type == CL_SNORM_INT8 || ch_type == CL_UNORM_INT8 ||
-        ch_type == CL_SIGNED_INT8 || ch_type == CL_UNSIGNED_INT8 )
-      {
-        elem_size = 1; /* 1 byte */
-      }
-    else if (ch_type == CL_UNSIGNED_INT32 || 
-             ch_type == CL_FLOAT || ch_type == CL_UNORM_INT_101010 )
-      {
-        elem_size = 4; /* 32bit -> 4 bytes */
-      }
-    else if (ch_type == CL_SNORM_INT16 || ch_type == CL_UNORM_INT16 ||
-             ch_type == CL_SIGNED_INT16 || ch_type == CL_UNSIGNED_INT16 ||
-             ch_type == CL_UNORM_SHORT_555 || ch_type == CL_UNORM_SHORT_565)
-      {
-        elem_size = 2; /* 16bit -> 2 bytes */
-      }
-
-    /* channels TODO: verify num of channels*/
-    if (ch_order == CL_RGB || ch_order == CL_RGBx )
-      {
-        channels = 1;
-      }
-    else
-      {
-        channels = 4;
-      }
+    
+    pocl_get_image_information ( image_format->image_channel_order,
+                                 image_format->image_channel_data_type, 
+                                 &channels, &elem_size);
 
     size = image_desc->image_width * image_desc->image_height * 
       elem_size * channels;
@@ -188,7 +164,7 @@ TYPE_SUPPORTED:
           }
       }
 
-
+    printf("clCreateImage: row_pitch = %d, slice_pitch = %d, size %d \n", row_pitch, slice_pitch, size);
 
     /* Create buffer and fill in missing parts */
     mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);

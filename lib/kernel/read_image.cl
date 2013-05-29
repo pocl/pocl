@@ -1,7 +1,12 @@
+
+
+
 #ifndef _CL_HAS_IMAGE_ACCESS
 
 #include "templates.h"
 #include "image.h"
+
+/* float functions */
 
 float4 _CL_OVERLOADABLE read_imagef ( image2d_t image,
         sampler_t sampler,
@@ -16,7 +21,7 @@ float4 _CL_OVERLOADABLE read_imagef ( image2d_t image,
   if( coord.y>=image->height )
     coord.y=image->height-1;
 
-  float4 color = ((float4*)image->data)[ coord.x + coord.y*image->rowpitch ];
+  float4 color = ((float4*)image->data)[ coord.x + coord.y*image->row_pitch ];
 
   return color;
 }
@@ -25,11 +30,14 @@ float4 _CL_OVERLOADABLE read_imagef ( image2d_t image,
         sampler_t sampler,
         float2 coord) {
   
-  float4 color = ((float4*)image->data)[ (int)coord.x + (int)coord.y*image->rowpitch ];
+  float4 color = ((float4*)image->data)[ (int)coord.x + (int)coord.y*image->row_pitch ];
 
   return color;
 }
-/* *************************************
+
+
+
+/* 
 float4 _CL_OVERLOADABLE read_imagef ( image2d_t image, int2 coord ) {
              
 }
@@ -51,17 +59,29 @@ float4 _CL_OVERLOADABLE read_imagef ( image2d_array_t image,
 
 ************************** */
 
-
-
-
+/* int functions */
 
 uint4 _CL_OVERLOADABLE read_imageui ( image2d_t image, sampler_t sampler, 
-      int2 coord ){
-      
-      uint4 color = ((uint4*)image->data)[ coord.x + coord.y*image->rowpitch ];
-
-      return color;    
+                                      int2 coord )
+{
+  uint4 color = ((uint4*)image->data)[ coord.x + coord.y*image->row_pitch ];
+  return color;    
 }
+
+uint4 _CL_OVERLOADABLE read_imageui ( image2d_array_t image, sampler_t sampler, 
+                                      int4 coord )
+{
+  uint4 color = ((uint4*)image->data)[ coord.x + coord.y*image->row_pitch ];
+  return color; 
+}
+
+int4 _CL_OVERLOADABLE read_imagei ( image2d_array_t image, sampler_t sampler, 
+                                    int2 coord )
+{
+  int4 color = ((int4*)image->data)[ coord.x + coord.y*image->row_pitch ];
+  return color;
+}
+
 
 #endif
 

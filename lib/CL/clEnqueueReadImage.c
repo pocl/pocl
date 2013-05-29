@@ -33,12 +33,12 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   status = pocl_read_image(image,
-			   command_queue->device,
-			   origin,
-			   region,
-			   host_row_pitch,
-			   host_slice_pitch, 
-			   ptr);
+                           command_queue->device,
+                           origin,
+                           region,
+                           host_row_pitch,
+                           host_slice_pitch, 
+                           ptr);
   POCL_UPDATE_EVENT_COMPLETE;
   return status;
 }
