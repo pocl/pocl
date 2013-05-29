@@ -36,6 +36,13 @@ if BUILD_ICD
 icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 do_subst = sed -e 's,[@]libdir[@],$(libdir),g'
+
+if FREEBSD_HOST_OS
+do_subst += -e 's,so.VER,so.2,g'
+else
+do_subst += -e 's,so.VER,so.1.1.0,g'
+endif
+
 pocl.icd:
 	$(do_subst) < $(srcdir)/pocl.icd.in > $(builddir)/pocl.icd
 
