@@ -24,7 +24,7 @@
 
 noinst_PROGRAMS = kernel
 
-kernel_SOURCES = kernel.c test_bitselect.cl test_fabs.cl test_hadd.cl test_rotate.cl
+kernel_SOURCES = kernel.c test_as_type.cl test_bitselect.cl test_convert_type.cl test_fabs.cl test_hadd.cl test_min_max.cl test_rotate.cl
 kernel_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 kernel_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 

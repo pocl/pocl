@@ -22,14 +22,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DIST_SUBDIRS = tce x86_64 powerpc powerpc64 cellspu arm
+DIST_SUBDIRS = arm cellspu powerpc powerpc64 tce x86_64
 SUBDIRS = @OCL_TARGETS@
 
 # The source files in this dir are not built directly
 # but are used with the target specific subdirs as
 # fallback implementations. Include them in the
 # dist once here.
-EXTRA_DIST = ${libkernel_SRCS} \
-	Makefile.target.am Makefile.host.am \
-	Makefile.target.in Makefile.host.in 
-
+EXTRA_DIST = *.c *.cl *.h *.ll			\
+	arm/*.cl tce/*.cl x86_64/*.cl		\
+	vecmathlib/COPYING			\
+	vecmathlib/COPYING.LESSER		\
+	vecmathlib/README			\
+	vecmathlib/*.h				\
+	vecmathlib/pocl/*.cc			\
+	vecmathlib/pocl/*.cl			\
+	vecmathlib/pocl/*.h
