@@ -43,7 +43,6 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li><a href="https://code.google.com/p/opencl-book-samples/">OpenCL Programming Guide</a> book samples (most of them)</a>
   <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.8</a> OpenCL samples (most of them)</a>
   <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
-
 </ul>
 
 <p>pocl has been tested on the following platforms <a href="http://llvm.org/docs/GettingStarted.html#hardware">supported by LLVM</a>:</p>

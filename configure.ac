@@ -35,10 +35,15 @@ AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
 
 AM_CONDITIONAL([DARWIN_HOST_OS], false)
+AM_CONDITIONAL([FREEBSD_HOST_OS], false)
 case $host_os in
   darwin* )
     AM_CONDITIONAL([DARWIN_HOST_OS], true)
     AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+         ;;
+  freebsd* )
+    AM_CONDITIONAL([FREEBSD_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
          ;;
   *)
     AC_SUBST([LIBRARY_SUFFIX], [".so"] )
@@ -71,7 +76,7 @@ LT_INIT
 LD_FLAGS_BIN=""
 
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.2 llvm-config-3.3])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.3 llvm-config-3.4 llvm-config-3.2 ])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -130,7 +135,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -138,6 +143,7 @@ enable_testsuite_viennacl=no
 enable_testsuite_rodinia=no
 enable_testsuite_parboil=no
 enable_testsuite_amd=no
+enable_testsuite_vexcl=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -156,10 +162,12 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64.tgz" ; then
     enable_testsuite_amd=yes
   fi
-
+  if test -f "$srcdir/examples/VexCL/vexcl/README.md" ; then
+    enable_testsuite_vexcl=yes
+  fi
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -181,6 +189,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,AMD,*|*,amd,*], [
     enable_testsuite_amd=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,VexCL,*|*,vexcl,*], [
+    enable_testsuite_vexcl=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -226,6 +238,29 @@ if test "$enable_testsuite_amd" = "yes" ; then
     ])
 fi
 
+if test "$enable_testsuite_vexcl" = "yes" ; then
+  # Check for software and sources for VexCL
+  if ! test -f "$srcdir/examples/VexCL/vexcl/README.md"; then
+    AC_MSG_WARN([disabling VexCL testsuite as the git branch is not in '$srcdir/examples/VexCL/vexcl'.])
+    enable_testsuite_vexcl=no
+  fi
+
+  AX_BOOST_BASE([1.52.0], [], [
+    AC_MSG_WARN(
+    [boost library v1.52+ not found. VexCL tests disabled])
+    enable_testsuite_vexcl=no
+  ])
+fi
+
+if test "$enable_testsuite_viennacl" = "yes" ; then
+  # Check for software and sources for ViennaCL
+  AX_BOOST_BASE([1.42.0], [], [
+    AC_MSG_WARN(
+    [boost library v1.42+ not found. ViennaCL tests disabled])
+    enable_testsuite_viennacl=no
+  ])
+fi
+
 #All ViennaCL tests use doubles, thus they fail on these platforms
 case $host_cpu in
   arm* | powerpc* | x86 | i?86 )
@@ -239,6 +274,7 @@ AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -273,6 +309,13 @@ if test "$enable_testsuite_amd" = "yes"; then
 else
   AC_MSG_NOTICE([tests from AMD APP SDK are disabled])
 fi
+if test "$enable_testsuite_vexcl" = "yes"; then
+  AC_MSG_NOTICE([tests from VexCL are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES vexcl"
+else
+  AC_MSG_NOTICE([tests from VexCL are disabled])
+fi
+
 
 
 AC_SUBST([POAT_TESTSUITES])
@@ -936,6 +979,7 @@ AC_CONFIG_FILES([Makefile
                  examples/ViennaCL/Makefile
                  examples/AMD/Makefile
                  examples/EinsteinToolkit/Makefile
+                 examples/VexCL/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/kernel/Makefile

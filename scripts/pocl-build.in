@@ -61,7 +61,12 @@ case $target in
   @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@";;
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
 esac
-CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map -target $target"
+CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map -target $target "
+
+# With fp-contract we get calls to fma with processors which do not
+# have fma instructions. These ruin the performance. Better to have
+# the mul+add separated in the IR.
+CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off "
 
 preprocessed_file=${output_file}.i
 
@@ -74,4 +79,8 @@ if false ; then
 fi
 # END REMOVE ONCE INSTALLED
 
-@CLANG@ ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
+# Use -fno-builtin to avoid clang producing extra memcpys etc. from
+# kernel loops. Otherwise, it a) ruins wg-vectorization b) causes issues with embedded 
+# devices such as TCE which do not have OS and a system linker.
+@CLANG@ -fno-builtin ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
+

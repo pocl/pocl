@@ -106,11 +106,11 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK((__OBJ__)->pocl_lock)
 #define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK((__OBJ__)->pocl_lock)
 
-#define POCL_RELEASE_OBJECT(__OBJ__)             \
-  do {                                           \
-    POCL_LOCK_OBJ (__OBJ__);                     \
-    (__OBJ__)->pocl_refcount--;                    \
-    POCL_UNLOCK_OBJ (__OBJ__);                   \
+#define POCL_RELEASE_OBJECT(__OBJ__, __NEW_REFCOUNT__)  \
+  do {                                                  \
+    POCL_LOCK_OBJ (__OBJ__);                            \
+    __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;      \
+    POCL_UNLOCK_OBJ (__OBJ__);                          \
   } while (0)                          
 
 #define POCL_RETAIN_OBJECT(__OBJ__)             \

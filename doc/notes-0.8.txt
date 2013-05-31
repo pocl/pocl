@@ -40,9 +40,6 @@ E. Schnetter acknowledges support from the Perimeter Institute, as
 well as funding from NSERC (Canada) via a Discovery Grant and from NSF
 (USA) via OCI Award 0905046.
 
-Thanks to Victor Oliveira for his first code contributions to the
-project and for testing pocl with the GEGL OpenCL filters.
-
 Links
 -----
 Home page:         http://pocl.sourceforge.net/

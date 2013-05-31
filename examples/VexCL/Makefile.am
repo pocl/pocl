@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples.
+# Makefile.am for pocl/examples/VexCL
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a trig scalarwave \
-	opencl-book-samples ViennaCL Rodinia Parboil AMD EinsteinToolkit
+if TEST_SUITE_VEXCL
+
+.PHONY: build
+
+# ViennaCL must be built in the subdirectory build/ of the extracted source
+# (it does not work elsewhere) and its source tree is modified.
+# So, copying the source tree in our build tree if required
+# (ie if $(srcdir) is not $(CURDIR) )
+build:
+	cd vexcl; cmake . $(OPENCL_CMAKE) ; make
+
+check-local: build
+
+clean-local:
+	cd vexcl; make clean
+
+endif

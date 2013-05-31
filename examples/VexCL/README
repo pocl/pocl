@@ -1,0 +1,8 @@
+To run the VexCL test suite using pocl:
+
+1) git clone https://github.com/ddemidov/vexcl.git
+2) build the sources if you want to use specific flags or 
+   a compiler that is not your default:
+   cd vexcl; cmake . ; make
+3) configure pocl. It should detect vexcl and enable it as 
+   a test suite (see the final messages printed).

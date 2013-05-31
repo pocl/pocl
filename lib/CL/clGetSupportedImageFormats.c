@@ -37,18 +37,26 @@ POname(clGetSupportedImageFormats)(cl_context           context,
   for (i=0; i<supported_order_count; i++)
     for (j=0; j<supported_type_count; j++)
       {
-        if (idx >= num_entries)
-          return CL_SUCCESS;
-        
-        image_formats[idx].image_channel_order = supported_orders[i];
-        image_formats[idx].image_channel_data_type = supported_types[j];
+        if (image_formats && idx < num_entries)
+        {
+          image_formats[idx].image_channel_order = supported_orders[i];
+          image_formats[idx].image_channel_data_type = supported_types[j];
+        }
         
         idx++;
       }
       
-   // Add special cases here if a channel order is supported with only some types or vice versa.
-   *num_image_formats = idx;
-   
-   return CL_SUCCESS;
+  /* Add special cases here if a channel order is supported with only some types or vice versa. */
+  if (num_image_formats)
+  {
+    /* CL Standard:
+
+       num_image_formats is the actual number of supported image formats for a
+       specific context and values specified by flags. If num_image_formats is
+       NULL, it is ignored. */
+    *num_image_formats = idx;
+  }
+  
+  return CL_SUCCESS;
 }
 POsym(clGetSupportedImageFormats)
