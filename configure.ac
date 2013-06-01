@@ -1018,7 +1018,8 @@ else
   else
    echo "'make check' might fail if it is run before 'make install' unless" 
    echo "your ICD loader supports the OCL_ICD_VENDORS environment variable"
-   echo "please consult README.devel for details."
+   echo "please consult http://pocl.sourceforge.net/docs/html/development.html#test-suite"
+   echo "for details."
   fi
  else
   echo "Using ocl-icd to run checks inside build tree."
