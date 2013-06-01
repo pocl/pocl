@@ -1,11 +1,9 @@
 Portable Computing Language (pocl) v0.8 released
 ------------------------------------------------
 
-[TODO: add release date]
+June, 2013.
 
-[TODO]
-
-Pocl aims to be an efficient open source (MIT-licensed) 
+Pocl's goal is to become an efficient open source (MIT-licensed) 
 implementation of the OpenCL 1.2 standard. 
 
 In addition to producing an easily portable open source OpenCL
@@ -20,13 +18,17 @@ work group functions of kernels, even in the presence of work-group
 barriers. These functions are suitable for parallelization in multiple 
 ways (SIMD, VLIW, superscalar,...).
 
-This release adds  ... [TODO]
+This release adds support for LLVM/Clang 3.3, using Vecmathlib
+for inlineable efficient math library implementations for the x86_64,
+inner loop parallelization to the kernel compiler, plenty of
+bug fixes and several new OpenCL API implementations.
 
 We consider pocl ready for wider scale testing, although the OpenCL
 1.2 standard is not yet fully implemented, and it contains known bugs.
 The pocl 0.8 test suite compiles and runs most of the ViennaCL 1.3.1 examples, 
 Rodinia 2.0.1 benchmarks, Parboil benchmarks, OpenCL Programming Guide book
-samples and the AMD APP SDK v2.8 OpenCL samples, ... [TODO]
+samples, VexCL test cases, Luxmark v2.0, and most of the AMD APP SDK v2.8 
+OpenCL samples, among others.
 
 Note: the project was originally called Portable OpenCL.
 
