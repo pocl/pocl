@@ -36,20 +36,22 @@ pocl_get_image_information(cl_channel_order ch_order,
     {
       *elem_size_out = 1; /* 1 byte */
     }
-  else if (ch_type == CL_UNSIGNED_INT32 || 
+  else if (ch_type == CL_UNSIGNED_INT32 || ch_type == CL_SIGNED_INT32 ||
            ch_type == CL_FLOAT || ch_type == CL_UNORM_INT_101010 )
     {
       *elem_size_out = 4; /* 32bit -> 4 bytes */
     }
   else if (ch_type == CL_SNORM_INT16 || ch_type == CL_UNORM_INT16 ||
            ch_type == CL_SIGNED_INT16 || ch_type == CL_UNSIGNED_INT16 ||
-           ch_type == CL_UNORM_SHORT_555 || ch_type == CL_UNORM_SHORT_565)
+           ch_type == CL_UNORM_SHORT_555 || ch_type == CL_UNORM_SHORT_565 ||
+           ch_type == CL_HALF_FLOAT)
     {
       *elem_size_out = 2; /* 16bit -> 2 bytes */
     }
   
   /* channels TODO: verify num of channels*/
-  if (ch_order == CL_RGB || ch_order == CL_RGBx )
+  if (ch_order == CL_RGB || ch_order == CL_RGBx || ch_order == CL_R || 
+      ch_order == CL_Rx || ch_order == CL_A)
     {
       *channels_out = 1;
     }
@@ -90,6 +92,7 @@ pocl_write_image(cl_mem               image,
 		 size_t               host_slice_pitch, 
 		 const void *         ptr)
 {
+  
   if (image == NULL)
     return CL_INVALID_MEM_OBJECT;
 
@@ -196,12 +199,21 @@ pocl_read_image(cl_mem               image,
     
   int width = image->image_width;
   int height = image->image_height;
-  int dev_elem_size = sizeof(cl_float);/* TODO: needs to check elem type*/
-  int dev_channels = 4;
+
+  int host_channels, host_elem_size;
+      
+  pocl_get_image_information(image->image_channel_order,
+                             image->image_channel_data_type,
+                             &host_channels, &host_elem_size);
+
+
+  int dev_elem_size = host_elem_size;/*sizeof(cl_float);*/
+  int dev_channels = host_channels;/*4;*/
+
   size_t origin[3] = { origin_[0]*dev_elem_size*dev_channels, origin_[1], origin_[2] };
   size_t region[3] = { region_[0]*dev_elem_size*dev_channels, region_[1], region_[2] };
-    
-  size_t image_row_pitch = width*dev_elem_size*dev_channels;
+  
+  size_t image_row_pitch = width*dev_elem_size*dev_channels; 
   size_t image_slice_pitch = 0;
   int calculaatio = region[0]*image->image_row_pitch*(region[1])+ region[2]*image->image_slice_pitch;
 
@@ -228,23 +240,19 @@ pocl_read_image(cl_mem               image,
   if (temp == NULL)
     return CL_OUT_OF_HOST_MEMORY;
       
-  int host_channels, host_elem_size;
-      
-  pocl_get_image_information(image->image_channel_order,
-                             image->image_channel_data_type,
-                             &host_channels, &host_elem_size);
-      
   if (host_row_pitch == 0) {
     host_row_pitch = width*host_channels;
   }
     
   size_t buffer_origin[3] = { 0, 0, 0 };
-    
-  device_id->read_rect(device_id->data, temp, 
+  
+  device_id->read_rect(device_id->data, /*temp*/ptr, 
 		       image->device_ptrs[device_id->dev_id],
 		       origin, origin, region,
 		       image_row_pitch, image_slice_pitch,
 		       image_row_pitch, image_slice_pitch);
+  
+  /* Old implementation trying to use only float on device 
     
   for (j=0; j<height; j++) {
     for (i=0; i<width; i++) {
@@ -260,7 +268,7 @@ pocl_read_image(cl_mem               image,
         elem[0] = temp[i*dev_channels + j*width*dev_channels + 0];
       }
         
-      if (type == CL_UNORM_INT8) 
+      if (type == CL_UNORM_INT8 || type == CL_UNSIGNED_INT8) 
         { // host_channels == 4
           for (k=0; k<host_channels; k++)
             {
@@ -281,7 +289,7 @@ pocl_read_image(cl_mem               image,
         POCL_ABORT_UNIMPLEMENTED();
     }
   }
-  
+  */
   free (temp);
     
   return CL_SUCCESS;

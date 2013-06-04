@@ -113,10 +113,8 @@ llvm_codegen (const char* tmpdir) {
 void fill_dev_image_t(dev_image_t* di, struct pocl_argument* parg, 
                       cl_int device){
   
-  cl_mem mem = (cl_mem)parg->value;
-  //di->data = &((*(cl_mem *) (parg->value))->device_ptrs[ta->device]);
-  //di->data = ((*(cl_mem *) (parg->value))->device_ptrs[ta->device]);
-  di->data = &(mem->device_ptrs[device]);
+  cl_mem mem = *(cl_mem *)parg->value;
+  di->data = (mem->device_ptrs[device]);  
   di->width = mem->image_width;
   di->height = mem->image_height;
   di->depth = mem->image_depth;
@@ -124,5 +122,11 @@ void fill_dev_image_t(dev_image_t* di, struct pocl_argument* parg,
   di->slice_pitch = mem->image_slice_pitch;
   di->order = mem->image_channel_order;
   di->data_type = mem->image_channel_data_type;
-
+  /*
+  printf("common.c: device param %d \n", device);
+  printf("common.c: di->data pointer %x \n", di->data);
+  printf("common.c: dev_data pointer %x \n", (mem->device_ptrs[device]));
+  printf("common.c: mem->width %d \n", mem->image_width);
+  printf("common.c: mem->height %d \n", mem->image_height);
+  */
 }

@@ -390,6 +390,7 @@ struct _cl_mem {
   size_t                  image_width;
   size_t                  image_height;
   size_t                  image_depth;
+  size_t                  image_array_size;
   size_t                  image_row_pitch;
   size_t                  image_slice_pitch;
 };

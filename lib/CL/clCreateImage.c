@@ -136,7 +136,7 @@ TYPE_SUPPORTED:
     printf("image_array_size %d\n", image_desc->image_array_size);
     printf("image_row_pitch %d\n", image_desc->image_row_pitch);
     printf("image_slice_pitch %d\n", image_desc->image_slice_pitch);
-    printf("host_ptr %u\n \n", host_ptr);
+    printf("host_ptr %u\n", host_ptr);
 
     
     pocl_get_image_information ( image_format->image_channel_order,
@@ -180,11 +180,21 @@ TYPE_SUPPORTED:
     mem->image_width = image_desc->image_width;
     mem->image_height = image_desc->image_height;
     mem->image_depth = image_desc->image_depth;
+    mem->image_array_size = image_desc->image_array_size;
     mem->image_row_pitch = row_pitch;
     mem->image_slice_pitch = slice_pitch;
     mem->image_channel_data_type = image_format->image_channel_data_type;
     mem->image_channel_order = image_format->image_channel_order;
-
+    
+    printf("mem_image_width %d\n", mem->image_width);
+    printf("mem_image_height %d\n", mem->image_height);
+    printf("mem_image_depth %d\n", mem->image_depth);
+    printf("mem_image_array_size %d\n", mem->image_array_size);
+    printf("mem_image_row_pitch %d\n", mem->image_row_pitch);
+    printf("mem_image_slice_pitch %d\n", mem->image_slice_pitch);
+    printf("mem_host_ptr %u\n", mem->mem_host_ptr);
+    printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
+    printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
 
 /* OLD IMPLEMENTATION     
     mem = (cl_mem) malloc(sizeof(struct _cl_mem));

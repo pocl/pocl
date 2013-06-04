@@ -577,7 +577,6 @@ pocl_pthread_run
       if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         cmd->event->time_end = pocl_basic_get_timer_value(d);
     }
-
   free(threads);
   free(arguments);
 }
@@ -643,8 +642,10 @@ workgroup_thread (void *p)
           fill_dev_image_t(&di, al, ta->device);
           void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr; 
+          *(void **)(arguments[i]) = devptr;       
           pocl_pthread_write( ta->data, &di, devptr, sizeof(dev_image_t) );
+          /*printf("pocl_workgroup:di->data = %x \n", di.data);
+            printf("pocl_workgroup:argument[%u], devptr->data: %x \n", i, ((dev_image_t*)devptr)->data);*/
         }
       else if (kernel->arg_is_sampler[i])
         {
