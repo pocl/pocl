@@ -122,11 +122,8 @@ void fill_dev_image_t(dev_image_t* di, struct pocl_argument* parg,
   di->slice_pitch = mem->image_slice_pitch;
   di->order = mem->image_channel_order;
   di->data_type = mem->image_channel_data_type;
-  /*
-  printf("common.c: device param %d \n", device);
-  printf("common.c: di->data pointer %x \n", di->data);
-  printf("common.c: dev_data pointer %x \n", (mem->device_ptrs[device]));
-  printf("common.c: mem->width %d \n", mem->image_width);
-  printf("common.c: mem->height %d \n", mem->image_height);
-  */
+  pocl_get_image_information(mem->image_channel_order, 
+                             mem->image_channel_data_type, 
+                             &(di->num_channels), &(di->elem_size));
+
 }

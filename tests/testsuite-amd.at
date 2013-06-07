@@ -272,10 +272,9 @@ AT_CHECK_UNQUOTED([make test_SimpleConvolution -sC $abs_top_builddir/examples/AM
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([simpleimage])
-# pocl error: encountered unimplemented part of the OpenCL specs in clCreateImage2D.c:119
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_SimpleImage -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
-[Passed!
+[Verifying 2D copy result - Passed!
+Verifying 3D copy result - Passed!
 ])     
 AT_CLEANUP
 

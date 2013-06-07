@@ -48,22 +48,6 @@ CL_API_SUFFIX__VERSION_1_2
     int elem_size;
     int channels;
    
-     /* debuggii */
-    if(flags & CL_MEM_ALLOC_HOST_PTR)
-      printf("flags: CL_MEM_ALLOC_HOST_PTR\n");
-    
-    if(flags & CL_MEM_USE_HOST_PTR)
-      printf("flags: CL_MEM_USE_HOST_PTR\n");
-
-    if(flags & CL_MEM_COPY_HOST_PTR)
-      printf("flags: CL_MEM_COPY_HOST_PTR\n");   
-
-    if(flags & CL_MEM_READ_ONLY)
-      printf("flags: CL_MEM_READ_ONLY\n"); 
-
-    printf("flags %X \n", flags);
-    
-        
     if (context == NULL) 
       {
       errcode = CL_INVALID_CONTEXT;
@@ -83,10 +67,6 @@ CL_API_SUFFIX__VERSION_1_2
         
     errcode = POname(clGetSupportedImageFormats)
       (context, flags, image_desc->image_type, 0, NULL, &num_entries);
-
-    printf("image_channel %x image_order %x image_type %x \n", 
-           image_format->image_channel_data_type, 
-           image_format->image_channel_order, image_desc->image_type);
 
     if (errcode != CL_SUCCESS || num_entries == 0) 
       {
@@ -119,7 +99,6 @@ CL_API_SUFFIX__VERSION_1_2
             goto TYPE_SUPPORTED;
           }
       }
-    printf("imageformaatti ei supportoitu\n");
     errcode = CL_INVALID_VALUE;
     goto ERROR_CLEAN_DEV;
 
@@ -129,15 +108,6 @@ TYPE_SUPPORTED:
     if (image_desc->image_type != CL_MEM_OBJECT_IMAGE2D &&
         image_desc->image_type != CL_MEM_OBJECT_IMAGE3D)
         POCL_ABORT_UNIMPLEMENTED();
-
-    printf("image_width %d\n", image_desc->image_width);
-    printf("image_height %d\n", image_desc->image_height);
-    printf("image_depth %d\n", image_desc->image_depth);
-    printf("image_array_size %d\n", image_desc->image_array_size);
-    printf("image_row_pitch %d\n", image_desc->image_row_pitch);
-    printf("image_slice_pitch %d\n", image_desc->image_slice_pitch);
-    printf("host_ptr %u\n", host_ptr);
-
     
     pocl_get_image_information ( image_format->image_channel_order,
                                  image_format->image_channel_data_type, 
@@ -155,16 +125,13 @@ TYPE_SUPPORTED:
         if ( image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
              image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY )
           {
-            slice_pitch = image_desc->image_row_pitch * 
-              image_desc->image_height;
+            slice_pitch = row_pitch * image_desc->image_height;
           }
         if ( image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY )
           {
             slice_pitch = image_desc->image_height;
           }
       }
-
-    printf("clCreateImage: row_pitch = %d, slice_pitch = %d, size %d \n", row_pitch, slice_pitch, size);
 
     /* Create buffer and fill in missing parts */
     mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
@@ -185,6 +152,8 @@ TYPE_SUPPORTED:
     mem->image_slice_pitch = slice_pitch;
     mem->image_channel_data_type = image_format->image_channel_data_type;
     mem->image_channel_order = image_format->image_channel_order;
+
+#if 0
     
     printf("mem_image_width %d\n", mem->image_width);
     printf("mem_image_height %d\n", mem->image_height);
@@ -195,6 +164,7 @@ TYPE_SUPPORTED:
     printf("mem_host_ptr %u\n", mem->mem_host_ptr);
     printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
     printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
+#endif
 
 /* OLD IMPLEMENTATION     
     mem = (cl_mem) malloc(sizeof(struct _cl_mem));
@@ -284,7 +254,5 @@ ERROR:
         *errcode_ret = errcode;
     }
     return NULL;
-    
-
 }
 POsym(clCreateImage)

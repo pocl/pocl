@@ -2099,8 +2099,8 @@ typedef struct dev_image_t* image1d_array_t;
 #define CLK_FILTER_LINEAR                           0x10
 
 float4 _CL_OVERLOADABLE read_imagef( image2d_t image,
-        sampler_t sampler,
-        int2 coord);
+                                     sampler_t sampler,
+                                     int2 coord);
 
 float4 _CL_OVERLOADABLE read_imagef( image2d_t image,
                                      sampler_t sampler,

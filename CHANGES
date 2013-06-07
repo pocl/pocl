@@ -2,6 +2,23 @@
 ===============
 
 [changes checked from bzr history until 2013-05-23]
+The OpenCL Runtime (OpenCL 1.2 Chapter 5)
+-----------------------------------------
+- clCreateImage2D() and clCreateImage3D() implementation moved to 
+  clCreateImage()
+- Image creation now uses clCreateBuffer 
+
+Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+----------------------------------------------------------
+- Refactored read/write_image()-functions to support refactored device image 
+  object. (Only functions used by SimpleImage test)
+- Added sampler implementation for CLK_ADDRESS_CLAMP and 
+  CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
+
+Device Drivers
+--------------
+- removed redundancy in pthread and basic:
+  * pthread now uses read/write_rect implementation from basic
 
 Misc.
 -----

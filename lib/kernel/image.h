@@ -16,6 +16,8 @@ typedef struct dev_image_t {
   int num_samples; /* maybe not needed */
   int order;
   int data_type;
+  int num_channels;
+  int elem_size;
 } dev_image_t;
 
 
