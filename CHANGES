@@ -20,6 +20,12 @@ Device Drivers
 - removed redundancy in pthread and basic:
   * pthread now uses read/write_rect implementation from basic
 
+Performance
+-----------
+- kernel compiler now tries to avoid replicating uniform variables,
+  this leads to less context data to be saved per work-item and cleaner
+  kernel bitcode for later optimizations
+
 Misc.
 -----
 - poclu: helpers for converting between the C float and OpenCL cl_half

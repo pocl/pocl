@@ -35,10 +35,15 @@ AM_INIT_AUTOMAKE([foreign])
 AM_SILENT_RULES([AM_DEFAULT_VERBOSITY=0])
 
 AM_CONDITIONAL([DARWIN_HOST_OS], false)
+AM_CONDITIONAL([FREEBSD_HOST_OS], false)
 case $host_os in
   darwin* )
     AM_CONDITIONAL([DARWIN_HOST_OS], true)
     AC_SUBST([LIBRARY_SUFFIX], [".dylib"] )
+         ;;
+  freebsd* )
+    AM_CONDITIONAL([FREEBSD_HOST_OS], true)
+    AC_SUBST([LIBRARY_SUFFIX], [".so"] )
          ;;
   *)
     AC_SUBST([LIBRARY_SUFFIX], [".so"] )
@@ -932,12 +937,13 @@ AC_C_BIGENDIAN
 # 0:0:0 == 0.6
 # 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
-AC_SUBST([LIB_VERSION], ["2:0:1"])
+# 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
+AC_SUBST([LIB_VERSION], ["3:0:2"])
 
 # The kernel compiler opt plugin shared library, however, changes more 
 # drastically. Let's try to follow the similar 'current' numbering as
-# pocl and perhaps tune the 'revision' and 'age' later.
-AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["2:0:1"])
+# the pocl host API library and perhaps tune the 'revision' and 'age' later.
+AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["3:0:0"])
 
 AC_SUBST([LD_FLAGS_BIN])
 

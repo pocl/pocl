@@ -28,6 +28,7 @@ TARGET_DIR=x86_64
 targetpkglibdir = $(pkglibdir)/x86_64
 targetpkglib_DATA = kernel-@TARGET@.bc
 
+
 if USE_VECMATHLIB
 include ../sources-vecmathlib.mk
 else
@@ -35,5 +36,9 @@ SECONDARY_VPATH = .
 include ../sources.mk
 endif
 
+# With fp-contract we get calls to fma with processors which do not
+# have fma instructions. These ruin the performance. Better to have
+# the mul+add separated in the IR.
+CLANGFLAGS += -ffp-contract=off 
 
 all: kernel-@TARGET@.bc
