@@ -327,36 +327,6 @@ pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
 }
 
 void
-pocl_pthread_read_rect (void *data,
-                        void *__restrict__ const host_ptr,
-                        void *__restrict__ const device_ptr,
-                        const size_t *__restrict__ const buffer_origin,
-                        const size_t *__restrict__ const host_origin, 
-                        const size_t *__restrict__ const region,
-                        size_t const buffer_row_pitch,
-                        size_t const buffer_slice_pitch,
-                        size_t const host_row_pitch,
-                        size_t const host_slice_pitch)
-{
-  char const *__restrict const adjusted_device_ptr = 
-    (char const*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
-  char *__restrict__ const adjusted_host_ptr = 
-    (char*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
-  
-  size_t j, k;
-  
-  /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              region[0]);
-}
-
-void
 pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
@@ -365,35 +335,6 @@ pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t c
   memcpy (device_ptr, host_ptr, cb);
 }
 
-void
-pocl_pthread_write_rect (void *data,
-                         const void *__restrict__ const host_ptr,
-                         void *__restrict__ const device_ptr,
-                         const size_t *__restrict__ const buffer_origin,
-                         const size_t *__restrict__ const host_origin, 
-                         const size_t *__restrict__ const region,
-                         size_t const buffer_row_pitch,
-                         size_t const buffer_slice_pitch,
-                         size_t const host_row_pitch,
-                         size_t const host_slice_pitch)
-{
-  char *__restrict const adjusted_device_ptr = 
-    (char*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
-  char const *__restrict__ const adjusted_host_ptr = 
-    (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
-  
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              region[0]);
-}
 
 void
 pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)

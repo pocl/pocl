@@ -113,9 +113,9 @@ GEN_PROTOTYPES (basic)
   NULL, /* create_sub_buffer */                   \
   pocl_pthread_free, /* free */						\
   pocl_pthread_read, /* read */						\
-  pocl_pthread_read_rect, /* read_rect */				\
+  pocl_basic_read_rect, /* read_rect */				\
   pocl_pthread_write, /* write */					\
-  pocl_pthread_write_rect, /* write_rect */				\
+  pocl_basic_write_rect, /* write_rect */				\
   pocl_pthread_copy, /* copy */						\
   pocl_pthread_copy_rect, /* copy_rect */				\
   pocl_basic_map_mem,                               \
