@@ -44,11 +44,15 @@ POname(clGetProgramInfo)(cl_program program,
 
   case CL_PROGRAM_SOURCE:
     {
-      size_t const value_size = strlen(program->source) + 1;
+      const char *source = program->source;
+      if (source == NULL)
+        source = "";
+
+      size_t const value_size = strlen(source) + 1;
       if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, program->source, value_size);
+        memcpy(param_value, source, value_size);
       }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;

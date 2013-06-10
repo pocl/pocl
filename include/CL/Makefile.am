@@ -36,5 +36,8 @@ if INSTALL_OPENCL_HEADERS
 library_includedir = $(includedir)/CL
 library_include_HEADERS = cl.h cl_ext.h			\
                           cl_gl.h cl_gl_ext.h		\
-                          cl_platform.h opencl.h cl.hpp
+                          cl_platform.h opencl.h
+nodist_library_include_HEADERS = cl.hpp
 endif
+
+EXTRA_DIST = cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch

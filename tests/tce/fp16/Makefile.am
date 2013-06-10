@@ -30,6 +30,5 @@ host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL \
 	-DSRCDIR='"$(abs_srcdir)"'
 
-
 run: host
-	@POCL_DEVICES="ttasim" POCL_DEVICE0_PARAMETERS="test_machine.adf" ./host
+	@POCL_DEVICES="ttasim" POCL_DEVICE0_PARAMETERS="$(top_srcdir)/tools/data/test_machine_fp16.adf" ./host

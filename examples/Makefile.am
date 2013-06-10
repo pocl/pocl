@@ -22,5 +22,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a trig scalarwave \
-	opencl-book-samples ViennaCL Rodinia Parboil AMD EinsteinToolkit
+SUBDIRS = example1 example2 example2a trig scalarwave standalone \
+	opencl-book-samples VexCL ViennaCL Rodinia Parboil AMD EinsteinToolkit
