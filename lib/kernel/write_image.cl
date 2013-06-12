@@ -1,4 +1,4 @@
-/* OpenCL built-in library: read_image()
+/* OpenCL built-in library: write_image()
 
    Copyright (c) 2013 Ville Korhonen 
    
@@ -27,7 +27,7 @@
 #include "image.h"
 
 /* writes pixel to coord in image */
-void write_pixel( uint* color, dev_image_t* image, int4 coord )
+void write_pixel (uint* color, dev_image_t* image, int4 coord)
 {
   
   int i, idx;
@@ -36,137 +36,116 @@ void write_pixel( uint* color, dev_image_t* image, int4 coord )
   int num_channels = image->num_channels;
   int elem_size = image->elem_size;
   
-  for ( i = 0; i < num_channels; i++ )
+  for (i = 0; i < num_channels; i++)
     {
-      idx = i + (coord.x + coord.y*width + coord.z*height*width) * num_channels;
-      if ( elem_size == 1 )
+      idx = i + (coord.x + coord.y*width + coord.z*height*width)*num_channels;
+      if (elem_size == 1)
         {
           ((uchar*)image->data)[idx] = color[i];          
         }
-      if ( elem_size == 2 )
+      if (elem_size == 2)
         {
           ((ushort*)image->data)[idx] = color[i];
         }
-      if ( elem_size == 4 )
+      if (elem_size == 4)
         {
           ((uint*)image->data)[idx] = color[i];
         }
     }
 }
 
-void _CL_OVERLOADABLE write_imagef ( image2d_t image,
-                                     int2 coord,
-                                     float4 color) 
+
+void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int2 coord, 
+                                     uint4 color)
+{
+  write_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
+}
+
+void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int4 coord, 
+                                     uint4 color)
+{
+  write_pixel((uint*)&color, (dev_image_t*)image, coord);
+}
+
+/* Not implemented yet
+
+void _CL_OVERLOADABLE write_imagef (image2d_t image, int2 coord, float4 color) 
 {
   ((float4*)image->data)[ coord.x + coord.y*image->row_pitch ] = color;
 }
 
-void _CL_OVERLOADABLE write_imagei ( image2d_t image,
-                                     int2 coord,
-                                     int4 color) 
+void _CL_OVERLOADABLE write_imagei (image2d_t image, int2 coord, int4 color) 
 {
-  ((float4*)image->data)[ coord.x + coord.y*image->row_pitch ] = (float4)(color.x,color.y,color.z,color.w);
+  ((float4*)image->data)[ coord.x + coord.y*image->row_pitch ] = 
+    (float4)(color.x,color.y,color.z,color.w);
 }
 
-void _CL_OVERLOADABLE write_imageui (dev_image_t* image,
-                                     int2 coord,      
+void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
+                                    float4 color)
+{
+
+}
+
+void _CL_OVERLOADABLE write_imagei (image2d_array_t image, int4 coord,
+                                    int4 color)
+{
+
+}
+
+void _CL_OVERLOADABLE write_imageui (image2d_array_t image, int4 coord,
                                      uint4 color)
 {
-  write_pixel( (uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0) );
+
 }
 
-void _CL_OVERLOADABLE write_imageui (dev_image_t* image,
-                                     int4 coord,      
-                                     uint4 color)
+void _CL_OVERLOADABLE write_imagef (image1d_t image, int2 coord, float4 color){
+
+}
+
+void _CL_OVERLOADABLE write_imagei (image1d_t image, int coord, int4 color)
 {
-  write_pixel( (uint*)&color, (dev_image_t*)image, coord );
-}
-/*
-
-void _CL_OVERLOADABLE write_imagef (
-     image2d_array_t image,
-     int4 coord,
-     float4 color){
-
-}
-
-void _CL_OVERLOADABLE write_imagei (
-     image2d_array_t image,
-     int4 coord,
-     int4 color){
-
-}
-
-void _CL_OVERLOADABLE write_imageui (
-     image2d_array_t image,
-     int4 coord,
-     uint4 color){
-
-}
-
-void _CL_OVERLOADABLE write_imagef (image1d_t image,
-     int2 coord,
-     float4 color){
-
-}
-
-void _CL_OVERLOADABLE write_imagei (image1d_t image,
-     int coord,
-     int4 color){
 
 }
 
 
-void _CL_OVERLOADABLE write_imageui (image1d_t image, 
-                                     int2 coord, 
-                                     uint4 color){
+void _CL_OVERLOADABLE write_imageui (image1d_t image, int2 coord, uint4 color)
+{
   
 
 }
 
 
-void _CL_OVERLOADABLE write_imagef ( 
-     image1d_buffer_t image, 
-     int2 coord, 
-     float4 color){
+void _CL_OVERLOADABLE write_imagef (image1d_buffer_t image, int2 coord, 
+                                    float4 color)
+{
 
 }
 
-void _CL_OVERLOADABLE write_imagei (
-     image1d_buffer_t image,
-     int2 coord,
-     int4 color){
+void _CL_OVERLOADABLE write_imagei (image1d_buffer_t image, int2 coord, 
+                                    int4 color){
 
 }
 
-void _CL_OVERLOADABLE write_imageui (
-     image1d_buffer_t image,
-     int2 coord,
-     uint4 color){
+void _CL_OVERLOADABLE write_imageui (image1d_buffer_t image, int2 coord,
+                                     uint4 color){
 
 }
 
-void _CL_OVERLOADABLE write_imagef (
-     image1d_array_t image,
-     int2 coord,
-     float4 color){
+void _CL_OVERLOADABLE write_imagef (image1d_array_t image, int2 coord,
+                                    float4 color){
 
 }
 
-void _CL_OVERLOADABLE write_imagei (     
-     image1d_array_t image,
-     int2 coord,
-     int4 color){
+void _CL_OVERLOADABLE write_imagei (image1d_array_t image, int2 coord, 
+                                    int4 color){
 
 }
 
-void _CL_OVERLOADABLE write_imageui (
-     image1d_array_t image,
-     int2 coord,
-     uint4 color){
+void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
+                                     uint4 color){
 
 }
 
-************ */
+*/
 
 #endif

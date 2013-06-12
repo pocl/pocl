@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 #include "pocl_cl.h"
+#include "pocl_image_util.h"
 
 extern CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage)(cl_context              context,
@@ -31,8 +32,6 @@ POname(clCreateImage)(cl_context              context,
               cl_int *                errcode_ret) 
 CL_API_SUFFIX__VERSION_1_2
 {
-
-
     cl_mem mem;
     cl_device_id device_id;
     void *device_ptr;
@@ -41,64 +40,63 @@ CL_API_SUFFIX__VERSION_1_2
     cl_image_format *supported_image_formats;
     int size;
     int errcode;
-    int row_pitch = image_desc->image_row_pitch;
-    int slice_pitch = image_desc->image_slice_pitch;
-    cl_channel_type ch_type = image_format->image_channel_data_type;
-    cl_channel_order ch_order = image_format->image_channel_order;
+    int row_pitch;
+    int slice_pitch;
     int elem_size;
     int channels;
-   
+    
+
     if (context == NULL) 
       {
-      errcode = CL_INVALID_CONTEXT;
+        errcode = CL_INVALID_CONTEXT;
         goto ERROR;
       }  
     
-    if (image_desc == NULL)
+    if (image_format == NULL)
       {
         errcode = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
         goto ERROR;
       }
 
-    if (image_desc->num_mip_levels != 0 || 
-        image_desc->num_samples != 0 )
-        POCL_ABORT_UNIMPLEMENTED();
-        
-        
+    if (image_desc == NULL)
+      {
+        errcode = CL_INVALID_IMAGE_DESCRIPTOR;
+        goto ERROR;
+      }
+    
+    if (image_desc->num_mip_levels != 0 || image_desc->num_samples != 0)
+      POCL_ABORT_UNIMPLEMENTED();
+    
     errcode = POname(clGetSupportedImageFormats)
       (context, flags, image_desc->image_type, 0, NULL, &num_entries);
+    
+    if (errcode != CL_SUCCESS || num_entries == 0)
+      goto ERROR;
 
-    if (errcode != CL_SUCCESS || num_entries == 0) 
-      {
-        goto ERROR;
-      } 
-
-    supported_image_formats = malloc(num_entries * sizeof(cl_image_format));
+    supported_image_formats = malloc (num_entries * sizeof(cl_image_format));
     if (supported_image_formats == NULL)
       {
         errcode = CL_OUT_OF_HOST_MEMORY;
         goto ERROR;
       }
     
-    errcode = POname(clGetSupportedImageFormats)
-      (context, flags, image_desc->image_type, num_entries, 
-       supported_image_formats, NULL);
+    errcode = POname(clGetSupportedImageFormats) (context, flags, 
+            image_desc->image_type, num_entries, supported_image_formats, NULL);
     
     if (errcode != CL_SUCCESS )
+      goto ERROR_CLEAN_DEV;
+    
+    for (i = 0; i < num_entries; i++)
       {
-        goto ERROR_CLEAN_DEV;
-      }
-
-    for( i = 0; i < num_entries; i++)
-      {
-        if ( supported_image_formats[i].image_channel_order == 
-             image_format->image_channel_order &&
-             supported_image_formats[i].image_channel_data_type ==
-             image_format->image_channel_data_type )
+        if (supported_image_formats[i].image_channel_order == 
+            image_format->image_channel_order &&
+            supported_image_formats[i].image_channel_data_type ==
+            image_format->image_channel_data_type )
           {
             goto TYPE_SUPPORTED;
           }
       }
+    
     errcode = CL_INVALID_VALUE;
     goto ERROR_CLEAN_DEV;
 
@@ -109,41 +107,42 @@ TYPE_SUPPORTED:
         image_desc->image_type != CL_MEM_OBJECT_IMAGE3D)
         POCL_ABORT_UNIMPLEMENTED();
     
-    pocl_get_image_information ( image_format->image_channel_order,
-                                 image_format->image_channel_data_type, 
-                                 &channels, &elem_size);
-
+    pocl_get_image_information (image_format->image_channel_order,
+                                image_format->image_channel_data_type, 
+                                &channels, &elem_size);
+    
+    row_pitch = image_desc->image_row_pitch;
+    slice_pitch = image_desc->image_slice_pitch;
+    
     size = image_desc->image_width * image_desc->image_height * 
       elem_size * channels;
-
-    if ( host_ptr != NULL && row_pitch == 0 )
+    
+    if (host_ptr != NULL && row_pitch == 0)
       {
         row_pitch = image_desc->image_width * elem_size * channels;
       }
-    if ( host_ptr != NULL && slice_pitch == 0)
+    if (host_ptr != NULL && slice_pitch == 0)
       {
-        if ( image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
-             image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY )
+        if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
+            image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY )
           {
             slice_pitch = row_pitch * image_desc->image_height;
           }
-        if ( image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY )
+        if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
           {
             slice_pitch = image_desc->image_height;
           }
       }
 
     /* Create buffer and fill in missing parts */
-    mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
+    mem = POname(clCreateBuffer)(context, flags, size, host_ptr, &errcode);
 
-    if ( mem == NULL )
-      {
-        goto ERROR_CLEAN_DEV;
-      }
-
+    if (mem == NULL)
+      goto ERROR_CLEAN_DEV;
+          
     mem->type = image_desc->image_type;
     mem->is_image = CL_TRUE;
-
+    
     mem->image_width = image_desc->image_width;
     mem->image_height = image_desc->image_height;
     mem->image_depth = image_desc->image_depth;
@@ -154,7 +153,6 @@ TYPE_SUPPORTED:
     mem->image_channel_order = image_format->image_channel_order;
 
 #if 0
-    
     printf("mem_image_width %d\n", mem->image_width);
     printf("mem_image_height %d\n", mem->image_height);
     printf("mem_image_depth %d\n", mem->image_depth);
@@ -165,94 +163,24 @@ TYPE_SUPPORTED:
     printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
     printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
 #endif
-
-/* OLD IMPLEMENTATION     
-    mem = (cl_mem) malloc(sizeof(struct _cl_mem));
-    if (mem == NULL)
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_MEM;
-      }
-
-    POCL_INIT_OBJECT(mem);
-    mem->parent = NULL;
-    mem->map_count = 0;
-    mem->mappings = NULL;
-    mem->type = image_desc->image_type;
-    mem->flags = flags;
-    mem->is_image = CL_TRUE;
-
-    mem->device_ptrs = (void **) malloc(context->num_devices * sizeof(void *));
-    if (mem->device_ptrs == NULL) {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_MEM;
-    }  
-
-
-    mem->size = size;
-    mem->context = context;
-  
-    mem->image_width = image_desc->image_width;
-    mem->image_height = image_desc->image_height;
-    mem->image_depth = image_desc->image_depth;
-    mem->image_row_pitch = row_pitch;
-    mem->image_slice_pitch = slice_pitch;
-    mem->image_channel_data_type = image_format->image_channel_data_type;
-    mem->image_channel_order = image_format->image_channel_order;
     
-  
-    for (i = 0; i < context->num_devices; ++i)
-    {
-    
-        if (i > 0)
-            POname(clRetainMemObject) (mem);
-        device_id = context->devices[i];
-        device_ptr = device_id->malloc(device_id->data, 0, size, NULL);
-        
-        if (device_ptr == NULL) {
-            errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;
-            goto ERROR_CLEAN_MEM_AND_DEV;
-        }
-        
-        mem->device_ptrs[i] = device_ptr;
-        /* The device allocator allocated from a device-host shared memory. *
-        if (flags & CL_MEM_ALLOC_HOST_PTR ||
-            flags & CL_MEM_USE_HOST_PTR)
-            POCL_ABORT_UNIMPLEMENTED();
-        
-        if (flags & CL_MEM_COPY_HOST_PTR)  
-        {
-            size_t origin[3] = { 0, 0, 0 };
-            size_t region[3] = { image_desc->image_width, 
-                                 image_desc->image_height, 1 };
-            pocl_write_image(mem,
-                             context->devices[i],
-                             origin,
-                             region,
-                             image_desc->image_row_pitch,
-                             image_desc->image_slice_pitch,
-                             host_ptr);
-        }
-    }
-    
-    POCL_RETAIN_OBJECT(context);
-    
-*/
     if (errcode_ret != NULL)
-        *errcode_ret = CL_SUCCESS;
+      *errcode_ret = CL_SUCCESS;
     
     return mem;
     
-ERROR_CLEAN_DEV:
-    for (j = 0; j < i; ++j) {
+ ERROR_CLEAN_DEV:
+    for (j = 0; j < i; ++j) 
+      {
         device_id = context->devices[j];
         device_id->free(device_id->data, 0, mem->device_ptrs[j]);
-    }
-
-ERROR:
-    if (errcode_ret) {
+      }
+    
+ ERROR:
+    if (errcode_ret) 
+      {
         *errcode_ret = errcode;
-    }
+      }
     return NULL;
 }
 POsym(clCreateImage)

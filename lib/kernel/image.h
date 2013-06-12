@@ -20,17 +20,4 @@ typedef struct dev_image_t {
   int elem_size;
 } dev_image_t;
 
-
-/*
-
-typedef struct image2d_t_ {
-  uchar4* data;
-  int width;
-  int height;
-  int rowpitch;
-  int order;
-  int data_type;
-} image2d_t_;
-*/
-
 #endif

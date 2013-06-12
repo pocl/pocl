@@ -34,7 +34,20 @@ POname(clCreateImage3D)(cl_context              context,
                 cl_int *                errcode_ret) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
-  return CL_SUCCESS;
+  
+  cl_image_desc img_desc;
+  img_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  img_desc.image_width = image_width;
+  img_desc.image_height = image_height; 
+  img_desc.image_depth = image_depth;
+  img_desc.image_array_size = 1;
+  img_desc.image_row_pitch = image_row_pitch;
+  img_desc.image_slice_pitch = image_slice_pitch;
+  img_desc.num_mip_levels = 0;
+  img_desc.num_samples = 0;
+  img_desc.buffer = 0;
+  
+  return POname(clCreateImage) (context, flags, image_format, &img_desc,
+                                host_ptr, errcode_ret);     
 }
 POsym(clCreateImage3D)

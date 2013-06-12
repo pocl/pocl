@@ -110,8 +110,8 @@ llvm_codegen (const char* tmpdir) {
   return module;
 }
 
-void fill_dev_image_t(dev_image_t* di, struct pocl_argument* parg, 
-                      cl_int device){
+void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
+                       cl_int device){
   
   cl_mem mem = *(cl_mem *)parg->value;
   di->data = (mem->device_ptrs[device]);  
@@ -122,8 +122,8 @@ void fill_dev_image_t(dev_image_t* di, struct pocl_argument* parg,
   di->slice_pitch = mem->image_slice_pitch;
   di->order = mem->image_channel_order;
   di->data_type = mem->image_channel_data_type;
-  pocl_get_image_information(mem->image_channel_order, 
-                             mem->image_channel_data_type, 
-                             &(di->num_channels), &(di->elem_size));
+  pocl_get_image_information(mem->image_channel_order,
+                             mem->image_channel_data_type, &(di->num_channels),
+                             &(di->elem_size));
 
 }

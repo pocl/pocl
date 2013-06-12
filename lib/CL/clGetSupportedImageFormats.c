@@ -1,14 +1,40 @@
+/* OpenCL runtime library: clGetSupportedImageFormats()
+
+   Copyright (c) 2013 Ville Korhonen / Tampere Univ. of Tech.
+   
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+   
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #include "pocl_cl.h"
+
+int pocl_find_img_format(cl_image_format *toFind, cl_image_format* list, 
+                         int num_entries);
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetSupportedImageFormats)(cl_context           context,
-                           cl_mem_flags         flags,
-                           cl_mem_object_type   image_type,
-                           cl_uint              num_entries,
-                           cl_image_format *    image_formats,
-                           cl_uint *            num_image_formats) CL_API_SUFFIX__VERSION_1_0
+                                   cl_mem_flags         flags,
+                                   cl_mem_object_type   image_type,
+                                   cl_uint              num_entries,
+                                   cl_image_format *    image_formats,
+                                   cl_uint *            num_image_formats) 
+CL_API_SUFFIX__VERSION_1_0
 {
-
 
     int i, j, k;
     cl_device_id device_id;
@@ -27,65 +53,52 @@ POname(clGetSupportedImageFormats)(cl_context           context,
     if (num_entries == 0 && image_formats != NULL)
       return CL_INVALID_VALUE;
     
-    dev_image_formats = calloc ( context->num_devices, sizeof(void*) );
-    dev_num_image_formats = calloc ( context->num_devices, sizeof(int));
+    dev_image_formats = calloc (context->num_devices, sizeof(cl_image_format*));
+    dev_num_image_formats = calloc (context->num_devices, sizeof(int));
     
     if (dev_image_formats == NULL || dev_num_image_formats == NULL)
       return CL_OUT_OF_HOST_MEMORY;
 
+    /* get supported image formats from devices */
     for (i = 0; i < context->num_devices; ++i)
       {    
         device_id = context->devices[i];
-        
-        /* get num of entries */
-        errcode = device_id->get_supported_image_formats(context, flags, 0, 
-                                             NULL, &dev_num_image_formats[i]);
+        errcode = device_id->get_supported_image_formats 
+          (flags, &(dev_image_formats[i]), &dev_num_image_formats[i]);
         
         if ( errcode != CL_SUCCESS)
-          goto CLEAN_MEM_N_RETURN;
-        
-        dev_image_formats[i] = malloc(dev_num_image_formats[i] * 
-                                      sizeof(cl_image_format) );
-        
+          goto CLEAN_MEM_AND_RETURN;
+                        
         if( &dev_num_image_formats[i] == NULL)
-          goto CLEAN_MEM_N_RETURN;
-
-        /* get actual entries */
-        errcode = device_id->get_supported_image_formats(context, flags, 
-                                                      dev_num_image_formats[i], 
-                                                      dev_image_formats[i], 
-                                                      NULL);
-        
-        if (errcode != CL_SUCCESS)
-          goto CLEAN_MEM_N_RETURN;
+          goto CLEAN_MEM_AND_RETURN;
       }
+
     
-    /* intersect of supported formats over devices */
-    /* compare dev[0] sup. formats to all other devices sup. formats */
-    for ( i = 0; i < dev_num_image_formats[0]; i++ )
+    /* intersect of supported image formats. TODO: should be union but 
+       implementation does not support contexts where format is not supported 
+       by every device in context */ 
+    
+    /* compare device[0] formats to all other devices */
+    for (i = 0; i < dev_num_image_formats[0]; i++)
       {
         reff_found = 1; /* init */
         reff = dev_image_formats[0][i];
         
         /* devices[1..*] */
-        for (j = 1; i < context->num_devices && reff_found; j++)
+        for (j = 1; j < context->num_devices && reff_found; j++)
           {
             reff_found = 0;
             /* sup. devices[j] image formats [0..*]   */
-            for(k = 0; k < dev_num_image_formats[j]; k++)
+            if (pocl_find_img_format (&reff, dev_image_formats[j], 
+                                      dev_num_image_formats[j]))
               {
-                toReff = dev_image_formats[j][k];
-                if( reff.image_channel_order == toReff.image_channel_order &&
-                    reff.image_channel_data_type == 
-                    toReff.image_channel_data_type )
-                  {
-                    /* reff found in current device -> next device */
-                    reff_found = 1;
-                    break;
-                  }
+                reff_found = 1;
+                continue;
               }
+            break;
           }
-        if ( reff_found )
+        
+        if (reff_found)
           { 
             /* if we get here reff is part of intersect */ 
             
@@ -96,76 +109,31 @@ POname(clGetSupportedImageFormats)(cl_context           context,
             ++formatCount;
           }   
       }
-    
-    if ( num_image_formats != NULL )
+
+    if (num_image_formats != NULL)
       {
         *num_image_formats = formatCount;
       }
     
-    
-CLEAN_MEM_N_RETURN:
+CLEAN_MEM_AND_RETURN:
     free ( dev_num_image_formats );
-    for(i = 0; i < context->num_devices; i++)
-      {
-        free ( dev_image_formats[i] );
-      }
     free ( dev_image_formats );
     return errcode;
     
 } 
-
-/*
-  if (context == NULL)
-    return CL_INVALID_CONTEXT;
-  
-  if (image_type != CL_MEM_OBJECT_IMAGE2D)
-    return CL_INVALID_VALUE;
-  
-  if (num_entries==0 && image_formats!=NULL)
-    return CL_INVALID_VALUE;
-  
-  int idx=0;
-  
-  const int supported_order_count = 2;
-  cl_channel_order supported_orders[] = 
-  {
-    CL_RGBA,
-    CL_R
-  };
-  
-  const int supported_type_count = 2;
-  cl_channel_type  supported_types[] =
-  {
-    CL_UNORM_INT8,
-    CL_FLOAT
-  };
-  
-  int i, j;
-  for (i=0; i<supported_order_count; i++)
-    for (j=0; j<supported_type_count; j++)
-      {
-        if (image_formats && idx < num_entries)
-        {
-          image_formats[idx].image_channel_order = supported_orders[i];
-          image_formats[idx].image_channel_data_type = supported_types[j];
-        }
-        
-        idx++;
-      }
-      
-
-  /* Add special cases here if a channel order is supported with 
-  only some types or vice versa. *
-  if (num_image_formats)
-  {
-    /* CL Standard:
-       num_image_formats is the actual number of supported image formats for a
-       specific context and values specified by flags. If num_image_formats is
-       NULL, it is ignored. *
-    *num_image_formats = idx;
-  }
-  
-  return CL_SUCCESS;
-}
-*/
 POsym(clGetSupportedImageFormats)
+
+
+int pocl_find_img_format(cl_image_format *toFind, cl_image_format* list, 
+                         int num_entries){
+  int i;
+  for (i = 0; i < num_entries; i++)
+    {
+      if (toFind->image_channel_order == list[i].image_channel_order &&
+          toFind->image_channel_data_type == list[i].image_channel_data_type)
+        {
+          return 1;
+        }
+    }
+  return 0;
+}

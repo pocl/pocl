@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clCreateImage()
+/* OpenCL runtime library: clEnqueueReadImage()
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0 
 {
   cl_int status;
-  if ( image == NULL )
+  if (image == NULL)
     return CL_INVALID_MEM_OBJECT;
 
   if (event != NULL)
@@ -55,15 +55,18 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
     }
-
-  status = pocl_read_image(image,
-                           command_queue->device,
-                           origin,
-                           region,
-                           host_row_pitch,
-                           host_slice_pitch, 
-                           ptr);
-  POCL_UPDATE_EVENT_COMPLETE;
-  return status;
+  
+  if (blocking_read)
+    {
+      status = pocl_read_image(image, command_queue->device, origin, region,
+                               host_row_pitch, host_slice_pitch, ptr);
+      POCL_UPDATE_EVENT_COMPLETE;
+      return status;
+    }
+  else /* non blocking */
+    {
+      POCL_ABORT_UNIMPLEMENTED();
+      return status;
+    }
 }
 POsym(clEnqueueReadImage)
