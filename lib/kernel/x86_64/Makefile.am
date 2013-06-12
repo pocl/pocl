@@ -39,6 +39,7 @@ endif
 # With fp-contract we get calls to fma with processors which do not
 # have fma instructions. These ruin the performance. Better to have
 # the mul+add separated in the IR.
-CLANGFLAGS += -ffp-contract=off 
+EXTRA_CLANGFLAGS = -ffp-contract=off 
+EXTRA_KERNEL_LIB_OPT_FLAGS = "-disable-simplify-libcalls"
 
 all: kernel-@TARGET@.bc

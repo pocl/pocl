@@ -35,7 +35,8 @@ include ../sources.mk
 # TCE's software emulation chokes on the fmuladd intrinsics
 # generated automatically. Force it off for now until it's
 # supported more properly in TCE.
-CLANGFLAGS += -ffp-contract=off -target tce-tut-llvm
+EXTRA_CLANGFLAGS = -ffp-contract=off -target tce-tut-llvm
+EXTRA_KERNEL_LIB_OPT_FLAGS = "-disable-simplify-libcalls"
 
 all: kernel-${KERNEL_TARGET}.bc
 
