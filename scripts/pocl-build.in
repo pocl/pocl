@@ -1,5 +1,5 @@
 #!/bin/sh
-# pocl-build - Compile a OpenCL kernel to bytecode usign clang.
+# pocl-build - Compile a OpenCL kernel to bytecode using clang.
 #
 # Copyright (c) 2011 Universidad Rey Juan Carlos and
 #               2012 Pekka Jääskeläinen / TUT
