@@ -4,7 +4,7 @@
 #                   header file.
 # 
 # Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-#                         Pekka Jääskeläinen / TUT
+#               2011-2013 Pekka Jääskeläinen / TUT
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -70,12 +70,12 @@ case $target in
   @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@" ;;
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
 esac
-CLANG_FLAGS="$CLANG_FLAGS -target $target"
+CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map -target $target "
 
-if test -z "$CLANGFLAGS"
-then
-    CLANGFLAGS="@CLANGFLAGS@"
-fi
+# With fp-contract we get calls to fma with processors which do not
+# have fma instructions. These ruin the performance. Better to have
+# the mul+add separated in the IR.
+CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off "
 
 tempdir="`dirname ${output_file}`/.pocl$$"
 mkdir ${tempdir}
@@ -131,10 +131,16 @@ then
 EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-no-fp"
 fi
 
+# -disable-simplify-libcalls was added because of TCE (it doesn't have
+# a runtime linker which could link the libs later on), but it might
+# also be harmful for wg-vectorization where we want to try to vectorize
+# the code it wants to convert e.g. to a memset or a memcpy
+
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -workgroup -kernel=${kernel} -local-size=1 1 1 ${OPT_SWITCH} \
+    -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls ${OPT_SWITCH} \
     ${EXTRA_OPTS} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
+
 
 rm -fr ${tempdir}
