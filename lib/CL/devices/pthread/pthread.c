@@ -327,36 +327,6 @@ pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
 }
 
 void
-pocl_pthread_read_rect (void *data,
-                        void *__restrict__ const host_ptr,
-                        void *__restrict__ const device_ptr,
-                        const size_t *__restrict__ const buffer_origin,
-                        const size_t *__restrict__ const host_origin, 
-                        const size_t *__restrict__ const region,
-                        size_t const buffer_row_pitch,
-                        size_t const buffer_slice_pitch,
-                        size_t const host_row_pitch,
-                        size_t const host_slice_pitch)
-{
-  char const *__restrict const adjusted_device_ptr = 
-    (char const*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
-  char *__restrict__ const adjusted_host_ptr = 
-    (char*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
-  
-  size_t j, k;
-  
-  /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              region[0]);
-}
-
-void
 pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 {
   if (host_ptr == device_ptr)
@@ -365,35 +335,6 @@ pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t c
   memcpy (device_ptr, host_ptr, cb);
 }
 
-void
-pocl_pthread_write_rect (void *data,
-                         const void *__restrict__ const host_ptr,
-                         void *__restrict__ const device_ptr,
-                         const size_t *__restrict__ const buffer_origin,
-                         const size_t *__restrict__ const host_origin, 
-                         const size_t *__restrict__ const region,
-                         size_t const buffer_row_pitch,
-                         size_t const buffer_slice_pitch,
-                         size_t const host_row_pitch,
-                         size_t const host_slice_pitch)
-{
-  char *__restrict const adjusted_device_ptr = 
-    (char*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
-  char const *__restrict__ const adjusted_host_ptr = 
-    (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
-  
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              region[0]);
-}
 
 void
 pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
@@ -577,7 +518,6 @@ pocl_pthread_run
       if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         cmd->event->time_end = pocl_basic_get_timer_value(d);
     }
-
   free(threads);
   free(arguments);
 }
@@ -626,31 +566,26 @@ workgroup_thread (void *p)
             *(void **)arguments[i] = NULL;
           }
         else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+            arguments[i] = &((*(cl_mem *)(al->value))->device_ptrs[ta->device]);
       }
       else if (kernel->arg_is_image[i])
         {
-          dev_image2d_t di;      
-          cl_mem mem = *(cl_mem*)al->value;
-          di.data = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
-          di.data = ((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
-          di.width = mem->image_width;
-          di.height = mem->image_height;
-          di.rowpitch = mem->image_row_pitch;
-          di.order = mem->image_channel_order;
-          di.data_type = mem->image_channel_data_type;
-          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image2d_t), NULL);
+          dev_image_t di;
+          fill_dev_image_t(&di, al, ta->device);
+          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr; 
-          pocl_pthread_write( ta->data, &di, devptr, sizeof(dev_image2d_t) );
+          *(void **)(arguments[i]) = devptr;       
+          pocl_pthread_write (ta->data, &di, devptr, sizeof(dev_image_t));
         }
       else if (kernel->arg_is_sampler[i])
         {
           dev_sampler_t ds;
           
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_pthread_write( ta->data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t) );
+          *(void **)(arguments[i]) = pocl_pthread_malloc 
+            (ta->data, 0, sizeof(dev_sampler_t), NULL);
+          pocl_pthread_write (ta->data, &ds, *(void**)arguments[i], 
+                              sizeof(dev_sampler_t));
         }
       else
         arguments[i] = al->value;
@@ -664,7 +599,8 @@ workgroup_thread (void *p)
     {
       al = &(ta->kernel_args[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
+      *(void **)(arguments[i]) = pocl_pthread_malloc (ta->data, 0, al->size, 
+                                                      NULL);
     }
 
   int first_gid_x = ta->pc.group_id[0];
@@ -687,21 +623,21 @@ workgroup_thread (void *p)
     {
       if (kernel->arg_is_local[i] )
         {
-          pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
-          free(arguments[i]);
+          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          free (arguments[i]);
         }
       else if (kernel->arg_is_sampler[i] || kernel->arg_is_image[i] || 
                (kernel->arg_is_pointer[i] && *(void**)arguments[i] == NULL))
         {
-          free(arguments[i]);
+          free (arguments[i]);
         }
     }
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
-      free(arguments[i]);
+      pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+      free (arguments[i]);
     }
   
   return NULL;

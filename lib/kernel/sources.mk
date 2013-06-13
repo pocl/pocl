@@ -207,7 +207,7 @@ OBJ:LKERNEL_SRCS
 %.bc: %.cl @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
 	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
 %.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ../../../include/${TARGET_DIR}/types.h
+	@CLANG@ -DPOCL_C_BUILTIN -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ../../../include/${TARGET_DIR}/types.h
 %.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
 	@CLANGXX@ -Xclang -ffake-address-space-map -std=c++11 -fno-exceptions -emit-llvm ${EXTRA_CLANGFLAGS} ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ../../../include/${TARGET_DIR}/types.h
 

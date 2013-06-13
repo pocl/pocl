@@ -44,9 +44,10 @@ pocl_read_image(cl_mem               image,
 		void *               ptr);
 
 extern void
-pocl_get_image_information (cl_mem        image,
-			    int* host_channels,
-			    int* host_elem_size);
+pocl_get_image_information (cl_channel_order ch_order, 
+                            cl_channel_type ch_type,
+                            int* host_channels,
+                            int* host_elem_size);
 #pragma GCC visibility pop
                    
 #endif

@@ -182,7 +182,7 @@ GenerateHeader::ProcessPointers(Function *F,
   bool is_local[num_args];
   bool is_image[num_args];
   bool is_sampler[num_args];
-    
+  
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(),
          ee = F->arg_end();
@@ -205,11 +205,11 @@ GenerateHeader::ProcessPointers(Function *F,
       is_pointer[i] = false;
       is_local[i] = false;
     }
-  
+    
     if (t->isPointerTy()) {
       if (t->getPointerElementType()->isStructTy()) {
         string name = t->getPointerElementType()->getStructName().str();
-        if (name == "struct.image2d_t_") { // TODO image3d?
+        if (name == "struct.dev_image_t") { // TODO image3d? was image2d_t_
           is_image[i] = true;
           is_pointer[i] = false;
           is_local[i] = false;

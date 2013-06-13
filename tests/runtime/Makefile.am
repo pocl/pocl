@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS= test_clGetDeviceInfo test_clGetEventInfo test_clCreateProgramWithBinary
+noinst_PROGRAMS= test_clGetDeviceInfo test_clGetEventInfo test_clCreateProgramWithBinary test_clGetSupportedImageFormats
 
 AM_LDFLAGS = @OPENCL_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"' @OPENCL_CFLAGS@

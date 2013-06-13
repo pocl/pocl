@@ -47,6 +47,141 @@ struct data {
   lt_dlhandle current_dlhandle;
 };
 
+const cl_image_format supported_image_formats[] = {
+    { CL_R, CL_SNORM_INT8 },
+    { CL_R, CL_SNORM_INT16 },
+    { CL_R, CL_UNORM_INT8 },
+    { CL_R, CL_UNORM_INT16 },
+    { CL_R, CL_UNORM_SHORT_565 }, 
+    { CL_R, CL_UNORM_SHORT_555 },
+    { CL_R, CL_UNORM_INT_101010 }, 
+    { CL_R, CL_SIGNED_INT8 },
+    { CL_R, CL_SIGNED_INT16 }, 
+    { CL_R, CL_SIGNED_INT32 },
+    { CL_R, CL_UNSIGNED_INT8 }, 
+    { CL_R, CL_UNSIGNED_INT16 },
+    { CL_R, CL_UNSIGNED_INT32 }, 
+    { CL_R, CL_HALF_FLOAT },
+    { CL_R, CL_FLOAT },
+    { CL_Rx, CL_SNORM_INT8 },
+    { CL_Rx, CL_SNORM_INT16 },
+    { CL_Rx, CL_UNORM_INT8 },
+    { CL_Rx, CL_UNORM_INT16 },
+    { CL_Rx, CL_UNORM_SHORT_565 }, 
+    { CL_Rx, CL_UNORM_SHORT_555 },
+    { CL_Rx, CL_UNORM_INT_101010 }, 
+    { CL_Rx, CL_SIGNED_INT8 },
+    { CL_Rx, CL_SIGNED_INT16 }, 
+    { CL_Rx, CL_SIGNED_INT32 },
+    { CL_Rx, CL_UNSIGNED_INT8 }, 
+    { CL_Rx, CL_UNSIGNED_INT16 },
+    { CL_Rx, CL_UNSIGNED_INT32 }, 
+    { CL_Rx, CL_HALF_FLOAT },
+    { CL_Rx, CL_FLOAT },
+    { CL_A, CL_SNORM_INT8 },
+    { CL_A, CL_SNORM_INT16 },
+    { CL_A, CL_UNORM_INT8 },
+    { CL_A, CL_UNORM_INT16 },
+    { CL_A, CL_UNORM_SHORT_565 }, 
+    { CL_A, CL_UNORM_SHORT_555 },
+    { CL_A, CL_UNORM_INT_101010 }, 
+    { CL_A, CL_SIGNED_INT8 },
+    { CL_A, CL_SIGNED_INT16 }, 
+    { CL_A, CL_SIGNED_INT32 },
+    { CL_A, CL_UNSIGNED_INT8 }, 
+    { CL_A, CL_UNSIGNED_INT16 },
+    { CL_A, CL_UNSIGNED_INT32 }, 
+    { CL_A, CL_HALF_FLOAT },
+    { CL_A, CL_FLOAT },
+    { CL_RG, CL_SNORM_INT8 },
+    { CL_RG, CL_SNORM_INT16 },
+    { CL_RG, CL_UNORM_INT8 },
+    { CL_RG, CL_UNORM_INT16 },
+    { CL_RG, CL_UNORM_SHORT_565 }, 
+    { CL_RG, CL_UNORM_SHORT_555 },
+    { CL_RG, CL_UNORM_INT_101010 }, 
+    { CL_RG, CL_SIGNED_INT8 },
+    { CL_RG, CL_SIGNED_INT16 }, 
+    { CL_RG, CL_SIGNED_INT32 },
+    { CL_RG, CL_UNSIGNED_INT8 }, 
+    { CL_RG, CL_UNSIGNED_INT16 },
+    { CL_RG, CL_UNSIGNED_INT32 }, 
+    { CL_RG, CL_HALF_FLOAT },
+    { CL_RG, CL_FLOAT },
+    { CL_RGx, CL_SNORM_INT8 },
+    { CL_RGx, CL_SNORM_INT16 },
+    { CL_RGx, CL_UNORM_INT8 },
+    { CL_RGx, CL_UNORM_INT16 },
+    { CL_RGx, CL_UNORM_SHORT_565 }, 
+    { CL_RGx, CL_UNORM_SHORT_555 },
+    { CL_RGx, CL_UNORM_INT_101010 }, 
+    { CL_RGx, CL_SIGNED_INT8 },
+    { CL_RGx, CL_SIGNED_INT16 }, 
+    { CL_RGx, CL_SIGNED_INT32 },
+    { CL_RGx, CL_UNSIGNED_INT8 }, 
+    { CL_RGx, CL_UNSIGNED_INT16 },
+    { CL_RGx, CL_UNSIGNED_INT32 }, 
+    { CL_RGx, CL_HALF_FLOAT },
+    { CL_RGx, CL_FLOAT },
+    { CL_RA, CL_SNORM_INT8 },
+    { CL_RA, CL_SNORM_INT16 },
+    { CL_RA, CL_UNORM_INT8 },
+    { CL_RA, CL_UNORM_INT16 },
+    { CL_RA, CL_UNORM_SHORT_565 }, 
+    { CL_RA, CL_UNORM_SHORT_555 },
+    { CL_RA, CL_UNORM_INT_101010 }, 
+    { CL_RA, CL_SIGNED_INT8 },
+    { CL_RA, CL_SIGNED_INT16 }, 
+    { CL_RA, CL_SIGNED_INT32 },
+    { CL_RA, CL_UNSIGNED_INT8 }, 
+    { CL_RA, CL_UNSIGNED_INT16 },
+    { CL_RA, CL_UNSIGNED_INT32 }, 
+    { CL_RA, CL_HALF_FLOAT },
+    { CL_RA, CL_FLOAT },
+    { CL_RGBA, CL_SNORM_INT8 },
+    { CL_RGBA, CL_SNORM_INT16 },
+    { CL_RGBA, CL_UNORM_INT8 },
+    { CL_RGBA, CL_UNORM_INT16 },
+    { CL_RGBA, CL_UNORM_SHORT_565 }, 
+    { CL_RGBA, CL_UNORM_SHORT_555 },
+    { CL_RGBA, CL_UNORM_INT_101010 }, 
+    { CL_RGBA, CL_SIGNED_INT8 },
+    { CL_RGBA, CL_SIGNED_INT16 }, 
+    { CL_RGBA, CL_SIGNED_INT32 },
+    { CL_RGBA, CL_UNSIGNED_INT8 }, 
+    { CL_RGBA, CL_UNSIGNED_INT16 },
+    { CL_RGBA, CL_UNSIGNED_INT32 }, 
+    { CL_RGBA, CL_HALF_FLOAT },
+    { CL_RGBA, CL_FLOAT },
+    { CL_INTENSITY, CL_UNORM_INT8 }, 
+    { CL_INTENSITY, CL_UNORM_INT16 }, 
+    { CL_INTENSITY, CL_SNORM_INT8 }, 
+    { CL_INTENSITY, CL_SNORM_INT16 }, 
+    { CL_INTENSITY, CL_HALF_FLOAT }, 
+    { CL_INTENSITY, CL_FLOAT },
+    { CL_LUMINANCE, CL_UNORM_INT8 }, 
+    { CL_LUMINANCE, CL_UNORM_INT16 }, 
+    { CL_LUMINANCE, CL_SNORM_INT8 }, 
+    { CL_LUMINANCE, CL_SNORM_INT16 }, 
+    { CL_LUMINANCE, CL_HALF_FLOAT }, 
+    { CL_LUMINANCE, CL_FLOAT },
+    { CL_RGB, CL_UNORM_SHORT_565 }, 
+    { CL_RGB, CL_UNORM_SHORT_555 },
+    { CL_RGB, CL_UNORM_INT_101010 }, 
+    { CL_RGBx, CL_UNORM_SHORT_565 }, 
+    { CL_RGBx, CL_UNORM_SHORT_555 },
+    { CL_RGBx, CL_UNORM_INT_101010 }, 
+    { CL_ARGB, CL_SNORM_INT8 },
+    { CL_ARGB, CL_UNORM_INT8 },
+    { CL_ARGB, CL_SIGNED_INT8 },
+    { CL_ARGB, CL_UNSIGNED_INT8 }, 
+    { CL_BGRA, CL_SNORM_INT8 },
+    { CL_BGRA, CL_UNORM_INT8 },
+    { CL_BGRA, CL_SIGNED_INT8 },
+    { CL_BGRA, CL_UNSIGNED_INT8 }
+ };
+
+
 void
 pocl_basic_init (cl_device_id device, const char* parameters)
 {
@@ -212,26 +347,21 @@ pocl_basic_run
         }
       else if (kernel->arg_is_image[i])
         {
-          dev_image2d_t di;      
-          cl_mem mem = *(cl_mem*)al->value;
-          di.data = &((*(cl_mem *) (al->value))->device_ptrs[device]);
-          di.data = ((*(cl_mem *) (al->value))->device_ptrs[device]);
-          di.width = mem->image_width;
-          di.height = mem->image_height;
-          di.rowpitch = mem->image_row_pitch;
-          di.order = mem->image_channel_order;
-          di.data_type = mem->image_channel_data_type;
-          void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image2d_t), NULL);
+          dev_image_t di;
+          fill_dev_image_t (&di, al, device);
+
+          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
-          pocl_basic_write (data, &di, devptr, sizeof(dev_image2d_t));
+          pocl_basic_write (data, &di, devptr, sizeof(dev_image_t));
         }
       else if (kernel->arg_is_sampler[i])
         {
           dev_sampler_t ds;
           
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, sizeof(dev_sampler_t), NULL);
+          *(void **)(arguments[i]) = pocl_basic_malloc 
+            (data, 0, sizeof(dev_sampler_t), NULL);
           pocl_basic_write (data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t));
         }
       else
@@ -245,7 +375,7 @@ pocl_basic_run
     {
       al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
+      *(void **)(arguments[i]) = pocl_basic_malloc (data, 0, al->size, NULL);
     }
 
   for (z = 0; z < pc->num_groups[2]; ++z)
@@ -399,4 +529,17 @@ pocl_basic_get_timer_value (void *data)
   struct timeval current;
   gettimeofday(&current, NULL);  
   return (current.tv_sec * 1000000 + current.tv_usec)*1000;
+}
+
+cl_int pocl_basic_get_supported_image_formats (cl_mem_flags flags,
+                                               cl_image_format **image_formats, 
+                                               cl_int *num_img_formats)
+{
+    if (num_img_formats == NULL || image_formats == NULL)
+      return CL_INVALID_VALUE;
+  
+    *num_img_formats = sizeof(supported_image_formats)/sizeof(cl_image_format);
+    *image_formats = supported_image_formats;
+    
+    return CL_SUCCESS; 
 }

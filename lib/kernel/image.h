@@ -3,13 +3,21 @@
 
 #include "templates.h"
 
-typedef struct image2d_t_ {
-  uchar4* data;
+
+typedef struct dev_image_t {
+  void* data;
   int width;
   int height;
-  int rowpitch;
+  int depth;
+  int image_array_size;
+  int row_pitch;
+  int slice_pitch;
+  int num_mip_levels; /* maybe not needed */
+  int num_samples; /* maybe not needed */
   int order;
   int data_type;
-} image2d_t_;
+  int num_channels;
+  int elem_size;
+} dev_image_t;
 
 #endif

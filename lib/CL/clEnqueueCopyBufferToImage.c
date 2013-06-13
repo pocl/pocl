@@ -36,7 +36,9 @@ POname(clEnqueueCopyBufferToImage)(cl_command_queue  command_queue,
     
     int host_elem_size;    
     int host_channels;
-    pocl_get_image_information (image, &host_channels, &host_elem_size);
+    pocl_get_image_information (image->image_channel_order,
+                                image->image_channel_data_type,
+                                &host_channels, &host_elem_size);
     
     void* temp = malloc (image->size);
     

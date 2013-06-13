@@ -1,3 +1,24 @@
+/* OpenCL runtime library: clEnqueueReadImage()
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+   
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #include "pocl_cl.h"
 #include "assert.h"
 #include "pocl_image_util.h"
@@ -17,6 +38,9 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0 
 {
   cl_int status;
+  if (image == NULL)
+    return CL_INVALID_MEM_OBJECT;
+
   if (event != NULL)
     {
       *event = (cl_event)malloc(sizeof(struct _cl_event));
@@ -31,15 +55,17 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
     }
-
-  status = pocl_read_image(image,
-			   command_queue->device,
-			   origin,
-			   region,
-			   host_row_pitch,
-			   host_slice_pitch, 
-			   ptr);
-  POCL_UPDATE_EVENT_COMPLETE;
-  return status;
+  
+  if (blocking_read)
+    {
+      status = pocl_read_image(image, command_queue->device, origin, region,
+                               host_row_pitch, host_slice_pitch, ptr);
+      POCL_UPDATE_EVENT_COMPLETE;
+      return status;
+    }
+  else /* non blocking */
+    {
+      POCL_ABORT_UNIMPLEMENTED();
+    }
 }
 POsym(clEnqueueReadImage)

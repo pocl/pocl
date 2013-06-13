@@ -68,7 +68,7 @@ GEN_PROTOTYPES (basic)
   0, /* max_clock_frequency */						\
   POCL_DEVICE_ADDRESS_BITS, /* address_bits */							\
   0, /* max_mem_alloc_size */						\
-  CL_FALSE, /* image_support */						\
+  CL_TRUE, /* image_support */						\
   0, /* max_read_image_args */						\
   0, /* max_write_image_args */						\
   0, /* image2d_max_width */						\
@@ -113,9 +113,9 @@ GEN_PROTOTYPES (basic)
   NULL, /* create_sub_buffer */                   \
   pocl_pthread_free, /* free */						\
   pocl_pthread_read, /* read */						\
-  pocl_pthread_read_rect, /* read_rect */				\
+  pocl_basic_read_rect, /* read_rect */				\
   pocl_pthread_write, /* write */					\
-  pocl_pthread_write_rect, /* write_rect */				\
+  pocl_basic_write_rect, /* write_rect */				\
   pocl_pthread_copy, /* copy */						\
   pocl_pthread_copy_rect, /* copy_rect */				\
   pocl_basic_map_mem,                               \
@@ -123,6 +123,7 @@ GEN_PROTOTYPES (basic)
   pocl_pthread_run, /* run */                         \
   pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* build_program */ \
+  pocl_basic_get_supported_image_formats, /* get_supported_image_formats */ \
   NULL, /* data */                                  \
   KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */  \
   OCL_KERNEL_TARGET, /* llvm_target_triplet */                         \

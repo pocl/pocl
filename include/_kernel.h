@@ -2037,39 +2037,140 @@ __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
 // Image support
 
-#ifndef _CL_HAS_IMAGE_ACCESS
+// Starting from Clang 3.3 the image and sampler are detected
+// as opaque types by the frontend. In order to define
+// the default builtins we use C functions which require 
+// the typedefs to the actual underlying types. Clang 3.2
+// the typedefs throughout as the types are not detected
+// by the frontend.
+#if !defined(_CL_HAS_IMAGE_ACCESS) || defined(POCL_C_BUILTIN)
 typedef int sampler_t;
-typedef struct image2d_t_* image2d_t;
+typedef struct dev_image_t* image2d_t;
+typedef struct dev_image_t* image3d_t;
+typedef struct dev_image_t* image1d_t;
+typedef struct dev_image_t* image1d_buffer_t;
+typedef struct dev_image_t* image2d_array_t;
+typedef struct dev_image_t* image1d_array_t;
 #endif
 
-#define CLK_ADDRESS_NONE                0x00
-#define CLK_ADDRESS_MIRRORED_REPEAT     0x01
-#define CLK_ADDRESS_REPEAT              0x02
-#define CLK_ADDRESS_CLAMP_TO_EDGE       0x03
-#define CLK_ADDRESS_CLAMP               0x04
 
-#define CLK_NORMALIZED_COORDS_FALSE     0x00
-#define CLK_NORMALIZED_COORDS_TRUE      0x08
+/* cl_channel_order */
+#define CL_R                                        0x10B0
+#define CL_A                                        0x10B1
+#define CL_RG                                       0x10B2
+#define CL_RA                                       0x10B3
+#define CL_RGB                                      0x10B4
+#define CL_RGBA                                     0x10B5
+#define CL_BGRA                                     0x10B6
+#define CL_ARGB                                     0x10B7
+#define CL_INTENSITY                                0x10B8
+#define CL_LUMINANCE                                0x10B9
+#define CL_Rx                                       0x10BA
+#define CL_RGx                                      0x10BB
+#define CL_RGBx                                     0x10BC
+#define CL_DEPTH                                    0x10BD
+#define CL_DEPTH_STENCIL                            0x10BE
 
-#define CLK_FILTER_NEAREST              0x00
-#define CLK_FILTER_LINEAR               0x10
+/* cl_channel_type */
+#define CL_SNORM_INT8                               0x10D0
+#define CL_SNORM_INT16                              0x10D1
+#define CL_UNORM_INT8                               0x10D2
+#define CL_UNORM_INT16                              0x10D3
+#define CL_UNORM_SHORT_565                          0x10D4
+#define CL_UNORM_SHORT_555                          0x10D5
+#define CL_UNORM_INT_101010                         0x10D6
+#define CL_SIGNED_INT8                              0x10D7
+#define CL_SIGNED_INT16                             0x10D8
+#define CL_SIGNED_INT32                             0x10D9
+#define CL_UNSIGNED_INT8                            0x10DA
+#define CL_UNSIGNED_INT16                           0x10DB
+#define CL_UNSIGNED_INT32                           0x10DC
+#define CL_HALF_FLOAT                               0x10DD
+#define CL_FLOAT                                    0x10DE
+#define CL_UNORM_INT24                              0x10DF
 
-float4 _CL_OVERLOADABLE read_imagef( image2d_t image,
-        sampler_t sampler,
-        int2 coord);
+/* cl_addressing _mode */
+#define CLK_ADDRESS_NONE                            0x00
+#define CLK_ADDRESS_MIRRORED_REPEAT                 0x01
+#define CLK_ADDRESS_REPEAT                          0x02
+#define CLK_ADDRESS_CLAMP_TO_EDGE                   0x03
+#define CLK_ADDRESS_CLAMP                           0x04
 
-float4 _CL_OVERLOADABLE read_imagef( image2d_t image,
-        sampler_t sampler,
-        float2 coord);
+/* cl_sampler_info */
+#define CLK_NORMALIZED_COORDS_FALSE                 0x00
+#define CLK_NORMALIZED_COORDS_TRUE                  0x08
 
-void _CL_OVERLOADABLE write_imagef( image2d_t image,
-        int2 coord,
-        float4 color);
+/* filter_mode */
+#define CLK_FILTER_NEAREST                          0x00
+#define CLK_FILTER_LINEAR                           0x10
 
-void _CL_OVERLOADABLE write_imagei( image2d_t image,
-        int2 coord,
-        int4 color);
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
+                                     int2 coord);
 
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
+                                     float2 coord);
+
+uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
+                                     int2 coord);
+
+uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
+                                     int4 coord);
+
+uint4 _CL_OVERLOADABLE read_imageui (image3d_t image, sampler_t sampler, 
+                                     int4 coord);
+
+int4 _CL_OVERLOADABLE read_imagei (image2d_t image, sampler_t sampler, 
+                                   int2 coord);
+
+
+void _CL_OVERLOADABLE write_imagei (image2d_t image, int2 coord, int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image2d_t image, int2 coord, uint4 color);
+
+
+/* not implemented 
+void _CL_OVERLOADABLE write_imagef (image2d_t image, int2 coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image2d_array_t image, int4 coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image2d_array_t image, int4 coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (image1d_t image, int coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image1d_t image, int coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image1d_t image, int coord, 
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (image1d_buffer_t image, int coord, 
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image1d_buffer_t image, int coord,
+                                     int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image1d_buffer_t image, int coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (image1d_array_t image, int2 coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image1d_array_t image, int2 coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imageui (image3d_t image, int4 coord,
+                                     uint4 color);
+*/
 int get_image_width (image2d_t image);
 int get_image_height (image2d_t image);
 

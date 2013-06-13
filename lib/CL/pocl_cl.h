@@ -309,6 +309,11 @@ struct _cl_device_id {
   /* Can be used to override the default action for initial .cl to .bc build. */
   int (*build_program) (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);
 
+    /* return supported image formats */
+   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
+                                          cl_image_format **image_formats, 
+                                          cl_int *num_image_formats);
+
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
@@ -382,9 +387,10 @@ struct _cl_mem {
   cl_channel_type         image_channel_data_type;
   size_t                  image_width;
   size_t                  image_height;
-  /*size_t                  image_depth;*/
+  size_t                  image_depth;
+  size_t                  image_array_size;
   size_t                  image_row_pitch;
-  /*size_t                  image_slice_pitch;*/
+  size_t                  image_slice_pitch;
 };
 
 struct _cl_program {
