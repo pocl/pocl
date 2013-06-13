@@ -64,8 +64,8 @@ pocl_get_image_information (cl_channel_order ch_order,
 cl_int
 pocl_write_image(cl_mem               image,
                  cl_device_id         device_id,
-                 const size_t *       origin_, /*[3]*/
-                 const size_t *       region_, /*[3]*/
+                 const size_t *       origin, /*[3]*/
+                 const size_t *       region, /*[3]*/
                  size_t               host_row_pitch,
                  size_t               host_slice_pitch, 
                  const void *         ptr)
@@ -92,18 +92,18 @@ pocl_write_image(cl_mem               image,
                               image->image_channel_data_type, 
                               &host_channels, &host_elem_size);
     
-  size_t origin[3] = {origin_[0]*dev_elem_size*dev_channels, origin_[1], 
-                      origin_[2]};
-  size_t region[3] = {region_[0]*dev_elem_size*dev_channels, region_[1], 
-                      region_[2]};
+  size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
+                            origin[2]};
+  size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
+                            region[2]};
     
   size_t image_row_pitch = width*dev_elem_size*dev_channels;
   size_t image_slice_pitch = 0;
     
-  if ((region[0]*region[1]*region[2] > 0) &&
-      (region[0]-1 +
-       image_row_pitch * (region[1]-1) +
-       image_slice_pitch * (region[2]-1) >= image->size))
+  if ((tuned_region[0]*tuned_region[1]*tuned_region[2] > 0) &&
+      (tuned_region[0]-1 +
+       image_row_pitch * (tuned_region[1]-1) +
+       image_slice_pitch * (tuned_region[2]-1) >= image->size))
     return CL_INVALID_VALUE;
     
   cl_float* temp = malloc (width*height*dev_channels*dev_elem_size);
@@ -151,7 +151,7 @@ pocl_write_image(cl_mem               image,
   
   device_id->write_rect(device_id->data, temp, 
                         image->device_ptrs[device_id->dev_id],
-                        origin, origin, region,
+                        tuned_origin, tuned_origin, tuned_region,
                         image_row_pitch, image_slice_pitch,
                         image_row_pitch, image_slice_pitch);
   

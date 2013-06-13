@@ -2105,21 +2105,16 @@ float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
                                      float2 coord);
 
 uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
-                                     int2 coord );
+                                     int2 coord);
 
 uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
-                                     int4 coord );
+                                     int4 coord);
 
 uint4 _CL_OVERLOADABLE read_imageui (image3d_t image, sampler_t sampler, 
-                                     int4 coord );
+                                     int4 coord);
 
 int4 _CL_OVERLOADABLE read_imagei (image2d_t image, sampler_t sampler, 
-                                   int2 coord );
-
-
-
-
-
+                                   int2 coord);
 
 
 void _CL_OVERLOADABLE write_imagei (image2d_t image, int2 coord, int4 color);
