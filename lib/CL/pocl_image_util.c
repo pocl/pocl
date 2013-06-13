@@ -92,8 +92,10 @@ pocl_write_image(cl_mem               image,
                               image->image_channel_data_type, 
                               &host_channels, &host_elem_size);
     
-  size_t origin[3] = { origin_[0]*dev_elem_size*dev_channels, origin_[1], origin_[2] };
-  size_t region[3] = { region_[0]*dev_elem_size*dev_channels, region_[1], region_[2] };
+  size_t origin[3] = {origin_[0]*dev_elem_size*dev_channels, origin_[1], 
+                      origin_[2]};
+  size_t region[3] = {region_[0]*dev_elem_size*dev_channels, region_[1], 
+                      region_[2]};
     
   size_t image_row_pitch = width*dev_elem_size*dev_channels;
   size_t image_slice_pitch = 0;
@@ -104,7 +106,7 @@ pocl_write_image(cl_mem               image,
        image_slice_pitch * (region[2]-1) >= image->size))
     return CL_INVALID_VALUE;
     
-  cl_float* temp = malloc( width*height*dev_channels*dev_elem_size );
+  cl_float* temp = malloc (width*height*dev_channels*dev_elem_size);
     
   if (temp == NULL) 
     return CL_OUT_OF_HOST_MEMORY;
@@ -186,20 +188,20 @@ pocl_read_image(cl_mem               image,
   int dev_elem_size = host_elem_size;
   int dev_channels = host_channels;
 
-  size_t tuned_origin[3] = { origin[0]*dev_elem_size*dev_channels, origin[1], 
-                             origin[2] };
-  size_t tuned_region[3] = { region[0]*dev_elem_size*dev_channels, region[1], 
-                             region[2] };
+  size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
+                            origin[2]};
+  size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
+                            region[2]};
   
   size_t image_row_pitch = width*dev_elem_size*dev_channels; 
   size_t image_slice_pitch = height*image_row_pitch;
     
   if ((tuned_origin[0] + tuned_region[0] > image_row_pitch) || 
-      (tuned_origin[1] + tuned_region[1] > height) )
+      (tuned_origin[1] + tuned_region[1] > height))
      return CL_INVALID_VALUE;
   
-  if  ((image->type == CL_MEM_OBJECT_IMAGE3D && 
-        (tuned_origin[2] + tuned_region[2] > image->image_depth)) )
+  if ((image->type == CL_MEM_OBJECT_IMAGE3D && 
+       (tuned_origin[2] + tuned_region[2] > image->image_depth)))
     return CL_INVALID_VALUE;
   
   if (image->type != CL_MEM_OBJECT_IMAGE3D && region[2] != 1)
@@ -211,10 +213,10 @@ pocl_read_image(cl_mem               image,
   cl_channel_type type = image->image_channel_data_type;
     
   device_id->read_rect(device_id->data, ptr, 
-		       image->device_ptrs[device_id->dev_id],
-		       tuned_origin, tuned_origin, tuned_region,
-		       image_row_pitch, image_slice_pitch,
-		       image_row_pitch, image_slice_pitch);
+                       image->device_ptrs[device_id->dev_id],
+                       tuned_origin, tuned_origin, tuned_region,
+                       image_row_pitch, image_slice_pitch,
+                       image_row_pitch, image_slice_pitch);
   
   return CL_SUCCESS;
 }

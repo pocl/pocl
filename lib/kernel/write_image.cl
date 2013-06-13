@@ -27,7 +27,7 @@
 #include "image.h"
 
 /* writes pixel to coord in image */
-void write_pixel (uint* color, dev_image_t* image, int4 coord)
+void pocl_write_pixel (uint* color, dev_image_t* image, int4 coord)
 {
   
   int i, idx;
@@ -58,13 +58,13 @@ void write_pixel (uint* color, dev_image_t* image, int4 coord)
 void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int2 coord, 
                                      uint4 color)
 {
-  write_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
+  pocl_write_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
 }
 
 void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int4 coord, 
                                      uint4 color)
 {
-  write_pixel((uint*)&color, (dev_image_t*)image, coord);
+  pocl_write_pixel ((uint*)&color, (dev_image_t*)image, coord);
 }
 
 /* Not implemented yet
@@ -132,17 +132,20 @@ void _CL_OVERLOADABLE write_imageui (image1d_buffer_t image, int2 coord,
 }
 
 void _CL_OVERLOADABLE write_imagef (image1d_array_t image, int2 coord,
-                                    float4 color){
+                                    float4 color)
+{
 
 }
 
 void _CL_OVERLOADABLE write_imagei (image1d_array_t image, int2 coord, 
-                                    int4 color){
+                                    int4 color)
+{
 
 }
 
 void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
-                                     uint4 color){
+                                     uint4 color)
+{
 
 }
 

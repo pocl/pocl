@@ -32,7 +32,7 @@
 inline int pocl_out_of_bounds (dev_image_t* image, int4 coord, 
                                sampler_t sampler, uint4 *color)
 {
-  if( sampler & CLK_ADDRESS_CLAMP_TO_EDGE )
+  if(sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
     {
       if (coord.x >= image->width)
         coord.x = image->width-1;
@@ -75,7 +75,7 @@ inline int pocl_out_of_bounds (dev_image_t* image, int4 coord,
 }
 
 
-void read_pixel (uint* color, dev_image_t* image, int4 coord)
+void pocl_read_pixel (uint* color, dev_image_t* image, int4 coord)
 {
   int i, idx;
   int width = image->width;
@@ -141,7 +141,7 @@ float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image,
 
 /* int functions */
 
-uint4 _CL_OVERLOADABLE read_imageui( image2d_t image, sampler_t sampler, 
+uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
                                      int2 coord )
 {
   uint4 color;
@@ -149,23 +149,23 @@ uint4 _CL_OVERLOADABLE read_imageui( image2d_t image, sampler_t sampler,
     {
       return color;
     }  
-  read_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
+  pocl_read_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
   return color;    
 }
 
-uint4 _CL_OVERLOADABLE read_imageui( dev_image_t* image, sampler_t sampler, 
+uint4 _CL_OVERLOADABLE read_imageui (dev_image_t* image, sampler_t sampler, 
                                      int4 coord )
 {
   uint4 color;
-  if (pocl_out_of_bounds( image, coord, sampler, &color ))
+  if (pocl_out_of_bounds(image, coord, sampler, &color))
     {
       return color;
     }  
-  read_pixel ((uint*)&color, (dev_image_t*)image, coord);
+  pocl_read_pixel ((uint*)&color, (dev_image_t*)image, coord);
   return color;    
 }
 
-int4 _CL_OVERLOADABLE read_imagei( image2d_array_t image, sampler_t sampler, 
+int4 _CL_OVERLOADABLE read_imagei (image2d_array_t image, sampler_t sampler, 
                                    int2 coord )
 {
   int4 color;
@@ -174,7 +174,7 @@ int4 _CL_OVERLOADABLE read_imagei( image2d_array_t image, sampler_t sampler,
     {
       return color;
     }  
-  read_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
+  pocl_read_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
   return color;
 }
 

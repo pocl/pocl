@@ -566,7 +566,7 @@ workgroup_thread (void *p)
             *(void **)arguments[i] = NULL;
           }
         else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[ta->device]);
+            arguments[i] = &((*(cl_mem *)(al->value))->device_ptrs[ta->device]);
       }
       else if (kernel->arg_is_image[i])
         {
@@ -575,15 +575,17 @@ workgroup_thread (void *p)
           void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;       
-          pocl_pthread_write( ta->data, &di, devptr, sizeof(dev_image_t) );
+          pocl_pthread_write (ta->data, &di, devptr, sizeof(dev_image_t));
         }
       else if (kernel->arg_is_sampler[i])
         {
           dev_sampler_t ds;
           
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_pthread_write( ta->data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t) );
+          *(void **)(arguments[i]) = pocl_pthread_malloc 
+            (ta->data, 0, sizeof(dev_sampler_t), NULL);
+          pocl_pthread_write (ta->data, &ds, *(void**)arguments[i], 
+                              sizeof(dev_sampler_t));
         }
       else
         arguments[i] = al->value;
@@ -597,7 +599,8 @@ workgroup_thread (void *p)
     {
       al = &(ta->kernel_args[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
+      *(void **)(arguments[i]) = pocl_pthread_malloc (ta->data, 0, al->size, 
+                                                      NULL);
     }
 
   int first_gid_x = ta->pc.group_id[0];
@@ -620,21 +623,21 @@ workgroup_thread (void *p)
     {
       if (kernel->arg_is_local[i] )
         {
-          pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
-          free(arguments[i]);
+          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          free (arguments[i]);
         }
       else if (kernel->arg_is_sampler[i] || kernel->arg_is_image[i] || 
                (kernel->arg_is_pointer[i] && *(void**)arguments[i] == NULL))
         {
-          free(arguments[i]);
+          free (arguments[i]);
         }
     }
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      pocl_pthread_free(ta->data, 0, *(void **)(arguments[i]));
-      free(arguments[i]);
+      pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+      free (arguments[i]);
     }
   
   return NULL;

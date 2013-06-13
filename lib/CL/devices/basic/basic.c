@@ -348,9 +348,9 @@ pocl_basic_run
       else if (kernel->arg_is_image[i])
         {
           dev_image_t di;
-          fill_dev_image_t(&di, al, device);
+          fill_dev_image_t (&di, al, device);
 
-          void* devptr = pocl_basic_malloc(data, 0, sizeof(dev_image_t), NULL);
+          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
           pocl_basic_write (data, &di, devptr, sizeof(dev_image_t));
@@ -360,7 +360,8 @@ pocl_basic_run
           dev_sampler_t ds;
           
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, sizeof(dev_sampler_t), NULL);
+          *(void **)(arguments[i]) = pocl_basic_malloc 
+            (data, 0, sizeof(dev_sampler_t), NULL);
           pocl_basic_write (data, &ds, *(void**)arguments[i], sizeof(dev_sampler_t));
         }
       else
@@ -374,7 +375,7 @@ pocl_basic_run
     {
       al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
+      *(void **)(arguments[i]) = pocl_basic_malloc (data, 0, al->size, NULL);
     }
 
   for (z = 0; z < pc->num_groups[2]; ++z)

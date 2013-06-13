@@ -23,16 +23,16 @@
 
 #include "pocl_cl.h"
 
-int pocl_find_img_format(cl_image_format *toFind, cl_image_format* list, 
-                         int num_entries);
+int pocl_find_img_format (cl_image_format *toFind, cl_image_format* list, 
+                          int num_entries);
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-POname(clGetSupportedImageFormats)(cl_context           context,
-                                   cl_mem_flags         flags,
-                                   cl_mem_object_type   image_type,
-                                   cl_uint              num_entries,
-                                   cl_image_format *    image_formats,
-                                   cl_uint *            num_image_formats) 
+POname(clGetSupportedImageFormats) (cl_context           context,
+                                    cl_mem_flags         flags,
+                                    cl_mem_object_type   image_type,
+                                    cl_uint              num_entries,
+                                    cl_image_format *    image_formats,
+                                    cl_uint *            num_image_formats) 
 CL_API_SUFFIX__VERSION_1_0
 {
 
@@ -66,10 +66,10 @@ CL_API_SUFFIX__VERSION_1_0
         errcode = device_id->get_supported_image_formats 
           (flags, &(dev_image_formats[i]), &dev_num_image_formats[i]);
         
-        if ( errcode != CL_SUCCESS)
+        if (errcode != CL_SUCCESS)
           goto CLEAN_MEM_AND_RETURN;
                         
-        if( &dev_num_image_formats[i] == NULL)
+        if (&dev_num_image_formats[i] == NULL)
           goto CLEAN_MEM_AND_RETURN;
       }
 
@@ -103,7 +103,7 @@ CL_API_SUFFIX__VERSION_1_0
             /* if we get here reff is part of intersect */ 
             
             /* if second call */
-            if ( image_formats != NULL && formatCount <= num_entries )
+            if (image_formats != NULL && formatCount <= num_entries)
               image_formats[formatCount] = reff;
             
             ++formatCount;
@@ -116,16 +116,16 @@ CL_API_SUFFIX__VERSION_1_0
       }
     
 CLEAN_MEM_AND_RETURN:
-    free ( dev_num_image_formats );
-    free ( dev_image_formats );
+    free (dev_num_image_formats);
+    free (dev_image_formats);
     return errcode;
     
 } 
 POsym(clGetSupportedImageFormats)
 
 
-int pocl_find_img_format(cl_image_format *toFind, cl_image_format* list, 
-                         int num_entries){
+int pocl_find_img_format (cl_image_format *toFind, cl_image_format* list, 
+                          int num_entries){
   int i;
   for (i = 0; i < num_entries; i++)
     {

@@ -24,12 +24,12 @@
 #include "pocl_image_util.h"
 
 extern CL_API_ENTRY cl_mem CL_API_CALL
-POname(clCreateImage)(cl_context              context,
-              cl_mem_flags            flags,
-              const cl_image_format * image_format,
-              const cl_image_desc *   image_desc, 
-              void *                  host_ptr,
-              cl_int *                errcode_ret) 
+POname(clCreateImage) (cl_context              context,
+                       cl_mem_flags            flags,
+                       const cl_image_format * image_format,
+                       const cl_image_desc *   image_desc, 
+                       void *                  host_ptr,
+                       cl_int *                errcode_ret) 
 CL_API_SUFFIX__VERSION_1_2
 {
     cl_mem mem;
@@ -45,7 +45,6 @@ CL_API_SUFFIX__VERSION_1_2
     int elem_size;
     int channels;
     
-
     if (context == NULL) 
       {
         errcode = CL_INVALID_CONTEXT;
@@ -83,7 +82,7 @@ CL_API_SUFFIX__VERSION_1_2
     errcode = POname(clGetSupportedImageFormats) (context, flags, 
             image_desc->image_type, num_entries, supported_image_formats, NULL);
     
-    if (errcode != CL_SUCCESS )
+    if (errcode != CL_SUCCESS)
       goto ERROR_CLEAN_DEV;
     
     for (i = 0; i < num_entries; i++)
@@ -91,7 +90,7 @@ CL_API_SUFFIX__VERSION_1_2
         if (supported_image_formats[i].image_channel_order == 
             image_format->image_channel_order &&
             supported_image_formats[i].image_channel_data_type ==
-            image_format->image_channel_data_type )
+            image_format->image_channel_data_type)
           {
             goto TYPE_SUPPORTED;
           }
@@ -114,8 +113,8 @@ TYPE_SUPPORTED:
     row_pitch = image_desc->image_row_pitch;
     slice_pitch = image_desc->image_slice_pitch;
     
-    size = image_desc->image_width * image_desc->image_height * 
-      elem_size * channels;
+    size = image_desc->image_width * image_desc->image_height * elem_size * 
+      channels;
     
     if (host_ptr != NULL && row_pitch == 0)
       {
@@ -124,7 +123,7 @@ TYPE_SUPPORTED:
     if (host_ptr != NULL && slice_pitch == 0)
       {
         if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
-            image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY )
+            image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
           {
             slice_pitch = row_pitch * image_desc->image_height;
           }
@@ -135,7 +134,7 @@ TYPE_SUPPORTED:
       }
 
     /* Create buffer and fill in missing parts */
-    mem = POname(clCreateBuffer)(context, flags, size, host_ptr, &errcode);
+    mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
 
     if (mem == NULL)
       goto ERROR_CLEAN_DEV;

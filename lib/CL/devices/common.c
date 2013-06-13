@@ -115,8 +115,8 @@ llvm_codegen (const char* tmpdir) {
  * from given kernel image argument
  */
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
-                       cl_int device){
-  
+                       cl_int device)
+{
   cl_mem mem = *(cl_mem *)parg->value;
   di->data = (mem->device_ptrs[device]);  
   di->width = mem->image_width;
