@@ -29,8 +29,8 @@
 /* checks if coord is out of bounds. If out of bounds: Sets coord in bounds 
    and returns false OR populates color with border colour and returns true.
    If in bounds, returns false */
-inline int _pocl_out_of_bounds( dev_image_t* image, int4 coord, 
-                                sampler_t sampler, uint4 *color)
+inline int pocl_out_of_bounds (dev_image_t* image, int4 coord, 
+                               sampler_t sampler, uint4 *color)
 {
   if( sampler & CLK_ADDRESS_CLAMP_TO_EDGE )
     {
@@ -75,7 +75,7 @@ inline int _pocl_out_of_bounds( dev_image_t* image, int4 coord,
 }
 
 
-void read_pixel( uint* color, dev_image_t* image, int4 coord )
+void read_pixel (uint* color, dev_image_t* image, int4 coord)
 {
   int i, idx;
   int width = image->width;
@@ -145,7 +145,7 @@ uint4 _CL_OVERLOADABLE read_imageui( image2d_t image, sampler_t sampler,
                                      int2 coord )
 {
   uint4 color;
-  if (_pocl_out_of_bounds (image, (int4)(coord, 0, 0), sampler, &color))
+  if (pocl_out_of_bounds (image, (int4)(coord, 0, 0), sampler, &color))
     {
       return color;
     }  
@@ -157,7 +157,7 @@ uint4 _CL_OVERLOADABLE read_imageui( dev_image_t* image, sampler_t sampler,
                                      int4 coord )
 {
   uint4 color;
-  if (_pocl_out_of_bounds( image, coord, sampler, &color ))
+  if (pocl_out_of_bounds( image, coord, sampler, &color ))
     {
       return color;
     }  
@@ -169,8 +169,8 @@ int4 _CL_OVERLOADABLE read_imagei( image2d_array_t image, sampler_t sampler,
                                    int2 coord )
 {
   int4 color;
-  if (_pocl_out_of_bounds (image, (int4)(coord, 0, 0), sampler, 
-                           (uint4*)&color ) )
+  if (pocl_out_of_bounds (image, (int4)(coord, 0, 0), sampler, 
+                          (uint4*)&color ) )
     {
       return color;
     }  

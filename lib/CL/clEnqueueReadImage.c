@@ -66,7 +66,6 @@ CL_API_SUFFIX__VERSION_1_0
   else /* non blocking */
     {
       POCL_ABORT_UNIMPLEMENTED();
-      return status;
     }
 }
 POsym(clEnqueueReadImage)

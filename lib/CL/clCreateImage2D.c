@@ -26,29 +26,29 @@
 
 CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage2D)(cl_context              context,
-                cl_mem_flags            flags,
-                const cl_image_format * image_format,
-                size_t                  image_width,
-                size_t                  image_height,
-                size_t                  image_row_pitch, 
-                void *                  host_ptr,
-                cl_int *                errcode_ret)
+                        cl_mem_flags            flags,
+                        const cl_image_format * image_format,
+                        size_t                  image_width,
+                        size_t                  image_height,
+                        size_t                  image_row_pitch, 
+                        void *                  host_ptr,
+                        cl_int *                errcode_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
-    cl_image_desc img_desc;
-    img_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    img_desc.image_width = image_width;
-    img_desc.image_height = image_height; 
-    img_desc.image_depth = 0;
-    img_desc.image_array_size = 1;
-    img_desc.image_row_pitch = image_row_pitch;
-    img_desc.image_slice_pitch = 0;
-    img_desc.num_mip_levels = 0;
-    img_desc.num_samples = 0;
-    img_desc.buffer = 0;
-    
-    return POname(clCreateImage) (context, flags, image_format, &img_desc,
-                                  host_ptr, errcode_ret);   
+  cl_image_desc img_desc;
+  img_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  img_desc.image_width = image_width;
+  img_desc.image_height = image_height; 
+  img_desc.image_depth = 0;
+  img_desc.image_array_size = 1;
+  img_desc.image_row_pitch = image_row_pitch;
+  img_desc.image_slice_pitch = 0;
+  img_desc.num_mip_levels = 0;
+  img_desc.num_samples = 0;
+  img_desc.buffer = 0;
+  
+  return POname(clCreateImage) (context, flags, image_format, &img_desc,
+                                host_ptr, errcode_ret);   
 }
 
 POsym(clCreateImage2D) 

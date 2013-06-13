@@ -16,19 +16,19 @@ main(void)
   cl_image_format *img_formats;
   cl_uint num_entries;
   
-  err = clGetPlatformIDs(1, platform, &nplatforms);	
+  err = clGetPlatformIDs (1, platform, &nplatforms);	
   if (err != CL_SUCCESS)
     return EXIT_FAILURE;
 
-  err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-                       devices, &ndevices);
+  err = clGetDeviceIDs (platform[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
+                        devices, &ndevices);
   if (err != CL_SUCCESS)
 	return EXIT_FAILURE;
 
   assert(ndevices >= 2);
 
-  cl_context context = clCreateContext(NULL, ndevices, devices, NULL, NULL, 
-                                       &err);
+  cl_context context = clCreateContext (NULL, ndevices, devices, NULL, NULL, 
+                                        &err);
 
   if (err != CL_SUCCESS)
     return EXIT_FAILURE;

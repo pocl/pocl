@@ -534,7 +534,7 @@ cl_int pocl_basic_get_supported_image_formats (cl_mem_flags flags,
                                                cl_image_format **image_formats, 
                                                cl_int *num_img_formats)
 {
-    if (num_img_formats == NULL)
+    if (num_img_formats == NULL || image_formats == NULL)
       return CL_INVALID_VALUE;
   
     *num_img_formats = sizeof(supported_image_formats)/sizeof(cl_image_format);
