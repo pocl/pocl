@@ -257,6 +257,7 @@ struct _cl_device_id {
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
   cl_device_partition_property device_partition_properties[1];
+  size_t printf_buffer_size;
   char *short_name; 
   char *long_name; 
   char *vendor;

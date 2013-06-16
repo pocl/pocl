@@ -115,6 +115,7 @@ GEN_PROTOTYPES (cellspu)
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   {0}, /* device_partition_properties */ \
+  0, /* printf_buffer_size */						\
   "cellspu", /* short_name */							\
   0, /* long_name */							\
   "STI", /* vendor */							\

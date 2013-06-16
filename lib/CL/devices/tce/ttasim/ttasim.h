@@ -99,6 +99,7 @@ GEN_PROTOTYPES (ttasim)
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   {0}, /* device_partition_properties */ \
+  0, /* printf_buffer_size */						\
   "ttasim", /* short_name */							\
   0, /* long_name */							\
   "TTA-Based Co-design Environment", /* vendor */							\
