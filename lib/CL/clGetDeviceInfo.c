@@ -181,6 +181,13 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_bool, device->available);
   case CL_DEVICE_COMPILER_AVAILABLE                :
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
+  case CL_DEVICE_LINKER_AVAILABLE                  :
+    /* TODO currently we return the same availability as the compiler,
+     * since if the compiler is available the linker MUST be available
+     * too. The only case where the linker and compiler availability can
+     * be different is when the linker is available and the compiler is not,
+     * which is not the case in pocl currently */
+    POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_uint, device->execution_capabilities);
   case CL_DEVICE_QUEUE_PROPERTIES                  :
