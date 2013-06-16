@@ -311,7 +311,7 @@ struct _cl_device_id {
 
     /* return supported image formats */
    cl_int (*get_supported_image_formats) (cl_mem_flags flags,
-                                          cl_image_format **image_formats, 
+                                          const cl_image_format **image_formats,
                                           cl_int *num_image_formats);
 
   void *data;
