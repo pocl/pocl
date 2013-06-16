@@ -242,6 +242,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_DEVICE_INFO_STR("OpenCL C 1.2");
+  case CL_DEVICE_BUILT_IN_KERNELS                  :
+    POCL_RETURN_DEVICE_INFO_STR("");
 
   /* TODO proper device partition support. For the time being,
    * the values returned only serve the purpose of indicating
