@@ -238,6 +238,25 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_DEVICE_INFO_STR("OpenCL C 1.2");
+
+  /* TODO proper device partition support. For the time being,
+   * the values returned only serve the purpose of indicating
+   * that it is not actually supported */
+  case CL_DEVICE_PARENT_DEVICE                     :
+    POCL_RETURN_GETINFO(cl_device_id, NULL);
+  case CL_DEVICE_PARTITION_MAX_SUB_DEVICES         :
+    POCL_RETURN_GETINFO(cl_uint, 1);
+  case CL_DEVICE_PARTITION_PROPERTIES              :
+  case CL_DEVICE_PARTITION_TYPE                    :
+    {
+      /* since we don't support sub-devices, querying the partition type
+       * presently returns the same thing as querying the available partition
+       * properties, i.e. { 0} */
+      typedef struct { cl_device_partition_property prop[1]; } dev_pp_1;
+      POCL_RETURN_GETINFO(dev_pp_1, *(const dev_pp_1*)device->device_partition_properties);
+    }
+  case CL_DEVICE_PARTITION_AFFINITY_DOMAIN         :
+    POCL_RETURN_GETINFO(cl_device_affinity_domain, 0);
   }
   return CL_INVALID_VALUE;
 }
