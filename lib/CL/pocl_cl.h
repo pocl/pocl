@@ -237,6 +237,7 @@ struct _cl_device_id {
   size_t max_parameter_size;
   cl_uint mem_base_addr_align;
   cl_uint min_data_type_align_size;
+  cl_device_fp_config half_fp_config;
   cl_device_fp_config single_fp_config;
   cl_device_fp_config double_fp_config;
   cl_device_mem_cache_type global_mem_cache_type;
