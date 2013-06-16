@@ -178,9 +178,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_ENDIAN_LITTLE                     :
     POCL_RETURN_GETINFO(cl_uint, device->endian_little);
   case CL_DEVICE_AVAILABLE                         :
-    POCL_RETURN_GETINFO(cl_uint, device->available);
+    POCL_RETURN_GETINFO(cl_bool, device->available);
   case CL_DEVICE_COMPILER_AVAILABLE                :
-    POCL_RETURN_GETINFO(cl_uint, device->compiler_available);
+    POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_uint, device->execution_capabilities);
   case CL_DEVICE_QUEUE_PROPERTIES                  :
