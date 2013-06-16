@@ -261,6 +261,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     }
   case CL_DEVICE_PARTITION_AFFINITY_DOMAIN         :
     POCL_RETURN_GETINFO(cl_device_affinity_domain, 0);
+
+  case CL_DEVICE_PREFERRED_INTEROP_USER_SYNC       :
+    POCL_RETURN_GETINFO(cl_bool, CL_TRUE);
   }
   return CL_INVALID_VALUE;
 }
