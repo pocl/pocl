@@ -532,7 +532,7 @@ pocl_basic_get_timer_value (void *data)
 }
 
 cl_int pocl_basic_get_supported_image_formats (cl_mem_flags flags,
-                                               cl_image_format **image_formats, 
+                                               const cl_image_format **image_formats,
                                                cl_int *num_img_formats)
 {
     if (num_img_formats == NULL || image_formats == NULL)

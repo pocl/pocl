@@ -836,7 +836,22 @@ fi
 # Checks for header files.
 
 # Checks for library features.
-AC_LANG([C++])
+AC_LANG([C])
+
+old_CC="$CC"
+old_CPPFLAGS="$CPPFLAGS"
+old_CFLAGS="$CFLAGS"
+old_LDFLAGS="$LDFLAGS"
+CC=$srcdir/config/xclang
+CPPFLAGS=""
+LDFLAGS=""
+
+AC_CONFIG_FILES([include/arm/types.h
+                 include/tce/types.h
+                 include/powerpc/types.h
+                 include/powerpc64/types.h
+                 include/cellspu/types.h
+                 include/x86_64/types.h])
 
 AC_MSG_CHECKING([for aligned_alloc])
 AC_COMPILE_IFELSE(
@@ -859,23 +874,6 @@ AC_COMPILE_IFELSE(
     [AC_MSG_RESULT(no)])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_LANG([C])
-
-old_CC="$CC"
-old_CPPFLAGS="$CPPFLAGS"
-old_CFLAGS="$CFLAGS"
-old_LDFLAGS="$LDFLAGS"
-CC=$srcdir/config/xclang
-CPPFLAGS=""
-LDFLAGS=""
-
-AC_CONFIG_FILES([include/arm/types.h
-                 include/tce/types.h
-                 include/powerpc/types.h
-                 include/powerpc64/types.h
-                 include/cellspu/types.h
-                 include/x86_64/types.h])
-
 AC_MSG_NOTICE([Checking target compiler characteristics])
 CFLAGS="-h $target"
 AC_CHECK_SIZEOF([long])

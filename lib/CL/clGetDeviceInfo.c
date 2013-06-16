@@ -145,6 +145,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_height);
   case CL_DEVICE_IMAGE3D_MAX_DEPTH                 :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_depth);
+  case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE             :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image_max_buffer_size);
+  case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE              :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image_max_array_size);
   case CL_DEVICE_MAX_PARAMETER_SIZE                : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->max_parameter_size);
   case CL_DEVICE_MAX_SAMPLERS                      : 
@@ -178,9 +182,16 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_ENDIAN_LITTLE                     :
     POCL_RETURN_GETINFO(cl_uint, device->endian_little);
   case CL_DEVICE_AVAILABLE                         :
-    POCL_RETURN_GETINFO(cl_uint, device->available);
+    POCL_RETURN_GETINFO(cl_bool, device->available);
   case CL_DEVICE_COMPILER_AVAILABLE                :
-    POCL_RETURN_GETINFO(cl_uint, device->compiler_available);
+    POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
+  case CL_DEVICE_LINKER_AVAILABLE                  :
+    /* TODO currently we return the same availability as the compiler,
+     * since if the compiler is available the linker MUST be available
+     * too. The only case where the linker and compiler availability can
+     * be different is when the linker is available and the compiler is not,
+     * which is not the case in pocl currently */
+    POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_uint, device->execution_capabilities);
   case CL_DEVICE_QUEUE_PROPERTIES                  :
@@ -210,7 +221,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     }
   case CL_DEVICE_DOUBLE_FP_CONFIG                  :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->double_fp_config);
-  case CL_DEVICE_HALF_FP_CONFIG                    : break;
+  case CL_DEVICE_HALF_FP_CONFIG                    :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->half_fp_config);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_half);
   case CL_DEVICE_HOST_UNIFIED_MEMORY               : 
@@ -231,6 +243,32 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_DEVICE_INFO_STR("OpenCL C 1.2");
+  case CL_DEVICE_BUILT_IN_KERNELS                  :
+    POCL_RETURN_DEVICE_INFO_STR("");
+
+  /* TODO proper device partition support. For the time being,
+   * the values returned only serve the purpose of indicating
+   * that it is not actually supported */
+  case CL_DEVICE_PARENT_DEVICE                     :
+    POCL_RETURN_GETINFO(cl_device_id, NULL);
+  case CL_DEVICE_PARTITION_MAX_SUB_DEVICES         :
+    POCL_RETURN_GETINFO(cl_uint, 1);
+  case CL_DEVICE_PARTITION_PROPERTIES              :
+  case CL_DEVICE_PARTITION_TYPE                    :
+    {
+      /* since we don't support sub-devices, querying the partition type
+       * presently returns the same thing as querying the available partition
+       * properties, i.e. { 0} */
+      typedef struct { cl_device_partition_property prop[1]; } dev_pp_1;
+      POCL_RETURN_GETINFO(dev_pp_1, *(const dev_pp_1*)device->device_partition_properties);
+    }
+  case CL_DEVICE_PARTITION_AFFINITY_DOMAIN         :
+    POCL_RETURN_GETINFO(cl_device_affinity_domain, 0);
+
+  case CL_DEVICE_PREFERRED_INTEROP_USER_SYNC       :
+    POCL_RETURN_GETINFO(cl_bool, CL_TRUE);
+  case CL_DEVICE_PRINTF_BUFFER_SIZE                :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->printf_buffer_size);
   }
   return CL_INVALID_VALUE;
 }

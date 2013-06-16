@@ -81,10 +81,13 @@ GEN_PROTOTYPES (basic)
   0, /* image3d_max_width */						\
   0, /* image3d_max_height */						\
   0, /* image3d_max_depth */						\
+  0, /* image_max_buffer_size */					\
+  0, /* image_max_array_size */						\
   0, /* max_samplers */							\
   1024, /* max_parameter_size */						\
   0, /* mem_base_addr_align */						\
   0, /* min_data_type_align_size */					\
+  0, /* half_fp_config */	\
   CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN, /* single_fp_config */	\
   CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN, /* double_fp_config */	\
   CL_NONE, /* global_mem_cache_type */					\
@@ -104,6 +107,8 @@ GEN_PROTOTYPES (basic)
   CL_EXEC_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
+  {0}, /* device_partition_properties */ \
+  0, /* printf_buffer_size */						\
   "basic", /* short_name */							\
   0, /* long_name */							\
   "pocl", /* vendor */							\

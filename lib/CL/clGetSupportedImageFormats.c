@@ -23,7 +23,7 @@
 
 #include "pocl_cl.h"
 
-int pocl_find_img_format (cl_image_format *toFind, cl_image_format* list, 
+int pocl_find_img_format (cl_image_format *toFind, const cl_image_format* list,
                           int num_entries);
 
 extern CL_API_ENTRY cl_int CL_API_CALL
@@ -38,7 +38,7 @@ CL_API_SUFFIX__VERSION_1_0
 
     int i, j, k;
     cl_device_id device_id;
-    cl_image_format **dev_image_formats = 0;
+    const cl_image_format **dev_image_formats = 0;
     int *dev_num_image_formats = 0;
     int errcode = 0;
     
@@ -64,13 +64,21 @@ CL_API_SUFFIX__VERSION_1_0
       {    
         device_id = context->devices[i];
         errcode = device_id->get_supported_image_formats 
-          (flags, &(dev_image_formats[i]), &dev_num_image_formats[i]);
+          (flags, dev_image_formats+i, dev_num_image_formats + i);
         
         if (errcode != CL_SUCCESS)
           goto CLEAN_MEM_AND_RETURN;
-                        
-        if (&dev_num_image_formats[i] == NULL)
+
+        if (dev_num_image_formats[i] == 0) {
+          /* this device supports no image formats. since we have to
+           * present the intersection of all supported image formats
+           * (see below), inform that we support none, and return early */
+          if (num_image_formats != NULL)
+          {
+            *num_image_formats = 0;
+          }
           goto CLEAN_MEM_AND_RETURN;
+        }
       }
 
     
@@ -124,7 +132,7 @@ CLEAN_MEM_AND_RETURN:
 POsym(clGetSupportedImageFormats)
 
 
-int pocl_find_img_format (cl_image_format *toFind, cl_image_format* list, 
+int pocl_find_img_format (cl_image_format *toFind, const cl_image_format* list,
                           int num_entries){
   int i;
   for (i = 0; i < num_entries; i++)

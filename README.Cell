@@ -4,7 +4,7 @@ The "default" debian for Powerpc has a 32bit userspace runtime,
 even if the processor itself is a 64bit PowerPC. You can run 
 multilibs on debian to be able to build 64bit binaries in the
 32bit environment, but the 'dlopen' of 64 bit libraries in 32bit
-binaries will fail. Hence, both libpocl and the opencl kerenls 
+binaries will fail. Hence, both libpocl and the opencl kernels
 must be of the same bitwidth.
 
 status
