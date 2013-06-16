@@ -81,6 +81,8 @@ GEN_PROTOTYPES (basic)
   0, /* image3d_max_width */						\
   0, /* image3d_max_height */						\
   0, /* image3d_max_depth */						\
+  0, /* image_max_buffer_size */					\
+  0, /* image_max_array_size */						\
   0, /* max_samplers */							\
   1024, /* max_parameter_size */						\
   0, /* mem_base_addr_align */						\

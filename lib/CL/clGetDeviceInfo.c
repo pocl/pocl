@@ -145,6 +145,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_height);
   case CL_DEVICE_IMAGE3D_MAX_DEPTH                 :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_depth);
+  case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE             :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image_max_buffer_size);
+  case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE              :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image_max_array_size);
   case CL_DEVICE_MAX_PARAMETER_SIZE                : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->max_parameter_size);
   case CL_DEVICE_MAX_SAMPLERS                      : 
