@@ -27,6 +27,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "pocl_image_util.h"
+
 #define COMMAND_LENGTH 2048
 
 /**
