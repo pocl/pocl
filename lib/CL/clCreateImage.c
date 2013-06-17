@@ -116,11 +116,11 @@ TYPE_SUPPORTED:
     size = image_desc->image_width * image_desc->image_height * elem_size * 
       channels;
     
-    if (host_ptr != NULL && row_pitch == 0)
+    if (row_pitch == 0)
       {
         row_pitch = image_desc->image_width * elem_size * channels;
       }
-    if (host_ptr != NULL && slice_pitch == 0)
+    if (slice_pitch == 0)
       {
         if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
             image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
@@ -129,7 +129,7 @@ TYPE_SUPPORTED:
           }
         if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
           {
-            slice_pitch = image_desc->image_height;
+            slice_pitch = row_pitch;
           }
       }
 
