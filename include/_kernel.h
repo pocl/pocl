@@ -197,7 +197,11 @@ _CL_STATIC_ASSERT(ulong16, sizeof(ulong16) == 16*sizeof(ulong));
 
 #ifdef cl_khr_fp16
 _CL_STATIC_ASSERT(half, sizeof(half) == 2);
-/* There are no vectors of type half */
+_CL_STATIC_ASSERT(half2 , sizeof(half2 ) == 2 *sizeof(half));
+_CL_STATIC_ASSERT(half3 , sizeof(half3 ) == 4 *sizeof(half));
+_CL_STATIC_ASSERT(half4 , sizeof(half4 ) == 4 *sizeof(half));
+_CL_STATIC_ASSERT(half8 , sizeof(half8 ) == 8 *sizeof(half));
+_CL_STATIC_ASSERT(half16, sizeof(half16) == 16*sizeof(half));
 #endif
 
 _CL_STATIC_ASSERT(float , sizeof(float ) == 4);

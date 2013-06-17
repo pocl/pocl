@@ -27,6 +27,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "pocl_image_util.h"
+
 #define COMMAND_LENGTH 2048
 
 /**
@@ -111,7 +113,7 @@ llvm_codegen (const char* tmpdir) {
 }
 
 /**
- * Populates the device spesific image data structure used by kernel 
+ * Populates the device specific image data structure used by kernel
  * from given kernel image argument
  */
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 

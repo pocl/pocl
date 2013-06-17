@@ -106,6 +106,12 @@ typedef float float16 __attribute__((__ext_vector_type__(16)));
 
 /* Image support */
 
+/* Starting from Clang 3.3 the image and sampler are detected
+   as opaque types by the frontend. In order to define
+   the default builtins we use C functions which require 
+   the typedefs to the actual underlying types. Clang 3.2
+   the typedefs throughout as the types are not detected
+   by the frontend. */
 #if !defined(_CL_HAS_IMAGE_ACCESS) || !defined(__OPENCL_VERSION__)
 typedef int sampler_t;
 typedef struct dev_image_t* image2d_t;

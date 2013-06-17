@@ -135,7 +135,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   /* Note: The specification describes identifiers being delimited by
      only a single space character. Some programs that check the device's
-     extension  string assume this rule. Future extenion additions should
+     extension  string assume this rule. Future extension additions should
      ensure that there is no more than a single space between
      identifiers. */
 

@@ -114,6 +114,7 @@ namespace llvm {
       else
         {
           assert (false && "Unsupported size_t width.");
+          return NULL;
         }
     }
 

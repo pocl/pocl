@@ -231,10 +231,13 @@ struct _cl_device_id {
   size_t image3d_max_width;
   size_t image3d_max_height;
   size_t image3d_max_depth;
+  size_t image_max_buffer_size;
+  size_t image_max_array_size;
   cl_uint max_samplers;
   size_t max_parameter_size;
   cl_uint mem_base_addr_align;
   cl_uint min_data_type_align_size;
+  cl_device_fp_config half_fp_config;
   cl_device_fp_config single_fp_config;
   cl_device_fp_config double_fp_config;
   cl_device_mem_cache_type global_mem_cache_type;
@@ -254,6 +257,8 @@ struct _cl_device_id {
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
+  cl_device_partition_property device_partition_properties[1];
+  size_t printf_buffer_size;
   char *short_name; 
   char *long_name; 
   char *vendor;
@@ -311,7 +316,7 @@ struct _cl_device_id {
 
     /* return supported image formats */
    cl_int (*get_supported_image_formats) (cl_mem_flags flags,
-                                          cl_image_format **image_formats, 
+                                          const cl_image_format **image_formats,
                                           cl_int *num_image_formats);
 
   void *data;
