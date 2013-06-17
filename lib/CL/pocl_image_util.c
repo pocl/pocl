@@ -74,8 +74,7 @@ pocl_write_image(cl_mem               image,
   if (image == NULL)
     return CL_INVALID_MEM_OBJECT;
 
-  if ((ptr == NULL) ||
-      (region_ == NULL))
+  if ((ptr == NULL) || (region == NULL) || origin == NULL)
     return CL_INVALID_VALUE;
     
   int width = image->image_width;
@@ -105,12 +104,13 @@ pocl_write_image(cl_mem               image,
        image_row_pitch * (tuned_region[1]-1) +
        image_slice_pitch * (tuned_region[2]-1) >= image->size))
     return CL_INVALID_VALUE;
-    
+  
+  /* old implementation  
   cl_float* temp = malloc (width*height*dev_channels*dev_elem_size);
-    
   if (temp == NULL) 
     return CL_OUT_OF_HOST_MEMORY;
-    
+  
+  
   int x, y, k;
     
   for (y=0; y<height; y++)
@@ -148,14 +148,14 @@ pocl_write_image(cl_mem               image,
             }
         }
     }
-  
-  device_id->write_rect(device_id->data, temp, 
+  */
+  device_id->write_rect(device_id->data, ptr, 
                         image->device_ptrs[device_id->dev_id],
                         tuned_origin, tuned_origin, tuned_region,
                         image_row_pitch, image_slice_pitch,
                         image_row_pitch, image_slice_pitch);
   
-  free (temp);
+  /*free (temp);*/
   return CL_SUCCESS;
 }
            

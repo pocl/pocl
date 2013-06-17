@@ -36,90 +36,90 @@ POname(clGetSupportedImageFormats) (cl_context           context,
 CL_API_SUFFIX__VERSION_1_0
 {
 
-    int i, j, k;
-    cl_device_id device_id;
-    cl_image_format **dev_image_formats = 0;
-    int *dev_num_image_formats = 0;
-    int errcode = 0;
+  int i, j, k;
+  cl_device_id device_id;
+  cl_image_format **dev_image_formats = 0;
+  int *dev_num_image_formats = 0;
+  int errcode = 0;
+  
+  cl_image_format reff;
+  cl_image_format toReff;
+  int reff_found;
+  int formatCount = 0;
+  
+  if (context == NULL && context->num_devices == 0)
+    return CL_INVALID_CONTEXT;
     
-    cl_image_format reff;
-    cl_image_format toReff;
-    int reff_found;
-    int formatCount = 0;
-    
-    if (context == NULL && context->num_devices == 0)
-      return CL_INVALID_CONTEXT;
-    
-    if (num_entries == 0 && image_formats != NULL)
-      return CL_INVALID_VALUE;
-    
-    dev_image_formats = calloc (context->num_devices, sizeof(cl_image_format*));
-    dev_num_image_formats = calloc (context->num_devices, sizeof(int));
-    
-    if (dev_image_formats == NULL || dev_num_image_formats == NULL)
-      return CL_OUT_OF_HOST_MEMORY;
+  if (num_entries == 0 && image_formats != NULL)
+    return CL_INVALID_VALUE;
+  
+  dev_image_formats = calloc (context->num_devices, sizeof(cl_image_format*));
+  dev_num_image_formats = calloc (context->num_devices, sizeof(int));
+  
+  if (dev_image_formats == NULL || dev_num_image_formats == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
 
-    /* get supported image formats from devices */
-    for (i = 0; i < context->num_devices; ++i)
-      {    
-        device_id = context->devices[i];
-        errcode = device_id->get_supported_image_formats 
-          (flags, &(dev_image_formats[i]), &dev_num_image_formats[i]);
-        
-        if (errcode != CL_SUCCESS)
-          goto CLEAN_MEM_AND_RETURN;
-                        
-        if (&dev_num_image_formats[i] == NULL)
-          goto CLEAN_MEM_AND_RETURN;
+  /* get supported image formats from devices */
+  for (i = 0; i < context->num_devices; ++i)
+    {    
+      device_id = context->devices[i];
+      errcode = device_id->get_supported_image_formats 
+        (flags, &(dev_image_formats[i]), &dev_num_image_formats[i]);
+      
+      if (errcode != CL_SUCCESS)
+        goto CLEAN_MEM_AND_RETURN;
+      
+      if (&dev_num_image_formats[i] == NULL)
+        goto CLEAN_MEM_AND_RETURN;
       }
-
-    
-    /* intersect of supported image formats. TODO: should be union but 
-       implementation does not support contexts where format is not supported 
-       by every device in context */ 
-    
-    /* compare device[0] formats to all other devices */
-    for (i = 0; i < dev_num_image_formats[0]; i++)
-      {
-        reff_found = 1; /* init */
-        reff = dev_image_formats[0][i];
-        
-        /* devices[1..*] */
-        for (j = 1; j < context->num_devices && reff_found; j++)
-          {
-            reff_found = 0;
-            /* sup. devices[j] image formats [0..*]   */
-            if (pocl_find_img_format (&reff, dev_image_formats[j], 
-                                      dev_num_image_formats[j]))
-              {
-                reff_found = 1;
-                continue;
-              }
-            break;
-          }
-        
-        if (reff_found)
-          { 
-            /* if we get here reff is part of intersect */ 
-            
-            /* if second call */
-            if (image_formats != NULL && formatCount <= num_entries)
-              image_formats[formatCount] = reff;
-            
-            ++formatCount;
-          }   
-      }
-
-    if (num_image_formats != NULL)
-      {
-        *num_image_formats = formatCount;
-      }
-    
-CLEAN_MEM_AND_RETURN:
-    free (dev_num_image_formats);
-    free (dev_image_formats);
-    return errcode;
-    
+  
+  
+  /* intersect of supported image formats. TODO: should be union but 
+     implementation does not support contexts where format is not supported 
+     by every device in context */ 
+  
+  /* compare device[0] formats to all other devices */
+  for (i = 0; i < dev_num_image_formats[0]; i++)
+    {
+      reff_found = 1; /* init */
+      reff = dev_image_formats[0][i];
+      
+      /* devices[1..*] */
+      for (j = 1; j < context->num_devices && reff_found; j++)
+        {
+          reff_found = 0;
+          /* sup. devices[j] image formats [0..*]   */
+          if (pocl_find_img_format (&reff, dev_image_formats[j], 
+                                    dev_num_image_formats[j]))
+            {
+              reff_found = 1;
+              continue;
+            }
+          break;
+        }
+      
+      if (reff_found)
+        { 
+          /* if we get here reff is part of intersect */ 
+          
+          /* if second call */
+          if (image_formats != NULL && formatCount <= num_entries)
+            image_formats[formatCount] = reff;
+          
+          ++formatCount;
+        }   
+    }
+  
+  if (num_image_formats != NULL)
+    {
+      *num_image_formats = formatCount;
+    }
+  
+ CLEAN_MEM_AND_RETURN:
+  free (dev_num_image_formats);
+  free (dev_image_formats);
+  return errcode;
+  
 } 
 POsym(clGetSupportedImageFormats)
 

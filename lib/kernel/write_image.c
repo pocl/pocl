@@ -28,8 +28,7 @@
 
 /* writes pixel to coord in image */
 void pocl_write_pixel (uint* color, dev_image_t* image, int4 coord)
-{
-  
+{  
   int i, idx;
   int width = image->width;
   int height = image->height;
@@ -58,7 +57,12 @@ void pocl_write_pixel (uint* color, dev_image_t* image, int4 coord)
 void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int2 coord, 
                                      uint4 color)
 {
-  pocl_write_pixel ((uint*)&color, (dev_image_t*)image, (int4)(coord, 0, 0));
+  int4 coord4;
+  coord4.x = coord.x;
+  coord4.y = coord.y;
+  coord4.z = 0;
+  coord4.w = 0;
+  pocl_write_pixel ((uint*)&color, (dev_image_t*)image, coord4);
 }
 
 void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int4 coord, 
