@@ -112,7 +112,7 @@ typedef float float16 __attribute__((__ext_vector_type__(16)));
    the typedefs to the actual underlying types. Clang 3.2
    the typedefs throughout as the types are not detected
    by the frontend. */
-#if !defined(_CL_HAS_IMAGE_ACCESS) || !defined(__OPENCL_VERSION__) || defined(POCL_C_BUILTIN)
+#if defined(POCL_C_BUILTIN)
 typedef int sampler_t;
 typedef struct dev_image_t* image2d_t;
 typedef struct dev_image_t* image3d_t;

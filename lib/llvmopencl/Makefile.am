@@ -29,12 +29,13 @@ AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION
 llvmopencl_la_LIBADD = -lLLVM-${LLVM_VERSION}
 
 llvmopencl_la_SOURCES = Barrier.h						\
+						ClangToPoclTypes.cc              \
                         BarrierBlock.h BarrierBlock.cc				\
                         Kernel.h Kernel.cc					\
                         ParallelRegion.h ParallelRegion.cc			\
                         CanonicalizeBarriers.h CanonicalizeBarriers.cc		\
                         LoopBarriers.h LoopBarriers.cc				\
-                        GenerateHeader.cc Workgroup.h Workgroup.cc				\
+                        GenerateHeader.cc Workgroup.h Workgroup.cc		\
 						BarrierTailReplication.h BarrierTailReplication.cc	\
                         Flatten.cc IsolateRegions.h IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \

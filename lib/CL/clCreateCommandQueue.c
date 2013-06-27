@@ -31,7 +31,7 @@ POname(clCreateCommandQueue)(cl_context context,
 {
   int i;
   int errcode;
-  cl_bool found;
+  cl_bool found = CL_FALSE;
 
   /* validate flags */
   if (properties > (1<<2)-1)
@@ -48,12 +48,15 @@ POname(clCreateCommandQueue)(cl_context context,
   }
 
   for (i=0; i<context->num_devices; i++)
-    if (context->devices[i] == device)
-      found = CL_TRUE;
+    {
+      if (context->devices[i] == device)
+        found = CL_TRUE;
+    }
 
   if (found == CL_FALSE)
   {
     errcode = CL_INVALID_DEVICE; 
+    goto ERROR;
   }
 
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));

@@ -21,88 +21,11 @@
    THE SOFTWARE.
 */
 
-#ifndef _CL_HAS_IMAGE_ACCESS
+/*#ifndef _CL_HAS_IMAGE_ACCESS*/
 
 #include "templates.h"
 #include "image.h"
-
-/* checks if coord is out of bounds. If out of bounds: Sets coord in bounds 
-   and returns false OR populates color with border colour and returns true.
-   If in bounds, returns false */
-int pocl_out_of_bounds (dev_image_t* image, int4 coord, 
-                        sampler_t sampler, uint4 *color)
-{
-  
-  if(sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
-    {
-      if (coord.x >= image->width)
-        coord.x = image->width-1;
-      if (coord.y >= image->height)
-        coord.y = image->height-1;
-      if (image->depth != 0 && coord.z >= image->depth)
-        coord.z = image->depth-1;
-
-      if (coord.x < 0)
-        coord.x = 0;
-      if (coord.y < 0) 
-        coord.y = 0;
-      if (image->depth != 0 && coord.z < 0)
-        coord.z = 0;
-
-      return 0;
-    }
-  if (sampler & CLK_ADDRESS_CLAMP)
-    {    
-      if(coord.x >= image->width || coord.x < 0 ||
-         coord.y >= image->height || coord.y < 0 ||
-         (image->depth != 0 && ( coord.z >= image->depth || coord.z < 0)))
-        {
-          (*color)[0] = 0;
-          (*color)[1] = 0;
-          (*color)[2] = 0;
-
-          if (image->order == CL_A || image->order == CL_INTENSITY || 
-              image->order == CL_RA || image->order == CL_ARGB || 
-              image->order == CL_BGRA || image->order == CL_RGBA)
-            (*color)[3] = 0;
-            
-          else
-            (*color)[3] = 1; 
-          
-          return 1;
-        }
-    }
-  return 0;
-}
-
-
-void pocl_read_pixel (uint* color, dev_image_t* image, int4 coord)
-{
-  int i, idx;
-  int width = image->width;
-  int height = image->height;
-  int num_channels = image->num_channels;
-  int elem_size = image->elem_size;
-
- 
-    
-  for (i = 0; i < num_channels; i++)
-    { 
-      idx = i + (coord.x + coord.y*width + coord.z*height*width) * num_channels;
-      if (elem_size == 1)
-        {
-          color[i] = ((uchar*)(image->data))[idx];
-        }
-      if (elem_size == 2)
-        {
-          color[i] = ((ushort*)image->data)[idx];
-        }
-      if (elem_size == 4)
-        {
-          color[i] = ((uint*)image->data)[idx];
-        }
-    }
-}
+#include "pocl_image_rw_utils.h"
 
 /* float functions: Not implemented
 
@@ -153,25 +76,40 @@ uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler,
   coord4.y = coord.y;
   coord4.z = 0;
   coord4.w = 0;
-  
-  if (pocl_out_of_bounds (image, coord4, sampler, &color))
+
+  if(coord.x == 0 && coord.y == 0)
+    printf("nolla koords \n");
+
+  if (pocl_out_of_bounds (&image, coord4, sampler, &color))
     {
       return color;
     }  
-  pocl_read_pixel ((uint*)&color, (dev_image_t*)image, coord4);
+  pocl_read_pixel ((uint*)&color, &image, coord4);
   
   return color;    
 }
 
-uint4 _CL_OVERLOADABLE read_imageui (dev_image_t* image, sampler_t sampler, 
+uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
                                      int4 coord)
 {
   uint4 color;
-  if (pocl_out_of_bounds(image, coord, sampler, &color))
+  if (pocl_out_of_bounds(&image, coord, sampler, &color))
     {
       return color;
     }  
-  pocl_read_pixel ((uint*)&color, (dev_image_t*)image, coord);
+  pocl_read_pixel ((uint*)&color, &image, coord);
+  return color;    
+}
+
+uint4 _CL_OVERLOADABLE read_imageui (image3d_t image, sampler_t sampler, 
+                                     int4 coord)
+{
+  uint4 color;
+  if (pocl_out_of_bounds(&image, coord, sampler, &color))
+    {
+      return color;
+    }  
+  pocl_read_pixel ((uint*)&color, &image, coord);
   return color;    
 }
 
@@ -184,14 +122,15 @@ int4 _CL_OVERLOADABLE read_imagei (image2d_array_t image, sampler_t sampler,
   coord4.y = coord.y;
   coord4.z = 0;
   coord4.w = 0;
-  if (pocl_out_of_bounds (image, coord4, sampler, (uint4*)&color))
+  
+  if (pocl_out_of_bounds (&image, coord4, sampler, &color))
     {
       return color;
     }  
-  pocl_read_pixel ((uint*)&color, (dev_image_t*)image, coord4);
+  pocl_read_pixel ((uint*)&color, &image, coord4);
   return color;
 }
 
 
-#endif
+/*#endif*/
 

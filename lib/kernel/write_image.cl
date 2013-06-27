@@ -21,40 +21,41 @@
    THE SOFTWARE.
 */
 
-#ifndef _CL_HAS_IMAGE_ACCESS
+/*#ifndef _CL_HAS_IMAGE_ACCESS*/
 
 #include "templates.h"
 #include "image.h"
 
 /* writes pixel to coord in image */
-void pocl_write_pixel (uint* color, dev_image_t* image, int4 coord)
+void pocl_write_pixel (uint* color, void* image, int4 coord)
 {  
+  dev_image_t* dev_image = *((dev_image_t**)image);
   int i, idx;
-  int width = image->width;
-  int height = image->height;
-  int num_channels = image->num_channels;
-  int elem_size = image->elem_size;
-  
+  int width = dev_image->width;
+  int height = dev_image->height;
+  int num_channels = dev_image->num_channels;
+  int elem_size = dev_image->elem_size;
+
   for (i = 0; i < num_channels; i++)
     {
       idx = i + (coord.x + coord.y*width + coord.z*height*width)*num_channels;
       if (elem_size == 1)
         {
-          ((uchar*)image->data)[idx] = color[i];          
+          ((uchar*)dev_image->data)[idx] = color[i];          
         }
       if (elem_size == 2)
         {
-          ((ushort*)image->data)[idx] = color[i];
+          ((ushort*)dev_image->data)[idx] = color[i];
         }
       if (elem_size == 4)
         {
-          ((uint*)image->data)[idx] = color[i];
+          ((uint*)dev_image->data)[idx] = color[i];
         }
     }
 }
 
 
-void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int2 coord, 
+void _CL_OVERLOADABLE write_imageui (image2d_t image, int2 coord, 
                                      uint4 color)
 {
   int4 coord4;
@@ -62,13 +63,13 @@ void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int2 coord,
   coord4.y = coord.y;
   coord4.z = 0;
   coord4.w = 0;
-  pocl_write_pixel ((uint*)&color, (dev_image_t*)image, coord4);
+  pocl_write_pixel ((uint*)&color, &image, coord4);
 }
 
-void _CL_OVERLOADABLE write_imageui (dev_image_t* image, int4 coord, 
+void _CL_OVERLOADABLE write_imageui (image2d_t image, int4 coord, 
                                      uint4 color)
 {
-  pocl_write_pixel ((uint*)&color, (dev_image_t*)image, coord);
+  pocl_write_pixel ((uint*)&color, &image, coord);
 }
 
 /* Not implemented yet
@@ -155,4 +156,4 @@ void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
 
 */
 
-#endif
+/*#endif*/

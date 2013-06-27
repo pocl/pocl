@@ -131,5 +131,4 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
   pocl_get_image_information (mem->image_channel_order,
                               mem->image_channel_data_type, &(di->num_channels),
                               &(di->elem_size));
-
 }
