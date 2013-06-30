@@ -99,10 +99,12 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   if (arch == "x86_64") {
     /* For x86_64 the default isel seems to work with the
-       fake address spaces. We could skip the processing,
-       but let's do it for now to get it some regular testing. */
-    //return false; 
+       fake address spaces. Skip the processing as it causes 
+       an overhead and is not fully implemented.
+    */
+    return false; 
   } else if (arch == "tce") {
+    /* TCE requires the remapping. */
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
     addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] = 4;
     /* LLVM 3.2 detects 'constant' as cuda_constant (5) in the fake
