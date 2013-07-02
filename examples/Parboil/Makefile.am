@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+EXTRA_DIST = *.patch
+
 if TEST_SUITE_PARBOIL
 
 testsuite_pocl_dir=${abs_top_srcdir}/examples/Parboil
