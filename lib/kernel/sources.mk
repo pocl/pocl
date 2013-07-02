@@ -183,8 +183,7 @@ LKERNEL_SRCS_DEFAULT= \
 	read_image.cl				\
 	write_image.cl		 		\
 	get_image_width.cl			\
-	get_image_height.cl			\
-	pocl_image_rw_utils.c 
+	get_image_height.cl
 
 # The standard list of kernel sources can be modified with
 # EXCLUDE_SRC_FILES, which removes files from the standard list, and

@@ -21,15 +21,15 @@
    THE SOFTWARE.
 */
 
-/*#ifndef _CL_HAS_IMAGE_ACCESS*/
-
 #include "templates.h"
 #include "image.h"
+#include "pocl_image_rw_utils.h"
 
 /* writes pixel to coord in image */
-void pocl_write_pixel (uint* color, void* image, int4 coord)
+void pocl_write_pixel (void* color_, void* image, int4 coord)
 {  
   dev_image_t* dev_image = *((dev_image_t**)image);
+  uint4 *color = (uint4*)color_;
   int i, idx;
   int width = dev_image->width;
   int height = dev_image->height;
@@ -41,36 +41,36 @@ void pocl_write_pixel (uint* color, void* image, int4 coord)
       idx = i + (coord.x + coord.y*width + coord.z*height*width)*num_channels;
       if (elem_size == 1)
         {
-          ((uchar*)dev_image->data)[idx] = color[i];          
+          ((uchar*)dev_image->data)[idx] = (*color)[i];          
         }
       if (elem_size == 2)
         {
-          ((ushort*)dev_image->data)[idx] = color[i];
+          ((ushort*)dev_image->data)[idx] = (*color)[i];
         }
       if (elem_size == 4)
         {
-          ((uint*)dev_image->data)[idx] = color[i];
+          ((uint*)dev_image->data)[idx] = (*color)[i];
         }
     }
 }
 
+/* Implementation for write_image with any image data type and int coordinates 
+   __IMGTYPE__ = image type (image2d_t, ...)
+   __DTYPE__  = data type to be read (int4 or uint4 float4)
+   __POSTFIX__ = function name postfix (i, ui, f)
+   __COORD__   = coordinate type (int, int2, int4)
+*/
+#define IMPLEMENTATION_WRITE_IMAGE_INT_COORD(__IMGTYPE__,__DTYPE__,__POSTFIX__,__COORD__)\
+  void _CL_OVERLOADABLE write_image##__POSTFIX__ (__IMGTYPE__ image,    \
+                                                  __COORD__ coord,      \
+                                                  __DTYPE__ color)      \
+  {                                                                     \
+  int4 coord4;                                                          \
+  INITCOORD##__COORD__(coord4, coord);                                  \
+  pocl_write_pixel (&color, &image, coord4);                             \
+  }                                                                     \
 
-void _CL_OVERLOADABLE write_imageui (image2d_t image, int2 coord, 
-                                     uint4 color)
-{
-  int4 coord4;
-  coord4.x = coord.x;
-  coord4.y = coord.y;
-  coord4.z = 0;
-  coord4.w = 0;
-  pocl_write_pixel ((uint*)&color, &image, coord4);
-}
-
-void _CL_OVERLOADABLE write_imageui (image2d_t image, int4 coord, 
-                                     uint4 color)
-{
-  pocl_write_pixel ((uint*)&color, &image, coord);
-}
+IMPLEMENTATION_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
 
 /* Not implemented yet
 
@@ -156,4 +156,4 @@ void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
 
 */
 
-/*#endif*/
+

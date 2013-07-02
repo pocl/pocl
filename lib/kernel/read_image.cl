@@ -21,116 +21,121 @@
    THE SOFTWARE.
 */
 
-/*#ifndef _CL_HAS_IMAGE_ACCESS*/
-
 #include "templates.h"
 #include "image.h"
 #include "pocl_image_rw_utils.h"
 
-/* float functions: Not implemented
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
-                                     int2 coord) 
-{ 
-
+/* checks if integer coord is out of bounds. If out of bounds: Sets coord in 
+   bounds and returns false OR populates color with border colour and returns 
+   true. If in bounds, returns false */
+int pocl_out_of_bounds (void* image, int4 coord, 
+                        void* sampler, void *color_)
+{
+  dev_image_t* dev_image = *((dev_image_t**)image);
+  dev_sampler_t* dev_sampler = (dev_sampler_t*)sampler;
+  uint4 *color = (uint4*)color_;
+  if(*dev_sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
+    {
+      if (coord.x >= dev_image->width)
+        coord.x = dev_image->width-1;
+      if (dev_image->height != 0 && coord.y >= dev_image->height)
+        coord.y = dev_image->height-1;
+      if (dev_image->depth != 0 && coord.z >= dev_image->depth)
+        coord.z = dev_image->depth-1;
+      
+      if (coord.x < 0)
+        coord.x = 0;
+      if (coord.y < 0) 
+        coord.y = 0;
+      if (coord.z < 0)
+        coord.z = 0;
+      
+      return 0;
+    }
+  if (*dev_sampler & CLK_ADDRESS_CLAMP)
+    {    
+      if(coord.x >= dev_image->width || coord.x < 0 ||
+         coord.y >= dev_image->height || coord.y < 0 ||
+         (dev_image->depth != 0 && (coord.z >= dev_image->depth || coord.z <0)))
+        {
+          (*color)[0] = 0;
+          (*color)[1] = 0;
+          (*color)[2] = 0;
+          
+          if (dev_image->order == CL_A || dev_image->order == CL_INTENSITY || 
+              dev_image->order == CL_RA || dev_image->order == CL_ARGB || 
+              dev_image->order == CL_BGRA || dev_image->order == CL_RGBA)
+            (*color)[3] = 0;
+            
+          else
+            (*color)[3] = 1; 
+          
+          return 1;
+        }
+    }
+  return 0;
 }
 
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
-                                     float2 coord) 
+/* Reads a four element pixel from image pointed by integer coords. */
+void pocl_read_pixel (void* color_, void* image, int4 coord)
 {
 
+  dev_image_t* dev_image = *((dev_image_t**)image);
+  uint4* color = (uint4*)color_;
+  int i, idx;
+  int width = dev_image->width;
+  int height = dev_image->height;
+  int num_channels = dev_image->num_channels;
+  int elem_size = dev_image->elem_size; 
+  
+  for (i = 0; i < num_channels; i++)
+    { 
+      idx = i + (coord.x + coord.y*width + coord.z*height*width) * num_channels;
+      if (elem_size == 1)
+        {
+          (*color)[i] = ((uchar*)(dev_image->data))[idx];
+        }
+      if (elem_size == 2)
+        {
+          (*color)[i] = ((ushort*)(dev_image->data))[idx];
+        }
+      if (elem_size == 4)
+        {
+          (*color)[i] = ((uint*)(dev_image->data))[idx];
+        }
+    }
 }
 
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image, int2 coord) {
-             
-}
 
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, int4 coord) 
-{
-       
-}
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, 
-                                     sampler_t sampler, int4 coord) 
-{
-       
-}
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, 
-                                     sampler_t sampler, float4 coord) 
-{
-
-}
-
+/* Implementation for read_image with any image data type and int coordinates 
+   __IMGTYPE__ = image type (image2d_t, ...)
+   __RETVAL__  = return value (int4 or uint4 float4)
+   __POSTFIX__ = function name postfix (i, ui, f)
+   __COORD__   = coordinate type (int, int2, int4)
 */
-
-/* int functions */
-
-uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
-                                     int2 coord)
-{
-  uint4 color;
-  int4 coord4;
-  coord4.x = coord.x;
-  coord4.y = coord.y;
-  coord4.z = 0;
-  coord4.w = 0;
-
-  if(coord.x == 0 && coord.y == 0)
-    printf("nolla koords \n");
-
-  if (pocl_out_of_bounds (&image, coord4, sampler, &color))
-    {
-      return color;
-    }  
-  pocl_read_pixel ((uint*)&color, &image, coord4);
+#define IMPLEMENTATION_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
+                                            __COORD__)                  \
+  __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
+                                                       sampler_t sampler, \
+                                                       __COORD__ coord) \
+  {                                                                     \
+    __RETVAL__ color;                                                   \
+    int4 coord4;                                                        \
+    INITCOORD##__COORD__(coord4, coord);                                \
+    if (pocl_out_of_bounds (&image, coord4, &sampler, &color))          \
+      {                                                                 \
+        return color;                                                   \
+      }                                                                 \
+    pocl_read_pixel (&color, &image, coord4);                           \
+                                                                        \
+    return color;                                                       \
+  }                                                                     \
   
-  return color;    
-}
 
-uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
-                                     int4 coord)
-{
-  uint4 color;
-  if (pocl_out_of_bounds(&image, coord, sampler, &color))
-    {
-      return color;
-    }  
-  pocl_read_pixel ((uint*)&color, &image, coord);
-  return color;    
-}
-
-uint4 _CL_OVERLOADABLE read_imageui (image3d_t image, sampler_t sampler, 
-                                     int4 coord)
-{
-  uint4 color;
-  if (pocl_out_of_bounds(&image, coord, sampler, &color))
-    {
-      return color;
-    }  
-  pocl_read_pixel ((uint*)&color, &image, coord);
-  return color;    
-}
-
-int4 _CL_OVERLOADABLE read_imagei (image2d_array_t image, sampler_t sampler, 
-                                   int2 coord)
-{
-  int4 color;
-  int4 coord4;
-  coord4.x = coord.x;
-  coord4.y = coord.y;
-  coord4.z = 0;
-  coord4.w = 0;
-  
-  if (pocl_out_of_bounds (&image, coord4, sampler, &color))
-    {
-      return color;
-    }  
-  pocl_read_pixel ((uint*)&color, &image, coord4);
-  return color;
-}
-
+/* read_image function instantions */
+IMPLEMENTATION_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
+IMPLEMENTATION_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
+IMPLEMENTATION_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
 
 /*#endif*/
 

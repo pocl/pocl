@@ -150,6 +150,9 @@ TYPE_SUPPORTED:
     mem->image_slice_pitch = slice_pitch;
     mem->image_channel_data_type = image_format->image_channel_data_type;
     mem->image_channel_order = image_format->image_channel_order;
+    mem->num_mip_levels = image_desc->num_mip_levels;
+    mem->num_samples = image_desc->num_samples;
+    mem->buffer = image_desc->buffer;
 
 #if 0
     printf("mem_image_width %d\n", mem->image_width);

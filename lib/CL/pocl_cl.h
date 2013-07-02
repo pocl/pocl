@@ -396,6 +396,9 @@ struct _cl_mem {
   size_t                  image_array_size;
   size_t                  image_row_pitch;
   size_t                  image_slice_pitch;
+  cl_uint                 num_mip_levels;
+  cl_uint                 num_samples;
+  cl_mem                  buffer;
 };
 
 struct _cl_program {
