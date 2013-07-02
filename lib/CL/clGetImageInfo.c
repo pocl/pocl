@@ -22,14 +22,14 @@ POname(clGetImageInfo)(cl_mem            image ,
                        size_t *          param_value_size_ret ) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  cl_image_format x = {image->image_channel_order, 
-                       image->image_channel_data_type};
+  cl_image_format image_format = {image->image_channel_order, 
+                                  image->image_channel_data_type};
   size_t elem_size;
   size_t num_channels;
   switch (param_name)
     {
     case CL_IMAGE_FORMAT:
-      POCL_RETURN_IMAGE_INFO (cl_image_format, x);
+      POCL_RETURN_IMAGE_INFO (cl_image_format, image_format);
     case CL_IMAGE_ELEMENT_SIZE:
       pocl_get_image_information (image->image_channel_order, 
                                   image->image_channel_data_type, 

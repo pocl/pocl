@@ -77,7 +77,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clGetDeviceInfo.c		\
                    clCreateContext.c		\
                    clGetProgramBuildInfo.c	\
-				   clEnqueueWriteBuffer.c	\
+                   clEnqueueWriteBuffer.c	\
                    clEnqueueWriteBufferRect.c	\
                    clEnqueueCopyBuffer.c	\
                    clEnqueueCopyBufferRect.c	\

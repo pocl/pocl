@@ -106,11 +106,11 @@ pocl_write_image(cl_mem               image,
        image_slice_pitch * (tuned_region[2]-1) >= image->size))
     return CL_INVALID_VALUE;
   
-  device_id->write_rect(device_id->data, ptr, 
-                        image->device_ptrs[device_id->dev_id],
-                        tuned_origin, tuned_origin, tuned_region,
-                        image_row_pitch, image_slice_pitch,
-                        image_row_pitch, image_slice_pitch);
+  device_id->write_rect (device_id->data, ptr, 
+                         image->device_ptrs[device_id->dev_id],
+                         tuned_origin, tuned_origin, tuned_region,
+                         image_row_pitch, image_slice_pitch,
+                         image_row_pitch, image_slice_pitch);
   
   
   return CL_SUCCESS;
@@ -164,11 +164,6 @@ pocl_read_image(cl_mem               image,
   if (image->type != CL_MEM_OBJECT_IMAGE3D && region[2] != 1)
     return CL_INVALID_VALUE;
   
-  int i, j, k;
-  
-  cl_channel_order order = image->image_channel_order;
-  cl_channel_type type = image->image_channel_data_type;
-    
   device_id->read_rect(device_id->data, ptr, 
                        image->device_ptrs[device_id->dev_id],
                        tuned_origin, tuned_origin, tuned_region,

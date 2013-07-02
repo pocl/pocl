@@ -57,6 +57,9 @@ POname(clBuildProgram)(cl_program program,
   char *pocl_build_script;
   int device_i = 0;
   const char *user_options = "";
+  char *temp_options;
+  char *modded_options;
+  char *token;
 
   if (program == NULL)
   {
@@ -78,8 +81,21 @@ POname(clBuildProgram)(cl_program program,
 
   if (options != NULL)
     {
-      user_options = options;
-      program->compiler_options = strdup(options);
+      modded_options = calloc(512, 1);
+      temp_options = calloc (strlen (options)+1, 1);
+      token = strtok (temp_options, " ");
+      while (token != NULL)
+        {
+          if (strstr(token, "-cl"))
+            strcat(modded_options, "-Xclang ");
+          strcat(modded_options, token);
+          strcat(modded_options, " ");
+          token = strtok (NULL, " ");
+        }
+      free (temp_options);
+      
+      user_options = modded_options;
+      program->compiler_options = strdup(modded_options);
     }
   else
     {
@@ -283,6 +299,7 @@ ERROR_CLEAN_PROGRAM:
   program->binaries = NULL;
   free(program->binary_sizes);
   program->binary_sizes = NULL;
+  free (modded_options);
 ERROR:
   return errcode;
 }

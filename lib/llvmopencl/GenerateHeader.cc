@@ -209,12 +209,13 @@ GenerateHeader::ProcessPointers(Function *F,
     if (t->isPointerTy()) {
       if (t->getPointerElementType()->isStructTy()) {
         string name = t->getPointerElementType()->getStructName().str();
-        if (name == "opencl.image2d_t" || name == "opencl.image3d_t") {
+        if (name == "opencl.image2d_t" || name == "opencl.image3d_t" || 
+            name == "opencl.image1d_t") {
           is_image[i] = true;
           is_pointer[i] = false;
           is_local[i] = false;
         }
-        if (name == "struct.sampler_t_") {
+        if (name == "opencl.sampler_t_") {
           is_sampler[i] = true;
           is_pointer[i] = false;
           is_local[i] = false;

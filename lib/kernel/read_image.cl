@@ -77,11 +77,11 @@ int pocl_out_of_bounds (void* image, int4 coord,
 }
 
 /* Reads a four element pixel from image pointed by integer coords. */
-void pocl_read_pixel (void* color_, void* image, int4 coord)
+void pocl_read_pixel (void* color, void* image, int4 coord)
 {
 
   dev_image_t* dev_image = *((dev_image_t**)image);
-  uint4* color = (uint4*)color_;
+  uint4* color_ptr = (uint4*)color;
   int i, idx;
   int width = dev_image->width;
   int height = dev_image->height;
@@ -93,15 +93,15 @@ void pocl_read_pixel (void* color_, void* image, int4 coord)
       idx = i + (coord.x + coord.y*width + coord.z*height*width) * num_channels;
       if (elem_size == 1)
         {
-          (*color)[i] = ((uchar*)(dev_image->data))[idx];
+          (*color_ptr)[i] = ((uchar*)(dev_image->data))[idx];
         }
       if (elem_size == 2)
         {
-          (*color)[i] = ((ushort*)(dev_image->data))[idx];
+          (*color_ptr)[i] = ((ushort*)(dev_image->data))[idx];
         }
       if (elem_size == 4)
         {
-          (*color)[i] = ((uint*)(dev_image->data))[idx];
+          (*color_ptr)[i] = ((uint*)(dev_image->data))[idx];
         }
     }
 }
@@ -113,7 +113,7 @@ void pocl_read_pixel (void* color_, void* image, int4 coord)
    __POSTFIX__ = function name postfix (i, ui, f)
    __COORD__   = coordinate type (int, int2, int4)
 */
-#define IMPLEMENTATION_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
+#define IMPLEMENT_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
                                             __COORD__)                  \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
                                                        sampler_t sampler, \
@@ -133,9 +133,9 @@ void pocl_read_pixel (void* color_, void* image, int4 coord)
   
 
 /* read_image function instantions */
-IMPLEMENTATION_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
-IMPLEMENTATION_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
-IMPLEMENTATION_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
 
 /*#endif*/
 

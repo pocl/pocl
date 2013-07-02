@@ -60,7 +60,8 @@ void pocl_write_pixel (void* color_, void* image, int4 coord)
    __POSTFIX__ = function name postfix (i, ui, f)
    __COORD__   = coordinate type (int, int2, int4)
 */
-#define IMPLEMENTATION_WRITE_IMAGE_INT_COORD(__IMGTYPE__,__DTYPE__,__POSTFIX__,__COORD__)\
+#define IMPLEMENT_WRITE_IMAGE_INT_COORD(__IMGTYPE__,__DTYPE__,__POSTFIX__, \
+                                        __COORD__)                      \
   void _CL_OVERLOADABLE write_image##__POSTFIX__ (__IMGTYPE__ image,    \
                                                   __COORD__ coord,      \
                                                   __DTYPE__ color)      \
@@ -70,7 +71,7 @@ void pocl_write_pixel (void* color_, void* image, int4 coord)
   pocl_write_pixel (&color, &image, coord4);                             \
   }                                                                     \
 
-IMPLEMENTATION_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
+IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
 
 
 
