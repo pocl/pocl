@@ -34,11 +34,13 @@
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
-               cl_uint num_devices,
-               const cl_device_id *device_list,
-               const char *options,
-               void (CL_CALLBACK *pfn_notify)(cl_program program, void *user_data),
-               void *user_data) CL_API_SUFFIX__VERSION_1_0
+                       cl_uint num_devices,
+                       const cl_device_id *device_list,
+                       const char *options,
+                       void (CL_CALLBACK *pfn_notify) (cl_program program, 
+                                                       void *user_data),
+                       void *user_data) 
+CL_API_SUFFIX__VERSION_1_0
 {
   char tmpdir[POCL_FILENAME_LENGTH];
   char device_tmpdir[POCL_FILENAME_LENGTH];
@@ -60,6 +62,7 @@ POname(clBuildProgram)(cl_program program,
   char *temp_options;
   char *modded_options;
   char *token;
+  char *saveptr;
 
   if (program == NULL)
   {
@@ -81,21 +84,21 @@ POname(clBuildProgram)(cl_program program,
 
   if (options != NULL)
     {
-      modded_options = calloc(512, 1);
-      temp_options = calloc (strlen (options)+1, 1);
-      token = strtok (temp_options, " ");
+      modded_options = calloc (512, 1);
+      temp_options = strdup (options);
+      token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
         {
           if (strstr(token, "-cl"))
             strcat(modded_options, "-Xclang ");
           strcat(modded_options, token);
           strcat(modded_options, " ");
-          token = strtok (NULL, " ");
+          token = strtok_r (NULL, " ", &saveptr);
         }
       free (temp_options);
       
       user_options = modded_options;
-      program->compiler_options = strdup(modded_options);
+      program->compiler_options = strdup (modded_options);
     }
   else
     {
