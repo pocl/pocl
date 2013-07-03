@@ -24,7 +24,4 @@
 
 #include "templates.h"
 
-#define __builtin_isnotequalf(a, b) (a != b)
-#define __builtin_isnotequal(a, b)  (a != b)
-
-DEFINE_BUILTIN_J_VV(isnotequal)
+DEFINE_EXPR_J_VV(isequal, a!=b)

@@ -26,4 +26,4 @@
 
 #define __builtin_isinff __builtin_isinf
 
-DEFINE_BUILTIN_J_V(isinf)
+DEFINE_BUILTIN_L_V(isinf)

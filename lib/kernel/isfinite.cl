@@ -26,4 +26,4 @@
 
 #define __builtin_isfinitef __builtin_isfinite
 
-DEFINE_BUILTIN_J_V(isfinite)
+DEFINE_BUILTIN_L_V(isfinite)
