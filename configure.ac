@@ -319,6 +319,18 @@ fi
 
 
 AC_SUBST([POAT_TESTSUITES])
+
+#Temporary option to enable the switch from scripts to llvm API build
+use_llvm_api="no"
+AC_ARG_ENABLE([llvmapi],
+              [AS_HELP_STRING([--enable-llvmapi], [Use LLVM via API, not scripts. (work in progress - do not use!)])],
+              [use_llvm_api="yes"])
+if test "$use_llvm_api" = "yes"; then
+  AC_DEFINE([USE_LLVM_API], [1], "Use LLVM via API, rather than scripts")
+fi
+AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
+
+
 ####################################################################
 
 # Option to build as an ICD
