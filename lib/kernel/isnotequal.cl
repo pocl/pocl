@@ -24,4 +24,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_J_VV(isequal, a!=b)
+DEFINE_EXPR_J_VV(isnotequal, a!=b)

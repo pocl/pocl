@@ -24,4 +24,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_J_VV(islessequal, a<b || a>b)
+DEFINE_EXPR_J_VV(islessgreater, a<b || a>b)
