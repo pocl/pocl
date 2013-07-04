@@ -1,4 +1,4 @@
-/* OpenCL built-in library: max()
+/* OpenCL built-in library: min()
 
    Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
                       Perimeter Institute for Theoretical Physics
@@ -24,6 +24,5 @@
 
 #include "templates.h"
 
-// Note: max() has no special semantics for inf/nan, even if fmax does
-DEFINE_EXPR_V_VV(max, select(b, a, (jtype)(a>=b)))
-DEFINE_EXPR_V_VS(max, max(a, (vtype)b))
+DEFINE_EXPR_G_GG(min, a<=b ? a : b)
+DEFINE_EXPR_G_GS(min, min(a, (gtype)b))
