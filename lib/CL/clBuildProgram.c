@@ -29,6 +29,20 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+/* supported compiler parameters */
+static char cl_parameters[] = 
+  "-cl-single-precision-constant "
+  "-cl-denorms-are-zero "
+  "-cl-fp32-correctly-rounded-divide-sqrt "
+  "-cl-opt-disable "
+  "-cl-mad-enable "
+  "-cl-no-signed-zeros "
+  "-cl-unsafe-math-optimizations "
+  "-cl-finite-math-only "
+  "-cl-fast-relaxed-math "
+  "-cl-std= "
+  "-cl-kernel-arg-info";
+
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 #define COMMAND_LENGTH 4096
 
@@ -89,11 +103,20 @@ CL_API_SUFFIX__VERSION_1_0
       token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
         {
-          if (strstr(token, "-cl"))
-            strcat(modded_options, "-Xclang ");
+          /* check if parameter is supported compiler parameter */
+          if (strstr (token, "-cl"))
+            {
+              if (strstr(cl_parameters, token) || strstr (token, "-cl-std="))
+                strcat(modded_options, "-Xclang ");
+              else
+                {
+                  errcode = CL_INVALID_BUILD_OPTIONS;
+                  goto ERROR_CLEAN_OPTIONS;
+                }
+            }    
           strcat(modded_options, token);
           strcat(modded_options, " ");
-          token = strtok_r (NULL, " ", &saveptr);
+          token = strtok_r (NULL, " ", &saveptr);  
         }
       free (temp_options);
       
@@ -302,6 +325,7 @@ ERROR_CLEAN_PROGRAM:
   program->binaries = NULL;
   free(program->binary_sizes);
   program->binary_sizes = NULL;
+ERROR_CLEAN_OPTIONS:
   free (modded_options);
 ERROR:
   return errcode;

@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_image_util.h"
 #include "utlist.h"
 #include "clEnqueueMapBuffer.h"
 
@@ -101,13 +102,26 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           free (node->command.run.tmp_dir);
           for (i = 0; i < node->command.run.kernel->num_args + 
                  node->command.run.kernel->num_locals; ++i)
-          {
-            pocl_aligned_free (node->command.run.arguments[i].value);
-          }
+            {
+              pocl_aligned_free (node->command.run.arguments[i].value);
+            }
           free (node->command.run.arguments);
           
           POname(clReleaseKernel)(node->command.run.kernel);
-          break;  
+          break;
+        case CL_COMMAND_FILL_IMAGE:
+          {
+            POCL_UPDATE_EVENT_SUBMITTED;
+            POCL_UPDATE_EVENT_RUNNING;
+            pocl_write_image (node->command.fill_image.data, 
+                              node->command.fill_image.host_ptr,
+                              node->command.fill_image.device_ptr,
+                              node->command.fill_image.origin, 
+                              node->command.fill_image.region,
+                              node->command.fill_image.rowpitch, 
+                              node->command.fill_image.slicepitch);
+            POCL_UPDATE_EVENT_COMPLETE;
+          }
         case CL_COMMAND_MARKER:
           POCL_UPDATE_EVENT_COMPLETE;
           break;

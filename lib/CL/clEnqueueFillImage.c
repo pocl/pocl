@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 #include "pocl_cl.h"
-
+#include "utlist.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueFillImage)(cl_command_queue  command_queue,
@@ -38,6 +38,7 @@ CL_API_SUFFIX__VERSION_1_2
   int num_entries = 0;
   cl_image_format *supported_image_formats;
   int i;
+  void *fill_ptr;
  
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -108,12 +109,41 @@ CL_API_SUFFIX__VERSION_1_2
           goto TYPE_SUPPORTED;
         }
     }
-  
   errcode = CL_INVALID_VALUE;
   goto ERROR_CLEAN;
 
  TYPE_SUPPORTED: 
+  
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc (sizeof(struct _cl_event));
+      if (event == NULL)
+        {
+          errcode = CL_OUT_OF_HOST_MEMORY;
+          goto ERROR_CLEAN;
+        }
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POname(clRetainCommandQueue) (command_queue);
+      (*event)->command_type = CL_COMMAND_FILL_IMAGE;
+      POCL_UPDATE_EVENT_QUEUED;
+    }
 
+  _cl_command_node *cmd = malloc (sizeof(_cl_command_node));
+  if (cmd == NULL)
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR_CLEAN;
+    }
+
+  cmd->command.fill_image.data = command_queue->device->data;
+  cmd->command.fill_image.host_ptr = fill_ptr;
+  cmd->command.fill_image.device_ptr = 
+    image->device_ptrs[command_queue->device->dev_id];
+  cmd->command.fill_image.origin = origin;
+  cmd->command.fill_image.region = region;
+  cmd->command.fill_image.rowpitch = image->image_row_pitch;
+  cmd->command.fill_image.slicepitch = image->image_slice_pitch;
   
 
  ERROR_CLEAN:

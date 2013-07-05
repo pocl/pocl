@@ -35,7 +35,8 @@ POname(clEnqueueCopyBuffer)(cl_command_queue command_queue,
                     size_t cb, 
                     cl_uint num_events_in_wait_list,
                     const cl_event *event_wait_list,
-                    cl_event *event) CL_API_SUFFIX__VERSION_1_0
+                    cl_event *event) 
+CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;

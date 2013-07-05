@@ -74,7 +74,6 @@ pocl_write_image(cl_mem               image,
   if (image == NULL)
     return CL_INVALID_MEM_OBJECT;
 
-
   if ((ptr == NULL) || (region == NULL) || origin == NULL)
     return CL_INVALID_VALUE;
     
