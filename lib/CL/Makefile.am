@@ -143,11 +143,36 @@ if BUILD_SPU
 libpocl_la_LIBADD += -lspe2
 endif
 
-if ! BUILD_ICD
+if USE_LLVM_API
+#Kludge: compile pocl_llvm_api.cc into a library of its own.
+#The source file is necessarely a C++ file, and having a C++ file
+#causes the entire pocl project to be linked with g++, which in turn
+#exposes a gcc/autoconf m4 macro issue
+# see: http://stackoverflow.com/questions/17055279/autotools-for-pthreads-not-setting-correct-linker-flags
+noinst_LIBRARIES = libpoclllvm.a
 
+#FIXME: make libpocl depend on this source!
+libpoclllvm_a_SOURCES = pocl_llvm_api.cc
+#poclllvm_a_LIBADD = ${top_builddir}/lib/llvmopencl/libllvmpasses.a
+libpoclllvm_a_CPPFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
+libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags`
+AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags`
+
+libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/
+#TODO: this doesn't seem to add libpoclllvm as a "dependency" build for libpocl.la
+libpocl_la_LIBADD += -lpoclllvm
+libpocl_la_LIBADD += -lLLVM-${LLVM_VERSION}
+libpocl_la_LIBADD += -lclangFrontend -lclangLex -lclangSema -lclangSerialization
+libpocl_la_LIBADD += -lclangEdit -lclangParse -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
+libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangARCMigrate -lclangStaticAnalyzerCore
+libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
+else
+libpocl_la_SOURCES += pocl_llvm.c
+endif
+
+if ! BUILD_ICD
 libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}
 libOpenCL_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
 libOpenCL_la_LDFLAGS = ${libpocl_la_LDFLAGS}
 libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
-
 endif

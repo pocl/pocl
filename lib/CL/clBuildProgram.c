@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include "pocl_llvm.h"
 
 /* supported compiler parameters */
 static char cl_parameters[] = 
@@ -40,8 +41,10 @@ static char cl_parameters[] =
   "-cl-unsafe-math-optimizations "
   "-cl-finite-math-only "
   "-cl-fast-relaxed-math "
-  "-cl-std= "
-  "-cl-kernel-arg-info";
+  "-cl-std=CL1.2 "
+  "-cl-std=CL1.1 "
+  "-cl-kernel-arg-info "
+  "-cl-strict-aliasing";
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 #define COMMAND_LENGTH 4096
@@ -106,16 +109,16 @@ CL_API_SUFFIX__VERSION_1_0
           /* check if parameter is supported compiler parameter */
           if (strstr (token, "-cl"))
             {
-              if (strstr(cl_parameters, token) || strstr (token, "-cl-std="))
-                strcat(modded_options, "-Xclang ");
+              if (strstr (cl_parameters, token))
+                strcat (modded_options, "-Xclang ");
               else
                 {
                   errcode = CL_INVALID_BUILD_OPTIONS;
                   goto ERROR_CLEAN_OPTIONS;
                 }
             }    
-          strcat(modded_options, token);
-          strcat(modded_options, " ");
+          strcat (modded_options, token);
+          strcat (modded_options, " ");
           token = strtok_r (NULL, " ", &saveptr);  
         }
       free (temp_options);
@@ -188,13 +191,6 @@ CL_API_SUFFIX__VERSION_1_0
       }
 
 
-      if (getenv("POCL_BUILDING") != NULL)
-        pocl_build_script = BUILDDIR "/scripts/" POCL_BUILD;
-      else if (access(PKGDATADIR "/" POCL_BUILD, X_OK) == 0)
-        pocl_build_script = PKGDATADIR "/" POCL_BUILD;
-      else
-        pocl_build_script = POCL_BUILD;
-
       /* Build the fully linked non-parallel bitcode for all
          devices. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
@@ -209,42 +205,9 @@ CL_API_SUFFIX__VERSION_1_0
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          if (real_device_list[device_i]->llvm_target_triplet != NULL)
-            {
-              error = snprintf(command, COMMAND_LENGTH,
-                               "USER_OPTIONS=\"%s\" %s -t %s -o %s %s", 
-                               user_options,
-                               pocl_build_script,
-                               device->llvm_target_triplet,                               
-                               binary_file_name, source_file_name);
-            }
-          else 
-            {
-              error = snprintf(command, COMMAND_LENGTH,
-                               "USER_OPTIONS=\"%s\" %s -o %s %s", 
-                               user_options,
-                               pocl_build_script,
-                               binary_file_name, source_file_name);
-            }
-          
-          if (error < 0)
-          {
-            errcode = CL_OUT_OF_HOST_MEMORY;
-            goto ERROR_CLEAN_BINARIES;
-          }
-
-          /* call the customized build command, if needed for the
-             device driver */
-          if (device->build_program != NULL)
-            {
-              error = device->build_program 
-                (device->data, source_file_name, binary_file_name, 
-                 command, device_tmpdir);
-            }
-          else
-            {
-	      error = system(command);
-            }
+          error = call_pocl_build( device, source_file_name,
+                                   binary_file_name, device_tmpdir,
+                                   user_options );     
 
           if (error != 0)
           {
