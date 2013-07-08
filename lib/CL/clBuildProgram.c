@@ -37,14 +37,16 @@ static char cl_parameters[] =
   "-cl-fp32-correctly-rounded-divide-sqrt "
   "-cl-opt-disable "
   "-cl-mad-enable "
-  "-cl-no-signed-zeros "
   "-cl-unsafe-math-optimizations "
   "-cl-finite-math-only "
   "-cl-fast-relaxed-math "
   "-cl-std=CL1.2 "
   "-cl-std=CL1.1 "
-  "-cl-kernel-arg-info "
-  "-cl-strict-aliasing";
+  "-cl-kernel-arg-info ";
+
+static char cl_parameters_not_yet_supported_by_clang[] = 
+  "-cl-strict-aliasing"
+  "-cl-no-signed-zeros ";
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 #define COMMAND_LENGTH 4096
@@ -111,6 +113,11 @@ CL_API_SUFFIX__VERSION_1_0
             {
               if (strstr (cl_parameters, token))
                 strcat (modded_options, "-Xclang ");
+              else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
+                {
+                  token = strtok_r (NULL, " ", &saveptr);  
+                  continue;
+                }
               else
                 {
                   errcode = CL_INVALID_BUILD_OPTIONS;
