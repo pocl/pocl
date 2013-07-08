@@ -6,14 +6,17 @@ The OpenCL Runtime (OpenCL 1.2 Chapter 5)
 -----------------------------------------
 - clCreateImage2D() and clCreateImage3D() implementation moved to 
   clCreateImage()
-- Image creation now uses clCreateBuffer 
+- Image creation now uses clCreateBuffer() 
 
 Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 ----------------------------------------------------------
 - Refactored read/write_image()-functions to support refactored device image 
   object. (Only functions used by SimpleImage test)
+- Introduced new macro based implementation for read/write_image()-functions
 - Added sampler implementation for CLK_ADDRESS_CLAMP and 
   CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
+- clBuildProgram: Propagate the supported -cl* compiler options to Clang's 
+  OpenCL frontend. 
 
 Device Drivers
 --------------

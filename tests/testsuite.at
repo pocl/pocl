@@ -165,7 +165,15 @@ AT_DATA([expout],
 ])
 AT_CHECK([$abs_top_builddir/examples/trig/trig], 0, expout)
 AT_CLEANUP
-          
+
+AT_SETUP([Sampler address clamp])
+AT_DATA([expout],
+[Running test test_sampler_address_clamp...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/sampler_address_clamp], 0, expout)
+AT_CLEANUP 
+        
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])

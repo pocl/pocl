@@ -28,7 +28,7 @@
 #define POCL_RETURN_CONTEXT_INFO(__SIZE__, __VALUE__)                   \
   {                                                                     \
     if (param_value) {                                                  \
-      if (param_value_size < value_size) return CL_INVALID_VALUE;       \
+      if (param_value_size < __SIZE__) return CL_INVALID_VALUE;       \
       memcpy(param_value, __VALUE__, __SIZE__);                         \
     }                                                                   \
     if (param_value_size_ret)                                           \
@@ -50,31 +50,31 @@ POname(clGetContextInfo)(cl_context context,
     return CL_INVALID_CONTEXT;
 
   switch (param_name) {
-    case CL_CONTEXT_REFERENCE_COUNT:
-      {
+  case CL_CONTEXT_REFERENCE_COUNT:
+    {
       cl_uint refcount = context->pocl_refcount;
       POCL_RETURN_CONTEXT_INFO(sizeof(cl_uint), &refcount);
+    }
+  case CL_CONTEXT_DEVICES:
+    value_size = context->num_devices * sizeof(cl_device_id);
+    POCL_RETURN_CONTEXT_INFO(value_size, context->devices);
+  case CL_CONTEXT_NUM_DEVICES:
+    POCL_RETURN_CONTEXT_INFO(sizeof(cl_uint), &context->num_devices);
+  case CL_CONTEXT_PROPERTIES:
+    if (context->properties)
+      {
+        value_size = (context->num_properties * 2 + 1) * sizeof(cl_context_properties);
+        POCL_RETURN_CONTEXT_INFO(value_size, context->devices);
       }
-    case CL_CONTEXT_DEVICES:
-      value_size = context->num_devices * sizeof(cl_device_id);
-      POCL_RETURN_CONTEXT_INFO(value_size, context->devices);
-    case CL_CONTEXT_NUM_DEVICES:
-      POCL_RETURN_CONTEXT_INFO(sizeof(size_t), &context->num_devices);
-    case CL_CONTEXT_PROPERTIES:
-      if (context->properties)
-        {
-      value_size = (context->num_properties * 2 + 1) * sizeof(cl_context_properties);
-      POCL_RETURN_CONTEXT_INFO(value_size, context->devices);
-        }
-      else
-        {
-          *param_value_size_ret = 0;
-          return CL_SUCCESS;
-        }
-    default:
-      return CL_INVALID_VALUE;
+    else
+      {
+        *param_value_size_ret = 0;
+        return CL_SUCCESS;
+      }
+  default:
+    return CL_INVALID_VALUE;
   }
-
+  
   return CL_SUCCESS;
 }
 POsym(clGetContextInfo)

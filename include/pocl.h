@@ -112,6 +112,18 @@ typedef struct
   mem_mapping_t *mapping;
 } _cl_command_map;
 
+// clEnqueueFillImage
+typedef struct
+{
+  void *data;
+  void *host_ptr;
+  void *device_ptr;
+  const size_t *origin;
+  const size_t *region;
+  size_t rowpitch;
+  size_t slicepitch;
+} _cl_command_fill_image;
+
 typedef union
 {
   _cl_command_run run;
@@ -119,6 +131,7 @@ typedef union
   _cl_command_write write;
   _cl_command_copy copy;
   _cl_command_map map;
+  _cl_command_fill_image fill_image;
 } _cl_command_t;
 
 // one item in the command queue

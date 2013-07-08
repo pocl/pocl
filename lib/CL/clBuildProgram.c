@@ -30,16 +30,36 @@
 #include <sys/stat.h>
 #include "pocl_llvm.h"
 
+/* supported compiler parameters */
+static char cl_parameters[] = 
+  "-cl-single-precision-constant "
+  "-cl-denorms-are-zero "
+  "-cl-fp32-correctly-rounded-divide-sqrt "
+  "-cl-opt-disable "
+  "-cl-mad-enable "
+  "-cl-unsafe-math-optimizations "
+  "-cl-finite-math-only "
+  "-cl-fast-relaxed-math "
+  "-cl-std=CL1.2 "
+  "-cl-std=CL1.1 "
+  "-cl-kernel-arg-info ";
+
+static char cl_parameters_not_yet_supported_by_clang[] = 
+  "-cl-strict-aliasing"
+  "-cl-no-signed-zeros ";
+
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 #define COMMAND_LENGTH 4096
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
-               cl_uint num_devices,
-               const cl_device_id *device_list,
-               const char *options,
-               void (CL_CALLBACK *pfn_notify)(cl_program program, void *user_data),
-               void *user_data) CL_API_SUFFIX__VERSION_1_0
+                       cl_uint num_devices,
+                       const cl_device_id *device_list,
+                       const char *options,
+                       void (CL_CALLBACK *pfn_notify) (cl_program program, 
+                                                       void *user_data),
+                       void *user_data) 
+CL_API_SUFFIX__VERSION_1_0
 {
   char tmpdir[POCL_FILENAME_LENGTH];
   char device_tmpdir[POCL_FILENAME_LENGTH];
@@ -58,6 +78,10 @@ POname(clBuildProgram)(cl_program program,
   char *pocl_build_script;
   int device_i = 0;
   const char *user_options = "";
+  char *temp_options;
+  char *modded_options;
+  char *token;
+  char *saveptr;
 
   if (program == NULL)
   {
@@ -79,8 +103,35 @@ POname(clBuildProgram)(cl_program program,
 
   if (options != NULL)
     {
-      user_options = options;
-      program->compiler_options = strdup(options);
+      modded_options = calloc (512, 1);
+      temp_options = strdup (options);
+      token = strtok_r (temp_options, " ", &saveptr);
+      while (token != NULL)
+        {
+          /* check if parameter is supported compiler parameter */
+          if (strstr (token, "-cl"))
+            {
+              if (strstr (cl_parameters, token))
+                strcat (modded_options, "-Xclang ");
+              else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
+                {
+                  token = strtok_r (NULL, " ", &saveptr);  
+                  continue;
+                }
+              else
+                {
+                  errcode = CL_INVALID_BUILD_OPTIONS;
+                  goto ERROR_CLEAN_OPTIONS;
+                }
+            }    
+          strcat (modded_options, token);
+          strcat (modded_options, " ");
+          token = strtok_r (NULL, " ", &saveptr);  
+        }
+      free (temp_options);
+      
+      user_options = modded_options;
+      program->compiler_options = strdup (modded_options);
     }
   else
     {
@@ -244,6 +295,8 @@ ERROR_CLEAN_PROGRAM:
   program->binaries = NULL;
   free(program->binary_sizes);
   program->binary_sizes = NULL;
+ERROR_CLEAN_OPTIONS:
+  free (modded_options);
 ERROR:
   return errcode;
 }

@@ -181,9 +181,9 @@ LKERNEL_SRCS_DEFAULT= \
 	async_work_group_copy.cl		\
 	wait_group_events.cl			\
 	read_image.cl				\
-	write_image.cl				\
+	write_image.cl		 		\
 	get_image_width.cl			\
-	get_image_height.cl     
+	get_image_height.cl
 
 # The standard list of kernel sources can be modified with
 # EXCLUDE_SRC_FILES, which removes files from the standard list, and
@@ -206,8 +206,8 @@ OBJ:LKERNEL_SRCS
 #rules to compile the different kernel library source file types into LLVM bitcode
 %.bc: %.cl @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
 	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
-%.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
-	@CLANG@ -DPOCL_C_BUILTIN -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ../../../include/${TARGET_DIR}/types.h
+%.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel_c.h
+	@CLANG@ -DPOCL_C_BUILTIN -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel_c.h
 %.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
 	@CLANGXX@ -Xclang -ffake-address-space-map -std=c++11 -fno-exceptions -emit-llvm ${EXTRA_CLANGFLAGS} ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ../../../include/${TARGET_DIR}/types.h
 

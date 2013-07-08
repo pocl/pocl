@@ -74,8 +74,7 @@ pocl_write_image(cl_mem               image,
   if (image == NULL)
     return CL_INVALID_MEM_OBJECT;
 
-  if ((ptr == NULL) ||
-      (region == NULL))
+  if ((ptr == NULL) || (region == NULL) || origin == NULL)
     return CL_INVALID_VALUE;
     
   int width = image->image_width;
@@ -105,57 +104,14 @@ pocl_write_image(cl_mem               image,
        image_row_pitch * (tuned_region[1]-1) +
        image_slice_pitch * (tuned_region[2]-1) >= image->size))
     return CL_INVALID_VALUE;
-    
-  cl_float* temp = malloc (width*height*dev_channels*dev_elem_size);
-    
-  if (temp == NULL) 
-    return CL_OUT_OF_HOST_MEMORY;
-    
-  int x, y, k;
-    
-  for (y=0; y<height; y++)
-    for (x=0; x<width*dev_channels; x++)
-      temp[x+y*width*dev_channels] = 0.f;
-    
-  for (y=0; y<height; y++)
-    {
-      for (x=0; x<width; x++)
-        {
-          cl_float elem[4]; //TODO 0,0,0,0 for some modes?
-          
-          for (k=0; k<host_channels; k++) 
-            {
-              if (type == CL_FLOAT)
-                elem[k] = ((float*)ptr)[k+(x+y*width)*host_channels];
-              else if (type==CL_UNORM_INT8) 
-                {
-                  cl_uchar foo = ((cl_uchar*)ptr)[k+(x+y*width)*host_channels];
-                  elem[k] = (float)(foo) * (1.f/255.f);
-                }
-              else
-                POCL_ABORT_UNIMPLEMENTED();
-            }
-          
-          if (order == CL_RGBA) 
-            for (k=0; k<4; k++)
-              temp[(x+y*width)*dev_channels+k] = elem[k];
-          else if (order == CL_R) 
-            {
-              temp[(x+y*width)*dev_channels+0] = elem[0];
-              temp[(x+y*width)*dev_channels+1] = 0.f;
-              temp[(x+y*width)*dev_channels+2] = 0.f;
-              temp[(x+y*width)*dev_channels+3] = 1.f;
-            }
-        }
-    }
   
-  device_id->write_rect(device_id->data, temp, 
-                        image->device_ptrs[device_id->dev_id],
-                        tuned_origin, tuned_origin, tuned_region,
-                        image_row_pitch, image_slice_pitch,
-                        image_row_pitch, image_slice_pitch);
+  device_id->write_rect (device_id->data, ptr, 
+                         image->device_ptrs[device_id->dev_id],
+                         tuned_origin, tuned_origin, tuned_region,
+                         image_row_pitch, image_slice_pitch,
+                         image_row_pitch, image_slice_pitch);
   
-  free (temp);
+  
   return CL_SUCCESS;
 }
            
@@ -207,11 +163,6 @@ pocl_read_image(cl_mem               image,
   if (image->type != CL_MEM_OBJECT_IMAGE3D && region[2] != 1)
     return CL_INVALID_VALUE;
   
-  int i, j, k;
-  
-  cl_channel_order order = image->image_channel_order;
-  cl_channel_type type = image->image_channel_data_type;
-    
   device_id->read_rect(device_id->data, ptr, 
                        image->device_ptrs[device_id->dev_id],
                        tuned_origin, tuned_origin, tuned_region,

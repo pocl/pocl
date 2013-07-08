@@ -3,6 +3,7 @@
 
 #include "templates.h"
 
+typedef int dev_sampler_t;
 
 typedef struct dev_image_t {
   void* data;

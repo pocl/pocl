@@ -50,22 +50,25 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
     return CL_INVALID_MEM_OBJECT;
   switch (param_name) {
   case CL_MEM_TYPE:
-    POCL_RETURN_MEM_INFO(cl_mem_object_type, memobj->type);
+    POCL_RETURN_MEM_INFO (cl_mem_object_type, memobj->type);
   case CL_MEM_FLAGS:
-    POCL_RETURN_MEM_INFO(cl_mem_flags, memobj->flags);
+    POCL_RETURN_MEM_INFO (cl_mem_flags, memobj->flags);
   case CL_MEM_SIZE:
-    POCL_RETURN_MEM_INFO(size_t, memobj->size);
+    POCL_RETURN_MEM_INFO (size_t, memobj->size);
   case CL_MEM_HOST_PTR:
-    POCL_RETURN_MEM_INFO(void *, memobj->mem_host_ptr);
+    POCL_RETURN_MEM_INFO (void *, memobj->mem_host_ptr);
   case CL_MEM_MAP_COUNT:
-    POCL_RETURN_MEM_INFO(cl_uint, memobj->map_count);
+    POCL_RETURN_MEM_INFO (cl_uint, memobj->map_count);
   case CL_MEM_REFERENCE_COUNT:
-    POCL_RETURN_MEM_INFO(cl_uint, memobj->pocl_refcount);
+    POCL_RETURN_MEM_INFO (cl_uint, memobj->pocl_refcount);
   case CL_MEM_CONTEXT:
-    POCL_RETURN_MEM_INFO(cl_context, memobj->context);
+    POCL_RETURN_MEM_INFO (cl_context, memobj->context);
   case CL_MEM_ASSOCIATED_MEMOBJECT:
-    POCL_RETURN_MEM_INFO(cl_mem, memobj->parent);
+    POCL_RETURN_MEM_INFO (cl_mem, memobj->parent);
   case CL_MEM_OFFSET:
+    if (memobj->parent == NULL)
+      POCL_RETURN_MEM_INFO (size_t, 0);
+
     POCL_ABORT_UNIMPLEMENTED();
   }
   return CL_INVALID_VALUE;
