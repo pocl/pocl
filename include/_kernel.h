@@ -24,13 +24,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
-#include "_kernel_c.h"
 
 /* Language feature detection */
 #if (__clang_major__ == 3) && (__clang_minor__ >= 3)
 #  define _CL_HAS_EVENT_T
 #  define _CL_HAS_IMAGE_ACCESS
 #endif
+#include "_kernel_c.h"
 
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
