@@ -24,6 +24,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#ifndef _KERNEL_C_H
+#define _KERNEL_C_H
 
 /* Function/type attributes supported by Clang/SPIR */
 #if __has_attribute(__always_inline__)
@@ -112,7 +114,7 @@ typedef float float16 __attribute__((__ext_vector_type__(16)));
    the typedefs to the actual underlying types. Clang 3.2
    the typedefs throughout as the types are not detected
    by the frontend. */
-#if defined(POCL_C_BUILTIN)
+#if !defined(_CL_HAS_IMAGE_ACCESS)
 typedef int sampler_t;
 typedef struct dev_image_t* image2d_t;
 typedef struct dev_image_t* image3d_t;
@@ -172,6 +174,8 @@ typedef struct dev_image_t* image1d_array_t;
 /* filter_mode */
 #define CLK_FILTER_NEAREST                          0x00
 #define CLK_FILTER_LINEAR                           0x10
+
+//#ifdef _CL_HAS_IMAGE_ACCESS
 
 float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
                                      int2 coord);
@@ -244,3 +248,4 @@ int get_image_width (image2d_t image);
 int get_image_height (image2d_t image);
 
 
+#endif

@@ -1,11 +1,14 @@
-#ifndef _CL_HAS_IMAGE_ACCESS
 
 #include "templates.h"
 #include "image.h"
 
-int get_image_width (image2d_t image)
+int pocl_get_image_width (void* image)
 {
-  return image->width;
+  return ((dev_image_t*)image)->width;
 }
 
-#endif
+int get_image_width (image2d_t image)
+{
+  return pocl_get_image_width(&image);
+}
+
