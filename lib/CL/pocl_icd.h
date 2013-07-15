@@ -151,10 +151,10 @@ struct _cl_icd_dispatch {
   NULL, /* &POclLinkProgram,             */ \
   NULL, /* &POclUnloadPlatformCompiler,  */ \
   NULL, /* &POclGetKernelArgInfo,        */ \
-  NULL, /* &POclEnqueueFillBuffer,       */ \
-  NULL, /* &POclEnqueueFillImage,        */ \
+  NULL, /* &POclEnqueueFillBuffer,        */ \
+  &POclEnqueueFillImage,         \
   NULL, /* &POclEnqueueMigrateMemObjects, */ \
-  NULL, /* &POclEnqueueMarkerWithWaitList, */ \
+  &POclEnqueueMarkerWithWaitList,  \
   NULL, /* &POclEnqueueBarrierWithWaitList, */ \
   NULL, /* &POclGetExtensionFunctionAddressForPlatform, */ \
   NULL, /* &POclCreateFromGLTexture,     */ \
