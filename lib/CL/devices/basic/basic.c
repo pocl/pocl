@@ -522,12 +522,10 @@ pocl_basic_fill_rect (void *data,
     
   size_t i, j, k;
 
-  /* TODO: handle overlaping regions */
-  
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
       for (i = 0; i < region[0]; ++i)
-        memcpy (adjusted_device_ptr + region[0] * pixel_size 
+        memcpy (adjusted_device_ptr + pixel_size * i 
                 + buffer_row_pitch * j 
                 + buffer_slice_pitch * k, fill_pixel, pixel_size);
 }

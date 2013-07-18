@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 #include "pocl_image_util.h"
+#include "pocl_util.h"
 #include <string.h>
 
 extern CL_API_ENTRY cl_int CL_API_CALL
@@ -45,6 +46,7 @@ CL_API_SUFFIX__VERSION_1_2
   void* fill_pixel;
   int num_image_channels;
   int image_elem_size;
+  size_t tuned_origin[3];
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -158,7 +160,7 @@ CL_API_SUFFIX__VERSION_1_2
       ((short*)fill_pixel)[2] = ((int*)fill_color)[2];
       ((short*)fill_pixel)[3] = ((int*)fill_color)[3];
     }
- if (image_elem_size == 1)
+ if (image_elem_size == 4)
     {
       ((int*)fill_pixel)[0] = ((int*)fill_color)[0];
       ((int*)fill_pixel)[1] = ((int*)fill_color)[1];
@@ -168,23 +170,22 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (event != NULL)
     {
-      *event = (cl_event)malloc (sizeof (struct _cl_event));
-      if (event == NULL)
-        {
-          errcode = CL_OUT_OF_HOST_MEMORY;
-          goto ERROR_CLEAN;
-        }
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      POname(clRetainCommandQueue) (command_queue);
-      (*event)->command_type = CL_COMMAND_FILL_IMAGE;
-      POCL_UPDATE_EVENT_QUEUED;
+      errcode = pocl_create_event(event, command_queue, CL_COMMAND_FILL_IMAGE, 
+                                  num_events_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        goto ERROR_CLEAN;
     }
+
+  tuned_origin[0] = origin[0];
+  tuned_origin[1] = image->image_height - region[1] - origin[1];
+  tuned_origin[2] = origin[2];
+
   cmd->type = CL_COMMAND_FILL_IMAGE;
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
-  memset (&(cmd->command.fill_image.buffer_origin), 0, 3*sizeof(size_t));
+  memcpy (&(cmd->command.fill_image.buffer_origin), tuned_origin, 
+          3*sizeof(size_t));
   memcpy (&(cmd->command.fill_image.region), region, 3*sizeof(size_t));
   cmd->command.fill_image.rowpitch = image->image_row_pitch;
   cmd->command.fill_image.slicepitch = image->image_slice_pitch;
@@ -193,7 +194,6 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->next = NULL;
   cmd->event = event ? (*event) : NULL;
   LL_APPEND(command_queue->root, cmd);
-
   
  ERROR_CLEAN:
   free (supported_image_formats);
