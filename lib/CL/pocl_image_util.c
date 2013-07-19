@@ -26,9 +26,9 @@
 #include "assert.h"
 
 extern cl_int 
-pocl_check_image_origin_region (cl_mem image, 
-                                size_t *origin, 
-                                size_t *region)
+pocl_check_image_origin_region (const cl_mem image, 
+                                const size_t *origin, 
+                                const size_t *region)
 {
   if (image == NULL)
     return CL_INVALID_MEM_OBJECT;

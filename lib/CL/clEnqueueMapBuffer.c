@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 #include <assert.h>
-
+#include "pocl_util.h"
 #include "clEnqueueMapBuffer.h"
 
 CL_API_ENTRY void * CL_API_CALL
@@ -42,6 +42,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   cl_device_id device;
   void *host_ptr = NULL;
   mem_mapping_t *mapping_info = NULL;
+  int errcode;
 
   if (buffer == NULL)
     POCL_ERROR(CL_INVALID_MEM_OBJECT);
@@ -71,13 +72,11 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   if (event != NULL)
     {
-      *event = (cl_event)malloc (sizeof(struct _cl_event));
-      if (*event == NULL)
-        return (void*)CL_OUT_OF_HOST_MEMORY; 
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      (*event)->command_type = CL_COMMAND_MAP_BUFFER;
-      POname(clRetainCommandQueue) (command_queue);
+      errcode = pocl_create_event (event, command_queue, 
+                                   CL_COMMAND_MAP_BUFFER, 
+                                   num_events_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
 
       POCL_UPDATE_EVENT_QUEUED;
     }
@@ -110,7 +109,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       POCL_UPDATE_EVENT_COMPLETE;
       POCL_ERROR (CL_MAP_FAILURE);
     }
-
+  
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;

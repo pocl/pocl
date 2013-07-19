@@ -22,25 +22,26 @@
 */
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueMarker)(cl_command_queue     command_queue,
                   cl_event *           event) 
 CL_API_SUFFIX__VERSION_1_0
 {
+  int errcode;
+
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
 
   if (event == NULL)
     return CL_INVALID_VALUE;
 
-  *event = (cl_event)malloc(sizeof(struct _cl_event));
-  if (*event == NULL)
-    return CL_OUT_OF_HOST_MEMORY; 
-  POCL_INIT_OBJECT(*event);
-  (*event)->queue = command_queue;
-  (*event)->command_type = CL_COMMAND_MARKER;
-  POname(clRetainCommandQueue) (command_queue);
+  errcode = pocl_create_event(event, command_queue, CL_COMMAND_MARKER, 
+                              0, NULL);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
   POCL_UPDATE_EVENT_QUEUED;
 
   _cl_command_node * cmd = malloc(sizeof(_cl_command_node));

@@ -201,10 +201,10 @@ void _CL_OVERLOADABLE write_imagei (image2d_t image, int2 coord, int4 color);
 void _CL_OVERLOADABLE write_imageui (image2d_t image, int2 coord, uint4 color);
 
 
-/* not implemented 
+
 void _CL_OVERLOADABLE write_imagef (image2d_t image, int2 coord,
                                     float4 color);
-
+/* not implemented 
 void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
                                     float4 color);
 

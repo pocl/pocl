@@ -112,17 +112,43 @@ typedef struct
   mem_mapping_t *mapping;
 } _cl_command_map;
 
-// clEnqueueFillImage
+/* clEnqueueMapImage */
 typedef struct
 {
   void *data;
-  void *host_ptr;
   void *device_ptr;
-  const size_t *origin;
-  const size_t *region;
+  void *map_ptr;
+  size_t origin[3];
+  size_t region[3];
   size_t rowpitch;
   size_t slicepitch;
+} _cl_command_map_image;
+
+/* clEnqueueUnMapMemObject */
+typedef struct
+{
+  void *data;
+  cl_mem memobj;
+  mem_mapping_t *mapping;
+} _cl_command_unmap;
+
+/* clEnqueueFillImage */
+typedef struct
+{
+  void *data;
+  void *device_ptr;
+  size_t buffer_origin[3];
+  size_t region[3];
+  size_t rowpitch;
+  size_t slicepitch;
+  void *fill_pixel;
+  size_t pixel_size;
 } _cl_command_fill_image;
+
+typedef struct
+{
+  void *data;
+} _cl_command_marker;
 
 typedef union
 {
@@ -131,7 +157,10 @@ typedef union
   _cl_command_write write;
   _cl_command_copy copy;
   _cl_command_map map;
+  _cl_command_map_image map_image;
   _cl_command_fill_image fill_image;
+  _cl_command_marker marker;
+  _cl_command_unmap unmap;
 } _cl_command_t;
 
 // one item in the command queue

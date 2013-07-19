@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 #include <assert.h>
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
@@ -38,6 +39,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 {
   cl_device_id device;
   unsigned i;
+  int errcode;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -73,12 +75,11 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   if (event != NULL)
     {
-      *event = (cl_event)malloc(sizeof(struct _cl_event));
-      if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      (*event)->command_type = CL_COMMAND_READ_BUFFER;
+      errcode = pocl_create_event (event, command_queue, 
+                                   CL_COMMAND_READ_BUFFER, 
+                                   num_events_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
 
       POname(clRetainCommandQueue) (command_queue);
 

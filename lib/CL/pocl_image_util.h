@@ -27,9 +27,9 @@
 #pragma GCC visibility push(hidden)
 
 extern cl_int 
-pocl_check_image_origin_region (cl_mem image, 
-                                size_t *origin, 
-                                size_t *region);
+pocl_check_image_origin_region (const cl_mem image, 
+                                const size_t *origin, 
+                                const size_t *region);
 
 extern void
 pocl_get_image_information (cl_channel_order  ch_order, 

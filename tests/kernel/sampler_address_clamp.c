@@ -152,7 +152,7 @@ int main(int argc, char **argv)
    result = clSetKernelArg( kernel, 0, sizeof(cl_mem), &image);
    if (result)
      {
-       puts("clSetKernelArg dailed\n");
+       puts("clSetKernelArg failed\n");
        goto error;
      }
 

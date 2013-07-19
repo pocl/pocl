@@ -189,5 +189,42 @@ pocl_aligned_free(void *ptr)
   if (ptr)
     free(*(void **)((uintptr_t)ptr - sizeof(void *)));
 }
+
+
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
+                          cl_command_type command_type, cl_int num_events, 
+                          cl_event *wait_list)
+{
+  int i;
+
+  if (wait_list == NULL && num_events != 0 ||
+      wait_list != NULL && num_events == 0)
+    return CL_INVALID_EVENT_WAIT_LIST;
+  
+  for (i = 0; i < num_events; ++i)
+    {
+      if (wait_list[i] == NULL)
+        {
+          printf("invaliidi waitlist\n");
+          return CL_INVALID_EVENT_WAIT_LIST;
+        }
+    }
+
+  if (event != NULL)
+    {
+      *event = (cl_event)malloc (sizeof (struct _cl_event));
+      if (event == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+      
+      POCL_INIT_OBJECT(*event);
+      (*event)->queue = command_queue;
+      POname(clRetainCommandQueue) (command_queue);
+      (*event)->event_wait_list = wait_list;
+      (*event)->num_events_in_wait_list = num_events;
+      (*event)->command_type = command_type;
+    }
+  return CL_SUCCESS;
+}
+
 #endif
 

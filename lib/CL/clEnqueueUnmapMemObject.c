@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 #include <assert.h>
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
@@ -33,9 +34,11 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                         const cl_event * event_wait_list,
                         cl_event *       event) CL_API_SUFFIX__VERSION_1_0
 {
+  int errcode;
   cl_device_id device_id;
   unsigned i;
   mem_mapping_t *mapping = NULL;
+  _cl_command_node *cmd;
 
   if (memobj == NULL)
     return CL_INVALID_MEM_OBJECT;
@@ -67,19 +70,29 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
 
   if (event != NULL)
     {
-      *event = (cl_event)malloc (sizeof(struct _cl_event));
-      if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      (*event)->command_type = CL_COMMAND_UNMAP_MEM_OBJECT;
-      POname(clRetainCommandQueue) (command_queue);
-
-      POCL_UPDATE_EVENT_QUEUED;
+      errcode = pocl_create_event (event, command_queue, 
+                                   CL_COMMAND_UNMAP_MEM_OBJECT, 
+                                   num_events_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        goto ERROR;
     }
 
+  cmd = malloc (sizeof (_cl_command_node));
+  if (cmd == NULL)
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    } 
+  cmd->type = CL_COMMAND_UNMAP_MEM_OBJECT;
+  cmd->command.unmap.data = command_queue->device->data;
+  cmd->command.unmap.memobj = memobj;
+  cmd->command.unmap.mapping = mapping;
+  cmd->next = NULL;
+  cmd->event = event ? (*event) : NULL;
+  LL_APPEND(command_queue->root, cmd);
+
   POCL_UPDATE_EVENT_SUBMITTED;
-  POCL_UPDATE_EVENT_RUNNING;
+  /*POCL_UPDATE_EVENT_RUNNING;
 
   if (memobj->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
     {
@@ -87,11 +100,11 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
          the host memory? How does the specs define it,
          can the host_ptr be assumed to point to the host and the
          device accessible memory or just point there until the
-         kernel(s) get executed or similar? */
-      /* Assume the region is automatically up to date. */
+         kernel(s) get executed or similar? 
+      /* Assume the region is automatically up to date. 
     } else 
     {
-      /* TODO: fixme. The offset computation must be done at the device driver. */
+      /* TODO: fixme. The offset computation must be done at the device driver. 
       if (device_id->unmap_mem != NULL)        
         device_id->unmap_mem
           (device_id->data, mapping->host_ptr, memobj->device_ptrs[device_id->dev_id] + mapping->offset, 
@@ -103,7 +116,12 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   DL_DELETE(memobj->mappings, mapping);
   memobj->map_count--;
   POname(clReleaseMemObject) (memobj);
-
+  */
   return CL_SUCCESS;
+
+ ERROR:
+  free (*event);
+  free (cmd);
+  return errcode;
 }
 POsym(clEnqueueUnmapMemObject)
