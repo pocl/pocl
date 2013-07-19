@@ -30,6 +30,9 @@ AT_CLEANUP
 
 POAT_ROD_SETUP([bfs])
 POAT_ROD_CHECK_BUILD([bfs], [ | egrep -v "^CLHelper.h:|^In file included from bfs.cpp:" ])
+# Test passes NVIDIA-specific parameters to clBuildProgram which is now
+# detected as an unsupported parameter by pocl.
+AT_SKIP_IF([true])
 AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/bfs; ./run 2>&1|grep -v "incomplete" | grep -v "argument unused" | grep .], 0,
 [Reading File
 --cambine:passed:-)
@@ -74,7 +77,7 @@ AT_CLEANUP
 
 POAT_ROD_SETUP([lavaMD])
 POAT_ROD_CHECK_BUILD([lavaMD],[ | egrep -v "^./kernel/kernel_gpu_opencl_wrapper.c:|^rm:" ])
-# This test case uses struct kernel arguments which current do not
+# This test case uses struct kernel arguments which currently do not
 # work correctly due to assuming the ABI maps variables 1:1 to kernel
 # arguments and at least AMD64 seems to sometimes split the struct
 # arguments to multiple scalar arguments. This (falsely) passes with

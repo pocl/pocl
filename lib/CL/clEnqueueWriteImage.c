@@ -44,10 +44,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
         return errcode;
       
       POCL_UPDATE_EVENT_QUEUED;
+      POname(clRetainCommandQueue) (command_queue);
     }      
-  POname(clRetainCommandQueue) (command_queue);
-  POCL_UPDATE_EVENT_QUEUED;
-  
   if (blocking_write)
     {
       POCL_UPDATE_EVENT_SUBMITTED;

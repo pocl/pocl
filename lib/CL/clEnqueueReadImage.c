@@ -55,13 +55,13 @@ CL_API_SUFFIX__VERSION_1_0
  
   if (event != NULL)
     {
-      *event = (cl_event)malloc(sizeof(struct _cl_event));
-      if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
-            
-      POname(clRetainCommandQueue) (command_queue);
-      POCL_UPDATE_EVENT_QUEUED;
-      
+      status = pocl_create_event(event, command_queue, 
+                                 CL_COMMAND_READ_IMAGE, 
+                                 num_events_in_wait_list, event_wait_list);
+      if (status != CL_SUCCESS)
+        return status;
+
+      POCL_UPDATE_EVENT_QUEUED;      
     }
   
   if (blocking_read)

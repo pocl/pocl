@@ -15,6 +15,8 @@ Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 - Introduced new macro based implementation for read/write_image()-functions
 - Added sampler implementation for CLK_ADDRESS_CLAMP and 
   CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
+- clBuildProgram: Propagate the supported -cl* compiler options to Clang's 
+  OpenCL frontend. 
 
 Device Drivers
 --------------
@@ -31,7 +33,6 @@ Misc.
 -----
 - poclu: helpers for converting between the C float and OpenCL cl_half
   types
-- piglit: Fixed -cl* build parameter propagation to OpenCL frontend. 
 
 0.8  June 2013
 ==============

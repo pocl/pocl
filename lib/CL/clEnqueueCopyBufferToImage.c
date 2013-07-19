@@ -29,14 +29,6 @@ CL_API_SUFFIX__VERSION_1_0
                                   num_events_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
-
-      *event = (cl_event)malloc(sizeof(struct _cl_event));
-      if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      POname(clRetainCommandQueue) (command_queue);
-      (*event)->command_type = CL_COMMAND_COPY_BUFFER_TO_IMAGE;
       POCL_UPDATE_EVENT_QUEUED;
       POCL_UPDATE_EVENT_RUNNING;
     }

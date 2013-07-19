@@ -61,7 +61,7 @@ static void exec_command (cl_command_queue command_queue,
 {
   int i;
   cl_event *event = &node->event;
-  //printf("exec_command: com_type = %X\n", node->type);
+  
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -109,7 +109,7 @@ static void exec_command (cl_command_queue command_queue,
       }
     case CL_COMMAND_MAP_IMAGE:
       {
-        //printf("clFinish: suoritetaan MAP IMAGE\n");
+        
         POCL_UPDATE_EVENT_SUBMITTED;
         POCL_UPDATE_EVENT_RUNNING; 
         command_queue->device->read_rect 
@@ -145,15 +145,12 @@ static void exec_command (cl_command_queue command_queue,
                (node->command.unmap.memobj)->device_ptrs[command_queue->device->dev_id], 
                (node->command.unmap.mapping)->size);
         }
-      
       DL_DELETE((node->command.unmap.memobj)->mappings, 
                 node->command.unmap.mapping);
       (node->command.unmap.memobj)->map_count--;
-      //POname(clReleaseMemObject) (node->command.unmap.memobj);
       POCL_UPDATE_EVENT_COMPLETE;
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
-      //printf("clFinish: suoritetaan KERNELIT\n");
       assert (*event == node->event);
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
@@ -163,7 +160,8 @@ static void exec_command (cl_command_queue command_queue,
         {
           cl_mem buf = node->command.run.arg_buffers[i];
           if (buf == NULL) continue;
-          //printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, buf,  node->command.run.kernel->function_name);
+          /*printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, 
+            buf,  node->command.run.kernel->function_name); */
           POname(clReleaseMemObject) (buf);
         }
       free (node->command.run.arg_buffers);
@@ -178,7 +176,6 @@ static void exec_command (cl_command_queue command_queue,
       POname(clReleaseKernel)(node->command.run.kernel);
       break;
     case CL_COMMAND_FILL_IMAGE:
-      //printf("suoritetaan filli\n");
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
       command_queue->device->fill_rect 
@@ -192,13 +189,11 @@ static void exec_command (cl_command_queue command_queue,
          node->command.fill_image.pixel_size);
       free(node->command.fill_image.fill_pixel);
       POCL_UPDATE_EVENT_COMPLETE;
-      //POname(clReleaseCommandQueue) (command_queue);
       break;
     case CL_COMMAND_MARKER:
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
       POCL_UPDATE_EVENT_COMPLETE;
-      //printf("marker suoritettu\n");
       break;
     default:
       POCL_ABORT_UNIMPLEMENTED();
@@ -224,10 +219,6 @@ static void exec_commands_in_queue_until_event(cl_command_queue queue,
         {
           for (i = 0; i < node->event->num_events_in_wait_list; ++i)
             {
-              printf("exec..until_event:com_type=%X \n", node->type);
-              printf("event=%d \n",  node->event->event_wait_list[i]);
-              printf("num_events = %d\n", node->event->num_events_in_wait_list);
-              printf("i=%d \n", i);
               wait_event = node->event->event_wait_list[i];
               if (wait_event->status != CL_COMPLETE || wait_event->status >= 0)
                 {

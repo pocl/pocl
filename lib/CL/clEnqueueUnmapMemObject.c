@@ -92,31 +92,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   LL_APPEND(command_queue->root, cmd);
 
   POCL_UPDATE_EVENT_SUBMITTED;
-  /*POCL_UPDATE_EVENT_RUNNING;
 
-  if (memobj->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
-    {
-      /* TODO: should we ensure the device global region is updated from
-         the host memory? How does the specs define it,
-         can the host_ptr be assumed to point to the host and the
-         device accessible memory or just point there until the
-         kernel(s) get executed or similar? 
-      /* Assume the region is automatically up to date. 
-    } else 
-    {
-      /* TODO: fixme. The offset computation must be done at the device driver. 
-      if (device_id->unmap_mem != NULL)        
-        device_id->unmap_mem
-          (device_id->data, mapping->host_ptr, memobj->device_ptrs[device_id->dev_id] + mapping->offset, 
-           mapping->size);
-    }
-
-  POCL_UPDATE_EVENT_COMPLETE;
-
-  DL_DELETE(memobj->mappings, mapping);
-  memobj->map_count--;
-  POname(clReleaseMemObject) (memobj);
-  */
   return CL_SUCCESS;
 
  ERROR:
