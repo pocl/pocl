@@ -65,3 +65,89 @@ int call_pocl_build( cl_device_id device,
   return error;
 }
 
+/* call pocl_kenel script.
+ *
+ * device_i is the index into the device and binaries-arrays 
+ * in the 'program' struct that point to the device we are building
+ * for. No safety checks in this function!
+ */
+int call_pocl_kernel(cl_program program, 
+                     cl_kernel kernel,
+                     int device_i,     
+                     const char* kernel_name,
+                     const char* device_tmpdir, 
+                     char* descriptor_filename,
+                     int *errcode )
+{
+  int error;
+  char* pocl_kernel_fmt;
+  FILE *binary_file;
+  size_t n;
+  char tmpdir[POCL_FILENAME_LENGTH];
+  char binary_filename[POCL_FILENAME_LENGTH];
+  char command[COMMAND_LENGTH];
+
+  if (getenv("POCL_BUILDING") != NULL)
+    pocl_kernel_fmt = BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s";
+  else if (access(PKGDATADIR "/" POCL_KERNEL, X_OK) == 0)
+    pocl_kernel_fmt = PKGDATADIR "/" POCL_KERNEL " -k %s -t %s -o %s %s";
+  else
+    pocl_kernel_fmt = POCL_KERNEL " -k %s -t %s -o %s %s";
+
+
+  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
+            device_tmpdir, kernel_name);
+  mkdir (tmpdir, S_IRWXU);
+
+  error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
+                   "%s/kernel.bc",
+                   tmpdir);
+  if (error < 0)
+  {
+    *errcode = CL_OUT_OF_HOST_MEMORY;
+    return -1;
+  }
+
+  binary_file = fopen(binary_filename, "w+");
+  if (binary_file == NULL)
+  {
+    *errcode = CL_OUT_OF_HOST_MEMORY;
+    return -1;
+  }
+
+  n = fwrite(program->binaries[device_i], 1,
+             program->binary_sizes[device_i], binary_file);
+  fclose(binary_file);
+
+  if (n < program->binary_sizes[device_i])
+  {
+    *errcode = CL_OUT_OF_HOST_MEMORY;
+    return -1;
+  }
+
+
+  error |= snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
+                   "%s/%s/descriptor.so", device_tmpdir, kernel_name);
+
+  error |= snprintf(command, COMMAND_LENGTH,
+                   pocl_kernel_fmt,
+                   kernel_name,
+                   program->devices[device_i]->llvm_target_triplet,
+                   descriptor_filename,
+                   binary_filename);
+  if (error < 0)
+  {
+    *errcode = CL_OUT_OF_HOST_MEMORY;
+    return -1;
+  }
+
+  error = system(command);
+  if (error != 0)
+  {
+    *errcode = CL_INVALID_KERNEL_NAME;
+    return -1;
+  }
+  
+  *errcode=CL_SUCCESS;
+  return 0;
+}
