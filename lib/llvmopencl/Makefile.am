@@ -22,13 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+if USE_LLVM_API
+noinst_LTLIBRARIES = libllvmpasses.a
+endif
 pkglib_LTLIBRARIES = llvmopencl.la
 
 AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags`
 AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
 llvmopencl_la_LIBADD = -lLLVM-${LLVM_VERSION}
 
-llvmopencl_la_SOURCES = Barrier.h						\
+PASSES_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\
                         Kernel.h Kernel.cc					\
                         ParallelRegion.h ParallelRegion.cc			\
@@ -49,5 +52,12 @@ llvmopencl_la_SOURCES = Barrier.h						\
 						TargetAddressSpaces.h TargetAddressSpaces.cc \
 						LLVMUtils.cc LLVMUtils.h \
 						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc 
+
+if USE_LLVM_API
+libllvmpasses_a_SOURCES = ${PASSES_SOURCES}
+endif
+# some scripts remain in the api version, and those require libopencl.so
+# so build it even when using the API
+llvmopencl_la_SOURCES = ${PASSES_SOURCES}
 
 #llvmopencl_la_LIBADD += @LIBS_LLVMTRANSFORMUTILS@
