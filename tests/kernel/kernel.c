@@ -153,6 +153,7 @@ const char * const all_tests[] = {
   "test_fabs",
   "test_hadd",
   "test_rotate",
+  "test_sizeof",
 };
    
 const int num_all_tests = (int)(sizeof(all_tests) / sizeof(all_tests[0]));

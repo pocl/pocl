@@ -147,12 +147,16 @@ AT_KEYWORDS([regression nullarg])
 AT_CHECK([$abs_top_builddir/tests/regression/test_null_arg], 0)
 AT_CLEANUP
 
-AT_SETUP([sizeof(uint8)])
+AT_SETUP([sizeof(uint)])
 AT_KEYWORDS([sizeof])
-AT_XFAIL_IF(true)
 AT_DATA([expout],
 [Running test test_sizeof...
-sizeof(uint8) == 64
+sizeof(uint) == 4
+sizeof(uint2) == 8
+sizeof(uint3) == 16
+sizeof(uint4) == 16
+sizeof(uint8) == 32
+sizeof(uint16) == 64
 OK
 ])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_sizeof], 0, expout)
