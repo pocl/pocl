@@ -147,13 +147,14 @@ error:
 }
 
 const char * const all_tests[] = {
+  "test_sizeof",
   "test_as_type",
   "test_convert_type",
   "test_bitselect",
   "test_fabs",
   "test_hadd",
   "test_rotate",
-  "test_sizeof",
+  "test_block",
 };
    
 const int num_all_tests = (int)(sizeof(all_tests) / sizeof(all_tests[0]));

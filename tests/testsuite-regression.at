@@ -161,3 +161,16 @@ OK
 ])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_sizeof], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([block])
+AT_KEYWORDS([block])
+AT_DATA([expout],
+[Running test test_block...
+op(1)=2.000000
+op(1)=2.000000
+op(1)=1.000000
+op(1)=2.000000
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_block], 0, expout)
+AT_CLEANUP
