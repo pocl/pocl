@@ -82,5 +82,5 @@ fi
 # Use -fno-builtin to avoid clang producing extra memcpys etc. from
 # kernel loops. Otherwise, it a) ruins wg-vectorization b) causes issues with embedded 
 # devices such as TCE which do not have OS and a system linker.
-@CLANG@ -fno-builtin ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
+@CLANG@ -fblocks -fno-builtin ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
 
