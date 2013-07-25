@@ -1,4 +1,4 @@
-/* OpenCL built-in library: isnotequal()
+/* OpenCL built-in library: max()
 
    Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
                       Perimeter Institute for Theoretical Physics
@@ -24,4 +24,5 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_J_VV(isnotequal, a!=b)
+DEFINE_EXPR_G_GG(max, a>=b ? a : b)
+DEFINE_EXPR_G_GS(max, max(a, (gtype)b))

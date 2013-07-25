@@ -110,13 +110,9 @@ OK
 AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel test_bitselect], 0, expout)
 AT_CLEANUP
 
-AT_SETUP([Kernel functions fabs signbit copysign])
+AT_SETUP([Kernel functions fabs signbit isfinite isinf isnan isnormal copysign])
 # Fails because signbit compilation crashes with Clang 3.3 and 3.4 and is thus
 # not available.   The VML version at least seems to work now, execpt on ARM.
-AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h && \
- ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h && \
- ! grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q arm && \
   grep -q "#define LLVM_3_3" $abs_top_builddir/config.h ])

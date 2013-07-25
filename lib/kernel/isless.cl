@@ -24,6 +24,4 @@
 
 #include "templates.h"
 
-#define __builtin_islessf __builtin_isless
-
-DEFINE_BUILTIN_J_VV(isless)
+DEFINE_EXPR_J_VV(isless, a<b)

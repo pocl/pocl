@@ -63,7 +63,7 @@ case $target in
             FP_CONTRACT=-fp-contract=off
         fi
         ;;
-  x86_64-*)    target_dir="x86_64";;
+  amd64-*|x86*|i?86-*)    target_dir="x86_64";;
 esac
 
 case $target in

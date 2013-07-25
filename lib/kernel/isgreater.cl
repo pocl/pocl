@@ -24,6 +24,4 @@
 
 #include "templates.h"
 
-#define __builtin_isgreaterf __builtin_isgreater
-
-DEFINE_BUILTIN_J_VV(isgreater)
+DEFINE_EXPR_J_VV(isgreater, a>b)

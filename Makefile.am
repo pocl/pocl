@@ -55,7 +55,7 @@ endif
 
 EXTRA_DIST = config/xclang doc/envs.txt tools/data/*.adf \
   CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
-  README.Darwin README.ppc64
+  README.OSX README.ppc64
 
 BUILT_SOURCES = install-paths.h
 

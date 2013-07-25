@@ -562,7 +562,7 @@ LLVM_PROG_WARN([CLANGXX], [clang++])
 if test ! -z "$CLANGXX"; then
 # Test that clang++ can compile a simple C++ program.
 
-: ${CLANGXX_FLAGS:="-std=c++11"}
+#: ${CLANGXX_FLAGS:="-std=c++11"}
 
 AC_LANG([C++])
 

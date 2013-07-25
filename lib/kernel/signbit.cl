@@ -22,6 +22,13 @@
    THE SOFTWARE.
 */
 
+
+
+/* Correct, but probably slower */
+/* DEFINE_BUILTIN_L_V(signbit) */
+
+
+
 #define IMPLEMENT_SIGNBIT_BUILTIN_FLOAT  __builtin_signbitf(a)
 #define IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE __builtin_signbit(a)
 #define IMPLEMENT_SIGNBIT_DIRECT                \
@@ -43,11 +50,7 @@
 
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
-#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ < 3))
-// Clang 3.3 and later crashes when generating this. Probably due to the
-// conversion *(jtype*)&a.
 IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
-#endif
 IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)
