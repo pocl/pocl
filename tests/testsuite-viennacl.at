@@ -110,7 +110,6 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/
 AT_CLEANUP
 
 POAT_VCL_SETUP([blas1], [long])
-AT_XFAIL_IF([grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
 POAT_VCL_CHECK_BUILD([blas1])
 AT_CHECK_UNQUOTED([POCL_DEVICES=basic $abs_top_builddir/examples/ViennaCL/ViennaCL-1.3.1-src/build/examples/tutorial/blas1 2>&1 | grep -v "incomplete"], 0, 
 [`cat $abs_top_srcdir/examples/ViennaCL/blas1.stdout`
