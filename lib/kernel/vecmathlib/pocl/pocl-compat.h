@@ -105,13 +105,6 @@ struct pair_double16 { double16 lo, hi; };
 
 
 
-// Define default implementations
-#define _cl_fma _cl_std_fma
-#define _cl_fmax _cl_std_fmax
-#define _cl_fmin _cl_std_fmin
-
-
-
 // Generic conversion function
 template<typename A, typename B>
 static B bitcast(A a)
