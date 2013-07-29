@@ -23,6 +23,7 @@
 #include "assert.h"
 #include "pocl_image_util.h"
 #include "pocl_util.h"
+#include "utlist.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueReadImage)(cl_command_queue     command_queue,
@@ -39,6 +40,11 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0 
 {
   cl_int status;
+  int errcode;
+  int num_channels;
+  int elem_size;
+  _cl_command_node *cmd;
+
   if (image == NULL)
     return CL_INVALID_MEM_OBJECT;
 
@@ -52,16 +58,21 @@ CL_API_SUFFIX__VERSION_1_0
   if (command_queue->context != image->context)
     return CL_INVALID_CONTEXT;
 
- 
+  size_t tuned_origin[3] = {origin[0] * elem_size * num_channels, origin[1], 
+                            origin[2]};
+  size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
+                            region[2]};
+
   if (event != NULL)
     {
-      status = pocl_create_event(event, command_queue, 
-                                 CL_COMMAND_READ_IMAGE, 
-                                 num_events_in_wait_list, event_wait_list);
+      status = pocl_create_event (event, command_queue, 
+                                  CL_COMMAND_READ_IMAGE, 
+                                  num_events_in_wait_list, event_wait_list);
       if (status != CL_SUCCESS)
         return status;
 
-      POCL_UPDATE_EVENT_QUEUED;      
+      POCL_UPDATE_EVENT_QUEUED;
+      POname(clRetainCommandQueue) (command_queue);
     }
   
   if (blocking_read)
@@ -77,7 +88,26 @@ CL_API_SUFFIX__VERSION_1_0
     }
   else /* non blocking */
     {
-      POCL_ABORT_UNIMPLEMENTED();
+      cmd = malloc (sizeof(_cl_command_node));
+      if (cmd == NULL)
+        {
+          status = CL_OUT_OF_HOST_MEMORY;
+          free (*event);
+          return status;
+        } 
+      cmd->type = CL_COMMAND_READ_IMAGE;
+      cmd->command.rw_image.data = command_queue->device->data;
+      cmd->command.rw_image.device_ptr = 
+        image->device_ptrs[command_queue->device->dev_id];
+      cmd->command.rw_image.host_ptr = ptr;
+      memcpy ((cmd->command.rw_image.origin), tuned_origin, 3*sizeof (size_t));
+      memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
+      cmd->command.rw_image.rowpitch = image->image_row_pitch;
+      cmd->command.rw_image.slicepitch = image->image_slice_pitch;
+      cmd->next = NULL;
+      cmd->event = event ? (*event) : NULL;
+      LL_APPEND(command_queue->root, cmd);
+      return status;
     }
 }
 POsym(clEnqueueReadImage)

@@ -109,7 +109,6 @@ static void exec_command (cl_command_queue command_queue,
       }
     case CL_COMMAND_MAP_IMAGE:
       {
-        
         POCL_UPDATE_EVENT_SUBMITTED;
         POCL_UPDATE_EVENT_RUNNING; 
         command_queue->device->read_rect 
@@ -123,6 +122,32 @@ static void exec_command (cl_command_queue command_queue,
         POCL_UPDATE_EVENT_COMPLETE;
         break;
       }
+    case CL_COMMAND_WRITE_IMAGE:
+      POCL_UPDATE_EVENT_SUBMITTED;
+      POCL_UPDATE_EVENT_RUNNING; 
+      command_queue->device->write_rect 
+        (node->command.map_image.data, node->command.map_image.map_ptr,
+         node->command.map_image.device_ptr, node->command.map_image.origin,
+         node->command.map_image.origin, node->command.map_image.region, 
+         node->command.map_image.rowpitch, 
+         node->command.map_image.slicepitch,
+         node->command.map_image.rowpitch,
+         node->command.map_image.slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE;
+      break;
+    case CL_COMMAND_READ_IMAGE:
+      POCL_UPDATE_EVENT_SUBMITTED;
+      POCL_UPDATE_EVENT_RUNNING; 
+      command_queue->device->read_rect 
+        (node->command.map_image.data, node->command.map_image.map_ptr,
+         node->command.map_image.device_ptr, node->command.map_image.origin,
+         node->command.map_image.origin, node->command.map_image.region, 
+         node->command.map_image.rowpitch, 
+         node->command.map_image.slicepitch,
+         node->command.map_image.rowpitch,
+         node->command.map_image.slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE;
+      break;
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       POCL_UPDATE_EVENT_RUNNING;
       if ((node->command.unmap.memobj)->flags & 

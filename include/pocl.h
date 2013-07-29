@@ -124,6 +124,18 @@ typedef struct
   size_t slicepitch;
 } _cl_command_map_image;
 
+/* clEnqueue(Write/Read)Image */
+typedef struct
+{
+  void *data;
+  void *device_ptr;
+  void *host_ptr;
+  size_t origin[3];
+  size_t region[3];
+  size_t rowpitch;
+  size_t slicepitch;
+} _cl_command_rw_image;
+
 /* clEnqueueUnMapMemObject */
 typedef struct
 {
@@ -159,6 +171,7 @@ typedef union
   _cl_command_map map;
   _cl_command_map_image map_image;
   _cl_command_fill_image fill_image;
+  _cl_command_rw_image rw_image;
   _cl_command_marker marker;
   _cl_command_unmap unmap;
 } _cl_command_t;
