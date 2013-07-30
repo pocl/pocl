@@ -1028,30 +1028,23 @@ _CL_DECLARE_FUNC_V_V(expm1)
 _CL_DECLARE_FUNC_V_V(fabs)
 _CL_DECLARE_FUNC_V_VV(fdim)
 _CL_DECLARE_FUNC_V_V(floor)
+_CL_DECLARE_FUNC_V_VVV(fma)
 #if __FAST__RELAXED__MATH__
-#  define _cl_fma fast_fma
-#else
-#  define _cl_fma std_fma
+#  undef fma
+#  define fma mad
 #endif
-#define _cl_fast_fma mad
-_CL_DECLARE_FUNC_V_VVV(std_fma)
-#if __FAST__RELAXED__MATH__
-#  define _cl_fmax fast_fmax
-#  define _cl_fmin fast_fmin
-#else
-#  define _cl_fmax std_fmax
-#  define _cl_fmin std_fmin
-#endif
-#define _cl_fast_fmax max
-#define _cl_fast_fmin min
-_CL_DECLARE_FUNC_V_VV(std_fmax)
-_CL_DECLARE_FUNC_V_VS(std_fmax)
-_CL_DECLARE_FUNC_V_VV(std_fmin)
-_CL_DECLARE_FUNC_V_VS(std_fmin)
 _CL_DECLARE_FUNC_V_VV(fmax)
 _CL_DECLARE_FUNC_V_VS(fmax)
+#if __FAST__RELAXED__MATH__
+#  undef fmax
+#  define fmax max
+#endif
 _CL_DECLARE_FUNC_V_VV(fmin)
 _CL_DECLARE_FUNC_V_VS(fmin)
+#if __FAST__RELAXED__MATH__
+#  undef fmin
+#  define fmin min
+#endif
 _CL_DECLARE_FUNC_V_VV(fmod)
 _CL_DECLARE_FUNC_V_VPV(fract)
 // frexp

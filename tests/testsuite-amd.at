@@ -165,7 +165,6 @@ AT_CLEANUP
 POAT_AMDSDK_SETUP([mandelbrot])
 AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_srcdir/config.h ])
 # undefined symbol: _Z7std_fmaDv4_fS_S_ with VML
-AT_XFAIL_IF([grep -q "#define USE_VECMATHLIB" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])

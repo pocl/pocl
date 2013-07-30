@@ -23,7 +23,7 @@
 # This file should be included from the Makefile.am of the target kernel
 # library in case vecmathlib versions of the builtins are wanted.
 
-SECONDARY_VPATH = ../vecmathlib/pocl
+SECONDARY_VPATH = @srcdir@/../vecmathlib/pocl
 
 LKERNEL_SRCS_EXCLUDE =				\
 	acos.cl					\
