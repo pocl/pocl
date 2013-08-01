@@ -263,6 +263,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                                  num_events_in_wait_list, event_wait_list);
       if (error != CL_SUCCESS)
         return error;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
   pc.work_dim = work_dim;
