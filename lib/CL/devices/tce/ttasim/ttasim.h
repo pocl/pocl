@@ -120,6 +120,7 @@ GEN_PROTOTYPES (ttasim)
   pocl_ttasim_write_rect, /* write_rect */				\
   pocl_ttasim_copy, /* copy */						\
   pocl_ttasim_copy_rect, /* copy_rect */				\
+  NULL, /* fill_rect */                                 \
   pocl_tce_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_tce_run, /* run */                         \
