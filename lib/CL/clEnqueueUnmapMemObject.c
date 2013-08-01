@@ -75,6 +75,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                                    num_events_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         goto ERROR;
+      POCL_UPDATE_EVENT_QUEUED;
     }
 
   cmd = malloc (sizeof (_cl_command_node));
