@@ -427,10 +427,10 @@ pocl_basic_copy_rect (void *data,
 {
   char const *__restrict const adjusted_src_ptr = 
     (char const*)src_ptr +
-    src_origin[0] + src_row_pitch * (src_origin[1] + src_slice_pitch * src_origin[2]);
+    src_origin[0] + src_row_pitch * src_origin[1] + src_slice_pitch * src_origin[2];
   char *__restrict__ const adjusted_dst_ptr = 
     (char*)dst_ptr +
-    dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
+    dst_origin[0] + dst_row_pitch * dst_origin[1] + dst_slice_pitch * dst_origin[2];
   
   size_t j, k;
 
@@ -457,10 +457,10 @@ pocl_basic_write_rect (void *data,
 {
   char *__restrict const adjusted_device_ptr = 
     (char*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
+    buffer_origin[0] + buffer_row_pitch * buffer_origin[1] + buffer_slice_pitch * buffer_origin[2];
   char const *__restrict__ const adjusted_host_ptr = 
     (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
+    host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
   
   size_t j, k;
 
@@ -503,6 +503,32 @@ pocl_basic_read_rect (void *data,
               region[0]);
 }
 
+/* origin and region must be in original shape unlike in copy/read/write_rect()
+ */
+void
+pocl_basic_fill_rect (void *data,
+                      void *__restrict__ const device_ptr,
+                      const size_t *__restrict__ const buffer_origin,
+                      const size_t *__restrict__ const region,
+                      size_t const buffer_row_pitch,
+                      size_t const buffer_slice_pitch,
+                      void *fill_pixel,
+                      size_t pixel_size)                    
+{
+  char *__restrict const adjusted_device_ptr = (char*)device_ptr 
+    + buffer_origin[0] * pixel_size 
+    + buffer_row_pitch * buffer_origin[1] 
+    + buffer_slice_pitch * buffer_origin[2];
+    
+  size_t i, j, k;
+
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      for (i = 0; i < region[0]; ++i)
+        memcpy (adjusted_device_ptr + pixel_size * i 
+                + buffer_row_pitch * j 
+                + buffer_slice_pitch * k, fill_pixel, pixel_size);
+}
 
 void *
 pocl_basic_map_mem (void *data, void *buf_ptr, 
@@ -531,9 +557,10 @@ pocl_basic_get_timer_value (void *data)
   return (current.tv_sec * 1000000 + current.tv_usec)*1000;
 }
 
-cl_int pocl_basic_get_supported_image_formats (cl_mem_flags flags,
-                                               const cl_image_format **image_formats,
-                                               cl_int *num_img_formats)
+cl_int 
+pocl_basic_get_supported_image_formats (cl_mem_flags flags,
+                                        const cl_image_format **image_formats,
+                                        cl_int *num_img_formats)
 {
     if (num_img_formats == NULL || image_formats == NULL)
       return CL_INVALID_VALUE;

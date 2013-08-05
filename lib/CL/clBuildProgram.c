@@ -79,7 +79,7 @@ CL_API_SUFFIX__VERSION_1_0
   int device_i = 0;
   const char *user_options = "";
   char *temp_options;
-  char *modded_options;
+  char *modded_options = NULL;
   char *token;
   char *saveptr;
 

@@ -155,6 +155,7 @@ TYPE_SUPPORTED:
     mem->buffer = image_desc->buffer;
 
 #if 0
+    printf("flags = %X\n",mem->flags); 
     printf("mem_image_width %d\n", mem->image_width);
     printf("mem_image_height %d\n", mem->image_height);
     printf("mem_image_depth %d\n", mem->image_depth);

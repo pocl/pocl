@@ -66,7 +66,6 @@ int pocl_out_of_bounds (void* image, int4 coord,
               dev_image->order == CL_RA || dev_image->order == CL_ARGB || 
               dev_image->order == CL_BGRA || dev_image->order == CL_RGBA)
             (*color)[3] = 0;
-            
           else
             (*color)[3] = 1; 
           
@@ -136,6 +135,8 @@ void pocl_read_pixel (void* color, void* image, int4 coord)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
+
+IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int2)
 
 /*#endif*/
 

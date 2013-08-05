@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "pocl_cl.h"
 
 #pragma GCC visibility push(hidden)
 #ifdef __cplusplus
@@ -89,5 +90,10 @@ void pocl_aligned_free(void* ptr);
   } 
 
 
+/* Function for creating events */
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
+                          cl_command_type command_type, cl_int num_events, 
+                          cl_event *wait_list);
+  
 
 #endif

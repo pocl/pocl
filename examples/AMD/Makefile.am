@@ -134,6 +134,8 @@ test_HelloWorld:
 test_ImageOverlap: 
 	cd $(amd_app_dir)/ImageOverlap && \
 	ln -sf $(amd_app_dir)/ImageOverlap/ImageOverlap_Kernels.cl $(amd_app_dir)/ImageOverlap/build/debug/x86_64/ && \
+	ln -sf $(amd_app_dir)/ImageOverlap/ImageOverlap_map.bmp $(amd_app_dir)/ImageOverlap/build/debug/x86_64/ && \
+	ln -sf $(amd_app_dir)/ImageOverlap/ImageOverlap_verify_map.bmp $(amd_app_dir)/ImageOverlap/build/debug/x86_64/ && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/ImageOverlap -e
 
 test_LUDecomposition: 

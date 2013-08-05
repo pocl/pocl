@@ -128,7 +128,8 @@ GEN_PROTOTYPES (basic)
   pocl_basic_write_rect, /* write_rect */				\
   pocl_basic_copy, /* copy */						\
   pocl_basic_copy_rect, /* copy_rect */				\
-  pocl_basic_map_mem,                               \
+  pocl_basic_fill_rect, /* fill_rect*/              \
+  pocl_basic_map_mem,                                 \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_basic_run, /* run */                         \
   pocl_basic_get_timer_value,  /* get_timer_value */    \

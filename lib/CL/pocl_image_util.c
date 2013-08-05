@@ -25,7 +25,28 @@
 #include "pocl_image_util.h"
 #include "assert.h"
 
-void
+extern cl_int 
+pocl_check_image_origin_region (const cl_mem image, 
+                                const size_t *origin, 
+                                const size_t *region)
+{
+  if (image == NULL)
+    return CL_INVALID_MEM_OBJECT;
+
+  if (origin == NULL || region == NULL)
+    return CL_INVALID_VALUE;
+  
+  /* check if origin + region in each dimension is with in image bounds */
+  if (((origin[0] + region[0]) > image->image_row_pitch) || 
+      (image->image_height > 0 && 
+       ((origin[1] + region[1]) > image->image_height)) ||
+      (image->image_depth > 0 && (origin[2] + region[2]) > image->image_depth))
+    return CL_INVALID_VALUE;
+
+  return CL_SUCCESS;
+}
+
+extern void
 pocl_get_image_information (cl_channel_order ch_order, 
                             cl_channel_type ch_type,
                             int* channels_out,

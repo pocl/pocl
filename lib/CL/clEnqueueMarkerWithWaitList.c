@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clEnqueueMarker()
+/* OpenCL runtime library: clEnqueueMarkerMarkerWithWaitList()
 
-   Copyright (c) 2011 Pekka Jääskeläinen / Tampere Univ. of Tech.
+   Copyright (c) 2013 Ville Korhonen / Tampere Univ. of Tech.
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,37 +23,51 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 #include "pocl_util.h"
+#include <stdio.h>
+
 
 CL_API_ENTRY cl_int CL_API_CALL
-POname(clEnqueueMarker)(cl_command_queue     command_queue,
-                  cl_event *           event) 
-CL_API_SUFFIX__VERSION_1_0
+POname(clEnqueueMarkerWithWaitList) (cl_command_queue   command_queue,
+                                     cl_uint            num_events_in_wait_list,
+                                     const cl_event *   event_wait_list,
+                                     cl_event *         event) 
+CL_API_SUFFIX__VERSION_1_2
 {
+  int i;
+  cl_int event_status;
+  int finished;
   int errcode;
-  _cl_command_node *cmd = NULL;
-
+  _cl_command_node *cmd;
+  
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
 
-  if (event == NULL)
-    return CL_INVALID_VALUE;
-
-  errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER, 
-                               0, NULL);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  POCL_UPDATE_EVENT_QUEUED;
-
+  if (event != NULL)
+    {
+      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER, 
+                                   num_events_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        goto ERROR;
+    }
+  
   cmd = malloc (sizeof(_cl_command_node));
   if (cmd == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    } 
   cmd->type = CL_COMMAND_MARKER;
+  cmd->command.marker.data = command_queue->device->data;
   cmd->next = NULL;
-  cmd->event = *event;
+  cmd->event = event ? (*event) : NULL;
   LL_APPEND(command_queue->root, cmd);
-
+      
   return CL_SUCCESS;
+
+ ERROR:
+  free (event); 
+  free (cmd);
+  return errcode;
+
 }
-POsym(clEnqueueMarker) 
+POsym(clEnqueueMarkerWithWaitList)

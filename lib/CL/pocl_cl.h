@@ -301,6 +301,15 @@ struct _cl_device_id {
                      size_t dst_row_pitch,
                      size_t dst_slice_pitch);
 
+void (*fill_rect) (void *data,
+                   void *__restrict__ const device_ptr,
+                   const size_t *__restrict__ const buffer_origin,
+                   const size_t *__restrict__ const region,
+                   size_t const buffer_row_pitch,
+                   size_t const buffer_slice_pitch,
+                   void *fill_pixel,
+                   size_t pixel_size);
+
   /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
@@ -315,10 +324,10 @@ struct _cl_device_id {
   int (*build_program) (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);
 
     /* return supported image formats */
-   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
-                                          const cl_image_format **image_formats,
-                                          cl_int *num_image_formats);
-
+  cl_int (*get_supported_image_formats) (cl_mem_flags flags,
+                                         const cl_image_format **image_formats,
+                                         cl_int *num_image_formats);
+  
   void *data;
   const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
@@ -445,11 +454,14 @@ struct _cl_kernel {
   struct _cl_kernel *next;
 };
 
+typedef struct _cl_event _cl_event;
 struct _cl_event {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   cl_command_queue queue;
   cl_command_type command_type;
+  cl_event *event_wait_list;
+  cl_int num_events_in_wait_list;
 
   /* The execution status of the command this event is monitoring. */
   cl_int status;

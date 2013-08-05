@@ -258,15 +258,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->event = NULL;
   if (event != NULL)
     {
-      *event = (cl_event)malloc (sizeof(struct _cl_event));
-      if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      POname(clRetainCommandQueue) (command_queue);
-      (*event)->command_type = command_node->type;
-      command_node->event = *event;
-
+      error = pocl_create_event (event, command_queue, 
+                                 CL_COMMAND_NDRANGE_KERNEL, 
+                                 num_events_in_wait_list, event_wait_list);
+      if (error != CL_SUCCESS)
+        return error;
       POCL_UPDATE_EVENT_QUEUED;
     }
 

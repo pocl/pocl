@@ -25,21 +25,23 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 #include <assert.h>
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueCopyBuffer)(cl_command_queue command_queue,
-                    cl_mem src_buffer,
-                    cl_mem dst_buffer,
-                    size_t src_offset,
-                    size_t dst_offset,
-                    size_t cb, 
-                    cl_uint num_events_in_wait_list,
-                    const cl_event *event_wait_list,
-                    cl_event *event) 
+                            cl_mem src_buffer,
+                            cl_mem dst_buffer,
+                            size_t src_offset,
+                            size_t dst_offset,
+                            size_t cb, 
+                            cl_uint num_events_in_wait_list,
+                            const cl_event *event_wait_list,
+                            cl_event *event) 
 CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;
+  int errcode;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -66,13 +68,11 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (event != NULL)
     {
-      *event = (cl_event)malloc(sizeof(struct _cl_event));
-      if (*event == NULL)
-        return CL_OUT_OF_HOST_MEMORY; 
-      POCL_INIT_OBJECT(*event);
-      (*event)->queue = command_queue;
-      POname(clRetainCommandQueue) (command_queue);
-      (*event)->command_type = CL_COMMAND_COPY_BUFFER;
+      errcode = pocl_create_event (event, command_queue,CL_COMMAND_COPY_BUFFER, 
+                                  num_events_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+      
       POCL_UPDATE_EVENT_QUEUED;
     }
 
