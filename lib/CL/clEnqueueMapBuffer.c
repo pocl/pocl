@@ -76,14 +76,17 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                                    CL_COMMAND_MAP_BUFFER, 
                                    num_events_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
-        return errcode;
+        goto ERROR;
 
       POCL_UPDATE_EVENT_QUEUED;
     }
 
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
-    POCL_ERROR(CL_OUT_OF_HOST_MEMORY);
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    }
 
   if (buffer->flags & CL_MEM_USE_HOST_PTR)
     {
@@ -107,54 +110,48 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   if (host_ptr == NULL)
     {
       POCL_UPDATE_EVENT_COMPLETE;
-      POCL_ERROR (CL_MAP_FAILURE);
+      errcode = CL_MAP_FAILURE;
+      goto ERROR;
     }
+
+  _cl_command_node *cmd = malloc(sizeof(_cl_command_node));
+  if (cmd == NULL)
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+    }
+  
+  cmd->type = CL_COMMAND_MAP_BUFFER;
+  cmd->command.map.buffer = buffer;
+  cmd->command.map.mapping = mapping_info;
+  cmd->next = NULL;
+  cmd->event = event ? *event : NULL;
+  LL_APPEND(command_queue->root, cmd);
   
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;
-  DL_APPEND (buffer->mappings, mapping_info);
-
+  DL_APPEND (buffer->mappings, mapping_info);  
+  
   if (blocking_map != CL_TRUE)
     {
-      _cl_command_node *cmd = malloc(sizeof(_cl_command_node));
-      if (cmd == NULL)
-        {
-          if (errcode_ret)
-            *errcode_ret = CL_OUT_OF_HOST_MEMORY;
-          return NULL;
-        }
-
-      cmd->type = CL_COMMAND_MAP_BUFFER;
-      cmd->command.map.buffer = buffer;
-      cmd->command.map.mapping = mapping_info;
-      cmd->next = NULL;
-      cmd->event = event ? *event : NULL;
-      LL_APPEND(command_queue->root, cmd);
       POCL_SUCCESS ();
       return mapping_info->host_ptr;
     }
   else
-    {
-      POname(clFinish) (command_queue);
-    }
-
-
-  POCL_UPDATE_EVENT_SUBMITTED;
-  POCL_UPDATE_EVENT_RUNNING;
-
-  host_ptr = pocl_map_mem_cmd(device, buffer, mapping_info);
-
-  POCL_UPDATE_EVENT_COMPLETE;
-
-  if (host_ptr == NULL)
-    {
-      POCL_UPDATE_EVENT_COMPLETE;
-      POCL_ERROR (CL_MAP_FAILURE);
-    }
+    POname(clFinish) (command_queue);
 
   POCL_SUCCESS ();
   return host_ptr;
+
+ ERROR:
+  if (event)
+    free(*event);
+  free(cmd);
+  free(event);
+  free (mapping_info);
+  if (errcode_ret)
+    *errcode_ret = errcode;
+  return NULL;
 }
 POsym(clEnqueueMapBuffer)
 
