@@ -23,11 +23,20 @@
 
 #include_next <CL/cl_platform.h>
 
-// We do not want warning when using 1.0 and 1.1 deprecated function:
-// we use it on purpose in order to provide backward compatibility
+// We do not want warnings when using 1.0 and 1.1 deprecated functions:
+// We use this on purpose to provide backward compatibility
 #undef  CL_EXTENSION_WEAK_LINK
 #define CL_EXTENSION_WEAK_LINK
 #undef  CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
 #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
 #undef  CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
+
+// What pocl provides on Apple platforms does not depend on the OS X
+// version, even if the Khronos headers say so:
+#undef  AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
+#define AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
+#undef  AVAILABLE_MAC_OS_X_VERSION_10_7_AND_LATER
+#define AVAILABLE_MAC_OS_X_VERSION_10_7_AND_LATER
+#undef  AVAILABLE_MAC_OS_X_VERSION_10_8_AND_LATER
+#define AVAILABLE_MAC_OS_X_VERSION_10_8_AND_LATER
