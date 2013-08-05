@@ -30,6 +30,7 @@ POname(clEnqueueMarker)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0
 {
   int errcode;
+  _cl_command_node *cmd = NULL;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
@@ -37,14 +38,14 @@ CL_API_SUFFIX__VERSION_1_0
   if (event == NULL)
     return CL_INVALID_VALUE;
 
-  errcode = pocl_create_event(event, command_queue, CL_COMMAND_MARKER, 
-                              0, NULL);
+  errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER, 
+                               0, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 
   POCL_UPDATE_EVENT_QUEUED;
 
-  _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
+  cmd = malloc (sizeof(_cl_command_node));
   if (cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 

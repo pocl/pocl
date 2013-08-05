@@ -24,9 +24,9 @@ CL_API_SUFFIX__VERSION_1_0
     
   if (event != NULL)
     {
-      errcode = pocl_create_event(event, command_queue, 
-                                  CL_COMMAND_COPY_BUFFER_TO_IMAGE, 
-                                  num_events_in_wait_list, event_wait_list);
+      errcode = pocl_create_event (event, command_queue, 
+                                   CL_COMMAND_COPY_BUFFER_TO_IMAGE, 
+                                   num_events_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
       POCL_UPDATE_EVENT_QUEUED;
@@ -52,19 +52,11 @@ CL_API_SUFFIX__VERSION_1_0
      image->device_ptrs[device_id->dev_id], 
      image->size); 
             
-  cl_int ret_code = pocl_write_image   
-    (image,
-     command_queue->device,
-     dst_origin,
-     region,
-     0,
-     0, 
-     temp+src_offset);
+  cl_int ret_code = pocl_write_image (image, command_queue->device, dst_origin,
+                                      region, 0, 0, temp+src_offset);
     
-  free(temp);
-
+  free (temp);
   POCL_UPDATE_EVENT_COMPLETE;
-
   return ret_code;
 }
 POsym(clEnqueueCopyBufferToImage) 

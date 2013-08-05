@@ -236,7 +236,6 @@ static void exec_commands_in_queue_until_event(cl_command_queue queue,
   
   for (node = queue->root; (node != NULL && (event == NULL || node->event != event)); node = node->next)
     {
-      printf("node = %d, node->event = %d\n", node, node->event);
       if (node->event != NULL && node->event->event_wait_list != NULL)
         {
           for (i = 0; i < node->event->num_events_in_wait_list; ++i)
@@ -244,8 +243,8 @@ static void exec_commands_in_queue_until_event(cl_command_queue queue,
               wait_event = node->event->event_wait_list[i];
               if (wait_event->status != CL_COMPLETE || wait_event->status >= 0)
                 {
-                  exec_commands_in_queue_until_event(wait_event->queue, 
-                                                     wait_event);
+                  exec_commands_in_queue_until_event (wait_event->queue, 
+                                                      wait_event);
                 }
             }
         }

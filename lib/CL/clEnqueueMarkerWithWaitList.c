@@ -27,10 +27,10 @@
 
 
 CL_API_ENTRY cl_int CL_API_CALL
-POname(clEnqueueMarkerWithWaitList)(cl_command_queue   command_queue,
-                                    cl_uint            num_events_in_wait_list,
-                                    const cl_event *   event_wait_list,
-                                    cl_event *         event) 
+POname(clEnqueueMarkerWithWaitList) (cl_command_queue   command_queue,
+                                     cl_uint            num_events_in_wait_list,
+                                     const cl_event *   event_wait_list,
+                                     cl_event *         event) 
 CL_API_SUFFIX__VERSION_1_2
 {
   int i;
@@ -44,8 +44,8 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (event != NULL)
     {
-      errcode = pocl_create_event(event, command_queue, CL_COMMAND_MARKER, 
-                                  num_events_in_wait_list, event_wait_list);
+      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER, 
+                                   num_events_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         goto ERROR;
     }

@@ -149,10 +149,10 @@ CL_API_SUFFIX__VERSION_1_2
   /* TODO: channel order, saturating data type conversion */
   if (image_elem_size == 1)
     {
-      (*(cl_char4*)fill_pixel).x = (*(cl_int4*)fill_color).x;
-      (*(cl_char4*)fill_pixel).y = (*(cl_int4*)fill_color).y;
-      (*(cl_char4*)fill_pixel).z = (*(cl_int4*)fill_color).z;
-      (*(cl_char4*)fill_pixel).w = (*(cl_int4*)fill_color).w;
+      ((cl_char4*)fill_pixel)->x = ((cl_int4*)fill_color)->x;
+      ((cl_char4*)fill_pixel)->y = ((cl_int4*)fill_color)->y;
+      ((cl_char4*)fill_pixel)->z = ((cl_int4*)fill_color)->z;
+      ((cl_char4*)fill_pixel)->w = ((cl_int4*)fill_color)->w;
     }
   if (image_elem_size == 2)
     {
