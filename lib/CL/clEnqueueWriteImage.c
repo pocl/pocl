@@ -45,47 +45,41 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   if (event != NULL)
     {
       status = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_WRITE_IMAGE, 
-                                   num_events_in_wait_list, 
-                                   event_wait_list);
+                                  CL_COMMAND_WRITE_IMAGE, 
+                                  num_events_in_wait_list, 
+                                  event_wait_list);
       if (status != CL_SUCCESS)
         return status;
       
       POCL_UPDATE_EVENT_QUEUED;
       POname(clRetainCommandQueue) (command_queue);
-      cmd = malloc (sizeof(_cl_command_node));
-      if (cmd == NULL)
-        {
-          status = CL_OUT_OF_HOST_MEMORY;
-          free (*event);
-          return status;
-        } 
-      cmd->type = CL_COMMAND_WRITE_IMAGE;
-      cmd->command.rw_image.data = command_queue->device->data;
-      cmd->command.rw_image.device_ptr = 
-        image->device_ptrs[command_queue->device->dev_id];
-      cmd->command.rw_image.host_ptr = ptr;
-      memcpy ((cmd->command.map_image.origin), tuned_origin, 3*sizeof (size_t));
-      memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
-      cmd->command.rw_image.rowpitch = image->image_row_pitch;
-      cmd->command.rw_image.slicepitch = image->image_slice_pitch;
-      cmd->next = NULL;
-      cmd->event = event ? (*event) : NULL;
-      LL_APPEND(command_queue->root, cmd);
-    }      
+    }
+  cmd = malloc (sizeof(_cl_command_node));
+  if (cmd == NULL)
+    {
+      status = CL_OUT_OF_HOST_MEMORY;
+      free (*event);
+      return status;
+    } 
+  cmd->type = CL_COMMAND_WRITE_IMAGE;
+  cmd->command.rw_image.data = command_queue->device->data;
+  cmd->command.rw_image.device_ptr = 
+    image->device_ptrs[command_queue->device->dev_id];
+  cmd->command.rw_image.host_ptr = ptr;
+  memcpy ((cmd->command.map_image.origin), tuned_origin, 3*sizeof (size_t));
+  memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
+  cmd->command.rw_image.rowpitch = image->image_row_pitch;
+  cmd->command.rw_image.slicepitch = image->image_slice_pitch;
+  cmd->next = NULL;
+  cmd->event = event ? (*event) : NULL;
+  LL_APPEND(command_queue->root, cmd);
+  
   if (blocking_write)
     {
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      status = pocl_write_image(image, command_queue->device, origin, region,
-                                host_row_pitch, host_slice_pitch, ptr);
-      POCL_UPDATE_EVENT_COMPLETE;
+      status = clFinish(command_queue);
+      return status;
     }
-  else
-    {
-      POCL_ABORT_UNIMPLEMENTED();
-    }
-
   return status;
 }
 POsym(clEnqueueWriteImage)
+

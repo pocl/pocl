@@ -43,6 +43,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   void *host_ptr = NULL;
   mem_mapping_t *mapping_info = NULL;
   int errcode;
+  _cl_command_node *cmd = NULL;
 
   if (buffer == NULL)
     POCL_ERROR(CL_INVALID_MEM_OBJECT);
@@ -114,7 +115,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       goto ERROR;
     }
 
-  _cl_command_node *cmd = malloc(sizeof(_cl_command_node));
+  cmd = malloc(sizeof(_cl_command_node));
   if (cmd == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;

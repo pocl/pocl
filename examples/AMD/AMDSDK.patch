@@ -468,3 +468,14 @@ index d310168..32358da 100755
  
  
  using namespace cl;
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app/Mandelbrot/Mandelbrot_Kernels.cl
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app/Mandelbrot/Mandelbrot_Kernels.cl
+@@ -258,8 +258,6 @@
+     mandelbrotImage[4 * tid + 3] = color[3];
+ }
+ 
+-#define native_log2 log2
+-#define native_cos  cos
+ 
+ #ifdef ENABLE_DOUBLE
+ #ifdef KHR_DP_EXTENSION

@@ -46,9 +46,9 @@ CL_API_SUFFIX__VERSION_1_0
   int elem_size;
   int num_channels;
   int map_size;
-  void *map;
+  void *map = NULL;
   cl_device_id device;
-  _cl_command_node *cmd;
+  _cl_command_node *cmd = NULL;
   mem_mapping_t *mapping_info = NULL;
 
   if (command_queue == NULL)
@@ -110,7 +110,7 @@ CL_API_SUFFIX__VERSION_1_0
                             origin[2]};
   size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
                             region[2]};
-  size_t map_origin[3] = {0, 0, 0};
+  size_t map_origin[3] = {0, 0, 0}; 
 
   if (event != NULL)
     {

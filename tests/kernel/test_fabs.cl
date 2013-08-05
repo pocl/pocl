@@ -1,5 +1,9 @@
 // TESTING: copysign
 // TESTING: fabs
+// TESTING: isfinite
+// TESTING: isinf
+// TESTING: isnan
+// TESTING: isnormal
 // TESTING: signbit
 
 #define IMPLEMENT_BODY_V(NAME, BODY, SIZE, VTYPE, STYPE, JTYPE, SJTYPE) \
@@ -55,6 +59,8 @@
 #define is_signed(T)   ((T)-1 < (T)+1)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))
 
+#define ISNAN(x) (isnan(x) || as_int((float)(x)) == as_int((float)NAN))
+
 DEFINE_BODY_V
 (test_fabs,
  ({
@@ -71,7 +77,7 @@ DEFINE_BODY_V
      MAXFLOAT,
      HUGE_VALF,
      INFINITY,
-     /* NAN,   a nan has no specific sign */
+     NAN,
      FLT_MAX,
      FLT_MIN,
      FLT_EPSILON,
@@ -91,7 +97,7 @@ DEFINE_BODY_V
      1000000000000000000000000.0,
      HUGE_VAL,
      INFINITY,
-     /* NAN,   a nan has no specific sign */
+     NAN,
      DBL_MAX,
      DBL_MIN,
      DBL_EPSILON,
@@ -138,7 +144,7 @@ DEFINE_BODY_V
            S r, g;
            r.s = res.s[n];
            g.s = good.s[n];
-           equal = equal && r.sj == g.sj;
+           equal = equal && (ISNAN(val.s[n]) || r.sj == g.sj);
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
@@ -152,13 +158,75 @@ DEFINE_BODY_V
          ires.v = signbit(val.v);
          equal = true;
          for (int n=0; n<vecsize; ++n) {
-           equal = equal && ires.s[n] == (sign>0 ? 0 : vecsize==1 ? +1 : -1);
+           equal = equal &&
+             (ISNAN(val.s[n]) ||
+              ires.s[n] == (sign>0 ? 0 : vecsize==1 ? +1 : -1));
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
              printf("FAIL: signbit type=%s val=%.17g res=%d good=%d\n",
                     typename, val.s[n], (int)ires.s[n],
                     (sign>0 ? 0 : vecsize==1 ? +1 : -1));
+           }
+           return;
+         }
+         /* isfinite */
+         ires.v = isfinite(val.v);
+         equal = true;
+         for (int n=0; n<vecsize; ++n) {
+           equal = equal &&
+             ires.s[n] == (isfinite(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+         }
+         if (!equal) {
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: isfinite type=%s val=%.17g res=%d good=%d\n",
+                    typename, val.s[n], (int)ires.s[n],
+                    (isfinite(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
+           }
+           return;
+         }
+         /* isinf */
+         ires.v = isinf(val.v);
+         equal = true;
+         for (int n=0; n<vecsize; ++n) {
+           equal = equal &&
+             ires.s[n] == (isinf(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+         }
+         if (!equal) {
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: isinf type=%s val=%.17g res=%d good=%d\n",
+                    typename, val.s[n], (int)ires.s[n],
+                    (isinf(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
+           }
+           return;
+         }
+         /* isnan */
+         ires.v = isnan(val.v);
+         equal = true;
+         for (int n=0; n<vecsize; ++n) {
+           equal = equal &&
+             ires.s[n] == (isnan(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+         }
+         if (!equal) {
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: isnan type=%s val=%.17g res=%d good=%d\n",
+                    typename, val.s[n], (int)ires.s[n],
+                    (isnan(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
+           }
+           return;
+         }
+         /* isnormal */
+         ires.v = isnormal(val.v);
+         equal = true;
+         for (int n=0; n<vecsize; ++n) {
+           equal = equal &&
+             ires.s[n] == (isnormal(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+         }
+         if (!equal) {
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: isnormal type=%s val=%.17g res=%d good=%d\n",
+                    typename, val.s[n], (int)ires.s[n],
+                    (isnormal(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
            }
            return;
          }
@@ -170,7 +238,8 @@ DEFINE_BODY_V
              S r, g;
              r.s = res.s[n];
              g.s = sign2*good.s[n];
-             equal = equal && r.sj == g.sj;
+             equal = equal &&
+               (ISNAN(val.s[n]) || ISNAN(val2.s[n]) || r.sj == g.sj);
            }
            if (!equal) {
              for (int n=0; n<vecsize; ++n) {

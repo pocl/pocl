@@ -30,7 +30,7 @@ SUBDIRS = @OCL_TARGETS@
 # fallback implementations. Include them in the
 # dist once here.
 EXTRA_DIST = *.c *.cl *.h *.ll			\
-	arm/*.cl tce/*.cl x86_64/*.cl		\
+	arm/*.cl tce/*.cl			\
 	vecmathlib/COPYING			\
 	vecmathlib/COPYING.LESSER		\
 	vecmathlib/README			\

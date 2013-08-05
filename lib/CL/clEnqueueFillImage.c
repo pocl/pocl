@@ -25,6 +25,7 @@
 #include "utlist.h"
 #include "pocl_image_util.h"
 #include "pocl_util.h"
+#include "cl_platform.h"
 #include <string.h>
 
 extern CL_API_ENTRY cl_int CL_API_CALL
@@ -40,12 +41,12 @@ CL_API_SUFFIX__VERSION_1_2
 {
   int errcode = CL_SUCCESS;
   int num_entries = 0;
-  _cl_command_node *cmd;
-  cl_image_format *supported_image_formats;
+  _cl_command_node *cmd = NULL;
+  cl_image_format *supported_image_formats = NULL;
   int i;
-  void* fill_pixel;
+  void *fill_pixel = NULL;
   int num_image_channels;
-  int image_elem_size;
+  int image_elem_size; 
   size_t tuned_origin[3];
 
   if (command_queue == NULL)
@@ -148,24 +149,21 @@ CL_API_SUFFIX__VERSION_1_2
   /* TODO: channel order, saturating data type conversion */
   if (image_elem_size == 1)
     {
-      ((char*)fill_pixel)[0] = ((int*)fill_color)[0];
-      ((char*)fill_pixel)[1] = ((int*)fill_color)[1];
-      ((char*)fill_pixel)[2] = ((int*)fill_color)[2];
-      ((char*)fill_pixel)[3] = ((int*)fill_color)[3];
+      (*(cl_char4*)fill_pixel).x = (*(cl_int4*)fill_color).x;
+      (*(cl_char4*)fill_pixel).y = (*(cl_int4*)fill_color).y;
+      (*(cl_char4*)fill_pixel).z = (*(cl_int4*)fill_color).z;
+      (*(cl_char4*)fill_pixel).w = (*(cl_int4*)fill_color).w;
     }
   if (image_elem_size == 2)
     {
-      ((short*)fill_pixel)[0] = ((int*)fill_color)[0];
-      ((short*)fill_pixel)[1] = ((int*)fill_color)[1];
-      ((short*)fill_pixel)[2] = ((int*)fill_color)[2];
-      ((short*)fill_pixel)[3] = ((int*)fill_color)[3];
+      ((cl_short4*)fill_pixel)->x = ((cl_int4*)fill_color)->x;
+      ((cl_short4*)fill_pixel)->y = ((cl_int4*)fill_color)->y;
+      ((cl_short4*)fill_pixel)->z = ((cl_int4*)fill_color)->z;
+      ((cl_short4*)fill_pixel)->w = ((cl_int4*)fill_color)->w;
     }
  if (image_elem_size == 4)
     {
-      ((int*)fill_pixel)[0] = ((int*)fill_color)[0];
-      ((int*)fill_pixel)[1] = ((int*)fill_color)[1];
-      ((int*)fill_pixel)[2] = ((int*)fill_color)[2];
-      ((int*)fill_pixel)[3] = ((int*)fill_color)[3];
+      memcpy (fill_pixel, fill_color, sizeof (cl_int4));      
     }
 
   if (event != NULL)
@@ -176,6 +174,9 @@ CL_API_SUFFIX__VERSION_1_2
         goto ERROR_CLEAN;
     }
 
+  /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
+     test uses bottom-left corner as origin. Because of this we need to modify 
+     y-coordinate so the fill goes in the right place. */
   tuned_origin[0] = origin[0];
   tuned_origin[1] = image->image_height - region[1] - origin[1];
   tuned_origin[2] = origin[2];
@@ -194,10 +195,15 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->next = NULL;
   cmd->event = event ? (*event) : NULL;
   LL_APPEND(command_queue->root, cmd);
+
+  free (supported_image_formats);
+  return errcode;
   
  ERROR_CLEAN:
   free (supported_image_formats);
-  
+  if (*event)
+    free (*event);
+  free (fill_pixel);
   return errcode;
 }
 POsym(clEnqueueFillImage)

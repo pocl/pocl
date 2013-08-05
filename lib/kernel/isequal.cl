@@ -24,7 +24,4 @@
 
 #include "templates.h"
 
-#define __builtin_isequalf(a, b) (a == b)
-#define __builtin_isequal(a, b)  (a == b)
-
-DEFINE_BUILTIN_J_VV(isequal)
+DEFINE_EXPR_J_VV(isequal, a==b)

@@ -36,19 +36,13 @@ POname(clCreateKernel)(cl_program program,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel kernel;
-  char tmpdir[POCL_FILENAME_LENGTH];
   char device_tmpdir[POCL_FILENAME_LENGTH];
-  char binary_filename[POCL_FILENAME_LENGTH];
-  FILE *binary_file;
-  size_t n;
   char descriptor_filename[POCL_FILENAME_LENGTH];
-  char command[COMMAND_LENGTH];
   int errcode;
   int error;
   lt_dlhandle dlhandle = NULL;
   int i;
   int device_i;
-  char* pocl_kernel_fmt;
   
   if (program == NULL || program->num_devices == 0)
   {
@@ -71,13 +65,6 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_INIT_OBJECT (kernel);
 
-  if (getenv("POCL_BUILDING") != NULL)
-    pocl_kernel_fmt = BUILDDIR "/scripts/" POCL_KERNEL " -k %s -t %s -o %s %s";
-  else if (access(PKGDATADIR "/" POCL_KERNEL, X_OK) == 0)
-    pocl_kernel_fmt = PKGDATADIR "/" POCL_KERNEL " -k %s -t %s -o %s %s";
-  else
-    pocl_kernel_fmt = POCL_KERNEL " -k %s -t %s -o %s %s";
-
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       if (device_i > 0)
@@ -90,60 +77,17 @@ POname(clCreateKernel)(cl_program program,
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
       if (access (device_tmpdir, F_OK) != 0) continue;
+ 
+      error = call_pocl_kernel( program, kernel, device_i, kernel_name, 
+                                device_tmpdir, descriptor_filename, &errcode );
 
-      snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                device_tmpdir, kernel_name);
-      mkdir (tmpdir, S_IRWXU);
+      if (error)
+        {
+          goto ERROR_CLEAN_KERNEL;
+        } 
 
-      error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
-                       "%s/kernel.bc",
-                       tmpdir);
-      if (error < 0)
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_KERNEL;
-      }
-
-      binary_file = fopen(binary_filename, "w+");
-      if (binary_file == NULL)
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_KERNEL;
-      }
-
-      n = fwrite(program->binaries[device_i], 1,
-                 program->binary_sizes[device_i], binary_file);
-      fclose(binary_file);
-
-      if (n < program->binary_sizes[device_i])
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_KERNEL;
-      }
-  
-
-      error |= snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
-                       "%s/%s/descriptor.so", device_tmpdir, kernel_name);
-
-      error |= snprintf(command, COMMAND_LENGTH,
-                       pocl_kernel_fmt,
-                       kernel_name,
-                       program->devices[device_i]->llvm_target_triplet,
-                       descriptor_filename,
-                       binary_filename);
-      if (error < 0)
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_KERNEL;
-      }
-
-      error = system(command);
-      if (error != 0)
-      {
-        errcode = CL_INVALID_KERNEL_NAME;
-        goto ERROR_CLEAN_KERNEL;
-      }
-
+      /* when using the API, there is no descriptor file */
+      #ifndef USE_LLVM_API
       if (dlhandle == NULL)
         {
           if (access (descriptor_filename, R_OK) != 0)
@@ -159,15 +103,15 @@ POname(clCreateKernel)(cl_program program,
               goto ERROR_CLEAN_KERNEL;
             }
         }
+      #endif 
     }
 
-  kernel->function_name = strdup(kernel_name);
-  kernel->name = strdup(kernel_name);
+  #ifndef USE_LLVM_API
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
   kernel->reqd_wg_size = (int*)lt_dlsym(dlhandle, "_reqd_wg_size");
-  kernel->context = program->context;
-  kernel->program = program;
-  kernel->dlhandle = dlhandle; /* TODO: why is this stored? */
+  kernel->dlhandle = dlhandle; /* Store this, as the above is a pointer
+                                  to the dl image, and it cannot be freed
+                                  before the cl_kernel is destroyed */
   kernel->arg_is_pointer = lt_dlsym(dlhandle, "_arg_is_pointer");
   kernel->arg_is_local = lt_dlsym(dlhandle, "_arg_is_local");
   kernel->arg_is_image = lt_dlsym(dlhandle, "_arg_is_image");
@@ -177,8 +121,6 @@ POname(clCreateKernel)(cl_program program,
   kernel->dyn_arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
-  kernel->next = NULL;
-
   /* Initialize kernel "dynamic" arguments (in case the user doesn't). */
   for (i = 0; i < kernel->num_args; ++i)
     {
@@ -193,6 +135,14 @@ POname(clCreateKernel)(cl_program program,
       kernel->dyn_arguments[kernel->num_args + i].size =
         ((unsigned *) lt_dlsym(dlhandle, "_local_sizes"))[i];
     }
+  #endif
+
+  /* TODO: one of these two could be eliminated?  */
+  kernel->function_name = strdup(kernel_name);
+  kernel->name = strdup(kernel_name);
+  kernel->context = program->context;
+  kernel->program = program;
+  kernel->next = NULL;
 
   cl_kernel k = program->kernels;
   program->kernels = kernel;

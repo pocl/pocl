@@ -16,8 +16,7 @@ Requirements
 In order to build pocl, you need the following support libraries and
 tools:
 
-  * LLVM & Clang 3.2
-  * gcc or a compatible compiler
+  * LLVM & Clang 3.3
   * GNU make
   * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
@@ -33,13 +32,6 @@ compile it with 'make REQUIRES_RTTI=1', as follows:
 
 !!!NOTE: A 64-bit host is at the moment required. See
 https://bugs.launchpad.net/pocl/+bug/911911
-
-!!!NOTE: On Mac OS X, you cannot build LLVM with LLVM; you need to
-build using gcc. Use e.g. this command to configure instead:
-
-  ./configure --enable-shared CC=gcc CXX=g++ --prefix=YOUR_INSTALLATION_PREFIX_HERE
-
-  See README.Darwin for more details on installing pocl on Mac.
 
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
@@ -58,11 +50,6 @@ Known issues not related to pocl are listed below.
 * Using Clang compiled with gcc 4.7 causes indeterminism in the
 kernel compilation results. See the LLVM bug report: 
 http://llvm.org/bugs/show_bug.cgi?id=12945
-
-* On Mac OS X, you cannot build LLVM with LLVM; you need to
-build using gcc. Use e.g. this command to configure instead:
-
-  ./configure --enable-shared CC=gcc CXX=g++ --prefix=YOUR_INSTALLATION_PREFIX_HERE
 
 The standard build installations as provided by FSF are as follows:
 

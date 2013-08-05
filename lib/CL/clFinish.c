@@ -234,9 +234,9 @@ static void exec_commands_in_queue_until_event(cl_command_queue queue,
   cl_event wait_event;
   int i;
   
-  for (node = queue->root; (node != NULL && (event == NULL || node->event != event)); 
-       node = node->next)
+  for (node = queue->root; (node != NULL && (event == NULL || node->event != event)); node = node->next)
     {
+      printf("node = %d, node->event = %d\n", node, node->event);
       if (node->event != NULL && node->event->event_wait_list != NULL)
         {
           for (i = 0; i < node->event->num_events_in_wait_list; ++i)
