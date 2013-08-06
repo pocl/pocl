@@ -204,10 +204,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
   for (i = 0; i < num_events; ++i)
     {
       if (wait_list[i] == NULL)
-        {
-          printf("invaliidi waitlist\n");
-          return CL_INVALID_EVENT_WAIT_LIST;
-        }
+        return CL_INVALID_EVENT_WAIT_LIST;
     }
 
   if (event != NULL)
