@@ -183,6 +183,9 @@ typedef struct
   cl_command_type type;
   void *next; // for linked-list storage
   cl_event event;
+  cl_event *event_wait_list;
+  cl_int num_events_in_wait_list;
+  cl_device_id device;
 } _cl_command_node;
 
 #endif /* POCL_H */

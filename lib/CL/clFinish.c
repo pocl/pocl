@@ -39,6 +39,13 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     POCL_ABORT_UNIMPLEMENTED();
 
+  /* loop until queue given as parameter is empty */
+  while (command_queue->root != NULL)
+    {
+      if (node->event_wait_list != NULL)
+        {
+          
+
   exec_commands_in_queue_until_event(command_queue, NULL);
 
   // free the queue contents
@@ -236,12 +243,12 @@ static void exec_commands_in_queue_until_event(cl_command_queue queue,
   
   for (node = queue->root; (node != NULL && (event == NULL || node->event != event)); node = node->next)
     {
-      if (node->event != NULL && node->event->event_wait_list != NULL)
+      if (node->event_wait_list != NULL)
         {
-          for (i = 0; i < node->event->num_events_in_wait_list; ++i)
+          for (i = 0; i < node->num_events_in_wait_list; ++i)
             {
-              wait_event = node->event->event_wait_list[i];
-              if (wait_event->status != CL_COMPLETE || wait_event->status >= 0)
+              wait_event = node->event_wait_list[i];
+              if (wait_event->status != CL_COMPLETE)
                 {
                   exec_commands_in_queue_until_event (wait_event->queue, 
                                                       wait_event);

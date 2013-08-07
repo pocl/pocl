@@ -25,8 +25,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (event != NULL)
     {
       errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_COPY_BUFFER_TO_IMAGE, 
-                                   num_events_in_wait_list, event_wait_list);
+                                   CL_COMMAND_COPY_BUFFER_TO_IMAGE);
       if (errcode != CL_SUCCESS)
         return errcode;
       POCL_UPDATE_EVENT_QUEUED;

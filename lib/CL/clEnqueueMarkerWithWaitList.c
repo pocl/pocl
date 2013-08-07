@@ -44,22 +44,18 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (event != NULL)
     {
-      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER, 
-                                   num_events_in_wait_list, event_wait_list);
+      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER);
       if (errcode != CL_SUCCESS)
         goto ERROR;
     }
   
-  cmd = malloc (sizeof(_cl_command_node));
-  if (cmd == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    } 
-  cmd->type = CL_COMMAND_MARKER;
+  errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_MARKER, 
+                                event, num_events_in_wait_list, 
+                                event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
   cmd->command.marker.data = command_queue->device->data;
-  cmd->next = NULL;
-  cmd->event = event ? (*event) : NULL;
   LL_APPEND(command_queue->root, cmd);
       
   return CL_SUCCESS;

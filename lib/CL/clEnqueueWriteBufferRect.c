@@ -99,8 +99,7 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   if (event != NULL)
     {
       errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_WRITE_BUFFER_RECT, 
-                                   num_events_in_wait_list, event_wait_list);
+                                   CL_COMMAND_WRITE_BUFFER_RECT);
       if (errcode != CL_SUCCESS)
         return errcode;
 

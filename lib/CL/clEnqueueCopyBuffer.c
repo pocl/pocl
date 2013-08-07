@@ -41,6 +41,7 @@ CL_API_SUFFIX__VERSION_1_0
 {
   cl_device_id device_id;
   unsigned i;
+  _cl_command_node *cmd = NULL;
   int errcode;
 
   if (command_queue == NULL)
@@ -68,18 +69,18 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (event != NULL)
     {
-      errcode = pocl_create_event (event, command_queue,CL_COMMAND_COPY_BUFFER, 
-                                  num_events_in_wait_list, event_wait_list);
+      errcode = pocl_create_event (event, command_queue,CL_COMMAND_COPY_BUFFER);
       if (errcode != CL_SUCCESS)
         return errcode;
       
       POCL_UPDATE_EVENT_QUEUED;
     }
 
-
-  _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
-  if (cmd == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
+                                event, num_events_in_wait_list, 
+                                event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   cmd->command.copy.src_buffer = src_buffer;
   cmd->command.copy.dst_buffer = dst_buffer;
@@ -87,15 +88,12 @@ CL_API_SUFFIX__VERSION_1_0
   POname(clRetainMemObject)(src_buffer);
   POname(clRetainMemObject)(dst_buffer);
 
-  cmd->type = CL_COMMAND_COPY_BUFFER;
   cmd->command.copy.data = device_id->data;
   /* TODO: call device->buf_offset() or similar as device_ptrs might not be
      actual buffer pointers but pointers to a book keeping structure. */
   cmd->command.copy.src_ptr = src_buffer->device_ptrs[device_id->dev_id] + src_offset;
   cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[device_id->dev_id] + dst_offset;
   cmd->command.copy.cb = cb;
-  cmd->next = NULL;
-  cmd->event = event ? *event : NULL;
 
   LL_APPEND(command_queue->root, cmd);
 

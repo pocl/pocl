@@ -127,13 +127,6 @@ CL_API_SUFFIX__VERSION_1_2
 
  TYPE_SUPPORTED: 
  
-  cmd = malloc (sizeof(_cl_command_node));
-  if (cmd == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR_CLEAN;
-    } 
-
   fill_pixel = malloc (4 * sizeof(int));
   if (fill_pixel == NULL)
     {
@@ -168,8 +161,7 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (event != NULL)
     {
-      errcode = pocl_create_event(event, command_queue, CL_COMMAND_FILL_IMAGE, 
-                                  num_events_in_wait_list, event_wait_list);
+      errcode = pocl_create_event(event, command_queue, CL_COMMAND_FILL_IMAGE);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN;
     }
@@ -181,7 +173,12 @@ CL_API_SUFFIX__VERSION_1_2
   tuned_origin[1] = image->image_height - region[1] - origin[1];
   tuned_origin[2] = origin[2];
 
-  cmd->type = CL_COMMAND_FILL_IMAGE;
+  errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
+                                event, num_events_in_wait_list, 
+                                event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR_CLEAN;
+
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
@@ -192,10 +189,8 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.slicepitch = image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
   cmd->command.fill_image.pixel_size = image_elem_size * num_image_channels;
-  cmd->next = NULL;
-  cmd->event = event ? (*event) : NULL;
   LL_APPEND(command_queue->root, cmd);
-
+  
   free (supported_image_formats);
   return errcode;
   
