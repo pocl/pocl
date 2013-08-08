@@ -77,10 +77,10 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
       POCL_UPDATE_EVENT_QUEUED;
     }
 
-  errcode = pocl_create_command(&cmd, command_queue, 
-                                CL_COMMAND_UNMAP_MEM_OBJECT, 
-                                event, num_events_in_wait_list, 
-                                event_wait_list);
+  errcode = pocl_create_command (&cmd, command_queue, 
+                                 CL_COMMAND_UNMAP_MEM_OBJECT, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
   if (errcode != CL_SUCCESS)
     goto ERROR;
   

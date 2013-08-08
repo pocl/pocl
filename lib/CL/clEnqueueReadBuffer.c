@@ -110,7 +110,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
 
-      device->read(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
+      device->read (device->data, ptr, 
+                    buffer->device_ptrs[device->dev_id]+offset, cb);
 
       POCL_UPDATE_EVENT_COMPLETE;
 
@@ -118,9 +119,9 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
     }
   else
   {
-    errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
-                                  event, num_events_in_wait_list, 
-                                  event_wait_list);
+    errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
+                                   event, num_events_in_wait_list, 
+                                   event_wait_list);
     if (errcode != CL_SUCCESS)
       return errcode;
 

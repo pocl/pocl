@@ -54,9 +54,9 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
       POname(clRetainCommandQueue) (command_queue);
     }
 
-  status = pocl_create_command(&cmd, command_queue, CL_COMMAND_WRITE_IMAGE, 
-                               event, num_events_in_wait_list, 
-                               event_wait_list);
+  status = pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_IMAGE, 
+                                event, num_events_in_wait_list, 
+                                event_wait_list);
   if (status != CL_SUCCESS)
     {
       if (event)

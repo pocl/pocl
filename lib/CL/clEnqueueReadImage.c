@@ -88,9 +88,9 @@ CL_API_SUFFIX__VERSION_1_0
     }
   else /* non blocking */
     {
-      status = pocl_create_command(&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
-                                   event, num_events_in_wait_list, 
-                                   event_wait_list);
+      status = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
+                                    event, num_events_in_wait_list, 
+                                    event_wait_list);
       if (status != CL_SUCCESS)
         {
           if (event)

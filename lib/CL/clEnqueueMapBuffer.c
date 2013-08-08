@@ -114,9 +114,9 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       goto ERROR;
     }
 
-  errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_MAP_BUFFER, 
-                                event, num_events_in_wait_list, 
-                                event_wait_list);
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
   
   if (errcode != CL_SUCCESS)
       goto ERROR;

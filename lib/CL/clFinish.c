@@ -39,11 +39,6 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   cl_bool command_ready;
   cl_event *event;
 
-  LL_FOREACH (command_queue->root, node)
-    {
-      //printf("clFinish: command=%X\n", node->type);
-    }
-
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     POCL_ABORT_UNIMPLEMENTED();
 
@@ -54,12 +49,13 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   while (command_queue->root != NULL)
     {
       node = queue_at_hand->root;
-      command_ready = CL_TRUE;
       if (node == NULL)
         {
           queue_at_hand = command_queue;
           continue;
         }
+      command_ready = CL_TRUE;
+
       /* if command has no wait_list -> it's ready */
       if (node->event_wait_list != NULL)
         {
@@ -72,7 +68,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
                      prequisite event. Current node cannot be added to ready 
                      list */
                   queue_at_hand = node->event_wait_list[i]->queue;
-                  node = queue_at_hand->root;
+                  //node = queue_at_hand->root;
                   command_ready = CL_FALSE;
                 }
             }
@@ -112,7 +108,6 @@ static void exec_commands (_cl_command_node *node_list)
       switch (node->type)
         {
         case CL_COMMAND_READ_BUFFER:
-          
           POCL_UPDATE_EVENT_RUNNING;
           node->device->read
             (node->command.read.data, 
@@ -123,7 +118,6 @@ static void exec_commands (_cl_command_node *node_list)
           POname(clReleaseMemObject) (node->command.read.buffer);
           break;
         case CL_COMMAND_WRITE_BUFFER:
-          
           POCL_UPDATE_EVENT_RUNNING;
           node->device->write
             (node->command.write.data, 
@@ -134,7 +128,6 @@ static void exec_commands (_cl_command_node *node_list)
           POname(clReleaseMemObject) (node->command.write.buffer);
           break;
         case CL_COMMAND_COPY_BUFFER:
-          
           POCL_UPDATE_EVENT_RUNNING;
           node->device->copy
             (node->command.copy.data, 
@@ -146,14 +139,12 @@ static void exec_commands (_cl_command_node *node_list)
           POname(clReleaseMemObject) (node->command.copy.dst_buffer);
           break;
         case CL_COMMAND_MAP_BUFFER: 
-          
           POCL_UPDATE_EVENT_RUNNING;            
           pocl_map_mem_cmd (node->device, node->command.map.buffer, 
                             node->command.map.mapping);
           POCL_UPDATE_EVENT_COMPLETE;
           break;
         case CL_COMMAND_MAP_IMAGE:
-          
           POCL_UPDATE_EVENT_RUNNING; 
           node->device->read_rect 
             (node->command.map_image.data, node->command.map_image.map_ptr,
@@ -166,7 +157,6 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_COMPLETE;
           break;
         case CL_COMMAND_WRITE_IMAGE:
-          
           POCL_UPDATE_EVENT_RUNNING; 
           node->device->write_rect 
             (node->command.map_image.data, node->command.map_image.map_ptr,
@@ -179,7 +169,6 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_COMPLETE;
           break;
         case CL_COMMAND_READ_IMAGE:
-          
           POCL_UPDATE_EVENT_RUNNING; 
           node->device->read_rect 
             (node->command.map_image.data, node->command.map_image.map_ptr,
@@ -192,7 +181,6 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_COMPLETE;
           break;
         case CL_COMMAND_UNMAP_MEM_OBJECT:
-          
           POCL_UPDATE_EVENT_RUNNING;
           if ((node->command.unmap.memobj)->flags & 
               (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
@@ -221,7 +209,6 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_NDRANGE_KERNEL:
           assert (*event == node->event);
-          
           POCL_UPDATE_EVENT_RUNNING;
           node->device->run(node->command.run.data, node);
           POCL_UPDATE_EVENT_COMPLETE;
@@ -245,7 +232,6 @@ static void exec_commands (_cl_command_node *node_list)
           POname(clReleaseKernel)(node->command.run.kernel);
           break;
         case CL_COMMAND_FILL_IMAGE:
-          
           POCL_UPDATE_EVENT_RUNNING;
           node->device->fill_rect 
             (node->command.fill_image.data, 
@@ -260,7 +246,6 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_COMPLETE;
           break;
         case CL_COMMAND_MARKER:
-          
           POCL_UPDATE_EVENT_RUNNING;
           POCL_UPDATE_EVENT_COMPLETE;
           break;

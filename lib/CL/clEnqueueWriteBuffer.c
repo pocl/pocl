@@ -112,9 +112,10 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
     }
   else
   {
-    errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_WRITE_BUFFER, 
-                                  event, num_events_in_wait_list, 
-                                  event_wait_list);
+    errcode = pocl_create_command (&cmd, command_queue, 
+                                   CL_COMMAND_WRITE_BUFFER, 
+                                   event, num_events_in_wait_list, 
+                                   event_wait_list);
     if (errcode != CL_SUCCESS)
       return errcode;
 

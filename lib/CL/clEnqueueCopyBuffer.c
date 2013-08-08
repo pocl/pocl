@@ -76,9 +76,9 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_UPDATE_EVENT_QUEUED;
     }
 
-  errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
-                                event, num_events_in_wait_list, 
-                                event_wait_list);
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
 

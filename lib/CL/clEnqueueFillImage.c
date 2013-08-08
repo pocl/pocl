@@ -173,9 +173,9 @@ CL_API_SUFFIX__VERSION_1_2
   tuned_origin[1] = image->image_height - region[1] - origin[1];
   tuned_origin[2] = origin[2];
 
-  errcode = pocl_create_command(&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
-                                event, num_events_in_wait_list, 
-                                event_wait_list);
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
   if (errcode != CL_SUCCESS)
     goto ERROR_CLEAN;
 
