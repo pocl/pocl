@@ -194,8 +194,6 @@ pocl_aligned_free(void *ptr)
 cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
                           cl_command_type command_type)
 {
- 
-
   if (event != NULL)
     {
       *event = (cl_event)malloc (sizeof (struct _cl_event));
