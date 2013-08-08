@@ -78,10 +78,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     return CL_INVALID_WORK_DIMENSION;
   assert(command_queue->device->max_work_item_dimensions <= 3);
 
-  command_node = (_cl_command_node*) malloc(sizeof(_cl_command_node));
-  if (command_node == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-
   if (global_work_offset != NULL)
     {
       offset_x = global_work_offset[0];
@@ -255,12 +251,17 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 #endif
     }
 
-  command_node->event = NULL;
+  error = pocl_create_command (&command_node, command_queue, 
+                               CL_COMMAND_NDRANGE_KERNEL, 
+                               event, num_events_in_wait_list, 
+                               event_wait_list);
+  if (error != CL_SUCCESS)
+    return error;
+
   if (event != NULL)
     {
       error = pocl_create_event (event, command_queue, 
-                                 CL_COMMAND_NDRANGE_KERNEL, 
-                                 num_events_in_wait_list, event_wait_list);
+                                 CL_COMMAND_NDRANGE_KERNEL);
       if (error != CL_SUCCESS)
         return error;
       POCL_UPDATE_EVENT_QUEUED;

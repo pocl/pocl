@@ -192,23 +192,8 @@ pocl_aligned_free(void *ptr)
 
 
 cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
-                          cl_command_type command_type, cl_int num_events, 
-                          cl_event *wait_list)
+                          cl_command_type command_type)
 {
-  int i;
-
-  if (wait_list == NULL && num_events != 0 ||
-      wait_list != NULL && num_events == 0)
-    return CL_INVALID_EVENT_WAIT_LIST;
-  
-  for (i = 0; i < num_events; ++i)
-    {
-      if (wait_list[i] == NULL)
-        {
-          return CL_INVALID_EVENT_WAIT_LIST;
-        }
-    }
-
   if (event != NULL)
     {
       *event = (cl_event)malloc (sizeof (struct _cl_event));
@@ -218,12 +203,40 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POname(clRetainCommandQueue) (command_queue);
-      (*event)->event_wait_list = wait_list;
-      (*event)->num_events_in_wait_list = num_events;
       (*event)->command_type = command_type;
     }
   return CL_SUCCESS;
 }
 
+cl_int pocl_create_command (_cl_command_node **cmd, 
+                            cl_command_queue command_queue, 
+                            cl_command_type command_type, cl_event *event, 
+                            cl_int num_events, cl_event *wait_list)
+{
+  int i;
+  
+  if (wait_list == NULL && num_events != 0 ||
+      wait_list != NULL && num_events == 0)
+    return CL_INVALID_EVENT_WAIT_LIST;
+  
+  for (i = 0; i < num_events; ++i)
+    {
+      if (wait_list[i] == NULL)
+        return CL_INVALID_EVENT_WAIT_LIST;
+    }
+  
+  (*cmd) = (_cl_command_node*)malloc (sizeof (_cl_command_node));
+  if (*cmd == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+  
+  (*cmd)->type = command_type;
+  (*cmd)->next = NULL;
+  (*cmd)->event = event ? (*event) : NULL;
+  (*cmd)->event_wait_list = wait_list;
+  (*cmd)->num_events_in_wait_list = num_events;
+  (*cmd)->device = command_queue->device;
+
+  return CL_SUCCESS;
+}
 #endif
 

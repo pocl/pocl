@@ -38,20 +38,17 @@ CL_API_SUFFIX__VERSION_1_0
   if (event == NULL)
     return CL_INVALID_VALUE;
 
-  errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER, 
-                               0, NULL);
+  errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER);
   if (errcode != CL_SUCCESS)
     return errcode;
 
   POCL_UPDATE_EVENT_QUEUED;
 
-  cmd = malloc (sizeof(_cl_command_node));
-  if (cmd == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, 
+                                 event, 0, NULL);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  cmd->type = CL_COMMAND_MARKER;
-  cmd->next = NULL;
-  cmd->event = *event;
   LL_APPEND(command_queue->root, cmd);
 
   return CL_SUCCESS;

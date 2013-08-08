@@ -39,6 +39,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
 {
   cl_device_id device;
   unsigned i;
+  _cl_command_node *cmd = NULL;
   int errcode;
 
   if (command_queue == NULL)
@@ -76,8 +77,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   if (event != NULL)
     {
       errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_WRITE_BUFFER, 
-                                   num_events_in_wait_list, event_wait_list);
+                                   CL_COMMAND_WRITE_BUFFER);
       if (errcode != CL_SUCCESS)
         return errcode;
 
@@ -112,18 +112,18 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
     }
   else
   {
-    _cl_command_node * cmd = malloc(sizeof(_cl_command_node));
-    if (cmd == NULL)
-      return CL_OUT_OF_HOST_MEMORY;
+    errcode = pocl_create_command (&cmd, command_queue, 
+                                   CL_COMMAND_WRITE_BUFFER, 
+                                   event, num_events_in_wait_list, 
+                                   event_wait_list);
+    if (errcode != CL_SUCCESS)
+      return errcode;
 
-    cmd->type = CL_COMMAND_WRITE_BUFFER;
     cmd->command.write.data = device->data;
     cmd->command.write.host_ptr = ptr;
     cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
     cmd->command.write.cb = cb;
     cmd->command.write.buffer = buffer;
-    cmd->next = NULL;
-    cmd->event = event ? *event : NULL;
     POname(clRetainMemObject) (buffer);
 
     LL_APPEND(command_queue->root, cmd);

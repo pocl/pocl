@@ -7,6 +7,10 @@ The OpenCL Runtime (OpenCL 1.2 Chapter 5)
 - clCreateImage2D() and clCreateImage3D() implementation moved to 
   clCreateImage()
 - Image creation now uses clCreateBuffer() 
+- clBuildProgram: Propagate the supported -cl* compiler options to Clang's 
+  OpenCL frontend. 
+- clFinish: works with commands with event wait lists.
+- Refactored clEnqueue* functions to use pocl_create_event/command() functions.
 
 Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 ----------------------------------------------------------
@@ -15,13 +19,12 @@ Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 - Introduced new macro based implementation for read/write_image()-functions
 - Added sampler implementation for CLK_ADDRESS_CLAMP and 
   CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
-- clBuildProgram: Propagate the supported -cl* compiler options to Clang's 
-  OpenCL frontend. 
 
 Device Drivers
 --------------
 - removed redundancy in pthread and basic:
   * pthread now uses read/write_rect implementation from basic
+- Added fill_rect function to device driver.
 
 Performance
 -----------
@@ -33,6 +36,8 @@ Misc.
 -----
 - poclu: helpers for converting between the C float and OpenCL cl_half
   types
+- Added pocl_create_event() and pocl_create_command() functions.
+- Added event waitlist feature to commands.
 
 0.8  July 2013
 ==============

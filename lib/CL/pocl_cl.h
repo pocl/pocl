@@ -460,9 +460,7 @@ struct _cl_event {
   POCL_OBJECT;
   cl_command_queue queue;
   cl_command_type command_type;
-  cl_event *event_wait_list;
-  cl_int num_events_in_wait_list;
-
+  
   /* The execution status of the command this event is monitoring. */
   cl_int status;
 

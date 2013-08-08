@@ -24,6 +24,7 @@
 #include "pocl_image_util.h"
 #include "pocl_util.h"
 #include "utlist.h"
+#include <string.h>
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueReadImage)(cl_command_queue     command_queue,
@@ -66,8 +67,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (event != NULL)
     {
       status = pocl_create_event (event, command_queue, 
-                                  CL_COMMAND_READ_IMAGE, 
-                                  num_events_in_wait_list, event_wait_list);
+                                  CL_COMMAND_READ_IMAGE);
       if (status != CL_SUCCESS)
         return status;
 
@@ -88,14 +88,16 @@ CL_API_SUFFIX__VERSION_1_0
     }
   else /* non blocking */
     {
-      cmd = malloc (sizeof(_cl_command_node));
-      if (cmd == NULL)
+      status = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
+                                    event, num_events_in_wait_list, 
+                                    event_wait_list);
+      if (status != CL_SUCCESS)
         {
-          status = CL_OUT_OF_HOST_MEMORY;
-          free (*event);
+          if (event)
+            free (*event);
           return status;
-        } 
-      cmd->type = CL_COMMAND_READ_IMAGE;
+        }
+
       cmd->command.rw_image.data = command_queue->device->data;
       cmd->command.rw_image.device_ptr = 
         image->device_ptrs[command_queue->device->dev_id];
@@ -104,8 +106,6 @@ CL_API_SUFFIX__VERSION_1_0
       memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
       cmd->command.rw_image.rowpitch = image->image_row_pitch;
       cmd->command.rw_image.slicepitch = image->image_slice_pitch;
-      cmd->next = NULL;
-      cmd->event = event ? (*event) : NULL;
       LL_APPEND(command_queue->root, cmd);
       return status;
     }

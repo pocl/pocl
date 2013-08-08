@@ -114,8 +114,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (event != NULL)
     {
-      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MAP_IMAGE, 
-                                   num_events_in_wait_list, event_wait_list);
+      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MAP_IMAGE);
       if (errcode != CL_SUCCESS)
         goto ERROR;
     }
@@ -142,13 +141,12 @@ CL_API_SUFFIX__VERSION_1_0
     }
   else
     {
-      cmd = malloc (sizeof(_cl_command_node));
-      if (cmd == NULL)
-        {
-          errcode = CL_OUT_OF_HOST_MEMORY;
-          goto ERROR;
-        } 
-      cmd->type = CL_COMMAND_MAP_IMAGE;
+      errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
+                                     event, num_events_in_wait_list, 
+                                     event_wait_list);
+      if (errcode != CL_SUCCESS)
+        goto ERROR;
+      
       cmd->command.map_image.data = command_queue->device->data;
       cmd->command.map_image.device_ptr = 
         image->device_ptrs[command_queue->device->dev_id];
@@ -157,8 +155,6 @@ CL_API_SUFFIX__VERSION_1_0
       memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
       cmd->command.map_image.rowpitch = image->image_row_pitch;
       cmd->command.map_image.slicepitch = image->image_slice_pitch;
-      cmd->next = NULL;
-      cmd->event = event ? (*event) : NULL;
       LL_APPEND(command_queue->root, cmd);
       POCL_UPDATE_EVENT_QUEUED;
     }

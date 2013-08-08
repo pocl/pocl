@@ -71,25 +71,22 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (event != NULL)
     {
       errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_UNMAP_MEM_OBJECT, 
-                                   num_events_in_wait_list, event_wait_list);
+                                   CL_COMMAND_UNMAP_MEM_OBJECT);
       if (errcode != CL_SUCCESS)
         goto ERROR;
       POCL_UPDATE_EVENT_QUEUED;
     }
 
-  cmd = malloc (sizeof (_cl_command_node));
-  if (cmd == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    } 
-  cmd->type = CL_COMMAND_UNMAP_MEM_OBJECT;
+  errcode = pocl_create_command (&cmd, command_queue, 
+                                 CL_COMMAND_UNMAP_MEM_OBJECT, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+  
   cmd->command.unmap.data = command_queue->device->data;
   cmd->command.unmap.memobj = memobj;
   cmd->command.unmap.mapping = mapping;
-  cmd->next = NULL;
-  cmd->event = event ? (*event) : NULL;
   LL_APPEND(command_queue->root, cmd);
 
   POCL_UPDATE_EVENT_SUBMITTED;
