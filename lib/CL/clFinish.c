@@ -27,235 +27,256 @@
 #include "utlist.h"
 #include "clEnqueueMapBuffer.h"
 
-static void exec_commands_in_queue_until_event(cl_command_queue queue, 
-                                               cl_event event);
+static void exec_commands (_cl_command_node *node_list);
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
   int i;
   _cl_command_node *node;
+  cl_command_queue queue_at_hand;
+  _cl_command_node *ready_list = NULL;
+  cl_bool command_ready;
+  cl_event *event;
+
+  LL_FOREACH (command_queue->root, node)
+    {
+      //printf("clFinish: command=%X\n", node->type);
+    }
 
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     POCL_ABORT_UNIMPLEMENTED();
 
-  /* loop until queue given as parameter is empty */
+  /* loop until queue given as parameter is empty. If command in queue has 
+     unsubmitted/uncomplete event move on to command_queue assosiated with that
+     event */
+  queue_at_hand = command_queue;
   while (command_queue->root != NULL)
     {
+      node = queue_at_hand->root;
+      command_ready = CL_TRUE;
+      if (node == NULL)
+        {
+          queue_at_hand = command_queue;
+          continue;
+        }
+      /* if command has no wait_list -> it's ready */
       if (node->event_wait_list != NULL)
         {
+          for(i = 0; i < node->num_events_in_wait_list; ++i)
+            {
+              if (node->event_wait_list[i]->status != CL_COMPLETE &&
+                  node->event_wait_list[i]->status != CL_SUBMITTED)
+                {
+                  /* move to handle command queue with unqueued/unfinished
+                     prequisite event. Current node cannot be added to ready 
+                     list */
+                  queue_at_hand = node->event_wait_list[i]->queue;
+                  node = queue_at_hand->root;
+                  command_ready = CL_FALSE;
+                }
+            }
+        }
+      if (command_ready = CL_TRUE)
+        {
+          if (node->event)
+            {
+              event = &(node->event);
+              POCL_UPDATE_EVENT_SUBMITTED;
+            }
+          /* remove command from queue and add to ready_list */
+          LL_DELETE (queue_at_hand->root, node);
+          LL_APPEND (ready_list, node);
+        }
+    }
+      
+  exec_commands(ready_list);
+
+  return CL_SUCCESS;
+}
+POsym(clFinish)
+
+static void exec_commands (_cl_command_node *node_list)
+{
+  int i;
+  cl_event *event;
+  _cl_command_node *node;
+  cl_command_queue command_queue = NULL;
+  LL_FOREACH (node_list, node)
+    {
+      event = &(node->event);
+      /* Command queue is needed for POCL_UPDATE_EVENT macros */
+      if (node->event)
+        command_queue = node->event->queue;
+
+      switch (node->type)
+        {
+        case CL_COMMAND_READ_BUFFER:
           
-
-  exec_commands_in_queue_until_event(command_queue, NULL);
-
+          POCL_UPDATE_EVENT_RUNNING;
+          node->device->read
+            (node->command.read.data, 
+             node->command.read.host_ptr, 
+             node->command.read.device_ptr, 
+             node->command.read.cb); 
+          POCL_UPDATE_EVENT_COMPLETE;
+          POname(clReleaseMemObject) (node->command.read.buffer);
+          break;
+        case CL_COMMAND_WRITE_BUFFER:
+          
+          POCL_UPDATE_EVENT_RUNNING;
+          node->device->write
+            (node->command.write.data, 
+             node->command.write.host_ptr, 
+             node->command.write.device_ptr, 
+             node->command.write.cb);
+          POCL_UPDATE_EVENT_COMPLETE;
+          POname(clReleaseMemObject) (node->command.write.buffer);
+          break;
+        case CL_COMMAND_COPY_BUFFER:
+          
+          POCL_UPDATE_EVENT_RUNNING;
+          node->device->copy
+            (node->command.copy.data, 
+             node->command.copy.src_ptr, 
+             node->command.copy.dst_ptr,
+             node->command.copy.cb);
+          POCL_UPDATE_EVENT_COMPLETE;
+          POname(clReleaseMemObject) (node->command.copy.src_buffer);
+          POname(clReleaseMemObject) (node->command.copy.dst_buffer);
+          break;
+        case CL_COMMAND_MAP_BUFFER: 
+          
+          POCL_UPDATE_EVENT_RUNNING;            
+          pocl_map_mem_cmd (node->device, node->command.map.buffer, 
+                            node->command.map.mapping);
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        case CL_COMMAND_MAP_IMAGE:
+          
+          POCL_UPDATE_EVENT_RUNNING; 
+          node->device->read_rect 
+            (node->command.map_image.data, node->command.map_image.map_ptr,
+             node->command.map_image.device_ptr, node->command.map_image.origin,
+             node->command.map_image.origin, node->command.map_image.region, 
+             node->command.map_image.rowpitch, 
+             node->command.map_image.slicepitch,
+             node->command.map_image.rowpitch,
+             node->command.map_image.slicepitch);
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        case CL_COMMAND_WRITE_IMAGE:
+          
+          POCL_UPDATE_EVENT_RUNNING; 
+          node->device->write_rect 
+            (node->command.map_image.data, node->command.map_image.map_ptr,
+             node->command.map_image.device_ptr, node->command.map_image.origin,
+             node->command.map_image.origin, node->command.map_image.region, 
+             node->command.map_image.rowpitch, 
+             node->command.map_image.slicepitch,
+             node->command.map_image.rowpitch,
+             node->command.map_image.slicepitch);
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        case CL_COMMAND_READ_IMAGE:
+          
+          POCL_UPDATE_EVENT_RUNNING; 
+          node->device->read_rect 
+            (node->command.map_image.data, node->command.map_image.map_ptr,
+             node->command.map_image.device_ptr, node->command.map_image.origin,
+             node->command.map_image.origin, node->command.map_image.region, 
+             node->command.map_image.rowpitch, 
+             node->command.map_image.slicepitch,
+             node->command.map_image.rowpitch,
+             node->command.map_image.slicepitch);
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        case CL_COMMAND_UNMAP_MEM_OBJECT:
+          
+          POCL_UPDATE_EVENT_RUNNING;
+          if ((node->command.unmap.memobj)->flags & 
+              (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
+            {
+              /* TODO: should we ensure the device global region is updated from
+                 the host memory? How does the specs define it,
+                 can the host_ptr be assumed to point to the host and the
+                 device accessible memory or just point there until the
+                 kernel(s) get executed or similar? */
+              /* Assume the region is automatically up to date. */
+            } else 
+            {
+              /* TODO: fixme. The offset computation must be done at the device 
+                 driver. */
+              if (node->device->unmap_mem != NULL)        
+                node->device->unmap_mem
+                  (node->device->data, 
+                   (node->command.unmap.mapping)->host_ptr, 
+                   (node->command.unmap.memobj)->device_ptrs[node->device->dev_id], 
+                   (node->command.unmap.mapping)->size);
+            }
+          DL_DELETE((node->command.unmap.memobj)->mappings, 
+                    node->command.unmap.mapping);
+          (node->command.unmap.memobj)->map_count--;
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        case CL_COMMAND_NDRANGE_KERNEL:
+          assert (*event == node->event);
+          
+          POCL_UPDATE_EVENT_RUNNING;
+          node->device->run(node->command.run.data, node);
+          POCL_UPDATE_EVENT_COMPLETE;
+          for (i = 0; i < node->command.run.arg_buffer_count; ++i)
+            {
+              cl_mem buf = node->command.run.arg_buffers[i];
+              if (buf == NULL) continue;
+              /*printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, 
+                buf,  node->command.run.kernel->function_name); */
+              POname(clReleaseMemObject) (buf);
+            }
+          free (node->command.run.arg_buffers);
+          free (node->command.run.tmp_dir);
+          for (i = 0; i < node->command.run.kernel->num_args + 
+                 node->command.run.kernel->num_locals; ++i)
+            {
+              pocl_aligned_free (node->command.run.arguments[i].value);
+            }
+          free (node->command.run.arguments);
+      
+          POname(clReleaseKernel)(node->command.run.kernel);
+          break;
+        case CL_COMMAND_FILL_IMAGE:
+          
+          POCL_UPDATE_EVENT_RUNNING;
+          node->device->fill_rect 
+            (node->command.fill_image.data, 
+             node->command.fill_image.device_ptr,
+             node->command.fill_image.buffer_origin,
+             node->command.fill_image.region,
+             node->command.fill_image.rowpitch, 
+             node->command.fill_image.slicepitch,
+             node->command.fill_image.fill_pixel,
+             node->command.fill_image.pixel_size);
+          free(node->command.fill_image.fill_pixel);
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        case CL_COMMAND_MARKER:
+          
+          POCL_UPDATE_EVENT_RUNNING;
+          POCL_UPDATE_EVENT_COMPLETE;
+          break;
+        default:
+          POCL_ABORT_UNIMPLEMENTED();
+          break;
+        }   
+    }
   // free the queue contents
-  /*node = command_queue->root;
-  command_queue->root = NULL;
+  node = node_list;
+  node_list = NULL;
   while (node)
     {
       _cl_command_node *tmp;
       tmp = node->next;
       free (node);
       node = tmp;
-      }*/  
-
-  return CL_SUCCESS;
-}
-POsym(clFinish)
-
-static void exec_command (cl_command_queue command_queue, 
-                          _cl_command_node *node)
-{
-  int i;
-  cl_event *event = &node->event;
-  
-  switch (node->type)
-    {
-    case CL_COMMAND_READ_BUFFER:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      command_queue->device->read
-        (node->command.read.data, 
-         node->command.read.host_ptr, 
-         node->command.read.device_ptr, 
-         node->command.read.cb); 
-      POCL_UPDATE_EVENT_COMPLETE;
-      POname(clReleaseMemObject) (node->command.read.buffer);
-      break;
-    case CL_COMMAND_WRITE_BUFFER:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      command_queue->device->write
-        (node->command.write.data, 
-         node->command.write.host_ptr, 
-         node->command.write.device_ptr, 
-         node->command.write.cb);
-      POCL_UPDATE_EVENT_COMPLETE;
-      POname(clReleaseMemObject) (node->command.write.buffer);
-      break;
-    case CL_COMMAND_COPY_BUFFER:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      command_queue->device->copy
-        (node->command.copy.data, 
-         node->command.copy.src_ptr, 
-         node->command.copy.dst_ptr,
-         node->command.copy.cb);
-      POCL_UPDATE_EVENT_COMPLETE;
-      POname(clReleaseMemObject) (node->command.copy.src_buffer);
-      POname(clReleaseMemObject) (node->command.copy.dst_buffer);
-      break;
-    case CL_COMMAND_MAP_BUFFER: 
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;            
-      pocl_map_mem_cmd (command_queue->device, node->command.map.buffer, 
-                        node->command.map.mapping);
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    case CL_COMMAND_MAP_IMAGE:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING; 
-      command_queue->device->read_rect 
-        (node->command.map_image.data, node->command.map_image.map_ptr,
-         node->command.map_image.device_ptr, node->command.map_image.origin,
-         node->command.map_image.origin, node->command.map_image.region, 
-         node->command.map_image.rowpitch, 
-         node->command.map_image.slicepitch,
-         node->command.map_image.rowpitch,
-         node->command.map_image.slicepitch);
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    case CL_COMMAND_WRITE_IMAGE:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING; 
-      command_queue->device->write_rect 
-        (node->command.map_image.data, node->command.map_image.map_ptr,
-         node->command.map_image.device_ptr, node->command.map_image.origin,
-         node->command.map_image.origin, node->command.map_image.region, 
-         node->command.map_image.rowpitch, 
-         node->command.map_image.slicepitch,
-         node->command.map_image.rowpitch,
-         node->command.map_image.slicepitch);
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    case CL_COMMAND_READ_IMAGE:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING; 
-      command_queue->device->read_rect 
-        (node->command.map_image.data, node->command.map_image.map_ptr,
-         node->command.map_image.device_ptr, node->command.map_image.origin,
-         node->command.map_image.origin, node->command.map_image.region, 
-         node->command.map_image.rowpitch, 
-         node->command.map_image.slicepitch,
-         node->command.map_image.rowpitch,
-         node->command.map_image.slicepitch);
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    case CL_COMMAND_UNMAP_MEM_OBJECT:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      if ((node->command.unmap.memobj)->flags & 
-          (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
-        {
-          /* TODO: should we ensure the device global region is updated from
-             the host memory? How does the specs define it,
-             can the host_ptr be assumed to point to the host and the
-             device accessible memory or just point there until the
-             kernel(s) get executed or similar? */
-          /* Assume the region is automatically up to date. */
-        } else 
-        {
-          /* TODO: fixme. The offset computation must be done at the device 
-             driver. */
-          if (command_queue->device->unmap_mem != NULL)        
-            command_queue->device->unmap_mem
-              (command_queue->device->data, 
-               (node->command.unmap.mapping)->host_ptr, 
-               (node->command.unmap.memobj)->device_ptrs[command_queue->device->dev_id], 
-               (node->command.unmap.mapping)->size);
-        }
-      DL_DELETE((node->command.unmap.memobj)->mappings, 
-                node->command.unmap.mapping);
-      (node->command.unmap.memobj)->map_count--;
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    case CL_COMMAND_NDRANGE_KERNEL:
-      assert (*event == node->event);
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      command_queue->device->run(node->command.run.data, node);
-      POCL_UPDATE_EVENT_COMPLETE;
-      for (i = 0; i < node->command.run.arg_buffer_count; ++i)
-        {
-          cl_mem buf = node->command.run.arg_buffers[i];
-          if (buf == NULL) continue;
-          /*printf ("### releasing arg %d - the buffer %x of kernel %s\n", i, 
-            buf,  node->command.run.kernel->function_name); */
-          POname(clReleaseMemObject) (buf);
-        }
-      free (node->command.run.arg_buffers);
-      free (node->command.run.tmp_dir);
-      for (i = 0; i < node->command.run.kernel->num_args + 
-             node->command.run.kernel->num_locals; ++i)
-        {
-          pocl_aligned_free (node->command.run.arguments[i].value);
-        }
-      free (node->command.run.arguments);
-      
-      POname(clReleaseKernel)(node->command.run.kernel);
-      break;
-    case CL_COMMAND_FILL_IMAGE:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      command_queue->device->fill_rect 
-        (node->command.fill_image.data, 
-         node->command.fill_image.device_ptr,
-         node->command.fill_image.buffer_origin,
-         node->command.fill_image.region,
-         node->command.fill_image.rowpitch, 
-         node->command.fill_image.slicepitch,
-         node->command.fill_image.fill_pixel,
-         node->command.fill_image.pixel_size);
-      free(node->command.fill_image.fill_pixel);
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    case CL_COMMAND_MARKER:
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
-      POCL_UPDATE_EVENT_COMPLETE;
-      break;
-    default:
-      POCL_ABORT_UNIMPLEMENTED();
-      break;
-    }   
-
-   LL_DELETE(command_queue->root, node);
-   free (node);
-}
-  
-
-static void exec_commands_in_queue_until_event(cl_command_queue queue, 
-                                               cl_event event)
-{
-  _cl_command_node *node;
-  cl_event wait_event;
-  int i;
-  
-  for (node = queue->root; (node != NULL && (event == NULL || node->event != event)); node = node->next)
-    {
-      if (node->event_wait_list != NULL)
-        {
-          for (i = 0; i < node->num_events_in_wait_list; ++i)
-            {
-              wait_event = node->event_wait_list[i];
-              if (wait_event->status != CL_COMPLETE)
-                {
-                  exec_commands_in_queue_until_event (wait_event->queue, 
-                                                      wait_event);
-                }
-            }
-        }
-      exec_command (queue, node);
     }
 }
-
