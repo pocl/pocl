@@ -99,8 +99,7 @@ built-ins.
 Tuning pocl behavior
 --------------------
 
-The behavior of pocl can be controlled with multiple environment variables.
-See `doc/envs.txt <http://bazaar.launchpad.net/~pocl/pocl/trunk/view/head:/doc/envs.txt>`_ for the full listing.
+.. include:: env_variables.rst
 
 Wiki
 ----

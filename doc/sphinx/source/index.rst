@@ -13,6 +13,7 @@ Contents:
 
    using
    development
+   design
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 
