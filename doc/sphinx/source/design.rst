@@ -4,19 +4,65 @@ Design notes
 Higher-level notes of pocl software design and implementation are collected 
 to this part.
 
+OpenCL host library
+-------------------
+
+The API implementations of The OpenCL Runtime and the The OpenCL Platform Layer are
+compiled to a single dynamic library (e.g., ``libpocl.so``). This library contains
+all implementations and, if pocl is compiled in the 
+`ICD mode <http://www.khronos.org/registry/cl/extensions/khr/cl_khr_icd.txt>`_, is what the ICD
+loader accesses. In case pocl is instructed to compile (also) a "directly linkable library", 
+``libOpenCL.so`` is produced which can be linked directly to the OpenCL programs (instead of linking
+against the ICD loader).
+
 Kernel compiler
 ---------------
 
-The kernel compiler of pocl relies on the OpenCL C frontend of the Clang
-for parsing the kernel descriptions to LLVM bytecode. The output from
-Clang is a description of the kernel function for a single work-item.
+The compilation of kernels in pocl is performed roughly as follows.
 
-The single work-item kernel function must be converted to a "work-group" function
-for targets that cannot execute the single work-item thread description directly.
-This includes the common CPU targets that are not optimized to the
-"Single Program Multiple Data" (SPMD) workloads. In contrast, GPU architectures
-(SIMT or SIMD style datapaths) often can input a single kernel description and 
-take care of the parallel execution of multiple kernel instances using the hardware.
+#. Produce an LLVM bitcode of the single kernel function.
+
+   The kernel compiler of pocl relies on the OpenCL C frontend of the Clang 
+   for parsing the kernel descriptions to LLVM bytecode. The output from
+   Clang is a description of the kernel function for a single work-item.
+
+   Done with the help of ``pocl-build`` script that invokes the Clang. See
+   ``clBuildProgram.c``.
+
+#. Link in the built-in functions.
+
+   The OpenCL C builtin functions are precompiled to LLVM *bitcode* libraries
+   residing under ``lib/kernel/$TARGET``. These are linked to the kernel using
+   the ``llvm-link`` tool when the helper script ``pocl-workgroup`` (see the next item).
+
+#. Produce the work-group function.
+
+   The single work-item kernel function is converted to a "work-group" function that
+   executes the kernel for all work-items in the local space. This is done
+   for targets that cannot execute the single work-item descriptions directly for
+   multiple work-item work-groups. This includes the common CPU targets that are not 
+   optimized to the "Single Program Multiple Data" (SPMD) workloads. In contrast, 
+   GPU architectures (SIMT or SIMD style datapaths) often can input a single kernel 
+   description and take care of the parallel execution of multiple kernel instances 
+   using their scheduling hardware.
+
+   This part is performed when a kernel execution command is executed (see 
+   ``clEnqueueNDRangeKernel.c``).  Only at this point the work-group dimensions are 
+   known, after which it is possible to produce functions of the single kernel functions 
+   that execute the whole work-group.
+
+#. Code generation for the target.
+
+   The work-group function (which is still in LLVM IR) of the kernel along with the launcher 
+   functions are finally converted to the machine code of the target device. This is done in
+   the device layer's implementation of the kernel run command. For example, see ``llvm_codegen()``
+   in ``lib/CL/devices/common.c``. This function generates a dynamically loaded object of the
+   work-group function for actually launching the kernel. The function is called from the CPU
+   device layer implementations (``pocl_basic_run()`` of ``lib/CL/devices/basic/basic.c``).
+   
+
+Work group function generation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The work-group function simply produces the execution of the whole local
 space, i.e., executes the kernel code for multiple work-items. This sounds 
@@ -28,10 +74,6 @@ a set of LLVM passes in pocl which are described in the following. Most of
 the passes can be omitted for targets which input single kernel descriptions
 to the instruction set. The source code for the passes is located 
 inside *lib/llvmopencl*.
-
-
-Work group function generation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The most complex part of the work-group generation is the part that analyzes
 the "barrier regions" and produces static execution of multiple work-items
