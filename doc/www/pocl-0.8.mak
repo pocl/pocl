@@ -53,6 +53,8 @@ well as funding from NSERC (Canada) via a Discovery Grant and from NSF
 <li><a href="http://pocl.sourceforge.net/pocl-0.8.html">This
 announcement</a></li>
 
+<li><a href="http://pocl.sourceforge.net/CHANGES">Change log</a></li>
+
 <li><a href="http://pocl.sourceforge.net/downloads">Download</a></li>
 
 </ul>
