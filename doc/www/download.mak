@@ -28,3 +28,7 @@ We also package releases regularly, usually after each new LLVM release:
             <a href="https://launchpadlibrarian.net/112874115/CHANGES">change log</a>, 
             <a href="https://launchpadlibrarian.net/112874413/notes-0.6.txt">release notes</a></li>
 </ul>
+
+All downloadable files, including previous releases and release
+candidates, are available on <a
+href="http://sourceforge.net/projects/pocl/files/">SourceForge</a>.
