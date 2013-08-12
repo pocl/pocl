@@ -34,7 +34,7 @@ most of the AMD APP SDK v2.8 OpenCL samples, among others.</p>
 
 <p>Note: This project was originally called Portable OpenCL.</p>
 
-<h3>Acknowledgements</h3>
+<h2>Acknowledgements</h2>
 
 <p>We'd like to thank the Radio Implementation Research Team from
 Nokia Research Center and Academy of Finland (funding decision 253087)
@@ -44,7 +44,7 @@ for funding the development of this release.</p>
 well as funding from NSERC (Canada) via a Discovery Grant and from NSF
 (USA) via OCI Award 0905046.</p>
 
-<h3>Links</h3>
+<h2>Links</h2>
 
 <ul>
 

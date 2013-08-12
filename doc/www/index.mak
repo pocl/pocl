@@ -18,6 +18,9 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2013-08-12: <a href="pocl-0.8.html">Portable Computing Language
+(pocl) v0.8 released</a></h2>
+
 <h2>2013-02-04: Project renamed to POrtable Computing Language (pocl) </h2>
 
 <p>The project was renamed to POrtable Computing Language (pocl) to avoid trademark
