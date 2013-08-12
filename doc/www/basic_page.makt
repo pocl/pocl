@@ -37,7 +37,7 @@
           <li class="menu_item"><a href="index.html" class="menu_link">Main</a></li>
           <li class="menu_item"><a href="download.html" class="menu_link">Download</a></li>
           <li class="menu_item"><a href="docs/html" class="menu_link">Documentation</a></li>
-          <li class="menu_item"><a href="http://launchpad.net/pocl" class="menu_link">Source</a></li>
+t          <li class="menu_item"><a href="http://launchpad.net/pocl" class="menu_link">Source</a></li>
           <li class="menu_item"><a href="discussion.html" class="menu_link">Discussion</a></li>
           <li class="menu_item"><a href="http://sourceforge.net/apps/mediawiki/pocl" class="menu_link">Wiki</a></li>
 ##          <li class="menu_item"><a href="publications.html" class="menu_link">Publications</a></li>
