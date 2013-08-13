@@ -39,8 +39,8 @@ Misc.
 - Added pocl_create_event() and pocl_create_command() functions.
 - Added event waitlist feature to commands.
 
-0.8  July 2013
-==============
+0.8  August 2013
+================
 
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.

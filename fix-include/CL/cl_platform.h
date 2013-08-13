@@ -31,6 +31,8 @@
 #define CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED
 #undef  CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
 #define CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED
+#undef  CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
+#define CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
 
 // What pocl provides on Apple platforms does not depend on the OS X
 // version, even if the Khronos headers say so:
