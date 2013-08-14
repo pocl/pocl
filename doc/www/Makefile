@@ -30,7 +30,7 @@ generated_htmls=$(patsubst %.mak,%.html,$(wildcard *.mak))
 all: $(generated_htmls)
 
 %.html : %.mak basic_page.makt
-	env PATH="/opt/local/Library/Frameworks/Python.framework/Versions/2.7/Resources/Python.app/Contents/MacOS:$$PATH" ./generate_html.py $< $@
+	./generate_html.py $< $@
 
 publish:
 	rsync -r *.html *.css $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
