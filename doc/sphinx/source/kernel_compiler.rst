@@ -282,7 +282,9 @@ Some of them are listed in the following:
  being refactored to use ``libClang`` directly from the host code to retrieve
  the information.
 
- Another purpose of this pass is to convert the automatic local buffers
+* ``AutomaticLocals``
+
+ This pass is converts the automatic local buffers
  to kernel arguments. This is to enforce the similar treatment of the both
  types of local buffers, the ones passed as arguments and the ones instantiated
  in the kernel.

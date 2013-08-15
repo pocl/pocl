@@ -299,39 +299,6 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
   }
   out << "}\n";    
 
-  if (locals.empty()) {
-    // This kernel fingerprint has not changed.
-    return F;
-  }
-  
-  // Create the new function.
-  FunctionType *ft = FunctionType::get(F->getReturnType(),
-                                       parameters,
-                                       F->isVarArg());
-  Function *new_kernel = Function::Create(ft,
-                                          F->getLinkage(),
-                                          "",
-                                          M);
-  new_kernel->takeName(F);
-  
-  ValueToValueMapTy vv;
-  Function::arg_iterator j = new_kernel->arg_begin();
-  for (Function::const_arg_iterator i = F->arg_begin(),
-         e = F->arg_end();
-       i != e; ++i) {
-    j->setName(i->getName());
-    vv[i] = j;
-    ++j;
-  }
-  
-  for (int i = 0; j != new_kernel->arg_end(); ++i, ++j) {
-    j->setName("_local" + Twine(i));
-    vv[locals[i]] = j;
-  }
-                                 
-  SmallVector<ReturnInst *, 1> ri;
-  CloneFunctionInto(new_kernel, F, vv, false, ri);
-
-  return new_kernel;
+  return F;
 }
 
