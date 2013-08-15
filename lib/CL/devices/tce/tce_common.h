@@ -30,6 +30,8 @@
 
 #include <string>
 
+#include "TCEString.hh"
+
 namespace TTAMachine {
   class AddressSpace;
   class Machine;
@@ -73,6 +75,24 @@ class TCEDevice {
      the device.*/
   virtual void initDataMemory();
 
+  virtual void setMachine(const TTAMachine::Machine& machine);
+
+  virtual void notifyKernelRunCommandSent
+      (__kernel_exec_cmd& dev_cmd, _cl_command_run *run_cmd) {};
+
+  virtual bool isNewKernel(const _cl_command_run* runCmd);
+
+  void updateCurrentKernel
+    (const _cl_command_run* runCmd, uint32_t kernelAddr);
+
+  /* Generates the command line string to execute tcecc to produce the
+     kernel binary. */
+  TCEString tceccCommandLine
+    (_cl_command_run *run_cmd, const TCEString& inputSrc, 
+     const TCEString& outputTpef, const TCEString extraParams=TCEString(""));
+
+  bool isMultiCoreMachine() const;
+
   /* The bufalloc memory regions for device memory allocation book 
      keeping. */
   struct memory_region local_mem;
@@ -88,11 +108,18 @@ class TCEDevice {
   bool needsByteSwap;
 
   const TTAProgram::Program* currentProgram;
+  const TTAMachine::Machine* machine_;
 
   uint32_t commandQueueAddr;
 
-  uint64_t globalCycleCount;
+  uint32_t curKernelAddr;
+  cl_kernel curKernel;
 
+  size_t curLocalX;
+  size_t curLocalY;
+  size_t curLocalZ;
+
+  uint64_t globalCycleCount;
 };
 
 #endif
@@ -108,7 +135,7 @@ class TCEDevice {
    device global memory. The structures start from 0, the
    buffer storage starts after them. TODO: check from the
    symbol table of the produced program. */
-#define TTA_UNALLOCATED_GLOBAL_SPACE (16*1024)
+#define TTA_UNALLOCATED_GLOBAL_SPACE (72*1024)
 
 #ifdef __cplusplus
 extern "C" {

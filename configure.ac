@@ -496,6 +496,54 @@ AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 # Checks for library functions.
 #AC_FUNC_MALLOC
 
+OCL_DRIVERS="basic pthreads"
+# look for the TCE library (needed for the ttasim device driver)
+
+AC_PATH_PROG([TCE_CONFIG], [tce-config])
+
+if test ! -z "$TCE_CONFIG"; then
+
+AC_PATH_PROG([TCECC], [tcecc])
+
+AC_LANG([C++])
+
+AC_LANG_CONFTEST(
+[AC_LANG_PROGRAM(
+  [[#include <Application.hh>]],
+  [Application::initialize()])
+])
+
+  if $CXX conftest.cpp `$TCE_CONFIG --libs --cxxflags --includes` -o /dev/null;
+  then
+        TCE_LIBRARY=ok
+  fi
+
+fi
+
+if test -z "$TCECC" || \
+   test -z "$TCE_CONFIG" || \
+   test -z "$TCE_LIBRARY"; then
+
+AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
+
+else
+
+if `$TCE_CONFIG --version|grep -q trunk`
+then
+AC_DEFINE([TCEMC_AVAILABLE], [1], [Defined to 1 if TCEMC libraries and tools are available])
+AC_SUBST([TCEMC_AVAILABLE], ["1"])
+TCEMC_AVAILABLE=1
+fi
+
+AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
+AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
+AC_SUBST([TCE_AVAILABLE], ["1"])
+LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
+fi
+
+AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
+AM_CONDITIONAL([TCEMC_AVAILABLE], test ! -z $TCEMC_AVAILABLE)
+
 # libtool dynamic library handling library
 old_LIBS="$LIBS"
 LIBS=
@@ -799,7 +847,14 @@ AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
 AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
 AC_SUBST([TCE_AVAILABLE], ["1"])
 LD_FLAGS_BIN="$LD_FLAGS_BIN `$TCE_CONFIG --libs`"
-OCL_DRIVERS="$OCL_DRIVERS tce"
+
+ if test ! -z $TCEMC_AVAILABLE;
+ then
+ OCL_DRIVERS="$OCL_DRIVERS tcemc"
+ else
+ OCL_DRIVERS="$OCL_DRIVERS tce"
+ fi
+
 OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
@@ -999,6 +1054,7 @@ AC_CONFIG_FILES([Makefile
                  tests/runtime/Makefile
                  tests/tce/Makefile
                  tests/tce/ttasim/Makefile
+                 tests/tce/tcemc/Makefile
                  tests/tce/fp16/Makefile
                  tests/cell/Makefile
                  tests/cell/hello/Makefile

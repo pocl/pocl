@@ -1,0 +1,26 @@
+The ttasim driver can dump a single kernel command as a C file
+which can be then compiled to a standalone binary that reproduces
+a single kernel execution command. It contains the input buffers
+initialized with the data for the kernel execution and the kernel
+launcher. This is useful for power benchmarking etc. as it
+isolates the device to a standalone entity.
+
+Usage:
+
+For the ttasim driver this feature is always on at the moment.
+
+export POCL_LEAVE_TEMP_DIRS=1
+export POCL_TEMP_DIR=tmp
+export POCL_DEVICES=ttasim
+mkdir tmp
+./opencl_app    # execute your opencl application
+sh tmp/ttasim-machine.adf/opencl_app/2-1-1.0-0-0/standalone_0_build
+ttasim -a machine.adf -p standalone.tpef
+(ttasim) info proc cycles
+399720
+
+There's a build script produced for each kernel execution (here only 1, 
+numbered as 0). This produces a standalone binary called standalone.tpef 
+which can be then simulated with the correct machine file. Also program.bc
+is produced for, e.g., using in the explorer tool.
+

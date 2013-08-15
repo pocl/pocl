@@ -70,6 +70,9 @@ typedef struct
      been executed. */
   cl_mem *arg_buffers;
   int arg_buffer_count;
+  size_t local_x;
+  size_t local_y;
+  size_t local_z;
   struct pocl_context pc;
   struct pocl_argument *arguments;
 } _cl_command_run;

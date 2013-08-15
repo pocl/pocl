@@ -85,7 +85,7 @@ main(void)
 
         cl::Device device = devices.at(0);
 
-        assert (strncmp(device.getInfo<CL_DEVICE_NAME>().c_str(), "ttasim", 6)==0 );
+        assert (strncmp(device.getInfo<CL_DEVICE_NAME>().c_str(), "tta", 3) == 0);
 
         a = poclu_bswap_cl_float (device(), a);
         b = poclu_bswap_cl_int (device(), b);
@@ -100,7 +100,7 @@ main(void)
         cl::Buffer inputBuffer = cl::Buffer(
             context, 
             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-            strlen (input), (void *) &input[0]);
+            strlen (input) + 1, (void *) &input[0]);
 
         // Create buffer for that uses the host ptr C
         cl::Buffer outputBuffer = cl::Buffer(

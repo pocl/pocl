@@ -33,6 +33,7 @@
 #define WIV_NAME "wi-vectorize"
 #define DEBUG_TYPE WIV_NAME
 #include "config.h"
+#include "pocl.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
@@ -102,7 +103,7 @@ IgnoreTargetInfo("wi-vectorize-ignore-target-info",  cl::init(true),
   cl::Hidden, cl::desc("Ignore target information"));
 
 static cl::opt<unsigned>
-ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(3), cl::Hidden,
+ReqChainDepth("wi-vectorize-req-chain-depth", cl::init(1), cl::Hidden,
   cl::desc("The required chain depth for vectorization"));
 
 static cl::opt<unsigned>
@@ -138,12 +139,16 @@ NoCMP("wi-vectorize-no-cmp", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize comparison operations"));
 
 static cl::opt<bool>
-NoCount("wi-vectorize-no-counters", cl::init(false), cl::Hidden,
+NoCount("wi-vectorize-no-counters", cl::init(true), cl::Hidden,
   cl::desc("Forbid vectorization based no loop counter "
           "arithmetic"));
 static cl::opt<bool>
-NoGEP("wi-vectorize-no-GEP", cl::init(false), cl::Hidden,
+NoGEP("wi-vectorize-no-GEP", cl::init(true), cl::Hidden,
   cl::desc("Don't try to vectorize getelementpointer operations"));
+static cl::opt<bool>
+GlobalToExtras("wi-vectorize-global-to-extras", cl::init(false), cl::Hidden,
+  cl::desc("Forces address computation for the global memory access to extras"));
+
 
 #ifndef NDEBUG
 static cl::opt<bool>
@@ -543,8 +548,8 @@ namespace {
 
       // Give a load or store half of the required depth so that load/store
       // pairs will vectorize.
-      if ((isa<LoadInst>(V) || isa<StoreInst>(V)))
-        return ReqChainDepth;
+      if ((isa<LoadInst>(V) || isa<StoreInst>(V))) 
+        return ReqChainDepth;      
         
       return 1;
     }
@@ -1013,7 +1018,11 @@ namespace {
       }
     } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
       // Currently, vector GEPs exist only with one index.
-      if (G->getNumIndices() != 1 || NoMemOps || NoGEP)
+      bool globalAccess = 
+          (dyn_cast<GetElementPtrInst>(I)->getPointerAddressSpace() 
+              == POCL_ADDRESS_SPACE_GLOBAL) ? true
+                                            : false;
+      if (G->getNumIndices() != 1 || NoMemOps || NoGEP || globalAccess)
         return false;         
     } else if (isa<CmpInst>(I)) {
         if (NoCMP)
@@ -1526,9 +1535,22 @@ namespace {
                     for (Value::use_iterator it = original->use_begin();
                          it != original->use_end();
                          it++) {
-                        bool usedInVec = false;                            
+                        bool usedInVec = false;  
+                        bool vectorizeCompute = !NoCount;
+                        if (GlobalToExtras) {
+                            for (Instruction::use_iterator it2 = original->use_begin();
+                                 it2 != original->use_end(); it2++) {
+                                if (isa<GetElementPtrInst>(*it2) &&
+                                    cast<GetElementPtrInst>(*it2)->getPointerAddressSpace() !=
+                                    POCL_ADDRESS_SPACE_GLOBAL &&
+                                    cast<GetElementPtrInst>(*it2)->getPointerAddressSpace() !=
+                                    POCL_ADDRESS_SPACE_CONSTANT) {
+                                    vectorizeCompute = true;
+                                }
+                            }
+                        }
                         if (*it != K) {
-                            if (!NoCount) {
+                            if (vectorizeCompute) {
                                 for (unsigned int j = 0; j < tmpVec->size(); j++) {
                                     if ((*it) == (*tmpVec)[j]) {
                                         usedInVec = true;
@@ -2872,33 +2894,75 @@ namespace {
   void WIVectorize::dropUnused(BasicBlock& BB) {
     bool changed;
     do{
-        BasicBlock::iterator J = BB.end();        
-        BasicBlock::iterator I = llvm::prior(J);
+        BasicBlock::iterator J = BB.end();     
         changed = false;
+        BasicBlock::iterator I = llvm::prior(J);        
         while (I != BB.begin()) {
         
-        if (isa<ShuffleVectorInst>(*I) ||
-            isa<ExtractElementInst>(*I) ||
-            isa<InsertElementInst>(*I) ||
-            isa<BitCastInst>(*I)) {
-            
-            Value* V = dyn_cast<Value>(&(*I));
-            
-            if (V && V->use_empty()) {
-                SE->forgetValue(&(*I));
-                (*I).eraseFromParent();
-                // removed instruction could have messed up things
-                // start again from the end
-                I = BB.end();
-                J = llvm::prior(I);
-                changed = true;
+            if (isa<ShuffleVectorInst>(*I) ||
+                isa<ExtractElementInst>(*I) ||
+                isa<InsertElementInst>(*I) ||
+                isa<BitCastInst>(*I)) {
+                
+                Value* V = dyn_cast<Value>(&(*I));
+                
+                if (V && V->use_empty()) {
+                    SE->forgetValue(&(*I));
+                    (*I).eraseFromParent();
+                    // removed instruction could have messed up things
+                    // start again from the end
+                    I = BB.end();
+                    J = llvm::prior(I);
+                    changed = true;
+                } else {
+                    J = llvm::prior(I);      		
+                }	  
+            } else if (GlobalToExtras && 
+                (isa<LoadInst>(*I) || isa<StoreInst>(*I))) {
+                // If the instruction is vector load or store of the
+                // width of the machine, reset metadata to force program
+                // partitioner to assign address computation to the extras.
+                Type *T1;
+                if (isa<StoreInst>(I)) {
+                  Value *IVal = cast<StoreInst>(I)->getValueOperand();
+                  T1 = IVal->getType();
+                } else {
+                  T1 = I->getType();
+                }
+                if (T1->isVectorTy()){
+                    unsigned numElem = cast<VectorType>(T1)->getNumElements();
+                    if (VectorWidth == numElem &&
+                        I->getMetadata("wi") != NULL) {
+                        MDNode* mn = I->getMetadata("wi");
+                        MDNode* mnCount = I->getMetadata("wi_counter");
+                        mn = NULL;
+                        mnCount = NULL;
+                        I->setMetadata("wi", mn);
+                        I->setMetadata("wi_counter", mnCount);
+                        changed = true;
+                    }
+                } 
+                if ((isa<LoadInst>(*I) && 
+                        (cast<LoadInst>(*I).getPointerAddressSpace() == 
+                        POCL_ADDRESS_SPACE_GLOBAL)) ||
+                    (isa<StoreInst>(*I) && 
+                        (cast<StoreInst>(*I).getPointerAddressSpace() == 
+                        POCL_ADDRESS_SPACE_GLOBAL))) {
+                    if (I->getMetadata("wi") != NULL) {
+                        MDNode* mn = I->getMetadata("wi");
+                        MDNode* mnCount = I->getMetadata("wi_counter");
+                        mn = NULL;
+                        mnCount = NULL;
+                        I->setMetadata("wi", mn);
+                        I->setMetadata("wi_counter", mnCount);
+                        changed = true;
+                    }
+                }                                                   
+                J = llvm::prior(I);                         
             } else {
                 J = llvm::prior(I);      		
-            }	  
-        } else {
-            J = llvm::prior(I);      		
-        }
-        I = J;      
+            }
+            I = J;      
         }
     } while (changed);
   }

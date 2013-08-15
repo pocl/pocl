@@ -8,6 +8,7 @@ AT_CHECK([make -s -C $abs_top_builddir/tests/tce/ttasim run | egrep -v "^make"],
 [PING23456.000000 2000001OK
 ])
 AT_CLEANUP
+
 AT_SETUP([Half-precision floats on ttasim])
 AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 AT_KEYWORDS([tce tta ttasim half])
@@ -30,5 +31,13 @@ AT_CHECK([make -s -C $abs_top_builddir/tests/tce/fp16 run | egrep -v "^make"], 0
 32.000000
 32.000000
 32.000000
+])
+AT_CLEANUP
+
+AT_SETUP([A basic TCEMC test])
+AT_KEYWORDS([tce tta ttasim tcemc])
+AT_SKIP_IF([! grep -c "define TCEMC_AVAILABLE" $abs_top_builddir/config.h])
+AT_CHECK([make -s -C $abs_top_builddir/tests/tce/tcemc run | egrep -v "^make"], 0, 
+[PING23456.000000 2000001OK
 ])
 AT_CLEANUP

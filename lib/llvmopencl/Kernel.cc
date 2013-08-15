@@ -30,8 +30,10 @@
 #include "llvm/Support/IRBuilder.h"
 #elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
+#include "llvm/InlineAsm.h"
 #else
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InlineAsm.h"
 #endif
 
 //#define DEBUG_PR_CREATION

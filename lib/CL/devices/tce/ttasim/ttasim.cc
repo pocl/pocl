@@ -1,4 +1,4 @@
-/* ttasim.h - a pocl device driver for simulating TTA devices using TCE's ttasim
+/* ttasim.cc - a pocl device driver for simulating TTA devices using TCE's ttasim
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
    
@@ -22,6 +22,7 @@
 */
 
 #include "ttasim.h"
+#include "install-paths.h"
 #include "bufalloc.h"
 #include "pocl_device.h"
 #include "pocl_util.h"
@@ -51,6 +52,9 @@
 #include <SimulatorCLI.hh>
 #include <SimulationEventHandler.hh>
 #include <Listener.hh>
+#include <TCEString.hh>
+
+#include <fstream>
 
 #include "tce_common.h"
 
@@ -66,7 +70,7 @@ public:
   TTASimDevice(cl_device_id dev, const char* adfName) :
     TCEDevice(dev, adfName), simulator(adfName), 
     simulatorCLI(simulator.frontend()), debuggerRequested(false),
-    shutdownRequested(false) {
+    shutdownRequested(false), produceStandAloneProgram_(true) {
     char dev_name[256];
 
     const char *adf = strrchr(adfName, '/');
@@ -78,6 +82,8 @@ public:
 
     SigINTHandler* ctrlcHandler = new SigINTHandler(this);
     Application::setSignalHandler(SIGINT, *ctrlcHandler);
+
+    setMachine(simulator.machine());
 
     initMemoryManagement(simulator.machine());
 
@@ -100,6 +106,7 @@ public:
       unsigned char val = ((char*)host_ptr)[i];
       globalMem->write (dest_addr + i, (Memory::MAU)(val));
     }
+
   }
 
   virtual void copyDeviceToHost(uint32_t src_addr, const void *host_ptr, 
@@ -139,6 +146,159 @@ public:
   virtual void restartProgram() {
     pthread_cond_signal (&simulation_start_cond);
   }
+
+  virtual void notifyKernelRunCommandSent
+  (__kernel_exec_cmd& dev_cmd, _cl_command_run *run_cmd) {
+    if (!produceStandAloneProgram_) return;
+
+    static int runCounter = 0;
+    TCEString tempDir = run_cmd->tmp_dir;
+    TCEString baseFname = tempDir + "/";
+    baseFname << "standalone_" << runCounter;
+
+    TCEString buildScriptFname = baseFname + "_build";
+    TCEString fname = baseFname + ".c";
+
+    std::ofstream out(fname.c_str());
+
+    out << "#include <lwpr.h>" << std::endl;
+    out << "#include <pocl_device.h>" << std::endl << std::endl;
+
+    out << "#define __local__ __attribute__((address_space(0)))" << std::endl;
+    out << "#define __global__ __attribute__((address_space(3)))" << std::endl;
+    out << "#define __constant__ __attribute__((address_space(3)))" << std::endl << std::endl;
+    out << "typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;" << std::endl;
+
+    /* Need to byteswap back as we are writing C code. */
+#define BSWAP(__X) byteswap_uint32_t (__X, needsByteSwap)
+
+    /* The standalone binary shall have the same input data as in the original
+       kernel host-device kernel launch command. The data is put into initialized 
+       global arrays to easily exclude the initialization time from the execution
+       time. Otherwise, the same command data is used for reproducing the execution.
+       For example, the local memory allocations (addresses) are the same as in
+       the original one. */
+
+    /* Create the global buffers along with their initialization data. */
+    for (int i = 0; i < run_cmd->kernel->num_args; ++i)
+      {
+        struct pocl_argument *al = &(run_cmd->arguments[i]);
+        if (run_cmd->kernel->arg_is_pointer[i])
+          {
+            if (al->value == NULL) continue;
+            unsigned start_addr = 
+              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id]))->start_address;
+            unsigned size = 
+              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id]))->size;
+
+            out << "__global__ char buffer_" << std::hex << start_addr 
+                << "[] = {" << std::endl << "\t";
+
+            MemorySystem &mems = simulator.memorySystem();
+            MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
+            for (std::size_t c = 0; c < size; ++c) {
+              unsigned char val = globalMem->read (start_addr + c);
+              out << "0x" << std::hex << (unsigned int)val;
+              if (c + 1 < size) out << ", ";
+              if (c % 32 == 31) out << std::endl << "\t";
+            }
+            out << std::endl << "}; " << std::endl << std::endl;
+          } 
+        else if (!run_cmd->kernel->arg_is_local[i])
+          {
+            /* Scalars are stored to global buffers automatically. Dump them to buffers. */
+            unsigned start_addr = BSWAP(dev_cmd.args[i]);
+            unsigned size = al->size;
+
+            out << "__global__ char scalar_arg_" << std::dec << i 
+                << "[] = {" << std::endl << "\t";
+
+            MemorySystem &mems = simulator.memorySystem();
+            MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
+            for (std::size_t c = 0; c < size; ++c) {
+              unsigned char val = globalMem->read (start_addr + c);
+              out << "0x" << std::hex << (unsigned int)val;
+              if (c + 1 < size) out << ", ";
+              if (c % 32 == 31) out << std::endl << "\t";
+            }
+            out << std::endl << "}; " << std::endl << std::endl;
+          }
+      }
+    
+    /* Setup the kernel command initialization values, pointing to the
+       global buffers for the buffer arguments, and using the original values
+       for the rest. */       
+
+    TCEString kernelMdSymbolName = "_";
+    kernelMdSymbolName += run_cmd->kernel->name;
+    kernelMdSymbolName += "_md";
+
+    out << "extern __global__ __kernel_metadata " << kernelMdSymbolName << ";" << std::endl << std::endl;
+
+    out << "kernel_exec_cmd kernel_command = {" << std::endl
+        << "\t.status = " << std::hex << "(uint32_t)0x" << BSWAP(dev_cmd.status) 
+        << "," << std::endl
+        << "\t.work_dim = " << std::dec << BSWAP(dev_cmd.work_dim) 
+        << ", " << std::endl
+        << "\t.num_groups = {" 
+        << std::dec << BSWAP(dev_cmd.num_groups[0]) << ", "
+        << std::dec << BSWAP(dev_cmd.num_groups[1]) << ", "
+        << std::dec << BSWAP(dev_cmd.num_groups[2]) << "}," << std::endl
+        << "\t.global_offset = {"
+        << std::dec << BSWAP(dev_cmd.global_offset[0]) << ", "
+        << std::dec << BSWAP(dev_cmd.global_offset[1]) << ", "
+        << std::dec << BSWAP(dev_cmd.global_offset[2]) << "}" << std::endl
+        << "};" << std::endl;
+
+    out << std::endl;
+    out << "__attribute__((noinline))" << std::endl;
+    out << "void initialize_kernel_launch() {" << std::endl;
+
+    out << "\tkernel_command.kernel = (uint32_t)&" << kernelMdSymbolName << ";" << std::endl;
+    int a = 0;
+    for (; a < run_cmd->kernel->num_args + run_cmd->kernel->num_locals; ++a)
+      {
+        struct pocl_argument *al = &(run_cmd->arguments[a]);
+        out << "\tkernel_command.args[" << std::dec << a << "] = ";
+        
+        if (run_cmd->kernel->arg_is_local[a] || a >= run_cmd->kernel->num_args)
+          {
+            /* Local buffers are managed by the host so the local
+               addresses are already valid. */
+            out << "(uint32_t)" << "0x" << std::hex << BSWAP(dev_cmd.args[a]);
+          }
+        else if (run_cmd->kernel->arg_is_pointer[a] && dev_cmd.args[a] != 0)
+          {
+            unsigned start_addr = 
+              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id]))->start_address;
+            
+            out << "(uint32_t)&buffer_" << std::hex << start_addr << "[0]";
+          }
+        else 
+          {
+            /* Scalars have been stored to global memory automatically. Point
+               to the generated buffers.
+             */
+            out << "(uint32_t)&scalar_arg_" << std::dec << a;
+          }
+        out << ";" << std::endl;
+    }   
+    
+    //    out << "\tlwpr_print_str(\"tta: initialized the standalone kernel lauch\\n\");" << std::endl;
+    out << "}" << std::endl;     
+    out.close();
+
+    // Create the build script.
+
+    std::ofstream scriptout(buildScriptFname.c_str());
+    scriptout 
+        << tceccCommandLine(run_cmd, fname + " " + tempDir + "/parallel.bc", 
+                            "standalone.tpef", " -D_STANDALONE_MODE=1");
+    scriptout.close();
+
+    ++runCounter;
+  }
+
 
   SimpleSimulatorFrontend simulator;
   /* A Command Line Interface for debugging. */
@@ -184,6 +344,17 @@ private:
     TTASimDevice* d_;
   };  
   static int device_count;
+  /* If set to true, extra files are produced that can be used to
+     reproduce execution of a single kernel outside pocl. The produced
+     files contain all the data needed to execute a single kernel
+     launch that was done in the host program using the 
+     clEnqueueNDRangeKernel(). The files are produced to the temp
+     directory of each final kernel binary. */
+  bool produceStandAloneProgram_;
+  /* This stream is pointing to the memory initialization function for the
+     produced standalone kernel. All host-device writes are reproduced
+     as C code in this function. */
+  std::ofstream* standaloneProgramInitFunc_;
 };
 
 int TTASimDevice::device_count = 0;
@@ -263,109 +434,6 @@ pocl_ttasim_uninit (cl_device_id device)
   delete (TTASimDevice*)device->data;
 }
 
-void
-pocl_ttasim_copy (void */*data*/, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
-{
-  POCL_ABORT_UNIMPLEMENTED();
-  if (src_ptr == dst_ptr)
-    return;
-  
-  memcpy (dst_ptr, src_ptr, cb);
-}
-
-void
-pocl_ttasim_copy_rect (void */*data*/,
-                      const void *__restrict const src_ptr,
-                      void *__restrict__ const dst_ptr,
-                      const size_t *__restrict__ const src_origin,
-                      const size_t *__restrict__ const dst_origin, 
-                      const size_t *__restrict__ const region,
-                      size_t const src_row_pitch,
-                      size_t const src_slice_pitch,
-                      size_t const dst_row_pitch,
-                      size_t const dst_slice_pitch)
-{
-  char const *__restrict const adjusted_src_ptr = 
-    (char const*)src_ptr +
-    src_origin[0] + src_row_pitch * (src_origin[1] + src_slice_pitch * src_origin[2]);
-  char *__restrict__ const adjusted_dst_ptr = 
-    (char*)dst_ptr +
-    dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
-  
-  size_t j, k;
-
-  POCL_ABORT_UNIMPLEMENTED();
-
-  /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
-              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
-              region[0]);
-}
-
-void
-pocl_ttasim_write_rect (void */*data*/,
-                       const void *__restrict__ const host_ptr,
-                       void *__restrict__ const device_ptr,
-                       const size_t *__restrict__ const buffer_origin,
-                       const size_t *__restrict__ const host_origin, 
-                       const size_t *__restrict__ const region,
-                       size_t const buffer_row_pitch,
-                       size_t const buffer_slice_pitch,
-                       size_t const host_row_pitch,
-                       size_t const host_slice_pitch)
-{
-  char *__restrict const adjusted_device_ptr = 
-    (char*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
-  char const *__restrict__ const adjusted_host_ptr = 
-    (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
-  
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  POCL_ABORT_UNIMPLEMENTED();
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              region[0]);
-}
-
-void
-pocl_ttasim_read_rect (void */*data*/,
-                      void *__restrict__ const host_ptr,
-                      void *__restrict__ const device_ptr,
-                      const size_t *__restrict__ const buffer_origin,
-                      const size_t *__restrict__ const host_origin, 
-                      const size_t *__restrict__ const region,
-                      size_t const buffer_row_pitch,
-                      size_t const buffer_slice_pitch,
-                      size_t const host_row_pitch,
-                      size_t const host_slice_pitch)
-{
-  char const *__restrict const adjusted_device_ptr = 
-    (char const*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
-  char *__restrict__ const adjusted_host_ptr = 
-    (char*)host_ptr +
-    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
-  
-  size_t j, k;
-  
-  /* TODO: handle overlaping regions */
-  POCL_ABORT_UNIMPLEMENTED();
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              region[0]);
-}
 
 cl_ulong
 pocl_ttasim_get_timer_value (void *data) 

@@ -280,6 +280,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->command.run.tmp_dir = strdup(tmpdir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
+  command_node->command.run.local_x = local_x;
+  command_node->command.run.local_y = local_y;
+  command_node->command.run.local_z = local_z;
+
   /* Copy the currently set kernel arguments because the same kernel 
      object can be reused for new launches with different arguments. */
   command_node->command.run.arguments = 

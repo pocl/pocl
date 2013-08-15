@@ -45,7 +45,7 @@ GEN_PROTOTYPES (ttasim)
   1, /* max_compute_units */						\
   3, /* max_work_item_dimensions */					\
   {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX}, /* max_work_item_sizes */		\
-  1024, /* max_work_group_size */					\
+  8192, /* max_work_group_size */					\
   8, /* preferred_wg_size_multiple */                                \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR  , /* preferred_vector_width_char */ \
   POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT , /* preferred_vector_width_short */ \
@@ -91,7 +91,7 @@ GEN_PROTOTYPES (ttasim)
   CL_GLOBAL, /* local_mem_type */					\
   0, /* local_mem_size */						\
   CL_FALSE, /* error_correction_support */				\
-  CL_FALSE, /* host_unified_memory */                \        
+  CL_FALSE, /* host_unified_memory */                \
   0, /* profiling_timer_resolution */					\
   CL_FALSE, /* endian_little */						\
   CL_TRUE, /* available */						\
@@ -115,11 +115,11 @@ GEN_PROTOTYPES (ttasim)
   pocl_tce_create_sub_buffer, \
   pocl_tce_free, /* free */						\
   pocl_tce_read, /* read */						\
-  pocl_ttasim_read_rect, /* read_rect */				\
+  pocl_tce_read_rect, /* read_rect */				\
   pocl_tce_write, /* write */					\
-  pocl_ttasim_write_rect, /* write_rect */				\
-  pocl_ttasim_copy, /* copy */						\
-  pocl_ttasim_copy_rect, /* copy_rect */				\
+  pocl_tce_write_rect, /* write_rect */				\
+  pocl_tce_copy, /* copy */						\
+  pocl_tce_copy_rect, /* copy_rect */				\
   NULL, /* fill_rect */                                 \
   pocl_tce_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \

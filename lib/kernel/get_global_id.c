@@ -38,14 +38,16 @@ extern size_t _global_offset_y;
 extern size_t _global_offset_z;
 
 size_t
+get_local_id(unsigned int dimindx);
+
+size_t
 get_global_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _global_offset_x + _local_size_x * _group_id_x + _local_id_x;
-    case 1: return _global_offset_y + _local_size_y * _group_id_y + _local_id_y;
-    case 2: return _global_offset_z + _local_size_z * _group_id_z + _local_id_z;
+    case 0: return _global_offset_x + _local_size_x * _group_id_x + get_local_id(0);
+    case 1: return _global_offset_y + _local_size_y * _group_id_y + get_local_id(1);
+    case 2: return _global_offset_z + _local_size_z * _group_id_z + get_local_id(2);
     default: return 0;
     }
 }
-

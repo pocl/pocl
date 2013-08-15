@@ -56,7 +56,7 @@ using namespace TTAMachine;
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   local_as(NULL), global_as(NULL), private_as(NULL), machine_file(adfName), parent(dev),
-  currentProgram(NULL), globalCycleCount(0) {
+  currentProgram(NULL), curKernelAddr(0), curKernel(NULL), globalCycleCount(0) {
   parent->data = this;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;
@@ -67,6 +67,26 @@ TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
 
 TCEDevice::~TCEDevice() {
   parent->data = NULL;
+}
+
+bool
+TCEDevice::isMultiCoreMachine() const {
+#if defined(TCEMC_AVAILABLE) && TCEMC_AVAILABLE == 1
+  assert (machine_ != NULL);
+  return machine_->coreCount() > 1;
+#else
+  return false;
+#endif
+}
+
+/**
+ * This should be called by the derived classes at the point the
+ * TTA machine description is loaded. It loads additional device
+ * properties from the parsed ADF.
+ */
+void
+TCEDevice::setMachine(const TTAMachine::Machine& machine) {
+  machine_ = &machine;
 }
 
 void
@@ -110,6 +130,7 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   /* Create the memory allocation book keeping structures based on
      the machine's address spaces (see tta.txt). */
   Machine::AddressSpaceNavigator nav = mach.addressSpaceNavigator();
+
   for (int i = 0; i < nav.count(); ++i) {
     AddressSpace *as = nav.item(i);
     if (as->hasNumericalId(TTA_ASID_LOCAL)) {
@@ -125,17 +146,27 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   }
   if (local_as == NULL) 
     POCL_ABORT("local address space not found in the ADF. "
-               "Mark it by adding numerical ids 4 to the AS.\n"
+               "Mark it by adding numerical id 4 to the AS.\n"
 	       "Local address space can be same as private AS.\n");
+
+
+  if (isMultiCoreMachine() && local_as->isShared()) 
+    POCL_ABORT("The local address space is marked as shared!\n");
 
   if (private_as == NULL) 
     POCL_ABORT("private address space not found in the ADF. "
-               "Mark it by adding numerical ids 0 to the AS.\n"
+               "Mark it by adding numerical id 0 to the AS.\n"
 	       "Private address space can be same as local AS.\n");
+
+  if (isMultiCoreMachine() && private_as->isShared()) 
+    POCL_ABORT("The private address space is marked as shared!\n");
 
   if (global_as == NULL) 
     POCL_ABORT("global address space not found in the ADF. "
                "Mark it by adding numerical ids 3 and 5 to the AS.\n");
+
+  if (isMultiCoreMachine() && !global_as->isShared()) 
+    POCL_ABORT("The global address space is not marked as shared!\n");
 
   int local_size = (private_as == local_as) ?
     local_as->end() - local_as->start() - TTA_UNALLOCATED_LOCAL_SPACE:
@@ -157,6 +188,94 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
      parent->global_mem_size);
 }
 
+TCEString
+TCEDevice::tceccCommandLine
+(_cl_command_run *run_cmd, const TCEString& inputSrc, 
+ const TCEString& outputTpef, const TCEString extraParams) 
+{
+
+  TCEString mainC;
+  if (isMultiCoreMachine()) 
+    mainC = "tta_device_main_dthread.c";
+  else
+    mainC = "tta_device_main.c";
+
+  TCEString deviceMainSrc;
+  TCEString poclIncludePathSwitch;
+  if (getenv("POCL_BUILDING") != NULL)
+    {
+      deviceMainSrc = TCEString(BUILDDIR) + "/lib/CL/devices/tce/" + mainC;
+      poclIncludePathSwitch = " -I " SRCDIR "/include";
+    }
+  else 
+    {
+      deviceMainSrc = TCEString(PKGDATADIR) + "/" + mainC;
+      assert(access(deviceMainSrc.c_str(), R_OK) == 0);
+      poclIncludePathSwitch = " -I " PKGINCLUDEDIR;
+    }
+
+  TCEString extraFlags = extraParams;
+  if (isMultiCoreMachine())
+    extraFlags += " -ldthread -lsync-lu -llockunit";
+
+  TCEString tempDir = run_cmd->tmp_dir;
+
+  std::string kernelObjSrc = "";
+  kernelObjSrc += tempDir;
+  kernelObjSrc += "/../descriptor.so.kernel_obj.c";
+
+  if (getenv("POCL_TCECC_EXTRA_FLAGS") != NULL)
+    extraFlags += " " + TCEString(getenv("POCL_TCECC_EXTRA_FLAGS"));
+
+  std::string userProgramBuildOptions;
+  if (run_cmd->kernel->program->compiler_options != NULL)
+    userProgramBuildOptions = run_cmd->kernel->program->compiler_options;
+
+  std::string kernelMdSymbolName = "_";
+  kernelMdSymbolName += run_cmd->kernel->name;
+  kernelMdSymbolName += "_md";
+
+  TCEString programBcFile = tempDir + "/program.bc";
+  /* Compile in steps to save the program.bc for automated exploration 
+     use case when producing the kernel capture scripts. */
+  TCEString cmdLine;
+  cmdLine << "tcecc --vector-backend -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
+    userProgramBuildOptions + " " + kernelObjSrc + " " + inputSrc + 
+    " -k " + kernelMdSymbolName +
+    " -g -O3 --emit-llvm -o " + programBcFile + " " + extraFlags + ";";
+
+  cmdLine << "tcecc $* --vector-backend -a " << machine_file << " " << programBcFile 
+          << " -O3 -o " << outputTpef << + " " + extraFlags + "\n";
+  return cmdLine;
+}
+
+bool 
+TCEDevice::isNewKernel(const _cl_command_run* runCmd) 
+{
+  if (curKernel == NULL || runCmd->kernel != curKernel) 
+    return true;
+
+  bool newKernel = true;
+  if (runCmd->local_x != curLocalX ||
+      runCmd->local_y != curLocalY ||
+      runCmd->local_z != curLocalZ)
+    newKernel = true;
+  else
+    newKernel = false;
+  return newKernel;
+}
+
+
+void 
+TCEDevice::updateCurrentKernel(const _cl_command_run* runCmd, 
+                               uint32_t kernelAddr)
+{
+  curKernelAddr = kernelAddr;
+  curKernel = runCmd->kernel;
+  curLocalX = runCmd->local_x;
+  curLocalY = runCmd->local_y;
+  curLocalZ = runCmd->local_z;
+}
 
 
 void *
@@ -204,7 +323,6 @@ pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
   printf("host: read to %x (host) from %d (device) %u\n", host_ptr, chunk->start_address, cb);
 #endif
   d->copyDeviceToHost(chunk->start_address, host_ptr, cb);
-  //pocl_ttasim_copy_d2h (data, chunk->start_address, host_ptr, cb);
 }
 
 void *
@@ -240,80 +358,58 @@ pocl_tce_run
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
   char command[COMMAND_LENGTH];
+  uint32_t kernelAddr;
   unsigned i;
 
   assert (data != NULL);
 
-  std::string assemblyFileName(cmd->command.run.tmp_dir);
-  assemblyFileName += "/parallel.tpef";
-
-  std::string kernelMdSymbolName = "_";
-  kernelMdSymbolName += cmd->command.run.kernel->name;
-  kernelMdSymbolName += "_md";
-
-  std::string userProgramBuildOptions;
-  if (cmd->command.run.kernel->program->compiler_options != NULL)
+  if (d->isNewKernel(&(cmd->command.run))) {
+    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    assemblyFileName += "/parallel.tpef";
+    
+    std::string kernelMdSymbolName = "_";
+    kernelMdSymbolName += cmd->command.run.kernel->name;
+    kernelMdSymbolName += "_md";
+    
+    std::string userProgramBuildOptions;
+    if (cmd->command.run.kernel->program->compiler_options != NULL)
       userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
-
-  if (access (assemblyFileName.c_str(), F_OK) != 0)
-    {
-      char *llvm_ld;
-      error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
-      
-      std::string poclIncludePathSwitch = "";
-      std::string deviceMainSrc = "";
-      if (getenv("POCL_BUILDING") != NULL)
-        {
-          deviceMainSrc = SRCDIR "/lib/CL/devices/tce/tta_device_main.c";
-          poclIncludePathSwitch = " -I " SRCDIR "/include";
-        }
-      else 
-        {
-          assert(access(PKGDATADIR "/tta_device_main.c", R_OK) == 0);
-          deviceMainSrc = PKGDATADIR "/tta_device_main.c";
-          poclIncludePathSwitch = " -I " PKGINCLUDEDIR;
-
-        }
-     
-      std::string kernelObjSrc = "";
-      kernelObjSrc += cmd->command.run.tmp_dir;
-      kernelObjSrc += "/../descriptor.so.kernel_obj.c";
-
-      TCEString extraFlags = "";
-      if (getenv("POCL_TCECC_EXTRA_FLAGS") != NULL)
-        extraFlags += " " + TCEString(getenv("POCL_TCECC_EXTRA_FLAGS"));
-
-      /* TODO: add the launcher code + main */
-      /* At this point the kernel has been fully linked. */
-      std::string buildCmd = 
-        std::string("tcecc --vector-backend -llwpr ") + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
-        userProgramBuildOptions + " " + kernelObjSrc + " " + bytecode + " -a " + d->machine_file + 
-        " -k " + kernelMdSymbolName +
-        " -g -O3 -o " + assemblyFileName + " " + extraFlags;
+    
+    if (access (assemblyFileName.c_str(), F_OK) != 0)
+      {
+        error = snprintf (bytecode, POCL_FILENAME_LENGTH,
+                          "%s/%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
+        TCEString buildCmd = 
+          d->tceccCommandLine(&cmd->command.run, bytecode, assemblyFileName);
+        
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
       error = system(buildCmd.c_str());
       if (error != 0)
         POCL_ABORT("Error while running tcecc.");
+      }
+    
+    d->loadProgramToDevice(assemblyFileName);
+    d->restartProgram();
+    
+    const TTAProgram::Program* prog = d->currentProgram;
+    assert (prog != NULL);
+    
+    const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
+    
+    try {
+      kernelAddr = globalScope.dataLabel(kernelMdSymbolName).address().location();
+    } catch (const KeyNotFound& e) {
+      POCL_ABORT ("Could not find the shared data structures from the device binary.");
     }
-
-  d->loadProgramToDevice(assemblyFileName);
-  d->restartProgram();
-
-  const TTAProgram::Program* prog = d->currentProgram;
-  assert (prog != NULL);
-
-  const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
-
-  uint32_t kernelAddr;
-  try {
-    kernelAddr = globalScope.dataLabel(kernelMdSymbolName).address().location();
-  } catch (const KeyNotFound& e) {
-    POCL_ABORT ("Could not find the shared data structures from the device binary.");
-  }    
-
+    // cache the currently device loaded kernel info 
+    d->updateCurrentKernel(&(cmd->command.run), kernelAddr);
+  } else {
+    // Same kernel, no need to recompile
+    d->restartProgram();
+    kernelAddr = d->curKernelAddr;
+  }
   __kernel_exec_cmd dev_cmd;
   dev_cmd.kernel = byteswap_uint32_t (kernelAddr, d->needsByteSwap);
 
@@ -423,6 +519,9 @@ pocl_tce_run
      to be ordered. */
   d->writeWordToDevice(d->commandQueueAddr, POCL_KST_READY);
 
+  dev_cmd.status = byteswap_uint32_t (POCL_KST_READY, d->needsByteSwap);
+
+  d->notifyKernelRunCommandSent(dev_cmd, &cmd->command.run);
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: commmand queue status: %x\n",
@@ -516,5 +615,109 @@ pocl_tce_build_program (void *data, char *source_fn, char *binary_fn,
     std::string("\" ") + std::string(default_cmd);
 
   return system (buildCmd.c_str());
+}
+
+void
+pocl_tce_copy (void */*data*/, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
+{
+  POCL_ABORT_UNIMPLEMENTED();
+  if (src_ptr == dst_ptr)
+    return;
+  
+  memcpy (dst_ptr, src_ptr, cb);
+}
+
+void
+pocl_tce_copy_rect (void */*data*/,
+                    const void *__restrict const src_ptr,
+                    void *__restrict__ const dst_ptr,
+                    const size_t *__restrict__ const src_origin,
+                    const size_t *__restrict__ const dst_origin, 
+                    const size_t *__restrict__ const region,
+                    size_t const src_row_pitch,
+                    size_t const src_slice_pitch,
+                    size_t const dst_row_pitch,
+                    size_t const dst_slice_pitch)
+{
+  char const *__restrict const adjusted_src_ptr = 
+    (char const*)src_ptr +
+    src_origin[0] + src_row_pitch * (src_origin[1] + src_slice_pitch * src_origin[2]);
+  char *__restrict__ const adjusted_dst_ptr = 
+    (char*)dst_ptr +
+    dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
+  
+  size_t j, k;
+
+  POCL_ABORT_UNIMPLEMENTED();
+
+  /* TODO: handle overlaping regions */
+  
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
+              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
+              region[0]);
+}
+
+void
+pocl_tce_write_rect (void */*data*/,
+                     const void *__restrict__ const host_ptr,
+                     void *__restrict__ const device_ptr,
+                     const size_t *__restrict__ const buffer_origin,
+                     const size_t *__restrict__ const host_origin, 
+                     const size_t *__restrict__ const region,
+                     size_t const buffer_row_pitch,
+                     size_t const buffer_slice_pitch,
+                     size_t const host_row_pitch,
+                     size_t const host_slice_pitch)
+{
+  char *__restrict const adjusted_device_ptr = 
+    (char*)device_ptr +
+    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
+  char const *__restrict__ const adjusted_host_ptr = 
+    (char const*)host_ptr +
+    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
+  
+  size_t j, k;
+
+  /* TODO: handle overlaping regions */
+  POCL_ABORT_UNIMPLEMENTED();
+  
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+              region[0]);
+}
+
+void
+pocl_tce_read_rect (void */*data*/,
+                    void *__restrict__ const host_ptr,
+                    void *__restrict__ const device_ptr,
+                    const size_t *__restrict__ const buffer_origin,
+                    const size_t *__restrict__ const host_origin, 
+                    const size_t *__restrict__ const region,
+                    size_t const buffer_row_pitch,
+                    size_t const buffer_slice_pitch,
+                    size_t const host_row_pitch,
+                    size_t const host_slice_pitch)
+{
+  char const *__restrict const adjusted_device_ptr = 
+    (char const*)device_ptr +
+    buffer_origin[0] + buffer_row_pitch * (buffer_origin[1] + buffer_slice_pitch * buffer_origin[2]);
+  char *__restrict__ const adjusted_host_ptr = 
+    (char*)host_ptr +
+    host_origin[0] + host_row_pitch * (host_origin[1] + host_slice_pitch * host_origin[2]);
+  
+  size_t j, k;
+  
+  /* TODO: handle overlaping regions */
+  POCL_ABORT_UNIMPLEMENTED();
+  
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+              region[0]);
 }
 

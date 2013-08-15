@@ -27,7 +27,7 @@
 
 #include <malloc.h>
 #include <stdlib.h>
-
+#include <dthread.h>
 #include <lwpr.h>
 
 #ifdef DEBUG_TTA_DEVICE
@@ -43,15 +43,34 @@
 typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;
 typedef __global__ __kernel_metadata kernel_metadata;
 
+struct wg_thread_arg {
+  kernel_exec_cmd* cmd;
+  int first_gid_x; 
+  int last_gid_x;
+};
+
+int min(int a, int b) {
+    if (a < b) return a;
+    else return b;
+}
+
 /**
  * Executes the work groups of the kernel command.
  */
-static void tta_opencl_wg_execute(
-    kernel_exec_cmd* cmd,
-    void** args,
-    int first_gidx, int last_gidx) {
-
+static void *wg_thread(void *targ) {
+    struct wg_thread_arg *targs = (struct wg_thread_arg*)targ;
+    kernel_exec_cmd *cmd = targs->cmd;
+    int first_gidx = targs->first_gid_x;
+    int last_gidx = targs->last_gid_x;
     kernel_metadata *kernel = (kernel_metadata*)cmd->kernel;
+
+    void* args[MAX_KERNEL_ARGS];
+
+    /* Copy the kernel function arguments from the global memory 
+       to the stack in the local memory. */
+    for (int i = 0; i < kernel->num_args + kernel->num_locals; ++i) {
+        args[i] = (void*)cmd->args[i];
+    }
 
     const int num_groups_x = cmd->num_groups[0];
     const int num_groups_y = (cmd->work_dim >= 2) ? (cmd->num_groups[1]) : 1;
@@ -84,63 +103,65 @@ static void tta_opencl_wg_execute(
             } 
         }
     }
+    return NULL;
 }
+
+#define MAX_WG_THREADS 128
+dthread_t wg_threads[MAX_WG_THREADS];
 
 /**
  * Prepares a work group for execution and launches it.
  */
 static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 
-    void* args[MAX_KERNEL_ARGS];
-    kernel_metadata *kernel = (kernel_metadata*)cmd->kernel;
-
     int num_groups_x = cmd->num_groups[0];
     int i, first_gid_x, last_gid_x;
+    int thread_count = min(min(num_groups_x, dthread_get_core_count()), MAX_WG_THREADS);
+    int wgs_per_thread = num_groups_x / thread_count;
+    int leftover_wgs = num_groups_x - wgs_per_thread * thread_count;
+    wgs_per_thread += leftover_wgs / thread_count;
+    leftover_wgs = num_groups_x - wgs_per_thread * thread_count;
 
-    /* single thread version: execute all work groups in
-       a single trampoline call as fast as possible. 
-
-       Do not create any threads. */
-    for (int i = 0; i < kernel->num_args + kernel->num_locals; ++i) {
 #ifdef DEBUG_TTA_DEVICE
-        lwpr_print_str("tta: processing arg ");
-        lwpr_print_int(i); 
-        lwpr_print_str(" value: ");
-        lwpr_print_int(cmd->args[i]);
-        lwpr_newline();
+    lwpr_print_str("tta: ------------------- starting kernel ");
+    puts(kernel->name);
 #endif
-        args[i] = (void*)cmd->args[i];
+    first_gid_x = 0;
+    last_gid_x = wgs_per_thread - 1;
+    for (i = 0; i < thread_count; 
+         ++i, first_gid_x += wgs_per_thread, last_gid_x += wgs_per_thread) {
+        int status;
+        struct wg_thread_arg arg;
+        dthread_attr_t attr;
+
+        if (i + 1 == thread_count) last_gid_x += leftover_wgs;
+
+        arg.cmd = cmd;
+        arg.first_gid_x = first_gid_x;
+        arg.last_gid_x = last_gid_x;
+
+        dthread_attr_init(&attr);
+        dthread_attr_setargs(&attr, &arg, sizeof(arg));
+        status = dthread_create(&wg_threads[i], &attr, wg_thread);
+        /* Assume there's always enough space in the STT. */
+        if (status) {
+            exit(-1);
+        } 
     }
 
+   for (int i = 0; i < thread_count; i++){ 
+       dthread_join(wg_threads[i], NULL);
+   }
+
 #ifdef DEBUG_TTA_DEVICE
-        lwpr_print_str("tta: ------------------- starting kernel\n");
-#endif
-        tta_opencl_wg_execute(cmd, args, 0, num_groups_x - 1);
-#ifdef DEBUG_TTA_DEVICE
-        lwpr_print_str("\ntta: ------------------- kernel finished\n");
+    lwpr_print_str("\ntta: ------------------- kernel finished\n");
 #endif
 }
 
 extern kernel_metadata _test_kernel_md;
 
 /* The shared kernel_command object using which the device is controlled. */
-#if !defined(_STANDALONE_MODE) || _STANDALONE_MODE == 0
-
 kernel_exec_cmd kernel_command;
-
-#ifndef _STANDALONE_MODE
-#define _STANDALONE_MODE 0
-#endif
-
-#else
-
-/* The kernel command is pregenerated in the standalone mode to reproduce
-   an execution command. The command along with the input buffers and arguments
-   is initialized in a separate .c file. */
-
-extern kernel_exec_cmd kernel_command;
-
-#endif
 
 static kernel_exec_cmd* wait_for_command() {
     while (kernel_command.status != POCL_KST_READY) 
@@ -149,13 +170,10 @@ static kernel_exec_cmd* wait_for_command() {
     return &kernel_command;
 }
 
-#if _STANDALONE_MODE == 1
-void initialize_kernel_launch();
-#endif
-
 int main() {
     kernel_exec_cmd *next_command;
     kernel_metadata *next_kernel;
+    size_t dynamic_local_arg_sizes[MAX_KERNEL_ARGS];
     int work_dim = 1;
     size_t local_work_sizes[3] = {1, 0, 0};
     size_t global_work_sizes[3] = {2, 0, 0};
@@ -163,10 +181,6 @@ int main() {
 #ifdef DEBUG_TTA_DEVICE
     lwpr_print_str("tta: Hello from a TTA device\n");
     lwpr_print_str("tta: initializing the command objects\n");
-#endif
-
-#if _STANDALONE_MODE == 1
-    initialize_kernel_launch();
 #endif
 
     do {
@@ -181,6 +195,7 @@ int main() {
 
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("tta: got a command to execute: ");
+        lwpr_print_str(next_kernel->name);
         lwpr_print_str(" with ");
         lwpr_print_int(next_command->work_dim);
         lwpr_print_str(" dimensions. num_groups ");
@@ -200,10 +215,7 @@ int main() {
         tta_opencl_wg_launch(next_command);
         kernel_command.status = POCL_KST_FINISHED;   
 
-        /* In case this is the host-device setup (not the standalone mode),
-           wait forever for commands from the host. Otherwise, execute the
-           only command from the standalone binary and quit. */
-    } while (1 && !_STANDALONE_MODE);
+    } while (1);
 
     return 0;
 }
