@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 if USE_LLVM_API
-noinst_LTLIBRARIES = libllvmpasses.a
+noinst_LTLIBRARIES = libllvmpasses.la
 endif
 pkglib_LTLIBRARIES = llvmopencl.la
 
@@ -55,7 +55,7 @@ PASSES_SOURCES = Barrier.h						\
 						AutomaticLocals.cc 
 
 if USE_LLVM_API
-libllvmpasses_a_SOURCES = ${PASSES_SOURCES}
+libllvmpasses_la_SOURCES = ${PASSES_SOURCES}
 endif
 # some scripts remain in the api version, and those require libopencl.so
 # so build it even when using the API

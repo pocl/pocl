@@ -151,3 +151,53 @@ int call_pocl_kernel(cl_program program,
   *errcode=CL_SUCCESS;
   return 0;
 }
+
+
+int call_pocl_workgroup( char* function_name, 
+                    size_t local_x, size_t local_y, size_t local_z,
+                    char* llvm_target_triplet, 
+                    char* parallel_filename,
+                    char* kernel_filename )
+{
+  int error;
+  struct stat buf;
+  char *pocl_wg_script;
+  char command[COMMAND_LENGTH];
+
+      if (getenv("POCL_BUILDING") != NULL)
+        pocl_wg_script = BUILDDIR "/scripts/" POCL_WORKGROUP;
+      else if (access(PKGDATADIR "/" POCL_WORKGROUP, X_OK) == 0)
+        pocl_wg_script = PKGDATADIR "/" POCL_WORKGROUP;
+      else
+        pocl_wg_script = POCL_WORKGROUP;
+
+      if (llvm_target_triplet != NULL) 
+        {
+          error = snprintf
+            (command, COMMAND_LENGTH,
+             "%s -k %s -x %zu -y %zu -z %zu -t %s -o %s %s",
+             pocl_wg_script,
+             function_name,
+             local_x, local_y, local_z,
+             llvm_target_triplet,
+             parallel_filename, kernel_filename);
+        }
+      else
+        {
+          error = snprintf
+            (command, COMMAND_LENGTH,
+             "%s -k %s -x %zu -y %zu -z %zu -o %s %s",
+             pocl_wg_script,
+             function_name,
+             local_x, local_y, local_z,
+             parallel_filename, kernel_filename);
+        }
+
+      if (error < 0)
+        return CL_OUT_OF_HOST_MEMORY;
+
+      error = system (command);
+      if (error != 0)
+        return CL_OUT_OF_RESOURCES;
+}
+

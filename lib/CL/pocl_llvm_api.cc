@@ -2,7 +2,9 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "llvm/LinkAllPasses.h"
+#include "llvm/Linker.h"
 #include "llvm/PassManager.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -11,7 +13,9 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
@@ -43,6 +47,7 @@ int call_pocl_build( cl_device_id device,
   // the per-file types don't seem to override this :/
   // FIXME: setting of the language standard (OCL 1.2, etc.) left as 'undefined' here
   la->FakeAddressSpaceMap=true;
+  la->Blocks=true; //-fblocks
   pocl_build.setLangDefaults(*la, clang::IK_OpenCL);
   
   // FIXME: print out any diagnostics to stdout for now. These should go to a buffer for the user
@@ -269,5 +274,178 @@ int call_pocl_kernel(cl_program program,
   
   return 0;
   
+}
+
+/* kludge - this is the kernel dimensions command-line parameter to the workitem loop */
+namespace pocl {
+extern llvm::cl::list<int> LocalSize;
+} 
+
+/* This function links the input kernel LLVM bitcode and the
+ * OpenCL kernel runtime library into one LLVM module, then
+ * runs pocl's LLVM passes on that module.
+ * Output is a LLVM bitcode file.
+ */
+int call_pocl_workgroup( char* function_name, 
+                    size_t local_x, size_t local_y, size_t local_z,
+                    char* llvm_target_triplet, 
+                    char* parallel_filename,
+                    char* kernel_filename )
+{
+
+  LLVMContext &Context = getGlobalContext();
+  SMDiagnostic Err;
+  std::string errmsg;
+  StringMap<llvm::cl::Option*> opts;
+  llvm::cl::getRegisteredOptions(opts);
+
+  // TODO: do this globally, and just once per program
+  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+  initializeCore(Registry);
+  initializeScalarOpts(Registry);
+  initializeVectorization(Registry);
+  initializeIPO(Registry);
+  initializeAnalysis(Registry);
+  initializeIPA(Registry);
+  initializeTransformUtils(Registry);
+  initializeInstCombine(Registry);
+  initializeInstrumentation(Registry);
+  initializeTarget(Registry);
+
+  // FIXME: this too should be done only once!
+  pocl::LocalSize.addValue(local_x);
+  pocl::LocalSize.addValue(local_y);
+  pocl::LocalSize.addValue(local_z);
+
+
+  //TODO sync with Nat Ferrus' improved linking
+  std::string kernellib;
+  if (getenv("POCL_BUILDING") != NULL)
+  {
+    kernellib =BUILDDIR;
+    kernellib+="/lib/kernel/";
+    kernellib+=KERNEL_DIR;
+    kernellib+="/kernel-";
+    kernellib+=OCL_KERNEL_TARGET;
+    kernellib+=".bc";   
+  }
+  else
+  {
+    #warning undone stuff - figure out the installation path
+    assert( false && "this part is undone");
+  }
+
+  // Link the kernel and runtime library
+  llvm::Module *input = ParseIRFile(kernel_filename, Err, Context);
+  llvm::Module *libmodule = ParseIRFile(kernellib, Err, Context);
+  Linker TheLinker( input );
+  TheLinker.linkInModule( libmodule, &errmsg );
+  llvm::Module *linked_bc = TheLinker.getModule();
+
+  /* Start assembling the LLVM passes to run */
+  PassManager Passes;
+  DataLayout*TD = 0;
+  const std::string &ModuleDataLayout = linked_bc->getDataLayout();
+  if (!ModuleDataLayout.empty()) {
+    TD = new DataLayout(ModuleDataLayout);
+    Passes.add(TD);
+  }
+  else
+  {
+    // FIXME: panic more sublty
+    assert( false );
+  }
+
+  /* The passes to run, in order */
+  const char *passes[] = {"domtree", 
+                          "workitem-handler-chooser",
+                          "break-constgeps",
+                          "automatic-locals",
+                          "flatten", 
+                          "always-inline",
+                          "globaldce",
+                          "simplifycfg",
+                          "loop-simplify",
+                          "phistoallocas",
+                          "isolate-regions",
+                          "uniformity",
+                          "implicit-loop-barriers",
+                          "loop-barriers", 
+                          "barriertails",
+                          "barriers",
+                          "isolate-regions",
+                          "wi-aa",
+                          "workitemrepl", 
+                          "workitemloops",
+                          "allocastoentry",
+                          "workgroup",
+                          "target-address-spaces",
+                          "STANDARD_OPTS",
+                          "instcombine"}; 
+
+  // Now add the above passes 
+  for( int i=0; i < sizeof(passes)/sizeof(const char*); i++ )
+  {
+    
+    // This is (more or less) -O3
+    if (strcmp("STANDARD_OPTS", passes[i])==0)
+    {
+      PassManagerBuilder Builder;
+      Builder.OptLevel = 3;
+      Builder.SizeLevel = 0;
+      Builder.DisableSimplifyLibCalls=true;
+       Builder.populateModulePassManager( Passes );
+      
+      continue;
+    }
+
+    const PassInfo *PIs = Registry.getPassInfo(StringRef(passes[i]));
+    if(PIs)
+    {
+      //std::cout << "-"<<passes[i] << " ";
+      Pass *thispass = PIs->createPass();
+      Passes.add(thispass);
+    }
+    else
+    {
+      // TODO: fail more gracefully.
+      assert(false && "failed to create LLVM pass");
+    }
+  }
+
+  llvm::cl::Option *O = opts["add-wi-metadata"];
+  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
+
+  /* This is a beginning of the handling of the fine-tuning parameters.
+   * Lots more needed...
+   */
+  std::string loopvec="";
+  if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
+  {
+    loopvec = getenv("POCL_WORK_GROUP_METHOD");
+  }
+  if (loopvec == "loopvec")
+  {
+    llvm::cl::Option *O = opts["vectorize-loops"];
+    assert(O && "could not find LLVM option 'vectorize-loops'");
+    O->addOccurrence(1, StringRef("vectorize-loops"), StringRef(""), false); 
+    
+    O = opts["vectorizer-min-trip-count"];
+    assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+    O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("1"), false); 
+  } 
+
+  /* Now finally run the set of passes assembled above */
+  std::string ErrorInfo;
+  tool_output_file *Out = new tool_output_file( parallel_filename, 
+                                                ErrorInfo, 
+                                                raw_fd_ostream::F_Binary);;
+  Passes.add(createBitcodeWriterPass(Out->os()));
+  Passes.run(*linked_bc);
+
+  Out->keep();
+  delete Out;
+
+  return 0;
 }
 

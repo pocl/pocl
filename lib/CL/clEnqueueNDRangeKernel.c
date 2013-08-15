@@ -204,42 +204,12 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   if (access (parallel_filename, F_OK) != 0) 
     {
+      error = call_pocl_workgroup( kernel->function_name, 
+                                   local_x, local_y, local_z,
+                                   command_queue->device->llvm_target_triplet, 
+                                   parallel_filename, kernel_filename );
+      if (error) return error;
 
-      if (getenv("POCL_BUILDING") != NULL)
-        pocl_wg_script = BUILDDIR "/scripts/" POCL_WORKGROUP;
-      else if (access(PKGDATADIR "/" POCL_WORKGROUP, X_OK) == 0)
-        pocl_wg_script = PKGDATADIR "/" POCL_WORKGROUP;
-      else
-        pocl_wg_script = POCL_WORKGROUP;
-
-      if (command_queue->device->llvm_target_triplet != NULL) 
-        {
-          error = snprintf
-            (command, COMMAND_LENGTH,
-             "%s -k %s -x %zu -y %zu -z %zu -t %s -o %s %s",
-             pocl_wg_script,
-             kernel->function_name,
-             local_x, local_y, local_z,
-             command_queue->device->llvm_target_triplet,
-             parallel_filename, kernel_filename);
-        }
-      else
-        {
-          error = snprintf
-            (command, COMMAND_LENGTH,
-             "%s -k %s -x %zu -y %zu -z %zu -o %s %s",
-             pocl_wg_script,
-             kernel->function_name,
-             local_x, local_y, local_z,
-             parallel_filename, kernel_filename);
-        }
-
-      if (error < 0)
-        return CL_OUT_OF_HOST_MEMORY;
-
-      error = system (command);
-      if (error != 0)
-        return CL_OUT_OF_RESOURCES;
 #ifdef DEBUG_NDRANGE
       printf("[parallel bc created]\n");
 #endif

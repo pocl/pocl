@@ -23,6 +23,15 @@ int call_pocl_kernel(cl_program program,
                      char* descriptor_filename,
                      int *errcode );
 
+/* Run the pocl passes on a kernel in LLVM IR, link it with kernel, 
+ * and produce the 'paralellized' kernel file.
+ */
+int call_pocl_workgroup( char* function_name, 
+                    size_t local_x, size_t local_y, size_t local_z,
+                    char* llvm_target_triplet, 
+                    char* parallel_filename,
+                    char* kernel_filename );
+
 #ifdef __cplusplus
 
 }
