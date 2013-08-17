@@ -67,10 +67,10 @@ namespace vecmathlib {
     bvector_t v;
     
     boolvec() {}
-    // Can't have a non-trivial copy constructor; if so, objects won't
-    // be passed in registers
-    // boolvec(boolvec const& x): v(x.v) {}
-    // boolvec& operator=(boolvec const& x) { return v=x.v, *this; }
+    // TODO: pass arguments via const references; this is more
+    // efficient on PowerPC, which won't pass them in registers
+    // TODO: do this for all PowerPC vector architectures (Altivec,
+    // VSX)
     boolvec(bvector_t x): v(x) {}
     boolvec(bool a): v(vec_splats(from_bool(a))) {}
     boolvec(bool const* as)
@@ -104,11 +104,19 @@ namespace vecmathlib {
     
     bool all() const
     {
-      return (*this)[0] && (*this)[1] && (*this)[2] && (*this)[3];
+      // return (*this)[0] && (*this)[1] && (*this)[2] && (*this)[3];
+      realvec_t x0123 = *this;
+      realvec_t x1032 = vec_perm(x0123, x0123, vec_gpci(01032));
+      realvec_t y0022 = x0123 && x1032;
+      return y0022[0] && y0022[2];
     }
     bool any() const
     {
-      return (*this)[0] || (*this)[1] || (*this)[2] || (*this)[3];
+      // return (*this)[0] || (*this)[1] || (*this)[2] || (*this)[3];
+      realvec_t x0123 = *this;
+      realvec_t x1032 = vec_perm(x0123, x0123, vec_gpci(01032));
+      realvec_t y0022 = x0123 || x1032;
+      return y0022[0] || y0022[2];
     }
     
     
@@ -413,10 +421,17 @@ namespace vecmathlib {
     realvec_t loada(real_t const* p, mask_t const& m) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
+#warning "TODO"
+      std::cout << "*this=" << *this << " mask=" << m << "\n";
       if (__builtin_expect(all(m.m), true)) {
+        std::cout << "fasttrack\n";
         return loada(p);
       } else {
-        return m.m.ifthen(loada(p), *this);
+        std::cout << "slowtrack\n";
+        // return m.m.ifthen(loada(p), *this);
+        realvec_t r = m.m.ifthen(loada(p), *this);
+        std::cout << "return " << r << "\n";
+        return r;
       }
     }
     realvec_t loadu(real_t const* p, mask_t const& m) const
@@ -438,8 +453,6 @@ namespace vecmathlib {
     void storea(real_t* p) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
-#warning "TODO"
-      std::cout << "yes this is storea\n";
       vec_sta(v, 0, p);
     }
     void storeu(real_t* p) const
@@ -539,7 +552,7 @@ namespace vecmathlib {
     real_t sum() const
     {
       // return (*this)[0] + (*this)[1] + (*this)[2] + (*this)[3];
-      realvec_t c1 = vec_logical(v, v, 0xf);
+      realvec_t c1 = vec_logical(v, v, 0xf); // +1.0
       realvec_t x = vec_xxmadd(v, c1, v);
       return x[0] + x[2];
     }

@@ -11,26 +11,24 @@ using namespace vecmathlib;
 
 int main(int argc, char** argv)
 {
-  // Choose an "interesting" vector type
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2
-  typedef realvec<double,2> realvec_t;
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4
-  typedef realvec<float,4> realvec_t;
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_1
-  typedef realvec<float,1> realvec_t;
-#else
-  typedef realpseudovec<float,1> realvec_t;
-#endif
-
-  typedef realvec_t::boolvec_t boolvec_t;
-  typedef realvec_t::intvec_t intvec_t;
-  
-  realvec_t x = 1.0;
-  realvec_t y = x + realvec_t(1.0);
+  // Declare a double precision vector with an architecture-dependent
+  // number of elements
+  double_vec x;
+  // Set each element separately. This is inefficient and should be
+  // avoided if possible, but we want to demonstrate it here anyway.
+  for (int i=0; i<double_vec::size; ++i) x.set_elt(i, double(i));
+  double_vec y = x + double_vec(1.0);
   y = sqrt(y);
-  realvec_t z = log(y);
-  boolvec_t b = x < y;
-  intvec_t i = convert_int(y);
+  double_vec z = log(y);
+  
+  // Boolean vectors are closely related to either double or float
+  // vectors, thus we need to make a distinction
+  bool_double_vec b = x < y;
+  // Integer vectors are closely related to either double or float,
+  // thus we need to make a distinction -- there is "long_vec"
+  // corresponding to "double_vec", and there is "int_vec"
+  // correpsonding to "float_vec".
+  long_vec i = convert_int(y);
   
   cout << "x=" << x << "\n";
   cout << "y=" << y << "\n";

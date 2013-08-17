@@ -112,4 +112,44 @@ namespace std { class type_info; }
 #  include "vec_qpx_double4.h"
 #endif
 
+
+
+// Define "best" vector types
+namespace vecmathlib {
+  
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8
+#  define VECMATHLIB_MAX_DOUBLE_VECSIZE 8
+#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4
+#  define VECMATHLIB_MAX_DOUBLE_VECSIZE 4
+#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_2
+#  define VECMATHLIB_MAX_DOUBLE_VECSIZE 2
+#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_1
+#  define VECMATHLIB_MAX_DOUBLE_VECSIZE 1
+#endif
+  
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#  define VECMATHLIB_MAX_FLOAT_VECSIZE 16
+#elif defined VECMATHLIB_HAVE_VEC_FLOAT_8
+#  define VECMATHLIB_MAX_FLOAT_VECSIZE 8
+#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4
+#  define VECMATHLIB_MAX_FLOAT_VECSIZE 4
+#elif defined VECMATHLIB_HAVE_VEC_FLOAT_2
+#  define VECMATHLIB_MAX_FLOAT_VECSIZE 2
+#elif defined VECMATHLIB_HAVE_VEC_FLOAT_1
+#  define VECMATHLIB_MAX_FLOAT_VECSIZE 1
+#endif
+  
+#ifdef VECMATHLIB_MAX_DOUBLE_VECSIZE
+  typedef realvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE> double_vec;
+  typedef intvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE>  long_vec;
+  typedef boolvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE> bool_double_vec;
+#endif
+  
+#ifdef VECMATHLIB_MAX_FLOAT_VECSIZE
+  typedef realvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE> float_vec;
+  typedef intvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE>  int_vec;
+  typedef boolvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE> bool_float_vec;
+#endif
+}
+
 #endif // #ifndef VECMATHLIB_H
