@@ -22,12 +22,8 @@
    THE SOFTWARE.
 */
 
-#undef fmin
-
 #include "templates.h"
 
-#define __builtin__cl_std_fminf __builtin_fminf
-#define __builtin__cl_std_fmin  __builtin_fmin
-DEFINE_BUILTIN_V_VV(_cl_std_fmin)
+DEFINE_BUILTIN_V_VV(fmin)
 
-DEFINE_EXPR_V_VS(_cl_std_fmin, _cl_std_fmin(a, (vtype)b))
+DEFINE_EXPR_V_VS(fmin, fmin(a, (vtype)b))
