@@ -31,10 +31,10 @@ SUBDIRS = @OCL_TARGETS@
 # dist once here.
 EXTRA_DIST = *.c *.cl *.h *.ll			\
 	arm/*.cl tce/*.cl			\
-	vecmathlib/COPYING			\
-	vecmathlib/COPYING.LESSER		\
+	vecmathlib/LICENCE			\
 	vecmathlib/README			\
 	vecmathlib/*.h				\
-	vecmathlib/pocl/*.cc			\
-	vecmathlib/pocl/*.cl			\
-	vecmathlib/pocl/*.h
+	vecmathlib-pocl/*.cc			\
+	vecmathlib-pocl/*.cl			\
+	vecmathlib-pocl/*.h			\
+	vecmathlib-pocl/*.py

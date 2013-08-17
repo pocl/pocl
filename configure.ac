@@ -632,7 +632,7 @@ AC_COMPILE_IFELSE(
   [AC_MSG_RESULT(yes)
    # The vecmathlib repo should be checked out under lib/kernel
    # and the pocl directory should have the generated files in place.
-   if test -r $srcdir/lib/kernel/vecmathlib/pocl/pow.cc; then
+   if test -r $srcdir/lib/kernel/vecmathlib/vecmathlib.h; then
       use_vecmathlib=yes
    fi
    AC_DEFINE_UNQUOTED([CLANGXX], ["$CLANGXX"], [clang++ executable])

@@ -32,7 +32,7 @@ CLANGFLAGS = -emit-llvm
 # problematic in case one wants to override the files in the
 # device-specific directory. To circumvent this, one can override a
 # default file with a more accurate path, e.g.,
-# vecmathlib/pocl/fmax.cl. This overrides a possible fmax.cl found in
+# vecmathlib-pocl/fmax.cl. This overrides a possible fmax.cl found in
 # the current directory by one from the VML. TODO: dependency tracking
 # does not work in that case because the .bc is not created in the
 # directory where the source is.

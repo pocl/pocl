@@ -1,4 +1,4 @@
-# sources.mk - Makefile definitions for the including the vecmathlib implementations
+# sources-vecmathlib.mk - Makefile definitions for the including the vecmathlib implementations
 # 
 # Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
 # 
@@ -23,7 +23,7 @@
 # This file should be included from the Makefile.am of the target kernel
 # library in case vecmathlib versions of the builtins are wanted.
 
-SECONDARY_VPATH = @srcdir@/../vecmathlib/pocl
+SECONDARY_VPATH = @srcdir@/../vecmathlib-pocl
 
 LKERNEL_SRCS_EXCLUDE =				\
 	acos.cl					\
@@ -61,8 +61,6 @@ LKERNEL_SRCS_EXCLUDE =				\
 	floor.cl				\
 	fma.cl					\
 	fmax.cl					\
-	fmax.cl					\
-	fmin.cl					\
 	fmin.cl					\
 	fmod.cl					\
 	fract.cl				\
