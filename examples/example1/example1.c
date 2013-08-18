@@ -40,6 +40,7 @@ main (void)
   cl_float4 *srcA, *srcB;
   cl_float *dst;
   int ierr;
+  int did_fail;
   int i;
 
   source_file = fopen("example1.cl", "r");
@@ -77,22 +78,41 @@ main (void)
     }
 
   ierr = exec_dot_product_kernel (source, N, srcA, srcB, dst);
-  if (ierr) printf ("ERROR\n");
+  if (ierr)
+    {
+      printf ("ERROR %d\n", ierr);
+      return -1;
+    }
 
+  did_fail = 0;
   for (i = 0; i < N; ++i)
     {
-      printf ("(%f, %f, %f, %f) . (%f, %f, %f, %f) = %f\n",
+      cl_float expected;
+      expected = (srcA[i].x * srcB[i].x +
+                  srcA[i].y * srcB[i].y +
+                  srcA[i].z * srcB[i].z +
+                  srcA[i].w * srcB[i].w);
+
+      printf ("(%.17g, %.17g, %.17g, %.17g) . (%.17g, %.17g, %.17g, %.17g) = %.17g | %.17g\n",
 	      srcA[i].x, srcA[i].y, srcA[i].z, srcA[i].w,
 	      srcB[i].x, srcB[i].y, srcB[i].z, srcB[i].w,
-	      dst[i]);
-      if (srcA[i].x * srcB[i].x +
-	  srcA[i].y * srcB[i].y +
-	  srcA[i].z * srcB[i].z +
-	  srcA[i].w * srcB[i].w != dst[i])
+	      dst[i], expected);
+      int ds, ex;
+      memcpy(&ds, &dst[i], 4);
+      memcpy(&ex, &expected, 4);
+      printf ("   %08x | %08x\n", ds, ex);
+      /* Note: This test multiplies integer values (stored as floating
+         point values), and thus the result must be exact */
+      if (expected != dst[i])
 	{
 	  printf ("FAIL\n");
-	  return -1;
+	  did_fail = 1;
 	}
+    }
+
+  if (did_fail)
+    {
+      return -1;
     }
 
   printf ("OK\n");

@@ -28,7 +28,7 @@
 
 // This could probably also be optimised
 DEFINE_EXPR_UG_GG(abs_diff,
-                  (sgtype)-1 < (sgtype)0 ?
+                  TYPE_IS_SIGNED(sgtype) ?
                   /* signed */
                   ({
                     (a^b) >= (gtype)0 ?

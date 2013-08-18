@@ -60,10 +60,10 @@
 
 
 DEFINE_EXPR_G_GG(mul_hi,
-                 (sgtype)-1 < (sgtype)0 ?
+                 TYPE_IS_SIGNED(sgtype) ?
                  /* signed */
                  ({
-                   int bits = CHAR_BIT * sizeof(sgtype);
+                   int bits = TYPE_BITS(sgtype);
                    gtype ah = SHI(a);
                    gtype al = SLO(a);
                    gtype bh = SHI(b);
@@ -82,7 +82,7 @@ DEFINE_EXPR_G_GG(mul_hi,
                  }) :
                  /* unsigned */
                  ({
-                   int bits = CHAR_BIT * sizeof(sgtype);
+                   int bits = TYPE_BITS(sgtype);
                    gtype ah = UHI(a);
                    gtype al = ULO(a);
                    gtype bh = UHI(b);

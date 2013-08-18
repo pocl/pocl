@@ -1,3 +1,5 @@
+
+
 /* OpenCL built-in library: implementation templates
 
    Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
@@ -21,6 +23,32 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+
+
+
+/* Determine type properties */
+
+// return type: int
+#define TYPE_IS_SIGNED(TYPE_)                   \
+  ((TYPE_)0 - (TYPE_)1 < (TYPE_)0)
+
+// return type: size_t
+#define TYPE_BITS(TYPE_)                        \
+  (CHAR_BIT * sizeof(TYPE_))
+
+// return type: TYPE_
+#define TYPE_MIN(TYPE_)                                         \
+  (TYPE_IS_SIGNED(TYPE_) ?                                      \
+   (TYPE_)((TYPE_)-1 << (TYPE_)(TYPE_BITS(TYPE_) - 1)) :        \
+   (TYPE_)0)
+
+// return type: TYPE_
+#define TYPE_MAX(TYPE_)                         \
+  (TYPE_IS_SIGNED(TYPE_) ?                      \
+   (TYPE_)((TYPE_)1 - TYPE_MIN(TYPE_)) :        \
+   (TYPE_)~(TYPE_)0 - (TYPE_)1)
+
+
 
 #define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                  \

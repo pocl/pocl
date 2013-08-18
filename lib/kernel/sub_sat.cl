@@ -32,12 +32,12 @@
 // Other types don't seem to be supported.
 
 DEFINE_EXPR_G_GG(sub_sat,
-                 (sgtype)-1 < (sgtype)0 ?
+                 TYPE_IS_SIGNED(sgtype) ?
                  /* signed */
                  ({
-                   int bits = CHAR_BIT * sizeof(sgtype);
-                   gtype min = (sgtype)1 << (sgtype)(bits-1);
-                   gtype max = min - (sgtype)1;
+                   int bits = TYPE_BITS(sgtype);
+                   gtype min = TYPE_MIN(sgtype);
+                   gtype max = TYPE_MAX(sgtype);
                    (a^b) >= (gtype)0 ?
                      /* same sign: no overflow/underflow */
                      a-b :
@@ -49,6 +49,6 @@ DEFINE_EXPR_G_GG(sub_sat,
                  }) :
                  /* unsigned */
                  ({
-                   gtype min = (sgtype)0;
+                   gtype min = TYPE_MIN(sgtype);
                    a < min+b ? min : a-b;
                  }))

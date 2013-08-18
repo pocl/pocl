@@ -79,22 +79,16 @@ but NVidia, AMD, Intel, Khronos, and the free ocl-icd project each provides one.
 Vecmathlib
 ----------
 
-It is possible to use `Vecmathlib <https://bitbucket.org/eschnett/vecmathlib/wiki/Home>`_ 
-implementations for the math builtins. These are highly recommended as they can be inlined
-to the call site and lead to better optimized kernels.
+Vecmathlib (aka VML)
+`<https://bitbucket.org/eschnett/vecmathlib/wiki/Home>`_ provides
+optimized implementations for math builtins such as sqrt, sin, cos,
+etc. These are highly recommended as they can be inlined to the call
+site and lead to better optimized kernels. A copy of Vecmathlib is
+distributed with pocl for convenience in the directory
+`lib/kernel/vecmathlib`_.
 
-VML can be used with pocl as follows:
-
-#. ensure you have a functional clang++ installed 
-#. 'git clone' the vecmathlib project under the 'kernel' directory in the
-   pocl source tree.
-#. generate the pocl wrappers using ./generate-files.py under
-   vecmathlib/pocl
-
-Thee pocl's configure script should now detect that you want to compile
-vecmathlib, and the x86_64 kernel is built using vecmathlib's versions for the math 
-built-ins.
-
+To use VML, you need to have a functional clang++ installed.
+Currently, VML is enabled only for x86_64.
 
 Tuning pocl behavior
 --------------------

@@ -33,12 +33,11 @@
 
 // This could probably also be optimised (i.e. the ?: operators eliminated)
 DEFINE_EXPR_G_GG(add_sat,
-                 (sgtype)-1 < (sgtype)0 ?
+                 TYPE_IS_SIGNED(sgtype) ?
                  /* signed */
                  ({
-                   int bits = CHAR_BIT * sizeof(sgtype);
-                   gtype min = (sgtype)1 << (sgtype)(bits-1);
-                   gtype max = min - (sgtype)1;
+                   gtype min = TYPE_MIN(sgtype);
+                   gtype max = TYPE_MAX(sgtype);
                    (a^b) < (gtype)0 ?
                      /* different signs: no overflow/underflow */
                      a+b :
@@ -50,6 +49,6 @@ DEFINE_EXPR_G_GG(add_sat,
                  }) :
                  /* unsigned */
                  ({
-                   gtype max = ~(gtype)0;
+                   gtype max = TYPE_MAX(sgtype);
                    a > max-b ? max : a+b;
                  }))
