@@ -25,13 +25,11 @@
 // We can't use templates.h because they don't allow us to create the
 // convert_* function calls
 
-#include "templates.h"
-
 #define IMPLEMENT_UPSAMPLE_LG_GUG(GTYPE, SGTYPE, UGTYPE, LGTYPE)        \
   LGTYPE _CL_OVERLOADABLE                                               \
   upsample(GTYPE a, UGTYPE b)                                           \
   {                                                                     \
-    int bits = TYPE_BITS(SGTYPE);                                       \
+    int bits = CHAR_BIT * sizeof(SGTYPE);                               \
     return (convert_##LGTYPE(a) << (LGTYPE)bits) | convert_##LGTYPE(b); \
   }
 

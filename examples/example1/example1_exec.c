@@ -40,7 +40,7 @@ exec_dot_product_kernel(const char *program_source,
     { 
       clReleaseContext(context); 
       free(devices); 
-      return -2; 
+      return -1; 
     } 
 
   for (i = 0; i < n; ++i)
@@ -58,7 +58,7 @@ exec_dot_product_kernel(const char *program_source,
     { 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -3; 
+      return -1; 
     } 
  
   memobjs[1] = clCreateBuffer(context, 
@@ -69,7 +69,7 @@ exec_dot_product_kernel(const char *program_source,
       delete_memobjs(memobjs, 1); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -4;
+      return -1;
     } 
  
   memobjs[2] = clCreateBuffer(context, 
@@ -80,7 +80,7 @@ exec_dot_product_kernel(const char *program_source,
       delete_memobjs(memobjs, 2); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -5; 
+      return -1; 
     } 
  
   // create the program 
@@ -91,7 +91,7 @@ exec_dot_product_kernel(const char *program_source,
       delete_memobjs(memobjs, 3); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -6; 
+      return -1; 
     } 
  
   // build the program 
@@ -102,7 +102,7 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -7; 
+      return -1; 
     } 
  
   // create the kernel 
@@ -113,7 +113,7 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -8; 
+      return -1; 
     } 
  
   // set the args values 
@@ -131,7 +131,7 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -9; 
+      return -1; 
     } 
  
   // set work-item dimensions 
@@ -149,7 +149,7 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -10; 
+      return -1; 
     } 
  
   // read output image 
@@ -163,7 +163,7 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -11; 
+      return -1; 
     } 
   for (i = 0; i < n; ++i)
     {

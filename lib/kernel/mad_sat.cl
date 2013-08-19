@@ -62,12 +62,12 @@
 
 
 DEFINE_EXPR_G_GGG(mad_sat,
-                  TYPE_IS_SIGNED(sgtype) ?
+                  (sgtype)-1 < (sgtype)0 ?
                   /* signed */
                   ({
-                    int bits = TYPE_BITS(sgtype);
-                    gtype min = TYPE_MIN(sgtype);
-                    gtype max = TYPE_MAX(sgtype);
+                    int bits = CHAR_BIT * sizeof(sgtype);
+                    gtype min = (sgtype)1 << (sgtype)(bits-1);
+                    gtype max = min - (sgtype)1;
                     gtype ah = SHI(a);
                     gtype al = SLO(a);
                     gtype bh = SHI(b);
@@ -94,8 +94,8 @@ DEFINE_EXPR_G_GGG(mad_sat,
                   }) :
                   /* unsigned */
                   ({
-                    int bits = TYPE_BITS(sgtype);
-                    gtype max = TYPE_MAX(sgtype);
+                    int bits = CHAR_BIT * sizeof(sgtype);
+                    gtype max = (sgtype)-1;
                     gtype ah = UHI(a);
                     gtype al = ULO(a);
                     gtype bh = UHI(b);
