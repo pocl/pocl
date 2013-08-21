@@ -89,8 +89,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_min_max], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fmin, fmax, fma])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([fmin_fmax_fma])
 AT_DATA([expout],
 [Running test test_fmin_fmax_fma...
