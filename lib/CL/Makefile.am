@@ -128,7 +128,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
 
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
-libpocl_la_LDFLAGS = -lltdl @PTHREAD_LIBS@ -version-info ${LIB_VERSION}
+libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ -version-info ${LIB_VERSION}
 #libpocl_la_LDFLAGS += -Wl,-z,defs 
 
 if TCE_AVAILABLE
@@ -150,19 +150,15 @@ if USE_LLVM_API
 #causes the entire pocl project to be linked with g++, which in turn
 #exposes a gcc/autoconf m4 macro issue
 # see: http://stackoverflow.com/questions/17055279/autotools-for-pthreads-not-setting-correct-linker-flags
-#noinst_LIBRARIES = libpoclllvm.a
+noinst_LIBRARIES = libpoclllvm.a
 
-#libpoclllvm_a_SOURCES = pocl_llvm_api.cc
-#libpoclllvm_a_CPPFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
-libpocl_la_SOURCES += pocl_llvm_api.cc
-libpocl_a_CXXFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
-
+libpoclllvm_a_SOURCES = pocl_llvm_api.cc
+libpoclllvm_a_CPPFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
 libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags`
-AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -I$(top_srcdir)/lib/llvmopencl/
-
+AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags`
 
 libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/
-#libpocl_la_LIBADD += ${top_builddir}/lib/CL/libpoclllvm.a
+libpocl_la_LIBADD += ${top_builddir}/lib/CL/libpoclllvm.a
 libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
 libpocl_la_LIBADD += -lLLVM-${LLVM_VERSION}
 libpocl_la_LIBADD += -lclangFrontend -lclangLex -lclangSema -lclangSerialization
