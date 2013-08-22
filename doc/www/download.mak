@@ -2,16 +2,15 @@
         sub_page = "Download"
 %>
 <%inherit file="basic_page.makt" />
-<p>pocl uses the <a href="http://bazaar.canonical.com/">Bazaar</a> version control system and 
-<a href="http://launchpad.net/pocl">Launchpad</a> for code hosting and <a href="http://bugs.launchpad.net/pocl">
-bug tracking</a>.</p>
+<p>pocl uses the <a href="http://git-scm.com/">git</a> version control system and 
+<a href="http://github.com/pocl/pocl">GitHub</a> for code hosting and issue tracking.</p>
 
 <p>The main development branch is kept stable (should pass all tests all the time), 
 thus the best starting point for using and developing pocl is to check it out from 
 the version control system:</p>
 
 <pre>
-        bzr co lp:pocl
+        git clone https://github.com/pocl/pocl.git
 </pre>
 
 We also package releases regularly, usually after each new LLVM release:
@@ -34,6 +33,5 @@ We also package releases regularly, usually after each new LLVM release:
             <a href="https://launchpadlibrarian.net/112874413/notes-0.6.txt">release notes</a></li>
 </ul>
 
-All downloadable files, including previous releases and release
-candidates, are available on <a
+<p>All releases are also available on <a
 href="http://sourceforge.net/projects/pocl/files/">SourceForge</a>.

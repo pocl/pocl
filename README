@@ -4,4 +4,8 @@ pocl is being developed towards an efficient implementation of OpenCL standard
 which can be easily adapted for new targets.
 
 Please refer to the file INSTALL in this directory for building and installing
-pocl. The documentation is located at http://pocl.sourceforge.net/docs/html/
+pocl. 
+
+More documentation available at http://pocl.sf.net/docs/html/
+The main web page is at http://pocl.sf.net
+
