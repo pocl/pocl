@@ -9,4 +9,7 @@ Current known issues:
 - ABI/ISA compatibility issue (soft float or not). This is
   producible in the example1 which takes float4 buffers as args.
   example2, which uses scalar buffers works ok.
-
+- On Ubuntu 12.04, clang 3.2 and 3.3 cannot compile a simple 
+  C program due to wrong internal paths. This leads to all tests
+  failing. Description on how to fix this issue is here:
+  http://sourceforge.net/mailarchive/forum.php?thread_name=20130723124515.7995bb36%40fx8&forum_name=pocl-devel
