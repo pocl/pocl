@@ -1,5 +1,7 @@
-This directory tree holds Portable OpenCL (pocl), a (still in-development)
-implementation of OpenCL standard which can be easily adapted for new targets.
+Portable Computing Language (pocl)
+----------------------------------
+pocl is being developed towards an efficient implementation of OpenCL standard 
+which can be easily adapted for new targets.
 
 The file INSTALL in this directory says how to build and install packages
 which use the GNU build system, most of which is valid for the pocl
