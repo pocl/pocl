@@ -23,4 +23,5 @@
 # THE SOFTWARE.
 
 SUBDIRS = example1 example2 example2a trig scalarwave standalone \
-	opencl-book-samples VexCL ViennaCL Rodinia Parboil AMD EinsteinToolkit
+	opencl-book-samples VexCL ViennaCL Rodinia Parboil AMD EinsteinToolkit \
+	piglit
