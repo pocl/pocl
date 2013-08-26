@@ -100,8 +100,4 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_int num_events, cl_event *wait_list);
   
 
-int pocl_is_valid_cmd_queue (cl_command_queue cq);
-void pocl_add_cmd_queue (cl_command_queue cq);
-void pocl_remove_cmd_queue (cl_command_queue cq);
-
 #endif

@@ -27,7 +27,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  if(command_queue == NULL || (pocl_is_valid_cmd_queue (command_queue) == 0))
+  if (command_queue == NULL)
     {
       return CL_INVALID_COMMAND_QUEUE;
     }

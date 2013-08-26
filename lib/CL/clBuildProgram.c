@@ -100,7 +100,7 @@ CL_API_SUFFIX__VERSION_1_0
     errcode = CL_INVALID_OPERATION;
     goto ERROR;
   }
-  //printf("options = %s\n", options);
+  
   if (options != NULL)
     {
       modded_options = calloc (512, 1);

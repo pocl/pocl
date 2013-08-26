@@ -74,8 +74,6 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->properties = properties;
   command_queue->root = NULL;
 
-  pocl_add_cmd_queue (command_queue);
-
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return command_queue;
