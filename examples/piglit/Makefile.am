@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for tests/regression.
+# Makefile.am for pocl/examples/VexCL
 # 
-# Copyright (c) 2012 Cyril Roelandt and Pekka Jääskeläinen
+# Copyright (c) 2013 Ville Korhonen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo test_clCreateProgramWithBinary test_clGetSupportedImageFormats
+if TEST_SUITE_PIGLIT
 
-AM_LDFLAGS = @OPENCL_LIBS@
-AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"' @OPENCL_CFLAGS@
+.PHONY: build
+
+build:
+	cd piglit ; make
+
+check-local: build
+
+clean-local:
+	cd piglit; make clean
+
+endif

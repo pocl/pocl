@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueue)(cl_context context, 
@@ -72,6 +73,8 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->device = device;
   command_queue->properties = properties;
   command_queue->root = NULL;
+
+  pocl_add_cmd_queue (command_queue);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

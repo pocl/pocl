@@ -33,6 +33,16 @@
 
 #define TEMP_DIR_PATH_CHARS 16
 
+struct list_item;
+
+typedef struct list_item
+{
+  void *value;
+  struct list_item *next;
+} list_item;
+
+static list_item *queue_list = NULL; 
+
 void 
 remove_directory (const char *path_name) 
 {
@@ -237,6 +247,50 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   (*cmd)->device = command_queue->device;
 
   return CL_SUCCESS;
+}
+
+int pocl_is_valid_cmd_queue (cl_command_queue cq)
+{
+  if (cq)
+    {
+      list_item *l = NULL;
+      for (l = queue_list; l; l = l->next)
+        {
+          if (l->value == cq)
+            {
+              return 1;
+            }
+        }
+    }
+  return 0;
+}
+void pocl_add_cmd_queue (cl_command_queue cq)
+{
+  list_item *tmp = NULL;
+  if (cq)
+    {
+      tmp = malloc (sizeof (list_item));
+      tmp->value = cq;
+      tmp->next = NULL;
+      LL_APPEND(queue_list, tmp);
+    }
+}
+
+void pocl_remove_cmd_queue (cl_command_queue cq)
+{
+  list_item *l;
+  if (cq)
+    {
+      for (l = queue_list; l->next; l = l->next)
+        {
+          if (l->next->value == cq)
+            {
+              free (l->next);
+              l->next = l->next->next;
+              break;
+            }
+        }
+    }
 }
 #endif
 

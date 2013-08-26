@@ -36,8 +36,6 @@ Misc.
 -----
 - poclu: helpers for converting between the C float and OpenCL cl_half
   types
-- Added pocl_create_event() and pocl_create_command() functions.
-- Added event waitlist feature to commands.
 
 0.8  August 2013
 ================
