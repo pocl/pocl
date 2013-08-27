@@ -26,6 +26,7 @@
 #include "pocl_util.h"
 #include "utlist.h"
 #include <stdlib.h>
+#include <string.h>
 
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapImage)(cl_command_queue   command_queue,
