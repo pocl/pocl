@@ -59,7 +59,7 @@ int call_pocl_build( cl_device_id device,
     }
   else
     {
-       error = system(command);
+      error = system(command);
     }
 
   return error;
@@ -199,5 +199,7 @@ int call_pocl_workgroup( char* function_name,
       error = system (command);
       if (error != 0)
         return CL_OUT_OF_RESOURCES;
+
+      return 0;
 }
 
