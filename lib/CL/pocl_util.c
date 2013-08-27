@@ -215,8 +215,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 {
   int i;
   
-  if (wait_list == NULL && num_events != 0 ||
-      wait_list != NULL && num_events == 0)
+  if ((wait_list == NULL && num_events != 0) ||
+      (wait_list != NULL && num_events == 0))
     return CL_INVALID_EVENT_WAIT_LIST;
   
   for (i = 0; i < num_events; ++i)

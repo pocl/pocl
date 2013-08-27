@@ -67,8 +67,8 @@ CL_API_SUFFIX__VERSION_1_0
       errcode = CL_INVALID_CONTEXT;
       goto ERROR;
     }
-  if (event_wait_list == NULL && num_events_in_wait_list != 0 ||
-      event_wait_list != NULL && num_events_in_wait_list == 0)
+  if ((event_wait_list == NULL && num_events_in_wait_list != 0) ||
+      (event_wait_list != NULL && num_events_in_wait_list == 0))
     {
       errcode = CL_INVALID_EVENT_WAIT_LIST;
       goto ERROR;
