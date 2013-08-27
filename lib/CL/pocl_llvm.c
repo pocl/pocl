@@ -18,7 +18,7 @@ int call_pocl_build( cl_device_id device,
                      const char* user_options )
 {
   int error;
-  char *pocl_build_script;
+  const char *pocl_build_script;
   char command[COMMAND_LENGTH];
 
   if (getenv("POCL_BUILDING") != NULL)
@@ -155,9 +155,9 @@ int call_pocl_kernel(cl_program program,
 
 int call_pocl_workgroup( char* function_name, 
                     size_t local_x, size_t local_y, size_t local_z,
-                    char* llvm_target_triplet, 
-                    char* parallel_filename,
-                    char* kernel_filename )
+                    const char* llvm_target_triplet, 
+                    const char* parallel_filename,
+                    const char* kernel_filename )
 {
   int error;
   struct stat buf;
