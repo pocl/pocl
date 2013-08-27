@@ -27,6 +27,7 @@ examples/example1/example1
 examples/example2/example2
 examples/example2a/example2a
 examples/scalarwave/scalarwave
+examples/standalone/standalone.h
 examples/trig/trig
 include/CL/cl.hpp
 include/arm/types.h
