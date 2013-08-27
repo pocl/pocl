@@ -43,3 +43,32 @@ Note: Some of the environment variables set above before building pocl
       also need to be set when running a program using pocl.
 
 Note: These instructions were tested on 2013-07-10
+
+
+Installation with Homebrew http://mxcl.github.io/homebrew/
+==========================================================
+
+1. brew install libxml2 hwloc
+
+2. brew install llvm --with-clang --shared --rtti --all-targets
+
+3. configure and install pocl 
+
+  mkdir build-pocl 
+  cd build-pocl
+  ../pocl-sources/configure --prefix=$PWD/../pocl-install --disable-icd --enable-testsuites=all
+
+4. make -j8 check
+
+5. make install
+
+NOTE: If configure cannot find hwloc library, problem is probably https://github.com/mxcl/homebrew/issues/20769
+      one can fix that by hand by editing libxml2 formula:
+
+  edit /usr/local/Library/Formula/libxml2.rb
+  remove line: "keg_only :provided_by_osx"
+  brew uninstall libxml2
+  brew install libxml2
+
+NOTE: if there are any problems make sure you don't have macports/fink installed.
+
