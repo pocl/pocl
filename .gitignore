@@ -75,4 +75,6 @@ tests/runtime/test_clGetDeviceInfo
 tests/runtime/test_clGetEventInfo
 tests/runtime/test_clGetSupportedImageFormats
 tests/testsuite
+tests/testsuite.dir
+tests/testsuite.log
 tests/workgroup/run_kernel
