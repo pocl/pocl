@@ -147,6 +147,11 @@ AT_KEYWORDS([regression nullarg])
 AT_CHECK([$abs_top_builddir/tests/regression/test_null_arg], 0)
 AT_CLEANUP
 
+AT_SETUP([private address space struct initializer fails with nested table])
+AT_KEYWORDS([regression structinit])
+AT_CHECK([$abs_top_builddir/tests/regression/test_struct_initialization], 0)
+AT_CLEANUP
+
 AT_SETUP([sizeof(uint)])
 AT_KEYWORDS([sizeof])
 AT_DATA([expout],
