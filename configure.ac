@@ -522,7 +522,7 @@ OCL_DRIVERS="basic pthreads"
 
 AC_PATH_PROG([TCE_CONFIG], [tce-config])
 
-if test ! -z "$TCE_CONFIG"; then
+if test ! -z "$TCE_CONFIG" -a x"$try_tce" = xyes; then
 
 AC_PATH_PROG([TCECC], [tcecc])
 

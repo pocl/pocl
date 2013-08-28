@@ -27,11 +27,24 @@ if TEST_SUITE_PIGLIT
 .PHONY: build
 
 build:
-	cd piglit ; make
+	cd piglit ; \
+	cmake \
+		-DPIGLIT_BUILD_GL_TESTS=OFF \
+		-DPIGLIT_BUILD_GLES1_TESTS=OFF \
+		-DPIGLIT_BUILD_GLES2_TESTS=OFF \
+		-DPIGLIT_BUILD_GLES3_TESTS=OFF \
+		-DPIGLIT_BUILD_CL_TESTS=ON \
+		-DPIGLIT_USE_WAFFLE=OFF \
+		-DPIGLIT_BUILD_GLX_TESTS=OFF \
+		-DOPENCL_INCLUDE_PATH="../../../include/" \
+		-DOPENCL_opencl_LIBRARY:STRING="-l OpenCL" .; \
+	make
 
 check-local: build
 
 clean-local:
 	cd piglit; make clean
+
+clean: clean-local
 
 endif

@@ -7,8 +7,7 @@ be used to test pocl until all fixes are merged upstream.
 
 So, here's how to run the piglit suite against pocl:
 
-git clone http://www.cs.tut.fi/~pjaaskel/piglit.git
-# to get the upstream repo: git clone git://anongit.freedesktop.org/piglit
+Get the upstream repo: git clone git://anongit.freedesktop.org/piglit
 
 cd piglit
 ccmake .
