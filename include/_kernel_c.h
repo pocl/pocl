@@ -27,7 +27,7 @@
 #ifndef _KERNEL_C_H
 #define _KERNEL_C_H
 
-#include "types.h"
+#include "pocl_types.h"
 
 /* Function/type attributes supported by Clang/SPIR */
 #if __has_attribute(__always_inline__)

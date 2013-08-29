@@ -51,10 +51,10 @@ OBJ = $(LKERNEL_SRCS:%=%.bc)
 
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
-%.c.bc: %.c @top_srcdir@/include/types.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ${abs_top_srcdir}/include/types.h
-%.cc.bc: %.cc @top_srcdir@/include/features.h
-	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm -ffp-contract=off ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ${abs_top_srcdir}/include/features.h
+%.c.bc: %.c @top_srcdir@/include/pocl_types.h
+	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ${abs_top_srcdir}/include/pocl_types.h
+%.cc.bc: %.cc @top_srcdir@/include/pocl_features.h
+	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm -ffp-contract=off ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ${abs_top_srcdir}/include/pocl_features.h
 %.cl.bc: %.cl @top_srcdir@/include/_kernel.h
 	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll

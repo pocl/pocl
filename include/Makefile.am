@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h _kernel_c.h features.h types.h
+pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h _kernel_c.h pocl_features.h pocl_types.h
 include_HEADERS = poclu.h utlist.h
 
 SUBDIRS = CL OpenCL
