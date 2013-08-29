@@ -61,9 +61,6 @@
 #  define _CL_UNAVAILABLE
 #endif
 
-// We align the 3-vectors, so that their sizeof is correct. Is there a
-// better way? Should we also align the other vectors?
-
 typedef char char2  __attribute__((__ext_vector_type__(2)));
 typedef char char3  __attribute__((__ext_vector_type__(3)));
 typedef char char4  __attribute__((__ext_vector_type__(4)));
