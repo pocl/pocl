@@ -27,10 +27,10 @@ pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h _kernel_c.h
 # The sort command (also) removes duplicate entries which might appear 
 # due to @TARGET@ and/or @HOST@ being one of the manually defined 
 # targets. 
-nobase_pkginclude_HEADERS = $(sort 				\
-							arm/types.h			\
-                            x86_64/types.h		\
-                            tce/types.h)
+nobase_pkginclude_HEADERS = $(sort		\
+	arm/types.h				\
+	x86_64/types.h				\
+        tce/types.h)
 include_HEADERS = poclu.h
 
 # utlist.h is a header only utility lib for linked list

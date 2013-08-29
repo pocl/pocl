@@ -110,6 +110,11 @@ typedef long long3  __attribute__((__ext_vector_type__(3)));
 typedef long long4  __attribute__((__ext_vector_type__(4)));
 typedef long long8  __attribute__((__ext_vector_type__(8)));
 typedef long long16 __attribute__((__ext_vector_type__(16)));
+typedef long _cl_long2  __attribute__((__ext_vector_type__(2)));
+typedef long _cl_long3  __attribute__((__ext_vector_type__(3)));
+typedef long _cl_long4  __attribute__((__ext_vector_type__(4)));
+typedef long _cl_long8  __attribute__((__ext_vector_type__(8)));
+typedef long _cl_long16 __attribute__((__ext_vector_type__(16)));
 
 typedef ulong ulong2  __attribute__((__ext_vector_type__(2)));
 typedef ulong ulong3  __attribute__((__ext_vector_type__(3)));

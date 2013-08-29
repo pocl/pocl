@@ -659,6 +659,7 @@ AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
 
+# TODO: this is duplicated
 LLVM_PROG([OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLVM_OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLC], [llc], [LLVM static compiler])
@@ -698,6 +699,17 @@ case $host_os in
 esac
 AC_SUBST([ICD_LD_FLAGS])
 case $host_cpu in
+  armv6l)
+    AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=armv6"
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=$host
+    kernel_dir="arm"
+    CL_DEVICE_ADDRESS_BITS=32
+    case $host in
+      *gnueabihf) HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=armv6l-unknown-linux-gnueabihf -mcpu=arm1176jzf-s -float-abi=hard";;
+    esac
+    ;;
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # check for gnueabihf, and set clang target accordingly
