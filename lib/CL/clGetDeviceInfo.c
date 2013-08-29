@@ -269,6 +269,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_bool, CL_TRUE);
   case CL_DEVICE_PRINTF_BUFFER_SIZE                :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->printf_buffer_size);
+  case CL_DEVICE_REFERENCE_COUNT:
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, 
+                                            (cl_uint)device->pocl_refcount)
   }
   return CL_INVALID_VALUE;
 }

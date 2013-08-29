@@ -7,5 +7,6 @@ AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetDeviceInfo])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetEventInfo])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateProgramWithBinary])
 AT_CHECK([POCL_DEVICES="pthread pthread" $abs_top_builddir/tests/runtime/test_clGetSupportedImageFormats])
-
+AT_CHECK_UNQUOTED([$abs_top_builddir/tests/runtime/test_clFinish | grep "ABABC"], 0, [ABABC
+])
 AT_CLEANUP

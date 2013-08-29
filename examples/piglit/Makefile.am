@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples.
+# Makefile.am for pocl/examples/VexCL
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2013 Ville Korhonen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example2 example2a trig scalarwave standalone \
-	opencl-book-samples VexCL ViennaCL Rodinia Parboil AMD EinsteinToolkit \
-	piglit
+if TEST_SUITE_PIGLIT
+
+.PHONY: build
+
+build:
+	cd piglit ; \
+	cmake \
+		-DPIGLIT_BUILD_GL_TESTS=OFF \
+		-DPIGLIT_BUILD_GLES1_TESTS=OFF \
+		-DPIGLIT_BUILD_GLES2_TESTS=OFF \
+		-DPIGLIT_BUILD_GLES3_TESTS=OFF \
+		-DPIGLIT_BUILD_CL_TESTS=ON \
+		-DPIGLIT_USE_WAFFLE=OFF \
+		-DPIGLIT_BUILD_GLX_TESTS=OFF \
+		-DOPENCL_INCLUDE_PATH="../../../include/" \
+		-DOPENCL_opencl_LIBRARY:STRING="-l OpenCL" .; \
+	make
+
+check-local: build
+
+clean-local:
+	cd piglit; make clean
+
+clean: clean-local
+
+endif
