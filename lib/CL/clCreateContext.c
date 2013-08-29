@@ -128,6 +128,12 @@ POname(clCreateContext)(const cl_context_properties * properties,
       errcode = CL_INVALID_VALUE;
       goto ERROR;
     }
+
+  if (pfn_notify == NULL && user_data != NULL)
+    {
+      errcode = CL_INVALID_VALUE;
+      goto ERROR;
+    }
   
   lt_dlinit();
   pocl_init_devices();

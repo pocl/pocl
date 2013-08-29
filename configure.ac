@@ -135,7 +135,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL,Piglit])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -144,6 +144,7 @@ enable_testsuite_rodinia=no
 enable_testsuite_parboil=no
 enable_testsuite_amd=no
 enable_testsuite_vexcl=no
+enable_testsuite_piglit=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -165,9 +166,12 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/VexCL/vexcl/README.md" ; then
     enable_testsuite_vexcl=yes
   fi
+  if test -f "$srcdir/examples/piglit/piglit/piglit-run.py" ; then
+    enable_testsuite_piglit=yes
+  fi  
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL,piglit"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -193,6 +197,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,VexCL,*|*,vexcl,*], [
     enable_testsuite_vexcl=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,piglit,*|*,Piglit,*], [
+    enable_testsuite_piglit=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -261,6 +269,13 @@ if test "$enable_testsuite_viennacl" = "yes" ; then
   ])
 fi
 
+if test "$enable_testsuite_piglit" = "yes" ; then
+  if ! test -f "$srcdir/examples/piglit/piglit/piglit-run.py" ; then
+    AC_MSG_WARN([disabling Piglit testsuite: piglit-run.py not found in '$srcdir/examples/piglit/piglit/'])
+    enable_testsuite_piglit=no
+  fi
+fi   
+
 #All ViennaCL tests use doubles, thus they fail on these platforms
 case $host_cpu in
   arm* | powerpc* | x86 | i?86 )
@@ -275,6 +290,7 @@ AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -315,7 +331,12 @@ if test "$enable_testsuite_vexcl" = "yes"; then
 else
   AC_MSG_NOTICE([tests from VexCL are disabled])
 fi
-
+if test "$enable_testsuite_piglit" = "yes"; then
+  AC_MSG_NOTICE([tests from Piglit are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES piglit"
+else
+  AC_MSG_NOTICE([tests from piglit are disabled])
+fi
 
 
 AC_SUBST([POAT_TESTSUITES])
@@ -501,7 +522,7 @@ OCL_DRIVERS="basic pthreads"
 
 AC_PATH_PROG([TCE_CONFIG], [tce-config])
 
-if test ! -z "$TCE_CONFIG"; then
+if test ! -z "$TCE_CONFIG" -a x"$try_tce" = xyes; then
 
 AC_PATH_PROG([TCECC], [tcecc])
 
@@ -1046,6 +1067,7 @@ AC_CONFIG_FILES([Makefile
                  examples/AMD/Makefile
                  examples/EinsteinToolkit/Makefile
                  examples/VexCL/Makefile
+                 examples/piglit/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/kernel/Makefile

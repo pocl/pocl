@@ -22,15 +22,22 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
+  if (command_queue == NULL)
+    {
+      return CL_INVALID_COMMAND_QUEUE;
+    }
+
   int new_refcount;
   POname(clFlush)(command_queue);
   POCL_RELEASE_OBJECT(command_queue, new_refcount);
   if (new_refcount == 0)
     {
+      //pocl_remove_cmd_queue (command_queue);
       free (command_queue);
       /* TODO: should clReleaseContext()? */
     }
