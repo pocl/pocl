@@ -66,10 +66,6 @@
 #  define __IF_FP64(x)
 #endif
 
-#if defined(cl_khr_fp64) && !defined(cles_khr_int64)
-#  error "cl_khr_fp64 requires cles_khr_int64"
-#endif
-
 
 /* A static assert statement to catch inconsistencies at build time */
 #if __has_extension(__c_static_assert__)
@@ -85,22 +81,6 @@ typedef enum {
 
 
 /* Data types */
-
-/* Disable undefined datatypes */
-#ifndef cles_khr_int64
-typedef struct error_undefined_type_long error_undefined_type_long;
-#  define long error_undefined_type_long
-typedef struct error_undefined_type_ulong error_undefined_type_ulong;
-#  define ulong error_undefined_type_ulong
-#endif
-#ifndef cl_khr_fp16
-typedef struct error_undefined_type_half error_undefined_type_half;
-#  define half error_undefined_type_half
-#endif
-#ifndef cl_khr_fp64
-typedef struct error_undefined_type_double error_undefined_type_double;
-#  define double error_undefined_type_double
-#endif
 
 
 
