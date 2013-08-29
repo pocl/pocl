@@ -33,5 +33,8 @@ targetpkglibdir = $(pkglibdir)/arm
 targetpkglib_DATA = kernel-@OCL_KERNEL_TARGET@.bc
 
 include ../sources.mk
-all: kernel-@OCL_KERNEL_TARGET@.bc
 
+# Leave empty if architecture is not defined
+EXTRA_CLANGFLAGS = $(foreach arch, @OCL_KERNEL_ARCH@, -march=$(arch))
+
+all: kernel-@OCL_KERNEL_TARGET@.bc

@@ -704,6 +704,7 @@ case $host_cpu in
     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=armv6"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
+    OCL_KERNEL_ARCH=armv6
     kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
     case $host in
@@ -789,6 +790,8 @@ AC_SUBST([HOST_CPU], [$host_cpu])
 AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
 AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
+AC_SUBST([OCL_KERNEL_ARCH],[$OCL_KERNEL_ARCH])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_ARCH], ["$OCL_KERNEL_ARCH"], [The kernel architecture.])
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
