@@ -928,13 +928,6 @@ CC=$srcdir/config/xclang
 CPPFLAGS=""
 LDFLAGS=""
 
-AC_CONFIG_FILES([include/arm/types.h
-                 include/tce/types.h
-                 include/powerpc/types.h
-                 include/powerpc64/types.h
-                 include/cellspu/types.h
-                 include/x86_64/types.h])
-
 AC_MSG_CHECKING([for aligned_alloc])
 AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM(

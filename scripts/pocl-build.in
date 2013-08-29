@@ -73,10 +73,10 @@ CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off "
 preprocessed_file=${output_file}.i
 
 # BEGIN REMOVE ONCE INSTALLED
-@CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
+@CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 if false ; then
 # END REMOVE ONCE INSTALLED
-@CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
+@CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
 # BEGIN REMOVE ONCE INSTALLED
 fi
 # END REMOVE ONCE INSTALLED

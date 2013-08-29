@@ -84,12 +84,12 @@ mkdir ${tempdir}
 kernel_bc="${tempdir}/kernel.bc"
 
 # BEGIN REMOVE ONCE INSTALLED
-@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_builddir@/include/${target_dir}/types.h -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
+@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
 @OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
 if false ; then
 # END REMOVE ONCE INSTALLED
-@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm  -include @pkgincludedir@/${target_dir}/types.h -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
+@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
 @OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
 # BEGIN REMOVE ONCE INSTALLED
