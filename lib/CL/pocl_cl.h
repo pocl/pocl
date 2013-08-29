@@ -329,7 +329,6 @@ void (*fill_rect) (void *data,
                                          cl_int *num_image_formats);
   
   void *data;
-  const char* kernel_lib_target;   /* the kernel library to use (NULL for the current host) */
   const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
   /* A running number (starting from zero) across all the device instances. Used for 
      indexing  arrays in data structures with device specific entries. */

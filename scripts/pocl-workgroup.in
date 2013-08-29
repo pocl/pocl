@@ -70,21 +70,10 @@ fi
 linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
 linked_out="${linked_bc}.out"
 
-target_dir=${target}
-case $target in
-  arm*)        target_dir="arm";;
-  cellspu-*)   target_dir="cellspu";;
-  powerpc-*)   target_dir="powerpc";;
-  powerpc64-*) target_dir="powerpc64";;
-  tce-*)       target_dir="tce";;
-  i?86*)       target_dir="x86_64";;
-  x86_64-*)    target_dir="x86_64";;
-esac
-
-full_target_dir="@pkglibdir@/${target_dir}"
+full_target_dir="@pkglibdir@"
 # BEGIN REMOVE ONCE INSTALLED
 # Fixing full_target_dir until the script is installed
-full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
+full_target_dir="@abs_top_builddir@/lib/kernel"
 # END REMOVE ONCE INSTALLED
 
 @LLVM_LINK@ -o ${linked_bc}  $1 "$full_target_dir"/kernel-$target.bc 

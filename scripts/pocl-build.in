@@ -43,20 +43,6 @@ then
     echo >&2 "Usage: $0 [-t <llvm_target_triplet>] -o output input" && exit 1
 fi
 
-target_dir=${target}
-case $target in
-  armv6*)      target_dir="arm";;
-  armv7*gnueabihf)  target_dir="arm"
-                    target="armv7l-unknown-linux-gnueabihf";;
-  armv7*)      target_dir="arm"
-               target="armv7";;
-  cellspu-*)   target_dir="cellspu";;
-  powerpc-*)   target_dir="powerpc";;
-  powerpc64-*) target_dir="powerpc64";;
-  tce-*)       target_dir="tce";;
-  amd64-*|x86*|i?86-*)    target_dir="x86_64";;
-esac
-
 case $target in
   armv6*)   CLANG_FLAGS="@TARGET_CLANG_FLAGS@ -march=armv6";;
   armv7*)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;

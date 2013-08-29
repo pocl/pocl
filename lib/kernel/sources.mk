@@ -21,38 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-CLANGFLAGS = -emit-llvm
 
-# Search the .cl, .c, and .ll sources first from this (target
-# specific) directory, then the one-up (generic) directory. This
-# allows to override the generic implementation simply by adding a
-# similarly named file in the target specific directory
 
-# NOTE: GNU make always searches from '.' first, which can be
-# problematic in case one wants to override the files in the
-# device-specific directory. To circumvent this, one can override a
-# default file with a more accurate path, e.g.,
-# vecmathlib-pocl/fmax.cl. This overrides a possible fmax.cl found in
-# the current directory by one from the VML. TODO: dependency tracking
-# does not work in that case because the .bc is not created in the
-# directory where the source is.
-vpath %.h @top_srcdir@/include:@srcdir@:${SECONDARY_VPATH}:@srcdir@/..
-vpath %.c @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
-vpath %.cc @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
-vpath %.cl @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
-vpath %.ll @srcdir@:${SECONDARY_VPATH}:@srcdir@/..
+LKERNEL_HDRS = image.h pocl_image_rw_utils.h templates.h
 
-LKERNEL_HDRS = image.h templates.h
-LKERNEL_SRCS_DEFAULT=				\
-	barrier.ll				\
-	get_global_id.c				\
-	get_global_offset.c			\
-	get_global_size.c			\
-	get_group_id.c				\
-	get_local_id.c				\
-	get_local_size.c			\
-	get_num_groups.c			\
-	get_work_dim.c				\
+LKERNEL_SRCS_DEFAULT =				\
 	abs.cl					\
 	abs_diff.cl				\
 	acos.cl					\
@@ -72,6 +45,7 @@ LKERNEL_SRCS_DEFAULT=				\
 	atanh.cl				\
 	atanpi.cl				\
 	atomics.cl				\
+	barrier.ll				\
 	bitselect.cl				\
 	cbrt.cl					\
 	ceil.cl					\
@@ -105,8 +79,16 @@ LKERNEL_SRCS_DEFAULT=				\
 	fmin.cl					\
 	fmod.cl					\
 	fract.cl				\
+	get_global_id.c				\
+	get_global_offset.c			\
+	get_global_size.c			\
+	get_group_id.c				\
 	get_image_height.cl			\
 	get_image_width.cl			\
+	get_local_id.c				\
+	get_local_size.c			\
+	get_num_groups.c			\
+	get_work_dim.c				\
 	hadd.cl					\
 	hypot.cl				\
 	ilogb.cl				\
@@ -155,6 +137,7 @@ LKERNEL_SRCS_DEFAULT=				\
 	powr.cl					\
 	radians.cl				\
 	read_image.cl				\
+	read_image.cl				\
 	recip.cl				\
 	remainder.cl				\
 	rhadd.cl				\
@@ -185,34 +168,231 @@ LKERNEL_SRCS_DEFAULT=				\
 	vstore.cl				\
 	vstore_half.cl				\
 	wait_group_events.cl			\
-	read_image.cl				\
-	write_image.cl		 		\
-	get_image_width.cl			\
-	get_image_height.cl
+	write_image.cl
 
-# The standard list of kernel sources can be modified with
-# LKERNEL_SRCS_EXCLUDE, which removes files from the standard list,
-# and LKERNEL_SRCS_EXTRA, which adds extra files to the source list.
-LKERNEL_SRCS =								\
-	$(filter-out ${LKERNEL_SRCS_EXCLUDE}, ${LKERNEL_SRCS_DEFAULT})	\
-	${LKERNEL_SRCS_EXTRA}
 
-OBJ = $(LKERNEL_SRCS:%=%.bc)
 
-# Rules to compile the different kernel library source file types into
-# LLVM bitcode
-%.c.bc: %.c @top_srcdir@/include/types.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ${abs_top_srcdir}/include/types.h
-%.cc.bc: %.cc @top_srcdir@/include/types.h
-	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm ${EXTRA_CLANGFLAGS} ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ${abs_top_srcdir}/include/types.h
-%.cl.bc: %.cl @top_srcdir@/include/_kernel.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ${abs_top_srcdir}/include/_kernel.h
-%.ll.bc: %.ll
-	@LLVM_AS@ -o $@ $<
+if USE_VECMATHLIB
 
-CLEANFILES = kernel-${KERNEL_TARGET}.bc ${notdir ${OBJ}}
+LKERNEL_SRCS_EXCLUDE =				\
+	acos.cl					\
+	acosh.cl				\
+	acospi.cl				\
+	asin.cl					\
+	asinh.cl				\
+	asinpi.cl				\
+	atan.cl					\
+	atan2.cl				\
+	atan2pi.cl				\
+	atanh.cl				\
+	atanpi.cl				\
+	cbrt.cl					\
+	ceil.cl					\
+	clamp.cl				\
+	copysign.cl				\
+	cos.cl					\
+	cosh.cl					\
+	cospi.cl				\
+	cross.cl				\
+	degrees.cl				\
+	distance.cl				\
+	divide.cl				\
+	dot.cl					\
+	exp.cl					\
+	exp10.cl				\
+	exp2.cl					\
+	expm1.cl				\
+	fabs.cl					\
+	fast_distance.cl			\
+	fast_length.cl				\
+	fast_normalize.cl			\
+	fdim.cl					\
+	floor.cl				\
+	fma.cl					\
+	fmax.cl					\
+	fmin.cl					\
+	fmod.cl					\
+	fract.cl				\
+	hypot.cl				\
+	ilogb.cl				\
+	isequal.cl				\
+	isfinite.cl				\
+	isgreater.cl				\
+	isgreaterequal.cl			\
+	isinf.cl				\
+	isless.cl				\
+	islessequal.cl				\
+	islessgreater.cl			\
+	isnan.cl				\
+	isnormal.cl				\
+	isnotequal.cl				\
+	isordered.cl				\
+	isunordered.cl				\
+	ldexp.cl				\
+	length.cl				\
+	log.cl					\
+	log10.cl				\
+	log1p.cl				\
+	log2.cl					\
+	logb.cl					\
+	mad.cl					\
+	max.cl					\
+	maxmag.cl				\
+	min.cl					\
+	minmag.cl				\
+	mix.cl					\
+	nan.cl					\
+	native_cos.cl				\
+	native_log2.cl				\
+	normalize.cl				\
+	pow.cl					\
+	pown.cl					\
+	powr.cl					\
+	radians.cl				\
+	recip.cl				\
+	remainder.cl				\
+	rint.cl					\
+	rootn.cl				\
+	round.cl				\
+	rsqrt.cl				\
+	sign.cl					\
+	signbit.cl				\
+	sin.cl					\
+	sincos.cl				\
+	sinh.cl					\
+	sinpi.cl				\
+	smoothstep.cl				\
+	sqrt.cl					\
+	step.cl					\
+	tan.cl					\
+	tanh.cl					\
+	tanpi.cl				\
+	trunc.cl
 
-# Optimize the bitcode library to speed up optimization times for the
-# OpenCL kernels
-kernel-${KERNEL_TARGET}.bc: ${OBJ}
-	@LLVM_LINK@ ${notdir $^} -o - | @LLVM_OPT@ ${KERNEL_LIB_OPT_FLAGS} -O3 -o $@
+LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
+	acos.cc						\
+	acosh.cc					\
+	acospi.cl					\
+	asin.cc						\
+	asinh.cc					\
+	asinpi.cl					\
+	atan.cc						\
+	atan2.cl					\
+	atan2pi.cl					\
+	atanh.cc					\
+	atanpi.cl					\
+	cbrt.cc						\
+	ceil.cc						\
+	clamp.cl					\
+	copysign.cc					\
+	cos.cc						\
+	cosh.cc						\
+	cospi.cl					\
+	cross.cl					\
+	degrees.cl					\
+	distance.cl					\
+	dot.cl						\
+	exp.cc						\
+	exp10.cc					\
+	exp2.cc						\
+	expm1.cc					\
+	fabs.cc						\
+	fast_distance.cl				\
+	fast_length.cl					\
+	fast_normalize.cl				\
+	fdim.cc						\
+	floor.cc					\
+	fma.cc						\
+	fmax.cc						\
+	fmax.cl						\
+	fmin.cc						\
+	fmin.cl						\
+	fmod.cc						\
+	fract.cl					\
+	frexp.cl					\
+	half_cos.cl					\
+	half_divide.cl					\
+	half_exp.cl					\
+	half_exp10.cl					\
+	half_exp2.cl					\
+	half_log.cl					\
+	half_log10.cl					\
+	half_log2.cl					\
+	half_powr.cl					\
+	half_recip.cl					\
+	half_rsqrt.cl					\
+	half_sin.cl					\
+	half_sqrt.cl					\
+	half_tan.cl					\
+	hypot.cc					\
+	ilogb.cl					\
+	ilogb_.cc					\
+	isequal.cl					\
+	isfinite.cc					\
+	isgreater.cl					\
+	isgreaterequal.cl				\
+	isinf.cc					\
+	isless.cl					\
+	islessequal.cl					\
+	islessgreater.cl				\
+	isnan.cc					\
+	isnormal.cc					\
+	isnotequal.cl					\
+	isordered.cl					\
+	isunordered.cl					\
+	ldexp.cl					\
+	ldexp_.cc					\
+	length.cl					\
+	log.cc						\
+	log10.cc					\
+	log1p.cc					\
+	log2.cc						\
+	logb.cl						\
+	mad.cl						\
+	max.cl						\
+	maxmag.cl					\
+	min.cl						\
+	minmag.cl					\
+	mix.cl						\
+	modf.cl						\
+	nan.cl						\
+	native_cos.cl					\
+	native_divide.cl				\
+	native_exp.cl					\
+	native_exp10.cl					\
+	native_exp2.cl					\
+	native_log.cl					\
+	native_log10.cl					\
+	native_log2.cl					\
+	native_powr.cl					\
+	native_recip.cl					\
+	native_rsqrt.cl					\
+	native_sin.cl					\
+	native_sqrt.cl					\
+	native_tan.cl					\
+	normalize.cl					\
+	pow.cc						\
+	pown.cl						\
+	powr.cl						\
+	radians.cl					\
+	remainder.cc					\
+	remquo.cl					\
+	rint.cc						\
+	rootn.cl					\
+	round.cc					\
+	rsqrt.cc					\
+	sign.cl						\
+	signbit.cc					\
+	sin.cc						\
+	sincos.cl					\
+	sinh.cc						\
+	sinpi.cl					\
+	smoothstep.cl					\
+	sqrt.cc						\
+	step.cl						\
+	tan.cc						\
+	tanh.cc						\
+	tanpi.cl					\
+	trunc.cc)
+
+endif

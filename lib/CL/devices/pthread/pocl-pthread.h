@@ -131,7 +131,6 @@ GEN_PROTOTYPES (basic)
   NULL, /* build_program */ \
   pocl_basic_get_supported_image_formats, /* get_supported_image_formats */ \
   NULL, /* data */                                  \
-  KERNEL_DIR,  /* kernel_lib_target (forced kernel library dir) */  \
   OCL_KERNEL_TARGET, /* llvm_target_triplet */                         \
   0     /* dev_id */                                    \
 }

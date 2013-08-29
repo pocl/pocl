@@ -1,7 +1,6 @@
 /* OpenCL built-in library: vload_half()
 
-   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
-                      Perimeter Institute for Theoretical Physics
+   Copyright (c) 2011 Universidad Rey Juan Carlos
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,37 +23,13 @@
 
 
 
-#ifdef cl_khr_fp16
-
-/*
-  half:   1 sign bit,  5 exponent bits, 10 mantissa bits
-  float:  1 sign bit,  8 exponent bits, 23 mantissa bits
-  double: 1 sign bit, 10 exponent bits, 53 mantissa bits
-*/
-
-
-
-#define IMPLEMENT_VLOAD_HALF(MOD)                                       \
-                                                                        \
-  float _CL_OVERLOADABLE                                                \
-  vload_half(size_t offset, const MOD half *p)                          \
-  {                                                                     \
-    /* This conversion always succeeds */                               \
-    short hval = ((const MOD short*)p)[offset];                         \
-    short hsign = (hval & (short)0x8000) >> (short)15;                  \
-    short hexp = (hval & (short)0x7c00) >> (short)10;                   \
-    short hmant = hval & (short)0x03ff;                                 \
-    bool isdenorm = hexp == (short)0;                                   \
-    bool isinfnan = hexp == (short)31;                                  \
-    hexp -= (short)15;                                                  \
-    int fsign = (int)hsign << 31;                                       \
-    int fexp = (__builtin_expect(isdenorm, false) ? 0 :                 \
-                __builtin_expect(isinfnan, false) ? 255 : (int)hexp + 127); \
-    fexp <<= 23;                                                        \
-    int fmant = (int)hmant << 13;                                       \
-    int fval = fsign | fexp | fmant;                                    \
-    return as_float(fval);                                              \
-  }                                                                     \
+#define IMPLEMENT_VLOAD_HALF(MOD)                       \
+                                                        \
+  float _CL_OVERLOADABLE                                \
+  vload_half(size_t offset, const MOD half *p)          \
+  {                                                     \
+    return p[offset];                                   \
+  }                                                     \
                                                         \
   float2 _CL_OVERLOADABLE                               \
   vload_half2(size_t offset, const MOD half *p)         \
@@ -132,5 +107,3 @@ IMPLEMENT_VLOAD_HALF(__global)
 IMPLEMENT_VLOAD_HALF(__local)
 IMPLEMENT_VLOAD_HALF(__constant)
 /* IMPLEMENT_VLOAD_HALF(__private) */
-
-#endif

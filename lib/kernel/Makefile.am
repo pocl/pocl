@@ -22,15 +22,58 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DIST_SUBDIRS = arm cellspu powerpc powerpc64 tce x86_64
-SUBDIRS = @OCL_TARGETS@
+
+
+KERNEL_TARGET = @TARGET@
+
+all: kernel-${KERNEL_TARGET}.bc
+
+
+
+# These may be necessary for powerpc64. If so: why? Is this maybe only
+# system-specific? Can this be enabled for all architectures?
+# RANLIB = @LLVM_RANLIB@
+# AR = @LLVM_AR@
+
+
+include sources.mk
+
+# The standard list of kernel sources can be modified with
+# LKERNEL_SRCS_EXCLUDE, which removes files from the standard list,
+# and LKERNEL_SRCS_EXTRA, which adds extra files to the source list.
+LKERNEL_SRCS =								\
+	$(filter-out ${LKERNEL_SRCS_EXCLUDE}, ${LKERNEL_SRCS_DEFAULT})	\
+	${LKERNEL_SRCS_EXTRA}
+
+OBJ = $(LKERNEL_SRCS:%=%.bc)
+
+
+
+# Rules to compile the different kernel library source file types into
+# LLVM bitcode
+%.c.bc: %.c @top_srcdir@/include/types.h
+	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ${abs_top_srcdir}/include/types.h
+%.cc.bc: %.cc @top_srcdir@/include/types.h
+	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm -ffp-contract=off ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ${abs_top_srcdir}/include/types.h
+%.cl.bc: %.cl @top_srcdir@/include/_kernel.h
+	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ${abs_top_srcdir}/include/_kernel.h
+%.ll.bc: %.ll
+	@LLVM_AS@ -o $@ $<
+
+CLEANFILES = kernel-${KERNEL_TARGET}.bc ${notdir ${OBJ}}
+
+# Optimize the bitcode library to speed up optimization times for the
+# OpenCL kernels
+kernel-${KERNEL_TARGET}.bc: ${OBJ}
+	@LLVM_LINK@ ${notdir $^} -o - | @LLVM_OPT@ ${KERNEL_LIB_OPT_FLAGS} -O3 -o $@
+
+
 
 # The source files in this dir are not built directly
 # but are used with the target specific subdirs as
 # fallback implementations. Include them in the
 # dist once here.
 EXTRA_DIST = *.c *.cl *.h *.ll			\
-	arm/*.cl tce/*.cl			\
 	vecmathlib/LICENCE			\
 	vecmathlib/README			\
 	vecmathlib/*.h				\
@@ -38,3 +81,4 @@ EXTRA_DIST = *.c *.cl *.h *.ll			\
 	vecmathlib-pocl/*.cl			\
 	vecmathlib-pocl/*.h			\
 	vecmathlib-pocl/*.py
+

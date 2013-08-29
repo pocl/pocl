@@ -747,7 +747,21 @@ case $host_cpu in
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=tce-tut-llvm
     kernel_dir="tce"
+    ;;
+
+  powerpc64*)
+    #on all tested operating systems with PowerPC, the processor is 64bit,
+    #but the operating system is 32 bit. Therefore, when on powerpc, always build
+    #for 32 bit ppc. If this does not work for you ... patches welcome.
+    AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    kernel_dir="powerpc"
+    OCL_KERNEL_TARGET="powerpc64-unknown-linux-gnu"
+    CL_DEVICE_ADDRESS_BITS=32
+    #TODO: not all PowerPCs have Altivec?
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
     ;;
 
   powerpc*)
@@ -762,6 +776,7 @@ case $host_cpu in
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
     ;;
+
   *)
     AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
@@ -895,14 +910,6 @@ AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 
 AC_SUBST([OCL_TARGETS])
-
-AC_CONFIG_FILES([lib/kernel/arm/Makefile
-                 lib/kernel/tce/Makefile
-                 lib/kernel/cellspu/Makefile
-                 lib/kernel/powerpc/Makefile
-                 lib/kernel/powerpc64/Makefile
-                 lib/kernel/x86_64/Makefile])
-
 
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
