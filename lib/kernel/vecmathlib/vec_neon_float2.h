@@ -315,7 +315,10 @@ namespace vecmathlib {
 #if defined __ARM_FEATURE_UNALIGNED
       return vld1_f32(p);
 #else
-#  error "unaligned NEON loads not implemented"
+      realvec_t r;
+      r.set_elt(0, p[0]);
+      r.set_elt(1, p[1]);
+      return r;
 #endif
     }
     static realvec_t loadu(real_t const* p, std::ptrdiff_t ioff)
@@ -357,12 +360,11 @@ namespace vecmathlib {
     {
       // Vector stores would require vector loads, which would need to
       // be atomic
-      // p[0] = (*this)[0];
-      // p[1] = (*this)[1];
 #if defined __ARM_FEATURE_UNALIGNED
       vst1_f32(p, v);
 #else
-#  error "unaligned NEON stores not implemented"
+      p[0] = (*this)[0];
+      p[1] = (*this)[1];
 #endif
     }
     void storeu(real_t* p, std::ptrdiff_t ioff) const
@@ -486,7 +488,7 @@ namespace vecmathlib {
     realvec fmax(realvec y) const { return vmax_f32(v, y.v); }
     realvec fmin(realvec y) const { return vmin_f32(v, y.v); }
     realvec fmod(realvec y) const { return MF::vml_fmod(*this, y); }
-    realvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
+    realvec frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
     realvec hypot(realvec y) const { return MF::vml_hypot(*this, y); }
     intvec_t ilogb() const { return MF::vml_ilogb(*this); }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }

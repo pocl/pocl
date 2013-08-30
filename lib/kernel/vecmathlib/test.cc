@@ -287,7 +287,7 @@ struct vecmathlib_test {
            << "   x=" << x << " [" << hex(x) << "]\n"
            << "   fstd(x)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x)=" << isbad << "\n"
            << flush;
     }
@@ -315,7 +315,7 @@ struct vecmathlib_test {
            << "   y=" << y << " [" << hex(y) << "]\n"
            << "   fstd(x,y)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x,y)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x,y)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x,y)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x,y)=" << isbad << "\n"
            << flush;
     }
@@ -345,7 +345,7 @@ struct vecmathlib_test {
            << "   z=" << z << " [" << hex(z) << "]\n"
            << "   fstd(x,y,z)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x,y,z)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x,y,z)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x,y,z)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x,y,z)=" << isbad << "\n"
            << flush;
     }
@@ -362,7 +362,7 @@ struct vecmathlib_test {
            << "Error in " << func << ":\n"
            << "   fstd()=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml()=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error()=" << dr << " [" << hex(dr) << "]\n"
+           << "   error()=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad()=" << isbad << "\n"
            << flush;
     }
@@ -388,7 +388,7 @@ struct vecmathlib_test {
            << "   x=" << x << " [" << hex(x) << "]\n"
            << "   fstd(x)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x)=" << isbad << "\n"
            << flush;
     }
@@ -415,7 +415,7 @@ struct vecmathlib_test {
            << "   y=" << y << " [" << hex(y) << "]\n"
            << "   fstd(x,y)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x,y)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x,y)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x,y)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x,y)=" << isbad << "\n"
            << flush;
     }
@@ -444,7 +444,7 @@ struct vecmathlib_test {
            << "   y=" << y << " [" << hex(y) << "]\n"
            << "   fstd(x,y)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x,y)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x,y)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x,y)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x,y)=" << isbad << "\n"
            << flush;
     }
@@ -476,7 +476,7 @@ struct vecmathlib_test {
            << "   z=" << z << " [" << hex(z) << "]\n"
            << "   fstd(x,y,z)=" << rstd << " [" << hex(rstd) << "]\n"
            << "   fvml(x,y,z)=" << rvml << " [" << hex(rvml) << "]\n"
-	   << "   error(x,y,z)=" << dr << " [" << hex(dr) << "]\n"
+           << "   error(x,y,z)=" << dr << " [" << hex(dr) << "]\n"
            << "   isbad(x,y,z)=" << isbad << "\n"
            << flush;
     }
@@ -766,7 +766,7 @@ struct vecmathlib_test {
       
       // storea
       {
-	memcpy(xnew, x, nbytes);
+        memcpy(xnew, x, nbytes);
         real_t *p = &xnew[sz];
         storea(z, p, mask);
         check_mem("storea(mask)", p, z, &x[sz], mval);
@@ -774,7 +774,7 @@ struct vecmathlib_test {
       
       // storeu
       for (ptrdiff_t i=0; i<realvec_t::size; ++i) {
-	memcpy(xnew, x, nbytes);
+        memcpy(xnew, x, nbytes);
         real_t *p = &xnew[sz];
         storeu(z, p+i, mask);
         check_mem("storeu(mask)", p+i, z, &x[sz+i], mval);
@@ -782,7 +782,7 @@ struct vecmathlib_test {
       
       // storeu
       for (ptrdiff_t ioff=0; ioff<realvec_t::size; ++ioff) {
-	memcpy(xnew, x, nbytes);
+        memcpy(xnew, x, nbytes);
         real_t *p = &xnew[sz];
         storeu(z, p, ioff, mask);
         check_mem("storeu(ioff,mask)", p+ioff, z, &x[sz+ioff], mval);
@@ -1092,12 +1092,12 @@ struct vecmathlib_test {
   static realvec_t local_vfrexp0(realvec_t x)
   {
     intvec_t r;
-    return vecmathlib::frexp(x, r);
+    return vecmathlib::frexp(x, &r);
   }
   static intvec_t local_vfrexp1(realvec_t x)
   {
     intvec_t r;
-    vecmathlib::frexp(x, r);
+    vecmathlib::frexp(x, &r);
     return r;
   }
   static int_t local_ilogb(real_t x)
@@ -1541,40 +1541,9 @@ int main(int argc, char** argv)
 {
   using namespace vecmathlib;
 
-  cout << "Testing math functions:\n" << flush;
-  
-  cout << "Vecmathlib configuration: [conf"
-#ifdef VML_DEBUG
-    "-DEBUG"
-#endif
-#ifdef __ALTIVEC__
-    "-Altivec"
-#endif
-#ifdef __VSX__
-    "-VSX"
-#endif
-#ifdef __ARM_PCS_VFP
-    "-NEON"
-#endif
-#if defined __bgq__ && defined __VECTOR4DOUBLE__
-    "-QPX"
-#endif
-#ifdef __SSE2__
-    "-SSE2"
-#endif
-#ifdef __SSE3__
-    "-SSE3"
-#endif
-#ifdef __SSE4_1__
-    "-SSE4.1"
-#endif
-#ifdef __SSE4a__
-    "-SSE4a"
-#endif
-#ifdef __AVX__
-    "-AVX"
-#endif
-    "]\n";
+  cout << "Testing math functions:\n"
+       << "[" VECMATHLIB_CONFIGURATION "]\n"
+       << flush;
   
   vecmathlib_test<realpseudovec<float,1> >::test();
   // vecmathlib_test<realbuiltinvec<float,1>>::test();
@@ -1600,6 +1569,12 @@ int main(int argc, char** argv)
   vecmathlib_test<realtestvec<float,8> >::test();
   vecmathlib_test<realvec<float,8> >::test();
 #endif
+#ifdef VECMATHLIB_HAVE_VEC_FLOAT_16
+  vecmathlib_test<realpseudovec<float,16> >::test();
+  // vecmathlib_test<realbuiltinvec<float,16> >::test();
+  vecmathlib_test<realtestvec<float,16> >::test();
+  vecmathlib_test<realvec<float,16> >::test();
+#endif
   
   vecmathlib_test<realpseudovec<double,1> >::test();
   // vecmathlib_test<realbuiltinvec<double,1> >::test();
@@ -1618,6 +1593,12 @@ int main(int argc, char** argv)
   // vecmathlib_test<realbuiltinvec<double,4> >::test();
   vecmathlib_test<realtestvec<double,4> >::test();
   vecmathlib_test<realvec<double,4> >::test();
+#endif
+#ifdef VECMATHLIB_HAVE_VEC_DOUBLE_8
+  vecmathlib_test<realpseudovec<double,8> >::test();
+  // vecmathlib_test<realbuiltinvec<double,8> >::test();
+  vecmathlib_test<realtestvec<double,8> >::test();
+  vecmathlib_test<realvec<double,8> >::test();
 #endif
   
   cout << "\n";

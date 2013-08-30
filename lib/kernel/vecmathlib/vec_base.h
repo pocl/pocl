@@ -382,7 +382,7 @@ namespace vecmathlib {
   
   template<typename real_t, int size>
   inline realvec<real_t, size> frexp(realvec<real_t, size> x,
-                                     intvec<real_t, size>& r)
+                                     intvec<real_t, size>* r)
   {
     return x.frexp(r);
   }

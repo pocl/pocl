@@ -113,7 +113,7 @@ namespace vecmathlib {
       // return
       //   (*this)[0] || (*this)[1] || (*this)[2] || (*this)[3] ||
       //   (*this)[4] || (*this)[5] || (*this)[6] || (*this)[7];
-      return ! _mm256_testz_ps(v, v);
+      return ! bool(_mm256_testz_ps(v, v));
     }
     
     
@@ -605,7 +605,7 @@ namespace vecmathlib {
     realvec fmax(realvec y) const { return _mm256_max_ps(v, y.v); }
     realvec fmin(realvec y) const { return _mm256_min_ps(v, y.v); }
     realvec fmod(realvec y) const { return MF::vml_fmod(*this, y); }
-    realvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
+    realvec frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
     realvec hypot(realvec y) const { return MF::vml_hypot(*this, y); }
     intvec_t ilogb() const { return MF::vml_ilogb(*this); }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }

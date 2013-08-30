@@ -41,12 +41,11 @@ inline ticks getticks()
 {
 #if __has_builtin(__builtin_readcyclecounter)
   return __builtin_readcyclecounter();
-#else
-#  if defined __x86_64__
+#elif defined __x86_64__
   ticks a, d;
   asm volatile("rdtsc" : "=a" (a), "=d" (d));
   return a | (d << 32);
-#  elif defined __powerpc__
+#elif defined __powerpc__
   unsigned int tbl, tbu, tbu1;
   do {
     asm volatile("mftbu %0": "=r"(tbu));
@@ -54,7 +53,13 @@ inline ticks getticks()
     asm volatile("mftbu %0": "=r"(tbu1));
   } while (tbu != tbu1);
   return ((unsigned long long)tbu << 32) | tbl;
-#  endif
+#else
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  return 1000000ULL * tv.tv_sec + tv.tv_usec;
+  // timespec ts;
+  // clock_gettime(CLOCK_REALTIME, &ts);
+  // return 1000000000ULL * ts.tv_sec + ts.tv_nsec;
 #endif
 }
 inline double elapsed(ticks t1, ticks t0)
@@ -261,7 +266,12 @@ int main(int argc, char** argv)
   // Ensure the grid size is aligned
   const ptrdiff_t ldm = align_up(m, realvec_t::size);
   typedef realvec_t::real_t real_t;
-  vector<real_t> x(ldm*n), y(ldm*n, 0.0);
+  vector<real_t> x0(ldm*n + realvec_t::size-1), y0(ldm*n + realvec_t::size-1);
+  real_t* restrict const x =
+    (real_t*)align_up(intptr_t(&x0[0]), sizeof(realvec_t));
+  real_t* restrict const y =
+    (real_t*)align_up(intptr_t(&y0[0]), sizeof(realvec_t));
+  for (ptrdiff_t i=0; i<ldm*n; ++i) y[i] = 0.0;
   
   // Initialize
   init<realvec_t>(&x[0], m, ldm, n);

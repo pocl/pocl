@@ -67,7 +67,7 @@ namespace vecmathlib {
     static realvec_t vml_fma(realvec_t x, realvec_t y, realvec_t z);
     static realvec_t vml_fmax(realvec_t x, realvec_t y);
     static realvec_t vml_fmin(realvec_t x, realvec_t y);
-    static realvec_t vml_frexp(realvec_t x, intvec_t& r);
+    static realvec_t vml_frexp(realvec_t x, intvec_t* r);
     static intvec_t vml_ilogb(realvec_t x);
     static boolvec_t vml_ieee_isfinite(realvec_t x);
     static boolvec_t vml_ieee_isinf(realvec_t x);

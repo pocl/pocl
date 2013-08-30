@@ -8,8 +8,6 @@
 #include "vec_base.h"
 
 #include <cmath>
-#warning "TODO"
-#include <iostream>
 
 // QPX intrinsics
 #ifdef __clang__
@@ -73,7 +71,7 @@ namespace vecmathlib {
     // VSX)
     boolvec(bvector_t x): v(x) {}
     boolvec(bool a): v(vec_splats(from_bool(a))) {}
-    boolvec(bool const* as)
+    boolvec(const bool* as)
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
     }
@@ -99,23 +97,26 @@ namespace vecmathlib {
     
     boolvec operator&&(boolvec x) const { return vec_and(v, x.v); }
     boolvec operator||(boolvec x) const { return vec_or(v, x.v); }
-    boolvec operator==(boolvec x) const { return vec_logical(v, x.v, 0x9); }
+    boolvec operator==(boolvec x) const
+    {
+      return vec_logical(v, x.v, 0x9);
+    }
     boolvec operator!=(boolvec x) const { return vec_xor(v, x.v); }
     
     bool all() const
     {
       // return (*this)[0] && (*this)[1] && (*this)[2] && (*this)[3];
-      realvec_t x0123 = *this;
-      realvec_t x1032 = vec_perm(x0123, x0123, vec_gpci(01032));
-      realvec_t y0022 = x0123 && x1032;
+      boolvec x0123 = *this;
+      boolvec x1032 = vec_perm(x0123, x0123, vec_gpci(01032));
+      boolvec y0022 = x0123 && x1032;
       return y0022[0] && y0022[2];
     }
     bool any() const
     {
       // return (*this)[0] || (*this)[1] || (*this)[2] || (*this)[3];
-      realvec_t x0123 = *this;
-      realvec_t x1032 = vec_perm(x0123, x0123, vec_gpci(01032));
-      realvec_t y0022 = x0123 || x1032;
+      boolvec x0123 = *this;
+      boolvec x1032 = vec_perm(x0123, x0123, vec_gpci(01032));
+      boolvec y0022 = x0123 || x1032;
       return y0022[0] || y0022[2];
     }
     
@@ -161,11 +162,11 @@ namespace vecmathlib {
     intvec() {}
     // Can't have a non-trivial copy constructor; if so, objects won't
     // be passed in registers
-    // intvec(intvec const& x): v(x.v) {}
-    // intvec& operator=(intvec const& x) { return v=x.v, *this; }
+    // intvec(const intvec& x): v(x.v) {}
+    // intvec& operator=(const intvec& x) { return v=x.v, *this; }
     intvec(ivector_t x): v(x) {}
     intvec(int_t a): v(vec_splats(FP::as_float(a))) {}
-    intvec(int_t const* as)
+    intvec(const int_t* as)
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
     }
@@ -216,8 +217,8 @@ namespace vecmathlib {
       return r;
     }
     
-    intvec& operator+=(intvec const& x) { return *this=*this+x; }
-    intvec& operator-=(intvec const& x) { return *this=*this-x; }
+    intvec& operator+=(intvec x) { return *this=*this+x; }
+    intvec& operator-=(intvec x) { return *this=*this-x; }
     
     
     
@@ -247,9 +248,9 @@ namespace vecmathlib {
       return r;
     }
     
-    intvec& operator&=(intvec const& x) { return *this=*this&x; }
-    intvec& operator|=(intvec const& x) { return *this=*this|x; }
-    intvec& operator^=(intvec const& x) { return *this=*this^x; }
+    intvec& operator&=(intvec x) { return *this=*this&x; }
+    intvec& operator|=(intvec x) { return *this=*this|x; }
+    intvec& operator^=(intvec x) { return *this=*this^x; }
     
     
     
@@ -302,37 +303,37 @@ namespace vecmathlib {
       return *this < IV(I(0));
     }
     
-    boolvec_t operator==(intvec const& x) const
+    boolvec_t operator==(intvec x) const
     {
       boolvec_t r;
       for (int d=0; d<size; ++d) r.set_elt(d, (*this)[d] == x[d]);
       return r;
     }
-    boolvec_t operator!=(intvec const& x) const
+    boolvec_t operator!=(intvec x) const
     {
       boolvec_t r;
       for (int d=0; d<size; ++d) r.set_elt(d, (*this)[d] != x[d]);
       return r;
     }
-    boolvec_t operator<(intvec const& x) const
+    boolvec_t operator<(intvec x) const
     {
       boolvec_t r;
       for (int d=0; d<size; ++d) r.set_elt(d, (*this)[d] < x[d]);
       return r;
     }
-    boolvec_t operator<=(intvec const& x) const
+    boolvec_t operator<=(intvec x) const
     {
       boolvec_t r;
       for (int d=0; d<size; ++d) r.set_elt(d, (*this)[d] <= x[d]);
       return r;
     }
-    boolvec_t operator>(intvec const& x) const
+    boolvec_t operator>(intvec x) const
     {
       boolvec_t r;
       for (int d=0; d<size; ++d) r.set_elt(d, (*this)[d] > x[d]);
       return r;
     }
-    boolvec_t operator>=(intvec const& x) const
+    boolvec_t operator>=(intvec x) const
     {
       boolvec_t r;
       for (int d=0; d<size; ++d) r.set_elt(d, (*this)[d] >= x[d]);
@@ -350,7 +351,7 @@ namespace vecmathlib {
     typedef vector4double vector_t;
     static int const alignment = sizeof(vector_t);
     
-    static char const* name() { return "<QPX:4*double>"; }
+    static const char* name() { return "<QPX:4*double>"; }
     void barrier() { __asm__("": "+v"(v)); }
     
     static_assert(size * sizeof(real_t) == sizeof(vector_t),
@@ -377,11 +378,11 @@ namespace vecmathlib {
     realvec() {}
     // Can't have a non-trivial copy constructor; if so, objects won't
     // be passed in registers
-    // realvec(realvec const& x): v(x.v) {}
-    // realvec& operator=(realvec const& x) { return v=x.v, *this; }
+    // realvec(const realvec& x): v(x.v) {}
+    // realvec& operator=(const realvec& x) { return v=x.v, *this; }
     realvec(vector_t x): v(x) {}
     realvec(real_t a): v(vec_splats(a)) {}
-    realvec(real_t const* as)
+    realvec(const real_t* as)
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
     }
@@ -400,41 +401,34 @@ namespace vecmathlib {
     
     typedef vecmathlib::mask_t<realvec_t> mask_t;
     
-    static realvec_t loada(real_t const* p)
+    static realvec_t loada(const real_t* p)
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
       return vec_lda(0, (real_t*)p);
     }
-    static realvec_t loadu(real_t const* p)
+    static realvec_t loadu(const real_t* p)
     {
       realvec_t v0 = vec_ld(0, (real_t*)p);
       realvec_t v1 = vec_ld(31, (real_t*)p);
       return vec_perm(v0.v, v1.v, vec_lvsl(0, (real_t*)p));
     }
-    static realvec_t loadu(real_t const* p, std::ptrdiff_t ioff)
+    static realvec_t loadu(const real_t* p, std::ptrdiff_t ioff)
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
       if (ioff % realvec::size == 0) return loada(p+ioff);
       // TODO: use load instruction with fixed offset
       return loadu(p+ioff);
     }
-    realvec_t loada(real_t const* p, mask_t const& m) const
+    realvec_t loada(const real_t* p, mask_t m) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
-#warning "TODO"
-      std::cout << "*this=" << *this << " mask=" << m << "\n";
       if (__builtin_expect(all(m.m), true)) {
-        std::cout << "fasttrack\n";
         return loada(p);
       } else {
-        std::cout << "slowtrack\n";
-        // return m.m.ifthen(loada(p), *this);
-        realvec_t r = m.m.ifthen(loada(p), *this);
-        std::cout << "return " << r << "\n";
-        return r;
+        return m.m.ifthen(loada(p), *this);
       }
     }
-    realvec_t loadu(real_t const* p, mask_t const& m) const
+    realvec_t loadu(const real_t* p, mask_t m) const
     {
       if (__builtin_expect(m.all_m, true)) {
         return loadu(p);
@@ -442,7 +436,7 @@ namespace vecmathlib {
         return m.m.ifthen(loadu(p), *this);
       }
     }
-    realvec_t loadu(real_t const* p, std::ptrdiff_t ioff, mask_t const& m) const
+    realvec_t loadu(const real_t* p, std::ptrdiff_t ioff, mask_t m) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
       if (ioff % realvec::size == 0) return loada(p+ioff, m);
@@ -471,7 +465,7 @@ namespace vecmathlib {
       if (ioff % realvec::size == 0) return storea(p+ioff);
       storeu(p+ioff);
     }
-    void storea(real_t* p, mask_t const& m) const
+    void storea(real_t* p, mask_t m) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
       if (__builtin_expect(m.all_m, true)) {
@@ -483,7 +477,7 @@ namespace vecmathlib {
         if (m.m[3]) p[3] = (*this)[3];
       }
     }
-    void storeu(real_t* p, mask_t const& m) const
+    void storeu(real_t* p, mask_t m) const
     {
       if (__builtin_expect(m.all_m, true)) {
         storeu(p);
@@ -494,7 +488,7 @@ namespace vecmathlib {
         if (m.m[3]) p[3] = (*this)[3];
       }
     }
-    void storeu(real_t* p, std::ptrdiff_t ioff, mask_t const& m) const
+    void storeu(real_t* p, std::ptrdiff_t ioff, mask_t m) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
       if (ioff % realvec::size == 0) return storea(p+ioff, m);
@@ -504,7 +498,7 @@ namespace vecmathlib {
     
     
     intvec_t as_int() const { return v; }
-    intvec_t convert_int() const { return vec_ctid(v); }
+    intvec_t convert_int() const { return vec_ctidz(v); }
     
     
     
@@ -520,10 +514,10 @@ namespace vecmathlib {
       return div_fastd4(v, x.v);
     }
     
-    realvec& operator+=(realvec const& x) { return *this=*this+x; }
-    realvec& operator-=(realvec const& x) { return *this=*this-x; }
-    realvec& operator*=(realvec const& x) { return *this=*this*x; }
-    realvec& operator/=(realvec const& x) { return *this=*this/x; }
+    realvec& operator+=(realvec x) { return *this=*this+x; }
+    realvec& operator-=(realvec x) { return *this=*this-x; }
+    realvec& operator*=(realvec x) { return *this=*this*x; }
+    realvec& operator/=(realvec x) { return *this=*this/x; }
     
     real_t maxval() const
     {
@@ -559,12 +553,26 @@ namespace vecmathlib {
     
     
     
-    boolvec_t operator==(realvec const& x) const { return vec_cmpeq(v, x.v); }
-    boolvec_t operator!=(realvec const& x) const { return ! (*this == x); }
-    boolvec_t operator<(realvec const& x) const { return vec_cmplt(v, x.v); }
-    boolvec_t operator<=(realvec const& x) const { return ! (*this > x); }
-    boolvec_t operator>(realvec const& x) const { return vec_cmpgt(v, x.v); }
-    boolvec_t operator>=(realvec const& x) const { return ! (*this < x); }
+    boolvec_t operator==(realvec x) const { return vec_cmpeq(v, x.v); }
+    boolvec_t operator!=(realvec x) const { return ! (*this == x); }
+    boolvec_t operator<(realvec x) const { return vec_cmplt(v, x.v); }
+    boolvec_t operator<=(realvec x) const
+    {
+#ifdef VML_HAVE_NAN
+      return *this < x || *this == x;
+#else
+      return ! (*this > x);
+#endif
+    }
+    boolvec_t operator>(realvec x) const { return vec_cmpgt(v, x.v); }
+    boolvec_t operator>=(realvec x) const
+    {
+#ifdef VML_HAVE_NAN
+      return *this > x || *this == x;
+#else
+      return ! (*this < x);
+#endif
+    }
     
     
     
@@ -577,7 +585,7 @@ namespace vecmathlib {
     realvec atanh() const { return atanhd4(v); }
     realvec cbrt() const { return cbrtd4(v); }
     realvec ceil() const { return vec_ceil(v); }
-    realvec copysign(realvec y) const { return vec_cpsgn(v, y.v); }
+    realvec copysign(realvec y) const { return vec_cpsgn(y.v, v); }
     realvec cos() const { return cosd4(v); }
     realvec cosh() const { return coshd4(v); }
     realvec exp() const { return expd4(v); }
@@ -587,21 +595,25 @@ namespace vecmathlib {
     realvec fabs() const { return vec_abs(v); }
     realvec fdim(realvec y) const { return MF::vml_fdim(*this, y); }
     realvec floor() const { return vec_floor(v); }
-    realvec fma(realvec y, realvec z) const { return vec_madd(v, y.v, z.v); }
+    realvec fma(realvec y, realvec z) const
+    {
+      return vec_madd(v, y.v, z.v);
+    }
     realvec fmax(realvec y) const { return MF::vml_fmax(v, y.v); }
     realvec fmin(realvec y) const { return MF::vml_fmin(v, y.v); }
     realvec fmod(realvec y) const { return MF::vml_fmod(*this, y); }
-    realvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
+    realvec frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
     realvec hypot(realvec y) const { return hypotd4(v, y.v); }
     intvec_t ilogb() const
     {
-      int_t ilogb_[] = {
-	::ilogb((*this)[0]),
-	::ilogb((*this)[1]),
-	::ilogb((*this)[2]),
-	::ilogb((*this)[3])
-      };
-      return intvec_t(ilogb_);
+      // int_t ilogb_[] = {
+      //   ::ilogb((*this)[0]),
+      //   ::ilogb((*this)[1]),
+      //   ::ilogb((*this)[2]),
+      //   ::ilogb((*this)[3])
+      // };
+      // return intvec_t(ilogb_);
+      return MF::vml_ilogb(v);
     }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }
     boolvec_t isinf() const { return MF::vml_isinf(*this); }
@@ -618,7 +630,7 @@ namespace vecmathlib {
     realvec ldexp(intvec_t n) const
     {
       real_t ldexp_[] = {
-	std::ldexp((*this)[0], n[0]),
+        std::ldexp((*this)[0], n[0]),
         std::ldexp((*this)[1], n[1]),
         std::ldexp((*this)[2], n[2]),
         std::ldexp((*this)[3], n[3])
@@ -629,10 +641,16 @@ namespace vecmathlib {
     realvec log10() const { return log10d4(v); }
     realvec log1p() const { return log1pd4(v); }
     realvec log2() const { return log2d4(v); }
-    realvec nextafter(realvec y) const { return MF::vml_nextafter(*this, y); }
+    realvec nextafter(realvec y) const
+    {
+      return MF::vml_nextafter(*this, y);
+    }
     realvec pow(realvec y) const { return powd4(v, y.v); }
     realvec rcp() const { return recip_fastd4(v); }
-    realvec remainder(realvec y) const { return MF::vml_remainder(*this, y); }
+    realvec remainder(realvec y) const
+    {
+      return MF::vml_remainder(*this, y);
+    }
     realvec rint() const
     {
       return MF::vml_rint(*this);
@@ -649,11 +667,15 @@ namespace vecmathlib {
       realvec x = *this;
       realvec r = vec_rsqrte(x.v); // this is only an approximation
       // TODO: use fma
-      // one Newton iteration (see vml_rsqrt)
+      // two Newton iterations (see vml_rsqrt)
+      r += RV(0.5)*r * (RV(1.0) - x * r*r);
       r += RV(0.5)*r * (RV(1.0) - x * r*r);
       return r;
     }
-    boolvec_t signbit() const { return !copysign(RV(1.0)).as_int().as_bool(); }
+    boolvec_t signbit() const
+    {
+      return !RV(1.0).copysign(*this).as_int().as_bool();
+    }
     realvec sin() const { return sind4(v); }
     realvec sinh() const { return sinhd4(v); }
     realvec sqrt() const
@@ -681,19 +703,22 @@ namespace vecmathlib {
   }
   
   inline
-  boolvec<double,4> boolvec<double,4>::ifthen(boolvec_t x, boolvec_t y) const
+  boolvec<double,4>
+  boolvec<double,4>::ifthen(boolvec_t x, boolvec_t y) const
   {
     return ifthen(x.as_int(), y.as_int()).as_bool();
   }
   
   inline
-  intvec<double,4> boolvec<double,4>::ifthen(intvec_t x, intvec_t y) const
+  intvec<double,4>
+  boolvec<double,4>::ifthen(intvec_t x, intvec_t y) const
   {
     return ifthen(x.as_float(), y.as_float()).as_int();
   }
   
   inline
-  realvec<double,4> boolvec<double,4>::ifthen(realvec_t x, realvec_t y) const
+  realvec<double,4>
+  boolvec<double,4>::ifthen(realvec_t x, realvec_t y) const
   {
     return vec_sel(y.v, x.v, v);
   }

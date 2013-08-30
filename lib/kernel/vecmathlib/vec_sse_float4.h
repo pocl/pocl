@@ -116,7 +116,7 @@ namespace vecmathlib {
       return ! (! *this).any();
 #else
       boolvec x = *this;
-      x = x && _mm_shuffle_ps(x.v, x.v, _MM_SHUFFLE(1,0,3,2));
+      x = x && _mm_shuffle_ps(x.v, x.v, _MM_SHUFFLE(2,3,0,1));
       return x[0] && x[2];
 #endif
     }
@@ -124,10 +124,10 @@ namespace vecmathlib {
     {
       // return (*this)[0] || (*this)[1] || (*this)[2] || (*this)[3];
 #if defined __AVX__
-      return ! _mm_testz_ps(v, v);
+      return ! bool(_mm_testz_ps(v, v));
 #else
       boolvec x = *this;
-      x = x || _mm_shuffle_ps(x.v, x.v, _MM_SHUFFLE(1,0,3,2));
+      x = x || _mm_shuffle_ps(x.v, x.v, _MM_SHUFFLE(2,3,0,1));
       return x[0] || x[2];
 #endif
     }
@@ -586,7 +586,7 @@ namespace vecmathlib {
     realvec fmax(realvec y) const { return _mm_max_ps(v, y.v); }
     realvec fmin(realvec y) const { return _mm_min_ps(v, y.v); }
     realvec fmod(realvec y) const { return MF::vml_fmod(*this, y); }
-    realvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
+    realvec frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
     realvec hypot(realvec y) const { return MF::vml_hypot(*this, y); }
     intvec_t ilogb() const { return MF::vml_ilogb(*this); }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }

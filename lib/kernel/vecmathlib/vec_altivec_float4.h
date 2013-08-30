@@ -367,7 +367,7 @@ namespace vecmathlib {
       if (__builtin_expect(m.all_m, true)) {
         storea(p);
       } else {
-	// Use vec_ste?
+        // Use vec_ste?
         if (m.m[0]) p[0] = (*this)[0];
         if (m.m[1]) p[1] = (*this)[1];
         if (m.m[2]) p[2] = (*this)[2];
@@ -379,7 +379,7 @@ namespace vecmathlib {
       if (__builtin_expect(m.all_m, true)) {
         storeu(p);
       } else {
-	// Use vec_ste?
+        // Use vec_ste?
         if (m.m[0]) p[0] = (*this)[0];
         if (m.m[1]) p[1] = (*this)[1];
         if (m.m[2]) p[2] = (*this)[2];
@@ -478,7 +478,7 @@ namespace vecmathlib {
     realvec fmax(realvec y) const { return vec_max(v, y.v); }
     realvec fmin(realvec y) const { return vec_min(v, y.v); }
     realvec fmod(realvec y) const { return MF::vml_fmod(*this, y); }
-    realvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
+    realvec frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
     realvec hypot(realvec y) const { return MF::vml_hypot(*this, y); }
     intvec_t ilogb() const { return MF::vml_ilogb(*this); }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }

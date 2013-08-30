@@ -423,13 +423,13 @@ namespace vecmathlib {
       return to_double(_mm_min_sd(from_double(v), from_double(y.v)));
     }
     realvec fmod(realvec y) const { return std::fmod(v, y.v); }
-    realvec frexp(intvec_t& ir) const
+    realvec frexp(intvec_t* ir) const
     {
       int iri;
       realvec r = std::frexp(v, &iri);
-      ir.v = iri;
-      if (isinf()) ir.v = std::numeric_limits<int_t>::max();
-      if (isnan()) ir.v = std::numeric_limits<int_t>::min();
+      if (isinf()) iri = std::numeric_limits<int_t>::max();
+      if (isnan()) iri = std::numeric_limits<int_t>::min();
+      ir->v = iri;
       return r;
     }
     realvec hypot(realvec y) const { return MF::vml_hypot(*this, y); }

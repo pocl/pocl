@@ -760,7 +760,7 @@ namespace vecmathlib {
     realpseudovec fmax(realpseudovec y) const { return map(std::fmax, y); }
     realpseudovec fmin(realpseudovec y) const { return map(std::fmin, y); }
     realpseudovec fmod(realpseudovec y) const { return map(std::fmod, y); }
-    realpseudovec frexp(intvec_t& ires) const
+    realpseudovec frexp(intvec_t* ires) const
     {
       realvec_t res;
       for (int d=0; d<size; ++d) {
@@ -774,7 +774,7 @@ namespace vecmathlib {
         if (std::isnan(v[d])) ir = std::numeric_limits<int_t>::min();
 #endif
         res.v[d] = r;
-        ires.v[d] = ir;
+        ires->v[d] = ir;
       }
       return res;
     }
@@ -1277,7 +1277,7 @@ namespace vecmathlib {
   
   template<typename real_t, int size>
   inline realpseudovec<real_t, size> frexp(realpseudovec<real_t, size> x,
-                                           intpseudovec<real_t, size>& r)
+                                           intpseudovec<real_t, size>* r)
   {
     return x.frexp(r);
   }

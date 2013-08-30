@@ -93,35 +93,86 @@ void save_result(realvec_t result)
 
 template<typename T> inline T nop(T x) { return x; }
 
-#define DECLARE_FUNCTOR(func)                   \
-  template<typename T>                          \
-  struct functor_##func {                       \
-    static char const* name() { return #func; } \
-    T operator()(T x) { return func(x); }       \
+#define DECLARE_FUNCTOR(FUNC, XMIN, XMAX)                       \
+  template<typename T>                                          \
+  struct functor_##FUNC {                                       \
+    static typename T::real_t get_xmin() { return XMIN; }       \
+    static typename T::real_t get_xmax() { return XMAX; }       \
+    static const char* name() { return #FUNC; }                 \
+    T operator()(T x) { return FUNC(x); }                       \
   }
 
-DECLARE_FUNCTOR(nop);
-DECLARE_FUNCTOR(sqrt);
-DECLARE_FUNCTOR(exp);
-DECLARE_FUNCTOR(log);
-DECLARE_FUNCTOR(sin);
-DECLARE_FUNCTOR(cos);
-DECLARE_FUNCTOR(atan);
+DECLARE_FUNCTOR(nop, 0.0, 1.0);
+
+DECLARE_FUNCTOR(acos, -0.5, +0.5);
+DECLARE_FUNCTOR(acosh, 0.0, 1.0);
+DECLARE_FUNCTOR(asin, -0.5, +0.5);
+DECLARE_FUNCTOR(asinh, -1.0, +1.0);
+DECLARE_FUNCTOR(atan, -1.0, +1.0);
+// DECLARE_FUNCTOR(atan2, 0.0);
+DECLARE_FUNCTOR(atanh, -0.5, +0.5);
+DECLARE_FUNCTOR(cbrt, -1.0, 1.0);
+DECLARE_FUNCTOR(ceil, -1.0, +1.0);
+// DECLARE_FUNCTOR(copysign, 0.0);
+DECLARE_FUNCTOR(cos, 0.0, 1.0);
+DECLARE_FUNCTOR(cosh, 0.0, 1.0);
+DECLARE_FUNCTOR(exp, 0.0, 1.0);
+DECLARE_FUNCTOR(exp10, 0.0, 1.0);
+DECLARE_FUNCTOR(exp2, 0.0, 1.0);
+DECLARE_FUNCTOR(expm1, 0.0, 1.0);
+DECLARE_FUNCTOR(fabs, -1.0, 1.0);
+DECLARE_FUNCTOR(floor, -1.0, +1.0);
+// DECLARE_FUNCTOR(fdim, 0.0);
+// DECLARE_FUNCTOR(fma, 0.0);
+// DECLARE_FUNCTOR(fmax, 0.0);
+// DECLARE_FUNCTOR(fmin, 0.0);
+// DECLARE_FUNCTOR(fmod, 0.0);
+// DECLARE_FUNCTOR(frexp, 0.0);
+// DECLARE_FUNCTOR(hypot, 0.0);
+// DECLARE_FUNCTOR(ilogb, 0.0);
+// DECLARE_FUNCTOR(isfinite, 0.0);
+// DECLARE_FUNCTOR(isinf, 0.0);
+// DECLARE_FUNCTOR(isnan, 0.0);
+// DECLARE_FUNCTOR(isnormal, 0.0);
+// DECLARE_FUNCTOR(ldexp, 0.0);
+// DECLARE_FUNCTOR(ldexp, 0.0);
+DECLARE_FUNCTOR(log, 1.0, 2.0);
+DECLARE_FUNCTOR(log10, 1.0, 2.0);
+DECLARE_FUNCTOR(log1p, 0.0, 1.0);
+DECLARE_FUNCTOR(log2, 1.0, 2.0);
+// DECLARE_FUNCTOR(nextafter, 0.0);
+// DECLARE_FUNCTOR(pow, 0.0);
+DECLARE_FUNCTOR(rcp, 1.0, 2.0);
+// DECLARE_FUNCTOR(remainder, 0.0);
+DECLARE_FUNCTOR(rint, -1.0, +1.0);
+DECLARE_FUNCTOR(round, -1.0, +1.0);
+DECLARE_FUNCTOR(rsqrt, 0.0, 1.0);
+// DECLARE_FUNCTOR(signbit, 0.0);
+DECLARE_FUNCTOR(sin, 0.0, 1.0);
+DECLARE_FUNCTOR(sinh, -1.0, +1.0);
+DECLARE_FUNCTOR(sqrt, 0.0, 1.0);
+DECLARE_FUNCTOR(tan, 0.0, 1.0);
+DECLARE_FUNCTOR(tanh, -1.0, +1.0);
+DECLARE_FUNCTOR(trunc, -1.0, +1.0);
 
 
 
 template<typename realvec_t, template<typename> class func_t>
 double run_bench()
 {
+  const int numiters = 10000000;
+  
+  typedef typename realvec_t::real_t real_t;
+  const real_t xmin = func_t<realvec_t>::get_xmin();
+  const real_t xmax = func_t<realvec_t>::get_xmax();
   realvec_t x0, dx;
   for (int i=0; i<realvec_t::size; ++i) {
-    x0.set_elt(i, 1.0f + float(i));
-    dx.set_elt(i, 1.0e-6f);
+    x0.set_elt(i, xmin + (xmax - xmin) / numiters * i / realvec_t::size);
+    dx.set_elt(i, (xmax - xmin) / numiters);
   }
   realvec_t x, y;
   ticks t0, t1;
   double const cycles_per_tick = 1.0; // measure_tick();
-  int const numiters = 10000000;
   
   func_t<realvec_t> func;
   t0 = getticks();
@@ -150,45 +201,45 @@ template<template<typename> class func_t>
 void bench_func()
 {
   cout << "\n"
-       << "Benchmarking " << func_t<float>().name() << ":\n";
+       << "Benchmarking " << func_t<float_vec>().name() << ":\n";
   
-  bench_type_func<realpseudovec<float,1>, func_t>();
-  // bench_type_func<realbuiltinvec<float,1>, func_t>();
-  bench_type_func<realtestvec<float,1>, func_t>();
-#ifdef VECMATHLIB_HAVE_VEC_FLOAT_1
-  bench_type_func<realvec<float,1>, func_t>();
-#endif
-#ifdef VECMATHLIB_HAVE_VEC_FLOAT_2
-  bench_type_func<realpseudovec<float,2>, func_t>();
-  // bench_type_func<realbuiltinvec<float,2>, func_t>();
-  // bench_type_func<realtestvec<float,2>, func_t>();
-  bench_type_func<realvec<float,2>, func_t>();
-#endif
-#ifdef VECMATHLIB_HAVE_VEC_FLOAT_4
-  bench_type_func<realpseudovec<float,4>, func_t>();
-  // bench_type_func<realbuiltinvec<float,4>, func_t>();
-  // bench_type_func<realtestvec<float,4>, func_t>();
-  bench_type_func<realvec<float,4>, func_t>();
-#endif
-#ifdef VECMATHLIB_HAVE_VEC_FLOAT_8
-  bench_type_func<realpseudovec<float,8>, func_t>();
-  // bench_type_func<realbuiltinvec<float,8>, func_t>();
-  // bench_type_func<realtestvec<float,8>, func_t>();
-  bench_type_func<realvec<float,8>, func_t>();
-#endif
+//   bench_type_func<realpseudovec<float,1>, func_t>();
+//   // bench_type_func<realbuiltinvec<float,1>, func_t>();
+//   bench_type_func<realtestvec<float,1>, func_t>();
+// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_1
+//   bench_type_func<realvec<float,1>, func_t>();
+// #endif
+// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_2
+//   bench_type_func<realpseudovec<float,2>, func_t>();
+//   // bench_type_func<realbuiltinvec<float,2>, func_t>();
+//   // bench_type_func<realtestvec<float,2>, func_t>();
+//   bench_type_func<realvec<float,2>, func_t>();
+// #endif
+// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_4
+//   bench_type_func<realpseudovec<float,4>, func_t>();
+//   // bench_type_func<realbuiltinvec<float,4>, func_t>();
+//   // bench_type_func<realtestvec<float,4>, func_t>();
+//   bench_type_func<realvec<float,4>, func_t>();
+// #endif
+// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_8
+//   bench_type_func<realpseudovec<float,8>, func_t>();
+//   // bench_type_func<realbuiltinvec<float,8>, func_t>();
+//   // bench_type_func<realtestvec<float,8>, func_t>();
+//   bench_type_func<realvec<float,8>, func_t>();
+// #endif
   
-  bench_type_func<realpseudovec<double,1>, func_t>();
-  // bench_type_func<realbuiltinvec<double,1>, func_t>();
-  bench_type_func<realtestvec<double,1>, func_t>();
-#ifdef VECMATHLIB_HAVE_VEC_DOUBLE_1
-  bench_type_func<realvec<double,1>, func_t>();
-#endif
-#ifdef VECMATHLIB_HAVE_VEC_DOUBLE_2
-  bench_type_func<realpseudovec<double,2>, func_t>();
-  // bench_type_func<realbuiltinvec<double,2>, func_t>();
-  // bench_type_func<realtestvec<double,2>, func_t>();
-  bench_type_func<realvec<double,2>, func_t>();
-#endif
+//   bench_type_func<realpseudovec<double,1>, func_t>();
+//   // bench_type_func<realbuiltinvec<double,1>, func_t>();
+//   bench_type_func<realtestvec<double,1>, func_t>();
+// #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_1
+//   bench_type_func<realvec<double,1>, func_t>();
+// #endif
+// #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_2
+//   bench_type_func<realpseudovec<double,2>, func_t>();
+//   // bench_type_func<realbuiltinvec<double,2>, func_t>();
+//   // bench_type_func<realtestvec<double,2>, func_t>();
+//   bench_type_func<realvec<double,2>, func_t>();
+// #endif
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_4
   bench_type_func<realpseudovec<double,4>, func_t>();
   // bench_type_func<realbuiltinvec<double,4>, func_t>();
@@ -200,12 +251,57 @@ void bench_func()
 void bench()
 {
   bench_func<functor_nop>();
-  bench_func<functor_sqrt>();
-  bench_func<functor_exp>();
-  bench_func<functor_log>();
-  bench_func<functor_sin>();
-  bench_func<functor_cos>();
+  
+  bench_func<functor_acos>();
+  bench_func<functor_acosh>();
+  bench_func<functor_asin>();
+  bench_func<functor_asinh>();
   bench_func<functor_atan>();
+  // bench_func<functor_atan2>();
+  bench_func<functor_atanh>();
+  bench_func<functor_cbrt>();
+  bench_func<functor_ceil>();
+  // bench_func<functor_copysign>();
+  bench_func<functor_cos>();
+  bench_func<functor_cosh>();
+  bench_func<functor_exp>();
+  bench_func<functor_exp10>();
+  bench_func<functor_exp2>();
+  bench_func<functor_expm1>();
+  bench_func<functor_fabs>();
+  bench_func<functor_floor>();
+  // bench_func<functor_fdim>();
+  // bench_func<functor_fma>();
+  // bench_func<functor_fmax>();
+  // bench_func<functor_fmin>();
+  // bench_func<functor_fmod>();
+  // bench_func<functor_frexp>();
+  // bench_func<functor_hypot>();
+  // bench_func<functor_ilogb>();
+  // bench_func<functor_isfinite>();
+  // bench_func<functor_isinf>();
+  // bench_func<functor_isnan>();
+  // bench_func<functor_isnormal>();
+  // bench_func<functor_ldexp>();
+  // bench_func<functor_ldexp>();
+  bench_func<functor_log>();
+  bench_func<functor_log10>();
+  bench_func<functor_log1p>();
+  bench_func<functor_log2>();
+  // bench_func<functor_nextafter>();
+  // bench_func<functor_pow>();
+  bench_func<functor_rcp>();
+  // bench_func<functor_remainder>();
+  bench_func<functor_rint>();
+  bench_func<functor_round>();
+  bench_func<functor_rsqrt>();
+  // bench_func<functor_signbit>();
+  bench_func<functor_sin>();
+  bench_func<functor_sinh>();
+  bench_func<functor_sqrt>();
+  bench_func<functor_tan>();
+  bench_func<functor_tanh>();
+  bench_func<functor_trunc>();
 }
 
 
