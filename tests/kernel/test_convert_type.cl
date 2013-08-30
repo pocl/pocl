@@ -80,73 +80,67 @@ constant size_t double_values_length = sizeof(double_values) / sizeof(double_val
 #endif
 
 _CL_NOINLINE
-void compare_char_elements(char const* name, size_t sample, const char* expected, const char* actual, size_t n)
+void compare_char_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
 
 _CL_NOINLINE
-void compare_uchar_elements(char const* name, size_t sample, const uchar* expected, const uchar* actual, size_t n)
+void compare_char_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
 
 _CL_NOINLINE
-void compare_short_elements(char const* name, size_t sample, const short* expected, const short* actual, size_t n)
+void compare_char_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
 
 _CL_NOINLINE
-void compare_ushort_elements(char const* name, size_t sample, const ushort* expected, const ushort* actual, size_t n)
+void compare_char_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
 
 _CL_NOINLINE
-void compare_int_elements(char const* name, size_t sample, const int* expected, const int* actual, size_t n)
+void compare_char_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
 
 _CL_NOINLINE
-void compare_uint_elements(char const* name, size_t sample, const uint* expected, const uint* actual, size_t n)
+void compare_char_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
@@ -154,13 +148,12 @@ void compare_uint_elements(char const* name, size_t sample, const uint* expected
 #ifdef cles_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements(char const* name, size_t sample, const long* expected, const long* actual, size_t n)
+void compare_char_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.16lx actual: %#.16lx\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
@@ -170,13 +163,12 @@ void compare_long_elements(char const* name, size_t sample, const long* expected
 #ifdef cles_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements(char const* name, size_t sample, const ulong* expected, const ulong* actual, size_t n)
+void compare_char_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %#.16lx actual: %#.16lx\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
@@ -184,13 +176,12 @@ void compare_ulong_elements(char const* name, size_t sample, const ulong* expect
 #endif
 
 _CL_NOINLINE
-void compare_float_elements(char const* name, size_t sample, const float* expected, const float* actual, size_t n)
+void compare_char_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %.12g actual: %.12g\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
@@ -198,13 +189,1210 @@ void compare_float_elements(char const* name, size_t sample, const float* expect
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements(char const* name, size_t sample, const double* expected, const double* actual, size_t n)
+void compare_char_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
-      printf("FAIL: %s - sample#: %u element#: %u expected: %.18g actual: %.18g\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_uchar_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uchar_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uchar_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uchar_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uchar_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uchar_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_uchar_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_uchar_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_uchar_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_uchar_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const uchar* expected, const uchar* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.2hhx actual: %#.2hhx\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_short_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_short_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_short_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_short_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_short_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_short_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_short_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_short_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_short_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_short_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const short* expected, const short* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_ushort_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_ushort_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_ushort_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_ushort_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_ushort_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_ushort_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ushort_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ushort_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_ushort_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_ushort_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const ushort* expected, const ushort* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.4hx actual: %#.4hx\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_int_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_int_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_int_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_int_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_int_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_int_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_int_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_int_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_int_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_int_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const int* expected, const int* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_uint_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uint_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uint_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uint_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uint_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_uint_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_uint_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_uint_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_uint_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_uint_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const uint* expected, const uint* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.8x actual: %#.8x\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_long_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const long* expected, const long* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_ulong_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const ulong* expected, const ulong* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.16lx actual: %#.16lx\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#endif
+
+_CL_NOINLINE
+void compare_float_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_float_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_float_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_float_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_float_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+_CL_NOINLINE
+void compare_float_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_float_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_float_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+_CL_NOINLINE
+void compare_float_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_float_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const float* expected, const float* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %.8g actual: %.8g\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_double_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#endif
+
+#ifdef cl_khr_fp64
+
+#ifdef cles_khr_int64
+
+_CL_NOINLINE
+void compare_double_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %#.16lx expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+    }
+  }
+}
+
+#endif
+
+#ifdef cl_khr_fp64
+
+_CL_NOINLINE
+void compare_double_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const double* expected, const double* actual, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    if (expected[i] != actual[i]) {
+      printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %.17g actual: %.17g\n",
+        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }
   }
 }
@@ -219,7 +1407,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)char_values[i]));
     actual.value = convert_char((char)char_values[i]);
-    compare_char_elements("convert_char((char))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_char("convert_char(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -227,7 +1415,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((char)char_values[i]);
-    compare_char_elements("convert_char_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_char("convert_char_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -236,7 +1424,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)char_values[i]));
     actual.value = convert_char2((char2)char_values[i]);
-    compare_char_elements("convert_char2((char2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_char("convert_char2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -244,7 +1432,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((char2)char_values[i]);
-    compare_char_elements("convert_char2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_char("convert_char2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -253,7 +1441,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)char_values[i]));
     actual.value = convert_char4((char4)char_values[i]);
-    compare_char_elements("convert_char4((char4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_char("convert_char4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -261,7 +1449,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((char4)char_values[i]);
-    compare_char_elements("convert_char4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_char("convert_char4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -270,7 +1458,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)char_values[i]));
     actual.value = convert_char8((char8)char_values[i]);
-    compare_char_elements("convert_char8((char8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_char("convert_char8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -278,7 +1466,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((char8)char_values[i]);
-    compare_char_elements("convert_char8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_char("convert_char8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -287,7 +1475,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)char_values[i]));
     actual.value = convert_char16((char16)char_values[i]);
-    compare_char_elements("convert_char16((char16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_char("convert_char16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -295,7 +1483,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((char16)char_values[i]);
-    compare_char_elements("convert_char16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_char("convert_char16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -304,7 +1492,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)char_values[i]));
     actual.value = convert_uchar((char)char_values[i]);
-    compare_uchar_elements("convert_uchar((char))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_char("convert_uchar(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -312,7 +1500,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((char)char_values[i]);
-    compare_uchar_elements("convert_uchar_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_char("convert_uchar_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -321,7 +1509,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)char_values[i]));
     actual.value = convert_uchar2((char2)char_values[i]);
-    compare_uchar_elements("convert_uchar2((char2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_char("convert_uchar2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -329,7 +1517,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((char2)char_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_char("convert_uchar2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -338,7 +1526,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)char_values[i]));
     actual.value = convert_uchar4((char4)char_values[i]);
-    compare_uchar_elements("convert_uchar4((char4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_char("convert_uchar4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -346,7 +1534,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((char4)char_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_char("convert_uchar4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -355,7 +1543,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)char_values[i]));
     actual.value = convert_uchar8((char8)char_values[i]);
-    compare_uchar_elements("convert_uchar8((char8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_char("convert_uchar8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -363,7 +1551,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((char8)char_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_char("convert_uchar8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -372,7 +1560,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)char_values[i]));
     actual.value = convert_uchar16((char16)char_values[i]);
-    compare_uchar_elements("convert_uchar16((char16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_char("convert_uchar16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -380,7 +1568,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((char16)char_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_char("convert_uchar16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -389,7 +1577,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)char_values[i]));
     actual.value = convert_short((char)char_values[i]);
-    compare_short_elements("convert_short((char))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_char("convert_short(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -397,7 +1585,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((char)char_values[i]);
-    compare_short_elements("convert_short_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_char("convert_short_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -406,7 +1594,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)char_values[i]));
     actual.value = convert_short2((char2)char_values[i]);
-    compare_short_elements("convert_short2((char2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_char("convert_short2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -414,7 +1602,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((char2)char_values[i]);
-    compare_short_elements("convert_short2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_char("convert_short2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -423,7 +1611,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)char_values[i]));
     actual.value = convert_short4((char4)char_values[i]);
-    compare_short_elements("convert_short4((char4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_char("convert_short4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -431,7 +1619,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((char4)char_values[i]);
-    compare_short_elements("convert_short4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_char("convert_short4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -440,7 +1628,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)char_values[i]));
     actual.value = convert_short8((char8)char_values[i]);
-    compare_short_elements("convert_short8((char8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_char("convert_short8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -448,7 +1636,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((char8)char_values[i]);
-    compare_short_elements("convert_short8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_char("convert_short8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -457,7 +1645,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)char_values[i]));
     actual.value = convert_short16((char16)char_values[i]);
-    compare_short_elements("convert_short16((char16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_char("convert_short16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -465,7 +1653,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((char16)char_values[i]);
-    compare_short_elements("convert_short16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_char("convert_short16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -474,7 +1662,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)char_values[i]));
     actual.value = convert_ushort((char)char_values[i]);
-    compare_ushort_elements("convert_ushort((char))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_char("convert_ushort(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -482,7 +1670,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((char)char_values[i]);
-    compare_ushort_elements("convert_ushort_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_char("convert_ushort_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -491,7 +1679,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)char_values[i]));
     actual.value = convert_ushort2((char2)char_values[i]);
-    compare_ushort_elements("convert_ushort2((char2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_char("convert_ushort2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -499,7 +1687,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((char2)char_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_char("convert_ushort2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -508,7 +1696,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)char_values[i]));
     actual.value = convert_ushort4((char4)char_values[i]);
-    compare_ushort_elements("convert_ushort4((char4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_char("convert_ushort4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -516,7 +1704,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((char4)char_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_char("convert_ushort4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -525,7 +1713,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)char_values[i]));
     actual.value = convert_ushort8((char8)char_values[i]);
-    compare_ushort_elements("convert_ushort8((char8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_char("convert_ushort8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -533,7 +1721,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((char8)char_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_char("convert_ushort8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -542,7 +1730,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)char_values[i]));
     actual.value = convert_ushort16((char16)char_values[i]);
-    compare_ushort_elements("convert_ushort16((char16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_char("convert_ushort16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -550,7 +1738,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((char16)char_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_char("convert_ushort16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -559,7 +1747,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)char_values[i]));
     actual.value = convert_int((char)char_values[i]);
-    compare_int_elements("convert_int((char))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_char("convert_int(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -567,7 +1755,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((char)char_values[i]);
-    compare_int_elements("convert_int_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_char("convert_int_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -576,7 +1764,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)char_values[i]));
     actual.value = convert_int2((char2)char_values[i]);
-    compare_int_elements("convert_int2((char2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_char("convert_int2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -584,7 +1772,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((char2)char_values[i]);
-    compare_int_elements("convert_int2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_char("convert_int2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -593,7 +1781,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)char_values[i]));
     actual.value = convert_int4((char4)char_values[i]);
-    compare_int_elements("convert_int4((char4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_char("convert_int4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -601,7 +1789,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((char4)char_values[i]);
-    compare_int_elements("convert_int4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_char("convert_int4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -610,7 +1798,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)char_values[i]));
     actual.value = convert_int8((char8)char_values[i]);
-    compare_int_elements("convert_int8((char8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_char("convert_int8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -618,7 +1806,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((char8)char_values[i]);
-    compare_int_elements("convert_int8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_char("convert_int8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -627,7 +1815,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)char_values[i]));
     actual.value = convert_int16((char16)char_values[i]);
-    compare_int_elements("convert_int16((char16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_char("convert_int16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -635,7 +1823,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((char16)char_values[i]);
-    compare_int_elements("convert_int16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_char("convert_int16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -644,7 +1832,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)char_values[i]));
     actual.value = convert_uint((char)char_values[i]);
-    compare_uint_elements("convert_uint((char))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_char("convert_uint(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -652,7 +1840,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((char)char_values[i]);
-    compare_uint_elements("convert_uint_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_char("convert_uint_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -661,7 +1849,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)char_values[i]));
     actual.value = convert_uint2((char2)char_values[i]);
-    compare_uint_elements("convert_uint2((char2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_char("convert_uint2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -669,7 +1857,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((char2)char_values[i]);
-    compare_uint_elements("convert_uint2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_char("convert_uint2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -678,7 +1866,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)char_values[i]));
     actual.value = convert_uint4((char4)char_values[i]);
-    compare_uint_elements("convert_uint4((char4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_char("convert_uint4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -686,7 +1874,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((char4)char_values[i]);
-    compare_uint_elements("convert_uint4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_char("convert_uint4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -695,7 +1883,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)char_values[i]));
     actual.value = convert_uint8((char8)char_values[i]);
-    compare_uint_elements("convert_uint8((char8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_char("convert_uint8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -703,7 +1891,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((char8)char_values[i]);
-    compare_uint_elements("convert_uint8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_char("convert_uint8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
@@ -712,7 +1900,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)char_values[i]));
     actual.value = convert_uint16((char16)char_values[i]);
-    compare_uint_elements("convert_uint16((char16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_char("convert_uint16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -720,7 +1908,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((char16)char_values[i]);
-    compare_uint_elements("convert_uint16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_char("convert_uint16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -731,7 +1919,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)char_values[i]));
     actual.value = convert_long((char)char_values[i]);
-    compare_long_elements("convert_long((char))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_char("convert_long(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -739,7 +1927,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((char)char_values[i]);
-    compare_long_elements("convert_long_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_char("convert_long_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -752,7 +1940,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)char_values[i]));
     actual.value = convert_long2((char2)char_values[i]);
-    compare_long_elements("convert_long2((char2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_char("convert_long2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -760,7 +1948,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((char2)char_values[i]);
-    compare_long_elements("convert_long2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_char("convert_long2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -773,7 +1961,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)char_values[i]));
     actual.value = convert_long4((char4)char_values[i]);
-    compare_long_elements("convert_long4((char4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_char("convert_long4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -781,7 +1969,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((char4)char_values[i]);
-    compare_long_elements("convert_long4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_char("convert_long4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -794,7 +1982,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)char_values[i]));
     actual.value = convert_long8((char8)char_values[i]);
-    compare_long_elements("convert_long8((char8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_char("convert_long8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -802,7 +1990,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((char8)char_values[i]);
-    compare_long_elements("convert_long8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_char("convert_long8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -815,7 +2003,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)char_values[i]));
     actual.value = convert_long16((char16)char_values[i]);
-    compare_long_elements("convert_long16((char16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_char("convert_long16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -823,7 +2011,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((char16)char_values[i]);
-    compare_long_elements("convert_long16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_char("convert_long16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -836,7 +2024,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)char_values[i]));
     actual.value = convert_ulong((char)char_values[i]);
-    compare_ulong_elements("convert_ulong((char))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_char("convert_ulong(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
     if (char_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -844,7 +2032,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((char)char_values[i]);
-    compare_ulong_elements("convert_ulong_sat((char))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_char("convert_ulong_sat(char)", i, &char_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -857,7 +2045,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)char_values[i]));
     actual.value = convert_ulong2((char2)char_values[i]);
-    compare_ulong_elements("convert_ulong2((char2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_char("convert_ulong2(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
     if (char_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -865,7 +2053,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((char2)char_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((char2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_char("convert_ulong2_sat(char2)", i, &char_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -878,7 +2066,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)char_values[i]));
     actual.value = convert_ulong4((char4)char_values[i]);
-    compare_ulong_elements("convert_ulong4((char4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_char("convert_ulong4(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
     if (char_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -886,7 +2074,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((char4)char_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((char4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_char("convert_ulong4_sat(char4)", i, &char_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -899,7 +2087,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)char_values[i]));
     actual.value = convert_ulong8((char8)char_values[i]);
-    compare_ulong_elements("convert_ulong8((char8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_char("convert_ulong8(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
     if (char_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -907,7 +2095,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((char8)char_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((char8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_char("convert_ulong8_sat(char8)", i, &char_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -920,7 +2108,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)char_values[i]));
     actual.value = convert_ulong16((char16)char_values[i]);
-    compare_ulong_elements("convert_ulong16((char16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_char("convert_ulong16(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
     if (char_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -928,7 +2116,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((char16)char_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((char16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_char("convert_ulong16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -939,7 +2127,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)uchar_values[i]));
     actual.value = convert_char((uchar)uchar_values[i]);
-    compare_char_elements("convert_char((uchar))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_uchar("convert_char(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -947,7 +2135,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((uchar)uchar_values[i]);
-    compare_char_elements("convert_char_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_uchar("convert_char_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -956,7 +2144,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)uchar_values[i]));
     actual.value = convert_char2((uchar2)uchar_values[i]);
-    compare_char_elements("convert_char2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_uchar("convert_char2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -964,7 +2152,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((uchar2)uchar_values[i]);
-    compare_char_elements("convert_char2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_uchar("convert_char2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -973,7 +2161,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)uchar_values[i]));
     actual.value = convert_char4((uchar4)uchar_values[i]);
-    compare_char_elements("convert_char4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_uchar("convert_char4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -981,7 +2169,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((uchar4)uchar_values[i]);
-    compare_char_elements("convert_char4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_uchar("convert_char4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -990,7 +2178,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)uchar_values[i]));
     actual.value = convert_char8((uchar8)uchar_values[i]);
-    compare_char_elements("convert_char8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_uchar("convert_char8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -998,7 +2186,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((uchar8)uchar_values[i]);
-    compare_char_elements("convert_char8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_uchar("convert_char8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1007,7 +2195,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)uchar_values[i]));
     actual.value = convert_char16((uchar16)uchar_values[i]);
-    compare_char_elements("convert_char16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_uchar("convert_char16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -1015,7 +2203,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((uchar16)uchar_values[i]);
-    compare_char_elements("convert_char16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_uchar("convert_char16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1024,7 +2212,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)uchar_values[i]));
     actual.value = convert_uchar((uchar)uchar_values[i]);
-    compare_uchar_elements("convert_uchar((uchar))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_uchar("convert_uchar(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -1032,7 +2220,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((uchar)uchar_values[i]);
-    compare_uchar_elements("convert_uchar_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_uchar("convert_uchar_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1041,7 +2229,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)uchar_values[i]));
     actual.value = convert_uchar2((uchar2)uchar_values[i]);
-    compare_uchar_elements("convert_uchar2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_uchar("convert_uchar2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -1049,7 +2237,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((uchar2)uchar_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_uchar("convert_uchar2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1058,7 +2246,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)uchar_values[i]));
     actual.value = convert_uchar4((uchar4)uchar_values[i]);
-    compare_uchar_elements("convert_uchar4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_uchar("convert_uchar4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -1066,7 +2254,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((uchar4)uchar_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_uchar("convert_uchar4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1075,7 +2263,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)uchar_values[i]));
     actual.value = convert_uchar8((uchar8)uchar_values[i]);
-    compare_uchar_elements("convert_uchar8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_uchar("convert_uchar8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -1083,7 +2271,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((uchar8)uchar_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_uchar("convert_uchar8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1092,7 +2280,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)uchar_values[i]));
     actual.value = convert_uchar16((uchar16)uchar_values[i]);
-    compare_uchar_elements("convert_uchar16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_uchar("convert_uchar16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -1100,7 +2288,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((uchar16)uchar_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_uchar("convert_uchar16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1109,7 +2297,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)uchar_values[i]));
     actual.value = convert_short((uchar)uchar_values[i]);
-    compare_short_elements("convert_short((uchar))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_uchar("convert_short(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -1117,7 +2305,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((uchar)uchar_values[i]);
-    compare_short_elements("convert_short_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_uchar("convert_short_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1126,7 +2314,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)uchar_values[i]));
     actual.value = convert_short2((uchar2)uchar_values[i]);
-    compare_short_elements("convert_short2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_uchar("convert_short2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -1134,7 +2322,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((uchar2)uchar_values[i]);
-    compare_short_elements("convert_short2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_uchar("convert_short2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1143,7 +2331,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)uchar_values[i]));
     actual.value = convert_short4((uchar4)uchar_values[i]);
-    compare_short_elements("convert_short4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_uchar("convert_short4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -1151,7 +2339,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((uchar4)uchar_values[i]);
-    compare_short_elements("convert_short4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_uchar("convert_short4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1160,7 +2348,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)uchar_values[i]));
     actual.value = convert_short8((uchar8)uchar_values[i]);
-    compare_short_elements("convert_short8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_uchar("convert_short8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -1168,7 +2356,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((uchar8)uchar_values[i]);
-    compare_short_elements("convert_short8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_uchar("convert_short8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1177,7 +2365,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)uchar_values[i]));
     actual.value = convert_short16((uchar16)uchar_values[i]);
-    compare_short_elements("convert_short16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_uchar("convert_short16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -1185,7 +2373,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((uchar16)uchar_values[i]);
-    compare_short_elements("convert_short16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_uchar("convert_short16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1194,7 +2382,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)uchar_values[i]));
     actual.value = convert_ushort((uchar)uchar_values[i]);
-    compare_ushort_elements("convert_ushort((uchar))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_uchar("convert_ushort(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -1202,7 +2390,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((uchar)uchar_values[i]);
-    compare_ushort_elements("convert_ushort_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_uchar("convert_ushort_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1211,7 +2399,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)uchar_values[i]));
     actual.value = convert_ushort2((uchar2)uchar_values[i]);
-    compare_ushort_elements("convert_ushort2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_uchar("convert_ushort2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -1219,7 +2407,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((uchar2)uchar_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_uchar("convert_ushort2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1228,7 +2416,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)uchar_values[i]));
     actual.value = convert_ushort4((uchar4)uchar_values[i]);
-    compare_ushort_elements("convert_ushort4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_uchar("convert_ushort4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -1236,7 +2424,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((uchar4)uchar_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_uchar("convert_ushort4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1245,7 +2433,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)uchar_values[i]));
     actual.value = convert_ushort8((uchar8)uchar_values[i]);
-    compare_ushort_elements("convert_ushort8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_uchar("convert_ushort8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -1253,7 +2441,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((uchar8)uchar_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_uchar("convert_ushort8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1262,7 +2450,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)uchar_values[i]));
     actual.value = convert_ushort16((uchar16)uchar_values[i]);
-    compare_ushort_elements("convert_ushort16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_uchar("convert_ushort16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -1270,7 +2458,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((uchar16)uchar_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_uchar("convert_ushort16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1279,7 +2467,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)uchar_values[i]));
     actual.value = convert_int((uchar)uchar_values[i]);
-    compare_int_elements("convert_int((uchar))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_uchar("convert_int(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -1287,7 +2475,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((uchar)uchar_values[i]);
-    compare_int_elements("convert_int_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_uchar("convert_int_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1296,7 +2484,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)uchar_values[i]));
     actual.value = convert_int2((uchar2)uchar_values[i]);
-    compare_int_elements("convert_int2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_uchar("convert_int2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -1304,7 +2492,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((uchar2)uchar_values[i]);
-    compare_int_elements("convert_int2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_uchar("convert_int2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1313,7 +2501,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)uchar_values[i]));
     actual.value = convert_int4((uchar4)uchar_values[i]);
-    compare_int_elements("convert_int4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_uchar("convert_int4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -1321,7 +2509,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((uchar4)uchar_values[i]);
-    compare_int_elements("convert_int4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_uchar("convert_int4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1330,7 +2518,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)uchar_values[i]));
     actual.value = convert_int8((uchar8)uchar_values[i]);
-    compare_int_elements("convert_int8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_uchar("convert_int8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -1338,7 +2526,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((uchar8)uchar_values[i]);
-    compare_int_elements("convert_int8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_uchar("convert_int8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1347,7 +2535,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)uchar_values[i]));
     actual.value = convert_int16((uchar16)uchar_values[i]);
-    compare_int_elements("convert_int16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_uchar("convert_int16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -1355,7 +2543,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((uchar16)uchar_values[i]);
-    compare_int_elements("convert_int16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_uchar("convert_int16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1364,7 +2552,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)uchar_values[i]));
     actual.value = convert_uint((uchar)uchar_values[i]);
-    compare_uint_elements("convert_uint((uchar))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_uchar("convert_uint(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -1372,7 +2560,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((uchar)uchar_values[i]);
-    compare_uint_elements("convert_uint_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_uchar("convert_uint_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1381,7 +2569,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)uchar_values[i]));
     actual.value = convert_uint2((uchar2)uchar_values[i]);
-    compare_uint_elements("convert_uint2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_uchar("convert_uint2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -1389,7 +2577,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((uchar2)uchar_values[i]);
-    compare_uint_elements("convert_uint2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_uchar("convert_uint2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1398,7 +2586,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)uchar_values[i]));
     actual.value = convert_uint4((uchar4)uchar_values[i]);
-    compare_uint_elements("convert_uint4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_uchar("convert_uint4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -1406,7 +2594,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((uchar4)uchar_values[i]);
-    compare_uint_elements("convert_uint4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_uchar("convert_uint4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1415,7 +2603,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)uchar_values[i]));
     actual.value = convert_uint8((uchar8)uchar_values[i]);
-    compare_uint_elements("convert_uint8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_uchar("convert_uint8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -1423,7 +2611,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((uchar8)uchar_values[i]);
-    compare_uint_elements("convert_uint8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_uchar("convert_uint8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
@@ -1432,7 +2620,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)uchar_values[i]));
     actual.value = convert_uint16((uchar16)uchar_values[i]);
-    compare_uint_elements("convert_uint16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_uchar("convert_uint16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -1440,7 +2628,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((uchar16)uchar_values[i]);
-    compare_uint_elements("convert_uint16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_uchar("convert_uint16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -1451,7 +2639,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)uchar_values[i]));
     actual.value = convert_long((uchar)uchar_values[i]);
-    compare_long_elements("convert_long((uchar))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_uchar("convert_long(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -1459,7 +2647,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((uchar)uchar_values[i]);
-    compare_long_elements("convert_long_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_uchar("convert_long_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -1472,7 +2660,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)uchar_values[i]));
     actual.value = convert_long2((uchar2)uchar_values[i]);
-    compare_long_elements("convert_long2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_uchar("convert_long2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -1480,7 +2668,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((uchar2)uchar_values[i]);
-    compare_long_elements("convert_long2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_uchar("convert_long2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -1493,7 +2681,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)uchar_values[i]));
     actual.value = convert_long4((uchar4)uchar_values[i]);
-    compare_long_elements("convert_long4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_uchar("convert_long4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -1501,7 +2689,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((uchar4)uchar_values[i]);
-    compare_long_elements("convert_long4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_uchar("convert_long4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -1514,7 +2702,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)uchar_values[i]));
     actual.value = convert_long8((uchar8)uchar_values[i]);
-    compare_long_elements("convert_long8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_uchar("convert_long8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -1522,7 +2710,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((uchar8)uchar_values[i]);
-    compare_long_elements("convert_long8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_uchar("convert_long8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -1535,7 +2723,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)uchar_values[i]));
     actual.value = convert_long16((uchar16)uchar_values[i]);
-    compare_long_elements("convert_long16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_uchar("convert_long16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -1543,7 +2731,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((uchar16)uchar_values[i]);
-    compare_long_elements("convert_long16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_uchar("convert_long16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -1556,7 +2744,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)uchar_values[i]));
     actual.value = convert_ulong((uchar)uchar_values[i]);
-    compare_ulong_elements("convert_ulong((uchar))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_uchar("convert_ulong(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
     if (uchar_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -1564,7 +2752,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((uchar)uchar_values[i]);
-    compare_ulong_elements("convert_ulong_sat((uchar))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_uchar("convert_ulong_sat(uchar)", i, &uchar_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -1577,7 +2765,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)uchar_values[i]));
     actual.value = convert_ulong2((uchar2)uchar_values[i]);
-    compare_ulong_elements("convert_ulong2((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_uchar("convert_ulong2(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
     if (uchar_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -1585,7 +2773,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((uchar2)uchar_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((uchar2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_uchar("convert_ulong2_sat(uchar2)", i, &uchar_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -1598,7 +2786,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)uchar_values[i]));
     actual.value = convert_ulong4((uchar4)uchar_values[i]);
-    compare_ulong_elements("convert_ulong4((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_uchar("convert_ulong4(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
     if (uchar_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -1606,7 +2794,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((uchar4)uchar_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((uchar4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_uchar("convert_ulong4_sat(uchar4)", i, &uchar_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -1619,7 +2807,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)uchar_values[i]));
     actual.value = convert_ulong8((uchar8)uchar_values[i]);
-    compare_ulong_elements("convert_ulong8((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_uchar("convert_ulong8(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
     if (uchar_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -1627,7 +2815,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((uchar8)uchar_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((uchar8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_uchar("convert_ulong8_sat(uchar8)", i, &uchar_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -1640,7 +2828,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)uchar_values[i]));
     actual.value = convert_ulong16((uchar16)uchar_values[i]);
-    compare_ulong_elements("convert_ulong16((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_uchar("convert_ulong16(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
     if (uchar_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -1648,7 +2836,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((uchar16)uchar_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((uchar16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_uchar("convert_ulong16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -1659,7 +2847,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)short_values[i]));
     actual.value = convert_char((short)short_values[i]);
-    compare_char_elements("convert_char((short))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_short("convert_char(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -1667,7 +2855,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((short)short_values[i]);
-    compare_char_elements("convert_char_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_short("convert_char_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1676,7 +2864,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)short_values[i]));
     actual.value = convert_char2((short2)short_values[i]);
-    compare_char_elements("convert_char2((short2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_short("convert_char2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -1684,7 +2872,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((short2)short_values[i]);
-    compare_char_elements("convert_char2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_short("convert_char2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1693,7 +2881,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)short_values[i]));
     actual.value = convert_char4((short4)short_values[i]);
-    compare_char_elements("convert_char4((short4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_short("convert_char4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -1701,7 +2889,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((short4)short_values[i]);
-    compare_char_elements("convert_char4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_short("convert_char4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1710,7 +2898,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)short_values[i]));
     actual.value = convert_char8((short8)short_values[i]);
-    compare_char_elements("convert_char8((short8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_short("convert_char8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -1718,7 +2906,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((short8)short_values[i]);
-    compare_char_elements("convert_char8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_short("convert_char8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1727,7 +2915,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)short_values[i]));
     actual.value = convert_char16((short16)short_values[i]);
-    compare_char_elements("convert_char16((short16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_short("convert_char16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -1735,7 +2923,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((short16)short_values[i]);
-    compare_char_elements("convert_char16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_short("convert_char16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1744,7 +2932,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)short_values[i]));
     actual.value = convert_uchar((short)short_values[i]);
-    compare_uchar_elements("convert_uchar((short))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_short("convert_uchar(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -1752,7 +2940,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((short)short_values[i]);
-    compare_uchar_elements("convert_uchar_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_short("convert_uchar_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1761,7 +2949,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)short_values[i]));
     actual.value = convert_uchar2((short2)short_values[i]);
-    compare_uchar_elements("convert_uchar2((short2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_short("convert_uchar2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -1769,7 +2957,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((short2)short_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_short("convert_uchar2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1778,7 +2966,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)short_values[i]));
     actual.value = convert_uchar4((short4)short_values[i]);
-    compare_uchar_elements("convert_uchar4((short4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_short("convert_uchar4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -1786,7 +2974,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((short4)short_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_short("convert_uchar4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1795,7 +2983,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)short_values[i]));
     actual.value = convert_uchar8((short8)short_values[i]);
-    compare_uchar_elements("convert_uchar8((short8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_short("convert_uchar8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -1803,7 +2991,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((short8)short_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_short("convert_uchar8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1812,7 +3000,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)short_values[i]));
     actual.value = convert_uchar16((short16)short_values[i]);
-    compare_uchar_elements("convert_uchar16((short16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_short("convert_uchar16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -1820,7 +3008,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((short16)short_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_short("convert_uchar16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1829,7 +3017,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)short_values[i]));
     actual.value = convert_short((short)short_values[i]);
-    compare_short_elements("convert_short((short))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_short("convert_short(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -1837,7 +3025,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((short)short_values[i]);
-    compare_short_elements("convert_short_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_short("convert_short_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1846,7 +3034,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)short_values[i]));
     actual.value = convert_short2((short2)short_values[i]);
-    compare_short_elements("convert_short2((short2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_short("convert_short2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -1854,7 +3042,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((short2)short_values[i]);
-    compare_short_elements("convert_short2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_short("convert_short2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1863,7 +3051,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)short_values[i]));
     actual.value = convert_short4((short4)short_values[i]);
-    compare_short_elements("convert_short4((short4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_short("convert_short4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -1871,7 +3059,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((short4)short_values[i]);
-    compare_short_elements("convert_short4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_short("convert_short4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1880,7 +3068,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)short_values[i]));
     actual.value = convert_short8((short8)short_values[i]);
-    compare_short_elements("convert_short8((short8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_short("convert_short8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -1888,7 +3076,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((short8)short_values[i]);
-    compare_short_elements("convert_short8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_short("convert_short8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1897,7 +3085,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)short_values[i]));
     actual.value = convert_short16((short16)short_values[i]);
-    compare_short_elements("convert_short16((short16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_short("convert_short16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -1905,7 +3093,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((short16)short_values[i]);
-    compare_short_elements("convert_short16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_short("convert_short16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1914,7 +3102,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)short_values[i]));
     actual.value = convert_ushort((short)short_values[i]);
-    compare_ushort_elements("convert_ushort((short))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_short("convert_ushort(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -1922,7 +3110,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((short)short_values[i]);
-    compare_ushort_elements("convert_ushort_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_short("convert_ushort_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1931,7 +3119,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)short_values[i]));
     actual.value = convert_ushort2((short2)short_values[i]);
-    compare_ushort_elements("convert_ushort2((short2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_short("convert_ushort2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -1939,7 +3127,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((short2)short_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_short("convert_ushort2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1948,7 +3136,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)short_values[i]));
     actual.value = convert_ushort4((short4)short_values[i]);
-    compare_ushort_elements("convert_ushort4((short4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_short("convert_ushort4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -1956,7 +3144,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((short4)short_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_short("convert_ushort4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1965,7 +3153,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)short_values[i]));
     actual.value = convert_ushort8((short8)short_values[i]);
-    compare_ushort_elements("convert_ushort8((short8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_short("convert_ushort8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -1973,7 +3161,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((short8)short_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_short("convert_ushort8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1982,7 +3170,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)short_values[i]));
     actual.value = convert_ushort16((short16)short_values[i]);
-    compare_ushort_elements("convert_ushort16((short16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_short("convert_ushort16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -1990,7 +3178,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((short16)short_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_short("convert_ushort16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -1999,7 +3187,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)short_values[i]));
     actual.value = convert_int((short)short_values[i]);
-    compare_int_elements("convert_int((short))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_short("convert_int(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -2007,7 +3195,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((short)short_values[i]);
-    compare_int_elements("convert_int_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_short("convert_int_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2016,7 +3204,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)short_values[i]));
     actual.value = convert_int2((short2)short_values[i]);
-    compare_int_elements("convert_int2((short2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_short("convert_int2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -2024,7 +3212,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((short2)short_values[i]);
-    compare_int_elements("convert_int2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_short("convert_int2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2033,7 +3221,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)short_values[i]));
     actual.value = convert_int4((short4)short_values[i]);
-    compare_int_elements("convert_int4((short4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_short("convert_int4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -2041,7 +3229,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((short4)short_values[i]);
-    compare_int_elements("convert_int4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_short("convert_int4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2050,7 +3238,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)short_values[i]));
     actual.value = convert_int8((short8)short_values[i]);
-    compare_int_elements("convert_int8((short8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_short("convert_int8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -2058,7 +3246,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((short8)short_values[i]);
-    compare_int_elements("convert_int8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_short("convert_int8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2067,7 +3255,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)short_values[i]));
     actual.value = convert_int16((short16)short_values[i]);
-    compare_int_elements("convert_int16((short16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_short("convert_int16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -2075,7 +3263,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((short16)short_values[i]);
-    compare_int_elements("convert_int16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_short("convert_int16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2084,7 +3272,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)short_values[i]));
     actual.value = convert_uint((short)short_values[i]);
-    compare_uint_elements("convert_uint((short))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_short("convert_uint(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -2092,7 +3280,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((short)short_values[i]);
-    compare_uint_elements("convert_uint_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_short("convert_uint_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2101,7 +3289,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)short_values[i]));
     actual.value = convert_uint2((short2)short_values[i]);
-    compare_uint_elements("convert_uint2((short2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_short("convert_uint2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -2109,7 +3297,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((short2)short_values[i]);
-    compare_uint_elements("convert_uint2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_short("convert_uint2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2118,7 +3306,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)short_values[i]));
     actual.value = convert_uint4((short4)short_values[i]);
-    compare_uint_elements("convert_uint4((short4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_short("convert_uint4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -2126,7 +3314,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((short4)short_values[i]);
-    compare_uint_elements("convert_uint4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_short("convert_uint4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2135,7 +3323,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)short_values[i]));
     actual.value = convert_uint8((short8)short_values[i]);
-    compare_uint_elements("convert_uint8((short8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_short("convert_uint8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -2143,7 +3331,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((short8)short_values[i]);
-    compare_uint_elements("convert_uint8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_short("convert_uint8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
@@ -2152,7 +3340,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)short_values[i]));
     actual.value = convert_uint16((short16)short_values[i]);
-    compare_uint_elements("convert_uint16((short16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_short("convert_uint16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -2160,7 +3348,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((short16)short_values[i]);
-    compare_uint_elements("convert_uint16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_short("convert_uint16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -2171,7 +3359,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)short_values[i]));
     actual.value = convert_long((short)short_values[i]);
-    compare_long_elements("convert_long((short))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_short("convert_long(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -2179,7 +3367,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((short)short_values[i]);
-    compare_long_elements("convert_long_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_short("convert_long_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -2192,7 +3380,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)short_values[i]));
     actual.value = convert_long2((short2)short_values[i]);
-    compare_long_elements("convert_long2((short2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_short("convert_long2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -2200,7 +3388,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((short2)short_values[i]);
-    compare_long_elements("convert_long2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_short("convert_long2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -2213,7 +3401,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)short_values[i]));
     actual.value = convert_long4((short4)short_values[i]);
-    compare_long_elements("convert_long4((short4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_short("convert_long4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -2221,7 +3409,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((short4)short_values[i]);
-    compare_long_elements("convert_long4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_short("convert_long4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -2234,7 +3422,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)short_values[i]));
     actual.value = convert_long8((short8)short_values[i]);
-    compare_long_elements("convert_long8((short8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_short("convert_long8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -2242,7 +3430,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((short8)short_values[i]);
-    compare_long_elements("convert_long8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_short("convert_long8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -2255,7 +3443,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)short_values[i]));
     actual.value = convert_long16((short16)short_values[i]);
-    compare_long_elements("convert_long16((short16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_short("convert_long16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -2263,7 +3451,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((short16)short_values[i]);
-    compare_long_elements("convert_long16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_short("convert_long16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -2276,7 +3464,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)short_values[i]));
     actual.value = convert_ulong((short)short_values[i]);
-    compare_ulong_elements("convert_ulong((short))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_short("convert_ulong(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
     if (short_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -2284,7 +3472,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((short)short_values[i]);
-    compare_ulong_elements("convert_ulong_sat((short))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_short("convert_ulong_sat(short)", i, &short_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -2297,7 +3485,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)short_values[i]));
     actual.value = convert_ulong2((short2)short_values[i]);
-    compare_ulong_elements("convert_ulong2((short2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_short("convert_ulong2(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
     if (short_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -2305,7 +3493,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((short2)short_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((short2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_short("convert_ulong2_sat(short2)", i, &short_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -2318,7 +3506,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)short_values[i]));
     actual.value = convert_ulong4((short4)short_values[i]);
-    compare_ulong_elements("convert_ulong4((short4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_short("convert_ulong4(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
     if (short_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -2326,7 +3514,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((short4)short_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((short4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_short("convert_ulong4_sat(short4)", i, &short_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -2339,7 +3527,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)short_values[i]));
     actual.value = convert_ulong8((short8)short_values[i]);
-    compare_ulong_elements("convert_ulong8((short8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_short("convert_ulong8(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
     if (short_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -2347,7 +3535,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((short8)short_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((short8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_short("convert_ulong8_sat(short8)", i, &short_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -2360,7 +3548,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)short_values[i]));
     actual.value = convert_ulong16((short16)short_values[i]);
-    compare_ulong_elements("convert_ulong16((short16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_short("convert_ulong16(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
     if (short_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -2368,7 +3556,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((short16)short_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((short16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_short("convert_ulong16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -2379,7 +3567,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)ushort_values[i]));
     actual.value = convert_char((ushort)ushort_values[i]);
-    compare_char_elements("convert_char((ushort))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_ushort("convert_char(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -2387,7 +3575,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((ushort)ushort_values[i]);
-    compare_char_elements("convert_char_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_ushort("convert_char_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2396,7 +3584,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)ushort_values[i]));
     actual.value = convert_char2((ushort2)ushort_values[i]);
-    compare_char_elements("convert_char2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_ushort("convert_char2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -2404,7 +3592,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((ushort2)ushort_values[i]);
-    compare_char_elements("convert_char2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_ushort("convert_char2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2413,7 +3601,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)ushort_values[i]));
     actual.value = convert_char4((ushort4)ushort_values[i]);
-    compare_char_elements("convert_char4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_ushort("convert_char4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -2421,7 +3609,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((ushort4)ushort_values[i]);
-    compare_char_elements("convert_char4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_ushort("convert_char4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2430,7 +3618,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)ushort_values[i]));
     actual.value = convert_char8((ushort8)ushort_values[i]);
-    compare_char_elements("convert_char8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_ushort("convert_char8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -2438,7 +3626,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((ushort8)ushort_values[i]);
-    compare_char_elements("convert_char8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_ushort("convert_char8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2447,7 +3635,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)ushort_values[i]));
     actual.value = convert_char16((ushort16)ushort_values[i]);
-    compare_char_elements("convert_char16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_ushort("convert_char16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -2455,7 +3643,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((ushort16)ushort_values[i]);
-    compare_char_elements("convert_char16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_ushort("convert_char16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2464,7 +3652,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)ushort_values[i]));
     actual.value = convert_uchar((ushort)ushort_values[i]);
-    compare_uchar_elements("convert_uchar((ushort))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_ushort("convert_uchar(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -2472,7 +3660,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((ushort)ushort_values[i]);
-    compare_uchar_elements("convert_uchar_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_ushort("convert_uchar_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2481,7 +3669,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)ushort_values[i]));
     actual.value = convert_uchar2((ushort2)ushort_values[i]);
-    compare_uchar_elements("convert_uchar2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_ushort("convert_uchar2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -2489,7 +3677,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((ushort2)ushort_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_ushort("convert_uchar2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2498,7 +3686,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)ushort_values[i]));
     actual.value = convert_uchar4((ushort4)ushort_values[i]);
-    compare_uchar_elements("convert_uchar4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_ushort("convert_uchar4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -2506,7 +3694,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((ushort4)ushort_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_ushort("convert_uchar4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2515,7 +3703,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)ushort_values[i]));
     actual.value = convert_uchar8((ushort8)ushort_values[i]);
-    compare_uchar_elements("convert_uchar8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_ushort("convert_uchar8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -2523,7 +3711,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((ushort8)ushort_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_ushort("convert_uchar8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2532,7 +3720,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)ushort_values[i]));
     actual.value = convert_uchar16((ushort16)ushort_values[i]);
-    compare_uchar_elements("convert_uchar16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_ushort("convert_uchar16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -2540,7 +3728,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((ushort16)ushort_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_ushort("convert_uchar16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2549,7 +3737,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)ushort_values[i]));
     actual.value = convert_short((ushort)ushort_values[i]);
-    compare_short_elements("convert_short((ushort))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_ushort("convert_short(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -2557,7 +3745,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((ushort)ushort_values[i]);
-    compare_short_elements("convert_short_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_ushort("convert_short_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2566,7 +3754,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)ushort_values[i]));
     actual.value = convert_short2((ushort2)ushort_values[i]);
-    compare_short_elements("convert_short2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_ushort("convert_short2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -2574,7 +3762,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((ushort2)ushort_values[i]);
-    compare_short_elements("convert_short2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_ushort("convert_short2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2583,7 +3771,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)ushort_values[i]));
     actual.value = convert_short4((ushort4)ushort_values[i]);
-    compare_short_elements("convert_short4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_ushort("convert_short4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -2591,7 +3779,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((ushort4)ushort_values[i]);
-    compare_short_elements("convert_short4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_ushort("convert_short4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2600,7 +3788,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)ushort_values[i]));
     actual.value = convert_short8((ushort8)ushort_values[i]);
-    compare_short_elements("convert_short8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_ushort("convert_short8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -2608,7 +3796,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((ushort8)ushort_values[i]);
-    compare_short_elements("convert_short8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_ushort("convert_short8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2617,7 +3805,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)ushort_values[i]));
     actual.value = convert_short16((ushort16)ushort_values[i]);
-    compare_short_elements("convert_short16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_ushort("convert_short16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -2625,7 +3813,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((ushort16)ushort_values[i]);
-    compare_short_elements("convert_short16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_ushort("convert_short16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2634,7 +3822,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)ushort_values[i]));
     actual.value = convert_ushort((ushort)ushort_values[i]);
-    compare_ushort_elements("convert_ushort((ushort))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_ushort("convert_ushort(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -2642,7 +3830,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((ushort)ushort_values[i]);
-    compare_ushort_elements("convert_ushort_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_ushort("convert_ushort_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2651,7 +3839,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)ushort_values[i]));
     actual.value = convert_ushort2((ushort2)ushort_values[i]);
-    compare_ushort_elements("convert_ushort2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_ushort("convert_ushort2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -2659,7 +3847,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((ushort2)ushort_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_ushort("convert_ushort2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2668,7 +3856,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)ushort_values[i]));
     actual.value = convert_ushort4((ushort4)ushort_values[i]);
-    compare_ushort_elements("convert_ushort4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_ushort("convert_ushort4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -2676,7 +3864,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((ushort4)ushort_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_ushort("convert_ushort4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2685,7 +3873,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)ushort_values[i]));
     actual.value = convert_ushort8((ushort8)ushort_values[i]);
-    compare_ushort_elements("convert_ushort8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_ushort("convert_ushort8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -2693,7 +3881,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((ushort8)ushort_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_ushort("convert_ushort8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2702,7 +3890,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)ushort_values[i]));
     actual.value = convert_ushort16((ushort16)ushort_values[i]);
-    compare_ushort_elements("convert_ushort16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_ushort("convert_ushort16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -2710,7 +3898,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((ushort16)ushort_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_ushort("convert_ushort16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2719,7 +3907,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)ushort_values[i]));
     actual.value = convert_int((ushort)ushort_values[i]);
-    compare_int_elements("convert_int((ushort))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_ushort("convert_int(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -2727,7 +3915,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((ushort)ushort_values[i]);
-    compare_int_elements("convert_int_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_ushort("convert_int_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2736,7 +3924,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)ushort_values[i]));
     actual.value = convert_int2((ushort2)ushort_values[i]);
-    compare_int_elements("convert_int2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_ushort("convert_int2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -2744,7 +3932,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((ushort2)ushort_values[i]);
-    compare_int_elements("convert_int2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_ushort("convert_int2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2753,7 +3941,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)ushort_values[i]));
     actual.value = convert_int4((ushort4)ushort_values[i]);
-    compare_int_elements("convert_int4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_ushort("convert_int4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -2761,7 +3949,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((ushort4)ushort_values[i]);
-    compare_int_elements("convert_int4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_ushort("convert_int4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2770,7 +3958,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)ushort_values[i]));
     actual.value = convert_int8((ushort8)ushort_values[i]);
-    compare_int_elements("convert_int8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_ushort("convert_int8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -2778,7 +3966,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((ushort8)ushort_values[i]);
-    compare_int_elements("convert_int8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_ushort("convert_int8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2787,7 +3975,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)ushort_values[i]));
     actual.value = convert_int16((ushort16)ushort_values[i]);
-    compare_int_elements("convert_int16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_ushort("convert_int16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -2795,7 +3983,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((ushort16)ushort_values[i]);
-    compare_int_elements("convert_int16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_ushort("convert_int16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2804,7 +3992,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)ushort_values[i]));
     actual.value = convert_uint((ushort)ushort_values[i]);
-    compare_uint_elements("convert_uint((ushort))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_ushort("convert_uint(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -2812,7 +4000,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((ushort)ushort_values[i]);
-    compare_uint_elements("convert_uint_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_ushort("convert_uint_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2821,7 +4009,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)ushort_values[i]));
     actual.value = convert_uint2((ushort2)ushort_values[i]);
-    compare_uint_elements("convert_uint2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_ushort("convert_uint2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -2829,7 +4017,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((ushort2)ushort_values[i]);
-    compare_uint_elements("convert_uint2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_ushort("convert_uint2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2838,7 +4026,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)ushort_values[i]));
     actual.value = convert_uint4((ushort4)ushort_values[i]);
-    compare_uint_elements("convert_uint4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_ushort("convert_uint4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -2846,7 +4034,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((ushort4)ushort_values[i]);
-    compare_uint_elements("convert_uint4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_ushort("convert_uint4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2855,7 +4043,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)ushort_values[i]));
     actual.value = convert_uint8((ushort8)ushort_values[i]);
-    compare_uint_elements("convert_uint8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_ushort("convert_uint8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -2863,7 +4051,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((ushort8)ushort_values[i]);
-    compare_uint_elements("convert_uint8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_ushort("convert_uint8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
@@ -2872,7 +4060,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)ushort_values[i]));
     actual.value = convert_uint16((ushort16)ushort_values[i]);
-    compare_uint_elements("convert_uint16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_ushort("convert_uint16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -2880,7 +4068,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((ushort16)ushort_values[i]);
-    compare_uint_elements("convert_uint16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_ushort("convert_uint16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -2891,7 +4079,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)ushort_values[i]));
     actual.value = convert_long((ushort)ushort_values[i]);
-    compare_long_elements("convert_long((ushort))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_ushort("convert_long(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -2899,7 +4087,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((ushort)ushort_values[i]);
-    compare_long_elements("convert_long_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_ushort("convert_long_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -2912,7 +4100,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)ushort_values[i]));
     actual.value = convert_long2((ushort2)ushort_values[i]);
-    compare_long_elements("convert_long2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_ushort("convert_long2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -2920,7 +4108,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((ushort2)ushort_values[i]);
-    compare_long_elements("convert_long2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_ushort("convert_long2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -2933,7 +4121,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)ushort_values[i]));
     actual.value = convert_long4((ushort4)ushort_values[i]);
-    compare_long_elements("convert_long4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_ushort("convert_long4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -2941,7 +4129,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((ushort4)ushort_values[i]);
-    compare_long_elements("convert_long4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_ushort("convert_long4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -2954,7 +4142,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)ushort_values[i]));
     actual.value = convert_long8((ushort8)ushort_values[i]);
-    compare_long_elements("convert_long8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_ushort("convert_long8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -2962,7 +4150,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((ushort8)ushort_values[i]);
-    compare_long_elements("convert_long8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_ushort("convert_long8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -2975,7 +4163,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)ushort_values[i]));
     actual.value = convert_long16((ushort16)ushort_values[i]);
-    compare_long_elements("convert_long16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_ushort("convert_long16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -2983,7 +4171,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((ushort16)ushort_values[i]);
-    compare_long_elements("convert_long16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_ushort("convert_long16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -2996,7 +4184,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)ushort_values[i]));
     actual.value = convert_ulong((ushort)ushort_values[i]);
-    compare_ulong_elements("convert_ulong((ushort))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_ushort("convert_ulong(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
     if (ushort_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -3004,7 +4192,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((ushort)ushort_values[i]);
-    compare_ulong_elements("convert_ulong_sat((ushort))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_ushort("convert_ulong_sat(ushort)", i, &ushort_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -3017,7 +4205,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)ushort_values[i]));
     actual.value = convert_ulong2((ushort2)ushort_values[i]);
-    compare_ulong_elements("convert_ulong2((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_ushort("convert_ulong2(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
     if (ushort_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -3025,7 +4213,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((ushort2)ushort_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((ushort2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_ushort("convert_ulong2_sat(ushort2)", i, &ushort_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -3038,7 +4226,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)ushort_values[i]));
     actual.value = convert_ulong4((ushort4)ushort_values[i]);
-    compare_ulong_elements("convert_ulong4((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_ushort("convert_ulong4(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
     if (ushort_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -3046,7 +4234,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((ushort4)ushort_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((ushort4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_ushort("convert_ulong4_sat(ushort4)", i, &ushort_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -3059,7 +4247,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)ushort_values[i]));
     actual.value = convert_ulong8((ushort8)ushort_values[i]);
-    compare_ulong_elements("convert_ulong8((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_ushort("convert_ulong8(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
     if (ushort_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -3067,7 +4255,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((ushort8)ushort_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((ushort8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_ushort("convert_ulong8_sat(ushort8)", i, &ushort_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -3080,7 +4268,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)ushort_values[i]));
     actual.value = convert_ulong16((ushort16)ushort_values[i]);
-    compare_ulong_elements("convert_ulong16((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_ushort("convert_ulong16(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
     if (ushort_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -3088,7 +4276,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((ushort16)ushort_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((ushort16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_ushort("convert_ulong16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -3099,7 +4287,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)int_values[i]));
     actual.value = convert_char((int)int_values[i]);
-    compare_char_elements("convert_char((int))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_int("convert_char(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -3107,7 +4295,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((int)int_values[i]);
-    compare_char_elements("convert_char_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_int("convert_char_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3116,7 +4304,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)int_values[i]));
     actual.value = convert_char2((int2)int_values[i]);
-    compare_char_elements("convert_char2((int2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_int("convert_char2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -3124,7 +4312,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((int2)int_values[i]);
-    compare_char_elements("convert_char2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_int("convert_char2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3133,7 +4321,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)int_values[i]));
     actual.value = convert_char4((int4)int_values[i]);
-    compare_char_elements("convert_char4((int4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_int("convert_char4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -3141,7 +4329,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((int4)int_values[i]);
-    compare_char_elements("convert_char4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_int("convert_char4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3150,7 +4338,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)int_values[i]));
     actual.value = convert_char8((int8)int_values[i]);
-    compare_char_elements("convert_char8((int8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_int("convert_char8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -3158,7 +4346,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((int8)int_values[i]);
-    compare_char_elements("convert_char8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_int("convert_char8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3167,7 +4355,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)int_values[i]));
     actual.value = convert_char16((int16)int_values[i]);
-    compare_char_elements("convert_char16((int16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_int("convert_char16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -3175,7 +4363,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((int16)int_values[i]);
-    compare_char_elements("convert_char16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_int("convert_char16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3184,7 +4372,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)int_values[i]));
     actual.value = convert_uchar((int)int_values[i]);
-    compare_uchar_elements("convert_uchar((int))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_int("convert_uchar(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -3192,7 +4380,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((int)int_values[i]);
-    compare_uchar_elements("convert_uchar_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_int("convert_uchar_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3201,7 +4389,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)int_values[i]));
     actual.value = convert_uchar2((int2)int_values[i]);
-    compare_uchar_elements("convert_uchar2((int2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_int("convert_uchar2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -3209,7 +4397,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((int2)int_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_int("convert_uchar2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3218,7 +4406,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)int_values[i]));
     actual.value = convert_uchar4((int4)int_values[i]);
-    compare_uchar_elements("convert_uchar4((int4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_int("convert_uchar4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -3226,7 +4414,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((int4)int_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_int("convert_uchar4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3235,7 +4423,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)int_values[i]));
     actual.value = convert_uchar8((int8)int_values[i]);
-    compare_uchar_elements("convert_uchar8((int8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_int("convert_uchar8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -3243,7 +4431,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((int8)int_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_int("convert_uchar8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3252,7 +4440,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)int_values[i]));
     actual.value = convert_uchar16((int16)int_values[i]);
-    compare_uchar_elements("convert_uchar16((int16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_int("convert_uchar16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -3260,7 +4448,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((int16)int_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_int("convert_uchar16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3269,7 +4457,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)int_values[i]));
     actual.value = convert_short((int)int_values[i]);
-    compare_short_elements("convert_short((int))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_int("convert_short(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -3277,7 +4465,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((int)int_values[i]);
-    compare_short_elements("convert_short_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_int("convert_short_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3286,7 +4474,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)int_values[i]));
     actual.value = convert_short2((int2)int_values[i]);
-    compare_short_elements("convert_short2((int2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_int("convert_short2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -3294,7 +4482,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((int2)int_values[i]);
-    compare_short_elements("convert_short2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_int("convert_short2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3303,7 +4491,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)int_values[i]));
     actual.value = convert_short4((int4)int_values[i]);
-    compare_short_elements("convert_short4((int4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_int("convert_short4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -3311,7 +4499,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((int4)int_values[i]);
-    compare_short_elements("convert_short4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_int("convert_short4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3320,7 +4508,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)int_values[i]));
     actual.value = convert_short8((int8)int_values[i]);
-    compare_short_elements("convert_short8((int8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_int("convert_short8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -3328,7 +4516,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((int8)int_values[i]);
-    compare_short_elements("convert_short8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_int("convert_short8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3337,7 +4525,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)int_values[i]));
     actual.value = convert_short16((int16)int_values[i]);
-    compare_short_elements("convert_short16((int16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_int("convert_short16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -3345,7 +4533,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((int16)int_values[i]);
-    compare_short_elements("convert_short16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_int("convert_short16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3354,7 +4542,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)int_values[i]));
     actual.value = convert_ushort((int)int_values[i]);
-    compare_ushort_elements("convert_ushort((int))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_int("convert_ushort(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -3362,7 +4550,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((int)int_values[i]);
-    compare_ushort_elements("convert_ushort_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_int("convert_ushort_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3371,7 +4559,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)int_values[i]));
     actual.value = convert_ushort2((int2)int_values[i]);
-    compare_ushort_elements("convert_ushort2((int2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_int("convert_ushort2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -3379,7 +4567,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((int2)int_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_int("convert_ushort2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3388,7 +4576,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)int_values[i]));
     actual.value = convert_ushort4((int4)int_values[i]);
-    compare_ushort_elements("convert_ushort4((int4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_int("convert_ushort4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -3396,7 +4584,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((int4)int_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_int("convert_ushort4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3405,7 +4593,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)int_values[i]));
     actual.value = convert_ushort8((int8)int_values[i]);
-    compare_ushort_elements("convert_ushort8((int8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_int("convert_ushort8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -3413,7 +4601,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((int8)int_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_int("convert_ushort8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3422,7 +4610,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)int_values[i]));
     actual.value = convert_ushort16((int16)int_values[i]);
-    compare_ushort_elements("convert_ushort16((int16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_int("convert_ushort16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -3430,7 +4618,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((int16)int_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_int("convert_ushort16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3439,7 +4627,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)int_values[i]));
     actual.value = convert_int((int)int_values[i]);
-    compare_int_elements("convert_int((int))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_int("convert_int(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -3447,7 +4635,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((int)int_values[i]);
-    compare_int_elements("convert_int_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_int("convert_int_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3456,7 +4644,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)int_values[i]));
     actual.value = convert_int2((int2)int_values[i]);
-    compare_int_elements("convert_int2((int2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_int("convert_int2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -3464,7 +4652,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((int2)int_values[i]);
-    compare_int_elements("convert_int2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_int("convert_int2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3473,7 +4661,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)int_values[i]));
     actual.value = convert_int4((int4)int_values[i]);
-    compare_int_elements("convert_int4((int4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_int("convert_int4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -3481,7 +4669,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((int4)int_values[i]);
-    compare_int_elements("convert_int4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_int("convert_int4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3490,7 +4678,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)int_values[i]));
     actual.value = convert_int8((int8)int_values[i]);
-    compare_int_elements("convert_int8((int8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_int("convert_int8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -3498,7 +4686,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((int8)int_values[i]);
-    compare_int_elements("convert_int8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_int("convert_int8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3507,7 +4695,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)int_values[i]));
     actual.value = convert_int16((int16)int_values[i]);
-    compare_int_elements("convert_int16((int16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_int("convert_int16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -3515,7 +4703,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((int16)int_values[i]);
-    compare_int_elements("convert_int16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_int("convert_int16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3524,7 +4712,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)int_values[i]));
     actual.value = convert_uint((int)int_values[i]);
-    compare_uint_elements("convert_uint((int))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_int("convert_uint(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -3532,7 +4720,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((int)int_values[i]);
-    compare_uint_elements("convert_uint_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_int("convert_uint_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3541,7 +4729,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)int_values[i]));
     actual.value = convert_uint2((int2)int_values[i]);
-    compare_uint_elements("convert_uint2((int2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_int("convert_uint2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -3549,7 +4737,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((int2)int_values[i]);
-    compare_uint_elements("convert_uint2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_int("convert_uint2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3558,7 +4746,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)int_values[i]));
     actual.value = convert_uint4((int4)int_values[i]);
-    compare_uint_elements("convert_uint4((int4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_int("convert_uint4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -3566,7 +4754,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((int4)int_values[i]);
-    compare_uint_elements("convert_uint4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_int("convert_uint4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3575,7 +4763,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)int_values[i]));
     actual.value = convert_uint8((int8)int_values[i]);
-    compare_uint_elements("convert_uint8((int8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_int("convert_uint8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -3583,7 +4771,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((int8)int_values[i]);
-    compare_uint_elements("convert_uint8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_int("convert_uint8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
@@ -3592,7 +4780,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)int_values[i]));
     actual.value = convert_uint16((int16)int_values[i]);
-    compare_uint_elements("convert_uint16((int16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_int("convert_uint16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -3600,7 +4788,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((int16)int_values[i]);
-    compare_uint_elements("convert_uint16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_int("convert_uint16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -3611,7 +4799,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)int_values[i]));
     actual.value = convert_long((int)int_values[i]);
-    compare_long_elements("convert_long((int))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_int("convert_long(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -3619,7 +4807,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((int)int_values[i]);
-    compare_long_elements("convert_long_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_int("convert_long_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -3632,7 +4820,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)int_values[i]));
     actual.value = convert_long2((int2)int_values[i]);
-    compare_long_elements("convert_long2((int2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_int("convert_long2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -3640,7 +4828,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((int2)int_values[i]);
-    compare_long_elements("convert_long2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_int("convert_long2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -3653,7 +4841,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)int_values[i]));
     actual.value = convert_long4((int4)int_values[i]);
-    compare_long_elements("convert_long4((int4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_int("convert_long4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -3661,7 +4849,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((int4)int_values[i]);
-    compare_long_elements("convert_long4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_int("convert_long4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -3674,7 +4862,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)int_values[i]));
     actual.value = convert_long8((int8)int_values[i]);
-    compare_long_elements("convert_long8((int8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_int("convert_long8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -3682,7 +4870,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((int8)int_values[i]);
-    compare_long_elements("convert_long8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_int("convert_long8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -3695,7 +4883,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)int_values[i]));
     actual.value = convert_long16((int16)int_values[i]);
-    compare_long_elements("convert_long16((int16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_int("convert_long16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -3703,7 +4891,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((int16)int_values[i]);
-    compare_long_elements("convert_long16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_int("convert_long16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -3716,7 +4904,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)int_values[i]));
     actual.value = convert_ulong((int)int_values[i]);
-    compare_ulong_elements("convert_ulong((int))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_int("convert_ulong(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
     if (int_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -3724,7 +4912,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((int)int_values[i]);
-    compare_ulong_elements("convert_ulong_sat((int))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_int("convert_ulong_sat(int)", i, &int_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -3737,7 +4925,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)int_values[i]));
     actual.value = convert_ulong2((int2)int_values[i]);
-    compare_ulong_elements("convert_ulong2((int2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_int("convert_ulong2(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
     if (int_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -3745,7 +4933,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((int2)int_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((int2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_int("convert_ulong2_sat(int2)", i, &int_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -3758,7 +4946,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)int_values[i]));
     actual.value = convert_ulong4((int4)int_values[i]);
-    compare_ulong_elements("convert_ulong4((int4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_int("convert_ulong4(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
     if (int_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -3766,7 +4954,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((int4)int_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((int4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_int("convert_ulong4_sat(int4)", i, &int_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -3779,7 +4967,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)int_values[i]));
     actual.value = convert_ulong8((int8)int_values[i]);
-    compare_ulong_elements("convert_ulong8((int8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_int("convert_ulong8(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
     if (int_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -3787,7 +4975,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((int8)int_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((int8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_int("convert_ulong8_sat(int8)", i, &int_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -3800,7 +4988,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)int_values[i]));
     actual.value = convert_ulong16((int16)int_values[i]);
-    compare_ulong_elements("convert_ulong16((int16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_int("convert_ulong16(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
     if (int_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -3808,7 +4996,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((int16)int_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((int16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_int("convert_ulong16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -3819,7 +5007,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)uint_values[i]));
     actual.value = convert_char((uint)uint_values[i]);
-    compare_char_elements("convert_char((uint))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_uint("convert_char(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -3827,7 +5015,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((uint)uint_values[i]);
-    compare_char_elements("convert_char_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_uint("convert_char_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3836,7 +5024,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)uint_values[i]));
     actual.value = convert_char2((uint2)uint_values[i]);
-    compare_char_elements("convert_char2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_uint("convert_char2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -3844,7 +5032,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((uint2)uint_values[i]);
-    compare_char_elements("convert_char2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_uint("convert_char2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3853,7 +5041,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)uint_values[i]));
     actual.value = convert_char4((uint4)uint_values[i]);
-    compare_char_elements("convert_char4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_uint("convert_char4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -3861,7 +5049,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((uint4)uint_values[i]);
-    compare_char_elements("convert_char4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_uint("convert_char4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3870,7 +5058,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)uint_values[i]));
     actual.value = convert_char8((uint8)uint_values[i]);
-    compare_char_elements("convert_char8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_uint("convert_char8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -3878,7 +5066,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((uint8)uint_values[i]);
-    compare_char_elements("convert_char8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_uint("convert_char8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3887,7 +5075,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)uint_values[i]));
     actual.value = convert_char16((uint16)uint_values[i]);
-    compare_char_elements("convert_char16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_uint("convert_char16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -3895,7 +5083,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((uint16)uint_values[i]);
-    compare_char_elements("convert_char16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_uint("convert_char16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3904,7 +5092,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)uint_values[i]));
     actual.value = convert_uchar((uint)uint_values[i]);
-    compare_uchar_elements("convert_uchar((uint))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_uint("convert_uchar(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -3912,7 +5100,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((uint)uint_values[i]);
-    compare_uchar_elements("convert_uchar_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_uint("convert_uchar_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3921,7 +5109,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)uint_values[i]));
     actual.value = convert_uchar2((uint2)uint_values[i]);
-    compare_uchar_elements("convert_uchar2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_uint("convert_uchar2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -3929,7 +5117,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((uint2)uint_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_uint("convert_uchar2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3938,7 +5126,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)uint_values[i]));
     actual.value = convert_uchar4((uint4)uint_values[i]);
-    compare_uchar_elements("convert_uchar4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_uint("convert_uchar4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -3946,7 +5134,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((uint4)uint_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_uint("convert_uchar4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3955,7 +5143,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)uint_values[i]));
     actual.value = convert_uchar8((uint8)uint_values[i]);
-    compare_uchar_elements("convert_uchar8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_uint("convert_uchar8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -3963,7 +5151,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((uint8)uint_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_uint("convert_uchar8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3972,7 +5160,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)uint_values[i]));
     actual.value = convert_uchar16((uint16)uint_values[i]);
-    compare_uchar_elements("convert_uchar16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_uint("convert_uchar16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -3980,7 +5168,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((uint16)uint_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_uint("convert_uchar16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -3989,7 +5177,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)uint_values[i]));
     actual.value = convert_short((uint)uint_values[i]);
-    compare_short_elements("convert_short((uint))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_uint("convert_short(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -3997,7 +5185,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((uint)uint_values[i]);
-    compare_short_elements("convert_short_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_uint("convert_short_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4006,7 +5194,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)uint_values[i]));
     actual.value = convert_short2((uint2)uint_values[i]);
-    compare_short_elements("convert_short2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_uint("convert_short2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -4014,7 +5202,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((uint2)uint_values[i]);
-    compare_short_elements("convert_short2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_uint("convert_short2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4023,7 +5211,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)uint_values[i]));
     actual.value = convert_short4((uint4)uint_values[i]);
-    compare_short_elements("convert_short4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_uint("convert_short4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -4031,7 +5219,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((uint4)uint_values[i]);
-    compare_short_elements("convert_short4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_uint("convert_short4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4040,7 +5228,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)uint_values[i]));
     actual.value = convert_short8((uint8)uint_values[i]);
-    compare_short_elements("convert_short8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_uint("convert_short8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -4048,7 +5236,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((uint8)uint_values[i]);
-    compare_short_elements("convert_short8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_uint("convert_short8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4057,7 +5245,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)uint_values[i]));
     actual.value = convert_short16((uint16)uint_values[i]);
-    compare_short_elements("convert_short16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_uint("convert_short16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -4065,7 +5253,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((uint16)uint_values[i]);
-    compare_short_elements("convert_short16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_uint("convert_short16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4074,7 +5262,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)uint_values[i]));
     actual.value = convert_ushort((uint)uint_values[i]);
-    compare_ushort_elements("convert_ushort((uint))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_uint("convert_ushort(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -4082,7 +5270,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((uint)uint_values[i]);
-    compare_ushort_elements("convert_ushort_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_uint("convert_ushort_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4091,7 +5279,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)uint_values[i]));
     actual.value = convert_ushort2((uint2)uint_values[i]);
-    compare_ushort_elements("convert_ushort2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_uint("convert_ushort2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -4099,7 +5287,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((uint2)uint_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_uint("convert_ushort2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4108,7 +5296,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)uint_values[i]));
     actual.value = convert_ushort4((uint4)uint_values[i]);
-    compare_ushort_elements("convert_ushort4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_uint("convert_ushort4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -4116,7 +5304,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((uint4)uint_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_uint("convert_ushort4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4125,7 +5313,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)uint_values[i]));
     actual.value = convert_ushort8((uint8)uint_values[i]);
-    compare_ushort_elements("convert_ushort8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_uint("convert_ushort8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -4133,7 +5321,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((uint8)uint_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_uint("convert_ushort8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4142,7 +5330,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)uint_values[i]));
     actual.value = convert_ushort16((uint16)uint_values[i]);
-    compare_ushort_elements("convert_ushort16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_uint("convert_ushort16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -4150,7 +5338,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((uint16)uint_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_uint("convert_ushort16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4159,7 +5347,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)uint_values[i]));
     actual.value = convert_int((uint)uint_values[i]);
-    compare_int_elements("convert_int((uint))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_uint("convert_int(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -4167,7 +5355,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((uint)uint_values[i]);
-    compare_int_elements("convert_int_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_uint("convert_int_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4176,7 +5364,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)uint_values[i]));
     actual.value = convert_int2((uint2)uint_values[i]);
-    compare_int_elements("convert_int2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_uint("convert_int2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -4184,7 +5372,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((uint2)uint_values[i]);
-    compare_int_elements("convert_int2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_uint("convert_int2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4193,7 +5381,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)uint_values[i]));
     actual.value = convert_int4((uint4)uint_values[i]);
-    compare_int_elements("convert_int4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_uint("convert_int4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -4201,7 +5389,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((uint4)uint_values[i]);
-    compare_int_elements("convert_int4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_uint("convert_int4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4210,7 +5398,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)uint_values[i]));
     actual.value = convert_int8((uint8)uint_values[i]);
-    compare_int_elements("convert_int8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_uint("convert_int8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -4218,7 +5406,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((uint8)uint_values[i]);
-    compare_int_elements("convert_int8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_uint("convert_int8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4227,7 +5415,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)uint_values[i]));
     actual.value = convert_int16((uint16)uint_values[i]);
-    compare_int_elements("convert_int16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_uint("convert_int16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -4235,7 +5423,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((uint16)uint_values[i]);
-    compare_int_elements("convert_int16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_uint("convert_int16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4244,7 +5432,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)uint_values[i]));
     actual.value = convert_uint((uint)uint_values[i]);
-    compare_uint_elements("convert_uint((uint))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_uint("convert_uint(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -4252,7 +5440,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((uint)uint_values[i]);
-    compare_uint_elements("convert_uint_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_uint("convert_uint_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4261,7 +5449,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)uint_values[i]));
     actual.value = convert_uint2((uint2)uint_values[i]);
-    compare_uint_elements("convert_uint2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_uint("convert_uint2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -4269,7 +5457,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((uint2)uint_values[i]);
-    compare_uint_elements("convert_uint2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_uint("convert_uint2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4278,7 +5466,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)uint_values[i]));
     actual.value = convert_uint4((uint4)uint_values[i]);
-    compare_uint_elements("convert_uint4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_uint("convert_uint4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -4286,7 +5474,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((uint4)uint_values[i]);
-    compare_uint_elements("convert_uint4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_uint("convert_uint4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4295,7 +5483,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)uint_values[i]));
     actual.value = convert_uint8((uint8)uint_values[i]);
-    compare_uint_elements("convert_uint8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_uint("convert_uint8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -4303,7 +5491,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((uint8)uint_values[i]);
-    compare_uint_elements("convert_uint8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_uint("convert_uint8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
@@ -4312,7 +5500,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)uint_values[i]));
     actual.value = convert_uint16((uint16)uint_values[i]);
-    compare_uint_elements("convert_uint16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_uint("convert_uint16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -4320,7 +5508,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((uint16)uint_values[i]);
-    compare_uint_elements("convert_uint16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_uint("convert_uint16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -4331,7 +5519,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)uint_values[i]));
     actual.value = convert_long((uint)uint_values[i]);
-    compare_long_elements("convert_long((uint))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_uint("convert_long(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -4339,7 +5527,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((uint)uint_values[i]);
-    compare_long_elements("convert_long_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_uint("convert_long_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4352,7 +5540,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)uint_values[i]));
     actual.value = convert_long2((uint2)uint_values[i]);
-    compare_long_elements("convert_long2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_uint("convert_long2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -4360,7 +5548,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((uint2)uint_values[i]);
-    compare_long_elements("convert_long2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_uint("convert_long2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -4373,7 +5561,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)uint_values[i]));
     actual.value = convert_long4((uint4)uint_values[i]);
-    compare_long_elements("convert_long4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_uint("convert_long4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -4381,7 +5569,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((uint4)uint_values[i]);
-    compare_long_elements("convert_long4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_uint("convert_long4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -4394,7 +5582,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)uint_values[i]));
     actual.value = convert_long8((uint8)uint_values[i]);
-    compare_long_elements("convert_long8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_uint("convert_long8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -4402,7 +5590,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((uint8)uint_values[i]);
-    compare_long_elements("convert_long8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_uint("convert_long8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -4415,7 +5603,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)uint_values[i]));
     actual.value = convert_long16((uint16)uint_values[i]);
-    compare_long_elements("convert_long16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_uint("convert_long16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -4423,7 +5611,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((uint16)uint_values[i]);
-    compare_long_elements("convert_long16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_uint("convert_long16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -4436,7 +5624,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)uint_values[i]));
     actual.value = convert_ulong((uint)uint_values[i]);
-    compare_ulong_elements("convert_ulong((uint))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_uint("convert_ulong(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
     if (uint_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -4444,7 +5632,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((uint)uint_values[i]);
-    compare_ulong_elements("convert_ulong_sat((uint))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_uint("convert_ulong_sat(uint)", i, &uint_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4457,7 +5645,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)uint_values[i]));
     actual.value = convert_ulong2((uint2)uint_values[i]);
-    compare_ulong_elements("convert_ulong2((uint2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_uint("convert_ulong2(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
     if (uint_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -4465,7 +5653,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((uint2)uint_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((uint2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_uint("convert_ulong2_sat(uint2)", i, &uint_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -4478,7 +5666,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)uint_values[i]));
     actual.value = convert_ulong4((uint4)uint_values[i]);
-    compare_ulong_elements("convert_ulong4((uint4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_uint("convert_ulong4(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
     if (uint_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -4486,7 +5674,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((uint4)uint_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((uint4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_uint("convert_ulong4_sat(uint4)", i, &uint_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -4499,7 +5687,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)uint_values[i]));
     actual.value = convert_ulong8((uint8)uint_values[i]);
-    compare_ulong_elements("convert_ulong8((uint8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_uint("convert_ulong8(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
     if (uint_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -4507,7 +5695,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((uint8)uint_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((uint8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_uint("convert_ulong8_sat(uint8)", i, &uint_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -4520,7 +5708,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)uint_values[i]));
     actual.value = convert_ulong16((uint16)uint_values[i]);
-    compare_ulong_elements("convert_ulong16((uint16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_uint("convert_ulong16(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
     if (uint_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -4528,7 +5716,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((uint16)uint_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((uint16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_uint("convert_ulong16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -4541,7 +5729,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)long_values[i]));
     actual.value = convert_char((long)long_values[i]);
-    compare_char_elements("convert_char((long))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_long("convert_char(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -4549,7 +5737,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((long)long_values[i]);
-    compare_char_elements("convert_char_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_long("convert_char_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4562,7 +5750,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)long_values[i]));
     actual.value = convert_char2((long2)long_values[i]);
-    compare_char_elements("convert_char2((long2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_long("convert_char2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -4570,7 +5758,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((long2)long_values[i]);
-    compare_char_elements("convert_char2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_long("convert_char2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -4583,7 +5771,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)long_values[i]));
     actual.value = convert_char4((long4)long_values[i]);
-    compare_char_elements("convert_char4((long4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_long("convert_char4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -4591,7 +5779,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((long4)long_values[i]);
-    compare_char_elements("convert_char4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_long("convert_char4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -4604,7 +5792,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)long_values[i]));
     actual.value = convert_char8((long8)long_values[i]);
-    compare_char_elements("convert_char8((long8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_long("convert_char8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -4612,7 +5800,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((long8)long_values[i]);
-    compare_char_elements("convert_char8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_long("convert_char8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -4625,7 +5813,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)long_values[i]));
     actual.value = convert_char16((long16)long_values[i]);
-    compare_char_elements("convert_char16((long16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_long("convert_char16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -4633,7 +5821,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((long16)long_values[i]);
-    compare_char_elements("convert_char16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_long("convert_char16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -4646,7 +5834,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)long_values[i]));
     actual.value = convert_uchar((long)long_values[i]);
-    compare_uchar_elements("convert_uchar((long))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_long("convert_uchar(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -4654,7 +5842,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((long)long_values[i]);
-    compare_uchar_elements("convert_uchar_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_long("convert_uchar_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4667,7 +5855,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)long_values[i]));
     actual.value = convert_uchar2((long2)long_values[i]);
-    compare_uchar_elements("convert_uchar2((long2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_long("convert_uchar2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -4675,7 +5863,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((long2)long_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_long("convert_uchar2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -4688,7 +5876,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)long_values[i]));
     actual.value = convert_uchar4((long4)long_values[i]);
-    compare_uchar_elements("convert_uchar4((long4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_long("convert_uchar4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -4696,7 +5884,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((long4)long_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_long("convert_uchar4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -4709,7 +5897,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)long_values[i]));
     actual.value = convert_uchar8((long8)long_values[i]);
-    compare_uchar_elements("convert_uchar8((long8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_long("convert_uchar8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -4717,7 +5905,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((long8)long_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_long("convert_uchar8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -4730,7 +5918,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)long_values[i]));
     actual.value = convert_uchar16((long16)long_values[i]);
-    compare_uchar_elements("convert_uchar16((long16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_long("convert_uchar16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -4738,7 +5926,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((long16)long_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_long("convert_uchar16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -4751,7 +5939,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)long_values[i]));
     actual.value = convert_short((long)long_values[i]);
-    compare_short_elements("convert_short((long))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_long("convert_short(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -4759,7 +5947,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((long)long_values[i]);
-    compare_short_elements("convert_short_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_long("convert_short_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4772,7 +5960,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)long_values[i]));
     actual.value = convert_short2((long2)long_values[i]);
-    compare_short_elements("convert_short2((long2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_long("convert_short2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -4780,7 +5968,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((long2)long_values[i]);
-    compare_short_elements("convert_short2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_long("convert_short2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -4793,7 +5981,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)long_values[i]));
     actual.value = convert_short4((long4)long_values[i]);
-    compare_short_elements("convert_short4((long4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_long("convert_short4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -4801,7 +5989,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((long4)long_values[i]);
-    compare_short_elements("convert_short4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_long("convert_short4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -4814,7 +6002,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)long_values[i]));
     actual.value = convert_short8((long8)long_values[i]);
-    compare_short_elements("convert_short8((long8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_long("convert_short8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -4822,7 +6010,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((long8)long_values[i]);
-    compare_short_elements("convert_short8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_long("convert_short8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -4835,7 +6023,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)long_values[i]));
     actual.value = convert_short16((long16)long_values[i]);
-    compare_short_elements("convert_short16((long16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_long("convert_short16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -4843,7 +6031,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((long16)long_values[i]);
-    compare_short_elements("convert_short16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_long("convert_short16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -4856,7 +6044,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)long_values[i]));
     actual.value = convert_ushort((long)long_values[i]);
-    compare_ushort_elements("convert_ushort((long))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_long("convert_ushort(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -4864,7 +6052,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((long)long_values[i]);
-    compare_ushort_elements("convert_ushort_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_long("convert_ushort_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4877,7 +6065,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)long_values[i]));
     actual.value = convert_ushort2((long2)long_values[i]);
-    compare_ushort_elements("convert_ushort2((long2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_long("convert_ushort2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -4885,7 +6073,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((long2)long_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_long("convert_ushort2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -4898,7 +6086,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)long_values[i]));
     actual.value = convert_ushort4((long4)long_values[i]);
-    compare_ushort_elements("convert_ushort4((long4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_long("convert_ushort4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -4906,7 +6094,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((long4)long_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_long("convert_ushort4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -4919,7 +6107,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)long_values[i]));
     actual.value = convert_ushort8((long8)long_values[i]);
-    compare_ushort_elements("convert_ushort8((long8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_long("convert_ushort8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -4927,7 +6115,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((long8)long_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_long("convert_ushort8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -4940,7 +6128,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)long_values[i]));
     actual.value = convert_ushort16((long16)long_values[i]);
-    compare_ushort_elements("convert_ushort16((long16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_long("convert_ushort16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -4948,7 +6136,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((long16)long_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_long("convert_ushort16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -4961,7 +6149,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)long_values[i]));
     actual.value = convert_int((long)long_values[i]);
-    compare_int_elements("convert_int((long))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_long("convert_int(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -4969,7 +6157,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((long)long_values[i]);
-    compare_int_elements("convert_int_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_long("convert_int_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -4982,7 +6170,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)long_values[i]));
     actual.value = convert_int2((long2)long_values[i]);
-    compare_int_elements("convert_int2((long2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_long("convert_int2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -4990,7 +6178,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((long2)long_values[i]);
-    compare_int_elements("convert_int2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_long("convert_int2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5003,7 +6191,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)long_values[i]));
     actual.value = convert_int4((long4)long_values[i]);
-    compare_int_elements("convert_int4((long4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_long("convert_int4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -5011,7 +6199,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((long4)long_values[i]);
-    compare_int_elements("convert_int4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_long("convert_int4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5024,7 +6212,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)long_values[i]));
     actual.value = convert_int8((long8)long_values[i]);
-    compare_int_elements("convert_int8((long8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_long("convert_int8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -5032,7 +6220,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((long8)long_values[i]);
-    compare_int_elements("convert_int8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_long("convert_int8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5045,7 +6233,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)long_values[i]));
     actual.value = convert_int16((long16)long_values[i]);
-    compare_int_elements("convert_int16((long16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_long("convert_int16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -5053,7 +6241,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((long16)long_values[i]);
-    compare_int_elements("convert_int16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_long("convert_int16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5066,7 +6254,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)long_values[i]));
     actual.value = convert_uint((long)long_values[i]);
-    compare_uint_elements("convert_uint((long))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_long("convert_uint(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -5074,7 +6262,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((long)long_values[i]);
-    compare_uint_elements("convert_uint_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_long("convert_uint_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5087,7 +6275,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)long_values[i]));
     actual.value = convert_uint2((long2)long_values[i]);
-    compare_uint_elements("convert_uint2((long2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_long("convert_uint2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -5095,7 +6283,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((long2)long_values[i]);
-    compare_uint_elements("convert_uint2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_long("convert_uint2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5108,7 +6296,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)long_values[i]));
     actual.value = convert_uint4((long4)long_values[i]);
-    compare_uint_elements("convert_uint4((long4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_long("convert_uint4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -5116,7 +6304,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((long4)long_values[i]);
-    compare_uint_elements("convert_uint4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_long("convert_uint4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5129,7 +6317,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)long_values[i]));
     actual.value = convert_uint8((long8)long_values[i]);
-    compare_uint_elements("convert_uint8((long8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_long("convert_uint8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -5137,7 +6325,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((long8)long_values[i]);
-    compare_uint_elements("convert_uint8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_long("convert_uint8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5150,7 +6338,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)long_values[i]));
     actual.value = convert_uint16((long16)long_values[i]);
-    compare_uint_elements("convert_uint16((long16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_long("convert_uint16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -5158,7 +6346,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((long16)long_values[i]);
-    compare_uint_elements("convert_uint16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_long("convert_uint16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5171,7 +6359,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)long_values[i]));
     actual.value = convert_long((long)long_values[i]);
-    compare_long_elements("convert_long((long))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_long("convert_long(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -5179,7 +6367,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((long)long_values[i]);
-    compare_long_elements("convert_long_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_long("convert_long_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5192,7 +6380,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)long_values[i]));
     actual.value = convert_long2((long2)long_values[i]);
-    compare_long_elements("convert_long2((long2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_long("convert_long2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -5200,7 +6388,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((long2)long_values[i]);
-    compare_long_elements("convert_long2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_long("convert_long2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5213,7 +6401,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)long_values[i]));
     actual.value = convert_long4((long4)long_values[i]);
-    compare_long_elements("convert_long4((long4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_long("convert_long4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -5221,7 +6409,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((long4)long_values[i]);
-    compare_long_elements("convert_long4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_long("convert_long4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5234,7 +6422,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)long_values[i]));
     actual.value = convert_long8((long8)long_values[i]);
-    compare_long_elements("convert_long8((long8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_long("convert_long8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -5242,7 +6430,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((long8)long_values[i]);
-    compare_long_elements("convert_long8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_long("convert_long8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5255,7 +6443,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)long_values[i]));
     actual.value = convert_long16((long16)long_values[i]);
-    compare_long_elements("convert_long16((long16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_long("convert_long16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -5263,7 +6451,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((long16)long_values[i]);
-    compare_long_elements("convert_long16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_long("convert_long16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5276,7 +6464,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)long_values[i]));
     actual.value = convert_ulong((long)long_values[i]);
-    compare_ulong_elements("convert_ulong((long))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_long("convert_ulong(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
     if (long_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -5284,7 +6472,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((long)long_values[i]);
-    compare_ulong_elements("convert_ulong_sat((long))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_long("convert_ulong_sat(long)", i, &long_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5297,7 +6485,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)long_values[i]));
     actual.value = convert_ulong2((long2)long_values[i]);
-    compare_ulong_elements("convert_ulong2((long2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_long("convert_ulong2(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
     if (long_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -5305,7 +6493,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((long2)long_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((long2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_long("convert_ulong2_sat(long2)", i, &long_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5318,7 +6506,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)long_values[i]));
     actual.value = convert_ulong4((long4)long_values[i]);
-    compare_ulong_elements("convert_ulong4((long4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_long("convert_ulong4(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
     if (long_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -5326,7 +6514,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((long4)long_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((long4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_long("convert_ulong4_sat(long4)", i, &long_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5339,7 +6527,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)long_values[i]));
     actual.value = convert_ulong8((long8)long_values[i]);
-    compare_ulong_elements("convert_ulong8((long8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_long("convert_ulong8(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
     if (long_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -5347,7 +6535,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((long8)long_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((long8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_long("convert_ulong8_sat(long8)", i, &long_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5360,7 +6548,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)long_values[i]));
     actual.value = convert_ulong16((long16)long_values[i]);
-    compare_ulong_elements("convert_ulong16((long16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_long("convert_ulong16(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
     if (long_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -5368,7 +6556,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((long16)long_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((long16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_long("convert_ulong16_sat(long16)", i, &long_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5381,7 +6569,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)ulong_values[i]));
     actual.value = convert_char((ulong)ulong_values[i]);
-    compare_char_elements("convert_char((ulong))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_ulong("convert_char(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (char)min_expected;
     }
@@ -5389,7 +6577,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((ulong)ulong_values[i]);
-    compare_char_elements("convert_char_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_ulong("convert_char_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5402,7 +6590,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)ulong_values[i]));
     actual.value = convert_char2((ulong2)ulong_values[i]);
-    compare_char_elements("convert_char2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_ulong("convert_char2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (char2)min_expected;
     }
@@ -5410,7 +6598,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((ulong2)ulong_values[i]);
-    compare_char_elements("convert_char2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_ulong("convert_char2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5423,7 +6611,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)ulong_values[i]));
     actual.value = convert_char4((ulong4)ulong_values[i]);
-    compare_char_elements("convert_char4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_ulong("convert_char4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (char4)min_expected;
     }
@@ -5431,7 +6619,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((ulong4)ulong_values[i]);
-    compare_char_elements("convert_char4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_ulong("convert_char4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5444,7 +6632,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)ulong_values[i]));
     actual.value = convert_char8((ulong8)ulong_values[i]);
-    compare_char_elements("convert_char8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_ulong("convert_char8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (char8)min_expected;
     }
@@ -5452,7 +6640,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((ulong8)ulong_values[i]);
-    compare_char_elements("convert_char8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_ulong("convert_char8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5465,7 +6653,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)ulong_values[i]));
     actual.value = convert_char16((ulong16)ulong_values[i]);
-    compare_char_elements("convert_char16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_ulong("convert_char16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (char16)min_expected;
     }
@@ -5473,7 +6661,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((ulong16)ulong_values[i]);
-    compare_char_elements("convert_char16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_ulong("convert_char16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5486,7 +6674,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)ulong_values[i]));
     actual.value = convert_uchar((ulong)ulong_values[i]);
-    compare_uchar_elements("convert_uchar((ulong))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_ulong("convert_uchar(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (uchar)min_expected;
     }
@@ -5494,7 +6682,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((ulong)ulong_values[i]);
-    compare_uchar_elements("convert_uchar_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_ulong("convert_uchar_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5507,7 +6695,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)ulong_values[i]));
     actual.value = convert_uchar2((ulong2)ulong_values[i]);
-    compare_uchar_elements("convert_uchar2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_ulong("convert_uchar2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (uchar2)min_expected;
     }
@@ -5515,7 +6703,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((ulong2)ulong_values[i]);
-    compare_uchar_elements("convert_uchar2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_ulong("convert_uchar2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5528,7 +6716,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)ulong_values[i]));
     actual.value = convert_uchar4((ulong4)ulong_values[i]);
-    compare_uchar_elements("convert_uchar4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_ulong("convert_uchar4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (uchar4)min_expected;
     }
@@ -5536,7 +6724,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((ulong4)ulong_values[i]);
-    compare_uchar_elements("convert_uchar4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_ulong("convert_uchar4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5549,7 +6737,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)ulong_values[i]));
     actual.value = convert_uchar8((ulong8)ulong_values[i]);
-    compare_uchar_elements("convert_uchar8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_ulong("convert_uchar8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (uchar8)min_expected;
     }
@@ -5557,7 +6745,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((ulong8)ulong_values[i]);
-    compare_uchar_elements("convert_uchar8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_ulong("convert_uchar8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5570,7 +6758,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)ulong_values[i]));
     actual.value = convert_uchar16((ulong16)ulong_values[i]);
-    compare_uchar_elements("convert_uchar16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_ulong("convert_uchar16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (uchar16)min_expected;
     }
@@ -5578,7 +6766,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((ulong16)ulong_values[i]);
-    compare_uchar_elements("convert_uchar16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_ulong("convert_uchar16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5591,7 +6779,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)ulong_values[i]));
     actual.value = convert_short((ulong)ulong_values[i]);
-    compare_short_elements("convert_short((ulong))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_ulong("convert_short(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (short)min_expected;
     }
@@ -5599,7 +6787,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((ulong)ulong_values[i]);
-    compare_short_elements("convert_short_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_ulong("convert_short_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5612,7 +6800,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)ulong_values[i]));
     actual.value = convert_short2((ulong2)ulong_values[i]);
-    compare_short_elements("convert_short2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_ulong("convert_short2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (short2)min_expected;
     }
@@ -5620,7 +6808,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((ulong2)ulong_values[i]);
-    compare_short_elements("convert_short2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_ulong("convert_short2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5633,7 +6821,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)ulong_values[i]));
     actual.value = convert_short4((ulong4)ulong_values[i]);
-    compare_short_elements("convert_short4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_ulong("convert_short4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (short4)min_expected;
     }
@@ -5641,7 +6829,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((ulong4)ulong_values[i]);
-    compare_short_elements("convert_short4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_ulong("convert_short4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5654,7 +6842,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)ulong_values[i]));
     actual.value = convert_short8((ulong8)ulong_values[i]);
-    compare_short_elements("convert_short8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_ulong("convert_short8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (short8)min_expected;
     }
@@ -5662,7 +6850,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((ulong8)ulong_values[i]);
-    compare_short_elements("convert_short8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_ulong("convert_short8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5675,7 +6863,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)ulong_values[i]));
     actual.value = convert_short16((ulong16)ulong_values[i]);
-    compare_short_elements("convert_short16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_ulong("convert_short16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (short16)min_expected;
     }
@@ -5683,7 +6871,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((ulong16)ulong_values[i]);
-    compare_short_elements("convert_short16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_ulong("convert_short16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5696,7 +6884,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)ulong_values[i]));
     actual.value = convert_ushort((ulong)ulong_values[i]);
-    compare_ushort_elements("convert_ushort((ulong))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_ulong("convert_ushort(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (ushort)min_expected;
     }
@@ -5704,7 +6892,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((ulong)ulong_values[i]);
-    compare_ushort_elements("convert_ushort_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_ulong("convert_ushort_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5717,7 +6905,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)ulong_values[i]));
     actual.value = convert_ushort2((ulong2)ulong_values[i]);
-    compare_ushort_elements("convert_ushort2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_ulong("convert_ushort2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (ushort2)min_expected;
     }
@@ -5725,7 +6913,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((ulong2)ulong_values[i]);
-    compare_ushort_elements("convert_ushort2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_ulong("convert_ushort2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5738,7 +6926,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)ulong_values[i]));
     actual.value = convert_ushort4((ulong4)ulong_values[i]);
-    compare_ushort_elements("convert_ushort4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_ulong("convert_ushort4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (ushort4)min_expected;
     }
@@ -5746,7 +6934,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((ulong4)ulong_values[i]);
-    compare_ushort_elements("convert_ushort4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_ulong("convert_ushort4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5759,7 +6947,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)ulong_values[i]));
     actual.value = convert_ushort8((ulong8)ulong_values[i]);
-    compare_ushort_elements("convert_ushort8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_ulong("convert_ushort8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (ushort8)min_expected;
     }
@@ -5767,7 +6955,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((ulong8)ulong_values[i]);
-    compare_ushort_elements("convert_ushort8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_ulong("convert_ushort8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5780,7 +6968,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)ulong_values[i]));
     actual.value = convert_ushort16((ulong16)ulong_values[i]);
-    compare_ushort_elements("convert_ushort16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_ulong("convert_ushort16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (ushort16)min_expected;
     }
@@ -5788,7 +6976,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((ulong16)ulong_values[i]);
-    compare_ushort_elements("convert_ushort16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_ulong("convert_ushort16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5801,7 +6989,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)ulong_values[i]));
     actual.value = convert_int((ulong)ulong_values[i]);
-    compare_int_elements("convert_int((ulong))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_ulong("convert_int(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (int)min_expected;
     }
@@ -5809,7 +6997,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((ulong)ulong_values[i]);
-    compare_int_elements("convert_int_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_ulong("convert_int_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5822,7 +7010,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)ulong_values[i]));
     actual.value = convert_int2((ulong2)ulong_values[i]);
-    compare_int_elements("convert_int2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_ulong("convert_int2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (int2)min_expected;
     }
@@ -5830,7 +7018,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((ulong2)ulong_values[i]);
-    compare_int_elements("convert_int2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_ulong("convert_int2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5843,7 +7031,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)ulong_values[i]));
     actual.value = convert_int4((ulong4)ulong_values[i]);
-    compare_int_elements("convert_int4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_ulong("convert_int4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (int4)min_expected;
     }
@@ -5851,7 +7039,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((ulong4)ulong_values[i]);
-    compare_int_elements("convert_int4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_ulong("convert_int4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5864,7 +7052,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)ulong_values[i]));
     actual.value = convert_int8((ulong8)ulong_values[i]);
-    compare_int_elements("convert_int8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_ulong("convert_int8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (int8)min_expected;
     }
@@ -5872,7 +7060,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((ulong8)ulong_values[i]);
-    compare_int_elements("convert_int8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_ulong("convert_int8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5885,7 +7073,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)ulong_values[i]));
     actual.value = convert_int16((ulong16)ulong_values[i]);
-    compare_int_elements("convert_int16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_ulong("convert_int16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (int16)min_expected;
     }
@@ -5893,7 +7081,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((ulong16)ulong_values[i]);
-    compare_int_elements("convert_int16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_ulong("convert_int16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -5906,7 +7094,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)ulong_values[i]));
     actual.value = convert_uint((ulong)ulong_values[i]);
-    compare_uint_elements("convert_uint((ulong))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_ulong("convert_uint(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (uint)min_expected;
     }
@@ -5914,7 +7102,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((ulong)ulong_values[i]);
-    compare_uint_elements("convert_uint_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_ulong("convert_uint_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -5927,7 +7115,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)ulong_values[i]));
     actual.value = convert_uint2((ulong2)ulong_values[i]);
-    compare_uint_elements("convert_uint2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_ulong("convert_uint2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (uint2)min_expected;
     }
@@ -5935,7 +7123,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((ulong2)ulong_values[i]);
-    compare_uint_elements("convert_uint2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_ulong("convert_uint2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -5948,7 +7136,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)ulong_values[i]));
     actual.value = convert_uint4((ulong4)ulong_values[i]);
-    compare_uint_elements("convert_uint4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_ulong("convert_uint4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (uint4)min_expected;
     }
@@ -5956,7 +7144,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((ulong4)ulong_values[i]);
-    compare_uint_elements("convert_uint4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_ulong("convert_uint4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -5969,7 +7157,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)ulong_values[i]));
     actual.value = convert_uint8((ulong8)ulong_values[i]);
-    compare_uint_elements("convert_uint8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_ulong("convert_uint8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (uint8)min_expected;
     }
@@ -5977,7 +7165,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((ulong8)ulong_values[i]);
-    compare_uint_elements("convert_uint8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_ulong("convert_uint8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -5990,7 +7178,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)ulong_values[i]));
     actual.value = convert_uint16((ulong16)ulong_values[i]);
-    compare_uint_elements("convert_uint16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_ulong("convert_uint16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (uint16)min_expected;
     }
@@ -5998,7 +7186,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((ulong16)ulong_values[i]);
-    compare_uint_elements("convert_uint16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_ulong("convert_uint16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -6011,7 +7199,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)ulong_values[i]));
     actual.value = convert_long((ulong)ulong_values[i]);
-    compare_long_elements("convert_long((ulong))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_ulong("convert_long(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (long)min_expected;
     }
@@ -6019,7 +7207,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((ulong)ulong_values[i]);
-    compare_long_elements("convert_long_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_ulong("convert_long_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -6032,7 +7220,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)ulong_values[i]));
     actual.value = convert_long2((ulong2)ulong_values[i]);
-    compare_long_elements("convert_long2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_ulong("convert_long2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (long2)min_expected;
     }
@@ -6040,7 +7228,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((ulong2)ulong_values[i]);
-    compare_long_elements("convert_long2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_ulong("convert_long2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -6053,7 +7241,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)ulong_values[i]));
     actual.value = convert_long4((ulong4)ulong_values[i]);
-    compare_long_elements("convert_long4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_ulong("convert_long4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (long4)min_expected;
     }
@@ -6061,7 +7249,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((ulong4)ulong_values[i]);
-    compare_long_elements("convert_long4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_ulong("convert_long4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -6074,7 +7262,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)ulong_values[i]));
     actual.value = convert_long8((ulong8)ulong_values[i]);
-    compare_long_elements("convert_long8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_ulong("convert_long8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (long8)min_expected;
     }
@@ -6082,7 +7270,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((ulong8)ulong_values[i]);
-    compare_long_elements("convert_long8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_ulong("convert_long8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -6095,7 +7283,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)ulong_values[i]));
     actual.value = convert_long16((ulong16)ulong_values[i]);
-    compare_long_elements("convert_long16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_ulong("convert_long16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (long16)min_expected;
     }
@@ -6103,7 +7291,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((ulong16)ulong_values[i]);
-    compare_long_elements("convert_long16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_ulong("convert_long16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -6116,7 +7304,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)ulong_values[i]));
     actual.value = convert_ulong((ulong)ulong_values[i]);
-    compare_ulong_elements("convert_ulong((ulong))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_ulong("convert_ulong(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
     if (ulong_values[i] < min_expected) {
        expected.value = (ulong)min_expected;
     }
@@ -6124,7 +7312,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((ulong)ulong_values[i]);
-    compare_ulong_elements("convert_ulong_sat((ulong))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_ulong("convert_ulong_sat(ulong)", i, &ulong_values[i], 0, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -6137,7 +7325,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)ulong_values[i]));
     actual.value = convert_ulong2((ulong2)ulong_values[i]);
-    compare_ulong_elements("convert_ulong2((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_ulong("convert_ulong2(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
     if (ulong_values[i] < min_expected) {
        expected.value = (ulong2)min_expected;
     }
@@ -6145,7 +7333,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((ulong2)ulong_values[i]);
-    compare_ulong_elements("convert_ulong2_sat((ulong2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_ulong("convert_ulong2_sat(ulong2)", i, &ulong_values[i], 0, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -6158,7 +7346,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)ulong_values[i]));
     actual.value = convert_ulong4((ulong4)ulong_values[i]);
-    compare_ulong_elements("convert_ulong4((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_ulong("convert_ulong4(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
     if (ulong_values[i] < min_expected) {
        expected.value = (ulong4)min_expected;
     }
@@ -6166,7 +7354,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((ulong4)ulong_values[i]);
-    compare_ulong_elements("convert_ulong4_sat((ulong4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_ulong("convert_ulong4_sat(ulong4)", i, &ulong_values[i], 0, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -6179,7 +7367,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)ulong_values[i]));
     actual.value = convert_ulong8((ulong8)ulong_values[i]);
-    compare_ulong_elements("convert_ulong8((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_ulong("convert_ulong8(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
     if (ulong_values[i] < min_expected) {
        expected.value = (ulong8)min_expected;
     }
@@ -6187,7 +7375,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((ulong8)ulong_values[i]);
-    compare_ulong_elements("convert_ulong8_sat((ulong8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_ulong("convert_ulong8_sat(ulong8)", i, &ulong_values[i], 0, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -6200,7 +7388,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)ulong_values[i]));
     actual.value = convert_ulong16((ulong16)ulong_values[i]);
-    compare_ulong_elements("convert_ulong16((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_ulong("convert_ulong16(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
     if (ulong_values[i] < min_expected) {
        expected.value = (ulong16)min_expected;
     }
@@ -6208,7 +7396,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((ulong16)ulong_values[i]);
-    compare_ulong_elements("convert_ulong16_sat((ulong16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_ulong("convert_ulong16_sat(ulong16)", i, &ulong_values[i], 0, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -6220,7 +7408,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)float_rounded_values[i]));
     actual.value = convert_char((float)float_values[i]);
-    compare_char_elements("convert_char((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -6229,10 +7417,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((float)sat_input);
-    compare_char_elements("convert_char_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)float_rounded_values_rte[i]));
     actual.value = convert_char_rte((float)float_values[i]);
-    compare_char_elements("convert_char_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -6241,10 +7429,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rte((float)sat_input);
-    compare_char_elements("convert_char_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)float_rounded_values_rtz[i]));
     actual.value = convert_char_rtz((float)float_values[i]);
-    compare_char_elements("convert_char_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -6253,10 +7441,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rtz((float)sat_input);
-    compare_char_elements("convert_char_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)float_rounded_values_rtp[i]));
     actual.value = convert_char_rtp((float)float_values[i]);
-    compare_char_elements("convert_char_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -6265,10 +7453,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rtp((float)sat_input);
-    compare_char_elements("convert_char_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)float_rounded_values_rtn[i]));
     actual.value = convert_char_rtn((float)float_values[i]);
-    compare_char_elements("convert_char_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -6277,7 +7465,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rtn((float)sat_input);
-    compare_char_elements("convert_char_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_float("convert_char_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6287,7 +7475,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)float_rounded_values[i]));
     actual.value = convert_char2((float2)float_values[i]);
-    compare_char_elements("convert_char2((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -6296,10 +7484,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((float2)sat_input);
-    compare_char_elements("convert_char2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)float_rounded_values_rte[i]));
     actual.value = convert_char2_rte((float2)float_values[i]);
-    compare_char_elements("convert_char2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -6308,10 +7496,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rte((float2)sat_input);
-    compare_char_elements("convert_char2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)float_rounded_values_rtz[i]));
     actual.value = convert_char2_rtz((float2)float_values[i]);
-    compare_char_elements("convert_char2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -6320,10 +7508,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rtz((float2)sat_input);
-    compare_char_elements("convert_char2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)float_rounded_values_rtp[i]));
     actual.value = convert_char2_rtp((float2)float_values[i]);
-    compare_char_elements("convert_char2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -6332,10 +7520,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rtp((float2)sat_input);
-    compare_char_elements("convert_char2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)float_rounded_values_rtn[i]));
     actual.value = convert_char2_rtn((float2)float_values[i]);
-    compare_char_elements("convert_char2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -6344,7 +7532,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rtn((float2)sat_input);
-    compare_char_elements("convert_char2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_float("convert_char2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6354,7 +7542,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)float_rounded_values[i]));
     actual.value = convert_char4((float4)float_values[i]);
-    compare_char_elements("convert_char4((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -6363,10 +7551,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((float4)sat_input);
-    compare_char_elements("convert_char4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)float_rounded_values_rte[i]));
     actual.value = convert_char4_rte((float4)float_values[i]);
-    compare_char_elements("convert_char4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -6375,10 +7563,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rte((float4)sat_input);
-    compare_char_elements("convert_char4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)float_rounded_values_rtz[i]));
     actual.value = convert_char4_rtz((float4)float_values[i]);
-    compare_char_elements("convert_char4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -6387,10 +7575,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtz((float4)sat_input);
-    compare_char_elements("convert_char4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)float_rounded_values_rtp[i]));
     actual.value = convert_char4_rtp((float4)float_values[i]);
-    compare_char_elements("convert_char4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -6399,10 +7587,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtp((float4)sat_input);
-    compare_char_elements("convert_char4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)float_rounded_values_rtn[i]));
     actual.value = convert_char4_rtn((float4)float_values[i]);
-    compare_char_elements("convert_char4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -6411,7 +7599,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtn((float4)sat_input);
-    compare_char_elements("convert_char4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_float("convert_char4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6421,7 +7609,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)float_rounded_values[i]));
     actual.value = convert_char8((float8)float_values[i]);
-    compare_char_elements("convert_char8((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -6430,10 +7618,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((float8)sat_input);
-    compare_char_elements("convert_char8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)float_rounded_values_rte[i]));
     actual.value = convert_char8_rte((float8)float_values[i]);
-    compare_char_elements("convert_char8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -6442,10 +7630,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rte((float8)sat_input);
-    compare_char_elements("convert_char8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)float_rounded_values_rtz[i]));
     actual.value = convert_char8_rtz((float8)float_values[i]);
-    compare_char_elements("convert_char8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -6454,10 +7642,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rtz((float8)sat_input);
-    compare_char_elements("convert_char8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)float_rounded_values_rtp[i]));
     actual.value = convert_char8_rtp((float8)float_values[i]);
-    compare_char_elements("convert_char8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -6466,10 +7654,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rtp((float8)sat_input);
-    compare_char_elements("convert_char8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)float_rounded_values_rtn[i]));
     actual.value = convert_char8_rtn((float8)float_values[i]);
-    compare_char_elements("convert_char8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -6478,7 +7666,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rtn((float8)sat_input);
-    compare_char_elements("convert_char8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_float("convert_char8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6488,7 +7676,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)float_rounded_values[i]));
     actual.value = convert_char16((float16)float_values[i]);
-    compare_char_elements("convert_char16((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -6497,10 +7685,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((float16)sat_input);
-    compare_char_elements("convert_char16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)float_rounded_values_rte[i]));
     actual.value = convert_char16_rte((float16)float_values[i]);
-    compare_char_elements("convert_char16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -6509,10 +7697,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rte((float16)sat_input);
-    compare_char_elements("convert_char16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)float_rounded_values_rtz[i]));
     actual.value = convert_char16_rtz((float16)float_values[i]);
-    compare_char_elements("convert_char16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -6521,10 +7709,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rtz((float16)sat_input);
-    compare_char_elements("convert_char16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)float_rounded_values_rtp[i]));
     actual.value = convert_char16_rtp((float16)float_values[i]);
-    compare_char_elements("convert_char16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -6533,10 +7721,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rtp((float16)sat_input);
-    compare_char_elements("convert_char16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)float_rounded_values_rtn[i]));
     actual.value = convert_char16_rtn((float16)float_values[i]);
-    compare_char_elements("convert_char16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -6545,7 +7733,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rtn((float16)sat_input);
-    compare_char_elements("convert_char16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_float("convert_char16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6555,7 +7743,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)float_rounded_values[i]));
     actual.value = convert_uchar((float)float_values[i]);
-    compare_uchar_elements("convert_uchar((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -6564,10 +7752,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((float)sat_input);
-    compare_uchar_elements("convert_uchar_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)float_rounded_values_rte[i]));
     actual.value = convert_uchar_rte((float)float_values[i]);
-    compare_uchar_elements("convert_uchar_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -6576,10 +7764,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rte((float)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)float_rounded_values_rtz[i]));
     actual.value = convert_uchar_rtz((float)float_values[i]);
-    compare_uchar_elements("convert_uchar_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -6588,10 +7776,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rtz((float)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)float_rounded_values_rtp[i]));
     actual.value = convert_uchar_rtp((float)float_values[i]);
-    compare_uchar_elements("convert_uchar_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -6600,10 +7788,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rtp((float)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)float_rounded_values_rtn[i]));
     actual.value = convert_uchar_rtn((float)float_values[i]);
-    compare_uchar_elements("convert_uchar_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -6612,7 +7800,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rtn((float)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_float("convert_uchar_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6622,7 +7810,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)float_rounded_values[i]));
     actual.value = convert_uchar2((float2)float_values[i]);
-    compare_uchar_elements("convert_uchar2((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -6631,10 +7819,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((float2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)float_rounded_values_rte[i]));
     actual.value = convert_uchar2_rte((float2)float_values[i]);
-    compare_uchar_elements("convert_uchar2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -6643,10 +7831,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rte((float2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)float_rounded_values_rtz[i]));
     actual.value = convert_uchar2_rtz((float2)float_values[i]);
-    compare_uchar_elements("convert_uchar2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -6655,10 +7843,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rtz((float2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)float_rounded_values_rtp[i]));
     actual.value = convert_uchar2_rtp((float2)float_values[i]);
-    compare_uchar_elements("convert_uchar2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -6667,10 +7855,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rtp((float2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)float_rounded_values_rtn[i]));
     actual.value = convert_uchar2_rtn((float2)float_values[i]);
-    compare_uchar_elements("convert_uchar2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -6679,7 +7867,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rtn((float2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_float("convert_uchar2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6689,7 +7877,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)float_rounded_values[i]));
     actual.value = convert_uchar4((float4)float_values[i]);
-    compare_uchar_elements("convert_uchar4((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -6698,10 +7886,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((float4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)float_rounded_values_rte[i]));
     actual.value = convert_uchar4_rte((float4)float_values[i]);
-    compare_uchar_elements("convert_uchar4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -6710,10 +7898,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rte((float4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)float_rounded_values_rtz[i]));
     actual.value = convert_uchar4_rtz((float4)float_values[i]);
-    compare_uchar_elements("convert_uchar4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -6722,10 +7910,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtz((float4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)float_rounded_values_rtp[i]));
     actual.value = convert_uchar4_rtp((float4)float_values[i]);
-    compare_uchar_elements("convert_uchar4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -6734,10 +7922,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtp((float4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)float_rounded_values_rtn[i]));
     actual.value = convert_uchar4_rtn((float4)float_values[i]);
-    compare_uchar_elements("convert_uchar4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -6746,7 +7934,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtn((float4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_float("convert_uchar4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6756,7 +7944,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)float_rounded_values[i]));
     actual.value = convert_uchar8((float8)float_values[i]);
-    compare_uchar_elements("convert_uchar8((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -6765,10 +7953,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((float8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)float_rounded_values_rte[i]));
     actual.value = convert_uchar8_rte((float8)float_values[i]);
-    compare_uchar_elements("convert_uchar8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -6777,10 +7965,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rte((float8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)float_rounded_values_rtz[i]));
     actual.value = convert_uchar8_rtz((float8)float_values[i]);
-    compare_uchar_elements("convert_uchar8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -6789,10 +7977,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rtz((float8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)float_rounded_values_rtp[i]));
     actual.value = convert_uchar8_rtp((float8)float_values[i]);
-    compare_uchar_elements("convert_uchar8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -6801,10 +7989,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rtp((float8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)float_rounded_values_rtn[i]));
     actual.value = convert_uchar8_rtn((float8)float_values[i]);
-    compare_uchar_elements("convert_uchar8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -6813,7 +8001,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rtn((float8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_float("convert_uchar8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6823,7 +8011,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)float_rounded_values[i]));
     actual.value = convert_uchar16((float16)float_values[i]);
-    compare_uchar_elements("convert_uchar16((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -6832,10 +8020,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((float16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)float_rounded_values_rte[i]));
     actual.value = convert_uchar16_rte((float16)float_values[i]);
-    compare_uchar_elements("convert_uchar16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -6844,10 +8032,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rte((float16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)float_rounded_values_rtz[i]));
     actual.value = convert_uchar16_rtz((float16)float_values[i]);
-    compare_uchar_elements("convert_uchar16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -6856,10 +8044,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rtz((float16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)float_rounded_values_rtp[i]));
     actual.value = convert_uchar16_rtp((float16)float_values[i]);
-    compare_uchar_elements("convert_uchar16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -6868,10 +8056,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rtp((float16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)float_rounded_values_rtn[i]));
     actual.value = convert_uchar16_rtn((float16)float_values[i]);
-    compare_uchar_elements("convert_uchar16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -6880,7 +8068,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rtn((float16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_float("convert_uchar16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6890,7 +8078,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)float_rounded_values[i]));
     actual.value = convert_short((float)float_values[i]);
-    compare_short_elements("convert_short((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -6899,10 +8087,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((float)sat_input);
-    compare_short_elements("convert_short_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)float_rounded_values_rte[i]));
     actual.value = convert_short_rte((float)float_values[i]);
-    compare_short_elements("convert_short_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -6911,10 +8099,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rte((float)sat_input);
-    compare_short_elements("convert_short_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)float_rounded_values_rtz[i]));
     actual.value = convert_short_rtz((float)float_values[i]);
-    compare_short_elements("convert_short_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -6923,10 +8111,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rtz((float)sat_input);
-    compare_short_elements("convert_short_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)float_rounded_values_rtp[i]));
     actual.value = convert_short_rtp((float)float_values[i]);
-    compare_short_elements("convert_short_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -6935,10 +8123,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rtp((float)sat_input);
-    compare_short_elements("convert_short_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)float_rounded_values_rtn[i]));
     actual.value = convert_short_rtn((float)float_values[i]);
-    compare_short_elements("convert_short_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -6947,7 +8135,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rtn((float)sat_input);
-    compare_short_elements("convert_short_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_float("convert_short_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -6957,7 +8145,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)float_rounded_values[i]));
     actual.value = convert_short2((float2)float_values[i]);
-    compare_short_elements("convert_short2((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -6966,10 +8154,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((float2)sat_input);
-    compare_short_elements("convert_short2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)float_rounded_values_rte[i]));
     actual.value = convert_short2_rte((float2)float_values[i]);
-    compare_short_elements("convert_short2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -6978,10 +8166,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rte((float2)sat_input);
-    compare_short_elements("convert_short2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)float_rounded_values_rtz[i]));
     actual.value = convert_short2_rtz((float2)float_values[i]);
-    compare_short_elements("convert_short2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -6990,10 +8178,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rtz((float2)sat_input);
-    compare_short_elements("convert_short2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)float_rounded_values_rtp[i]));
     actual.value = convert_short2_rtp((float2)float_values[i]);
-    compare_short_elements("convert_short2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -7002,10 +8190,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rtp((float2)sat_input);
-    compare_short_elements("convert_short2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)float_rounded_values_rtn[i]));
     actual.value = convert_short2_rtn((float2)float_values[i]);
-    compare_short_elements("convert_short2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -7014,7 +8202,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rtn((float2)sat_input);
-    compare_short_elements("convert_short2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_float("convert_short2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7024,7 +8212,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)float_rounded_values[i]));
     actual.value = convert_short4((float4)float_values[i]);
-    compare_short_elements("convert_short4((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -7033,10 +8221,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((float4)sat_input);
-    compare_short_elements("convert_short4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)float_rounded_values_rte[i]));
     actual.value = convert_short4_rte((float4)float_values[i]);
-    compare_short_elements("convert_short4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -7045,10 +8233,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rte((float4)sat_input);
-    compare_short_elements("convert_short4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)float_rounded_values_rtz[i]));
     actual.value = convert_short4_rtz((float4)float_values[i]);
-    compare_short_elements("convert_short4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -7057,10 +8245,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtz((float4)sat_input);
-    compare_short_elements("convert_short4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)float_rounded_values_rtp[i]));
     actual.value = convert_short4_rtp((float4)float_values[i]);
-    compare_short_elements("convert_short4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -7069,10 +8257,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtp((float4)sat_input);
-    compare_short_elements("convert_short4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)float_rounded_values_rtn[i]));
     actual.value = convert_short4_rtn((float4)float_values[i]);
-    compare_short_elements("convert_short4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -7081,7 +8269,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtn((float4)sat_input);
-    compare_short_elements("convert_short4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_float("convert_short4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7091,7 +8279,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)float_rounded_values[i]));
     actual.value = convert_short8((float8)float_values[i]);
-    compare_short_elements("convert_short8((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -7100,10 +8288,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((float8)sat_input);
-    compare_short_elements("convert_short8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)float_rounded_values_rte[i]));
     actual.value = convert_short8_rte((float8)float_values[i]);
-    compare_short_elements("convert_short8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -7112,10 +8300,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rte((float8)sat_input);
-    compare_short_elements("convert_short8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)float_rounded_values_rtz[i]));
     actual.value = convert_short8_rtz((float8)float_values[i]);
-    compare_short_elements("convert_short8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -7124,10 +8312,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rtz((float8)sat_input);
-    compare_short_elements("convert_short8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)float_rounded_values_rtp[i]));
     actual.value = convert_short8_rtp((float8)float_values[i]);
-    compare_short_elements("convert_short8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -7136,10 +8324,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rtp((float8)sat_input);
-    compare_short_elements("convert_short8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)float_rounded_values_rtn[i]));
     actual.value = convert_short8_rtn((float8)float_values[i]);
-    compare_short_elements("convert_short8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -7148,7 +8336,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rtn((float8)sat_input);
-    compare_short_elements("convert_short8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_float("convert_short8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7158,7 +8346,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)float_rounded_values[i]));
     actual.value = convert_short16((float16)float_values[i]);
-    compare_short_elements("convert_short16((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -7167,10 +8355,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((float16)sat_input);
-    compare_short_elements("convert_short16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)float_rounded_values_rte[i]));
     actual.value = convert_short16_rte((float16)float_values[i]);
-    compare_short_elements("convert_short16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -7179,10 +8367,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rte((float16)sat_input);
-    compare_short_elements("convert_short16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)float_rounded_values_rtz[i]));
     actual.value = convert_short16_rtz((float16)float_values[i]);
-    compare_short_elements("convert_short16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -7191,10 +8379,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rtz((float16)sat_input);
-    compare_short_elements("convert_short16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)float_rounded_values_rtp[i]));
     actual.value = convert_short16_rtp((float16)float_values[i]);
-    compare_short_elements("convert_short16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -7203,10 +8391,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rtp((float16)sat_input);
-    compare_short_elements("convert_short16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)float_rounded_values_rtn[i]));
     actual.value = convert_short16_rtn((float16)float_values[i]);
-    compare_short_elements("convert_short16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -7215,7 +8403,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rtn((float16)sat_input);
-    compare_short_elements("convert_short16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_float("convert_short16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7225,7 +8413,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)float_rounded_values[i]));
     actual.value = convert_ushort((float)float_values[i]);
-    compare_ushort_elements("convert_ushort((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -7234,10 +8422,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((float)sat_input);
-    compare_ushort_elements("convert_ushort_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)float_rounded_values_rte[i]));
     actual.value = convert_ushort_rte((float)float_values[i]);
-    compare_ushort_elements("convert_ushort_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -7246,10 +8434,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rte((float)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)float_rounded_values_rtz[i]));
     actual.value = convert_ushort_rtz((float)float_values[i]);
-    compare_ushort_elements("convert_ushort_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -7258,10 +8446,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rtz((float)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)float_rounded_values_rtp[i]));
     actual.value = convert_ushort_rtp((float)float_values[i]);
-    compare_ushort_elements("convert_ushort_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -7270,10 +8458,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rtp((float)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)float_rounded_values_rtn[i]));
     actual.value = convert_ushort_rtn((float)float_values[i]);
-    compare_ushort_elements("convert_ushort_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -7282,7 +8470,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rtn((float)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_float("convert_ushort_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7292,7 +8480,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)float_rounded_values[i]));
     actual.value = convert_ushort2((float2)float_values[i]);
-    compare_ushort_elements("convert_ushort2((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -7301,10 +8489,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((float2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)float_rounded_values_rte[i]));
     actual.value = convert_ushort2_rte((float2)float_values[i]);
-    compare_ushort_elements("convert_ushort2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -7313,10 +8501,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rte((float2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)float_rounded_values_rtz[i]));
     actual.value = convert_ushort2_rtz((float2)float_values[i]);
-    compare_ushort_elements("convert_ushort2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -7325,10 +8513,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rtz((float2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)float_rounded_values_rtp[i]));
     actual.value = convert_ushort2_rtp((float2)float_values[i]);
-    compare_ushort_elements("convert_ushort2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -7337,10 +8525,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rtp((float2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)float_rounded_values_rtn[i]));
     actual.value = convert_ushort2_rtn((float2)float_values[i]);
-    compare_ushort_elements("convert_ushort2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -7349,7 +8537,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rtn((float2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_float("convert_ushort2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7359,7 +8547,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)float_rounded_values[i]));
     actual.value = convert_ushort4((float4)float_values[i]);
-    compare_ushort_elements("convert_ushort4((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -7368,10 +8556,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((float4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)float_rounded_values_rte[i]));
     actual.value = convert_ushort4_rte((float4)float_values[i]);
-    compare_ushort_elements("convert_ushort4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -7380,10 +8568,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rte((float4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)float_rounded_values_rtz[i]));
     actual.value = convert_ushort4_rtz((float4)float_values[i]);
-    compare_ushort_elements("convert_ushort4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -7392,10 +8580,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtz((float4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)float_rounded_values_rtp[i]));
     actual.value = convert_ushort4_rtp((float4)float_values[i]);
-    compare_ushort_elements("convert_ushort4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -7404,10 +8592,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtp((float4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)float_rounded_values_rtn[i]));
     actual.value = convert_ushort4_rtn((float4)float_values[i]);
-    compare_ushort_elements("convert_ushort4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -7416,7 +8604,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtn((float4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_float("convert_ushort4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7426,7 +8614,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)float_rounded_values[i]));
     actual.value = convert_ushort8((float8)float_values[i]);
-    compare_ushort_elements("convert_ushort8((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -7435,10 +8623,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((float8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)float_rounded_values_rte[i]));
     actual.value = convert_ushort8_rte((float8)float_values[i]);
-    compare_ushort_elements("convert_ushort8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -7447,10 +8635,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rte((float8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)float_rounded_values_rtz[i]));
     actual.value = convert_ushort8_rtz((float8)float_values[i]);
-    compare_ushort_elements("convert_ushort8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -7459,10 +8647,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rtz((float8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)float_rounded_values_rtp[i]));
     actual.value = convert_ushort8_rtp((float8)float_values[i]);
-    compare_ushort_elements("convert_ushort8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -7471,10 +8659,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rtp((float8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)float_rounded_values_rtn[i]));
     actual.value = convert_ushort8_rtn((float8)float_values[i]);
-    compare_ushort_elements("convert_ushort8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -7483,7 +8671,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rtn((float8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_float("convert_ushort8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7493,7 +8681,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)float_rounded_values[i]));
     actual.value = convert_ushort16((float16)float_values[i]);
-    compare_ushort_elements("convert_ushort16((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -7502,10 +8690,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((float16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)float_rounded_values_rte[i]));
     actual.value = convert_ushort16_rte((float16)float_values[i]);
-    compare_ushort_elements("convert_ushort16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -7514,10 +8702,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rte((float16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)float_rounded_values_rtz[i]));
     actual.value = convert_ushort16_rtz((float16)float_values[i]);
-    compare_ushort_elements("convert_ushort16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -7526,10 +8714,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rtz((float16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)float_rounded_values_rtp[i]));
     actual.value = convert_ushort16_rtp((float16)float_values[i]);
-    compare_ushort_elements("convert_ushort16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -7538,10 +8726,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rtp((float16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)float_rounded_values_rtn[i]));
     actual.value = convert_ushort16_rtn((float16)float_values[i]);
-    compare_ushort_elements("convert_ushort16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -7550,7 +8738,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rtn((float16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_float("convert_ushort16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7560,7 +8748,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)float_rounded_values[i]));
     actual.value = convert_int((float)float_values[i]);
-    compare_int_elements("convert_int((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -7569,10 +8757,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((float)sat_input);
-    compare_int_elements("convert_int_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)float_rounded_values_rte[i]));
     actual.value = convert_int_rte((float)float_values[i]);
-    compare_int_elements("convert_int_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -7581,10 +8769,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rte((float)sat_input);
-    compare_int_elements("convert_int_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)float_rounded_values_rtz[i]));
     actual.value = convert_int_rtz((float)float_values[i]);
-    compare_int_elements("convert_int_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -7593,10 +8781,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rtz((float)sat_input);
-    compare_int_elements("convert_int_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)float_rounded_values_rtp[i]));
     actual.value = convert_int_rtp((float)float_values[i]);
-    compare_int_elements("convert_int_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -7605,10 +8793,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rtp((float)sat_input);
-    compare_int_elements("convert_int_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)float_rounded_values_rtn[i]));
     actual.value = convert_int_rtn((float)float_values[i]);
-    compare_int_elements("convert_int_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -7617,7 +8805,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rtn((float)sat_input);
-    compare_int_elements("convert_int_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_float("convert_int_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7627,7 +8815,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)float_rounded_values[i]));
     actual.value = convert_int2((float2)float_values[i]);
-    compare_int_elements("convert_int2((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -7636,10 +8824,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((float2)sat_input);
-    compare_int_elements("convert_int2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)float_rounded_values_rte[i]));
     actual.value = convert_int2_rte((float2)float_values[i]);
-    compare_int_elements("convert_int2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -7648,10 +8836,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rte((float2)sat_input);
-    compare_int_elements("convert_int2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)float_rounded_values_rtz[i]));
     actual.value = convert_int2_rtz((float2)float_values[i]);
-    compare_int_elements("convert_int2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -7660,10 +8848,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rtz((float2)sat_input);
-    compare_int_elements("convert_int2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)float_rounded_values_rtp[i]));
     actual.value = convert_int2_rtp((float2)float_values[i]);
-    compare_int_elements("convert_int2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -7672,10 +8860,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rtp((float2)sat_input);
-    compare_int_elements("convert_int2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)float_rounded_values_rtn[i]));
     actual.value = convert_int2_rtn((float2)float_values[i]);
-    compare_int_elements("convert_int2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -7684,7 +8872,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rtn((float2)sat_input);
-    compare_int_elements("convert_int2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_float("convert_int2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7694,7 +8882,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)float_rounded_values[i]));
     actual.value = convert_int4((float4)float_values[i]);
-    compare_int_elements("convert_int4((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -7703,10 +8891,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((float4)sat_input);
-    compare_int_elements("convert_int4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)float_rounded_values_rte[i]));
     actual.value = convert_int4_rte((float4)float_values[i]);
-    compare_int_elements("convert_int4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -7715,10 +8903,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rte((float4)sat_input);
-    compare_int_elements("convert_int4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)float_rounded_values_rtz[i]));
     actual.value = convert_int4_rtz((float4)float_values[i]);
-    compare_int_elements("convert_int4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -7727,10 +8915,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtz((float4)sat_input);
-    compare_int_elements("convert_int4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)float_rounded_values_rtp[i]));
     actual.value = convert_int4_rtp((float4)float_values[i]);
-    compare_int_elements("convert_int4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -7739,10 +8927,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtp((float4)sat_input);
-    compare_int_elements("convert_int4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)float_rounded_values_rtn[i]));
     actual.value = convert_int4_rtn((float4)float_values[i]);
-    compare_int_elements("convert_int4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -7751,7 +8939,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtn((float4)sat_input);
-    compare_int_elements("convert_int4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_float("convert_int4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7761,7 +8949,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)float_rounded_values[i]));
     actual.value = convert_int8((float8)float_values[i]);
-    compare_int_elements("convert_int8((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -7770,10 +8958,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((float8)sat_input);
-    compare_int_elements("convert_int8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)float_rounded_values_rte[i]));
     actual.value = convert_int8_rte((float8)float_values[i]);
-    compare_int_elements("convert_int8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -7782,10 +8970,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rte((float8)sat_input);
-    compare_int_elements("convert_int8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)float_rounded_values_rtz[i]));
     actual.value = convert_int8_rtz((float8)float_values[i]);
-    compare_int_elements("convert_int8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -7794,10 +8982,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rtz((float8)sat_input);
-    compare_int_elements("convert_int8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)float_rounded_values_rtp[i]));
     actual.value = convert_int8_rtp((float8)float_values[i]);
-    compare_int_elements("convert_int8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -7806,10 +8994,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rtp((float8)sat_input);
-    compare_int_elements("convert_int8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)float_rounded_values_rtn[i]));
     actual.value = convert_int8_rtn((float8)float_values[i]);
-    compare_int_elements("convert_int8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -7818,7 +9006,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rtn((float8)sat_input);
-    compare_int_elements("convert_int8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_float("convert_int8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7828,7 +9016,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)float_rounded_values[i]));
     actual.value = convert_int16((float16)float_values[i]);
-    compare_int_elements("convert_int16((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -7837,10 +9025,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((float16)sat_input);
-    compare_int_elements("convert_int16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)float_rounded_values_rte[i]));
     actual.value = convert_int16_rte((float16)float_values[i]);
-    compare_int_elements("convert_int16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -7849,10 +9037,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rte((float16)sat_input);
-    compare_int_elements("convert_int16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)float_rounded_values_rtz[i]));
     actual.value = convert_int16_rtz((float16)float_values[i]);
-    compare_int_elements("convert_int16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -7861,10 +9049,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rtz((float16)sat_input);
-    compare_int_elements("convert_int16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)float_rounded_values_rtp[i]));
     actual.value = convert_int16_rtp((float16)float_values[i]);
-    compare_int_elements("convert_int16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -7873,10 +9061,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rtp((float16)sat_input);
-    compare_int_elements("convert_int16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)float_rounded_values_rtn[i]));
     actual.value = convert_int16_rtn((float16)float_values[i]);
-    compare_int_elements("convert_int16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -7885,7 +9073,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rtn((float16)sat_input);
-    compare_int_elements("convert_int16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_float("convert_int16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7895,7 +9083,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)float_rounded_values[i]));
     actual.value = convert_uint((float)float_values[i]);
-    compare_uint_elements("convert_uint((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -7904,10 +9092,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((float)sat_input);
-    compare_uint_elements("convert_uint_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)float_rounded_values_rte[i]));
     actual.value = convert_uint_rte((float)float_values[i]);
-    compare_uint_elements("convert_uint_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -7916,10 +9104,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rte((float)sat_input);
-    compare_uint_elements("convert_uint_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)float_rounded_values_rtz[i]));
     actual.value = convert_uint_rtz((float)float_values[i]);
-    compare_uint_elements("convert_uint_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -7928,10 +9116,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rtz((float)sat_input);
-    compare_uint_elements("convert_uint_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)float_rounded_values_rtp[i]));
     actual.value = convert_uint_rtp((float)float_values[i]);
-    compare_uint_elements("convert_uint_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -7940,10 +9128,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rtp((float)sat_input);
-    compare_uint_elements("convert_uint_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)float_rounded_values_rtn[i]));
     actual.value = convert_uint_rtn((float)float_values[i]);
-    compare_uint_elements("convert_uint_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -7952,7 +9140,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rtn((float)sat_input);
-    compare_uint_elements("convert_uint_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_float("convert_uint_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -7962,7 +9150,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)float_rounded_values[i]));
     actual.value = convert_uint2((float2)float_values[i]);
-    compare_uint_elements("convert_uint2((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -7971,10 +9159,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((float2)sat_input);
-    compare_uint_elements("convert_uint2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)float_rounded_values_rte[i]));
     actual.value = convert_uint2_rte((float2)float_values[i]);
-    compare_uint_elements("convert_uint2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -7983,10 +9171,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rte((float2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)float_rounded_values_rtz[i]));
     actual.value = convert_uint2_rtz((float2)float_values[i]);
-    compare_uint_elements("convert_uint2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -7995,10 +9183,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rtz((float2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)float_rounded_values_rtp[i]));
     actual.value = convert_uint2_rtp((float2)float_values[i]);
-    compare_uint_elements("convert_uint2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -8007,10 +9195,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rtp((float2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)float_rounded_values_rtn[i]));
     actual.value = convert_uint2_rtn((float2)float_values[i]);
-    compare_uint_elements("convert_uint2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -8019,7 +9207,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rtn((float2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_float("convert_uint2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -8029,7 +9217,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)float_rounded_values[i]));
     actual.value = convert_uint4((float4)float_values[i]);
-    compare_uint_elements("convert_uint4((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -8038,10 +9226,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((float4)sat_input);
-    compare_uint_elements("convert_uint4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)float_rounded_values_rte[i]));
     actual.value = convert_uint4_rte((float4)float_values[i]);
-    compare_uint_elements("convert_uint4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -8050,10 +9238,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rte((float4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)float_rounded_values_rtz[i]));
     actual.value = convert_uint4_rtz((float4)float_values[i]);
-    compare_uint_elements("convert_uint4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -8062,10 +9250,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtz((float4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)float_rounded_values_rtp[i]));
     actual.value = convert_uint4_rtp((float4)float_values[i]);
-    compare_uint_elements("convert_uint4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -8074,10 +9262,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtp((float4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)float_rounded_values_rtn[i]));
     actual.value = convert_uint4_rtn((float4)float_values[i]);
-    compare_uint_elements("convert_uint4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -8086,7 +9274,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtn((float4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_float("convert_uint4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -8096,7 +9284,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)float_rounded_values[i]));
     actual.value = convert_uint8((float8)float_values[i]);
-    compare_uint_elements("convert_uint8((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -8105,10 +9293,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((float8)sat_input);
-    compare_uint_elements("convert_uint8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)float_rounded_values_rte[i]));
     actual.value = convert_uint8_rte((float8)float_values[i]);
-    compare_uint_elements("convert_uint8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -8117,10 +9305,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rte((float8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)float_rounded_values_rtz[i]));
     actual.value = convert_uint8_rtz((float8)float_values[i]);
-    compare_uint_elements("convert_uint8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -8129,10 +9317,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rtz((float8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)float_rounded_values_rtp[i]));
     actual.value = convert_uint8_rtp((float8)float_values[i]);
-    compare_uint_elements("convert_uint8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -8141,10 +9329,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rtp((float8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)float_rounded_values_rtn[i]));
     actual.value = convert_uint8_rtn((float8)float_values[i]);
-    compare_uint_elements("convert_uint8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -8153,7 +9341,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rtn((float8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_float("convert_uint8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
   for (size_t i = 0; i < float_values_length; ++i) {
@@ -8163,7 +9351,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)float_rounded_values[i]));
     actual.value = convert_uint16((float16)float_values[i]);
-    compare_uint_elements("convert_uint16((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -8172,10 +9360,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((float16)sat_input);
-    compare_uint_elements("convert_uint16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)float_rounded_values_rte[i]));
     actual.value = convert_uint16_rte((float16)float_values[i]);
-    compare_uint_elements("convert_uint16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -8184,10 +9372,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rte((float16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)float_rounded_values_rtz[i]));
     actual.value = convert_uint16_rtz((float16)float_values[i]);
-    compare_uint_elements("convert_uint16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -8196,10 +9384,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rtz((float16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)float_rounded_values_rtp[i]));
     actual.value = convert_uint16_rtp((float16)float_values[i]);
-    compare_uint_elements("convert_uint16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -8208,10 +9396,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rtp((float16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)float_rounded_values_rtn[i]));
     actual.value = convert_uint16_rtn((float16)float_values[i]);
-    compare_uint_elements("convert_uint16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -8220,7 +9408,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rtn((float16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_float("convert_uint16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #ifdef cles_khr_int64
@@ -8232,7 +9420,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)float_rounded_values[i]));
     actual.value = convert_long((float)float_values[i]);
-    compare_long_elements("convert_long((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -8241,10 +9429,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((float)sat_input);
-    compare_long_elements("convert_long_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)float_rounded_values_rte[i]));
     actual.value = convert_long_rte((float)float_values[i]);
-    compare_long_elements("convert_long_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -8253,10 +9441,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rte((float)sat_input);
-    compare_long_elements("convert_long_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)float_rounded_values_rtz[i]));
     actual.value = convert_long_rtz((float)float_values[i]);
-    compare_long_elements("convert_long_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -8265,10 +9453,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rtz((float)sat_input);
-    compare_long_elements("convert_long_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)float_rounded_values_rtp[i]));
     actual.value = convert_long_rtp((float)float_values[i]);
-    compare_long_elements("convert_long_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -8277,10 +9465,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rtp((float)sat_input);
-    compare_long_elements("convert_long_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)float_rounded_values_rtn[i]));
     actual.value = convert_long_rtn((float)float_values[i]);
-    compare_long_elements("convert_long_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -8289,7 +9477,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rtn((float)sat_input);
-    compare_long_elements("convert_long_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_float("convert_long_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -8303,7 +9491,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)float_rounded_values[i]));
     actual.value = convert_long2((float2)float_values[i]);
-    compare_long_elements("convert_long2((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -8312,10 +9500,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((float2)sat_input);
-    compare_long_elements("convert_long2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)float_rounded_values_rte[i]));
     actual.value = convert_long2_rte((float2)float_values[i]);
-    compare_long_elements("convert_long2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -8324,10 +9512,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rte((float2)sat_input);
-    compare_long_elements("convert_long2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)float_rounded_values_rtz[i]));
     actual.value = convert_long2_rtz((float2)float_values[i]);
-    compare_long_elements("convert_long2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -8336,10 +9524,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rtz((float2)sat_input);
-    compare_long_elements("convert_long2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)float_rounded_values_rtp[i]));
     actual.value = convert_long2_rtp((float2)float_values[i]);
-    compare_long_elements("convert_long2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -8348,10 +9536,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rtp((float2)sat_input);
-    compare_long_elements("convert_long2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)float_rounded_values_rtn[i]));
     actual.value = convert_long2_rtn((float2)float_values[i]);
-    compare_long_elements("convert_long2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -8360,7 +9548,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rtn((float2)sat_input);
-    compare_long_elements("convert_long2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_float("convert_long2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -8374,7 +9562,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)float_rounded_values[i]));
     actual.value = convert_long4((float4)float_values[i]);
-    compare_long_elements("convert_long4((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -8383,10 +9571,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((float4)sat_input);
-    compare_long_elements("convert_long4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)float_rounded_values_rte[i]));
     actual.value = convert_long4_rte((float4)float_values[i]);
-    compare_long_elements("convert_long4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -8395,10 +9583,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rte((float4)sat_input);
-    compare_long_elements("convert_long4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)float_rounded_values_rtz[i]));
     actual.value = convert_long4_rtz((float4)float_values[i]);
-    compare_long_elements("convert_long4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -8407,10 +9595,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtz((float4)sat_input);
-    compare_long_elements("convert_long4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)float_rounded_values_rtp[i]));
     actual.value = convert_long4_rtp((float4)float_values[i]);
-    compare_long_elements("convert_long4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -8419,10 +9607,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtp((float4)sat_input);
-    compare_long_elements("convert_long4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)float_rounded_values_rtn[i]));
     actual.value = convert_long4_rtn((float4)float_values[i]);
-    compare_long_elements("convert_long4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -8431,7 +9619,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtn((float4)sat_input);
-    compare_long_elements("convert_long4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_float("convert_long4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -8445,7 +9633,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)float_rounded_values[i]));
     actual.value = convert_long8((float8)float_values[i]);
-    compare_long_elements("convert_long8((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -8454,10 +9642,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((float8)sat_input);
-    compare_long_elements("convert_long8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)float_rounded_values_rte[i]));
     actual.value = convert_long8_rte((float8)float_values[i]);
-    compare_long_elements("convert_long8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -8466,10 +9654,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rte((float8)sat_input);
-    compare_long_elements("convert_long8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)float_rounded_values_rtz[i]));
     actual.value = convert_long8_rtz((float8)float_values[i]);
-    compare_long_elements("convert_long8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -8478,10 +9666,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rtz((float8)sat_input);
-    compare_long_elements("convert_long8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)float_rounded_values_rtp[i]));
     actual.value = convert_long8_rtp((float8)float_values[i]);
-    compare_long_elements("convert_long8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -8490,10 +9678,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rtp((float8)sat_input);
-    compare_long_elements("convert_long8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)float_rounded_values_rtn[i]));
     actual.value = convert_long8_rtn((float8)float_values[i]);
-    compare_long_elements("convert_long8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -8502,7 +9690,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rtn((float8)sat_input);
-    compare_long_elements("convert_long8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_float("convert_long8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -8516,7 +9704,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)float_rounded_values[i]));
     actual.value = convert_long16((float16)float_values[i]);
-    compare_long_elements("convert_long16((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -8525,10 +9713,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((float16)sat_input);
-    compare_long_elements("convert_long16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)float_rounded_values_rte[i]));
     actual.value = convert_long16_rte((float16)float_values[i]);
-    compare_long_elements("convert_long16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -8537,10 +9725,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rte((float16)sat_input);
-    compare_long_elements("convert_long16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)float_rounded_values_rtz[i]));
     actual.value = convert_long16_rtz((float16)float_values[i]);
-    compare_long_elements("convert_long16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -8549,10 +9737,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rtz((float16)sat_input);
-    compare_long_elements("convert_long16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)float_rounded_values_rtp[i]));
     actual.value = convert_long16_rtp((float16)float_values[i]);
-    compare_long_elements("convert_long16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -8561,10 +9749,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rtp((float16)sat_input);
-    compare_long_elements("convert_long16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)float_rounded_values_rtn[i]));
     actual.value = convert_long16_rtn((float16)float_values[i]);
-    compare_long_elements("convert_long16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -8573,7 +9761,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rtn((float16)sat_input);
-    compare_long_elements("convert_long16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_float("convert_long16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -8587,7 +9775,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)float_rounded_values[i]));
     actual.value = convert_ulong((float)float_values[i]);
-    compare_ulong_elements("convert_ulong((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -8596,10 +9784,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((float)sat_input);
-    compare_ulong_elements("convert_ulong_sat((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_sat(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)float_rounded_values_rte[i]));
     actual.value = convert_ulong_rte((float)float_values[i]);
-    compare_ulong_elements("convert_ulong_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -8608,10 +9796,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rte((float)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rte((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_sat_rte(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)float_rounded_values_rtz[i]));
     actual.value = convert_ulong_rtz((float)float_values[i]);
-    compare_ulong_elements("convert_ulong_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -8620,10 +9808,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rtz((float)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rtz((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_sat_rtz(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)float_rounded_values_rtp[i]));
     actual.value = convert_ulong_rtp((float)float_values[i]);
-    compare_ulong_elements("convert_ulong_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -8632,10 +9820,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rtp((float)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rtp((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_sat_rtp(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)float_rounded_values_rtn[i]));
     actual.value = convert_ulong_rtn((float)float_values[i]);
-    compare_ulong_elements("convert_ulong_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -8644,7 +9832,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rtn((float)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rtn((float))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_float("convert_ulong_sat_rtn(float)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -8658,7 +9846,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)float_rounded_values[i]));
     actual.value = convert_ulong2((float2)float_values[i]);
-    compare_ulong_elements("convert_ulong2((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -8667,10 +9855,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((float2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_sat(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)float_rounded_values_rte[i]));
     actual.value = convert_ulong2_rte((float2)float_values[i]);
-    compare_ulong_elements("convert_ulong2_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -8679,10 +9867,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rte((float2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rte((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_sat_rte(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)float_rounded_values_rtz[i]));
     actual.value = convert_ulong2_rtz((float2)float_values[i]);
-    compare_ulong_elements("convert_ulong2_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -8691,10 +9879,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rtz((float2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rtz((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_sat_rtz(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)float_rounded_values_rtp[i]));
     actual.value = convert_ulong2_rtp((float2)float_values[i]);
-    compare_ulong_elements("convert_ulong2_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -8703,10 +9891,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rtp((float2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rtp((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_sat_rtp(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)float_rounded_values_rtn[i]));
     actual.value = convert_ulong2_rtn((float2)float_values[i]);
-    compare_ulong_elements("convert_ulong2_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -8715,7 +9903,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rtn((float2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rtn((float2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_float("convert_ulong2_sat_rtn(float2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -8729,7 +9917,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)float_rounded_values[i]));
     actual.value = convert_ulong4((float4)float_values[i]);
-    compare_ulong_elements("convert_ulong4((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -8738,10 +9926,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((float4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_sat(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)float_rounded_values_rte[i]));
     actual.value = convert_ulong4_rte((float4)float_values[i]);
-    compare_ulong_elements("convert_ulong4_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -8750,10 +9938,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rte((float4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rte((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_sat_rte(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)float_rounded_values_rtz[i]));
     actual.value = convert_ulong4_rtz((float4)float_values[i]);
-    compare_ulong_elements("convert_ulong4_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -8762,10 +9950,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtz((float4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rtz((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_sat_rtz(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)float_rounded_values_rtp[i]));
     actual.value = convert_ulong4_rtp((float4)float_values[i]);
-    compare_ulong_elements("convert_ulong4_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -8774,10 +9962,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtp((float4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rtp((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_sat_rtp(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)float_rounded_values_rtn[i]));
     actual.value = convert_ulong4_rtn((float4)float_values[i]);
-    compare_ulong_elements("convert_ulong4_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -8786,7 +9974,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtn((float4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rtn((float4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_float("convert_ulong4_sat_rtn(float4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -8800,7 +9988,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)float_rounded_values[i]));
     actual.value = convert_ulong8((float8)float_values[i]);
-    compare_ulong_elements("convert_ulong8((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -8809,10 +9997,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((float8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_sat(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)float_rounded_values_rte[i]));
     actual.value = convert_ulong8_rte((float8)float_values[i]);
-    compare_ulong_elements("convert_ulong8_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -8821,10 +10009,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rte((float8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rte((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_sat_rte(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)float_rounded_values_rtz[i]));
     actual.value = convert_ulong8_rtz((float8)float_values[i]);
-    compare_ulong_elements("convert_ulong8_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -8833,10 +10021,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rtz((float8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rtz((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_sat_rtz(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)float_rounded_values_rtp[i]));
     actual.value = convert_ulong8_rtp((float8)float_values[i]);
-    compare_ulong_elements("convert_ulong8_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -8845,10 +10033,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rtp((float8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rtp((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_sat_rtp(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)float_rounded_values_rtn[i]));
     actual.value = convert_ulong8_rtn((float8)float_values[i]);
-    compare_ulong_elements("convert_ulong8_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -8857,7 +10045,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rtn((float8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rtn((float8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_float("convert_ulong8_sat_rtn(float8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -8871,7 +10059,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)float_rounded_values[i]));
     actual.value = convert_ulong16((float16)float_values[i]);
-    compare_ulong_elements("convert_ulong16((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -8880,10 +10068,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((float16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_sat(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)float_rounded_values_rte[i]));
     actual.value = convert_ulong16_rte((float16)float_values[i]);
-    compare_ulong_elements("convert_ulong16_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -8892,10 +10080,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rte((float16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rte((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_sat_rte(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)float_rounded_values_rtz[i]));
     actual.value = convert_ulong16_rtz((float16)float_values[i]);
-    compare_ulong_elements("convert_ulong16_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -8904,10 +10092,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rtz((float16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rtz((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_sat_rtz(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)float_rounded_values_rtp[i]));
     actual.value = convert_ulong16_rtp((float16)float_values[i]);
-    compare_ulong_elements("convert_ulong16_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -8916,10 +10104,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rtp((float16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rtp((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_sat_rtp(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)float_rounded_values_rtn[i]));
     actual.value = convert_ulong16_rtn((float16)float_values[i]);
-    compare_ulong_elements("convert_ulong16_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -8928,7 +10116,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rtn((float16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rtn((float16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_float("convert_ulong16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -8942,7 +10130,7 @@ kernel void test_convert_type()
     union { char value; char raw[1]; } expected, actual;
     expected.value = ((char)((char)double_rounded_values[i]));
     actual.value = convert_char((double)double_values[i]);
-    compare_char_elements("convert_char((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -8951,10 +10139,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat((double)sat_input);
-    compare_char_elements("convert_char_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)double_rounded_values_rte[i]));
     actual.value = convert_char_rte((double)double_values[i]);
-    compare_char_elements("convert_char_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -8963,10 +10151,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rte((double)sat_input);
-    compare_char_elements("convert_char_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)double_rounded_values_rtz[i]));
     actual.value = convert_char_rtz((double)double_values[i]);
-    compare_char_elements("convert_char_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -8975,10 +10163,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rtz((double)sat_input);
-    compare_char_elements("convert_char_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)double_rounded_values_rtp[i]));
     actual.value = convert_char_rtp((double)double_values[i]);
-    compare_char_elements("convert_char_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -8987,10 +10175,10 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rtp((double)sat_input);
-    compare_char_elements("convert_char_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((char)((char)double_rounded_values_rtn[i]));
     actual.value = convert_char_rtn((double)double_values[i]);
-    compare_char_elements("convert_char_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (char)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char)min_expected;
@@ -8999,7 +10187,7 @@ kernel void test_convert_type()
        expected.value = (char)max_expected;
     }
     actual.value = convert_char_sat_rtn((double)sat_input);
-    compare_char_elements("convert_char_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_char_elements_double("convert_char_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -9013,7 +10201,7 @@ kernel void test_convert_type()
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)double_rounded_values[i]));
     actual.value = convert_char2((double2)double_values[i]);
-    compare_char_elements("convert_char2((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -9022,10 +10210,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat((double2)sat_input);
-    compare_char_elements("convert_char2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)double_rounded_values_rte[i]));
     actual.value = convert_char2_rte((double2)double_values[i]);
-    compare_char_elements("convert_char2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -9034,10 +10222,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rte((double2)sat_input);
-    compare_char_elements("convert_char2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)double_rounded_values_rtz[i]));
     actual.value = convert_char2_rtz((double2)double_values[i]);
-    compare_char_elements("convert_char2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -9046,10 +10234,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rtz((double2)sat_input);
-    compare_char_elements("convert_char2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)double_rounded_values_rtp[i]));
     actual.value = convert_char2_rtp((double2)double_values[i]);
-    compare_char_elements("convert_char2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -9058,10 +10246,10 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rtp((double2)sat_input);
-    compare_char_elements("convert_char2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((char2)((char)double_rounded_values_rtn[i]));
     actual.value = convert_char2_rtn((double2)double_values[i]);
-    compare_char_elements("convert_char2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (char2)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char2)min_expected;
@@ -9070,7 +10258,7 @@ kernel void test_convert_type()
        expected.value = (char2)max_expected;
     }
     actual.value = convert_char2_sat_rtn((double2)sat_input);
-    compare_char_elements("convert_char2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_char_elements_double("convert_char2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -9084,7 +10272,7 @@ kernel void test_convert_type()
     union { char4 value; char raw[4]; } expected, actual;
     expected.value = ((char4)((char)double_rounded_values[i]));
     actual.value = convert_char4((double4)double_values[i]);
-    compare_char_elements("convert_char4((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -9093,10 +10281,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((double4)sat_input);
-    compare_char_elements("convert_char4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)double_rounded_values_rte[i]));
     actual.value = convert_char4_rte((double4)double_values[i]);
-    compare_char_elements("convert_char4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -9105,10 +10293,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rte((double4)sat_input);
-    compare_char_elements("convert_char4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)double_rounded_values_rtz[i]));
     actual.value = convert_char4_rtz((double4)double_values[i]);
-    compare_char_elements("convert_char4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -9117,10 +10305,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtz((double4)sat_input);
-    compare_char_elements("convert_char4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)double_rounded_values_rtp[i]));
     actual.value = convert_char4_rtp((double4)double_values[i]);
-    compare_char_elements("convert_char4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -9129,10 +10317,10 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtp((double4)sat_input);
-    compare_char_elements("convert_char4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((char4)((char)double_rounded_values_rtn[i]));
     actual.value = convert_char4_rtn((double4)double_values[i]);
-    compare_char_elements("convert_char4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char4)min_expected;
@@ -9141,7 +10329,7 @@ kernel void test_convert_type()
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtn((double4)sat_input);
-    compare_char_elements("convert_char4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_char_elements_double("convert_char4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -9155,7 +10343,7 @@ kernel void test_convert_type()
     union { char8 value; char raw[8]; } expected, actual;
     expected.value = ((char8)((char)double_rounded_values[i]));
     actual.value = convert_char8((double8)double_values[i]);
-    compare_char_elements("convert_char8((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -9164,10 +10352,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat((double8)sat_input);
-    compare_char_elements("convert_char8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)double_rounded_values_rte[i]));
     actual.value = convert_char8_rte((double8)double_values[i]);
-    compare_char_elements("convert_char8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -9176,10 +10364,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rte((double8)sat_input);
-    compare_char_elements("convert_char8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)double_rounded_values_rtz[i]));
     actual.value = convert_char8_rtz((double8)double_values[i]);
-    compare_char_elements("convert_char8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -9188,10 +10376,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rtz((double8)sat_input);
-    compare_char_elements("convert_char8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)double_rounded_values_rtp[i]));
     actual.value = convert_char8_rtp((double8)double_values[i]);
-    compare_char_elements("convert_char8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -9200,10 +10388,10 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rtp((double8)sat_input);
-    compare_char_elements("convert_char8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((char8)((char)double_rounded_values_rtn[i]));
     actual.value = convert_char8_rtn((double8)double_values[i]);
-    compare_char_elements("convert_char8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (char8)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char8)min_expected;
@@ -9212,7 +10400,7 @@ kernel void test_convert_type()
        expected.value = (char8)max_expected;
     }
     actual.value = convert_char8_sat_rtn((double8)sat_input);
-    compare_char_elements("convert_char8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_char_elements_double("convert_char8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -9226,7 +10414,7 @@ kernel void test_convert_type()
     union { char16 value; char raw[16]; } expected, actual;
     expected.value = ((char16)((char)double_rounded_values[i]));
     actual.value = convert_char16((double16)double_values[i]);
-    compare_char_elements("convert_char16((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -9235,10 +10423,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat((double16)sat_input);
-    compare_char_elements("convert_char16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)double_rounded_values_rte[i]));
     actual.value = convert_char16_rte((double16)double_values[i]);
-    compare_char_elements("convert_char16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -9247,10 +10435,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rte((double16)sat_input);
-    compare_char_elements("convert_char16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)double_rounded_values_rtz[i]));
     actual.value = convert_char16_rtz((double16)double_values[i]);
-    compare_char_elements("convert_char16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -9259,10 +10447,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rtz((double16)sat_input);
-    compare_char_elements("convert_char16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)double_rounded_values_rtp[i]));
     actual.value = convert_char16_rtp((double16)double_values[i]);
-    compare_char_elements("convert_char16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -9271,10 +10459,10 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rtp((double16)sat_input);
-    compare_char_elements("convert_char16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((char16)((char)double_rounded_values_rtn[i]));
     actual.value = convert_char16_rtn((double16)double_values[i]);
-    compare_char_elements("convert_char16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (char16)convert_char_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (char16)min_expected;
@@ -9283,7 +10471,7 @@ kernel void test_convert_type()
        expected.value = (char16)max_expected;
     }
     actual.value = convert_char16_sat_rtn((double16)sat_input);
-    compare_char_elements("convert_char16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_char_elements_double("convert_char16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -9297,7 +10485,7 @@ kernel void test_convert_type()
     union { uchar value; uchar raw[1]; } expected, actual;
     expected.value = ((uchar)((uchar)double_rounded_values[i]));
     actual.value = convert_uchar((double)double_values[i]);
-    compare_uchar_elements("convert_uchar((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -9306,10 +10494,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat((double)sat_input);
-    compare_uchar_elements("convert_uchar_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)double_rounded_values_rte[i]));
     actual.value = convert_uchar_rte((double)double_values[i]);
-    compare_uchar_elements("convert_uchar_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -9318,10 +10506,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rte((double)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)double_rounded_values_rtz[i]));
     actual.value = convert_uchar_rtz((double)double_values[i]);
-    compare_uchar_elements("convert_uchar_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -9330,10 +10518,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rtz((double)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)double_rounded_values_rtp[i]));
     actual.value = convert_uchar_rtp((double)double_values[i]);
-    compare_uchar_elements("convert_uchar_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -9342,10 +10530,10 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rtp((double)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uchar)((uchar)double_rounded_values_rtn[i]));
     actual.value = convert_uchar_rtn((double)double_values[i]);
-    compare_uchar_elements("convert_uchar_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uchar)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar)min_expected;
@@ -9354,7 +10542,7 @@ kernel void test_convert_type()
        expected.value = (uchar)max_expected;
     }
     actual.value = convert_uchar_sat_rtn((double)sat_input);
-    compare_uchar_elements("convert_uchar_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_uchar_elements_double("convert_uchar_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -9368,7 +10556,7 @@ kernel void test_convert_type()
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)double_rounded_values[i]));
     actual.value = convert_uchar2((double2)double_values[i]);
-    compare_uchar_elements("convert_uchar2((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -9377,10 +10565,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat((double2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)double_rounded_values_rte[i]));
     actual.value = convert_uchar2_rte((double2)double_values[i]);
-    compare_uchar_elements("convert_uchar2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -9389,10 +10577,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rte((double2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)double_rounded_values_rtz[i]));
     actual.value = convert_uchar2_rtz((double2)double_values[i]);
-    compare_uchar_elements("convert_uchar2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -9401,10 +10589,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rtz((double2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)double_rounded_values_rtp[i]));
     actual.value = convert_uchar2_rtp((double2)double_values[i]);
-    compare_uchar_elements("convert_uchar2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -9413,10 +10601,10 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rtp((double2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uchar2)((uchar)double_rounded_values_rtn[i]));
     actual.value = convert_uchar2_rtn((double2)double_values[i]);
-    compare_uchar_elements("convert_uchar2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uchar2)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar2)min_expected;
@@ -9425,7 +10613,7 @@ kernel void test_convert_type()
        expected.value = (uchar2)max_expected;
     }
     actual.value = convert_uchar2_sat_rtn((double2)sat_input);
-    compare_uchar_elements("convert_uchar2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_uchar_elements_double("convert_uchar2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -9439,7 +10627,7 @@ kernel void test_convert_type()
     union { uchar4 value; uchar raw[4]; } expected, actual;
     expected.value = ((uchar4)((uchar)double_rounded_values[i]));
     actual.value = convert_uchar4((double4)double_values[i]);
-    compare_uchar_elements("convert_uchar4((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -9448,10 +10636,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((double4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)double_rounded_values_rte[i]));
     actual.value = convert_uchar4_rte((double4)double_values[i]);
-    compare_uchar_elements("convert_uchar4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -9460,10 +10648,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rte((double4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)double_rounded_values_rtz[i]));
     actual.value = convert_uchar4_rtz((double4)double_values[i]);
-    compare_uchar_elements("convert_uchar4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -9472,10 +10660,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtz((double4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)double_rounded_values_rtp[i]));
     actual.value = convert_uchar4_rtp((double4)double_values[i]);
-    compare_uchar_elements("convert_uchar4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -9484,10 +10672,10 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtp((double4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uchar4)((uchar)double_rounded_values_rtn[i]));
     actual.value = convert_uchar4_rtn((double4)double_values[i]);
-    compare_uchar_elements("convert_uchar4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar4)min_expected;
@@ -9496,7 +10684,7 @@ kernel void test_convert_type()
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtn((double4)sat_input);
-    compare_uchar_elements("convert_uchar4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_uchar_elements_double("convert_uchar4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -9510,7 +10698,7 @@ kernel void test_convert_type()
     union { uchar8 value; uchar raw[8]; } expected, actual;
     expected.value = ((uchar8)((uchar)double_rounded_values[i]));
     actual.value = convert_uchar8((double8)double_values[i]);
-    compare_uchar_elements("convert_uchar8((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -9519,10 +10707,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat((double8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)double_rounded_values_rte[i]));
     actual.value = convert_uchar8_rte((double8)double_values[i]);
-    compare_uchar_elements("convert_uchar8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -9531,10 +10719,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rte((double8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)double_rounded_values_rtz[i]));
     actual.value = convert_uchar8_rtz((double8)double_values[i]);
-    compare_uchar_elements("convert_uchar8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -9543,10 +10731,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rtz((double8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)double_rounded_values_rtp[i]));
     actual.value = convert_uchar8_rtp((double8)double_values[i]);
-    compare_uchar_elements("convert_uchar8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -9555,10 +10743,10 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rtp((double8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uchar8)((uchar)double_rounded_values_rtn[i]));
     actual.value = convert_uchar8_rtn((double8)double_values[i]);
-    compare_uchar_elements("convert_uchar8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uchar8)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar8)min_expected;
@@ -9567,7 +10755,7 @@ kernel void test_convert_type()
        expected.value = (uchar8)max_expected;
     }
     actual.value = convert_uchar8_sat_rtn((double8)sat_input);
-    compare_uchar_elements("convert_uchar8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_uchar_elements_double("convert_uchar8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -9581,7 +10769,7 @@ kernel void test_convert_type()
     union { uchar16 value; uchar raw[16]; } expected, actual;
     expected.value = ((uchar16)((uchar)double_rounded_values[i]));
     actual.value = convert_uchar16((double16)double_values[i]);
-    compare_uchar_elements("convert_uchar16((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -9590,10 +10778,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat((double16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)double_rounded_values_rte[i]));
     actual.value = convert_uchar16_rte((double16)double_values[i]);
-    compare_uchar_elements("convert_uchar16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -9602,10 +10790,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rte((double16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)double_rounded_values_rtz[i]));
     actual.value = convert_uchar16_rtz((double16)double_values[i]);
-    compare_uchar_elements("convert_uchar16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -9614,10 +10802,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rtz((double16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)double_rounded_values_rtp[i]));
     actual.value = convert_uchar16_rtp((double16)double_values[i]);
-    compare_uchar_elements("convert_uchar16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -9626,10 +10814,10 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rtp((double16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uchar16)((uchar)double_rounded_values_rtn[i]));
     actual.value = convert_uchar16_rtn((double16)double_values[i]);
-    compare_uchar_elements("convert_uchar16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uchar16)convert_uchar_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uchar16)min_expected;
@@ -9638,7 +10826,7 @@ kernel void test_convert_type()
        expected.value = (uchar16)max_expected;
     }
     actual.value = convert_uchar16_sat_rtn((double16)sat_input);
-    compare_uchar_elements("convert_uchar16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_uchar_elements_double("convert_uchar16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -9652,7 +10840,7 @@ kernel void test_convert_type()
     union { short value; short raw[1]; } expected, actual;
     expected.value = ((short)((short)double_rounded_values[i]));
     actual.value = convert_short((double)double_values[i]);
-    compare_short_elements("convert_short((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -9661,10 +10849,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat((double)sat_input);
-    compare_short_elements("convert_short_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)double_rounded_values_rte[i]));
     actual.value = convert_short_rte((double)double_values[i]);
-    compare_short_elements("convert_short_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -9673,10 +10861,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rte((double)sat_input);
-    compare_short_elements("convert_short_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)double_rounded_values_rtz[i]));
     actual.value = convert_short_rtz((double)double_values[i]);
-    compare_short_elements("convert_short_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -9685,10 +10873,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rtz((double)sat_input);
-    compare_short_elements("convert_short_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)double_rounded_values_rtp[i]));
     actual.value = convert_short_rtp((double)double_values[i]);
-    compare_short_elements("convert_short_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -9697,10 +10885,10 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rtp((double)sat_input);
-    compare_short_elements("convert_short_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((short)((short)double_rounded_values_rtn[i]));
     actual.value = convert_short_rtn((double)double_values[i]);
-    compare_short_elements("convert_short_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (short)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short)min_expected;
@@ -9709,7 +10897,7 @@ kernel void test_convert_type()
        expected.value = (short)max_expected;
     }
     actual.value = convert_short_sat_rtn((double)sat_input);
-    compare_short_elements("convert_short_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_short_elements_double("convert_short_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -9723,7 +10911,7 @@ kernel void test_convert_type()
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)double_rounded_values[i]));
     actual.value = convert_short2((double2)double_values[i]);
-    compare_short_elements("convert_short2((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -9732,10 +10920,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat((double2)sat_input);
-    compare_short_elements("convert_short2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)double_rounded_values_rte[i]));
     actual.value = convert_short2_rte((double2)double_values[i]);
-    compare_short_elements("convert_short2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -9744,10 +10932,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rte((double2)sat_input);
-    compare_short_elements("convert_short2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)double_rounded_values_rtz[i]));
     actual.value = convert_short2_rtz((double2)double_values[i]);
-    compare_short_elements("convert_short2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -9756,10 +10944,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rtz((double2)sat_input);
-    compare_short_elements("convert_short2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)double_rounded_values_rtp[i]));
     actual.value = convert_short2_rtp((double2)double_values[i]);
-    compare_short_elements("convert_short2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -9768,10 +10956,10 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rtp((double2)sat_input);
-    compare_short_elements("convert_short2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((short2)((short)double_rounded_values_rtn[i]));
     actual.value = convert_short2_rtn((double2)double_values[i]);
-    compare_short_elements("convert_short2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (short2)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short2)min_expected;
@@ -9780,7 +10968,7 @@ kernel void test_convert_type()
        expected.value = (short2)max_expected;
     }
     actual.value = convert_short2_sat_rtn((double2)sat_input);
-    compare_short_elements("convert_short2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_short_elements_double("convert_short2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -9794,7 +10982,7 @@ kernel void test_convert_type()
     union { short4 value; short raw[4]; } expected, actual;
     expected.value = ((short4)((short)double_rounded_values[i]));
     actual.value = convert_short4((double4)double_values[i]);
-    compare_short_elements("convert_short4((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -9803,10 +10991,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((double4)sat_input);
-    compare_short_elements("convert_short4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)double_rounded_values_rte[i]));
     actual.value = convert_short4_rte((double4)double_values[i]);
-    compare_short_elements("convert_short4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -9815,10 +11003,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rte((double4)sat_input);
-    compare_short_elements("convert_short4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)double_rounded_values_rtz[i]));
     actual.value = convert_short4_rtz((double4)double_values[i]);
-    compare_short_elements("convert_short4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -9827,10 +11015,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtz((double4)sat_input);
-    compare_short_elements("convert_short4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)double_rounded_values_rtp[i]));
     actual.value = convert_short4_rtp((double4)double_values[i]);
-    compare_short_elements("convert_short4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -9839,10 +11027,10 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtp((double4)sat_input);
-    compare_short_elements("convert_short4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((short4)((short)double_rounded_values_rtn[i]));
     actual.value = convert_short4_rtn((double4)double_values[i]);
-    compare_short_elements("convert_short4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short4)min_expected;
@@ -9851,7 +11039,7 @@ kernel void test_convert_type()
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtn((double4)sat_input);
-    compare_short_elements("convert_short4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_short_elements_double("convert_short4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -9865,7 +11053,7 @@ kernel void test_convert_type()
     union { short8 value; short raw[8]; } expected, actual;
     expected.value = ((short8)((short)double_rounded_values[i]));
     actual.value = convert_short8((double8)double_values[i]);
-    compare_short_elements("convert_short8((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -9874,10 +11062,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat((double8)sat_input);
-    compare_short_elements("convert_short8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)double_rounded_values_rte[i]));
     actual.value = convert_short8_rte((double8)double_values[i]);
-    compare_short_elements("convert_short8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -9886,10 +11074,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rte((double8)sat_input);
-    compare_short_elements("convert_short8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)double_rounded_values_rtz[i]));
     actual.value = convert_short8_rtz((double8)double_values[i]);
-    compare_short_elements("convert_short8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -9898,10 +11086,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rtz((double8)sat_input);
-    compare_short_elements("convert_short8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)double_rounded_values_rtp[i]));
     actual.value = convert_short8_rtp((double8)double_values[i]);
-    compare_short_elements("convert_short8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -9910,10 +11098,10 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rtp((double8)sat_input);
-    compare_short_elements("convert_short8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((short8)((short)double_rounded_values_rtn[i]));
     actual.value = convert_short8_rtn((double8)double_values[i]);
-    compare_short_elements("convert_short8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (short8)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short8)min_expected;
@@ -9922,7 +11110,7 @@ kernel void test_convert_type()
        expected.value = (short8)max_expected;
     }
     actual.value = convert_short8_sat_rtn((double8)sat_input);
-    compare_short_elements("convert_short8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_short_elements_double("convert_short8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -9936,7 +11124,7 @@ kernel void test_convert_type()
     union { short16 value; short raw[16]; } expected, actual;
     expected.value = ((short16)((short)double_rounded_values[i]));
     actual.value = convert_short16((double16)double_values[i]);
-    compare_short_elements("convert_short16((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -9945,10 +11133,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat((double16)sat_input);
-    compare_short_elements("convert_short16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)double_rounded_values_rte[i]));
     actual.value = convert_short16_rte((double16)double_values[i]);
-    compare_short_elements("convert_short16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -9957,10 +11145,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rte((double16)sat_input);
-    compare_short_elements("convert_short16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)double_rounded_values_rtz[i]));
     actual.value = convert_short16_rtz((double16)double_values[i]);
-    compare_short_elements("convert_short16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -9969,10 +11157,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rtz((double16)sat_input);
-    compare_short_elements("convert_short16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)double_rounded_values_rtp[i]));
     actual.value = convert_short16_rtp((double16)double_values[i]);
-    compare_short_elements("convert_short16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -9981,10 +11169,10 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rtp((double16)sat_input);
-    compare_short_elements("convert_short16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((short16)((short)double_rounded_values_rtn[i]));
     actual.value = convert_short16_rtn((double16)double_values[i]);
-    compare_short_elements("convert_short16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (short16)convert_short_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (short16)min_expected;
@@ -9993,7 +11181,7 @@ kernel void test_convert_type()
        expected.value = (short16)max_expected;
     }
     actual.value = convert_short16_sat_rtn((double16)sat_input);
-    compare_short_elements("convert_short16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_short_elements_double("convert_short16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -10007,7 +11195,7 @@ kernel void test_convert_type()
     union { ushort value; ushort raw[1]; } expected, actual;
     expected.value = ((ushort)((ushort)double_rounded_values[i]));
     actual.value = convert_ushort((double)double_values[i]);
-    compare_ushort_elements("convert_ushort((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -10016,10 +11204,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat((double)sat_input);
-    compare_ushort_elements("convert_ushort_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)double_rounded_values_rte[i]));
     actual.value = convert_ushort_rte((double)double_values[i]);
-    compare_ushort_elements("convert_ushort_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -10028,10 +11216,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rte((double)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)double_rounded_values_rtz[i]));
     actual.value = convert_ushort_rtz((double)double_values[i]);
-    compare_ushort_elements("convert_ushort_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -10040,10 +11228,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rtz((double)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)double_rounded_values_rtp[i]));
     actual.value = convert_ushort_rtp((double)double_values[i]);
-    compare_ushort_elements("convert_ushort_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -10052,10 +11240,10 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rtp((double)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ushort)((ushort)double_rounded_values_rtn[i]));
     actual.value = convert_ushort_rtn((double)double_values[i]);
-    compare_ushort_elements("convert_ushort_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ushort)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort)min_expected;
@@ -10064,7 +11252,7 @@ kernel void test_convert_type()
        expected.value = (ushort)max_expected;
     }
     actual.value = convert_ushort_sat_rtn((double)sat_input);
-    compare_ushort_elements("convert_ushort_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_ushort_elements_double("convert_ushort_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -10078,7 +11266,7 @@ kernel void test_convert_type()
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)double_rounded_values[i]));
     actual.value = convert_ushort2((double2)double_values[i]);
-    compare_ushort_elements("convert_ushort2((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -10087,10 +11275,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat((double2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)double_rounded_values_rte[i]));
     actual.value = convert_ushort2_rte((double2)double_values[i]);
-    compare_ushort_elements("convert_ushort2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -10099,10 +11287,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rte((double2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)double_rounded_values_rtz[i]));
     actual.value = convert_ushort2_rtz((double2)double_values[i]);
-    compare_ushort_elements("convert_ushort2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -10111,10 +11299,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rtz((double2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)double_rounded_values_rtp[i]));
     actual.value = convert_ushort2_rtp((double2)double_values[i]);
-    compare_ushort_elements("convert_ushort2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -10123,10 +11311,10 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rtp((double2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ushort2)((ushort)double_rounded_values_rtn[i]));
     actual.value = convert_ushort2_rtn((double2)double_values[i]);
-    compare_ushort_elements("convert_ushort2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ushort2)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort2)min_expected;
@@ -10135,7 +11323,7 @@ kernel void test_convert_type()
        expected.value = (ushort2)max_expected;
     }
     actual.value = convert_ushort2_sat_rtn((double2)sat_input);
-    compare_ushort_elements("convert_ushort2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_ushort_elements_double("convert_ushort2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -10149,7 +11337,7 @@ kernel void test_convert_type()
     union { ushort4 value; ushort raw[4]; } expected, actual;
     expected.value = ((ushort4)((ushort)double_rounded_values[i]));
     actual.value = convert_ushort4((double4)double_values[i]);
-    compare_ushort_elements("convert_ushort4((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -10158,10 +11346,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((double4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)double_rounded_values_rte[i]));
     actual.value = convert_ushort4_rte((double4)double_values[i]);
-    compare_ushort_elements("convert_ushort4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -10170,10 +11358,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rte((double4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)double_rounded_values_rtz[i]));
     actual.value = convert_ushort4_rtz((double4)double_values[i]);
-    compare_ushort_elements("convert_ushort4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -10182,10 +11370,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtz((double4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)double_rounded_values_rtp[i]));
     actual.value = convert_ushort4_rtp((double4)double_values[i]);
-    compare_ushort_elements("convert_ushort4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -10194,10 +11382,10 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtp((double4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ushort4)((ushort)double_rounded_values_rtn[i]));
     actual.value = convert_ushort4_rtn((double4)double_values[i]);
-    compare_ushort_elements("convert_ushort4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort4)min_expected;
@@ -10206,7 +11394,7 @@ kernel void test_convert_type()
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtn((double4)sat_input);
-    compare_ushort_elements("convert_ushort4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_ushort_elements_double("convert_ushort4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -10220,7 +11408,7 @@ kernel void test_convert_type()
     union { ushort8 value; ushort raw[8]; } expected, actual;
     expected.value = ((ushort8)((ushort)double_rounded_values[i]));
     actual.value = convert_ushort8((double8)double_values[i]);
-    compare_ushort_elements("convert_ushort8((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -10229,10 +11417,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat((double8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)double_rounded_values_rte[i]));
     actual.value = convert_ushort8_rte((double8)double_values[i]);
-    compare_ushort_elements("convert_ushort8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -10241,10 +11429,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rte((double8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)double_rounded_values_rtz[i]));
     actual.value = convert_ushort8_rtz((double8)double_values[i]);
-    compare_ushort_elements("convert_ushort8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -10253,10 +11441,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rtz((double8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)double_rounded_values_rtp[i]));
     actual.value = convert_ushort8_rtp((double8)double_values[i]);
-    compare_ushort_elements("convert_ushort8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -10265,10 +11453,10 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rtp((double8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ushort8)((ushort)double_rounded_values_rtn[i]));
     actual.value = convert_ushort8_rtn((double8)double_values[i]);
-    compare_ushort_elements("convert_ushort8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ushort8)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort8)min_expected;
@@ -10277,7 +11465,7 @@ kernel void test_convert_type()
        expected.value = (ushort8)max_expected;
     }
     actual.value = convert_ushort8_sat_rtn((double8)sat_input);
-    compare_ushort_elements("convert_ushort8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_ushort_elements_double("convert_ushort8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -10291,7 +11479,7 @@ kernel void test_convert_type()
     union { ushort16 value; ushort raw[16]; } expected, actual;
     expected.value = ((ushort16)((ushort)double_rounded_values[i]));
     actual.value = convert_ushort16((double16)double_values[i]);
-    compare_ushort_elements("convert_ushort16((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -10300,10 +11488,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat((double16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)double_rounded_values_rte[i]));
     actual.value = convert_ushort16_rte((double16)double_values[i]);
-    compare_ushort_elements("convert_ushort16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -10312,10 +11500,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rte((double16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)double_rounded_values_rtz[i]));
     actual.value = convert_ushort16_rtz((double16)double_values[i]);
-    compare_ushort_elements("convert_ushort16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -10324,10 +11512,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rtz((double16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)double_rounded_values_rtp[i]));
     actual.value = convert_ushort16_rtp((double16)double_values[i]);
-    compare_ushort_elements("convert_ushort16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -10336,10 +11524,10 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rtp((double16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ushort16)((ushort)double_rounded_values_rtn[i]));
     actual.value = convert_ushort16_rtn((double16)double_values[i]);
-    compare_ushort_elements("convert_ushort16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ushort16)convert_ushort_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ushort16)min_expected;
@@ -10348,7 +11536,7 @@ kernel void test_convert_type()
        expected.value = (ushort16)max_expected;
     }
     actual.value = convert_ushort16_sat_rtn((double16)sat_input);
-    compare_ushort_elements("convert_ushort16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_ushort_elements_double("convert_ushort16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -10362,7 +11550,7 @@ kernel void test_convert_type()
     union { int value; int raw[1]; } expected, actual;
     expected.value = ((int)((int)double_rounded_values[i]));
     actual.value = convert_int((double)double_values[i]);
-    compare_int_elements("convert_int((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -10371,10 +11559,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat((double)sat_input);
-    compare_int_elements("convert_int_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)double_rounded_values_rte[i]));
     actual.value = convert_int_rte((double)double_values[i]);
-    compare_int_elements("convert_int_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -10383,10 +11571,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rte((double)sat_input);
-    compare_int_elements("convert_int_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)double_rounded_values_rtz[i]));
     actual.value = convert_int_rtz((double)double_values[i]);
-    compare_int_elements("convert_int_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -10395,10 +11583,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rtz((double)sat_input);
-    compare_int_elements("convert_int_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)double_rounded_values_rtp[i]));
     actual.value = convert_int_rtp((double)double_values[i]);
-    compare_int_elements("convert_int_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -10407,10 +11595,10 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rtp((double)sat_input);
-    compare_int_elements("convert_int_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((int)((int)double_rounded_values_rtn[i]));
     actual.value = convert_int_rtn((double)double_values[i]);
-    compare_int_elements("convert_int_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (int)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int)min_expected;
@@ -10419,7 +11607,7 @@ kernel void test_convert_type()
        expected.value = (int)max_expected;
     }
     actual.value = convert_int_sat_rtn((double)sat_input);
-    compare_int_elements("convert_int_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_int_elements_double("convert_int_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -10433,7 +11621,7 @@ kernel void test_convert_type()
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)double_rounded_values[i]));
     actual.value = convert_int2((double2)double_values[i]);
-    compare_int_elements("convert_int2((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -10442,10 +11630,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat((double2)sat_input);
-    compare_int_elements("convert_int2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)double_rounded_values_rte[i]));
     actual.value = convert_int2_rte((double2)double_values[i]);
-    compare_int_elements("convert_int2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -10454,10 +11642,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rte((double2)sat_input);
-    compare_int_elements("convert_int2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)double_rounded_values_rtz[i]));
     actual.value = convert_int2_rtz((double2)double_values[i]);
-    compare_int_elements("convert_int2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -10466,10 +11654,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rtz((double2)sat_input);
-    compare_int_elements("convert_int2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)double_rounded_values_rtp[i]));
     actual.value = convert_int2_rtp((double2)double_values[i]);
-    compare_int_elements("convert_int2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -10478,10 +11666,10 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rtp((double2)sat_input);
-    compare_int_elements("convert_int2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((int2)((int)double_rounded_values_rtn[i]));
     actual.value = convert_int2_rtn((double2)double_values[i]);
-    compare_int_elements("convert_int2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (int2)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int2)min_expected;
@@ -10490,7 +11678,7 @@ kernel void test_convert_type()
        expected.value = (int2)max_expected;
     }
     actual.value = convert_int2_sat_rtn((double2)sat_input);
-    compare_int_elements("convert_int2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_int_elements_double("convert_int2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -10504,7 +11692,7 @@ kernel void test_convert_type()
     union { int4 value; int raw[4]; } expected, actual;
     expected.value = ((int4)((int)double_rounded_values[i]));
     actual.value = convert_int4((double4)double_values[i]);
-    compare_int_elements("convert_int4((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -10513,10 +11701,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((double4)sat_input);
-    compare_int_elements("convert_int4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)double_rounded_values_rte[i]));
     actual.value = convert_int4_rte((double4)double_values[i]);
-    compare_int_elements("convert_int4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -10525,10 +11713,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rte((double4)sat_input);
-    compare_int_elements("convert_int4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)double_rounded_values_rtz[i]));
     actual.value = convert_int4_rtz((double4)double_values[i]);
-    compare_int_elements("convert_int4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -10537,10 +11725,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtz((double4)sat_input);
-    compare_int_elements("convert_int4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)double_rounded_values_rtp[i]));
     actual.value = convert_int4_rtp((double4)double_values[i]);
-    compare_int_elements("convert_int4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -10549,10 +11737,10 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtp((double4)sat_input);
-    compare_int_elements("convert_int4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((int4)((int)double_rounded_values_rtn[i]));
     actual.value = convert_int4_rtn((double4)double_values[i]);
-    compare_int_elements("convert_int4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int4)min_expected;
@@ -10561,7 +11749,7 @@ kernel void test_convert_type()
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtn((double4)sat_input);
-    compare_int_elements("convert_int4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_int_elements_double("convert_int4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -10575,7 +11763,7 @@ kernel void test_convert_type()
     union { int8 value; int raw[8]; } expected, actual;
     expected.value = ((int8)((int)double_rounded_values[i]));
     actual.value = convert_int8((double8)double_values[i]);
-    compare_int_elements("convert_int8((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -10584,10 +11772,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat((double8)sat_input);
-    compare_int_elements("convert_int8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)double_rounded_values_rte[i]));
     actual.value = convert_int8_rte((double8)double_values[i]);
-    compare_int_elements("convert_int8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -10596,10 +11784,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rte((double8)sat_input);
-    compare_int_elements("convert_int8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)double_rounded_values_rtz[i]));
     actual.value = convert_int8_rtz((double8)double_values[i]);
-    compare_int_elements("convert_int8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -10608,10 +11796,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rtz((double8)sat_input);
-    compare_int_elements("convert_int8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)double_rounded_values_rtp[i]));
     actual.value = convert_int8_rtp((double8)double_values[i]);
-    compare_int_elements("convert_int8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -10620,10 +11808,10 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rtp((double8)sat_input);
-    compare_int_elements("convert_int8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((int8)((int)double_rounded_values_rtn[i]));
     actual.value = convert_int8_rtn((double8)double_values[i]);
-    compare_int_elements("convert_int8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (int8)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int8)min_expected;
@@ -10632,7 +11820,7 @@ kernel void test_convert_type()
        expected.value = (int8)max_expected;
     }
     actual.value = convert_int8_sat_rtn((double8)sat_input);
-    compare_int_elements("convert_int8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_int_elements_double("convert_int8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -10646,7 +11834,7 @@ kernel void test_convert_type()
     union { int16 value; int raw[16]; } expected, actual;
     expected.value = ((int16)((int)double_rounded_values[i]));
     actual.value = convert_int16((double16)double_values[i]);
-    compare_int_elements("convert_int16((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -10655,10 +11843,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat((double16)sat_input);
-    compare_int_elements("convert_int16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)double_rounded_values_rte[i]));
     actual.value = convert_int16_rte((double16)double_values[i]);
-    compare_int_elements("convert_int16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -10667,10 +11855,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rte((double16)sat_input);
-    compare_int_elements("convert_int16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)double_rounded_values_rtz[i]));
     actual.value = convert_int16_rtz((double16)double_values[i]);
-    compare_int_elements("convert_int16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -10679,10 +11867,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rtz((double16)sat_input);
-    compare_int_elements("convert_int16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)double_rounded_values_rtp[i]));
     actual.value = convert_int16_rtp((double16)double_values[i]);
-    compare_int_elements("convert_int16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -10691,10 +11879,10 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rtp((double16)sat_input);
-    compare_int_elements("convert_int16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((int16)((int)double_rounded_values_rtn[i]));
     actual.value = convert_int16_rtn((double16)double_values[i]);
-    compare_int_elements("convert_int16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (int16)convert_int_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (int16)min_expected;
@@ -10703,7 +11891,7 @@ kernel void test_convert_type()
        expected.value = (int16)max_expected;
     }
     actual.value = convert_int16_sat_rtn((double16)sat_input);
-    compare_int_elements("convert_int16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_int_elements_double("convert_int16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -10717,7 +11905,7 @@ kernel void test_convert_type()
     union { uint value; uint raw[1]; } expected, actual;
     expected.value = ((uint)((uint)double_rounded_values[i]));
     actual.value = convert_uint((double)double_values[i]);
-    compare_uint_elements("convert_uint((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -10726,10 +11914,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat((double)sat_input);
-    compare_uint_elements("convert_uint_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)double_rounded_values_rte[i]));
     actual.value = convert_uint_rte((double)double_values[i]);
-    compare_uint_elements("convert_uint_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -10738,10 +11926,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rte((double)sat_input);
-    compare_uint_elements("convert_uint_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)double_rounded_values_rtz[i]));
     actual.value = convert_uint_rtz((double)double_values[i]);
-    compare_uint_elements("convert_uint_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -10750,10 +11938,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rtz((double)sat_input);
-    compare_uint_elements("convert_uint_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)double_rounded_values_rtp[i]));
     actual.value = convert_uint_rtp((double)double_values[i]);
-    compare_uint_elements("convert_uint_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -10762,10 +11950,10 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rtp((double)sat_input);
-    compare_uint_elements("convert_uint_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((uint)((uint)double_rounded_values_rtn[i]));
     actual.value = convert_uint_rtn((double)double_values[i]);
-    compare_uint_elements("convert_uint_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (uint)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint)min_expected;
@@ -10774,7 +11962,7 @@ kernel void test_convert_type()
        expected.value = (uint)max_expected;
     }
     actual.value = convert_uint_sat_rtn((double)sat_input);
-    compare_uint_elements("convert_uint_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_uint_elements_double("convert_uint_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -10788,7 +11976,7 @@ kernel void test_convert_type()
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)double_rounded_values[i]));
     actual.value = convert_uint2((double2)double_values[i]);
-    compare_uint_elements("convert_uint2((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -10797,10 +11985,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat((double2)sat_input);
-    compare_uint_elements("convert_uint2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)double_rounded_values_rte[i]));
     actual.value = convert_uint2_rte((double2)double_values[i]);
-    compare_uint_elements("convert_uint2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -10809,10 +11997,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rte((double2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)double_rounded_values_rtz[i]));
     actual.value = convert_uint2_rtz((double2)double_values[i]);
-    compare_uint_elements("convert_uint2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -10821,10 +12009,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rtz((double2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)double_rounded_values_rtp[i]));
     actual.value = convert_uint2_rtp((double2)double_values[i]);
-    compare_uint_elements("convert_uint2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -10833,10 +12021,10 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rtp((double2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((uint2)((uint)double_rounded_values_rtn[i]));
     actual.value = convert_uint2_rtn((double2)double_values[i]);
-    compare_uint_elements("convert_uint2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (uint2)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint2)min_expected;
@@ -10845,7 +12033,7 @@ kernel void test_convert_type()
        expected.value = (uint2)max_expected;
     }
     actual.value = convert_uint2_sat_rtn((double2)sat_input);
-    compare_uint_elements("convert_uint2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_uint_elements_double("convert_uint2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -10859,7 +12047,7 @@ kernel void test_convert_type()
     union { uint4 value; uint raw[4]; } expected, actual;
     expected.value = ((uint4)((uint)double_rounded_values[i]));
     actual.value = convert_uint4((double4)double_values[i]);
-    compare_uint_elements("convert_uint4((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -10868,10 +12056,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((double4)sat_input);
-    compare_uint_elements("convert_uint4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)double_rounded_values_rte[i]));
     actual.value = convert_uint4_rte((double4)double_values[i]);
-    compare_uint_elements("convert_uint4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -10880,10 +12068,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rte((double4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)double_rounded_values_rtz[i]));
     actual.value = convert_uint4_rtz((double4)double_values[i]);
-    compare_uint_elements("convert_uint4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -10892,10 +12080,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtz((double4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)double_rounded_values_rtp[i]));
     actual.value = convert_uint4_rtp((double4)double_values[i]);
-    compare_uint_elements("convert_uint4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -10904,10 +12092,10 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtp((double4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((uint4)((uint)double_rounded_values_rtn[i]));
     actual.value = convert_uint4_rtn((double4)double_values[i]);
-    compare_uint_elements("convert_uint4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint4)min_expected;
@@ -10916,7 +12104,7 @@ kernel void test_convert_type()
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtn((double4)sat_input);
-    compare_uint_elements("convert_uint4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_uint_elements_double("convert_uint4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -10930,7 +12118,7 @@ kernel void test_convert_type()
     union { uint8 value; uint raw[8]; } expected, actual;
     expected.value = ((uint8)((uint)double_rounded_values[i]));
     actual.value = convert_uint8((double8)double_values[i]);
-    compare_uint_elements("convert_uint8((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -10939,10 +12127,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat((double8)sat_input);
-    compare_uint_elements("convert_uint8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)double_rounded_values_rte[i]));
     actual.value = convert_uint8_rte((double8)double_values[i]);
-    compare_uint_elements("convert_uint8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -10951,10 +12139,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rte((double8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)double_rounded_values_rtz[i]));
     actual.value = convert_uint8_rtz((double8)double_values[i]);
-    compare_uint_elements("convert_uint8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -10963,10 +12151,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rtz((double8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)double_rounded_values_rtp[i]));
     actual.value = convert_uint8_rtp((double8)double_values[i]);
-    compare_uint_elements("convert_uint8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -10975,10 +12163,10 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rtp((double8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((uint8)((uint)double_rounded_values_rtn[i]));
     actual.value = convert_uint8_rtn((double8)double_values[i]);
-    compare_uint_elements("convert_uint8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (uint8)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint8)min_expected;
@@ -10987,7 +12175,7 @@ kernel void test_convert_type()
        expected.value = (uint8)max_expected;
     }
     actual.value = convert_uint8_sat_rtn((double8)sat_input);
-    compare_uint_elements("convert_uint8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_uint_elements_double("convert_uint8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -11001,7 +12189,7 @@ kernel void test_convert_type()
     union { uint16 value; uint raw[16]; } expected, actual;
     expected.value = ((uint16)((uint)double_rounded_values[i]));
     actual.value = convert_uint16((double16)double_values[i]);
-    compare_uint_elements("convert_uint16((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -11010,10 +12198,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat((double16)sat_input);
-    compare_uint_elements("convert_uint16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)double_rounded_values_rte[i]));
     actual.value = convert_uint16_rte((double16)double_values[i]);
-    compare_uint_elements("convert_uint16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -11022,10 +12210,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rte((double16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)double_rounded_values_rtz[i]));
     actual.value = convert_uint16_rtz((double16)double_values[i]);
-    compare_uint_elements("convert_uint16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -11034,10 +12222,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rtz((double16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)double_rounded_values_rtp[i]));
     actual.value = convert_uint16_rtp((double16)double_values[i]);
-    compare_uint_elements("convert_uint16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -11046,10 +12234,10 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rtp((double16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((uint16)((uint)double_rounded_values_rtn[i]));
     actual.value = convert_uint16_rtn((double16)double_values[i]);
-    compare_uint_elements("convert_uint16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (uint16)convert_uint_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (uint16)min_expected;
@@ -11058,7 +12246,7 @@ kernel void test_convert_type()
        expected.value = (uint16)max_expected;
     }
     actual.value = convert_uint16_sat_rtn((double16)sat_input);
-    compare_uint_elements("convert_uint16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_uint_elements_double("convert_uint16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -11074,7 +12262,7 @@ kernel void test_convert_type()
     union { long value; long raw[1]; } expected, actual;
     expected.value = ((long)((long)double_rounded_values[i]));
     actual.value = convert_long((double)double_values[i]);
-    compare_long_elements("convert_long((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -11083,10 +12271,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat((double)sat_input);
-    compare_long_elements("convert_long_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)double_rounded_values_rte[i]));
     actual.value = convert_long_rte((double)double_values[i]);
-    compare_long_elements("convert_long_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -11095,10 +12283,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rte((double)sat_input);
-    compare_long_elements("convert_long_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)double_rounded_values_rtz[i]));
     actual.value = convert_long_rtz((double)double_values[i]);
-    compare_long_elements("convert_long_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -11107,10 +12295,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rtz((double)sat_input);
-    compare_long_elements("convert_long_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)double_rounded_values_rtp[i]));
     actual.value = convert_long_rtp((double)double_values[i]);
-    compare_long_elements("convert_long_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -11119,10 +12307,10 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rtp((double)sat_input);
-    compare_long_elements("convert_long_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((long)((long)double_rounded_values_rtn[i]));
     actual.value = convert_long_rtn((double)double_values[i]);
-    compare_long_elements("convert_long_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (long)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long)min_expected;
@@ -11131,7 +12319,7 @@ kernel void test_convert_type()
        expected.value = (long)max_expected;
     }
     actual.value = convert_long_sat_rtn((double)sat_input);
-    compare_long_elements("convert_long_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_long_elements_double("convert_long_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -11149,7 +12337,7 @@ kernel void test_convert_type()
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)double_rounded_values[i]));
     actual.value = convert_long2((double2)double_values[i]);
-    compare_long_elements("convert_long2((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -11158,10 +12346,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat((double2)sat_input);
-    compare_long_elements("convert_long2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)double_rounded_values_rte[i]));
     actual.value = convert_long2_rte((double2)double_values[i]);
-    compare_long_elements("convert_long2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -11170,10 +12358,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rte((double2)sat_input);
-    compare_long_elements("convert_long2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)double_rounded_values_rtz[i]));
     actual.value = convert_long2_rtz((double2)double_values[i]);
-    compare_long_elements("convert_long2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -11182,10 +12370,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rtz((double2)sat_input);
-    compare_long_elements("convert_long2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)double_rounded_values_rtp[i]));
     actual.value = convert_long2_rtp((double2)double_values[i]);
-    compare_long_elements("convert_long2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -11194,10 +12382,10 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rtp((double2)sat_input);
-    compare_long_elements("convert_long2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((long2)((long)double_rounded_values_rtn[i]));
     actual.value = convert_long2_rtn((double2)double_values[i]);
-    compare_long_elements("convert_long2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (long2)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long2)min_expected;
@@ -11206,7 +12394,7 @@ kernel void test_convert_type()
        expected.value = (long2)max_expected;
     }
     actual.value = convert_long2_sat_rtn((double2)sat_input);
-    compare_long_elements("convert_long2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_long_elements_double("convert_long2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -11224,7 +12412,7 @@ kernel void test_convert_type()
     union { long4 value; long raw[4]; } expected, actual;
     expected.value = ((long4)((long)double_rounded_values[i]));
     actual.value = convert_long4((double4)double_values[i]);
-    compare_long_elements("convert_long4((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -11233,10 +12421,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((double4)sat_input);
-    compare_long_elements("convert_long4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)double_rounded_values_rte[i]));
     actual.value = convert_long4_rte((double4)double_values[i]);
-    compare_long_elements("convert_long4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -11245,10 +12433,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rte((double4)sat_input);
-    compare_long_elements("convert_long4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)double_rounded_values_rtz[i]));
     actual.value = convert_long4_rtz((double4)double_values[i]);
-    compare_long_elements("convert_long4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -11257,10 +12445,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtz((double4)sat_input);
-    compare_long_elements("convert_long4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)double_rounded_values_rtp[i]));
     actual.value = convert_long4_rtp((double4)double_values[i]);
-    compare_long_elements("convert_long4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -11269,10 +12457,10 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtp((double4)sat_input);
-    compare_long_elements("convert_long4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((long4)((long)double_rounded_values_rtn[i]));
     actual.value = convert_long4_rtn((double4)double_values[i]);
-    compare_long_elements("convert_long4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long4)min_expected;
@@ -11281,7 +12469,7 @@ kernel void test_convert_type()
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtn((double4)sat_input);
-    compare_long_elements("convert_long4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_long_elements_double("convert_long4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -11299,7 +12487,7 @@ kernel void test_convert_type()
     union { long8 value; long raw[8]; } expected, actual;
     expected.value = ((long8)((long)double_rounded_values[i]));
     actual.value = convert_long8((double8)double_values[i]);
-    compare_long_elements("convert_long8((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -11308,10 +12496,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat((double8)sat_input);
-    compare_long_elements("convert_long8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)double_rounded_values_rte[i]));
     actual.value = convert_long8_rte((double8)double_values[i]);
-    compare_long_elements("convert_long8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -11320,10 +12508,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rte((double8)sat_input);
-    compare_long_elements("convert_long8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)double_rounded_values_rtz[i]));
     actual.value = convert_long8_rtz((double8)double_values[i]);
-    compare_long_elements("convert_long8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -11332,10 +12520,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rtz((double8)sat_input);
-    compare_long_elements("convert_long8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)double_rounded_values_rtp[i]));
     actual.value = convert_long8_rtp((double8)double_values[i]);
-    compare_long_elements("convert_long8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -11344,10 +12532,10 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rtp((double8)sat_input);
-    compare_long_elements("convert_long8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((long8)((long)double_rounded_values_rtn[i]));
     actual.value = convert_long8_rtn((double8)double_values[i]);
-    compare_long_elements("convert_long8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (long8)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long8)min_expected;
@@ -11356,7 +12544,7 @@ kernel void test_convert_type()
        expected.value = (long8)max_expected;
     }
     actual.value = convert_long8_sat_rtn((double8)sat_input);
-    compare_long_elements("convert_long8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_long_elements_double("convert_long8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -11374,7 +12562,7 @@ kernel void test_convert_type()
     union { long16 value; long raw[16]; } expected, actual;
     expected.value = ((long16)((long)double_rounded_values[i]));
     actual.value = convert_long16((double16)double_values[i]);
-    compare_long_elements("convert_long16((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -11383,10 +12571,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat((double16)sat_input);
-    compare_long_elements("convert_long16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)double_rounded_values_rte[i]));
     actual.value = convert_long16_rte((double16)double_values[i]);
-    compare_long_elements("convert_long16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -11395,10 +12583,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rte((double16)sat_input);
-    compare_long_elements("convert_long16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)double_rounded_values_rtz[i]));
     actual.value = convert_long16_rtz((double16)double_values[i]);
-    compare_long_elements("convert_long16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -11407,10 +12595,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rtz((double16)sat_input);
-    compare_long_elements("convert_long16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)double_rounded_values_rtp[i]));
     actual.value = convert_long16_rtp((double16)double_values[i]);
-    compare_long_elements("convert_long16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -11419,10 +12607,10 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rtp((double16)sat_input);
-    compare_long_elements("convert_long16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((long16)((long)double_rounded_values_rtn[i]));
     actual.value = convert_long16_rtn((double16)double_values[i]);
-    compare_long_elements("convert_long16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (long16)convert_long_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (long16)min_expected;
@@ -11431,7 +12619,7 @@ kernel void test_convert_type()
        expected.value = (long16)max_expected;
     }
     actual.value = convert_long16_sat_rtn((double16)sat_input);
-    compare_long_elements("convert_long16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_long_elements_double("convert_long16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -11449,7 +12637,7 @@ kernel void test_convert_type()
     union { ulong value; ulong raw[1]; } expected, actual;
     expected.value = ((ulong)((ulong)double_rounded_values[i]));
     actual.value = convert_ulong((double)double_values[i]);
-    compare_ulong_elements("convert_ulong((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -11458,10 +12646,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat((double)sat_input);
-    compare_ulong_elements("convert_ulong_sat((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_sat(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)double_rounded_values_rte[i]));
     actual.value = convert_ulong_rte((double)double_values[i]);
-    compare_ulong_elements("convert_ulong_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -11470,10 +12658,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rte((double)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rte((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_sat_rte(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)double_rounded_values_rtz[i]));
     actual.value = convert_ulong_rtz((double)double_values[i]);
-    compare_ulong_elements("convert_ulong_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -11482,10 +12670,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rtz((double)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rtz((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_sat_rtz(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)double_rounded_values_rtp[i]));
     actual.value = convert_ulong_rtp((double)double_values[i]);
-    compare_ulong_elements("convert_ulong_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -11494,10 +12682,10 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rtp((double)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rtp((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_sat_rtp(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
     expected.value = ((ulong)((ulong)double_rounded_values_rtn[i]));
     actual.value = convert_ulong_rtn((double)double_values[i]);
-    compare_ulong_elements("convert_ulong_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
     expected.value = (ulong)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong)min_expected;
@@ -11506,7 +12694,7 @@ kernel void test_convert_type()
        expected.value = (ulong)max_expected;
     }
     actual.value = convert_ulong_sat_rtn((double)sat_input);
-    compare_ulong_elements("convert_ulong_sat_rtn((double))", i, expected.raw, actual.raw, 1);
+    compare_ulong_elements_double("convert_ulong_sat_rtn(double)", i, 0, &sat_input, expected.raw, actual.raw, 1);
   }
 
 #endif
@@ -11524,7 +12712,7 @@ kernel void test_convert_type()
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)double_rounded_values[i]));
     actual.value = convert_ulong2((double2)double_values[i]);
-    compare_ulong_elements("convert_ulong2((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -11533,10 +12721,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat((double2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_sat(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)double_rounded_values_rte[i]));
     actual.value = convert_ulong2_rte((double2)double_values[i]);
-    compare_ulong_elements("convert_ulong2_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -11545,10 +12733,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rte((double2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rte((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_sat_rte(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)double_rounded_values_rtz[i]));
     actual.value = convert_ulong2_rtz((double2)double_values[i]);
-    compare_ulong_elements("convert_ulong2_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -11557,10 +12745,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rtz((double2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rtz((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_sat_rtz(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)double_rounded_values_rtp[i]));
     actual.value = convert_ulong2_rtp((double2)double_values[i]);
-    compare_ulong_elements("convert_ulong2_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -11569,10 +12757,10 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rtp((double2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rtp((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_sat_rtp(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
     expected.value = ((ulong2)((ulong)double_rounded_values_rtn[i]));
     actual.value = convert_ulong2_rtn((double2)double_values[i]);
-    compare_ulong_elements("convert_ulong2_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
     expected.value = (ulong2)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong2)min_expected;
@@ -11581,7 +12769,7 @@ kernel void test_convert_type()
        expected.value = (ulong2)max_expected;
     }
     actual.value = convert_ulong2_sat_rtn((double2)sat_input);
-    compare_ulong_elements("convert_ulong2_sat_rtn((double2))", i, expected.raw, actual.raw, 2);
+    compare_ulong_elements_double("convert_ulong2_sat_rtn(double2)", i, 0, &sat_input, expected.raw, actual.raw, 2);
   }
 
 #endif
@@ -11599,7 +12787,7 @@ kernel void test_convert_type()
     union { ulong4 value; ulong raw[4]; } expected, actual;
     expected.value = ((ulong4)((ulong)double_rounded_values[i]));
     actual.value = convert_ulong4((double4)double_values[i]);
-    compare_ulong_elements("convert_ulong4((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -11608,10 +12796,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((double4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_sat(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)double_rounded_values_rte[i]));
     actual.value = convert_ulong4_rte((double4)double_values[i]);
-    compare_ulong_elements("convert_ulong4_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -11620,10 +12808,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rte((double4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rte((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_sat_rte(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)double_rounded_values_rtz[i]));
     actual.value = convert_ulong4_rtz((double4)double_values[i]);
-    compare_ulong_elements("convert_ulong4_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -11632,10 +12820,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtz((double4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rtz((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_sat_rtz(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)double_rounded_values_rtp[i]));
     actual.value = convert_ulong4_rtp((double4)double_values[i]);
-    compare_ulong_elements("convert_ulong4_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -11644,10 +12832,10 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtp((double4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rtp((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_sat_rtp(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
     expected.value = ((ulong4)((ulong)double_rounded_values_rtn[i]));
     actual.value = convert_ulong4_rtn((double4)double_values[i]);
-    compare_ulong_elements("convert_ulong4_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong4)min_expected;
@@ -11656,7 +12844,7 @@ kernel void test_convert_type()
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtn((double4)sat_input);
-    compare_ulong_elements("convert_ulong4_sat_rtn((double4))", i, expected.raw, actual.raw, 4);
+    compare_ulong_elements_double("convert_ulong4_sat_rtn(double4)", i, 0, &sat_input, expected.raw, actual.raw, 4);
   }
 
 #endif
@@ -11674,7 +12862,7 @@ kernel void test_convert_type()
     union { ulong8 value; ulong raw[8]; } expected, actual;
     expected.value = ((ulong8)((ulong)double_rounded_values[i]));
     actual.value = convert_ulong8((double8)double_values[i]);
-    compare_ulong_elements("convert_ulong8((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -11683,10 +12871,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat((double8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_sat(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)double_rounded_values_rte[i]));
     actual.value = convert_ulong8_rte((double8)double_values[i]);
-    compare_ulong_elements("convert_ulong8_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -11695,10 +12883,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rte((double8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rte((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_sat_rte(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)double_rounded_values_rtz[i]));
     actual.value = convert_ulong8_rtz((double8)double_values[i]);
-    compare_ulong_elements("convert_ulong8_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -11707,10 +12895,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rtz((double8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rtz((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_sat_rtz(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)double_rounded_values_rtp[i]));
     actual.value = convert_ulong8_rtp((double8)double_values[i]);
-    compare_ulong_elements("convert_ulong8_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -11719,10 +12907,10 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rtp((double8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rtp((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_sat_rtp(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
     expected.value = ((ulong8)((ulong)double_rounded_values_rtn[i]));
     actual.value = convert_ulong8_rtn((double8)double_values[i]);
-    compare_ulong_elements("convert_ulong8_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
     expected.value = (ulong8)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong8)min_expected;
@@ -11731,7 +12919,7 @@ kernel void test_convert_type()
        expected.value = (ulong8)max_expected;
     }
     actual.value = convert_ulong8_sat_rtn((double8)sat_input);
-    compare_ulong_elements("convert_ulong8_sat_rtn((double8))", i, expected.raw, actual.raw, 8);
+    compare_ulong_elements_double("convert_ulong8_sat_rtn(double8)", i, 0, &sat_input, expected.raw, actual.raw, 8);
   }
 
 #endif
@@ -11749,7 +12937,7 @@ kernel void test_convert_type()
     union { ulong16 value; ulong raw[16]; } expected, actual;
     expected.value = ((ulong16)((ulong)double_rounded_values[i]));
     actual.value = convert_ulong16((double16)double_values[i]);
-    compare_ulong_elements("convert_ulong16((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -11758,10 +12946,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat((double16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_sat(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)double_rounded_values_rte[i]));
     actual.value = convert_ulong16_rte((double16)double_values[i]);
-    compare_ulong_elements("convert_ulong16_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rte(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -11770,10 +12958,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rte((double16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rte((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_sat_rte(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)double_rounded_values_rtz[i]));
     actual.value = convert_ulong16_rtz((double16)double_values[i]);
-    compare_ulong_elements("convert_ulong16_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rtz(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -11782,10 +12970,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rtz((double16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rtz((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_sat_rtz(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)double_rounded_values_rtp[i]));
     actual.value = convert_ulong16_rtp((double16)double_values[i]);
-    compare_ulong_elements("convert_ulong16_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rtp(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -11794,10 +12982,10 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rtp((double16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rtp((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_sat_rtp(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
     expected.value = ((ulong16)((ulong)double_rounded_values_rtn[i]));
     actual.value = convert_ulong16_rtn((double16)double_values[i]);
-    compare_ulong_elements("convert_ulong16_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
     expected.value = (ulong16)convert_ulong_rtn(sat_input);
     if (sat_input < min_expected) {
        expected.value = (ulong16)min_expected;
@@ -11806,7 +12994,7 @@ kernel void test_convert_type()
        expected.value = (ulong16)max_expected;
     }
     actual.value = convert_ulong16_sat_rtn((double16)sat_input);
-    compare_ulong_elements("convert_ulong16_sat_rtn((double16))", i, expected.raw, actual.raw, 16);
+    compare_ulong_elements_double("convert_ulong16_sat_rtn(double16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
 #endif
@@ -11814,24 +13002,31 @@ kernel void test_convert_type()
 #endif
 
 union { int8 value; int raw[8]; } qe, qa;
-qa.value = convert_int8_rtz((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
-qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
-compare_int_elements("convert_int8_rtz((float8))", 0, qe.raw, qa.raw, 8);
+union { float8 value; float raw[8]; } qo;
 
-qa.value = convert_int8_rtp((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rtz(qo.value);
+qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
+compare_int_elements_float("convert_int8_rtz(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
+
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rtp(qo.value);
 qe.value = (int8)(-23, -23, -23, -23, 23, 24, 24, 24);
-compare_int_elements("convert_int8_rtp((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8_rtp(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rtn((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rtn(qo.value);
 qe.value = (int8)(-24, -24, -24, -23, 23, 23, 23, 23);
-compare_int_elements("convert_int8_rtn((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8_rtn(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rte((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rte(qo.value);
 qe.value = (int8)(-24, -24, -23, -23, 23, 23, 24, 24);
-compare_int_elements("convert_int8_rte((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8_rte(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8(qo.value);
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
-compare_int_elements("convert_int8((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
 }

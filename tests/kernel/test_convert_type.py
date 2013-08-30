@@ -66,8 +66,8 @@ printf_format_type = {
              'uint'  : '%#.8x',
              'long'  : '%#.16lx',
              'ulong' : '%#.16lx',
-             'float' : '%.12g',
-             'double': '%.18g'}
+             'float' : '%.8g',
+             'double': '%.17g'}
 
 def generate_conversions(src_types, dst_types):
   for src in src_types:
@@ -142,26 +142,26 @@ constant size_t {F}_values_length = sizeof({F}_values) / sizeof({F}_values[0]);
 #
 
 for t in all_types:
-  if t == 'double':
-    print("\n#ifdef cl_khr_fp64")
-  if t in int64_types:
-    print("\n#ifdef cles_khr_int64")
-  print("""
+  for ot in all_types:
+    if t == 'double' or ot == 'double':
+      print("\n#ifdef cl_khr_fp64")
+    if t in int64_types or ot in int64_types:
+      print("\n#ifdef cles_khr_int64")
+    print("""
 _CL_NOINLINE
-void compare_{Type}_elements(char const* name, size_t sample, const {Type}* expected, const {Type}* actual, size_t n)
+void compare_{Type}_elements_{OrigType}(char const* name, size_t sample, constant {OrigType}* original1, const {OrigType}* original2, const {Type}* expected, const {Type}* actual, size_t n)
 {{
   for (size_t i = 0; i < n; ++i) {{
     if (expected[i] != actual[i]) {{
-      printf("FAIL: %s - sample#: %u element#: %u expected: {TypeFormat} actual: {TypeFormat}\\n",
-        name, (uint)sample, (uint)i, expected[i], actual[i]);
-      break;
+      printf("FAIL: %s - sample#: %u element#: %u original: {OrigTypeFormat} expected: {TypeFormat} actual: {TypeFormat}\\n",
+        name, (uint)sample, (uint)i, ({OrigType})(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
     }}
   }}
-}}""".format(Type=t, TypeFormat=printf_format_type[t]))
-  if t in int64_types:
-    print("\n#endif")
-  if t == 'double':
-    print("\n#endif")
+}}""".format(Type=t, TypeFormat=printf_format_type[t], OrigType=ot, OrigTypeFormat=printf_format_type[ot]))
+    if t == 'double' or ot == 'double':
+      print("\n#endif")
+    if t in int64_types or ot in int64_types:
+      print("\n#endif")
 
 #
 # conversion tests
@@ -183,7 +183,7 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
     union {{ {D}{N} value; {D} raw[{M}]; }} expected, actual;
     expected.value = (({D}{N})(({D}){S}_values[i]));
     actual.value = convert_{D}{N}(({S}{N}){S}_values[i]);
-    compare_{D}_elements("convert_{D}{N}(({S}{N}))", i, expected.raw, actual.raw, {M});
+    compare_{D}_elements_{S}("convert_{D}{N}({S}{N})", i, &{S}_values[i], 0, expected.raw, actual.raw, {M});
     if ({S}_values[i] < min_expected) {{
        expected.value = ({D}{N})min_expected;
     }}
@@ -191,7 +191,7 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
        expected.value = ({D}{N})max_expected;
     }}
     actual.value = convert_{D}{N}_sat(({S}{N}){S}_values[i]);
-    compare_{D}_elements("convert_{D}{N}_sat(({S}{N}))", i, expected.raw, actual.raw, {M});
+    compare_{D}_elements_{S}("convert_{D}{N}_sat({S}{N})", i, &{S}_values[i], 0, expected.raw, actual.raw, {M});
   }}""".format(
       S=src, SMIN=limit_min[src], SMAX=limit_max[src],
       D=dst, DMIN=limit_min[dst], DMAX=limit_max[dst],
@@ -221,7 +221,7 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
   for mode in rounding_modes:
     print("""    expected.value = (({D}{N})(({D}){S}_rounded_values{R}[i]));
     actual.value = convert_{D}{N}{R}(({S}{N}){S}_values[i]);
-    compare_{D}_elements("convert_{D}{N}{R}(({S}{N}))", i, expected.raw, actual.raw, {M});
+    compare_{D}_elements_{S}("convert_{D}{N}{R}({S}{N})", i, &{S}_values[i], 0, expected.raw, actual.raw, {M});
     expected.value = ({D}{N})convert_{D}{R}(sat_input);
     if (sat_input < min_expected) {{
        expected.value = ({D}{N})min_expected;
@@ -230,7 +230,7 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
        expected.value = ({D}{N})max_expected;
     }}
     actual.value = convert_{D}{N}_sat{R}(({S}{N})sat_input);
-    compare_{D}_elements("convert_{D}{N}_sat{R}(({S}{N}))", i, expected.raw, actual.raw, {M});"""
+    compare_{D}_elements_{S}("convert_{D}{N}_sat{R}({S}{N})", i, 0, &sat_input, expected.raw, actual.raw, {M});"""
       .format(S=src, D=dst, R=mode, N=size, M=size if len(size) > 0 else "1"))
   print("  }");
   if (src == 'double'):
@@ -244,25 +244,32 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
 
 print("""
 union { int8 value; int raw[8]; } qe, qa;
-qa.value = convert_int8_rtz((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
-qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
-compare_int_elements("convert_int8_rtz((float8))", 0, qe.raw, qa.raw, 8);
+union { float8 value; float raw[8]; } qo;
 
-qa.value = convert_int8_rtp((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rtz(qo.value);
+qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
+compare_int_elements_float("convert_int8_rtz(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
+
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rtp(qo.value);
 qe.value = (int8)(-23, -23, -23, -23, 23, 24, 24, 24);
-compare_int_elements("convert_int8_rtp((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8_rtp(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rtn((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rtn(qo.value);
 qe.value = (int8)(-24, -24, -24, -23, 23, 23, 23, 23);
-compare_int_elements("convert_int8_rtn((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8_rtn(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8_rte((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8_rte(qo.value);
 qe.value = (int8)(-24, -24, -23, -23, 23, 23, 24, 24);
-compare_int_elements("convert_int8_rte((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8_rte(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 
-qa.value = convert_int8((float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f));
+qo.value = (float8)(-23.67f, -23.50f, -23.35f, -23.0f, 23.0f, 23.35f, 23.50f, 23.67f);
+qa.value = convert_int8(qo.value);
 qe.value = (int8)(-23, -23, -23, -23, 23, 23, 23, 23);
-compare_int_elements("convert_int8((float8))", 0, qe.raw, qa.raw, 8);
+compare_int_elements_float("convert_int8(float8)", 0, 0, qo.raw, qe.raw, qa.raw, 8);
 """)
 
 #
