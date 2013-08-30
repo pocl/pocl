@@ -52,20 +52,23 @@ OBJ = $(LKERNEL_SRCS:%=%.bc)
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
 %.c.bc: %.c @top_srcdir@/include/pocl_types.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -c -target ${KERNEL_TARGET} -o ${notdir $@} -x c $< -include ${abs_top_srcdir}/include/pocl_types.h
+	mkdir -p ${dir $@}
+	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ${abs_top_srcdir}/include/pocl_types.h
 %.cc.bc: %.cc @top_srcdir@/include/pocl_features.h
-	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm -ffp-contract=off ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ${abs_top_srcdir}/include/pocl_features.h
+	mkdir -p ${dir $@}
+	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm -ffp-contract=off ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
 %.cl.bc: %.cl @top_srcdir@/include/_kernel.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ${abs_top_srcdir}/include/_kernel.h
+	mkdir -p ${dir $@}
+	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -fsigned-char -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll
 	@LLVM_AS@ -o $@ $<
 
-CLEANFILES = kernel-${KERNEL_TARGET}.bc ${notdir ${OBJ}}
+CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 
 # Optimize the bitcode library to speed up optimization times for the
 # OpenCL kernels
 kernel-${KERNEL_TARGET}.bc: ${OBJ}
-	@LLVM_LINK@ ${notdir $^} -o - | @LLVM_OPT@ ${KERNEL_LIB_OPT_FLAGS} -O3 -o $@
+	@LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
 
 
 
