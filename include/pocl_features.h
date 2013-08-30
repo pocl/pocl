@@ -9,7 +9,7 @@
 #define cl_khr_fp16
 
 // Is long supported?
-#if __SIZEOF_LONG_LONG__ == 8
+#if __SIZEOF_LONG__ == 8 || __SIZEOF_LONG_LONG__ == 8
 #  define cles_khr_int64
 #else
 #  undef cles_khr_int64
