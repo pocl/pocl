@@ -135,7 +135,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     }
 
 #ifdef DEBUG_NDRANGE
-  printf("### queueing kernel %s for dimensions %lu x %lu x %lu...", 
+  printf("### queueing kernel %s for dimensions %zu x %zu x %zu...", 
          kernel->function_name, local_x, local_y, local_z);
 #endif
 
@@ -158,7 +158,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       (event_wait_list != NULL && num_events_in_wait_list == 0))
     return CL_INVALID_EVENT_WAIT_LIST;
 
-  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%s/%lu-%lu-%lu.%lu-%lu-%lu", 
+  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%s/%zu-%zu-%zu.%zu-%zu-%zu", 
             kernel->program->temp_dir, command_queue->device->short_name, 
             kernel->name, 
             local_x, local_y, local_z, offset_x, offset_y, offset_z);
