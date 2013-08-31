@@ -26,6 +26,10 @@
 
 KERNEL_TARGET = @TARGET@
 
+CLANGFLAGS = -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target ${KERNEL_TARGET} $(foreach arch, @OCL_KERNEL_ARCH@, -march=${arch})
+
+
+
 all: kernel-${KERNEL_TARGET}.bc
 
 
@@ -53,13 +57,13 @@ OBJ = $(LKERNEL_SRCS:%=%.bc)
 # LLVM bitcode
 %.c.bc: %.c @top_srcdir@/include/pocl_types.h
 	mkdir -p ${dir $@}
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -c -target ${KERNEL_TARGET} -o $@ -x c $< -include ${abs_top_srcdir}/include/pocl_types.h
+	@CLANG@ ${CLANGFLAGS} -x c ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
 %.cc.bc: %.cc @top_srcdir@/include/pocl_features.h
 	mkdir -p ${dir $@}
-	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm -ffp-contract=off ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
+	@CLANGXX@ ${CLANGFLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
 %.cl.bc: %.cl @top_srcdir@/include/_kernel.h
 	mkdir -p ${dir $@}
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} -ffp-contract=off -fsigned-char -c -target ${KERNEL_TARGET} -o $@ -x cl $< -include ${abs_top_srcdir}/include/_kernel.h
+	@CLANG@ ${CLANGFLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll
 	@LLVM_AS@ -o $@ $<
 
