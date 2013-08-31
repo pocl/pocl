@@ -68,7 +68,10 @@ fi
 # END REMOVE ONCE INSTALLED
 
 # Use -fno-builtin to avoid clang producing extra memcpys etc. from
-# kernel loops. Otherwise, it a) ruins wg-vectorization b) causes issues with embedded 
-# devices such as TCE which do not have OS and a system linker.
-@CLANG@ -fblocks -fno-builtin ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
+# kernel loops. Otherwise, it a) ruins wg-vectorization b) causes
+# issues with embedded devices such as TCE which do not have OS and a
+# system linker.
+# Use -Wno-format to avoid warnings for printf, where we currently
+# have to use %lld for long arguments (to handle 32-bit architectures).
+@CLANG@ -fblocks -fno-builtin -Wno-format ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
 

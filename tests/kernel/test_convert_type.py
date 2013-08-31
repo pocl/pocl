@@ -64,8 +64,8 @@ printf_format_type = {
              'ushort': '%#.4hx',
              'int'   : '%#.8x',
              'uint'  : '%#.8x',
-             'long'  : '%#.16lx',
-             'ulong' : '%#.16lx',
+             'long'  : '%#.16llx',
+             'ulong' : '%#.16llx',
              'float' : '%.8g',
              'double': '%.17g'}
 
