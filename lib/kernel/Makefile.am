@@ -57,7 +57,7 @@ OBJ = $(LKERNEL_SRCS:%=%.bc)
 # LLVM bitcode
 %.c.bc: %.c @top_srcdir@/include/pocl_types.h
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANGFLAGS} -x c ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
+	@CLANG@ ${CLANGFLAGS} ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
 %.cc.bc: %.cc @top_srcdir@/include/pocl_features.h
 	mkdir -p ${dir $@}
 	@CLANGXX@ ${CLANGFLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
