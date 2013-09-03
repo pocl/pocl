@@ -597,8 +597,8 @@ AC_ARG_ENABLE([pedantic],
               [be_pedantic="yes"])
 if test "$be_pedantic" = "yes"
 then
-	CXXFLAGS="$CXXFLAGS -Werror"
-	CFLAGS="$CFLAGS -Werror"
+	CXXFLAGS="$CXXFLAGS -Wno-unused-result -Werror"
+	CFLAGS="$CFLAGS -Wno-unused-result -Werror"
 fi
 
 AC_DEFINE([HAVE_GL_GL_H], [], [OpenGL])
