@@ -68,12 +68,11 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
                      prequisite event. Current node cannot be added to ready 
                      list */
                   queue_at_hand = node->event_wait_list[i]->queue;
-                  //node = queue_at_hand->root;
                   command_ready = CL_FALSE;
                 }
             }
         }
-      if (command_ready = CL_TRUE)
+      if (command_ready == CL_TRUE)
         {
           if (node->event)
             {
@@ -85,7 +84,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           LL_APPEND (ready_list, node);
         }
     }
-      
+  
   exec_commands(ready_list);
 
   return CL_SUCCESS;

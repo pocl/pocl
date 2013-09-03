@@ -7,8 +7,7 @@ be used to test pocl until all fixes are merged upstream.
 
 So, here's how to run the piglit suite against pocl:
 
-git clone http://www.cs.tut.fi/~pjaaskel/piglit.git
-# to get the upstream repo: git clone git://anongit.freedesktop.org/piglit
+Get the upstream repo: git clone git://anongit.freedesktop.org/piglit
 
 cd piglit
 ccmake .
@@ -29,3 +28,9 @@ export OCL_ICD_VENDORS=LOCATION_TO_POCL_ROOT/ocl-vendors
 
 # Now under summary/pocl there should be index.html etc. which
 # can be used to browse the test results and logs.
+
+
+If you do something affecting piglit test results (fix something to make a 
+test pass) then you should make new reference file by 
+running:
+./piglit-run.py tests/all_cl.tests results/all 2>&1 | cut -d ':' -f 5- -s | grep "pass" > ../piglit_ref_output

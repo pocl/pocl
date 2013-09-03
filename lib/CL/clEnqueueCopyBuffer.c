@@ -69,7 +69,8 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (event != NULL)
     {
-      errcode = pocl_create_event (event, command_queue,CL_COMMAND_COPY_BUFFER);
+      errcode = pocl_create_event (event, command_queue, 
+                                   CL_COMMAND_COPY_BUFFER);
       if (errcode != CL_SUCCESS)
         return errcode;
       

@@ -40,7 +40,7 @@ POname(clEnqueueFillImage)(cl_command_queue  command_queue,
 CL_API_SUFFIX__VERSION_1_2
 {
   int errcode = CL_SUCCESS;
-  int num_entries = 0;
+  cl_uint num_entries = 0;
   _cl_command_node *cmd = NULL;
   cl_image_format *supported_image_formats = NULL;
   int i;

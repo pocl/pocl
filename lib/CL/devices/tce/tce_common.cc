@@ -390,9 +390,13 @@ pocl_tce_run
         POCL_ABORT("Error while running tcecc.");
       }
     
-    d->loadProgramToDevice(assemblyFileName);
-    d->restartProgram();
-    
+    try {
+      d->loadProgramToDevice(assemblyFileName);
+      d->restartProgram();
+    } catch (Exception &e) {
+      POCL_ABORT("Failed to load program to the TTA.");
+    }
+
     const TTAProgram::Program* prog = d->currentProgram;
     assert (prog != NULL);
     
