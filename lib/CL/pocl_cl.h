@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <ltdl.h>
 #include <pthread.h>
+#include "utlist.h"
 
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #ifdef BUILD_ICD
@@ -454,13 +455,26 @@ struct _cl_kernel {
   struct _cl_kernel *next;
 };
 
+typedef struct event_callback_item event_callback_item;
+struct event_callback_item
+{
+  void (*callback_function) (cl_event, cl_int, void*);
+  void *user_data;
+  cl_int trigger_status;
+  void *next;
+};
+
+
 typedef struct _cl_event _cl_event;
 struct _cl_event {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   cl_command_queue queue;
   cl_command_type command_type;
-  
+
+  /* list of callback functions */
+  event_callback_item* callback_list;
+
   /* The execution status of the command this event is monitoring. */
   cl_int status;
 
@@ -492,15 +506,21 @@ struct _cl_sampler {
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_UPDATE_EVENT_SUBMITTED                                          \
+#define POCL_UPDATE_EVENT_SUBMITTED                                     \
   do {                                                                  \
     if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
+        event_callback_item* cb_ptr;                                    \
         assert((*event)->status = CL_QUEUED);                           \
         (*event)->status = CL_SUBMITTED;                                \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_submit =                                       \
             command_queue->device->get_timer_value(command_queue->device->data); \
+        for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next) \
+          {                                                             \
+            if (cb_ptr->trigger_status == CL_SUBMITTED)                 \
+              cb_ptr->callback_function ((*event), CL_SUBMITTED, cb_ptr->user_data); \
+          }                                                             \
       }                                                                 \
   } while (0)                                                           \
 
@@ -508,23 +528,35 @@ struct _cl_sampler {
   do {                                                                  \
     if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
+        event_callback_item* cb_ptr;                                    \
         assert((*event)->status = CL_SUBMITTED);                        \
         (*event)->status = CL_RUNNING;                                  \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_start =                                        \
             command_queue->device->get_timer_value(command_queue->device->data); \
+        for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next) \
+          {                                                             \
+            if (cb_ptr->trigger_status == CL_RUNNING)                   \
+              cb_ptr->callback_function ((*event), CL_RUNNING, cb_ptr->user_data); \
+          }                                                             \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_UPDATE_EVENT_COMPLETE                                           \
+#define POCL_UPDATE_EVENT_COMPLETE                                      \
   do {                                                                  \
     if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
+        event_callback_item* cb_ptr;                                    \
         assert((*event)->status = CL_RUNNING);                          \
         (*event)->status = CL_COMPLETE;                                 \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_end =                                          \
             command_queue->device->get_timer_value(command_queue->device->data); \
+        for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next) \
+          {                                                             \
+            if (cb_ptr->trigger_status == CL_COMPLETE)                  \
+              cb_ptr->callback_function ((*event), CL_COMPLETE, cb_ptr->user_data); \
+          }                                                             \
       }                                                                 \
   } while (0)                                                           \
 

@@ -9,4 +9,10 @@ AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateProgramWithBinary])
 AT_CHECK([POCL_DEVICES="pthread pthread" $abs_top_builddir/tests/runtime/test_clGetSupportedImageFormats])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/runtime/test_clFinish | grep "ABABC"], 0, [ABABC
 ])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clSetEventCallback], 0, 
+[Callback function: event status: CL_SUBMITTED
+Callback function: event status: CL_RUNNING
+kernel in execution
+Callback function: event status: CL_COMPLETE
+])
 AT_CLEANUP
