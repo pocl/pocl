@@ -132,7 +132,7 @@ typedef struct
 {
   void *data;
   void *device_ptr;
-  void *host_ptr;
+  const void *host_ptr;
   size_t origin[3];
   size_t region[3];
   size_t rowpitch;
@@ -186,7 +186,7 @@ typedef struct
   cl_command_type type;
   void *next; // for linked-list storage
   cl_event event;
-  cl_event *event_wait_list;
+  const cl_event *event_wait_list;
   cl_int num_events_in_wait_list;
   cl_device_id device;
 } _cl_command_node;

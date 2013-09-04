@@ -69,7 +69,7 @@ AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q a
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
              grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
 #Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
-AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo ])
+AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
 [Running test test_convert_type...
@@ -140,7 +140,7 @@ AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q p
 #fails with: undefined symbol: _Z5rhaddcc. Probably related to the crash mentioned in the fabs test above.
 AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 #Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
-AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo ])
+AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_DATA([expout],
 [Running test test_hadd...
 OK

@@ -28,9 +28,9 @@ int call_pocl_kernel(cl_program program,
  */
 int call_pocl_workgroup( char* function_name, 
                     size_t local_x, size_t local_y, size_t local_z,
-                    char* llvm_target_triplet, 
-                    char* parallel_filename,
-                    char* kernel_filename );
+                    const char* llvm_target_triplet, 
+                    const char* parallel_filename,
+                    const char* kernel_filename );
 
 #ifdef __cplusplus
 

@@ -23,6 +23,7 @@
 
 #include "poclu.h"
 #include <CL/opencl.h>
+#include <stdlib.h>
 #include "config.h"
 
 cl_context

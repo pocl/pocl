@@ -591,6 +591,16 @@ else
 	CXXFLAGS="$CXXFLAGS -O0 -g"
 fi
 
+be_pedantic="no"
+AC_ARG_ENABLE([pedantic],
+              [AS_HELP_STRING([--enable-pedantic], [Compile host library with stricter compiler flags.])],
+              [be_pedantic="yes"])
+if test "$be_pedantic" = "yes"
+then
+	CXXFLAGS="$CXXFLAGS -Wno-unused-result -Werror"
+	CFLAGS="$CFLAGS -Wno-unused-result -Werror"
+fi
+
 AC_DEFINE([HAVE_GL_GL_H], [], [OpenGL])
 AC_DEFINE([HAVE_OPENGL_OPENGL_H], [], [OpenGL on Apple])
 

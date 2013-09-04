@@ -26,6 +26,7 @@
 #include "pocl_util.h"
 #include "utlist.h"
 #include <stdlib.h>
+#include <string.h>
 
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapImage)(cl_command_queue   command_queue,
@@ -66,8 +67,8 @@ CL_API_SUFFIX__VERSION_1_0
       errcode = CL_INVALID_CONTEXT;
       goto ERROR;
     }
-  if (event_wait_list == NULL && num_events_in_wait_list != 0 ||
-      event_wait_list != NULL && num_events_in_wait_list == 0)
+  if ((event_wait_list == NULL && num_events_in_wait_list != 0) ||
+      (event_wait_list != NULL && num_events_in_wait_list == 0))
     {
       errcode = CL_INVALID_EVENT_WAIT_LIST;
       goto ERROR;
