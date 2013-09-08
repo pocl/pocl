@@ -146,8 +146,6 @@ AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd
 #Fails on tce due to bug #1160383
 #AT_KEYWORDS([tce])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-#fails with: undefined symbol: _Z5rhaddcc. Probably related to the crash mentioned in the fabs test above.
-AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 #Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
 AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_DATA([expout],
