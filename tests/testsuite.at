@@ -53,6 +53,15 @@ AT_CLEANUP
         
 AT_BANNER([Kernel runtime library])
 
+AT_SETUP([Kernel functions convert_char*])
+AT_KEYWORDS([short16])
+AT_DATA([expout],
+[Running test test_short16...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_short16], 0, expout)
+AT_CLEANUP
+
 AT_SETUP([Kernel functions as_type])
 AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
