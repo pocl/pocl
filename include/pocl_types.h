@@ -47,5 +47,5 @@ typedef unsigned long ulong;
 
 typedef __SIZE_TYPE__ size_t;
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
-typedef __INTPTR_TYPE__ intptr_t;
-typedef unsigned __INTPTR_TYPE__ uintptr_t;
+typedef ptrdiff_t intptr_t;
+typedef size_t uintptr_t;
