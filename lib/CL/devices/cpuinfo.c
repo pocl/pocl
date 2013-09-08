@@ -61,8 +61,10 @@ int pocl_cpufreq_get_max()
     return -1;
 
   FILE *f = fopen (cpufreq_file, "r");
-  fscanf(f, "%d", &retval);
-  fclose(f);  
+  int nread = fscanf(f, "%d", &retval);
+  fclose(f);
+  if (nread < 1)
+    return -1;
 
   // KHz to MHz
   retval /= 1000; 
