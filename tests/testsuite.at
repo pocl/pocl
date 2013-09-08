@@ -187,10 +187,6 @@ AT_CLEANUP
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
-#lack of double support on ppc, arm, x86-32bit
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
 AT_KEYWORDS([scalarwave])
 AT_DATA([expout],
 [Initial condition: t=0
