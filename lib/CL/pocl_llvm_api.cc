@@ -21,6 +21,7 @@
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
+#include "install-paths.h"
 
 using namespace clang;
 using namespace llvm;
@@ -64,12 +65,35 @@ int call_pocl_build( cl_device_id device,
 
   PreprocessorOptions &pp = pocl_build.getPreprocessorOpts();
   // FIXME: these paths are wrong!
-  pp.Includes.push_back(BUILDDIR "/include/x86_64/types.h");
-  pp.Includes.push_back(BUILDDIR "/../pocl/include/_kernel.h");
+  std::string typesh;
+  std::string kernelh;
+  if (getenv("POCL_BUILDING") != NULL)
+  {
+    typesh = BUILDDIR;
+    typesh+= "/include/";
+    typesh+= KERNEL_DIR;
+    typesh+= "/types.h"; 
+  
+    kernelh = SRCDIR;
+    kernelh+= "/include/_kernel.h";
+  }
+  else
+  {
+    typesh = PKGDATADIR;
+    typesh+= "/include/pocl/";
+    typesh+= KERNEL_DIR;
+    typesh+= "/types.h"; 
+
+    kernelh = PKGDATADIR;
+    kernelh+= "/include/_kernel.h";
+  }
+  pp.Includes.push_back(typesh);
+  pp.Includes.push_back(kernelh);
 
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
-  // FIXME:!
-  ta.Triple = llvm::sys::getDefaultTargetTriple();
+  assert(device->llvm_target_triplet && "Device has no target triple set"); 
+  const char* triple = device->llvm_target_triplet;
+  ta.Triple = triple;
   
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   // This is the "-O" flag for clang - setting it to 3 breaks barriers,
@@ -108,11 +132,8 @@ int call_pocl_kernel(cl_program program,
 
   const char *triple;
 
-  //TODO: a device should *allways* know its triple.
-  if( program->devices[device_i]->llvm_target_triplet != NULL )
-    triple = program->devices[device_i]->llvm_target_triplet;
-  else
-    triple = sys::getDefaultTargetTriple().c_str();
+  assert(program->devices[device_i]->llvm_target_triplet && "Device has no target triple set"); 
+  triple = program->devices[device_i]->llvm_target_triplet;
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
@@ -288,9 +309,9 @@ extern llvm::cl::list<int> LocalSize;
  */
 int call_pocl_workgroup( char* function_name, 
                     size_t local_x, size_t local_y, size_t local_z,
-                    char* llvm_target_triplet, 
-                    char* parallel_filename,
-                    char* kernel_filename )
+                    const char* llvm_target_triplet, 
+                    const char* parallel_filename,
+                    const char* kernel_filename )
 {
 
   LLVMContext &Context = getGlobalContext();
@@ -329,8 +350,13 @@ int call_pocl_workgroup( char* function_name,
   }
   else
   {
-    #warning undone stuff - figure out the installation path
-    assert( false && "this part is undone");
+    // TODO: vefify this is the correct place!
+    kernellib = PKGDATADIR;
+    kernellib+="/pocl/";
+    kernellib+=KERNEL_DIR;
+    kernellib+="/kernel-";
+    kernellib+=OCL_KERNEL_TARGET;
+    kernellib+=".bc";
   }
 
   // Link the kernel and runtime library

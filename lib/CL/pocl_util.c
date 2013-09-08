@@ -33,6 +33,16 @@
 
 #define TEMP_DIR_PATH_CHARS 16
 
+struct list_item;
+
+typedef struct list_item
+{
+  void *value;
+  struct list_item *next;
+} list_item;
+
+static list_item *queue_list = NULL; 
+
 void 
 remove_directory (const char *path_name) 
 {
@@ -238,5 +248,5 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   return CL_SUCCESS;
 }
-#endif
 
+#endif

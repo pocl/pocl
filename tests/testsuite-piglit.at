@@ -1,0 +1,9 @@
+AT_BANNER([Piglit OpenCL tests])
+
+AT_SETUP([Piglit testsuite])
+AT_KEYWORDS([piglit])
+AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" piglit "*],[false],[:])])
+#AT_CHECK([make -s -C $abs_top_builddir/examples/piglit/piglit], ignore, ignore, ignore)
+AT_CHECK([$abs_top_builddir/examples/piglit/piglit/piglit-run.py tests/all_cl.tests $abs_top_builddir/examples/piglit/piglit/results/all 2>&1 | cut -d ':' -f 5- -s | grep "pass" | sort > $abs_top_builddir/examples/piglit/result ; sort $abs_top_builddir/examples/piglit/piglit_ref_output > $abs_top_builddir/examples/piglit/sorted_ref], ignore, ignore, ignore)
+AT_CHECK([comm -23 $abs_top_builddir/examples/piglit/sorted_ref $abs_top_builddir/examples/piglit/result])
+AT_CLEANUP

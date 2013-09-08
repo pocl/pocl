@@ -33,7 +33,6 @@
 /* supported compiler parameters */
 static char cl_parameters[] = 
   "-cl-single-precision-constant "
-  "-cl-denorms-are-zero "
   "-cl-fp32-correctly-rounded-divide-sqrt "
   "-cl-opt-disable "
   "-cl-mad-enable "
@@ -45,7 +44,8 @@ static char cl_parameters[] =
   "-cl-kernel-arg-info ";
 
 static char cl_parameters_not_yet_supported_by_clang[] = 
-  "-cl-strict-aliasing"
+  "-cl-strict-aliasing "
+  "-cl-denorms-are-zero "
   "-cl-no-signed-zeros ";
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
@@ -100,7 +100,7 @@ CL_API_SUFFIX__VERSION_1_0
     errcode = CL_INVALID_OPERATION;
     goto ERROR;
   }
-
+  
   if (options != NULL)
     {
       modded_options = calloc (512, 1);
@@ -123,7 +123,21 @@ CL_API_SUFFIX__VERSION_1_0
                   errcode = CL_INVALID_BUILD_OPTIONS;
                   goto ERROR_CLEAN_OPTIONS;
                 }
-            }    
+            }
+          else if (strstr (token, "-D") || strstr (token, "-I"))
+            {
+              strcat (modded_options, token);
+              strcat (modded_options, " ");
+              /* if there is a space in between, then next token is part 
+                 of the option */
+              if (strlen (token) == 2)
+                token = strtok_r (NULL, " ", &saveptr);
+            }
+          else
+            {
+              errcode = CL_INVALID_BUILD_OPTIONS;
+              goto ERROR_CLEAN_OPTIONS;
+            }
           strcat (modded_options, token);
           strcat (modded_options, " ");
           token = strtok_r (NULL, " ", &saveptr);  

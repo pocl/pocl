@@ -54,6 +54,12 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     goto ERROR;
   }
 
+  if (pfn_notify == NULL && user_data != NULL)
+    {
+      errcode = CL_INVALID_VALUE;
+      goto ERROR;
+    }
+
   POCL_INIT_OBJECT(context);
   context->valid = 0;
 
