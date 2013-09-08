@@ -26,7 +26,15 @@
 
 KERNEL_TARGET = @TARGET@
 
-CLANGFLAGS = -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target ${KERNEL_TARGET} $(foreach arch, @OCL_KERNEL_ARCH@, -march=${arch})
+# if on @HOST@:
+CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Werror -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+LLC_FLAGS   = @HOST_LLC_FLAGS@
+LD_FLAGS    = @HOST_LD_FLAGS@
+
+## if on @TARGET@:
+#CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Werror -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+#LLC_FLAGS   = @TARGET_LLC_FLAGS@
+#LD_FLAGS    = @TARGET_LD_FLAGS@
 
 
 
@@ -55,15 +63,15 @@ OBJ = $(LKERNEL_SRCS:%=%.bc)
 
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
-%.c.bc: %.c @top_srcdir@/include/pocl_types.h
+%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANGFLAGS} ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
-%.cc.bc: %.cc @top_srcdir@/include/pocl_features.h
+	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
+%.cc.bc: %.cc ${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
-	@CLANGXX@ ${CLANGFLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
-%.cl.bc: %.cl @top_srcdir@/include/_kernel.h
+	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
+%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANGFLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h
+	@CLANG@ ${CLANG_FLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll
 	@LLVM_AS@ -o $@ $<
 
@@ -72,7 +80,7 @@ CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 # Optimize the bitcode library to speed up optimization times for the
 # OpenCL kernels
 kernel-${KERNEL_TARGET}.bc: ${OBJ}
-	@LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
+	@LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
 
 
 

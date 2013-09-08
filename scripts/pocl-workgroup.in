@@ -69,6 +69,15 @@ then
     echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
 fi
 
+case $target in
+  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+            LLC_FLAGS="@HOST_LLC_FLAGS@"
+            LD_FLAGS="@HOST_LD_FLAGS@";;
+  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
+            LLC_FLAGS="@TARGET_LLC_FLAGS@"
+            LD_FLAGS="@TARGET_LD_FLAGS@";;
+esac
+
 linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
 linked_out="${linked_bc}.out"
 
@@ -78,7 +87,7 @@ full_target_dir="@pkglibdir@"
 full_target_dir="@abs_top_builddir@/lib/kernel"
 # END REMOVE ONCE INSTALLED
 
-@LLVM_LINK@ -o ${linked_bc}  $1 "$full_target_dir"/kernel-$target.bc 
+@LLVM_LINK@ -o ${linked_bc} $1 "$full_target_dir"/kernel-$target.bc 
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
@@ -134,7 +143,8 @@ fi
 # also be harmful for wg-vectorization where we want to try to vectorize
 # the code it wants to convert e.g. to a memset or a memcpy
 
-@OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
+@OPT@ ${LLC_FLAGS} \
+    -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \

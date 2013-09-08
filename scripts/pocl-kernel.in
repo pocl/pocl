@@ -50,27 +50,29 @@ then
     echo >&2 "Usage: $0 -k <kernel> -o <output_file> <input_file>" && exit 1
 fi
 
+case $target in
+  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+            LLC_FLAGS="@HOST_LLC_FLAGS@"
+            LD_FLAGS="@HOST_LD_FLAGS@";;
+  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
+            LLC_FLAGS="@TARGET_LLC_FLAGS@"
+            LD_FLAGS="@TARGET_LD_FLAGS@";;
+esac
+
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
 rm -f ${header}
 
 # BEGIN REMOVE ONCE INSTALLED
-@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+@OPT@ ${LLC_FLAGS} -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 if false ; then
 # END REMOVE ONCE INSTALLED
-@OPT@ -load=@pkglibdir@/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
+@OPT@ ${LLC_FLAGS} -load=@pkglibdir@/llvmopencl.so -break-constgeps -generate-header -kernel=${kernel} -header=${header} -disable-output $1
 # BEGIN REMOVE ONCE INSTALLED
 fi
 # END REMOVE ONCE INSTALLED
 
-#pure clang doesn't allow "-target tce-tut-llvm"
-case $target in
-  tce-*)
-    target_flags="" ;;
-  *)
-    target_flags="-target $target";;
-esac
-@CLANG@ @HOST_CLANG_FLAGS@ $target_flags -c -o ${output_file}.o -x c - <<EOF
+@CLANG@ ${CLANG_FLAGS} $target_flags -c -o ${output_file}.o -x c - <<EOF
 
 #include "${header}"
 
@@ -86,7 +88,7 @@ unsigned _local_sizes[_${kernel}_NUM_LOCALS] = _${kernel}_LOCAL_SIZE;
 #endif
 EOF
 
-ld ${output_file}.o @HOST_LD_FLAGS@ -o ${output_file}
+ld ${output_file}.o ${LD_FLAGS} -o ${output_file}
 
 # Generate a C global object suitable for using from the device as
 # the kernel metadata object. The idea is that multiple of these

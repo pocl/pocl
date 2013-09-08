@@ -701,15 +701,19 @@ AC_SUBST([ICD_LD_FLAGS])
 case $host_cpu in
   armv6l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=armv6"
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
-    OCL_KERNEL_ARCH=armv6
     kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
+    llc_host_cpu=$(llc --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
     case $host in
-      *gnueabihf) HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=armv6l-unknown-linux-gnueabihf -mcpu=arm1176jzf-s -float-abi=hard";;
+      *gnueabihf)
+      case $llc_host_cpu in
+        arm1176jz-s) llc_host_cpu=arm1176jzf-s;;
+      esac;;
     esac
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS --target=$host -march=$llc_host_cpu"
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$host -mcpu=$llc_host_cpu"
     ;;
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
@@ -733,6 +737,23 @@ case $host_cpu in
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
+    # TODO: We need to set both target-triple and cpu-type when
+    # building, since the ABI depends on both. We can either add flags
+    # to all the scripts, or set the respective flags here in
+    # *_CLANG_FLAGS and *_LLC_FLAGS. Note that clang and llc use
+    # different option names to set these. Note that clang calls the
+    # triple "target" and the cpu "architecture", which is different
+    # from llc.
+    # Normalise the triple. Otherwise, clang normalises it when
+    # passing it to llc, which is then different from the triple we
+    # pass to llc. This would lead to inconsistent bytecode files,
+    # depending on whether they are generated via clang or directly
+    # via llc.
+    dnl The quadrigraphs @<:@ and @:>@ turn into [ and ].
+    llc_triple=$(clang -v -cc1 --target=$host -x c /dev/null -E 2>&1 | grep -e -triple | sed -E -e 's/^.*-triple +(@<:@^ @:>@+).*$/\1/')
+    llc_host_cpu=$(llc --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS --target=$llc_triple -march=$llc_host_cpu"
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
     kernel_dir="x86_64"
     CL_DEVICE_ADDRESS_BITS=64
     ;;
@@ -740,6 +761,9 @@ case $host_cpu in
     AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
+    llc_host_cpu=$(llc --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS --target=$host -march=$llc_host_cpu"
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$host -mcpu=$llc_host_cpu"
     kernel_dir="x86_64"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
@@ -812,7 +836,7 @@ AC_ARG_VAR([HOST_CLANG_FLAGS],
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
                    ["$HOST_CLANG_FLAGS"],
                    [Parameters to for host compilation.])
-AC_SUBST([HOST_LLC_FLAGS])
+AC_ARG_VAR([HOST_LLC_FLAGS])
 AC_DEFINE_UNQUOTED([HOST_LLC_FLAGS],
                    ["$HOST_LLC_FLAGS"], 
                    [Parameters to llc for code generation in the host.])

@@ -90,8 +90,7 @@ llvm_codegen (const char* tmpdir) {
           
       // For the pthread device, use device type is always the same as the host. 
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target " OCL_KERNEL_TARGET
-			" " HOST_CLANG_FLAGS " -c -o %s.o %s",
+			CLANG " " HOST_CLANG_FLAGS " -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
@@ -105,8 +104,8 @@ llvm_codegen (const char* tmpdir) {
 
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-                       LINK_CMD " -target " OCL_KERNEL_TARGET
-                       " " HOST_LD_FLAGS " -o %s %s.o",
+                       LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " "
+                        "-o %s %s.o",
                        module,
                        module);
       assert (error >= 0);

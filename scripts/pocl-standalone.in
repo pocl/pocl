@@ -54,15 +54,19 @@ then
 fi
 
 case $target in
-  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@" ;;
-  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@" ;;
+  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+            LLC_FLAGS="@HOST_LLC_FLAGS@"
+            LD_FLAGS="@HOST_LD_FLAGS@";;
+  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
+            LLC_FLAGS="@TARGET_LLC_FLAGS@"
+            LD_FLAGS="@TARGET_LD_FLAGS@";;
 esac
-CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map -target $target "
+CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map"
 
 # With fp-contract we get calls to fma with processors which do not
 # have fma instructions. These ruin the performance. Better to have
 # the mul+add separated in the IR.
-CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off "
+CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off"
 
 tempdir="`dirname ${output_file}`/.pocl$$"
 mkdir ${tempdir}
@@ -72,12 +76,12 @@ kernel_bc="${tempdir}/kernel.bc"
 # BEGIN REMOVE ONCE INSTALLED
 @CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
-@OPT@ -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
+@OPT@ ${LLC_FLAGS} -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
 if false ; then
 # END REMOVE ONCE INSTALLED
 @CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
-@OPT@ -load=@pkglibdir@/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
+@OPT@ ${LLC_FLAGS} -load=@pkglibdir@/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
 # BEGIN REMOVE ONCE INSTALLED
 fi
 # END REMOVE ONCE INSTALLED
@@ -123,7 +127,8 @@ fi
 # also be harmful for wg-vectorization where we want to try to vectorize
 # the code it wants to convert e.g. to a memset or a memcpy
 
-@OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
+@OPT@ ${LLC_FLAGS} \
+    -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
     -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls ${OPT_SWITCH} \

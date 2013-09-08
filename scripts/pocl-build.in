@@ -46,17 +46,19 @@ then
 fi
 
 case $target in
-  armv6*)   CLANG_FLAGS="@TARGET_CLANG_FLAGS@ -march=armv6";;
-  armv7*)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
-  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@";;
-  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
+  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+            LLC_FLAGS="@HOST_LLC_FLAGS@"
+            LD_FLAGS="@HOST_LD_FLAGS@";;
+  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
+            LLC_FLAGS="@TARGET_LLC_FLAGS@"
+            LD_FLAGS="@TARGET_LD_FLAGS@";;
 esac
-CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map -target $target "
+CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map"
 
 # With fp-contract we get calls to fma with processors which do not
 # have fma instructions. These ruin the performance. Better to have
 # the mul+add separated in the IR.
-CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off "
+CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off"
 
 preprocessed_file=${output_file}.i
 
@@ -76,4 +78,3 @@ fi
 # Use -Wno-format to avoid warnings for printf, where we currently
 # have to use %lld for long arguments (to handle 32-bit architectures).
 @CLANG@ -fblocks -fno-builtin -Wno-format ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
-
