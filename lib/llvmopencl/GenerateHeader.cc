@@ -108,7 +108,12 @@ GenerateHeader::runOnModule(Module &M)
   FunctionMapping kernels;
 
   string ErrorInfo;
+#if LLVM_VERSION_MAJOR > 3 ||                           \
+  (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 4)
+  raw_fd_ostream out(Header.c_str(), ErrorInfo, sys::fs::F_Append);
+#else
   raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
+#endif
 
   for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {
     if (!Workgroup::isKernelToProcess(*mi))
