@@ -73,11 +73,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_as_type], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
-#LLVM PPC backend regression, most likely
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
-             grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
-#Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
+# Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
 AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
