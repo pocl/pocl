@@ -154,7 +154,7 @@ void compare_{Type}_elements_{OrigType}(char const* name, size_t sample, constan
   for (size_t i = 0; i < n; ++i) {{
     if (expected[i] != actual[i]) {{
       printf("FAIL: %s - sample#: %u element#: %u original: {OrigTypeFormat} expected: {TypeFormat} actual: {TypeFormat}\\n",
-        name, (uint)sample, (uint)i, ({OrigType})(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, ({OrigType})(original1 ? *original1 : *original2), expected[i], actual[i]);
     }}
   }}
 }}""".format(Type=t, TypeFormat=printf_format_type[t], OrigType=ot, OrigTypeFormat=printf_format_type[ot]))

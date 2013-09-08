@@ -85,7 +85,7 @@ void compare_char_elements_char(char const* name, size_t sample, constant char* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -96,7 +96,7 @@ void compare_char_elements_uchar(char const* name, size_t sample, constant uchar
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -107,7 +107,7 @@ void compare_char_elements_short(char const* name, size_t sample, constant short
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -118,7 +118,7 @@ void compare_char_elements_ushort(char const* name, size_t sample, constant usho
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -129,7 +129,7 @@ void compare_char_elements_int(char const* name, size_t sample, constant int* or
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -140,7 +140,7 @@ void compare_char_elements_uint(char const* name, size_t sample, constant uint* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -153,7 +153,7 @@ void compare_char_elements_long(char const* name, size_t sample, constant long* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -168,7 +168,7 @@ void compare_char_elements_ulong(char const* name, size_t sample, constant ulong
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -181,7 +181,7 @@ void compare_char_elements_float(char const* name, size_t sample, constant float
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -194,7 +194,7 @@ void compare_char_elements_double(char const* name, size_t sample, constant doub
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -207,7 +207,7 @@ void compare_uchar_elements_char(char const* name, size_t sample, constant char*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -218,7 +218,7 @@ void compare_uchar_elements_uchar(char const* name, size_t sample, constant ucha
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -229,7 +229,7 @@ void compare_uchar_elements_short(char const* name, size_t sample, constant shor
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -240,7 +240,7 @@ void compare_uchar_elements_ushort(char const* name, size_t sample, constant ush
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -251,7 +251,7 @@ void compare_uchar_elements_int(char const* name, size_t sample, constant int* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -262,7 +262,7 @@ void compare_uchar_elements_uint(char const* name, size_t sample, constant uint*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -275,7 +275,7 @@ void compare_uchar_elements_long(char const* name, size_t sample, constant long*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -290,7 +290,7 @@ void compare_uchar_elements_ulong(char const* name, size_t sample, constant ulon
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -303,7 +303,7 @@ void compare_uchar_elements_float(char const* name, size_t sample, constant floa
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -316,7 +316,7 @@ void compare_uchar_elements_double(char const* name, size_t sample, constant dou
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.2hhx actual: %#.2hhx\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -329,7 +329,7 @@ void compare_short_elements_char(char const* name, size_t sample, constant char*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -340,7 +340,7 @@ void compare_short_elements_uchar(char const* name, size_t sample, constant ucha
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -351,7 +351,7 @@ void compare_short_elements_short(char const* name, size_t sample, constant shor
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -362,7 +362,7 @@ void compare_short_elements_ushort(char const* name, size_t sample, constant ush
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -373,7 +373,7 @@ void compare_short_elements_int(char const* name, size_t sample, constant int* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -384,7 +384,7 @@ void compare_short_elements_uint(char const* name, size_t sample, constant uint*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -397,7 +397,7 @@ void compare_short_elements_long(char const* name, size_t sample, constant long*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -412,7 +412,7 @@ void compare_short_elements_ulong(char const* name, size_t sample, constant ulon
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -425,7 +425,7 @@ void compare_short_elements_float(char const* name, size_t sample, constant floa
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -438,7 +438,7 @@ void compare_short_elements_double(char const* name, size_t sample, constant dou
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -451,7 +451,7 @@ void compare_ushort_elements_char(char const* name, size_t sample, constant char
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -462,7 +462,7 @@ void compare_ushort_elements_uchar(char const* name, size_t sample, constant uch
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -473,7 +473,7 @@ void compare_ushort_elements_short(char const* name, size_t sample, constant sho
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -484,7 +484,7 @@ void compare_ushort_elements_ushort(char const* name, size_t sample, constant us
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -495,7 +495,7 @@ void compare_ushort_elements_int(char const* name, size_t sample, constant int* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -506,7 +506,7 @@ void compare_ushort_elements_uint(char const* name, size_t sample, constant uint
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -519,7 +519,7 @@ void compare_ushort_elements_long(char const* name, size_t sample, constant long
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -534,7 +534,7 @@ void compare_ushort_elements_ulong(char const* name, size_t sample, constant ulo
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -547,7 +547,7 @@ void compare_ushort_elements_float(char const* name, size_t sample, constant flo
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -560,7 +560,7 @@ void compare_ushort_elements_double(char const* name, size_t sample, constant do
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.4hx actual: %#.4hx\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -573,7 +573,7 @@ void compare_int_elements_char(char const* name, size_t sample, constant char* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -584,7 +584,7 @@ void compare_int_elements_uchar(char const* name, size_t sample, constant uchar*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -595,7 +595,7 @@ void compare_int_elements_short(char const* name, size_t sample, constant short*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -606,7 +606,7 @@ void compare_int_elements_ushort(char const* name, size_t sample, constant ushor
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -617,7 +617,7 @@ void compare_int_elements_int(char const* name, size_t sample, constant int* ori
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -628,7 +628,7 @@ void compare_int_elements_uint(char const* name, size_t sample, constant uint* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -641,7 +641,7 @@ void compare_int_elements_long(char const* name, size_t sample, constant long* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -656,7 +656,7 @@ void compare_int_elements_ulong(char const* name, size_t sample, constant ulong*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -669,7 +669,7 @@ void compare_int_elements_float(char const* name, size_t sample, constant float*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -682,7 +682,7 @@ void compare_int_elements_double(char const* name, size_t sample, constant doubl
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -695,7 +695,7 @@ void compare_uint_elements_char(char const* name, size_t sample, constant char* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -706,7 +706,7 @@ void compare_uint_elements_uchar(char const* name, size_t sample, constant uchar
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -717,7 +717,7 @@ void compare_uint_elements_short(char const* name, size_t sample, constant short
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -728,7 +728,7 @@ void compare_uint_elements_ushort(char const* name, size_t sample, constant usho
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -739,7 +739,7 @@ void compare_uint_elements_int(char const* name, size_t sample, constant int* or
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -750,7 +750,7 @@ void compare_uint_elements_uint(char const* name, size_t sample, constant uint* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -763,7 +763,7 @@ void compare_uint_elements_long(char const* name, size_t sample, constant long* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -778,7 +778,7 @@ void compare_uint_elements_ulong(char const* name, size_t sample, constant ulong
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -791,7 +791,7 @@ void compare_uint_elements_float(char const* name, size_t sample, constant float
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -804,7 +804,7 @@ void compare_uint_elements_double(char const* name, size_t sample, constant doub
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.8x actual: %#.8x\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -819,7 +819,7 @@ void compare_long_elements_char(char const* name, size_t sample, constant char* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -834,7 +834,7 @@ void compare_long_elements_uchar(char const* name, size_t sample, constant uchar
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -849,7 +849,7 @@ void compare_long_elements_short(char const* name, size_t sample, constant short
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -864,7 +864,7 @@ void compare_long_elements_ushort(char const* name, size_t sample, constant usho
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -879,7 +879,7 @@ void compare_long_elements_int(char const* name, size_t sample, constant int* or
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -894,7 +894,7 @@ void compare_long_elements_uint(char const* name, size_t sample, constant uint* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -909,7 +909,7 @@ void compare_long_elements_long(char const* name, size_t sample, constant long* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -924,7 +924,7 @@ void compare_long_elements_ulong(char const* name, size_t sample, constant ulong
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -939,7 +939,7 @@ void compare_long_elements_float(char const* name, size_t sample, constant float
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -956,7 +956,7 @@ void compare_long_elements_double(char const* name, size_t sample, constant doub
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -973,7 +973,7 @@ void compare_ulong_elements_char(char const* name, size_t sample, constant char*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -988,7 +988,7 @@ void compare_ulong_elements_uchar(char const* name, size_t sample, constant ucha
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1003,7 +1003,7 @@ void compare_ulong_elements_short(char const* name, size_t sample, constant shor
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1018,7 +1018,7 @@ void compare_ulong_elements_ushort(char const* name, size_t sample, constant ush
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1033,7 +1033,7 @@ void compare_ulong_elements_int(char const* name, size_t sample, constant int* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1048,7 +1048,7 @@ void compare_ulong_elements_uint(char const* name, size_t sample, constant uint*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1063,7 +1063,7 @@ void compare_ulong_elements_long(char const* name, size_t sample, constant long*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1078,7 +1078,7 @@ void compare_ulong_elements_ulong(char const* name, size_t sample, constant ulon
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1093,7 +1093,7 @@ void compare_ulong_elements_float(char const* name, size_t sample, constant floa
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1110,7 +1110,7 @@ void compare_ulong_elements_double(char const* name, size_t sample, constant dou
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %#.16llx actual: %#.16llx\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1125,7 +1125,7 @@ void compare_float_elements_char(char const* name, size_t sample, constant char*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1136,7 +1136,7 @@ void compare_float_elements_uchar(char const* name, size_t sample, constant ucha
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1147,7 +1147,7 @@ void compare_float_elements_short(char const* name, size_t sample, constant shor
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1158,7 +1158,7 @@ void compare_float_elements_ushort(char const* name, size_t sample, constant ush
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1169,7 +1169,7 @@ void compare_float_elements_int(char const* name, size_t sample, constant int* o
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1180,7 +1180,7 @@ void compare_float_elements_uint(char const* name, size_t sample, constant uint*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1193,7 +1193,7 @@ void compare_float_elements_long(char const* name, size_t sample, constant long*
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1208,7 +1208,7 @@ void compare_float_elements_ulong(char const* name, size_t sample, constant ulon
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1221,7 +1221,7 @@ void compare_float_elements_float(char const* name, size_t sample, constant floa
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1234,7 +1234,7 @@ void compare_float_elements_double(char const* name, size_t sample, constant dou
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %.8g actual: %.8g\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1249,7 +1249,7 @@ void compare_double_elements_char(char const* name, size_t sample, constant char
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (char)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (char)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1264,7 +1264,7 @@ void compare_double_elements_uchar(char const* name, size_t sample, constant uch
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.2hhx expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (uchar)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uchar)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1279,7 +1279,7 @@ void compare_double_elements_short(char const* name, size_t sample, constant sho
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (short)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (short)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1294,7 +1294,7 @@ void compare_double_elements_ushort(char const* name, size_t sample, constant us
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.4hx expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (ushort)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ushort)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1309,7 +1309,7 @@ void compare_double_elements_int(char const* name, size_t sample, constant int* 
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (int)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (int)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1324,7 +1324,7 @@ void compare_double_elements_uint(char const* name, size_t sample, constant uint
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.8x expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (uint)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (uint)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1341,7 +1341,7 @@ void compare_double_elements_long(char const* name, size_t sample, constant long
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (long)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (long)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1360,7 +1360,7 @@ void compare_double_elements_ulong(char const* name, size_t sample, constant ulo
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %#.16llx expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (ulong)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (ulong)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1377,7 +1377,7 @@ void compare_double_elements_float(char const* name, size_t sample, constant flo
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.8g expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (float)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (float)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
@@ -1392,7 +1392,7 @@ void compare_double_elements_double(char const* name, size_t sample, constant do
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
       printf("FAIL: %s - sample#: %u element#: %u original: %.17g expected: %.17g actual: %.17g\n",
-        name, (uint)sample, (uint)i, (double)(original1 ? original1[i] : original2[i]), expected[i], actual[i]);
+        name, (uint)sample, (uint)i, (double)(original1 ? *original1 : *original2), expected[i], actual[i]);
     }
   }
 }
