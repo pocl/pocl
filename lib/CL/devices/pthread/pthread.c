@@ -222,7 +222,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 
       if (chunk == NULL)
       {
-        printf("pocl error: could not allocate a buffer of size %lu from the newly created region of size %lu.\n",
+        printf("pocl error: could not allocate a buffer of size %zu from the newly created region of size %zu.\n",
                size, region_size);
         print_chunks(new_mem_region->chunks);
         /* In case the malloc didn't fail it should have been able to allocate 
