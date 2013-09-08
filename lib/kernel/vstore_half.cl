@@ -173,10 +173,10 @@ IMPLEMENT_VSTORE_HALF(__local   , _rte)
 IMPLEMENT_VSTORE_HALF(__local   , _rtz)
 IMPLEMENT_VSTORE_HALF(__local   , _rtp)
 IMPLEMENT_VSTORE_HALF(__local   , _rtn)
-/* IMPLEMENT_VSTORE_HALF(__private ,     ) */
-/* IMPLEMENT_VSTORE_HALF(__private , _rte) */
-/* IMPLEMENT_VSTORE_HALF(__private , _rtz) */
-/* IMPLEMENT_VSTORE_HALF(__private , _rtp) */
-/* IMPLEMENT_VSTORE_HALF(__private , _rtn) */
+IMPLEMENT_VSTORE_HALF(__private ,     )
+IMPLEMENT_VSTORE_HALF(__private , _rte)
+IMPLEMENT_VSTORE_HALF(__private , _rtz)
+IMPLEMENT_VSTORE_HALF(__private , _rtp)
+IMPLEMENT_VSTORE_HALF(__private , _rtn)
 
 #endif

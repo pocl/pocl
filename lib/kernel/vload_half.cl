@@ -149,6 +149,6 @@ float _cl_half2float(ushort hval)
 IMPLEMENT_VLOAD_HALF(__global)
 IMPLEMENT_VLOAD_HALF(__local)
 IMPLEMENT_VLOAD_HALF(__constant)
-/* IMPLEMENT_VLOAD_HALF(__private) */
+IMPLEMENT_VLOAD_HALF(__private)
 
 #endif

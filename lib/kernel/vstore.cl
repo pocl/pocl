@@ -95,7 +95,6 @@ IMPLEMENT_VSTORE(float , __local)
 IMPLEMENT_VSTORE(double, __local)
 #endif
 
-/* __private is not supported yet
 IMPLEMENT_VSTORE(char  , __private)
 IMPLEMENT_VSTORE(short , __private)
 IMPLEMENT_VSTORE(int   , __private)
@@ -112,4 +111,3 @@ IMPLEMENT_VSTORE(float , __private)
 #if defined(cl_khr_fpt64)
 IMPLEMENT_VSTORE(double, __private)
 #endif
-*/

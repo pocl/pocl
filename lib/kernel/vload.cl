@@ -105,7 +105,6 @@ IMPLEMENT_VLOAD(float , __constant)
 IMPLEMENT_VLOAD(double, __constant)
 #endif
 
-/* __private is not supported yet
 IMPLEMENT_VLOAD(char  , __private)
 IMPLEMENT_VLOAD(short , __private)
 IMPLEMENT_VLOAD(int   , __private)
@@ -122,4 +121,3 @@ IMPLEMENT_VLOAD(float , __private)
 #if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __private)
 #endif
-*/
