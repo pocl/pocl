@@ -44,16 +44,16 @@ below.
  all the intermediate compiler files is left to /tmp. Otherwise, it is
  be cleaned in clReleaseProgram.
 
-* POCL_MAX_WORK_GROUP_SIZE
-
- Forces the maximum WG size returned by the device or kernel work group queries
- to be at most this number.
-
 * POCL_MAX_PTHREAD_COUNT
 
  The maximum number of threads created for work group execution in the
  pthread device driver. The default is to determine this from the number of
  hardware threads available in the CPU.
+
+* POCL_MAX_WORK_GROUP_SIZE
+
+ Forces the maximum WG size returned by the device or kernel work group queries
+ to be at most this number.
 
 * POCL_TEMP_DIR
 
@@ -76,15 +76,20 @@ below.
  If set to number, indicates the width of vector to use during vectorization. Default
  is 8 lanes.
 
+* POCL_VECTORIZE_MEM_ONLY
+
+ If set to 1, indicates that only the memory access operations should be
+ vectorized.
+
 * POCL_VECTORIZE_NO_FP
 
  If set to 1, indicates the vectorization of floating point operations is
  forbidden.
 
-* POCL_VECTORIZE_MEM_ONLY
+* POCL_VERBOSE
 
- If set to 1, indicates that only the memory access operations should be
- vectorized.
+If set to 1, output the LLVM commands as they are executed to compile
+and run kernels.
 
 * POCL_WORK_GROUP_METHOD
 

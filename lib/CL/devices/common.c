@@ -24,6 +24,7 @@
 */
 #include "common.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -42,6 +43,9 @@
  */
 const char*
 llvm_codegen (const char* tmpdir) {
+
+  const char* pocl_verbose_ptr = getenv("POCL_VERBOSE");
+  int pocl_verbose = pocl_verbose_ptr && *pocl_verbose_ptr;
 
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
@@ -77,8 +81,10 @@ llvm_codegen (const char* tmpdir) {
 			bytecode);
       assert (error >= 0);
       
-      /* printf("[pocl] executing [%s]\n", command); */
-      /* fflush(stdout); */
+      if (pocl_verbose) {
+        printf("[pocl] executing [%s]\n", command);
+        fflush(stdout);
+      }
       error = system (command);
       assert (error == 0);
           
@@ -90,8 +96,10 @@ llvm_codegen (const char* tmpdir) {
 			assembly);
       assert (error >= 0);
       
-      /* printf("[pocl] executing [%s]\n", command); */
-      /* fflush(stdout); */
+      if (pocl_verbose) {
+        printf("[pocl] executing [%s]\n", command);
+        fflush(stdout);
+      }
       error = system (command);
       assert (error == 0);
 
@@ -103,8 +111,10 @@ llvm_codegen (const char* tmpdir) {
                        module);
       assert (error >= 0);
 
-      /* printf("[pocl] executing [%s]\n", command); */
-      /* fflush(stdout); */
+      if (pocl_verbose) {
+        printf("[pocl] executing [%s]\n", command);
+        fflush(stdout);
+      }
       error = system (command);
       assert (error == 0);
     }
