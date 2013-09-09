@@ -225,7 +225,9 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_int num_events, const cl_event *wait_list)
 {
   int i;
-  
+  int err;
+  cl_event new_event = NULL;
+
   if ((wait_list == NULL && num_events != 0) ||
       (wait_list != NULL && num_events == 0))
     return CL_INVALID_EVENT_WAIT_LIST;
@@ -240,12 +242,51 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
   
+  if (event == NULL)
+    {
+      
+      err = pocl_create_event(&new_event, command_queue, 0);
+      if (err != CL_SUCCESS)
+        {
+          free (*cmd);
+          return err;
+        }
+    }
+
+  /* if in-order command queue and queue is not empty, add event from 
+     previous command to new commands event_waitlist */
+  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
+      && command_queue->root != NULL)
+    {
+      _cl_command_node *prev_command;
+      for (prev_command = command_queue->root; prev_command->next != NULL;
+           prev_command = prev_command->next){}
+      //printf("create_command: prev_com=%d prev_com->event = %d \n",prev_command, prev_command->event);
+      cl_event *new_wl = (cl_event*)malloc ((num_events +1)*sizeof (cl_event));
+      for (i = 0; i < num_events; ++i)
+        {
+          new_wl[i] = wait_list[i];
+        }
+      new_wl[i] = prev_command->event;
+      (*cmd)->event_wait_list = new_wl;
+      (*cmd)->num_events_in_wait_list = num_events + 1;
+      for (i = 0; i < num_events + 1; ++i)
+        {
+          //printf("create-command: new_wl[%i]=%d\n", i, new_wl[i]);
+        }
+    }
+  else
+    {
+      (*cmd)->event_wait_list = wait_list;  
+      (*cmd)->num_events_in_wait_list = num_events;
+    }
   (*cmd)->type = command_type;
   (*cmd)->next = NULL;
-  (*cmd)->event = event ? (*event) : NULL;
-  (*cmd)->event_wait_list = wait_list;
-  (*cmd)->num_events_in_wait_list = num_events;
+  (*cmd)->event = event ? (*event) : new_event;
   (*cmd)->device = command_queue->device;
+
+  //printf("create_command (end): event=%d new_event=%d cmd->event=%d cmd=%d\n", event, new_event, (*cmd)->event, *cmd);
+  
 
   return CL_SUCCESS;
 }
