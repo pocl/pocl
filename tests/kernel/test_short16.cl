@@ -6,6 +6,44 @@
 // The failure mode is that convert_char16(short16) sets the upper 8
 // vector elements to zero.
 
+__attribute__((__noinline__))
+char my_convert_char(short s)
+{
+  return convert_char(s);
+}
+
+__attribute__((__noinline__))
+char2 my_convert_char2(short2 s2)
+{
+  return convert_char2(s2);
+}
+
+__attribute__((__noinline__))
+char3 my_convert_char3(short3 s3)
+{
+  return convert_char3(s3);
+}
+
+__attribute__((__noinline__))
+char4 my_convert_char4(short4 s4)
+{
+  return convert_char4(s4);
+}
+
+__attribute__((__noinline__))
+char8 my_convert_char8(short8 s8)
+{
+  return convert_char8(s8);
+}
+
+__attribute__((__noinline__))
+char16 my_convert_char16(short16 s16)
+{
+  return convert_char16(s16);
+}
+
+
+
 kernel void test_short16()
 {
   short s = (short)(1);
@@ -15,12 +53,12 @@ kernel void test_short16()
   short8 s8 = (short8)(8);
   short16 s16 = (short16)(16);
   
-  char c = convert_char(s);
-  char2 c2 = convert_char2(s2);
-  char3 c3 = convert_char3(s3);
-  char4 c4 = convert_char4(s4);
-  char8 c8 = convert_char8(s8);
-  char16 c16 = convert_char16(s16);
+  char c = my_convert_char(s);
+  char2 c2 = my_convert_char2(s2);
+  char3 c3 = my_convert_char3(s3);
+  char4 c4 = my_convert_char4(s4);
+  char8 c8 = my_convert_char8(s8);
+  char16 c16 = my_convert_char16(s16);
   
   bool good = true;
   good = good && c == s;
