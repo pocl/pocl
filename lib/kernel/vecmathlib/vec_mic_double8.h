@@ -216,6 +216,8 @@ namespace vecmathlib {
     intvec& operator|=(const intvec& x) { return *this=*this|x; }
     intvec& operator^=(const intvec& x) { return *this=*this^x; }
     
+    intvec_t bitifthen(intvec_t x, intvec_t y) const;
+    
     
     
     intvec lsr(int_t n) const
@@ -231,6 +233,7 @@ namespace vecmathlib {
         return _mm512_mask_swizzle_epi32(vhi, 0xb0101010101010101, vlo);
       }
     }
+    intvec_t rotate(int_t n) const;
     intvec operator>>(int_t n) const
     {
       if (n < 32) {
@@ -270,6 +273,7 @@ namespace vecmathlib {
       }
       return r;
     }
+    intvec_t rotate(intvec_t n) const;
     intvec operator>>(intvec n) const
     {
       // TODO: improve this
@@ -291,12 +295,27 @@ namespace vecmathlib {
     intvec& operator>>=(intvec n) { return *this=*this>>n; }
     intvec& operator<<=(intvec n) { return *this=*this<<n; }
     
-    
-    
-    boolvec_t signbit() const
+    intvec_t clz() const
     {
-      return *this < IV(I(0));
+      // Return 8*sizeof(TYPE) when the input is 0
+      intvec_t r;
+      for (int i=0; i<size; ++i) {
+        // __lzcnt64
+        r.set_elt(i, __builtin_clzll((*this)[i]));
+      }
+      return r;
     }
+    intvec_t popcount() const
+    {
+      intvec_t r;
+      for (int i=0; i<size; ++i) {
+        // _mm_popcnt_u64
+        r.set_elt(i, __builtin_popcountll((*this)[i]));
+      }
+      return r;
+    }
+    
+    
     
     boolvec_t operator==(const intvec& x) const
     {
@@ -322,6 +341,11 @@ namespace vecmathlib {
     {
       return mask16tomask8(_mm512_cmp_epi32_mask(v, x.v, _MM_CMPINT_GE));
     }
+    
+    intvec_t abs() const;
+    boolvec_t isignbit() const;
+    intvec_t max(intvec_t x) const;
+    intvec_t min(intvec_t x) const;
   };
   
   
@@ -637,6 +661,42 @@ namespace vecmathlib {
       r.set_elt(n, floatprops::convert_float((*this)[n]));
     }
     return r;
+  }
+  
+  inline intvec<double,8> intvec<double,8>::abs() const
+  {
+    return MF::vml_abs(*this);
+  }
+  
+  inline intvec<double,8> intvec<double,8>::bitifthen(intvec_t x,
+                                                      intvec_t y) const
+  {
+    return MF::vml_bitifthen(*this, x, y);
+  }
+  
+  inline boolvec<double,8> intvec<double,8>::isignbit() const
+  {
+    return MF::vml_isignbit(*this);
+  }
+  
+  inline intvec<double,8> intvec<double,8>::max(intvec_t x) const
+  {
+    return MF::vml_max(*this, x);
+  }
+  
+  inline intvec<double,8> intvec<double,8>::min(intvec_t x) const
+  {
+    return MF::vml_min(*this, x);
+  }
+  
+  inline intvec<double,8> intvec<double,8>::rotate(int_t n) const
+  {
+    return MF::vml_rotate(*this, n);
+  }
+  
+  inline intvec<double,8> intvec<double,8>::rotate(intvec_t n) const
+  {
+    return MF::vml_rotate(*this, n);
   }
   
 } // namespace vecmathlib

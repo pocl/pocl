@@ -212,18 +212,25 @@ namespace vecmathlib {
     intvec& operator|=(intvec const& x) { return *this=*this|x; }
     intvec& operator^=(intvec const& x) { return *this=*this^x; }
     
+    intvec_t bitifthen(intvec_t x, intvec_t y) const
+    {
+      return vbslq_s32(vreinterpretq_u32_s32(v), x.v, y.v)
+    }
     
     
-    intvec lsr(int_t n) const { return lsr(IV(n)); }
+    
+    intvec_t lsr(int_t n) const { return lsr(IV(n)); }
+    intvec_t rotate(int_t n) const;
     intvec operator>>(int_t n) const { return *this >> IV(n); }
     intvec operator<<(int_t n) const { return *this << IV(n); }
     intvec& operator>>=(int_t n) { return *this=*this>>n; }
     intvec& operator<<=(int_t n) { return *this=*this<<n; }
     
-    intvec lsr(intvec n) const
+    intvec_t lsr(intvec_t n) const
     {
       return vreinterpretq_s32_u32(vshlq_u32(vreinterpretq_u32_s32(v), (-n).v));
     }
+    intvec_t rotate(intvec_t n) const;
     intvec operator>>(intvec n) const
     {
       return vshlq_s32(v, (-n).v);
@@ -235,13 +242,13 @@ namespace vecmathlib {
     intvec& operator>>=(intvec n) { return *this=*this>>n; }
     intvec& operator<<=(intvec n) { return *this=*this<<n; }
     
-    
-    
-    boolvec_t signbit() const
+    intvec_t clz() const { return vclzq_s32(v); }
+    intvec_t popcount() const
     {
-      //return *this < IV(I(0));
-      return intvec(vshrq_n_s32(v, FP::bits-1)).as_bool();
+      return vpaddlq_s16(vpaddlq_s8(vcntq_s8(vreinterpretq_s8_s32(v))));
     }
+    
+    
     
     boolvec_t operator==(intvec const& x) const { return vceqq_s32(v, x.v); }
     boolvec_t operator!=(intvec const& x) const { return !(*this == x); }
@@ -249,6 +256,15 @@ namespace vecmathlib {
     boolvec_t operator<=(intvec const& x) const { return vcleq_s32(v, x.v); }
     boolvec_t operator>(intvec const& x) const { return vcgtq_s32(v, x.v); }
     boolvec_t operator>=(intvec const& x) const { return vcgeq_s32(v, x.v); }
+    
+    intvec_t abs() const { return vabsq_s32(v); }
+    boolvec_t isignbit() const
+    {
+      //return *this < IV(I(0));
+      return intvec(vshrq_n_s32(v, FP::bits-1)).as_bool();
+    }
+    intvec_t max(intvec_t x) const { return vmaxq_s32(v, x.v); }
+    intvec_t min(intvec_t x) const { return vminq_s32(v, x.v); }
   };
   
   
@@ -605,6 +621,16 @@ namespace vecmathlib {
   inline realvec<float,4> intvec<float,4>::convert_float() const
   {
     return vcvtq_f32_s32(v);
+  }
+  
+  inline intvec<float,4> intvec<float,4>::rotate(int_t n) const
+  {
+    return MF::vml_rotate(*this, n);
+  }
+  
+  inline intvec<float,4> intvec<float,4>::rotate(intvec_t n) const
+  {
+    return MF::vml_rotate(*this, n);
   }
   
 } // namespace vecmathlib

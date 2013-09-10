@@ -11,14 +11,19 @@
 
 // Altivec intrinsics
 #include <altivec.h>
-#ifdef __clang__
+
+#if defined __clang__
 #  define __vector vector
 #  define __pixel pixel
 #  define __bool bool
-#else
+#elif defined __gcc__
 #  undef vector
 #  undef pixel
 #  undef bool
+#elif defined __xlC__
+#  define __bool bool
+#else
+#  error "Unknown compiler"
 #endif
 
 
@@ -73,7 +78,7 @@ namespace vecmathlib {
     // boolvec(boolvec const& x): v(x.v) {}
     // boolvec& operator=(boolvec const& x) { return v=x.v, *this; }
     boolvec(bvector_t x): v(x) {}
-    boolvec(bool a): v(vec_splats(from_bool(a))) {}
+    boolvec(bool a): v((bvector_t)vec_splats(from_bool(a))) {}
     boolvec(bool const* as)
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
@@ -123,7 +128,7 @@ namespace vecmathlib {
   {
     static int const size = 4;
     typedef int_t scalar_t;
-    typedef __vector int ivector_t;
+    typedef __vector signed int ivector_t;
     static int const alignment = sizeof(ivector_t);
     
     static_assert(size * sizeof(real_t) == sizeof(ivector_t),
@@ -158,7 +163,7 @@ namespace vecmathlib {
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
     }
-    static intvec iota() { return (__vector int){0, 1, 2, 3}; }
+    static intvec iota() { return (__vector signed int){0, 1, 2, 3}; }
     
     operator ivector_t() const { return v; }
     int_t operator[](int n) const
@@ -181,7 +186,15 @@ namespace vecmathlib {
     
     
     intvec operator+() const { return *this; }
-    intvec operator-() const { return IV(0) - *this; }
+    intvec operator-() const
+    {
+#if defined __xlC_
+      return vec_neg(v);
+#else
+      // vec_neg does not exist in clang
+      return IV(I(0)) - *this;
+#endif
+    }
     
     intvec operator+(intvec x) const { return vec_add(v, x.v); }
     intvec operator-(intvec x) const { return vec_sub(v, x.v); }
@@ -201,18 +214,22 @@ namespace vecmathlib {
     intvec& operator|=(intvec const& x) { return *this=*this|x; }
     intvec& operator^=(intvec const& x) { return *this=*this^x; }
     
+    intvec_t bitifthen(intvec_t x, intvec_t y) const;
     
     
-    intvec lsr(int_t n) const { return lsr(IV(n)); }
+    
+    intvec_t lsr(int_t n) const { return lsr(IV(n)); }
+    intvec_t rotate(int_t n) const;
     intvec operator>>(int_t n) const { return *this >> IV(n); }
     intvec operator<<(int_t n) const { return *this << IV(n); }
     intvec& operator>>=(int_t n) { return *this=*this>>n; }
     intvec& operator<<=(int_t n) { return *this=*this<<n; }
     
-    intvec lsr(intvec n) const
+    intvec_t lsr(intvec_t n) const
     {
       return vec_sr(v, (__vector unsigned int)n.v);
     }
+    intvec_t rotate(intvec_t n) const;
     intvec operator>>(intvec n) const
     {
       return vec_sra(v, (__vector unsigned int)n.v);
@@ -224,12 +241,10 @@ namespace vecmathlib {
     intvec& operator>>=(intvec n) { return *this=*this>>n; }
     intvec& operator<<=(intvec n) { return *this=*this<<n; }
     
+    intvec_t clz() const;
+    intvec_t popcount() const;
     
     
-    boolvec_t signbit() const
-    {
-      return *this < IV(I(0));
-    }
     
     boolvec_t operator==(intvec const& x) const { return vec_cmpeq(v, x.v); }
     boolvec_t operator!=(intvec const& x) const { return !(*this == x); }
@@ -237,6 +252,11 @@ namespace vecmathlib {
     boolvec_t operator<=(intvec const& x) const { return !(*this > x); }
     boolvec_t operator>(intvec const& x) const { return vec_cmpgt(v, x.v); }
     boolvec_t operator>=(intvec const& x) const { return !(*this < x); }
+    
+    intvec_t abs() const { return vec_abs(v); }
+    boolvec_t isignbit() const { return (*this >> (bits-1)).as_bool(); }
+    intvec_t max(intvec_t x) const { return vec_max(v, x.v); }
+    intvec_t min(intvec_t x) const { return vec_min(v, x.v); }
   };
   
   
@@ -395,27 +415,45 @@ namespace vecmathlib {
     
     
     
-    intvec_t as_int() const { return (__vector int) v; }
-    intvec_t convert_int() const { return vec_cts(v, 0); }
+    intvec_t as_int() const { return (__vector signed int) v; }
+    intvec_t convert_int() const
+    {
+#if defined __xlC__
+      return vec_cts(v, 0);
+#else
+      // vec_cts leads to an ICE in clang
+      return MF::vml_convert_int(*this);
+#endif
+    }
     
     
     
     realvec operator+() const { return *this; }
-    realvec operator-() const { return RV(0.0) - *this; }
+    realvec operator-() const
+    {
+#if defined __xlC_
+      return vec_neg(v);
+#else
+      // vec_neg does not exist in clang
+      return RV(0.0) - *this;
+#endif
+    }
     
     realvec operator+(realvec x) const { return vec_add(v, x.v); }
     realvec operator-(realvec x) const { return vec_sub(v, x.v); }
     realvec operator*(realvec x) const {
-#if defined __VSX__
+#if defined __xlC__
       return vec_mul(v, x.v);
 #else
+      // vec_mul does not exist in clang
       return vec_madd(v, x.v, RV(0.0).v);
 #endif
     }
     realvec operator/(realvec x) const {
-#if defined __VSX__
+#if defined __xlC__
       return vec_div(v, x.v);
 #else
+      // vec_div does not exist in clang
       return *this * x.rcp();
 #endif
     }
@@ -427,13 +465,13 @@ namespace vecmathlib {
     
     real_t maxval() const
     {
-      return std::fmax(std::fmax((*this)[0], (*this)[1]),
-                       std::fmax((*this)[2], (*this)[3]));
+      return vml_std::fmax(vml_std::fmax((*this)[0], (*this)[1]),
+                           vml_std::fmax((*this)[2], (*this)[3]));
     }
     real_t minval() const
     {
-      return std::fmin(std::fmin((*this)[0], (*this)[1]),
-                       std::fmin((*this)[2], (*this)[3]));
+      return vml_std::fmin(vml_std::fmin((*this)[0], (*this)[1]),
+                           vml_std::fmin((*this)[2], (*this)[3]));
     }
     real_t prod() const
     {
@@ -504,26 +542,22 @@ namespace vecmathlib {
       return r;
     }
     realvec remainder(realvec y) const { return MF::vml_remainder(*this, y); }
-    realvec rint() const { return vec_round(v); }
+    realvec rint() const { return vec_round(v); /* sic! */ }
     realvec round() const { return MF::vml_round(*this); }
     realvec rsqrt() const
     {
-#if defined __VSX__
-      return vec_rsqrt(v);
-#else
       realvec x = *this;
       realvec r = vec_rsqrte(x.v); // this is only an approximation
       // TODO: use fma
       // one Newton iteration (see vml_rsqrt)
       r += RV(0.5)*r * (RV(1.0) - x * r*r);
       return r;
-#endif
     }
     boolvec_t signbit() const { return MF::vml_signbit(*this); }
     realvec sin() const { return MF::vml_sin(*this); }
     realvec sinh() const { return MF::vml_sinh(*this); }
     realvec sqrt() const {
-#if defined __VSX__
+#if defined __xlC__
       return vec_sqrt(v);
 #else
       return *this * rsqrt();
@@ -540,12 +574,12 @@ namespace vecmathlib {
   
   inline intvec<float,4> boolvec<float,4>::as_int() const
   {
-    return (__vector int) v;
+    return (__vector signed int) v;
   }
   
   inline intvec<float,4> boolvec<float,4>::convert_int() const
   {
-    return -(__vector int)v;
+    return -(__vector signed int)v;
   }
   
   inline boolvec<float,4> boolvec<float,4>::operator==(boolvec_t x) const
@@ -580,9 +614,40 @@ namespace vecmathlib {
     return (__vector float)v;
   }
   
+  inline intvec<float,4> intvec<float,4>::bitifthen(intvec_t x,
+                                                    intvec_t y) const
+  {
+    return MF::vml_bitifthen(*this, x, y);
+  }
+  
+  inline intvec<float,4> intvec<float,4>::clz() const
+  {
+    return MF::vml_clz(*this);
+  }
+  
   inline realvec<float,4> intvec<float,4>::convert_float() const
   {
+#if defined __xlC__
     return vec_ctf(v, 0);
+#else
+      // vec_ctf leads to an ICE in clang
+    return MF::vml_convert_float(*this);
+#endif
+  }
+  
+  inline intvec<float,4> intvec<float,4>::popcount() const
+  {
+    return MF::vml_popcount(*this);
+  }
+  
+  inline intvec<float,4> intvec<float,4>::rotate(int_t n) const
+  {
+    return MF::vml_rotate(*this, n);
+  }
+  
+  inline intvec<float,4> intvec<float,4>::rotate(intvec_t n) const
+  {
+    return MF::vml_rotate(*this, n);
   }
   
 } // namespace vecmathlib

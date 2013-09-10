@@ -101,6 +101,32 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
+  inline intvec<real_t, size> abs(intvec<real_t, size> x)
+  {
+    return x.abs();
+  }
+  
+  template<typename real_t, int size>
+  inline intvec<real_t, size> bitifthen(intvec<real_t, size> x,
+                                        intvec<real_t, size> y,
+                                        intvec<real_t, size> z)
+  {
+    return x.bitifthen(y, z);
+  }
+  
+  template<typename real_t, int size>
+  inline intvec<real_t, size> clz(intvec<real_t, size> x)
+  {
+    return x.clz();
+  }
+  
+  template<typename real_t, int size>
+  inline boolvec<real_t, size> isignbit(intvec<real_t, size> x)
+  {
+    return x.isignbit();
+  }
+  
+  template<typename real_t, int size>
   inline intvec<real_t, size> lsr(intvec<real_t, size> x,
                                   typename intvec<real_t, size>::int_t n)
   {
@@ -115,9 +141,37 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
-  inline boolvec<real_t, size> signbit(intvec<real_t, size> x)
+  inline intvec<real_t, size> max(intvec<real_t, size> x,
+                                  intvec<real_t, size> y)
   {
-    return x.signbit();
+    return x.max(y);
+  }
+  
+  template<typename real_t, int size>
+  inline intvec<real_t, size> min(intvec<real_t, size> x,
+                                  intvec<real_t, size> y)
+  {
+    return x.min(y);
+  }
+  
+  template<typename real_t, int size>
+  inline intvec<real_t, size> popcount(intvec<real_t, size> x)
+  {
+    return x.popcount();
+  }
+  
+  template<typename real_t, int size>
+  inline intvec<real_t, size> rotate(intvec<real_t, size> x,
+                                     typename intvec<real_t, size>::int_t n)
+  {
+    return x.rotate(n);
+  }
+  
+  template<typename real_t, int size>
+  inline intvec<real_t, size> rotate(intvec<real_t, size> x,
+                                     intvec<real_t, size> n)
+  {
+    return x.rotate(n);
   }
   
   

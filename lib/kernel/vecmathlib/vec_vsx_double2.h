@@ -11,9 +11,20 @@
 
 // VSX intrinsics
 #include <altivec.h>
-#undef vector
-#undef pixel
-#undef bool
+
+#if defined __clang__
+#  define __vector vector
+#  define __pixel pixel
+#  define __bool bool
+#elif defined __gcc__
+#  undef vector
+#  undef pixel
+#  undef bool
+#elif defined __xlC__
+#  define __bool bool
+#else
+#  error "Unknown compiler"
+#endif
 
 
 
@@ -68,7 +79,7 @@ namespace vecmathlib {
     // boolvec(boolvec const& x): v(x.v) {}
     // boolvec& operator=(boolvec const& x) { return v=x.v, *this; }
     boolvec(bvector_t x): v(x) {}
-    boolvec(bool a): v(vec_splats(from_bool(a))) {}
+    boolvec(bool a): v((bvector_t)vec_splats((unsigned long long)from_bool(a))) {}
     boolvec(bool const* as)
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
@@ -92,45 +103,15 @@ namespace vecmathlib {
     
     
     
-    boolvec operator!() const
-    {
-      return
-        (__vector __bool long long)(__vector long long)
-        vec_nor((__vector double)(__vector long long)v,
-                (__vector double)(__vector long long)v);
-    }
+    boolvec operator!() const { return vec_nor(v, v); }
     
-    boolvec operator&&(boolvec x) const
-    {
-      return
-        (__vector __bool long long)(__vector long long)
-        vec_and((__vector double)(__vector long long)v,
-                (__vector double)(__vector long long)x.v);
-    }
-    boolvec operator||(boolvec x) const
-    {
-      return
-        (__vector __bool long long)(__vector long long)
-        vec_or((__vector double)(__vector long long)v,
-               (__vector double)(__vector long long)x.v);
-    }
+    boolvec operator&&(boolvec x) const { return vec_and(v, x.v); }
+    boolvec operator||(boolvec x) const { return vec_or(v, x.v); }
     boolvec operator==(boolvec x) const { return !(*this!=x); }
-    boolvec operator!=(boolvec x) const
-    {
-      return
-        (__vector __bool long long)(__vector long long)
-        vec_xor((__vector double)(__vector long long)v,
-                (__vector double)(__vector long long)x.v);
-    }
+    boolvec operator!=(boolvec x) const { return vec_xor(v, x.v); }
     
-    bool all() const
-    {
-      return vec_all_ne((__vector int)v, (__vector int)BV(false).v);
-    }
-    bool any() const
-    {
-      return vec_any_ne((__vector int)v, (__vector int)BV(false).v);
-    }
+    bool all() const { return vec_all_ne(v, BV(false)); }
+    bool any() const { return vec_any_ne(v, BV(false)); }
     
     
     
@@ -147,7 +128,7 @@ namespace vecmathlib {
   {
     static int const size = 2;
     typedef int_t scalar_t;
-    typedef __vector long long ivector_t;
+    typedef __vector signed long long ivector_t;
     static int const alignment = sizeof(ivector_t);
     
     static_assert(size * sizeof(real_t) == sizeof(ivector_t),
@@ -177,12 +158,12 @@ namespace vecmathlib {
     // intvec(intvec const& x): v(x.v) {}
     // intvec& operator=(intvec const& x) { return v=x.v, *this; }
     intvec(ivector_t x): v(x) {}
-    intvec(int_t a): v(vec_splats(a)) {}
+    intvec(int_t a): v(vec_splats((long long)a)) {}
     intvec(int_t const* as)
     {
       for (int d=0; d<size; ++d) set_elt(d, as[d]);
     }
-    static intvec iota() { return (__vector long long){0, 1}; }
+    static intvec iota() { return (__vector signed long long){0, 1}; }
     
     operator ivector_t() const { return v; }
     int_t operator[](int n) const
@@ -227,64 +208,50 @@ namespace vecmathlib {
     
 
     intvec operator+() const { return *this; }
-    intvec operator-() const { return IV(I(0)) - *this; }
+    intvec operator-() const { return vec_neg(v); }
     
-    intvec operator+(intvec x) const
-    {
-      // return vec_add(v, x.v);
-      __vector unsigned int a = (__vector unsigned int)v;
-      __vector unsigned int b = (__vector unsigned int)x.v;
-      __vector unsigned int s = vec_add(a, b);
-      __vector unsigned int c = vec_addc(a, b);
-      __vector unsigned int z = vec_xor(z, z);
-      c = vec_perm(c, z, perm_int_swap());
-      s = vec_add(s, c);
-      return (__vector long long)s;
-    }
-    intvec operator-(intvec x) const
-    {
-      // return vec_sub(v, x.v);
-      __vector unsigned int a = (__vector unsigned int)v;
-      __vector unsigned int b = (__vector unsigned int)x.v;
-      __vector unsigned int d = vec_sub(a, b);
-      __vector unsigned int c = vec_subc(a, b);
-      c = vec_sub(vec_splats(1U), c);
-      __vector unsigned int z = vec_xor(z, z);
-      c = vec_perm(c, z, perm_int_swap());
-      d = vec_sub(d, c);
-      return (__vector long long)d;
-    }
+    intvec operator+(intvec x) const { return vec_add(v, x.v); }
+    intvec operator-(intvec x) const { return vec_sub(v, x.v); }
+    intvec operator*(intvec x) const { return vec_mul(v, x.v); }
+    intvec operator/(intvec x) const { return vec_div(v, x.v); }
+    intvec operator%(intvec x) const { return *this - *this / x * x; }
     
     intvec& operator+=(intvec const& x) { return *this=*this+x; }
     intvec& operator-=(intvec const& x) { return *this=*this-x; }
+    intvec& operator*=(intvec const& x) { return *this=*this*x; }
+    intvec& operator/=(intvec const& x) { return *this=*this/x; }
+    intvec& operator%=(intvec const& x) { return *this=*this%x; }
     
     
     
     intvec operator~() const
     {
-      return (__vector long long)vec_nor((__vector int)v, (__vector int)v);
+      return (__vector signed long long)vec_nor((__vector signed int)v, (__vector signed int)v);
     }
     
     intvec operator&(intvec x) const
     {
-      return (__vector long long)vec_and((__vector int)v, (__vector int)x.v);
+      return (__vector signed long long)vec_and((__vector signed int)v, (__vector signed int)x.v);
     }
     intvec operator|(intvec x) const
     {
-      return (__vector long long)vec_or ((__vector int)v, (__vector int)x.v);
+      return (__vector signed long long)vec_or ((__vector signed int)v, (__vector signed int)x.v);
     }
     intvec operator^(intvec x) const
     {
-      return (__vector long long)vec_xor((__vector int)v, (__vector int)x.v);
+      return (__vector signed long long)vec_xor((__vector signed int)v, (__vector signed int)x.v);
     }
     
     intvec& operator&=(intvec const& x) { return *this=*this&x; }
     intvec& operator|=(intvec const& x) { return *this=*this|x; }
     intvec& operator^=(intvec const& x) { return *this=*this^x; }
     
+    intvec_t bitifthen(intvec_t x, intvec_t y) const;
+    
     
     
     intvec lsr(int_t n) const { return lsr(IV(n)); }
+    intvec_t rotate(int_t n) const;
     intvec operator>>(int_t n) const { return *this >> IV(n); }
     intvec operator<<(int_t n) const { return *this << IV(n); }
     intvec& operator>>=(int_t n) { return *this=*this>>n; }
@@ -299,6 +266,7 @@ namespace vecmathlib {
       }
       return r;
     }
+    intvec_t rotate(intvec_t n) const;
     intvec operator>>(intvec n) const
     {
       // return vec_sra(v, (__vector unsigned long long)n.v);
@@ -320,18 +288,16 @@ namespace vecmathlib {
     intvec& operator>>=(intvec n) { return *this=*this>>n; }
     intvec& operator<<=(intvec n) { return *this=*this<<n; }
     
+    intvec_t clz() const;
+    intvec_t popcount() const;
     
     
-    boolvec_t signbit() const
-    {
-      return (*this >> (bits-1)).as_bool();
-    }
     
     boolvec_t operator==(intvec const& x) const
     {
       // return vec_cmpeq(v, x.v);
-      __vector int a = (__vector int)v;
-      __vector int b = (__vector int)x.v;
+      __vector signed int a = (__vector signed int)v;
+      __vector signed int b = (__vector signed int)x.v;
       __vector __bool int c = vec_cmpeq(a, b);
       __vector __bool int cx = vec_perm(c, c, perm_int_swap());
       __vector __bool int r = vec_and(c, cx);
@@ -340,8 +306,8 @@ namespace vecmathlib {
     boolvec_t operator!=(intvec const& x) const { return !(*this == x); }
     boolvec_t operator<(intvec const& x) const
     {
-      __vector int a = (__vector int)v;
-      __vector int b = (__vector int)x.v;
+      __vector signed int a = (__vector signed int)v;
+      __vector signed int b = (__vector signed int)x.v;
       __vector __bool int lt = vec_cmplt(a, b);
       __vector __bool int eq = vec_cmpeq(a, b);
       __vector unsigned int ua = (__vector unsigned int)v;
@@ -364,6 +330,11 @@ namespace vecmathlib {
     {
       return ! (*this < x);
     }
+    
+    intvec_t abs() const;
+    boolvec_t isignbit() const { return (*this >> (bits-1)).as_bool(); }
+    intvec_t max(intvec_t x) const;
+    intvec_t min(intvec_t x) const;
   };
   
   
@@ -429,13 +400,12 @@ namespace vecmathlib {
     static realvec_t loada(real_t const* p)
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
-      return vec_ld(0, (const __vector double*)p);
+      return vec_xld2(0, (real_t*)p);
     }
     static realvec_t loadu(real_t const* p)
     {
-      realvec_t v0 = vec_ld(0, (const __vector double*)p);
-      realvec_t v1 = vec_ld(15, (const __vector double*)p);
-      return vec_perm(v0.v, v1.v, vec_lvsl(0, p));
+      // TODO: Can this handle unaligned access?
+      return vec_xld2(0, (real_t*)p);
     }
     static realvec_t loadu(real_t const* p, std::ptrdiff_t ioff)
     {
@@ -470,7 +440,7 @@ namespace vecmathlib {
     void storea(real_t* p) const
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
-      vec_st(v, 0, (__vector double*)p);
+      vec_xstd2(v, 0, p);
     }
     void storeu(real_t* p) const
     {
@@ -516,7 +486,7 @@ namespace vecmathlib {
     
     
     
-    intvec_t as_int() const { return (__vector long long) v; }
+    intvec_t as_int() const { return (__vector signed long long) v; }
     intvec_t convert_int() const { return MF::vml_convert_int(*this); }
     
     
@@ -536,11 +506,11 @@ namespace vecmathlib {
     
     real_t maxval() const
     {
-      return std::fmax((*this)[0], (*this)[1]);
+      return vml_std::fmax((*this)[0], (*this)[1]);
     }
     real_t minval() const
     {
-      return std::fmin((*this)[0], (*this)[1]);
+      return vml_std::fmin((*this)[0], (*this)[1]);
     }
     real_t prod() const
     {
@@ -612,22 +582,12 @@ namespace vecmathlib {
       return r;
     }
     realvec remainder(realvec y) const { return MF::vml_remainder(*this, y); }
-    realvec rint() const { return vec_rint(v); }
+    realvec rint() const { return vec_round(v); /* sic! */}
     realvec round() const { return MF::vml_round(*this); }
-    realvec rsqrt() const
-    {
-      // realvec x = *this;
-      // realvec r = vec_rsqrte(x.v); // this is only an approximation
-      // // TODO: use fma
-      // // one Newton iteration (see vml_rsqrt)
-      // r += RV(0.5)*r * (RV(1.0) - x * r*r);
-      // return r;
-      return vec_rsqrt(v);
-    }
+    realvec rsqrt() const { return RV(1.0) / sqrt(); }
     boolvec_t signbit() const { return MF::vml_signbit(*this); }
     realvec sin() const { return MF::vml_sin(*this); }
     realvec sinh() const { return MF::vml_sinh(*this); }
-    // realvec sqrt() const { return *this * rsqrt(); }
     realvec sqrt() const { return vec_sqrt(v); }
     realvec tan() const { return MF::vml_tan(*this); }
     realvec tanh() const { return MF::vml_tanh(*this); }
@@ -640,12 +600,12 @@ namespace vecmathlib {
   
   inline intvec<double,2> boolvec<double,2>::as_int() const
   {
-    return (__vector long long) v;
+    return (__vector signed long long) v;
   }
   
   inline intvec<double,2> boolvec<double,2>::convert_int() const
   {
-    return -(__vector long long)v;
+    return -(__vector signed long long)v;
   }
   
   inline
@@ -670,15 +630,56 @@ namespace vecmathlib {
   
   // intvec definitions
   
+  inline intvec<double,2> intvec<double,2>::abs() const
+  {
+    return MF::vml_abs(*this);
+  }
+  
   inline realvec<double,2> intvec<double,2>::as_float() const
   {
     return (__vector double)v;
+  }
+  
+  inline intvec<double,2> intvec<double,2>::bitifthen(intvec_t x,
+						      intvec_t y) const
+  {
+    return MF::vml_bitifthen(*this, x, y);
+  }
+  
+  inline intvec<double,2> intvec<double,2>::clz() const
+  {
+    return MF::vml_clz(*this);
   }
   
   inline realvec<double,2> intvec<double,2>::convert_float() const
   {
     // return vec_ctd(v, 0);
     return MF::vml_convert_float(*this);
+  }
+  
+  inline intvec<double,2> intvec<double,2>::max(intvec_t x) const
+  {
+    return MF::vml_max(*this, x);
+  }
+  
+  inline intvec<double,2> intvec<double,2>::min(intvec_t x) const
+  {
+    return MF::vml_min(*this, x);
+  }
+  
+  inline intvec<double,2> intvec<double,2>::popcount() const
+  {
+    return MF::vml_popcount(*this);
+  }
+  
+  inline intvec<double,2> intvec<double,2>::rotate(int_t n) const
+  {
+    return MF::vml_rotate(*this, n);
+  }
+  
+  inline intvec<double,2> intvec<double,2>::rotate(intvec_t n) const
+  {
+    return MF::vml_rotate(*this, n);
   }
   
 } // namespace vecmathlib

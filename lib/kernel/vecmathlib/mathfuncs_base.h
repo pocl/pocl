@@ -4,7 +4,6 @@
 #define MATHFUNCS_BASE_H
 
 #include "floatprops.h"
-#include "vec_base.h"
 
 
 
@@ -37,6 +36,17 @@ namespace vecmathlib {
     // static realvec_t RV(real_t a) { return realvec_t(a); }
     // static intvec_t IV(int_t a) { return intvec_t(a); }
     // static boolvec_t BV(bool a) { return boolvec_t(a); }
+    
+    // int
+    static intvec_t vml_abs(intvec_t x);
+    static intvec_t vml_bitifthen(intvec_t x, intvec_t y, intvec_t z);
+    static intvec_t vml_clz(intvec_t x);
+    static boolvec_t vml_isignbit(intvec_t x);
+    static intvec_t vml_max(intvec_t x, intvec_t y);
+    static intvec_t vml_min(intvec_t x, intvec_t y);
+    static intvec_t vml_popcount(intvec_t x);
+    static intvec_t vml_rotate(intvec_t x, int_t n);
+    static intvec_t vml_rotate(intvec_t x, intvec_t n);
     
     // asin
     static realvec_t vml_acos(realvec_t x);

@@ -21,6 +21,11 @@ namespace vecmathlib {
     // intvec_t iround_x = convert_int(round_x);
     // r = ldexp(r, iround_x);
     
+#if 0
+    // Straightforward implementation
+    realvec_t round_x = rint(x);
+    x -= round_x;
+#elif 1
     // Round by adding, then subtracting again a large number
     // Add a large number to move the mantissa bits to the right
     int_t large = (U(1) << FP::mantissa_bits) + FP::exponent_offset;
@@ -29,6 +34,12 @@ namespace vecmathlib {
     
     realvec_t round_x = tmp - RV(R(large));
     x -= round_x;
+#else
+    // Straightforward implementation, using round instead of rint,
+    // since round is faster for QPX
+    realvec_t round_x = round(x);
+    x -= round_x;
+#endif
     VML_ASSERT(all(x >= RV(-0.5) && x <= RV(0.5)));
     
     // Polynomial expansion
@@ -88,15 +99,29 @@ namespace vecmathlib {
     }
     
     // Undo rescaling
+#if 0
+    // Straightforward implementation
+    r = ldexp(r, convert_int(round_x));
+#elif 1
+    // Use direct integer manipulation
     // Extract integer as lowest mantissa bits (highest bits still
     // contain offset, exponent, and sign)
     intvec_t itmp = as_int(tmp);
     // Construct scale factor by setting exponent (this shifts out the
     // highest bits)
     realvec_t scale = as_float(itmp << I(FP::mantissa_bits));
-    scale = ifthen(x0 < RV(R(FP::min_exponent)), RV(0.0), scale);
-    
     r *= scale;
+#else
+    // Use floating point operations instead of integer operations,
+    // since these are faster for QPX
+    real_t exponent_factor = R(I(1) << I(FP::mantissa_bits));
+    real_t exponent_offset = R(I(FP::exponent_offset) << I(FP::mantissa_bits));
+    realvec_t exponent = fma(round_x, RV(exponent_factor), RV(exponent_offset));
+    realvec_t scale = as_float(convert_int(exponent));
+    r *= scale;
+#endif
+    
+    r = ifthen(x0 < RV(R(FP::min_exponent)), RV(0.0), r);
     
     return r;
   }
