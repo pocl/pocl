@@ -230,6 +230,20 @@ static void exec_commands (_cl_command_node *node_list)
       
           POname(clReleaseKernel)(node->command.run.kernel);
           break;
+        case CL_COMMAND_NATIVE_KERNEL:
+          POCL_UPDATE_EVENT_RUNNING;
+          printf("mode->device := %p\n", node->device);
+          node->device->run_native(node->command.native.data, node);
+          POCL_UPDATE_EVENT_COMPLETE;
+          for (i = 0; i < node->command.native.num_mem_objects; ++i)
+            {
+              cl_mem buf = node->command.native.mem_list[i];
+              if (buf == NULL) continue;
+              POname(clReleaseMemObject) (buf);
+            }
+          free (node->command.native.mem_list);
+          free (node->command.native.args);
+	      break;
         case CL_COMMAND_FILL_IMAGE:
           POCL_UPDATE_EVENT_RUNNING;
           node->device->fill_rect 
