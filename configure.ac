@@ -673,11 +673,22 @@ fi
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
+AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
+AC_ARG_VAR([CLANGXX_FLAGS], [Flags to be used when compiling C++ sources with clang])
+
 if test x"$use_vecmathlib" = xyes; then
   AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
 fi
 
-AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
+use_vecmathlib_builtins="no"
+AC_ARG_ENABLE([vecmathlib-builtins],
+              [AS_HELP_STRING([--enable-vecmathlib-builtins], [Use only __builtin_* functions in the kernel library.])],
+              [use_vecmathlib_builtins="yes"])
+if test "$use_vecmathlib_builtins" = "yes"
+then
+	CLFLAGS="$CLFLAGS -DPOCL_VECMATHLIB_BUILTIN"
+	CLANGXX_FLAGS="$CLANGXX_FLAGS -DPOCL_VECMATHLIB_BUILTIN"
+fi
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
