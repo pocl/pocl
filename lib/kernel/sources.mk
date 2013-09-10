@@ -135,6 +135,7 @@ LKERNEL_SRCS_DEFAULT =				\
 	pow.cl					\
 	pown.cl					\
 	powr.cl					\
+	printf.cl				\
 	radians.cl				\
 	read_image.cl				\
 	read_image.cl				\

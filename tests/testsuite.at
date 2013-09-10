@@ -62,6 +62,33 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_short16], 0, expout)
 AT_CLEANUP
 
+AT_SETUP([Kernel functions printf])
+AT_KEYWORDS([printf])
+AT_DATA([expout],
+[Running test test_printf...
+1
+2
+3
+4
+5
+         6
+0000000007
+0000000008
+9,9,9,9
+1.0
+2.000000
+3.000000
+4
+5
+  6.000000
+7.0000000000
+8.0000000000
+9.000000,9.000000,9.000000,9.000000
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_printf], 0, expout)
+AT_CLEANUP
+
 AT_SETUP([Kernel functions as_type])
 AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])

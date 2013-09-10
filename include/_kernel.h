@@ -2018,8 +2018,11 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
 // shuffle2
 
 
-int printf(const /*constant*/ char * restrict format, ...)
+// Note: Using "const" instead of "constant", since string literals
+// are currently "const" instead of "constant".
+int _cl_printf(/*constant*/ const char* restrict format, ...)
   __attribute__((format(printf, 1, 2)));
+#define printf _cl_printf
 
 
 /* Async Copies from Global to Local Memory, Local to
