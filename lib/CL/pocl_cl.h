@@ -317,11 +317,12 @@ void (*fill_rect) (void *data,
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
 
   void (*run) (void *data, _cl_command_node* cmd);
+  void (*run_native) (void *data, _cl_command_node* cmd);
 
   cl_ulong (*get_timer_value) (void *data); /* The current device timer value in nanoseconds. */
 
   /* Can be used to override the default action for initial .cl to .bc build. */
-  int (*build_program) (void *data, const char *source_fn, const char *binary_fn, const char *default_cmd, const char *dev_tmpdir);
+  int (*build_program) (void *data, const char *source_fn, const char *binary_fn, const char *default_cmd, const char *user_opts, const char *dev_tmpdir);
 
     /* return supported image formats */
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
