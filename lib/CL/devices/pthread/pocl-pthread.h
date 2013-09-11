@@ -99,7 +99,7 @@ GEN_PROTOTYPES (basic)
   !(WORDS_BIGENDIAN), /* endian_little */				\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
-  CL_EXEC_KERNEL, /*execution_capabilities */				\
+  CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   {0}, /* device_partition_properties */ \
