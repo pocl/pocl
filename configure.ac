@@ -835,8 +835,12 @@ then
  AC_MSG_NOTICE([TCEMC installation found. The ttasim device will be built.])
  AC_DEFINE([TCEMC_AVAILABLE], [1], [Defined to 1 if TCEMC libraries and tools are available])
  AC_SUBST([TCEMC_AVAILABLE], ["1"])
+ AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
+ AC_SUBST([TCE_AVAILABLE], ["1"])
  OCL_DRIVERS="$OCL_DRIVERS tcemc"
  TCEMC_AVAILABLE=1
+ # TCEMC is a "superset" of TCE (lp:tce) features.
+ TCE_AVAILABLE=1
  else
  AC_MSG_NOTICE([TCE installation found. The ttasim device will be built.])
  AC_DEFINE([TCE_AVAILABLE], [1], [Defined to 1 if TCE libraries and tools are available])
