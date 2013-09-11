@@ -36,6 +36,7 @@ Misc.
 -----
 - poclu: helpers for converting between the C float and OpenCL cl_half
   types
+- clEnqueueNativeKernel implemented
 
 0.8  August 2013
 ================

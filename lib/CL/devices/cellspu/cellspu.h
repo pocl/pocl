@@ -139,6 +139,7 @@ GEN_PROTOTYPES (cellspu)
   pocl_cellspu_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_cellspu_run, /* run */                         \
+  NULL, /* run_native */						\
   pocl_cellspu_get_timer_value,                \
   NULL, /*pocl_cellspu_build_program */	 \
   NULL, /* get_supported_image_formats */ \

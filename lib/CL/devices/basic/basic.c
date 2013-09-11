@@ -405,6 +405,14 @@ pocl_basic_run
 }
 
 void
+pocl_basic_run_native 
+(void *data, 
+ _cl_command_node* cmd)
+{
+  cmd->command.native.user_func(cmd->command.native.args);
+}
+
+void
 pocl_basic_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
   if (src_ptr == dst_ptr)
