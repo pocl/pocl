@@ -1,1 +1,1 @@
-libpocl.so.VER
+@libdir@/libpocl.so.VER

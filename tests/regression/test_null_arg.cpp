@@ -96,7 +96,7 @@ main(void)
 
         // Set kernel args
         kernel.setArg(0, inBuffer);
-        kernel.setArg(1, NULL);
+        kernel.setArg(1, 0);
         kernel.setArg(2, outBuffer);
 
         // Create command queue
