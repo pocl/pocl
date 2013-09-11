@@ -591,7 +591,7 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
 
 int 
 pocl_tce_build_program (void *data, const char *source_fn, const char *binary_fn, 
-                        const char *default_cmd, const char *user_opts, char *dev_tmpdir) 
+                        const char *default_cmd, const char *user_opts, const char *dev_tmpdir) 
 {
   TCEDevice *tce_dev = (TCEDevice*)data;
 
