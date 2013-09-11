@@ -111,6 +111,10 @@ VectorWidth("wi-vectorize-vector-width", cl::init(8), cl::Hidden,
   cl::desc("The width of the machine vector in words."));
 
 static cl::opt<bool>
+AllAllocaBitwidths("wi-vectorize-all-alloca-bitwidths", cl::init(false),
+  cl::Hidden, cl::desc("Vectorize allocas of all sizes. default only 32"));
+
+static cl::opt<bool>
 NoMath("wi-vectorize-no-math", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point math intrinsics"));
 
@@ -224,7 +228,11 @@ namespace {
                      int indx);
     
     Type* newAllocaType(Type* start, unsigned int width);
-    
+
+    Type* getElementType(Type *start);
+
+    bool allowedToVectorizeAlloca(AllocaInst& oldAlloca);
+
     bool removeDuplicates(BasicBlock &BB);
 
     void dropUnused(BasicBlock& BB);
@@ -2966,6 +2974,32 @@ namespace {
         }
     } while (changed);
   }
+
+  bool WIVectorize::allowedToVectorizeAlloca(AllocaInst& oldAlloca){
+    Instruction::use_iterator useiter = oldAlloca.use_begin();                
+
+    while (useiter != oldAlloca.use_end()) {
+        llvm::User* user = *useiter;
+        
+        if (isa<BitCastInst>(user)) {
+            BitCastInst* bitCast = cast<BitCastInst>(user);
+            Instruction::use_iterator useIterBC = bitCast->use_begin();
+            while (useIterBC != bitCast->use_end()) {
+                llvm::User* bcUser = *useIterBC;
+                if (isa<CallInst>(bcUser)) {
+                    // TODO: check if it is llvm.lifetime.end() or
+                    // llvm.lifetime.start()
+                    // should fail on other calls
+                } else {
+                    return false;
+                }
+                useIterBC++;
+            }
+        }
+        useiter++;
+    }
+    return true;
+  }
   
   // Replace uses of alloca with new alloca.
   // This includes getelementpointer, bitcast, load and store only
@@ -3144,6 +3178,13 @@ namespace {
           return start;
       }
   }
+
+  Type* WIVectorize::getElementType(Type *start) {
+      if (!start->isArrayTy()) {
+          return start;
+      }
+      return getElementType(start->getArrayElementType());
+  }
   
   // In case there is private variable in the kernel that does not fit into
   // register (multidimensional array for example), there are alloca 
@@ -3197,6 +3238,17 @@ namespace {
         Type* startType = I->getAllocatedType();
         if (!startType->isArrayTy())
             continue;
+
+        // only interleave 32-bit accesses?
+        if (!AllAllocaBitwidths) {
+            Type *elementType = getElementType(startType);
+            int bitSize = elementType->getScalarSizeInBits();
+            if (bitSize != 32)
+                continue;
+        }
+        if (!allowedToVectorizeAlloca(*I))
+            continue;
+
         // Find new type for alloca by recursively searching through multiple
         // dimensions of array
         Type* newType = newAllocaType(startType, allocaWidth);
