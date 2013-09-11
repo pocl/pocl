@@ -127,7 +127,7 @@ GEN_PROTOTYPES (basic)
   pocl_basic_map_mem,                                 \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_pthread_run, /* run */                         \
-  NULL, /* run_native */						\
+  pocl_basic_run_native, /* run_native */						\
   pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* build_program */ \
   pocl_basic_get_supported_image_formats, /* get_supported_image_formats */ \
