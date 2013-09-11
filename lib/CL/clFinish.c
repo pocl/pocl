@@ -232,7 +232,6 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_NATIVE_KERNEL:
           POCL_UPDATE_EVENT_RUNNING;
-          printf("mode->device := %p\n", node->device);
           node->device->run_native(node->command.native.data, node);
           POCL_UPDATE_EVENT_COMPLETE;
           for (i = 0; i < node->command.native.num_mem_objects; ++i)
