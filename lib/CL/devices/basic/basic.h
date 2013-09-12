@@ -104,7 +104,7 @@ GEN_PROTOTYPES (basic)
   !(WORDS_BIGENDIAN), /* endian_little */				\
   CL_TRUE, /* available */						\
   CL_TRUE, /* compiler_available */					\
-  CL_EXEC_KERNEL, /*execution_capabilities */				\
+  CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL, /*execution_capabilities */				\
   CL_QUEUE_PROFILING_ENABLE, /* queue_properties */			\
   0, /* platform */							\
   {0}, /* device_partition_properties */ \
@@ -132,6 +132,7 @@ GEN_PROTOTYPES (basic)
   pocl_basic_map_mem,                                 \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_basic_run, /* run */                         \
+  pocl_basic_run_native, /* run_native */						\
   pocl_basic_get_timer_value,  /* get_timer_value */    \
   NULL, /* build_program */ \
   pocl_basic_get_supported_image_formats, /* get_supported_image_formats */ \

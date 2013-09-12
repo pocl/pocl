@@ -13,7 +13,7 @@ the version control system:</p>
         git clone https://github.com/pocl/pocl.git
 </pre>
 
-We also package releases regularly, usually after each new LLVM release:
+<p>We also package releases regularly, usually after each new LLVM release:</p>
 
 <ul>
 
@@ -35,3 +35,6 @@ We also package releases regularly, usually after each new LLVM release:
 
 <p>All releases are also available on <a
 href="http://sourceforge.net/projects/pocl/files/">SourceForge</a>.
+
+<p>Operating system binaries for Fedora 19 and later are <a href="rpm.html">available</a>.</p>
+

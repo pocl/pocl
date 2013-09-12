@@ -124,6 +124,7 @@ GEN_PROTOTYPES (ttasim)
   pocl_tce_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_tce_run, /* run */                         \
+  NULL, /* run_native */						\
   pocl_ttasim_get_timer_value,                \
   pocl_tce_build_program, \
   NULL, /* get_supported_image_formats */      \
