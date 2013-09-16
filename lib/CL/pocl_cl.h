@@ -455,13 +455,25 @@ struct _cl_kernel {
   struct _cl_kernel *next;
 };
 
+typedef struct event_callback_item event_callback_item;
+struct event_callback_item
+{
+  void (*callback_function) (cl_event, cl_int, void*);
+  void *user_data;
+  cl_int trigger_status;
+  void *next;
+};
+
 typedef struct _cl_event _cl_event;
 struct _cl_event {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   cl_command_queue queue;
   cl_command_type command_type;
-  
+
+  /* list of callback functions */
+  event_callback_item* callback_list;
+
   /* The execution status of the command this event is monitoring. */
   cl_int status;
 
