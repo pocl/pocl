@@ -693,6 +693,8 @@ case $host_cpu in
     OCL_KERNEL_TARGET=$host
     kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
+    dnl The quadrigraphs @<:@ and @:>@ turn into [ and ].
+    llc_triple=$(clang -v -cc1 --target=$host -x c /dev/null -E 2>&1 | grep -e -triple | sed -E -e 's/^.*-triple +(@<:@^ @:>@+).*$/\1/')
     llc_host_cpu=$(llc --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
     case $host in
       *gnueabihf)
@@ -700,8 +702,8 @@ case $host_cpu in
         arm1176jz-s) llc_host_cpu=arm1176jzf-s;;
       esac;;
     esac
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS --target=$host -march=$llc_host_cpu"
-    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$host -mcpu=$llc_host_cpu"
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS --target=$llc_triple -march=$llc_host_cpu"
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
     ;;
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
