@@ -5,6 +5,8 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 
+#include <limits.h>
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 					  void (CL_CALLBACK * user_func)(void *), 
@@ -109,10 +111,9 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
       arg_loc = (void *) ((uintptr_t) args_copy + (uintptr_t)offset);
 
-      if (command_queue->device->address_bits == 32)
-          *((uint32_t *) arg_loc) = (uint32_t) (((uintptr_t) buf) & 0xFFFFFFFF);
-      else
-          *((uint64_t *) arg_loc) = (uint64_t) buf;
+      assert(command_queue->device->address_bits ==
+             CHAR_BIT * sizeof(uintptr_t));
+      *(uintptr_t*) arg_loc = (uintptr_t)buf;
     }
   command_node->command.native.args = args_copy;
   command_node->command.native.cb_args = cb_args;
