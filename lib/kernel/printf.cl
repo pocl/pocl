@@ -34,6 +34,14 @@ int snprintf(char* restrict str, size_t size, const char* restrict fmt, ...);
 
 
 
+// For debugging
+// Use as: DEBUG_PRINTF((fmt, args...)) -- note double parentheses!
+// #define DEBUG_PRINTF(args) printf(args)
+#define DEBUG_PRINTF(args) ((void)0)
+
+
+
+
 // Conversion flags
 typedef struct {
   bool left;
@@ -56,6 +64,7 @@ typedef struct {
   void _cl_print_ints_##WIDTH(flags_t flags, int field_width, int precision, \
                               char conv, const void* vals, int n)       \
   {                                                                     \
+    DEBUG_PRINTF(("[printf:ints:n=%df]\n", n));                         \
     char outfmt[1000];                                                  \
     snprintf(outfmt, sizeof outfmt,                                     \
              "%%%s%s%s%s%s%.0d%s%.0d" INT_CONV_##WIDTH "%c",            \
@@ -68,10 +77,13 @@ typedef struct {
              precision != -1 ? "." : "",                                \
              precision != -1 ? precision : 0,                           \
              conv);                                                     \
+    DEBUG_PRINTF(("[printf:ints:outfmt=%s]\n", outfmt));                \
     for (int d=0; d<n; ++d) {                                           \
+      DEBUG_PRINTF(("[printf:ints:d=%d]\n", d));                        \
       if (d != 0) printf(",");                                          \
       printf(outfmt, ((const WIDTH*)vals)[d]);                          \
     }                                                                   \
+    DEBUG_PRINTF(("[printf:ints:done]\n"));                             \
   }
 
 DEFINE_PRINT_INTS(char)
@@ -141,6 +153,7 @@ DEFINE_PRINT_FLOATS(double)
 
 int _cl_printf(const char* restrict format, ...)
 {
+  DEBUG_PRINTF(("[printf:format=%s]\n", format));
   va_list ap;
   va_start(ap, format);
   
@@ -150,10 +163,11 @@ int _cl_printf(const char* restrict format, ...)
       ch = *++format;
       
       if (ch == '%') {
+        DEBUG_PRINTF(("[printf:%%]\n"));
         printf("%%");           // literal %
         ch = *++format;
       } else {
-        
+        DEBUG_PRINTF(("[printf:arg]\n"));
         // Flags
         flags_t flags;
         flags.left = false;
@@ -173,6 +187,8 @@ int _cl_printf(const char* restrict format, ...)
           ch = *++format;
         }
       flags_done:;
+        DEBUG_PRINTF(("[printf:flags:left=%d,plus=%d,space=%d,alt=%d,zero=%d]\n",
+                      flags.left, flags.plus, flags.space, flags.alt, flags.zero));
         
         // Field width
         int field_width = 0;
@@ -182,6 +198,7 @@ int _cl_printf(const char* restrict format, ...)
           field_width = 10 * field_width + (ch - '0');
           ch = *++format;
         }
+        DEBUG_PRINTF(("[printf:width=%d]\n", field_width));
         
         // Precision
         int precision;
@@ -196,6 +213,7 @@ int _cl_printf(const char* restrict format, ...)
         } else {
           precision = -1;
         }
+        DEBUG_PRINTF(("[printf:precision=%d]\n", precision));
         
         // Vector specifier
         int vector_length = 0;
@@ -214,6 +232,7 @@ int _cl_printf(const char* restrict format, ...)
                  vector_length == 16)) goto error;
           
         }
+        DEBUG_PRINTF(("[printf:vector_length=%d]\n", vector_length));
         
         // Length modifier
         int length = 0;           // default
@@ -235,6 +254,7 @@ int _cl_printf(const char* restrict format, ...)
         if (vector_length > 0 && length == 0) goto error;
         if (vector_length == 0 && length == 4) goto error;
         if (vector_length == 0) vector_length = 1;
+        DEBUG_PRINTF(("[printf:length=%d]\n", length));
         
         // Conversion specifier
         switch (ch) {
@@ -246,7 +266,7 @@ int _cl_printf(const char* restrict format, ...)
         case 'u':
         case 'x':
         case 'X':
-
+          
 #define CALL_PRINT_INTS(WIDTH, PROMOTED_WIDTH)                          \
           {                                                             \
             WIDTH##16 val;                                              \
@@ -263,6 +283,7 @@ int _cl_printf(const char* restrict format, ...)
                                    ch, &val, vector_length);            \
           }
           
+          DEBUG_PRINTF(("[printf:int:conversion=%c]\n", ch));
           switch (length) {
           default: __builtin_unreachable();
           case 1: CALL_PRINT_INTS(char, int); break;
@@ -304,6 +325,7 @@ int _cl_printf(const char* restrict format, ...)
                                      ch, &val, vector_length);          \
           }
           
+          DEBUG_PRINTF(("[printf:float:conversion=%c]\n", ch));
           switch (length) {
           default: __builtin_unreachable();
 #ifdef cles_khr_fp16
@@ -333,15 +355,18 @@ int _cl_printf(const char* restrict format, ...)
       } // not a literal %
 
     } else {
+      DEBUG_PRINTF(("[printf:char]\n"));
       printf("%c", ch);
       ch = *++format;
     }
   }
   
   va_end(ap);
+  DEBUG_PRINTF(("[printf:done]\n"));
   return 0;
   
  error:;
   va_end(ap);
+  DEBUG_PRINTF(("[printf:error]\n"));
   return -1;
 }
