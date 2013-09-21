@@ -27,12 +27,12 @@
 KERNEL_TARGET = @TARGET@
 
 # if on @HOST@:
-CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Werror -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 LLC_FLAGS   = @HOST_LLC_FLAGS@
 LD_FLAGS    = @HOST_LD_FLAGS@
 
 ## if on @TARGET@:
-#CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Werror -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+#CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 #LLC_FLAGS   = @TARGET_LLC_FLAGS@
 #LD_FLAGS    = @TARGET_LD_FLAGS@
 
