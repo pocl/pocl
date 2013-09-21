@@ -8,7 +8,7 @@ kernel void test_printf()
   printf("%10d\n", 6);
   printf("%.10d\n", 7);
   printf("%10.10d\n", 8);
-  printf("%v4hld\n", (int4)(9));
+  printf("%v4hld\n", (int4)9);
   
   printf("1.0\n");
   printf("%f\n", 2.0f);
@@ -18,5 +18,5 @@ kernel void test_printf()
   printf("%10f\n", 6.0f);
   printf("%.10f\n", 7.0f);
   printf("%10.10f\n", 8.0f);
-  printf("%v4hlf\n", (float4)(9.0f));
+  printf("%v4hlf\n", (float4)9.0f);
 }
