@@ -37,7 +37,7 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]TARGET[@],$(TARGET),g'	\
                -e 's,[@]TARGET_CLANG_FLAGS[@],$(TARGET_CLANG_FLAGS),g'	\
                -e 's,[@]TARGET_LLC_FLAGS[@],$(TARGET_LLC_FLAGS),g'	\
-               -e 's,[@]TARGET_LD_FLAGS[@],$(TARGET_LLC_FLAGS),g'	\
+               -e 's,[@]TARGET_LD_FLAGS[@],$(TARGET_LD_FLAGS),g'	\
                -e 's,[@]HOST[@],$(HOST),g'	\
                -e 's,[@]HOST_CLANG_FLAGS[@],$(HOST_CLANG_FLAGS),g'	\
                -e 's,[@]HOST_LLC_FLAGS[@],$(HOST_LLC_FLAGS),g'	\
