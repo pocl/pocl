@@ -24,21 +24,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-LEX =
+KERNEL_TARGET=cellspu-v0
+TARGET_DIR=cellspu
 
 targetpkglibdir = $(pkglibdir)/cellspu
-targetpkglib_LIBRARIES = libkernel.a
-
-vpath %.cl @srcdir@:@srcdir@/..
-vpath %.c @srcdir@:@srcdir@/..
-vpath %.ll @srcdir@:@srcdir@/..
+targetpkglib_DATA = kernel-$(KERNEL_TARGET).bc
 
 include ../sources.mk
+all: kernel-$(KERNEL_TARGET).bc
 
-nodist_libkernel_a_SOURCES=$(libkernel_SRCS)
-
-RANLIB = @LLVM_RANLIB@
-AR = @LLVM_AR@
-
-CLANGFLAGS += -target cellspu-v0
-CLANG_DEFAULT_INCLUDES = -include $(top_builddir)/include/cellspu/types.h
