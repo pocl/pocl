@@ -121,7 +121,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   d->mem_regions = NULL;
 #endif  
 
-  device->address_bits = SIZEOF_VOID_P * 8;
+  device->address_bits = sizeof(void*) * 8;
 
   /* Use the minimum values until we get a more sensible 
      upper limit from somewhere. */
