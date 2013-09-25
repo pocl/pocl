@@ -365,7 +365,7 @@ pocl_cellspu_run
   // the main loop on the spe needs an auxiliary struct for to get the 
   // number of arguments and such. 
   __kernel_metadata kmd;
-  strncpy( kmd.name, workgroup_string, sizeof( kmd.name ) );  
+  strncpy( (char*) kmd.name, workgroup_string, sizeof( kmd.name ) );  
   kmd.num_args = kernel->num_args;
   kmd.num_locals = kernel->num_locals;
   // TODO: fill in the rest, if used by the spu main function.
@@ -373,9 +373,9 @@ pocl_cellspu_run
   // TODO malloc_local should be given the 'device data'. as long as teh 
   // spu context is global this is ok.
   void *chunk = cellspu_malloc_local( NULL, sizeof(__kernel_metadata) ); 
-  void *kernel_area = ((chunk_info_t*)chunk)->start_address;
+  void *kernel_area = (void*)((chunk_info_t*)chunk)->start_address;
   cellspu_memwrite( kernel_area, &kmd, sizeof(__kernel_metadata) );
-  dev_cmd.kernel = kernel_area;
+  dev_cmd.kernel = (int) kernel_area;
   
   // finish up the command, send it to SPE
   dev_cmd.status =POCL_KST_READY;
@@ -553,8 +553,8 @@ pocl_cellspu_get_timer_value (void *data)
 }
 
 int 
-pocl_cellspu_build_program (void *data, char *source_fn, char *binary_fn, 
-			    char *default_cmd, char *dev_tmpdir) 
+pocl_cellspu_build_program (void *data, const char *source_fn, const char *binary_fn, 
+			    const char *default_cmd, const char *user_opts, const char *dev_tmpdir) 
 {
   POCL_ABORT_UNIMPLEMENTED();
 

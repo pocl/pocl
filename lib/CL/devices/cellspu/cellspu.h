@@ -136,6 +136,7 @@ GEN_PROTOTYPES (cellspu)
   pocl_cellspu_write_rect, /* write_rect */				\
   pocl_cellspu_copy, /* copy */						\
   pocl_cellspu_copy_rect, /* copy_rect */				\
+  NULL, /* fill_rect */							\
   pocl_cellspu_map_mem,                               \
   NULL, /* unmap_mem is a NOP */                    \
   pocl_cellspu_run, /* run */                         \
