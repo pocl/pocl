@@ -857,6 +857,10 @@ AM_CONDITIONAL([TCEMC_AVAILABLE], test ! -z $TCEMC_AVAILABLE)
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
+# SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
+# so compile the spu backend only when LLVM 3.2 is found
+if test "$LLVM_VERSION" == 3.2 -o "$LLVM_VERSION" == 3.2svn
+then
 PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
   [
     AC_MSG_NOTICE([libspe2 found.])
@@ -869,7 +873,7 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
     AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
     LIBSPE_AVAILABLE=no
   ])
-
+fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
