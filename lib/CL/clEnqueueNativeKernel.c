@@ -112,7 +112,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
       if (command_queue->device->address_bits == 32)
           *((uint32_t *) arg_loc) = (uint32_t) (((uintptr_t) buf) & 0xFFFFFFFF);
       else
-          *((uint64_t *) arg_loc) = (uint64_t) buf;
+          *((uint64_t *) arg_loc) = (uint64_t) (uintptr_t) buf;
     }
   command_node->command.native.args = args_copy;
   command_node->command.native.cb_args = cb_args;
