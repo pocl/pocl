@@ -68,19 +68,18 @@
                            size_t const buffer_slice_pitch,    \
                            void *fill_pixel,    \
                            size_t pixel_size);  \
-void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
-  void*                                                                 \
-  pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
+  void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
+  void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \
+  void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
                         size_t offset, size_t size, void *host_ptr); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
-  int pocl_##__DRV__##_build_program (void *data, char *source_fn, char *binary_fn, char *default_cmd, char *dev_tmpdir);\
+  int pocl_##__DRV__##_build_program (void *data,                      \
+                                    const char *source_fn,             \
+                                    const char *binary_fn,             \
+                                    const char *default_cmd,           \
+                                    const char *user_opts,             \
+                                    const char *dev_tmpdir);           \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
                                          cl_int *num_image_formats);\
-_Pragma ("GCC visibility pop")                                        \
-
-
-
-
-
-
+_Pragma ("GCC visibility pop")

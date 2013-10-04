@@ -4,15 +4,16 @@ AT_BANNER([Runtime library tests])
 AT_SETUP([Host runtime tests])
 AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetDeviceInfo])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clEnqueueNativeKernel])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetEventInfo])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateProgramWithBinary])
 AT_CHECK([POCL_DEVICES="pthread pthread" $abs_top_builddir/tests/runtime/test_clGetSupportedImageFormats])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/runtime/test_clFinish | grep "ABABC"], 0, [ABABC
 ])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clSetEventCallback], 0, 
-[Callback function: event status: CL_SUBMITTED
+[kernel in execution
+Callback function: event status: CL_SUBMITTED
 Callback function: event status: CL_RUNNING
-kernel in execution
 Callback function: event status: CL_COMPLETE
 ])
 AT_CLEANUP

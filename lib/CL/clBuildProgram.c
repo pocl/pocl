@@ -41,7 +41,8 @@ static char cl_parameters[] =
   "-cl-fast-relaxed-math "
   "-cl-std=CL1.2 "
   "-cl-std=CL1.1 "
-  "-cl-kernel-arg-info ";
+  "-cl-kernel-arg-info "
+  "-w ";
 
 static char cl_parameters_not_yet_supported_by_clang[] = 
   "-cl-strict-aliasing "
@@ -109,7 +110,7 @@ CL_API_SUFFIX__VERSION_1_0
       while (token != NULL)
         {
           /* check if parameter is supported compiler parameter */
-          if (strstr (token, "-cl"))
+          if (strstr (token, "-cl") || strstr (token, "-w"))
             {
               if (strstr (cl_parameters, token))
                 strcat (modded_options, "-Xclang ");

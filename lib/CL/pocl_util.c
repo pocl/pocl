@@ -244,7 +244,6 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   
   if (event == NULL)
     {
-      
       err = pocl_create_event(&new_event, command_queue, 0);
       if (err != CL_SUCCESS)
         {

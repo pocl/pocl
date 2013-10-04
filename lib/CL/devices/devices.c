@@ -42,16 +42,8 @@
 struct _cl_device_id* pocl_devices = NULL;
 int pocl_num_devices = 0;
 
-#if defined TCE_AVAILABLE && defined BUILD_SPU
-#define POCL_NUM_DEVICE_TYPES 4
-#elif defined TCE_AVAILABLE || defined BUILD_SPU
-#define POCL_NUM_DEVICE_TYPES 3
-#else
-#define POCL_NUM_DEVICE_TYPES 2
-#endif
-
 /* All device drivers available to the pocl. */
-static struct _cl_device_id pocl_device_types[POCL_NUM_DEVICE_TYPES] = {
+static struct _cl_device_id pocl_device_types[] = {
   POCL_DEVICES_PTHREAD,
   POCL_DEVICES_BASIC,
 #if defined(BUILD_SPU)
@@ -61,6 +53,8 @@ static struct _cl_device_id pocl_device_types[POCL_NUM_DEVICE_TYPES] = {
   POCL_DEVICES_TTASIM,
 #endif
 };
+
+#define POCL_NUM_DEVICE_TYPES (sizeof(pocl_device_types) / sizeof((pocl_device_types)[0]))
 
 void 
 pocl_init_devices()

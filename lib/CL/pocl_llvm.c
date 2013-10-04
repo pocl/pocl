@@ -55,7 +55,7 @@ int call_pocl_build( cl_device_id device,
     {
       error = device->build_program 
         (device->data, source_file_name, binary_file_name, 
-         command, device_tmpdir);
+         command, user_options, device_tmpdir);
     }
   else
     {
@@ -202,4 +202,3 @@ int call_pocl_workgroup( char* function_name,
 
       return 0;
 }
-

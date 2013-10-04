@@ -77,6 +77,17 @@ typedef struct
   struct pocl_argument *arguments;
 } _cl_command_run;
 
+// clEnqueueNativeKernel
+typedef struct
+{
+  void *data;
+  void *args;
+  size_t cb_args;
+  void (*user_func)(void *);
+  cl_mem *mem_list;
+  int num_mem_objects;
+} _cl_command_native;
+
 // clEnqueueReadBuffer
 typedef struct
 {
@@ -168,6 +179,7 @@ typedef struct
 typedef union
 {
   _cl_command_run run;
+  _cl_command_native native;
   _cl_command_read read;
   _cl_command_write write;
   _cl_command_copy copy;

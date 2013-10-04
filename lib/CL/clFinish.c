@@ -38,7 +38,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   _cl_command_node *ready_list = NULL;
   cl_bool command_ready;
   cl_event *event;
-
+  
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     POCL_ABORT_UNIMPLEMENTED();
 
@@ -97,6 +97,8 @@ static void exec_commands (_cl_command_node *node_list)
   cl_event *event;
   _cl_command_node *node;
   cl_command_queue command_queue = NULL;
+  event_callback_item* cb_ptr;
+  
   LL_FOREACH (node_list, node)
     {
       event = &(node->event);
@@ -230,6 +232,19 @@ static void exec_commands (_cl_command_node *node_list)
       
           POname(clReleaseKernel)(node->command.run.kernel);
           break;
+        case CL_COMMAND_NATIVE_KERNEL:
+          POCL_UPDATE_EVENT_RUNNING;
+          node->device->run_native(node->command.native.data, node);
+          POCL_UPDATE_EVENT_COMPLETE;
+          for (i = 0; i < node->command.native.num_mem_objects; ++i)
+            {
+              cl_mem buf = node->command.native.mem_list[i];
+              if (buf == NULL) continue;
+              POname(clReleaseMemObject) (buf);
+            }
+          free (node->command.native.mem_list);
+          free (node->command.native.args);
+	      break;
         case CL_COMMAND_FILL_IMAGE:
           POCL_UPDATE_EVENT_RUNNING;
           node->device->fill_rect 
@@ -252,6 +267,16 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_ABORT_UNIMPLEMENTED();
           break;
         }   
+    }
+
+  /* event callback handling */
+  if (event)
+    {
+      for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
+        {
+          cb_ptr->callback_function ((*event), cb_ptr->trigger_status, 
+                                     cb_ptr->user_data);
+        }
     }
   // free the queue contents
   node = node_list;
