@@ -222,13 +222,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 #endif
     }
 
-  error = pocl_create_command (&command_node, command_queue, 
-                               CL_COMMAND_NDRANGE_KERNEL, 
-                               event, num_events_in_wait_list, 
-                               event_wait_list);
-  if (error != CL_SUCCESS)
-    return error;
-
   if (event != NULL)
     {
       error = pocl_create_event (event, command_queue, 
@@ -237,6 +230,13 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         return error;
       POCL_UPDATE_EVENT_QUEUED;
     }
+
+  error = pocl_create_command (&command_node, command_queue,
+                               CL_COMMAND_NDRANGE_KERNEL,
+                               event, num_events_in_wait_list,
+                               event_wait_list);
+  if (error != CL_SUCCESS)
+    return error;
 
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
@@ -322,8 +322,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         ++count;
       }
   }
-
-  command_node->event = event ? *event : NULL;
 
   LL_APPEND(command_queue->root, command_node);
 

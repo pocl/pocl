@@ -12,8 +12,8 @@ API
 - build options support is incomplete
 - clang accepts invalid opencl version in command-line
 - unimplemented parts in clReleaseProgram
-- unimplemented parts in clRetainEvent and clReleaseEvent
 - clGetProgramBuildInfo returns an empty string
+- clSetKernelArg various error checks
 
 Execute
 -------
@@ -25,9 +25,5 @@ Unimplemented
 -------------
 
 - clGetProgramInfo
-- clGetMemObjectInfo
-- clCreateSampler
-- clGetImageInfo
-- clGetEventInfo
 - clCreateKernelsInProgram
-- clGetContextInfo
+
