@@ -30,7 +30,7 @@ void callback_function(cl_event event,
                        cl_int   event_command_exec_status, 
                        void     *user_data)
 {
-  printf("%s ", user_data);
+  printf("%s ", (const char *)user_data);
   if(event_command_exec_status == CL_SUBMITTED)
     printf("CL_SUBMITTED\n");
 
