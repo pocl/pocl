@@ -38,6 +38,10 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   if (ptr == NULL)
     return CL_INVALID_VALUE;
 
+  pocl_get_image_information(image->image_channel_order,
+                             image->image_channel_data_type,
+                             &num_channels, &elem_size);
+
   size_t tuned_origin[3] = {origin[0] * elem_size * num_channels, origin[1], 
                             origin[2]};
   size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
