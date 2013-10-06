@@ -40,8 +40,10 @@ CL_API_SUFFIX__VERSION_1_0
   
   return sampler;
 
+#if 0
 ERROR_CLEAN_SAMPLER:
   free(sampler);
+#endif
 ERROR:
   if(errcode_ret)
   {

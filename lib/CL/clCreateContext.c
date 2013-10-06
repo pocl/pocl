@@ -186,7 +186,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
   
  ERROR_CLEAN_CONTEXT_AND_DEVICES:
   free(context->devices);
- ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
+ /*ERROR_CLEAN_CONTEXT_AND_PROPERTIES:*/
   free(context->properties);
  ERROR_CLEAN_CONTEXT:
   free(context);

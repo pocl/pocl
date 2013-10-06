@@ -162,8 +162,10 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
     *errcode_ret = CL_SUCCESS;
   return mem;
 
+#if 0
 ERROR_CLEAN_MEM_AND_DEVPTR:
     free(mem->device_ptrs);
+#endif
 ERROR_CLEAN_MEM:
     free(mem);
 ERROR:

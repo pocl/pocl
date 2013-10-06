@@ -113,7 +113,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
 ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
   free(context->properties);
-ERROR_CLEAN_CONTEXT:
+/*ERROR_CLEAN_CONTEXT:*/
   free(context);
 ERROR:
   if(errcode_ret)
