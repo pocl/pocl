@@ -28,7 +28,6 @@ int main(int argc, char **argv)
   cl_uchar4 *imageData;
   cl_image_format image_format;
   cl_image_desc image_desc;
-  cl_mem_flags flags;
 
   
 

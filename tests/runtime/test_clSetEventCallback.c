@@ -57,10 +57,6 @@ int main()
   cl_uint nplatforms;
   cl_device_id devices[1]; // + 1 for duplicate test
   cl_uint num_devices;
-  cl_uint i, j;  
-  const unsigned char **binaries = NULL;
-  size_t *binary_sizes = NULL;
-  size_t num_bytes_copied;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
   char input[] = "kernel in execution\n";

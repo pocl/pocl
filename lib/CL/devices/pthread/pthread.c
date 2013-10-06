@@ -403,11 +403,9 @@ pocl_pthread_run
 {
   struct data *d;
   int error;
-  char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
   cl_device_id device_ptr;
-  size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
   const char *module_fn;

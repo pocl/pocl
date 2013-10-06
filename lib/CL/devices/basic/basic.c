@@ -208,7 +208,6 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 		    size_t size, void *host_ptr)
 {
   void *b;
-  struct data* d = (struct data*)device_data;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
@@ -266,9 +265,7 @@ pocl_basic_run
  _cl_command_node* cmd)
 {
   struct data *d;
-  int error;
   const char *module_fn;
-  char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
   struct pocl_argument *al;

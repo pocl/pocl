@@ -41,7 +41,6 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0 
 {
   cl_int status;
-  int errcode;
   int num_channels;
   int elem_size;
   _cl_command_node *cmd;

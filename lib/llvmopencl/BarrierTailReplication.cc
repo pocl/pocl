@@ -308,7 +308,6 @@ BarrierTailReplication::FindSubgraph(BasicBlockVector &subgraph,
   subgraph.push_back(entry);
 
   const TerminatorInst *t = entry->getTerminator();
-  Loop *l = LI->getLoopFor(entry);
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *successor = t->getSuccessor(i);
     const bool isBackedge = DT->dominates(successor, entry);
