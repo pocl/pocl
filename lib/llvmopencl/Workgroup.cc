@@ -70,7 +70,6 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static void noaliasArguments(Function *F);
 static Function *createLauncher(Module &M, Function *F);
 static void privatizeContext(Module &M, Function *F);
 static void createWorkgroup(Module &M, Function *F);
@@ -195,17 +194,6 @@ Workgroup::runOnModule(Module &M)
   ReturnInst::Create(M.getContext(), 0, bb);
   
   return true;
-}
-
-/**
- * Marks the pointer arguments to the kernel functions as noalias.
- */
-static void
-noaliasArguments(Function *F)
-{
-  for (unsigned i = 0, e = F->getFunctionType()->getNumParams(); i < e; ++i)
-    if (isa<PointerType> (F->getFunctionType()->getParamType(i)))
-      F->setDoesNotAlias(i + 1); // arg 0 is return type
 }
 
 static Function *
@@ -550,7 +538,6 @@ createWorkgroupFast(Module &M, Function *F)
     Value *gep = builder.CreateGEP(ai, 
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
-    Value *bc = NULL;
      
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
@@ -563,10 +550,6 @@ createWorkgroupFast(Module &M, Function *F)
        * element type in subsequent load. */
       t = t->getPointerElementType();
     }
-
-    /* Assume the pointer points to data in the global memory space. */
-    bc = builder.CreateBitCast(pointer,
-            t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
 
     /* If it's a pass by value pointer argument, we just pass the pointer
      * as is to the function, no need to load from it first. */

@@ -67,8 +67,6 @@ CL_API_SUFFIX__VERSION_1_0
   char source_file_name[POCL_FILENAME_LENGTH], binary_file_name[POCL_FILENAME_LENGTH];
   FILE *source_file, *binary_file;
   size_t n;
-  struct stat buf;
-  char command[COMMAND_LENGTH];
   int errcode;
   int i;
   int error;
@@ -76,7 +74,6 @@ CL_API_SUFFIX__VERSION_1_0
   unsigned real_num_devices;
   const cl_device_id *real_device_list;
   /* The default build script for .cl files. */
-  char *pocl_build_script;
   int device_i = 0;
   const char *user_options = "";
   char *temp_options;

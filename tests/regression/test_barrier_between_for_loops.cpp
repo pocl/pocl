@@ -70,7 +70,6 @@ main(void)
 {
     cl_float A[BUFFER_SIZE];
     cl_int R[WORK_ITEMS];
-    cl_int err = 0;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         A[i] = i;
@@ -179,7 +178,7 @@ main(void)
             return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
-        err = queue.enqueueUnmapMemObject(
+        queue.enqueueUnmapMemObject(
             cBuffer,
             (void *) output);
  

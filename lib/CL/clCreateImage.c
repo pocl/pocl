@@ -34,7 +34,6 @@ CL_API_SUFFIX__VERSION_1_2
 {
     cl_mem mem;
     cl_device_id device_id;
-    void *device_ptr;
     unsigned i, j;
     cl_uint num_entries = 0;
     cl_image_format *supported_image_formats;

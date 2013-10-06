@@ -40,7 +40,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 {
   int num_devices;
   int i, j;
-  int num_properties;
   int errcode;
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
@@ -63,7 +62,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   POCL_INIT_OBJECT(context);
   context->valid = 0;
 
-  num_properties = context_set_properties(context, properties, &errcode);
+  context_set_properties(context, properties, &errcode);
   if (errcode)
     {
         goto ERROR_CLEAN_CONTEXT_AND_PROPERTIES;
@@ -113,7 +112,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
 ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
   free(context->properties);
-ERROR_CLEAN_CONTEXT:
+/*ERROR_CLEAN_CONTEXT:*/
   free(context);
 ERROR:
   if(errcode_ret)

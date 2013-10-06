@@ -237,7 +237,7 @@ namespace {
 
     void dropUnused(BasicBlock& BB);
     
-    bool getCandidatePairs(BasicBlock &BB,
+    void getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts);
@@ -926,7 +926,6 @@ namespace {
   // This function implements one vectorization iteration on the provided
   // basic block. It returns true if the block is changed.
   bool WIVectorize::vectorizePairs(BasicBlock &BB) {
-    bool ShouldContinue;
     BasicBlock::iterator Start = BB.getFirstInsertionPt();
 
     std::vector<Value *> AllPairableInsts;
@@ -934,8 +933,7 @@ namespace {
     
       std::vector<Value *> PairableInsts;
       std::multimap<Value *, Value *> CandidatePairs;
-      ShouldContinue = getCandidatePairs(BB, Start, CandidatePairs,
-                                         PairableInsts);
+      getCandidatePairs(BB, Start, CandidatePairs, PairableInsts);
       if (PairableInsts.empty()) return false;
       // Now we have a map of all of the pairable instructions and we need to
       // select the best possible pairing. A good pairing is one such that the
@@ -1084,7 +1082,7 @@ namespace {
     // Instruction combiner pass will remove duplicates.
     if (SE->isSCEVable(I->getType())) {
         const SCEV* sc = SE->getSCEV(I);
-        if (const SCEVAddRecExpr* S = dyn_cast<SCEVAddRecExpr>(sc)) {
+        if (isa<SCEVAddRecExpr>(sc)) {
             if (I->hasNUses(2)) {
                 // Loop counter instruction is used in the comparison
                 // operation before branch and with the phi node.
@@ -1199,8 +1197,6 @@ namespace {
 
     // Loads and stores can be merged if they have different alignments,
     // but are otherwise the same.
-    LoadInst *LI, *LJ;
-    StoreInst *SI, *SJ;
     if (!J->isSameOperationAs(I)) {
       return false;
     }
@@ -1389,14 +1385,14 @@ namespace {
   
   // This function iterates over all instruction pairs in the provided
   // basic block and collects all candidate pairs for vectorization.
-  bool WIVectorize::getCandidatePairs(BasicBlock &BB,
+  void WIVectorize::getCandidatePairs(BasicBlock &BB,
                        BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts) {
     BasicBlock::iterator E = BB.end();
     LLVMContext& context = BB.getContext();
     
-    if (Start == E) return false;
+    if (Start == E) return;
 
     std::multimap<int, ValueVector*> temporary;
     for (BasicBlock::iterator I = Start++; I != E; ++I) {
@@ -1609,7 +1605,6 @@ namespace {
             CandidatePairs.insert(ValuePair(I, J));            
         }
     }
-    return false;
   }
   
   // Finds candidate pairs connected to the pair P = <PI, PJ>. This means that

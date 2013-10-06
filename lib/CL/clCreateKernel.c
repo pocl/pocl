@@ -155,10 +155,12 @@ POname(clCreateKernel)(cl_program program,
     *errcode_ret = CL_SUCCESS;
   return kernel;
 
+#if 0
 ERROR_CLEAN_KERNEL_AND_CONTENTS:
   free(kernel->function_name);
   free(kernel->name);
   free(kernel->dyn_arguments);
+#endif
 ERROR_CLEAN_KERNEL:
   free(kernel);
 ERROR:

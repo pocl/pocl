@@ -30,7 +30,7 @@ void callback_function(cl_event event,
                        cl_int   event_command_exec_status, 
                        void     *user_data)
 {
-  printf("%s ", user_data);
+  printf("%s ", (const char *)user_data);
   if(event_command_exec_status == CL_SUBMITTED)
     printf("CL_SUBMITTED\n");
 
@@ -57,10 +57,6 @@ int main()
   cl_uint nplatforms;
   cl_device_id devices[1]; // + 1 for duplicate test
   cl_uint num_devices;
-  cl_uint i, j;  
-  const unsigned char **binaries = NULL;
-  size_t *binary_sizes = NULL;
-  size_t num_bytes_copied;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
   char input[] = "kernel in execution\n";

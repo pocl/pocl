@@ -145,13 +145,15 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
     *errcode_ret = CL_SUCCESS;
   return program;
 
+#if 0
 ERROR_CLEAN_PROGRAM_BINARIES_AND_DEVICES:
   free(program->devices);
+#endif
 ERROR_CLEAN_PROGRAM_AND_BINARIES:
   free(program->binaries[0]);
   free(program->binaries);
   free(program->binary_sizes);
-ERROR_CLEAN_PROGRAM:
+/*ERROR_CLEAN_PROGRAM:*/
   free(program);
 ERROR:
     if(errcode_ret != NULL)
