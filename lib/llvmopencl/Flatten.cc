@@ -53,15 +53,6 @@ extern cl::opt<std::string> KernelName;
 char Flatten::ID = 0;
 static RegisterPass<Flatten> X("flatten", "Kernel function flattening pass");
 
-static const char *workgroup_variables[] = {
-  "_local_id_x", "_local_id_y", "_local_id_z",
-  "_local_size_x", "_local_size_y", "_local_size_z",
-  "_work_dim",
-  "_num_groups_x", "_num_groups_y", "_num_groups_z",
-  "_group_id_x", "_group_id_y", "_group_id_z",
-  "_global_offset_x", "_global_offset_y", "_global_offset_z",
-  NULL};
-
 //#define DEBUG_FLATTEN
 
 #define INLINE_ALL_NON_KERNEL
@@ -129,6 +120,16 @@ Flatten::runOnModule(Module &M)
 }
 
 #else
+
+static const char *workgroup_variables[] = {
+  "_local_id_x", "_local_id_y", "_local_id_z",
+  "_local_size_x", "_local_size_y", "_local_size_z",
+  "_work_dim",
+  "_num_groups_x", "_num_groups_y", "_num_groups_z",
+  "_group_id_x", "_group_id_y", "_group_id_z",
+  "_global_offset_x", "_global_offset_y", "_global_offset_z",
+  NULL
+};
 
 bool
 Flatten::runOnModule(Module &M)
