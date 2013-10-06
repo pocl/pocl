@@ -120,7 +120,6 @@ POname(clCreateContext)(const cl_context_properties * properties,
 {
   int i, j;
   cl_device_id device_ptr;
-  int num_properties;
   int errcode = 0;
     
   if (devices == NULL || num_devices == 0)
@@ -147,7 +146,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   POCL_INIT_OBJECT(context);
 
-  num_properties = context_set_properties(context, properties, &errcode);
+  context_set_properties(context, properties, &errcode);
   if (errcode)
     {
       goto ERROR_CLEAN_CONTEXT;
