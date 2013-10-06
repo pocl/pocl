@@ -876,6 +876,8 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
 fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
+AM_CONDITIONAL([BUILD_PTHREADS],[echo $OCL_DRIVERS | grep pthreads])
+
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 
 AC_SUBST([OCL_TARGETS])
