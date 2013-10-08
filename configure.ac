@@ -353,6 +353,22 @@ AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
 
 
 ####################################################################
+# Pthread Library
+
+old_CFLAGS="$CFLAGS"
+old_CPPFLAGS="$CPPFLAGS"
+CFLAGS=`echo "$CFLAGS" | sed 's/-Werror[[-A-Za-z0-9=]]*//g'`
+CPPFLAGS=`echo "$CPPFLAGS" | sed 's/-Werror[[-A-Za-z0-9=]]*//g'`
+
+ACX_PTHREAD()
+
+CFLAGS="$old_CFLAGS"
+CPPFLAGS="$old_CPPFLAGS"
+
+LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
+
+
+####################################################################
 
 # Option to build as an ICD
 AC_ARG_ENABLE([icd],
@@ -462,9 +478,7 @@ AC_SUBST([OPENCL_EXTLIBS])
 
 ####################################################################
 #AC_LANG([C++])
-ACX_PTHREAD()
 
-LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
 # Checks for libraries.
 #old_LDFLAGS="$LDFLAGS"
@@ -875,8 +889,6 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
   ])
 fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
-
-AM_CONDITIONAL([BUILD_PTHREADS],[echo $OCL_DRIVERS | grep pthreads])
 
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 

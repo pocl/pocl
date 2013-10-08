@@ -144,10 +144,6 @@ if BUILD_SPU
 libpocl_la_LIBADD += -lspe2
 endif
 
-if BUILD_PTHREADS
-libpocl_la_LIBADD += -lpthread
-endif
-
 if USE_LLVM_API
 #Kludge: compile pocl_llvm_api.cc into a library of its own.
 #The source file is necessarely a C++ file, and having a C++ file
