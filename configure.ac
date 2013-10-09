@@ -923,6 +923,7 @@ old_CPPFLAGS="$CPPFLAGS"
 old_CFLAGS="$CFLAGS"
 old_LDFLAGS="$LDFLAGS"
 CC=$srcdir/config/xclang
+CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
 
@@ -933,8 +934,9 @@ AC_CONFIG_FILES([include/arm/types.h
                  include/cellspu/types.h
                  include/x86_64/types.h])
 
+
 AC_MSG_CHECKING([for aligned_alloc])
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
         [[ #include <stdlib.h> ]],
         [[ void* p = aligned_alloc(0, 0); ]]
@@ -944,7 +946,7 @@ AC_COMPILE_IFELSE(
     [AC_MSG_RESULT(no)])
 
 AC_MSG_CHECKING([for posix_memalign])
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
         [[ #include <stdlib.h> ]],
         [[ int r = posix_memalign(NULL, 0, 0); ]]
