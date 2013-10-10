@@ -75,6 +75,9 @@ LT_INIT
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
 
+###################################################
+# LLVM configuration
+#
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
 AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.3 llvm-config33 llvm-config-3.4 llvm-config34 llvm-config-3.2 llvm-config32 ])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
@@ -105,15 +108,42 @@ Unsupported LLVM version. Please use LLVM 3.2 or later.
    ;;
 esac
 
+
+#Temporary option to enable the switch from scripts to llvm API build
+use_llvm_api="no"
+AC_ARG_ENABLE([llvmapi],
+              [AS_HELP_STRING([--enable-llvmapi], [Use LLVM via API, not scripts. (work in progress - do not use!)])],
+              [use_llvm_api="yes"])
+if test "$use_llvm_api" = "yes"; then
+  AC_DEFINE([USE_LLVM_API], [1], "Use LLVM via API, rather than scripts")
+fi
+AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
+
+# When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
+# or risk causing version mismatches
+# Also note, when building LLVM with cmake, there is no libLLVM-<versionnumber>.so
+link_llvm_static="no"
+AC_ARG_ENABLE([static-llvm],
+              [AS_HELP_STRING([--enable-static-llvm],
+                              [Link LLVM statically. Default is dynamic. Only used if --enable-llvmapi is given.])],
+              [link_llvm_static="yes"])
+
 LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
 
+if test "$link_llvm_static" = "yes"; then
+  LLVM_LIBS=$($LLVM_CONFIG --libs)
+else
+  LLVM_LIBS=-lLLVM-$LLVM_VERSION
 if test ! -e $LLVM_SHARED_LIB_FILE;
 then
-        AC_MSG_WARN([
+        AC_MSG_ERROR([
 $LLVM_SHARED_LIB_FILE not found. 
 Recompile and install LLVM after ./configure --enable-shared.
 Read the INSTALL file for details.])
 fi
+fi
+
+AC_SUBST([LLVM_LIBS])
 
 LLVM_RTTI_CHECK=$($LLVM_CONFIG --cxxflags | grep -i "\-fno-rtti")
 
@@ -340,16 +370,6 @@ fi
 
 
 AC_SUBST([POAT_TESTSUITES])
-
-#Temporary option to enable the switch from scripts to llvm API build
-use_llvm_api="no"
-AC_ARG_ENABLE([llvmapi],
-              [AS_HELP_STRING([--enable-llvmapi], [Use LLVM via API, not scripts. (work in progress - do not use!)])],
-              [use_llvm_api="yes"])
-if test "$use_llvm_api" = "yes"; then
-  AC_DEFINE([USE_LLVM_API], [1], "Use LLVM via API, rather than scripts")
-fi
-AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
 
 
 ####################################################################
