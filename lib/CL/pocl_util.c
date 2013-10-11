@@ -41,8 +41,6 @@ typedef struct list_item
   struct list_item *next;
 } list_item;
 
-static list_item *queue_list = NULL; 
-
 void 
 remove_directory (const char *path_name) 
 {
@@ -58,7 +56,6 @@ remove_directory (const char *path_name)
 char*
 pocl_create_temp_dir() 
 {  
-  struct temp_dir *td; 
   char *path_name; 
   if (getenv(POCL_TEMPDIR_ENV) != NULL &&
       access (getenv(POCL_TEMPDIR_ENV), F_OK) == 0) 
@@ -199,7 +196,7 @@ pocl_aligned_free(void *ptr)
   if (ptr)
     free(*(void **)((uintptr_t)ptr - sizeof(void *)));
 }
-
+#endif
 
 cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
                           cl_command_type command_type)
@@ -289,5 +286,3 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   return CL_SUCCESS;
 }
-
-#endif

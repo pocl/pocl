@@ -35,14 +35,13 @@ POname(clGetSupportedImageFormats) (cl_context           context,
                                     cl_uint *            num_image_formats) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  int i, j, k;
+  int i, j;
   cl_device_id device_id;
   const cl_image_format **dev_image_formats = 0;
   int *dev_num_image_formats = 0;
   int errcode = 0;
   
   cl_image_format reff;
-  cl_image_format toReff;
   int reff_found;
   int formatCount = 0;
   

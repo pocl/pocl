@@ -60,8 +60,6 @@ main(void)
 {
     float A[BUFFER_SIZE];
 
-    cl_int err;
-
     try {
         std::vector<cl::Platform> platformList;
 
@@ -138,7 +136,7 @@ main(void)
         }
 
         // Finally release our hold on accessing the memory
-        err = queue.enqueueUnmapMemObject(
+        queue.enqueueUnmapMemObject(
             aBuffer, (void *) res);
  
         // There is no need to perform a finish on the final unmap

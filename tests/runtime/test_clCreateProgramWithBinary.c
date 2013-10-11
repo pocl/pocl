@@ -16,7 +16,7 @@ main(void){
   cl_device_id devices[MAX_DEVICES + 1]; // + 1 for duplicate test
   cl_device_id device_id0;
   cl_uint num_devices;
-  cl_uint i, j;  
+  cl_uint i;
   size_t num_binaries;
   const unsigned char **binaries = NULL;
   size_t *binary_sizes = NULL;

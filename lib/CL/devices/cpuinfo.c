@@ -211,9 +211,6 @@ pocl_cpuinfo_detect_compute_unit_count() {
 void
 pocl_cpuinfo_append_cpu_name(cl_device_id device)
 {
-  #define MAX_MODEL_LEN 128
-  char model[MAX_MODEL_LEN];
-
   /* If something fails here, have this as backup solution.
    * short_name is in the .data anyways.*/
   device->long_name = device->short_name;

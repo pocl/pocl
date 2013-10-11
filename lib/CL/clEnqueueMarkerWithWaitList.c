@@ -33,9 +33,6 @@ POname(clEnqueueMarkerWithWaitList) (cl_command_queue   command_queue,
                                      cl_event *         event) 
 CL_API_SUFFIX__VERSION_1_2
 {
-  int i;
-  cl_int event_status;
-  int finished;
   int errcode;
   _cl_command_node *cmd;
   

@@ -311,7 +311,6 @@ coalesce_chunks (chunk_info_t* first,
 memory_region_t *
 free_buffer (memory_region_t *regions, memory_address_t addr)
 {
-  chunk_info_t *chunk = NULL;
   memory_region_t *region = NULL;
 
 #ifdef DEBUG_BUFALLOC

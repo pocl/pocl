@@ -28,6 +28,7 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
 {
   int new_refcount;
   POCL_RELEASE_OBJECT (device, new_refcount);
+  (void)new_refcount;
 
   /* Cannot free() the device driver objects because they
      can be in use in other contexts and might be needed

@@ -41,7 +41,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (num_mem_objects == 0 && (mem_list != NULL || args_mem_loc != NULL))
     return CL_INVALID_VALUE;
 
-  if (!command_queue->device->execution_capabilities & CL_EXEC_NATIVE_KERNEL)
+  if (!(command_queue->device->execution_capabilities & CL_EXEC_NATIVE_KERNEL))
     return CL_INVALID_OPERATION;
 
   error = pocl_create_command (&command_node, command_queue,

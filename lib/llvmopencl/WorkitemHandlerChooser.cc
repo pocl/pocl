@@ -84,7 +84,7 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
 
   if (method == "auto") 
     {
-      size_t ReplThreshold = 2;
+      int ReplThreshold = 2;
       if (getenv("POCL_FULL_REPLICATION_THRESHOLD") != NULL) 
       {
         ReplThreshold = atoi(getenv("POCL_FULL_REPLICATION_THRESHOLD"));

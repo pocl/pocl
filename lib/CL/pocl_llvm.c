@@ -160,7 +160,6 @@ int call_pocl_workgroup( char* function_name,
                     const char* kernel_filename )
 {
   int error;
-  struct stat buf;
   char *pocl_wg_script;
   char command[COMMAND_LENGTH];
 

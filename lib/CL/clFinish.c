@@ -94,7 +94,7 @@ POsym(clFinish)
 static void exec_commands (_cl_command_node *node_list)
 {
   int i;
-  cl_event *event;
+  cl_event *event = NULL;
   _cl_command_node *node;
   cl_command_queue command_queue = NULL;
   event_callback_item* cb_ptr;

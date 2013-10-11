@@ -59,11 +59,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   char parallel_filename[POCL_FILENAME_LENGTH];
   size_t n;
   int i, count;
-  char command[COMMAND_LENGTH];
   int error;
   struct pocl_context pc;
   _cl_command_node *command_node;
-  char *pocl_wg_script;
 
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;

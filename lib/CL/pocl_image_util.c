@@ -98,11 +98,6 @@ pocl_write_image(cl_mem               image,
   if ((ptr == NULL) || (region == NULL) || origin == NULL)
     return CL_INVALID_VALUE;
     
-  int width = image->image_width;
-  int height = image->image_height;
-  cl_channel_order order = image->image_channel_order;
-  cl_channel_type type = image->image_channel_data_type;
-    
   size_t dev_elem_size = sizeof(cl_float);
   int dev_channels = 4;
     
@@ -117,7 +112,7 @@ pocl_write_image(cl_mem               image,
   size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
                             region[2]};
     
-  size_t image_row_pitch = width*dev_elem_size*dev_channels;
+  size_t image_row_pitch = image->image_width*dev_elem_size*dev_channels;
   size_t image_slice_pitch = 0;
     
   if ((tuned_region[0]*tuned_region[1]*tuned_region[2] > 0) &&
