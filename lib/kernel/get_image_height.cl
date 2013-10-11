@@ -4,7 +4,7 @@
 
 int pocl_get_image_height(void *image)
 {
-  return ((dev_image_t*)image)->height;
+  return (*(dev_image_t**)image)->height;
 }
 
 int get_image_height (image2d_t image)
