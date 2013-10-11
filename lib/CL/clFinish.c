@@ -269,7 +269,8 @@ static void exec_commands (_cl_command_node *node_list)
         }   
     }
 
-  /* event callback handling */
+  /* event callback handling 
+     just call functions in the same order they were added */
   if (event)
     {
       for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
