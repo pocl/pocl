@@ -736,7 +736,6 @@ AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
 
 AC_MSG_CHECKING([LLC target triple (for host $host)])
 dnl The quadrigraphs @<:@ and @:>@ turn into [ and ].
-#llc_triple=$($CLANG -v -cc1 -target=$host -x c /dev/null -E 2>&1 | grep -e -triple | sed -E -e 's/^.*-triple +(@<:@^ @:>@+).*$/\1/')
 llc_triple=$($CLANG ${CLANG_TARGET_OPTION}$host -x c /dev/null -S -emit-llvm -o - | grep -e 'target triple' | sed -E -e 's/^.*target triple = "+(@<:@^ @:>@+).*"$/\1/')
 AC_MSG_RESULT($llc_triple)
 test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
@@ -843,9 +842,7 @@ case $host_cpu in
     ;;
 esac
 OCL_TARGETS=$kernel_dir
-# Note: Clang 3.4 expects --target, but also accepts -target. Clang
-# 3.3 only accepts -target.
-HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target=$llc_triple -march=$llc_host_cpu"
+HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple -march=$llc_host_cpu"
 HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
 # Note: Clang 3.3 reports a warning about an "unused argument" for
 # -target when generating byte code. This warning is wrong, as the
