@@ -708,6 +708,18 @@ HOST_CLANG_FLAGS=""
 HOST_LLC_FLAGS="-relocation-model=pic"
 HOST_LD_FLAGS="-shared"
 
+# The option for specifying the target changed; try the modern syntax
+# first, and fall back to the old-style syntax if this failed
+AC_MSG_CHECKING([Clang option to specify the target])
+if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null ]; then
+  CLANG_TARGET_OPTION='--target='
+elif [ $CLANG -target=$host -x c /dev/null -S -o - >/dev/null ]; then
+  CLANG_TARGET_OPTION='-target='
+else
+  AC_MSG_ERROR([Cannot determine Clang option to specify the target])
+fi
+AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
+
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
 # to all the scripts, or set the respective flags here in
@@ -722,9 +734,10 @@ HOST_LD_FLAGS="-shared"
 # depending on whether they are generated via clang or directly
 # via llc.
 
-AC_MSG_CHECKING([LLC target triple])
+AC_MSG_CHECKING([LLC target triple (for host $host)])
 dnl The quadrigraphs @<:@ and @:>@ turn into [ and ].
-llc_triple=$($CLANG -v -cc1 -target=$host -x c /dev/null -E 2>&1 | grep -e -triple | sed -E -e 's/^.*-triple +(@<:@^ @:>@+).*$/\1/')
+#llc_triple=$($CLANG -v -cc1 -target=$host -x c /dev/null -E 2>&1 | grep -e -triple | sed -E -e 's/^.*-triple +(@<:@^ @:>@+).*$/\1/')
+llc_triple=$($CLANG ${CLANG_TARGET_OPTION}$host -x c /dev/null -S -emit-llvm -o - | grep -e 'target triple' | sed -E -e 's/^.*target triple = "+(@<:@^ @:>@+).*"$/\1/')
 AC_MSG_RESULT($llc_triple)
 test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
 AC_MSG_CHECKING([LLC host CPU])
