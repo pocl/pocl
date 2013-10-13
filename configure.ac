@@ -75,6 +75,9 @@ LT_INIT
 # The extra LDFLAGS that must be given to link final binaries against pocl
 LD_FLAGS_BIN=""
 
+###################################################
+# LLVM configuration
+#
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
 AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-3.3 llvm-config33 llvm-config-3.4 llvm-config34 llvm-config-3.2 llvm-config32 ])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
@@ -105,15 +108,42 @@ Unsupported LLVM version. Please use LLVM 3.2 or later.
    ;;
 esac
 
+
+#Temporary option to enable the switch from scripts to llvm API build
+use_llvm_api="no"
+AC_ARG_ENABLE([llvmapi],
+              [AS_HELP_STRING([--enable-llvmapi], [Use LLVM via API, not scripts. (work in progress - do not use!)])],
+              [use_llvm_api="yes"])
+if test "$use_llvm_api" = "yes"; then
+  AC_DEFINE([USE_LLVM_API], [1], "Use LLVM via API, rather than scripts")
+fi
+AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
+
+# When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
+# or risk causing version mismatches
+# Also note, when building LLVM with cmake, there is no libLLVM-<versionnumber>.so
+link_llvm_static="no"
+AC_ARG_ENABLE([static-llvm],
+              [AS_HELP_STRING([--enable-static-llvm],
+                              [Link LLVM statically. Default is dynamic. Only used if --enable-llvmapi is given.])],
+              [link_llvm_static="yes"])
+
 LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
 
+if test "$link_llvm_static" = "yes"; then
+  LLVM_LIBS=$($LLVM_CONFIG --libs)
+else
+  LLVM_LIBS=-lLLVM-$LLVM_VERSION
 if test ! -e $LLVM_SHARED_LIB_FILE;
 then
-        AC_MSG_WARN([
+        AC_MSG_ERROR([
 $LLVM_SHARED_LIB_FILE not found. 
 Recompile and install LLVM after ./configure --enable-shared.
 Read the INSTALL file for details.])
 fi
+fi
+
+AC_SUBST([LLVM_LIBS])
 
 LLVM_RTTI_CHECK=$($LLVM_CONFIG --cxxflags | grep -i "\-fno-rtti")
 
@@ -333,15 +363,21 @@ fi
 
 AC_SUBST([POAT_TESTSUITES])
 
-#Temporary option to enable the switch from scripts to llvm API build
-use_llvm_api="no"
-AC_ARG_ENABLE([llvmapi],
-              [AS_HELP_STRING([--enable-llvmapi], [Use LLVM via API, not scripts. (work in progress - do not use!)])],
-              [use_llvm_api="yes"])
-if test "$use_llvm_api" = "yes"; then
-  AC_DEFINE([USE_LLVM_API], [1], "Use LLVM via API, rather than scripts")
-fi
-AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
+
+####################################################################
+# Pthread Library
+
+old_CFLAGS="$CFLAGS"
+old_CPPFLAGS="$CPPFLAGS"
+CFLAGS=`echo "$CFLAGS" | sed 's/-Werror[[-A-Za-z0-9=]]*//g'`
+CPPFLAGS=`echo "$CPPFLAGS" | sed 's/-Werror[[-A-Za-z0-9=]]*//g'`
+
+ACX_PTHREAD()
+
+CFLAGS="$old_CFLAGS"
+CPPFLAGS="$old_CPPFLAGS"
+
+LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
 
 ####################################################################
@@ -454,9 +490,7 @@ AC_SUBST([OPENCL_EXTLIBS])
 
 ####################################################################
 #AC_LANG([C++])
-ACX_PTHREAD()
 
-LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
 # Checks for libraries.
 #old_LDFLAGS="$LDFLAGS"
@@ -929,6 +963,10 @@ AM_CONDITIONAL([TCEMC_AVAILABLE], test ! -z $TCEMC_AVAILABLE)
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
+# SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
+# so compile the spu backend only when LLVM 3.2 is found
+if test "$LLVM_VERSION" == 3.2 -o "$LLVM_VERSION" == 3.2svn
+then
 PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
   [
     AC_MSG_NOTICE([libspe2 found.])
@@ -941,7 +979,7 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
     AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
     LIBSPE_AVAILABLE=no
   ])
-
+fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
@@ -969,11 +1007,12 @@ old_CPPFLAGS="$CPPFLAGS"
 old_CFLAGS="$CFLAGS"
 old_LDFLAGS="$LDFLAGS"
 CC=$srcdir/config/xclang
+CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
 
 AC_MSG_CHECKING([for aligned_alloc])
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
         [[ #include <stdlib.h> ]],
         [[ void* p = aligned_alloc(0, 0); ]]
@@ -983,7 +1022,7 @@ AC_COMPILE_IFELSE(
     [AC_MSG_RESULT(no)])
 
 AC_MSG_CHECKING([for posix_memalign])
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
         [[ #include <stdlib.h> ]],
         [[ int r = posix_memalign(NULL, 0, 0); ]]

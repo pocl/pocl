@@ -43,7 +43,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (num_mem_objects == 0 && (mem_list != NULL || args_mem_loc != NULL))
     return CL_INVALID_VALUE;
 
-  if (!command_queue->device->execution_capabilities & CL_EXEC_NATIVE_KERNEL)
+  if (!(command_queue->device->execution_capabilities & CL_EXEC_NATIVE_KERNEL))
     return CL_INVALID_OPERATION;
 
   error = pocl_create_command (&command_node, command_queue,
@@ -111,9 +111,10 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
       arg_loc = (void *) ((uintptr_t) args_copy + (uintptr_t)offset);
 
-      assert(command_queue->device->address_bits ==
-             CHAR_BIT * sizeof(uintptr_t));
-      *(uintptr_t*) arg_loc = (uintptr_t)buf;
+      if (command_queue->device->address_bits == 32)
+          *((uint32_t *) arg_loc) = (uint32_t) (((uintptr_t) buf) & 0xFFFFFFFF);
+      else
+          *((uint64_t *) arg_loc) = (uint64_t) (uintptr_t) buf;
     }
   command_node->command.native.args = args_copy;
   command_node->command.native.cb_args = cb_args;

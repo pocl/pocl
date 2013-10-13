@@ -62,7 +62,6 @@ llvm_codegen (const char* tmpdir) {
 
   if (access (module, F_OK) != 0)
     {
-      char *llvm_ld;
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);

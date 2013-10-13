@@ -32,9 +32,6 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_UPDATE_EVENT_RUNNING;
     }
 
-  int dev_elem_size = sizeof(cl_float);
-  int dev_channels = 4;
-    
   int host_elem_size;    
   int host_channels;
   pocl_get_image_information (image->image_channel_order,

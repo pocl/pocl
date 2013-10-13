@@ -121,7 +121,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   d->mem_regions = NULL;
 #endif  
 
-  device->address_bits = SIZEOF_VOID_P * 8;
+  device->address_bits = sizeof(void*) * 8;
 
   /* Use the minimum values until we get a more sensible 
      upper limit from somewhere. */
@@ -403,11 +403,9 @@ pocl_pthread_run
 {
   struct data *d;
   int error;
-  char command[COMMAND_LENGTH];
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned device;
   cl_device_id device_ptr;
-  size_t x, y, z;
   unsigned i;
   pocl_workgroup w;
   const char *module_fn;

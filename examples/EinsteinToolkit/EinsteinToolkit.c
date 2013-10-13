@@ -1237,6 +1237,7 @@ static void check_var(cGH const* const cctkGH,
   int ierr = clEnqueueReadBuffer
     (cmd_queue, ptr->mem, 1, 0, nsize * sizeof(CCTK_REAL), ptr->ptr,
      0, NULL, NULL);
+  assert(!ierr);
   for (int k=0; k<cctkGH->cctk_lsh[2]; ++k) {
     for (int j=0; j<cctkGH->cctk_lsh[1]; ++j) {
       for (int i=0; i<cctkGH->cctk_lsh[0]; ++i) {

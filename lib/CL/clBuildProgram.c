@@ -41,7 +41,8 @@ static char cl_parameters[] =
   "-cl-fast-relaxed-math "
   "-cl-std=CL1.2 "
   "-cl-std=CL1.1 "
-  "-cl-kernel-arg-info ";
+  "-cl-kernel-arg-info "
+  "-w ";
 
 static char cl_parameters_not_yet_supported_by_clang[] = 
   "-cl-strict-aliasing "
@@ -66,8 +67,6 @@ CL_API_SUFFIX__VERSION_1_0
   char source_file_name[POCL_FILENAME_LENGTH], binary_file_name[POCL_FILENAME_LENGTH];
   FILE *source_file, *binary_file;
   size_t n;
-  struct stat buf;
-  char command[COMMAND_LENGTH];
   int errcode;
   int i;
   int error;
@@ -75,7 +74,6 @@ CL_API_SUFFIX__VERSION_1_0
   unsigned real_num_devices;
   const cl_device_id *real_device_list;
   /* The default build script for .cl files. */
-  char *pocl_build_script;
   int device_i = 0;
   const char *user_options = "";
   char *temp_options;
@@ -109,7 +107,7 @@ CL_API_SUFFIX__VERSION_1_0
       while (token != NULL)
         {
           /* check if parameter is supported compiler parameter */
-          if (strstr (token, "-cl"))
+          if (strstr (token, "-cl") || strstr (token, "-w"))
             {
               if (strstr (cl_parameters, token))
                 strcat (modded_options, "-Xclang ");

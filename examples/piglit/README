@@ -7,21 +7,26 @@ be used to test pocl until all fixes are merged upstream.
 
 So, here's how to run the piglit suite against pocl:
 
-Get the upstream repo: git clone git://anongit.freedesktop.org/piglit
+# Get the upstream repo to piglit directory: 
+git clone git://anongit.freedesktop.org/piglit
 
-cd piglit
-ccmake .
-# It should open the cmake's curses GUI. Select only the CL tests and
-# deselect waffle.
+# reconfigure pocl
+./configure
 
-# Build the piglit test framework
-make
+# piglit should appear in enabled testsuite list
+
+# Build the piglit test framework by running make in pocl top source directory
+make check TESTSUITEFLAGS="-k piglit"
 
 # Setup ocl-icd to use the build tree pocl
 export OCL_ICD_VENDORS=LOCATION_TO_POCL_ROOT/ocl-vendors
 
-# Run the OCL test suite
+# Run the OCL test suite in piglit source directory
 ./piglit-run.py tests/all_cl.tests results/all
+
+# OR by running
+make check TESTSUITEFLAGS="-k piglit"
+
 
 # Produce a summary HTML page of the results
 ./piglit-summary-html.py summary/pocl results/all/main

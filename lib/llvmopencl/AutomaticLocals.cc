@@ -132,7 +132,6 @@ Function *
 AutomaticLocals::ProcessAutomaticLocals(Function *F)
 {
   Module *M = F->getParent();
-  DataLayout &TD = getAnalysis<DataLayout>();
   
   SmallVector<GlobalVariable *, 8> locals;
 

@@ -24,12 +24,14 @@
 
 if USE_LLVM_API
 noinst_LTLIBRARIES = libllvmpasses.la
-endif
+else
 pkglib_LTLIBRARIES = llvmopencl.la
+endif
 
-AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags`
+AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags` -fno-rtti
 AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
-llvmopencl_la_LIBADD = -lLLVM-${LLVM_VERSION}
+#this static linking gets only added when we build pocl with "scripts", not "API"
+llvmopencl_la_LIBADD = @LLVM_LIBS@
 
 PASSES_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\

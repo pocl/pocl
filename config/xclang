@@ -1,6 +1,8 @@
 #!/bin/sh
 
-while getopts h:o:cSE o
+CFLAGS=""
+
+while getopts h:o:cSEgO: o
 do
     case "$o" in
         h)   host="${OPTARG}";;
@@ -8,7 +10,9 @@ do
         c)   mode=-c;;
         S)   mode=-S;;
         E)   mode=-E;;
-	[?]) echo >&2 "Usage: $0 [-h <host>] [-c | -S | -E] [-o <output_file>] <input_file>" && exit 1;;
+        O)   CFLAGS="$CFLAGS -O${OPTARG}";;
+        g)   CFLAGS="$CFLAGS -g";;
+        [?]) echo >&2 "Usage: $0 [-h <host>] [-c | -S | -E] [-o <output_file>] <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
@@ -20,7 +24,7 @@ LLC="${LLC:-llc}"
 
 if [ "x$host" = x ]
 then
-    exec $CLANG $mode $output $1
+    exec $CLANG $CFLAGS $mode $output $1
 fi
 
 config=`dirname $0`
@@ -35,23 +39,23 @@ mkdir $tmpdir
 
 if [ "$mode" = -c ]
 then
-    $CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+    $CLANG $CFLAGS -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
     $LLC -mtriple=$build -o $tmpdir/xclang.s $tmpdir/xclang.bc
     exec $CLANG -target $build -c $output $tmpdir/xclang.s
 fi
 
 if [ "$mode" = -S ]
 then
-    $CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+    $CLANG $CFLAGS -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
     exec $LLC -mtriple=$build $output $tmpdir/xclang.bc
 fi
 
 if [ "$mode" = -E ]
 then
-    exec $CLANG -E $output $1
+    exec $CLANG $CFLAGS -E $output $1
 fi
 
-$CLANG -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
+$CLANG $CFLAGS -target $host -c -emit-llvm -o $tmpdir/xclang.bc $@
 
 # Adjust $LLC call for hard-float in case the build is that
 case "$build" in

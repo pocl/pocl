@@ -50,7 +50,6 @@ main(void)
 {
     float in [BUFFER_SIZE];
     float out[BUFFER_SIZE];
-    cl_int err;
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
         in[i] = (float)rand()/(float)RAND_MAX;;
@@ -131,7 +130,7 @@ main(void)
           return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
-        err = queue.enqueueUnmapMemObject(
+        queue.enqueueUnmapMemObject(
             outBuffer,
             (void *) output);
  
