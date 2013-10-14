@@ -706,7 +706,8 @@ AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 # kernel dir: where to search for the ocl lib kernel
 HOST_CLANG_FLAGS=""
 HOST_LLC_FLAGS="-relocation-model=pic"
-HOST_LD_FLAGS="-shared"
+#HOST_LD_FLAGS="-shared"
+HOST_LD_FLAGS=""
 
 # The option for specifying the target changed; try the modern syntax
 # first, and fall back to the old-style syntax if this failed
