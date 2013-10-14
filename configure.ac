@@ -707,7 +707,7 @@ AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 HOST_CLANG_FLAGS=""
 HOST_LLC_FLAGS="-relocation-model=pic"
 #HOST_LD_FLAGS="-shared"
-HOST_LD_FLAGS=""
+HOST_LD_FLAGS="-dylib"
 
 # The option for specifying the target changed; try the modern syntax
 # first, and fall back to the old-style syntax if this failed
