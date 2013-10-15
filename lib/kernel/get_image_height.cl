@@ -2,14 +2,13 @@
 #include "templates.h"
 #include "image.h"
 
-int pocl_get_image_height(void *image)
-{
-  return ((dev_image_t*)image)->height;
-}
+#define IMPLEMENT_GET_IMAGE_HEIGHT(__IMGTYPE__)                   \
+  int _CL_OVERLOADABLE get_image_height(__IMGTYPE__ image){       \
+    return (*(dev_image_t**)&image)->height;                      \
+  }                                                               \
 
-int get_image_height (image2d_t image)
-{
-  return pocl_get_image_height(&image);
-}
 
+IMPLEMENT_GET_IMAGE_HEIGHT(image1d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(image2d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(image3d_t)
 
