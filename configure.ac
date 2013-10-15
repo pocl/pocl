@@ -700,12 +700,13 @@ if echo $host | grep -q darwin; then
 else
   LD_SHARED="-shared"
 fi
-AC_MSG_RESULT(${LD_SHARED})
-AC_DEFINE([LD_SHARED], [${LD_SHARED}], [Linker option to build a shared library])
+AC_MSG_RESULT($LD_SHARED)
+AC_DEFINE_UNQUOTED([LD_SHARED], ["$LD_SHARED"], [Linker option to build a shared library])
+AC_SUBST([LD_SHARED])
 
 HOST_CLANG_FLAGS=""
 HOST_LLC_FLAGS="-relocation-model=pic"
-HOST_LD_FLAGS="${LD_SHARED}"
+HOST_LD_FLAGS="${ld_shared}"
 
 
 # Targets.
