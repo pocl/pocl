@@ -1016,12 +1016,12 @@ CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
 for flag in $old_CPPFLAGS; do
-    if echo "$ flag" | grep -q -e -Werror; then
+    if echo " $flag" | grep -q -e -Werror; then
        CPPFLAGS="$CPPFLAGS $flag"
     fi
 done
 for flag in $old_CFLAGS; do
-    if echo "$ flag" | grep -q -e -Werror; then
+    if echo " $flag" | grep -q -e -Werror; then
        CFLAGS="$CFLAGS $flag"
     fi
 done
