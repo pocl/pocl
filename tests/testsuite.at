@@ -212,6 +212,14 @@ OK
 ])
 AT_CHECK([$abs_top_builddir/tests/kernel/sampler_address_clamp], 0, expout)
 AT_CLEANUP 
+
+AT_SETUP([Image query functions])
+AT_DATA([expout],
+[Running test test_image_query_funcs...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/image_query_funcs], 0, expout)
+AT_CLEANUP 
         
 AT_BANNER([Full applications])
 

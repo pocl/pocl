@@ -83,6 +83,7 @@ LKERNEL_SRCS_DEFAULT =				\
 	get_global_offset.c			\
 	get_global_size.c			\
 	get_group_id.c				\
+	get_image_depth.cl			\
 	get_image_height.cl			\
 	get_image_width.cl			\
 	get_local_id.c				\
@@ -137,7 +138,6 @@ LKERNEL_SRCS_DEFAULT =				\
 	powr.cl					\
 	printf.cl				\
 	radians.cl				\
-	read_image.cl				\
 	read_image.cl				\
 	recip.cl				\
 	remainder.cl				\
