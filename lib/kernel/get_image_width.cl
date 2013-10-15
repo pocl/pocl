@@ -3,7 +3,7 @@
 #include "image.h"
 
 #define IMPLEMENT_GET_IMAGE_WIDTH(__IMGTYPE__)               \
-  int  _CL_OVERLOADABLE get_image_width(__IMGTYPE__ image){  \
+  int _CL_OVERLOADABLE get_image_width(__IMGTYPE__ image){   \
     return (*(dev_image_t**)&image)->width;                  \
   }                                                          \
 
