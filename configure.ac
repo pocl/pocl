@@ -694,6 +694,20 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
+AC_MSG_CHECKING([Linker option to build a shared library])
+if echo $host | grep -q darwin; then
+  LD_SHARED="-dylib"
+else
+  LD_SHARED="-shared"
+fi
+AC_MSG_RESULT(${LD_SHARED})
+AC_DEFINE([LD_SHARED], [${LD_SHARED}], [Linker option to build a shared library])
+
+HOST_CLANG_FLAGS=""
+HOST_LLC_FLAGS="-relocation-model=pic"
+HOST_LD_FLAGS="${LD_SHARED}"
+
+
 # Targets.
 # This is the target architecture of the basic and pthreads devices.
 # These always are the same arch as host (in current pocl implementation).
@@ -701,10 +715,6 @@ AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 # We have: 
 # target triplet: the OCL device target triple
 # kernel dir: where to search for the ocl lib kernel
-HOST_CLANG_FLAGS=""
-HOST_LLC_FLAGS="-relocation-model=pic"
-#HOST_LD_FLAGS="-shared"
-HOST_LD_FLAGS="-dylib"
 
 # The option for specifying the target changed; try the modern syntax
 # first, and fall back to the old-style syntax if this failed

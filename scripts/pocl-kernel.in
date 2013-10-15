@@ -88,8 +88,7 @@ unsigned _local_sizes[_${kernel}_NUM_LOCALS] = _${kernel}_LOCAL_SIZE;
 #endif
 EOF
 
-#ld -shared ${output_file}.o ${LD_FLAGS} -o ${output_file}
-ld -dylib ${output_file}.o ${LD_FLAGS} -o ${output_file}
+ld @LD_SHARED@ ${output_file}.o ${LD_FLAGS} -o ${output_file}
 
 # Generate a C global object suitable for using from the device as
 # the kernel metadata object. The idea is that multiple of these
