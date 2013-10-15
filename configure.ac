@@ -1017,10 +1017,13 @@ CPPFLAGS=""
 LDFLAGS=""
 
 AC_MSG_CHECKING([for aligned_alloc])
+# Ensure that aligned_alloc can be linked, and that a prototype with
+# the correct signature is available
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
         [[ #include <stdlib.h> ]],
-        [[ void* p = aligned_alloc(0, 0); ]]
+        [[ void* p = aligned_alloc(0, 0);
+           int array[sizeof(aligned_alloc(0, 0)) == sizeof(void *) ? 1 : -1]; ]]
     )],
     [AC_MSG_RESULT(yes)
     AC_DEFINE([HAVE_ALIGNED_ALLOC], [], [Defined if aligned_alloc is available.])],
