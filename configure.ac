@@ -1015,16 +1015,24 @@ CC=$srcdir/config/xclang
 CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
+for flag in $old_CPPFLAGS; do
+    if echo "$ flag" | grep -q -e -Werror; then
+       CPPFLAGS="$CPPFLAGS $flag"
+    fi
+done
+for flag in $old_CFLAGS; do
+    if echo "$ flag" | grep -q -e -Werror; then
+       CFLAGS="$CFLAGS $flag"
+    fi
+done
 
 AC_MSG_CHECKING([for aligned_alloc])
 # Ensure that aligned_alloc can be linked, and that a prototype with
 # the correct signature is available
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
-        [[ #include <stdlib.h>
-           void *aligned_alloc(size_t alignment, size_t size); ]],
-        [[ void* p = aligned_alloc(0, 0);
-           int array[sizeof(aligned_alloc(0, 0)) == sizeof(void*) ? 1 : -1]; ]]
+        [[ #include <stdlib.h> ]],
+        [[ void* p = aligned_alloc(0, 0); ]]
     )],
     [AC_MSG_RESULT(yes)
     AC_DEFINE([HAVE_ALIGNED_ALLOC], [], [Defined if aligned_alloc is available.])],
