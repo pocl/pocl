@@ -81,8 +81,8 @@ llvm_codegen (const char* tmpdir) {
       assert (error >= 0);
       
       if (pocl_verbose) {
-        printf("[pocl] executing [%s]\n", command);
-        fflush(stdout);
+        fprintf(stderr, "[pocl] executing [%s]\n", command);
+        fflush(stderr);
       }
       error = system (command);
       assert (error == 0);
@@ -95,8 +95,8 @@ llvm_codegen (const char* tmpdir) {
       assert (error >= 0);
       
       if (pocl_verbose) {
-        printf("[pocl] executing [%s]\n", command);
-        fflush(stdout);
+        fprintf(stderr, "[pocl] executing [%s]\n", command);
+        fflush(stderr);
       }
       error = system (command);
       assert (error == 0);
@@ -110,8 +110,8 @@ llvm_codegen (const char* tmpdir) {
       assert (error >= 0);
 
       if (pocl_verbose) {
-        printf("[pocl] executing [%s]\n", command);
-        fflush(stdout);
+        fprintf(stderr, "[pocl] executing [%s]\n", command);
+        fflush(stderr);
       }
       error = system (command);
       assert (error == 0);
