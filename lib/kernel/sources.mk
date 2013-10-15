@@ -1,4 +1,4 @@
-# sources.mk - a template for the target overridden kernel library makefiles
+# sources.mk - a list of all kernel source files
 # 
 # Copyright (c) 2011-2013 Universidad Rey Juan Carlos
 #                         Pekka Jääskeläinen / Tampere University of Technology

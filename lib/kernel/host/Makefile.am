@@ -1,6 +1,4 @@
-# Process this file with automake to produce Makefile.in (in this,
-# and all subdirectories).
-# Makefile.am for pocl/lib/kernel.
+# Process this file with automake to produce Makefile.in
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -24,21 +22,12 @@
 
 
 
-SUBDIRS = @OCL_TARGETS@
+KERNEL_TARGET = @HOST@
 
+# Use HOST flags:
+CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+LLC_FLAGS   = @HOST_LLC_FLAGS@
+LD_FLAGS    = @HOST_LD_FLAGS@
 
-
-# The source files in this dir are not built directly
-# but are used with the target specific subdirs as
-# fallback implementations. Include them in the
-# dist once here.
-EXTRA_DIST = *.c *.cl *.h *.ll			\
-        kernel-template/Makefile.am		\
-	vecmathlib/LICENCE			\
-	vecmathlib/README			\
-	vecmathlib/*.h				\
-	vecmathlib-pocl/*.cc			\
-	vecmathlib-pocl/*.cl			\
-	vecmathlib-pocl/*.h			\
-	vecmathlib-pocl/*.py
-
+include ../rules.mk
+include ../sources.mk

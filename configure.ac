@@ -763,7 +763,6 @@ case $host_cpu in
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
-    kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
     case $host in
       *gnueabihf)
@@ -787,21 +786,18 @@ case $host_cpu in
 
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
   amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
-    kernel_dir="x86_64"
     CL_DEVICE_ADDRESS_BITS=64
     ;;
   i?86)
     AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
-    kernel_dir="x86_64"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
  
@@ -809,7 +805,6 @@ case $host_cpu in
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=tce-tut-llvm
-    kernel_dir="tce"
     ;;
 
   powerpc64*)
@@ -818,7 +813,6 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    kernel_dir="powerpc"
     OCL_KERNEL_TARGET="powerpc64-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
@@ -831,7 +825,6 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    kernel_dir="powerpc"
     OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
@@ -842,6 +835,7 @@ case $host_cpu in
     AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
 esac
+kernel_dir="host"
 OCL_TARGETS=$kernel_dir
 HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple -march=$llc_host_cpu"
 HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
@@ -1133,6 +1127,9 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/cellspu/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
+                 lib/kernel/cellspu/Makefile
+                 lib/kernel/host/Makefile
+                 lib/kernel/tce/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile

@@ -54,6 +54,12 @@ then
 fi
 
 case $target in
+  cellspu-*) target_dir="cellspu";;
+  tce-*)     target_dir="tce";;
+  *)         target_dir="host";;
+esac
+
+case $target in
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
             LLC_FLAGS="@HOST_LLC_FLAGS@"
             LD_FLAGS="@HOST_LD_FLAGS@";;
@@ -89,11 +95,11 @@ fi
 linked_bc="${tempdir}/linked.bc"
 linked_out="${linked_bc}.out"
 pocl_lib="@pkglibdir@/llvmopencl.so"
-full_target_dir="@pkglibdir@"
+full_target_dir="@pkglibdir@/${target_dir}"
 # BEGIN REMOVE ONCE INSTALLED
 # Fixing variables until the script is installed
 pocl_lib="@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so"
-full_target_dir="@abs_top_builddir@/lib/kernel"
+full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
 # END REMOVE ONCE INSTALLED
 
 llvm-link -o ${linked_bc} ${kernel_bc} ${full_target_dir}/kernel*.bc
