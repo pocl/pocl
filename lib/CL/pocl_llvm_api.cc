@@ -215,6 +215,7 @@ int call_pocl_kernel(cl_program program,
   kernel->arg_is_sampler = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
   
   // This is from GenerateHeader.cc
+  i=0;
   for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
                                           ee = arglist.end(); 
        ii != ee ; ii++)
