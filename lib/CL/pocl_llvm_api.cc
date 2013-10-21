@@ -26,6 +26,12 @@
 using namespace clang;
 using namespace llvm;
 
+#if defined LLVM_3_2 or defined LLVM_3_3
+using llvm::raw_fd_ostream::F_Binary;
+#else
+using llvm::sys::fs::F_Binary;
+#endif
+
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
  * (the "program.bc") file.
@@ -417,8 +423,10 @@ int call_pocl_workgroup( char* function_name,
       PassManagerBuilder Builder;
       Builder.OptLevel = 3;
       Builder.SizeLevel = 0;
+      #if defined LLVM_3_2 or defined LLVM_3_3
       Builder.DisableSimplifyLibCalls=true;
-       Builder.populateModulePassManager( Passes );
+      #endif
+      Builder.populateModulePassManager( Passes );
       
       continue;
     }
@@ -463,7 +471,7 @@ int call_pocl_workgroup( char* function_name,
   std::string ErrorInfo;
   tool_output_file *Out = new tool_output_file( parallel_filename, 
                                                 ErrorInfo, 
-                                                raw_fd_ostream::F_Binary);;
+                                                F_Binary);;
   Passes.add(createBitcodeWriterPass(Out->os()));
   Passes.run(*linked_bc);
 

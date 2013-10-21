@@ -30,6 +30,7 @@
 #else
 # include <llvm/IR/Instructions.h>
 #endif
+#include "llvm/IR/Constants.h"
 
 #include "AllocasToEntry.h"
 
