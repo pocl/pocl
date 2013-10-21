@@ -121,19 +121,16 @@ int call_pocl_kernel(cl_program program,
                      int *errcode )
 {
 
-  int error,n, i;
+  int error, i;
+  unsigned n;
   llvm::Module *input;
   LLVMContext &Context = getGlobalContext();
   SMDiagnostic Err;
   FILE *binary_file;
   char binary_filename[POCL_FILENAME_LENGTH];
-  char object_filename[POCL_FILENAME_LENGTH];
   char tmpdir[POCL_FILENAME_LENGTH];
 
-  const char *triple;
-
   assert(program->devices[device_i]->llvm_target_triplet && "Device has no target triple set"); 
-  triple = program->devices[device_i]->llvm_target_triplet;
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
@@ -193,14 +190,14 @@ int call_pocl_kernel(cl_program program,
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   /* Initialize kernel "dynamic" arguments (in case the user doesn't). */
-  for (int i = 0; i < kernel->num_args; ++i)
+  for (unsigned i = 0; i < kernel->num_args; ++i)
     {
       kernel->dyn_arguments[i].value = NULL;
       kernel->dyn_arguments[i].size = 0;
     }
 
   /* Fill up automatic local arguments. */
-  for (int i = 0; i < kernel->num_locals; ++i)
+  for (unsigned i = 0; i < kernel->num_locals; ++i)
     {
       kernel->dyn_arguments[kernel->num_args + i].value = NULL;
       kernel->dyn_arguments[kernel->num_args + i].size =
@@ -411,7 +408,7 @@ int call_pocl_workgroup( char* function_name,
                           "instcombine"}; 
 
   // Now add the above passes 
-  for( int i=0; i < sizeof(passes)/sizeof(const char*); i++ )
+  for( unsigned i=0; i < sizeof(passes)/sizeof(const char*); i++ )
   {
     
     // This is (more or less) -O3
