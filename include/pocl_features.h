@@ -10,7 +10,6 @@
 #  define cles_khr_int64
 #else
 #  undef cles_khr_int64
-#  warning "int64 not supported"
 #endif
 
 // Is double supported?
@@ -18,5 +17,4 @@
 #  define cl_khr_fp64
 #else
 #  undef cl_khr_fp64
-#  warning "fp64 not supported"
 #endif
