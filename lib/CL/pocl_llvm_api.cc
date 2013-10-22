@@ -11,13 +11,14 @@
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
-
+#include <iostream>
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
@@ -152,14 +153,22 @@ int call_pocl_kernel(cl_program program,
   if (binary_file == NULL)
     return (CL_OUT_OF_HOST_MEMORY);
 
+  // TODO: check if we need this in the api branch at all
   n = fwrite(program->binaries[device_i], 1,
              program->binary_sizes[device_i], binary_file);
   if (n < program->binary_sizes[device_i])
     return (CL_OUT_OF_HOST_MEMORY);
-  
   fclose(binary_file); 
-  input = ParseIRFile(binary_filename, Err, Context);
 
+  input = ParseIRFile(binary_filename, Err, Context);
+  if( !input ) {
+    // TODO:
+    raw_os_ostream os(std::cout);
+    Err.print( "Pocl error: bad kernel file ", os);
+    os.flush();
+    exit(1);
+  }
+  
   PassManager Passes;
   DataLayout *TD = 0;
   const std::string &ModuleDataLayout = input->getDataLayout();
