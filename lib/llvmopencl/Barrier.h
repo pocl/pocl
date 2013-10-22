@@ -33,7 +33,7 @@
 
 #include "llvm/Support/Casting.h"
 
-#define BARRIER_FUNCTION_NAME "_pocl_barrier"
+#define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 namespace pocl {
   

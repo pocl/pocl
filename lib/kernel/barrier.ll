@@ -1,9 +1,9 @@
-declare void @_pocl_barrier()
+; This is an "illegal" C function name on purpose. It's a magic
+; handle based on which we know it's the special WG barrier function.
+declare void @pocl.barrier()
 
-; Use noduplicate to avoid unwanted (illegal in OpenCL C semantics)
-; code motion / replication of barriers.
-define void @barrier(i32 %flags) noduplicate {
+define void @barrier(i32 %flags) {
 entry:
-  call void @_pocl_barrier()
+  call void @pocl.barrier()
   ret void
 }
