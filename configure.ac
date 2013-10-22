@@ -86,18 +86,23 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
+NEW_PRINTF_WORKS=1
+
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
 case "$LLVM_VERSION" in
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
+     NEW_PRINTF_WORKS=0
    ;;
      3.3*)
      AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")     
+     NEW_PRINTF_WORKS=0
    ;; 
      3.4*)
      AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
      AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
+     NEW_PRINTF_WORKS=1
    ;;   
      *)
    AC_MSG_ERROR(
@@ -108,6 +113,7 @@ Unsupported LLVM version. Please use LLVM 3.2 or later.
    ;;
 esac
 
+AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 #Temporary option to enable the switch from scripts to llvm API build
 use_llvm_api="no"

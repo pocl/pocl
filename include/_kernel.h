@@ -2022,7 +2022,15 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
 // are currently "const" instead of "constant".
 int _cl_printf(/*constant*/ const char* restrict format, ...)
   __attribute__((format(printf, 1, 2)));
+
+#if ((__clang_major__ == 3) && (__clang_minor__ > 3)) && !defined (__TCE__)
+// this will be overridden in printf.cl by an OpenCL-compliant printf
 #define printf _cl_printf
+#else
+// The new printf requires Clang 3.4. Fall back to the libc one
+// if using an older version.
+int printf(const char* restrict fmt, ...);
+#endif
 
 
 /* Async Copies from Global to Local Memory, Local to
