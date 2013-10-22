@@ -60,15 +60,16 @@ vpath %.ll @top_srcdir@/lib/kernel
 
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
-%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h
+%.c.bc: %.c ${TYPES} ${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
+	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -c -o $@ $< -include ${TYPES}
 %.cc.bc: %.cc ${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
 	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
-%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h
+%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${TYPES} \
+	${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANG_FLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h
+	@CLANG@ ${CLANG_FLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${TYPES} -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll
 	mkdir -p ${dir $@}
 	@LLVM_AS@ -o $@ $<

@@ -22,12 +22,19 @@
 
 
 
-KERNEL_TARGET = tce
+KERNEL_TARGET = tce-tut-llvm
 
 # Use TARGET flags:
-CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target tce-tut-llvm 
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
+TYPES       = ${abs_top_srcdir}/include/tce/types.h
 
 include ../rules.mk
 include ../sources.mk
+
+# Use the libc (newlib) printf() for now because the pocl's
+# fails in TCE code gen:
+# SplitVectorResult #0: 0x24c5ae0: v8i16,ch = vaarg 0x20628e8, 0x2423ed0, 0x24c59e0, 0x24c4fe0 [ORD=223] [ID=0]
+# LLVM ERROR: Do not know how to split the result of this operator!
+LKERNEL_SRCS_EXCLUDE = printf.cl

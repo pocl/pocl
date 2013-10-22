@@ -1,4 +1,4 @@
-# sources.mk - a list of all kernel source files
+# sources-vml.mk - kernel source file overrides for vecmathlib
 # 
 # Copyright (c) 2011-2013 Universidad Rey Juan Carlos
 #                         Pekka Jääskeläinen / Tampere University of Technology
@@ -20,38 +20,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+if USE_VECMATHLIB
 
-LKERNEL_HDRS = image.h pocl_image_rw_utils.h templates.h
-
-
-LKERNEL_SRCS_DEFAULT =				\
-	abs.cl					\
-	abs_diff.cl				\
+LKERNEL_SRCS_EXCLUDE =				\
 	acos.cl					\
 	acosh.cl				\
 	acospi.cl				\
-	add_sat.cl				\
-	all.cl					\
-	any.cl					\
-	as_type.cl				\
 	asin.cl					\
 	asinh.cl				\
 	asinpi.cl				\
-	async_work_group_copy.cl		\
 	atan.cl					\
 	atan2.cl				\
 	atan2pi.cl				\
 	atanh.cl				\
 	atanpi.cl				\
-	atomics.cl				\
-	barrier.ll				\
-	bitselect.cl				\
 	cbrt.cl					\
 	ceil.cl					\
 	clamp.cl				\
-	clamp_int.cl				\
-	clz.cl					\
-	convert_type.cl				\
 	copysign.cl				\
 	cos.cl					\
 	cosh.cl					\
@@ -61,8 +46,6 @@ LKERNEL_SRCS_DEFAULT =				\
 	distance.cl				\
 	divide.cl				\
 	dot.cl					\
-	erf.cl					\
-	erfc.cl					\
 	exp.cl					\
 	exp10.cl				\
 	exp2.cl					\
@@ -78,18 +61,6 @@ LKERNEL_SRCS_DEFAULT =				\
 	fmin.cl					\
 	fmod.cl					\
 	fract.cl				\
-	get_global_id.c				\
-	get_global_offset.c			\
-	get_global_size.c			\
-	get_group_id.c				\
-	get_image_depth.cl			\
-	get_image_height.cl			\
-	get_image_width.cl			\
-	get_local_id.c				\
-	get_local_size.c			\
-	get_num_groups.c			\
-	get_work_dim.c				\
-	hadd.cl					\
 	hypot.cl				\
 	ilogb.cl				\
 	isequal.cl				\
@@ -107,45 +78,31 @@ LKERNEL_SRCS_DEFAULT =				\
 	isunordered.cl				\
 	ldexp.cl				\
 	length.cl				\
-	lgamma.cl				\
 	log.cl					\
 	log10.cl				\
 	log1p.cl				\
 	log2.cl					\
 	logb.cl					\
 	mad.cl					\
-	mad24.cl				\
-	mad_hi.cl				\
-	mad_sat.cl				\
 	max.cl					\
-	max_i.cl				\
 	maxmag.cl				\
 	min.cl					\
-	min_i.cl				\
 	minmag.cl				\
 	mix.cl					\
-	mul24.cl				\
-	mul_hi.cl				\
 	nan.cl					\
 	native_cos.cl				\
 	native_log2.cl				\
-	nextafter.cl				\
 	normalize.cl				\
-	popcount.cl				\
 	pow.cl					\
 	pown.cl					\
 	powr.cl					\
 	radians.cl				\
-	read_image.cl				\
 	recip.cl				\
 	remainder.cl				\
-	rhadd.cl				\
 	rint.cl					\
 	rootn.cl				\
-	rotate.cl				\
 	round.cl				\
 	rsqrt.cl				\
-	select.cl				\
 	sign.cl					\
 	signbit.cl				\
 	sin.cl					\
@@ -155,20 +112,135 @@ LKERNEL_SRCS_DEFAULT =				\
 	smoothstep.cl				\
 	sqrt.cl					\
 	step.cl					\
-	sub_sat.cl				\
 	tan.cl					\
 	tanh.cl					\
 	tanpi.cl				\
-	tgamma.cl				\
-	trunc.cl				\
-	upsample.cl				\
-	vload.cl				\
-	vload_half.cl  		    \
-	vstore.cl				\
-	vstore_half.cl			\
-	wait_group_events.cl	\
-	write_image.cl
+	trunc.cl
 
-if NEW_PRINTF_WORKS
-LKERNEL_SRCS_DEFAULT += printf.cl
+LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
+	acos.cc						\
+	acosh.cc					\
+	acospi.cl					\
+	asin.cc						\
+	asinh.cc					\
+	asinpi.cl					\
+	atan.cc						\
+	atan2.cl					\
+	atan2pi.cl					\
+	atanh.cc					\
+	atanpi.cl					\
+	cbrt.cc						\
+	ceil.cc						\
+	clamp.cl					\
+	copysign.cc					\
+	cos.cc						\
+	cosh.cc						\
+	cospi.cl					\
+	cross.cl					\
+	degrees.cl					\
+	distance.cl					\
+	dot.cl						\
+	exp.cc						\
+	exp10.cc					\
+	exp2.cc						\
+	expm1.cc					\
+	fabs.cc						\
+	fast_distance.cl				\
+	fast_length.cl					\
+	fast_normalize.cl				\
+	fdim.cc						\
+	floor.cc					\
+	fma.cc						\
+	fmax.cc						\
+	fmax.cl						\
+	fmin.cc						\
+	fmin.cl						\
+	fmod.cc						\
+	fract.cl					\
+	frexp.cl					\
+	half_cos.cl					\
+	half_divide.cl					\
+	half_exp.cl					\
+	half_exp10.cl					\
+	half_exp2.cl					\
+	half_log.cl					\
+	half_log10.cl					\
+	half_log2.cl					\
+	half_powr.cl					\
+	half_recip.cl					\
+	half_rsqrt.cl					\
+	half_sin.cl					\
+	half_sqrt.cl					\
+	half_tan.cl					\
+	hypot.cc					\
+	ilogb.cl					\
+	ilogb_.cc					\
+	isequal.cl					\
+	isfinite.cc					\
+	isgreater.cl					\
+	isgreaterequal.cl				\
+	isinf.cc					\
+	isless.cl					\
+	islessequal.cl					\
+	islessgreater.cl				\
+	isnan.cc					\
+	isnormal.cc					\
+	isnotequal.cl					\
+	isordered.cl					\
+	isunordered.cl					\
+	ldexp.cl					\
+	ldexp_.cc					\
+	length.cl					\
+	log.cc						\
+	log10.cc					\
+	log1p.cc					\
+	log2.cc						\
+	logb.cl						\
+	mad.cl						\
+	max.cl						\
+	maxmag.cl					\
+	min.cl						\
+	minmag.cl					\
+	mix.cl						\
+	modf.cl						\
+	nan.cl						\
+	native_cos.cl					\
+	native_divide.cl				\
+	native_exp.cl					\
+	native_exp10.cl					\
+	native_exp2.cl					\
+	native_log.cl					\
+	native_log10.cl					\
+	native_log2.cl					\
+	native_powr.cl					\
+	native_recip.cl					\
+	native_rsqrt.cl					\
+	native_sin.cl					\
+	native_sqrt.cl					\
+	native_tan.cl					\
+	normalize.cl					\
+	pow.cc						\
+	pown.cl						\
+	powr.cl						\
+	radians.cl					\
+	remainder.cc					\
+	remquo.cl					\
+	rint.cc						\
+	rootn.cl					\
+	round.cc					\
+	rsqrt.cc					\
+	sign.cl						\
+	signbit.cc					\
+	sin.cc						\
+	sincos.cl					\
+	sinh.cc						\
+	sinpi.cl					\
+	smoothstep.cl					\
+	sqrt.cc						\
+	step.cl						\
+	tan.cc						\
+	tanh.cc						\
+	tanpi.cl					\
+	trunc.cc)
+
 endif
