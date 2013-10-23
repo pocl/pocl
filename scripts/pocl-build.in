@@ -67,7 +67,7 @@ preprocessed_file=${output_file}.i
 
 # BEGIN REMOVE ONCE INSTALLED
 @CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -I@abs_top_builddir@ \
--include @abs_top_builddir@/include/${types} \
+-include @abs_top_srcdir@/include/${types} \
 -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
 if false ; then
 # END REMOVE ONCE INSTALLED
