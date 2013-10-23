@@ -3,8 +3,6 @@
 #ifndef VEC_BASE_H
 #define VEC_BASE_H
 
-#include <iostream>
-
 #include "vec_mask.h"
 
 
