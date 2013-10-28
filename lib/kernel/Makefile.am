@@ -33,7 +33,6 @@ SUBDIRS = @OCL_TARGETS@
 # fallback implementations. Include them in the
 # dist once here.
 EXTRA_DIST = *.c *.cl *.h *.ll			\
-        kernel-template/Makefile.am		\
 	vecmathlib/LICENCE			\
 	vecmathlib/README			\
 	vecmathlib/*.h				\
