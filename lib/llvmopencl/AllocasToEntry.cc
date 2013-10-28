@@ -29,8 +29,8 @@
 # include <llvm/Instructions.h>
 #else
 # include <llvm/IR/Instructions.h>
+# include "llvm/IR/Constants.h"
 #endif
-#include "llvm/IR/Constants.h"
 
 #include "AllocasToEntry.h"
 
