@@ -159,7 +159,7 @@ libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags`
 AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -fno-rtti
 
 libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/
-libpocl_la_LIBADD += ${top_builddir}/lib/CL/libpoclllvm.a
+libpocl_la_LIBADD += libpoclllvm.a
 libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
 libpocl_la_LIBADD += -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization
 libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 

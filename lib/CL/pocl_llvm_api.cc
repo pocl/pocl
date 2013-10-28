@@ -11,13 +11,14 @@
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
-
+#include <iostream>
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
@@ -25,6 +26,12 @@
 
 using namespace clang;
 using namespace llvm;
+
+#if defined LLVM_3_2 or defined LLVM_3_3
+using llvm::raw_fd_ostream::F_Binary;
+#else
+using llvm::sys::fs::F_Binary;
+#endif
 
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
@@ -121,19 +128,16 @@ int call_pocl_kernel(cl_program program,
                      int *errcode )
 {
 
-  int error,n, i;
+  int error, i;
+  unsigned n;
   llvm::Module *input;
   LLVMContext &Context = getGlobalContext();
   SMDiagnostic Err;
   FILE *binary_file;
   char binary_filename[POCL_FILENAME_LENGTH];
-  char object_filename[POCL_FILENAME_LENGTH];
   char tmpdir[POCL_FILENAME_LENGTH];
 
-  const char *triple;
-
   assert(program->devices[device_i]->llvm_target_triplet && "Device has no target triple set"); 
-  triple = program->devices[device_i]->llvm_target_triplet;
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
@@ -149,14 +153,22 @@ int call_pocl_kernel(cl_program program,
   if (binary_file == NULL)
     return (CL_OUT_OF_HOST_MEMORY);
 
+  // TODO: check if we need this in the api branch at all
   n = fwrite(program->binaries[device_i], 1,
              program->binary_sizes[device_i], binary_file);
   if (n < program->binary_sizes[device_i])
     return (CL_OUT_OF_HOST_MEMORY);
-  
   fclose(binary_file); 
-  input = ParseIRFile(binary_filename, Err, Context);
 
+  input = ParseIRFile(binary_filename, Err, Context);
+  if( !input ) {
+    // TODO:
+    raw_os_ostream os(std::cout);
+    Err.print( "Pocl error: bad kernel file ", os);
+    os.flush();
+    exit(1);
+  }
+  
   PassManager Passes;
   DataLayout *TD = 0;
   const std::string &ModuleDataLayout = input->getDataLayout();
@@ -193,14 +205,14 @@ int call_pocl_kernel(cl_program program,
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
                                      sizeof (struct pocl_argument));
   /* Initialize kernel "dynamic" arguments (in case the user doesn't). */
-  for (int i = 0; i < kernel->num_args; ++i)
+  for (unsigned i = 0; i < kernel->num_args; ++i)
     {
       kernel->dyn_arguments[i].value = NULL;
       kernel->dyn_arguments[i].size = 0;
     }
 
   /* Fill up automatic local arguments. */
-  for (int i = 0; i < kernel->num_locals; ++i)
+  for (unsigned i = 0; i < kernel->num_locals; ++i)
     {
       kernel->dyn_arguments[kernel->num_args + i].value = NULL;
       kernel->dyn_arguments[kernel->num_args + i].size =
@@ -215,6 +227,7 @@ int call_pocl_kernel(cl_program program,
   kernel->arg_is_sampler = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
   
   // This is from GenerateHeader.cc
+  i=0;
   for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
                                           ee = arglist.end(); 
        ii != ee ; ii++)
@@ -408,7 +421,7 @@ int call_pocl_workgroup( char* function_name,
                           "instcombine"}; 
 
   // Now add the above passes 
-  for( int i=0; i < sizeof(passes)/sizeof(const char*); i++ )
+  for( unsigned i=0; i < sizeof(passes)/sizeof(const char*); i++ )
   {
     
     // This is (more or less) -O3
@@ -417,8 +430,10 @@ int call_pocl_workgroup( char* function_name,
       PassManagerBuilder Builder;
       Builder.OptLevel = 3;
       Builder.SizeLevel = 0;
+      #if defined LLVM_3_2 or defined LLVM_3_3
       Builder.DisableSimplifyLibCalls=true;
-       Builder.populateModulePassManager( Passes );
+      #endif
+      Builder.populateModulePassManager( Passes );
       
       continue;
     }
@@ -463,7 +478,7 @@ int call_pocl_workgroup( char* function_name,
   std::string ErrorInfo;
   tool_output_file *Out = new tool_output_file( parallel_filename, 
                                                 ErrorInfo, 
-                                                raw_fd_ostream::F_Binary);;
+                                                F_Binary);;
   Passes.add(createBitcodeWriterPass(Out->os()));
   Passes.run(*linked_bc);
 
