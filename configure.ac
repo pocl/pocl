@@ -670,6 +670,7 @@ AC_ARG_VAR([CLANGXX_FLAGS], [Flags to be used when compiling C++ sources with cl
 
 if test x"$use_vecmathlib" = xyes; then
   AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
+  CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
 fi
 
 use_vecmathlib_builtins="no"
