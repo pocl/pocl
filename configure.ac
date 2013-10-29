@@ -86,23 +86,23 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
-NEW_PRINTF_WORKS=1
+NEW_PRINTF_WORKS=true
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
 case "$LLVM_VERSION" in
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
-     NEW_PRINTF_WORKS=0
+     NEW_PRINTF_WORKS=false
    ;;
      3.3*)
      AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")     
-     NEW_PRINTF_WORKS=0
+     NEW_PRINTF_WORKS=false
    ;; 
      3.4*)
      AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
      AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
-     NEW_PRINTF_WORKS=1
+     NEW_PRINTF_WORKS=true
    ;;   
      *)
    AC_MSG_ERROR(
