@@ -5,7 +5,7 @@
 
 // Is long supported?
 // Note: The definitions of "long" below differs between languages. We
-// therefore need to check "long long" instead as well.
+// therefore need to check "long long" as well.
 #if __SIZEOF_LONG__ == 8 || __SIZEOF_LONG_LONG__ == 8
 #  define cles_khr_int64
 #else
@@ -16,5 +16,13 @@
 #if defined cles_khr_int64 && __SIZEOF_DOUBLE__ == 8
 #  define cl_khr_fp64
 #else
+#  undef cl_khr_fp64
+#endif
+
+// Architecture-specific overrides
+#ifdef __TCE__
+#  define __EMBEDDED_PROFILE__ 1
+// TODO: Are these necessary?
+#  undef cles_khr_int64
 #  undef cl_khr_fp64
 #endif

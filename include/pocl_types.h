@@ -2,7 +2,7 @@
 
 #include "pocl_features.h"
 
-#if defined(cl_khr_fp64) && !defined(cles_khr_int64)
+#if defined cl_khr_fp64 && !defined cles_khr_int64
 #  error "cl_khr_fp64 requires cles_khr_int64"
 #endif
 

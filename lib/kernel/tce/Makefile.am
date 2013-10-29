@@ -28,7 +28,6 @@ KERNEL_TARGET = tce-tut-llvm
 CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target tce-tut-llvm 
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
-TYPES       = ${abs_top_srcdir}/include/tce/types.h
 
 include ../rules.mk
 include ../sources.mk

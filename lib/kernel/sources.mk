@@ -163,10 +163,10 @@ LKERNEL_SRCS_DEFAULT =				\
 	trunc.cl				\
 	upsample.cl				\
 	vload.cl				\
-	vload_half.cl  		    \
+	vload_half.cl				\
 	vstore.cl				\
-	vstore_half.cl			\
-	wait_group_events.cl	\
+	vstore_half.cl				\
+	wait_group_events.cl			\
 	write_image.cl
 
 if NEW_PRINTF_WORKS

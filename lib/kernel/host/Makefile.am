@@ -28,7 +28,6 @@ KERNEL_TARGET = @HOST@
 CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 LLC_FLAGS   = @HOST_LLC_FLAGS@
 LD_FLAGS    = @HOST_LD_FLAGS@
-TYPES       = ${abs_top_srcdir}/include/pocl_types.h
 
 include ../rules.mk
 include ../sources.mk
