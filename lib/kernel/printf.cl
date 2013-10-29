@@ -36,9 +36,8 @@ int snprintf(char* restrict str, size_t size, const char* restrict fmt, ...);
 
 // For debugging
 // Use as: DEBUG_PRINTF((fmt, args...)) -- note double parentheses!
-// #define DEBUG_PRINTF(args) printf(args)
+// #define DEBUG_PRINTF(args) (printf args)
 #define DEBUG_PRINTF(args) ((void)0)
-
 
 
 
@@ -109,6 +108,7 @@ DEFINE_PRINT_INTS(long)
   void _cl_print_floats_##WIDTH(flags_t flags, int field_width, int precision, \
                                 char conv, const void* vals, int n)     \
   {                                                                     \
+    DEBUG_PRINTF(("[printf:floats:n=%dd]\n", n));                       \
     char outfmt[1000];                                                  \
     snprintf(outfmt, sizeof outfmt,                                     \
              "%%%s%s%s%s%s%.0d%s%.0d" FLOAT_CONV_##WIDTH "%c",          \
@@ -121,10 +121,13 @@ DEFINE_PRINT_INTS(long)
              precision != -1 ? "." : "",                                \
              precision != -1 ? precision : 0,                           \
              conv);                                                     \
+    DEBUG_PRINTF(("[printf:floats:outfmt=%s]\n", outfmt));              \
     for (int d=0; d<n; ++d) {                                           \
+      DEBUG_PRINTF(("[printf:floats:d=%d]\n", d));                      \
       if (d != 0) printf(",");                                          \
       printf(outfmt, ((const WIDTH*)vals)[d]);                          \
     }                                                                   \
+    DEBUG_PRINTF(("[printf:floats:done]\n"));                           \
   }
 
 #ifdef cl_khr_fp16
@@ -328,17 +331,17 @@ int _cl_printf(const char* restrict format, ...)
           DEBUG_PRINTF(("[printf:float:conversion=%c]\n", ch));
           switch (length) {
           default: __builtin_unreachable();
-#ifdef cles_khr_fp16
-          case 2: CALL_PRINT_FLOATS(half, double); break;
+#ifdef cl_khr_fp16
+            // case 2: CALL_PRINT_FLOATS(half, double); break;
+          case 2: goto error;   // not yet implemented
 #endif
           case 0:
             // Note: width 0 cleverly falls through to float if double
             // is not supported
-#ifdef cles_khr_fp64
+#ifdef cl_khr_fp64
           case 8: CALL_PRINT_FLOATS(double, double); break;
-          case 4: CALL_PRINT_FLOATS(float, double); break;
 #endif
-              break;
+          case 4: CALL_PRINT_FLOATS(float, double); break;
           }
           
 #undef CALL_PRINT_FLOATS
