@@ -88,7 +88,7 @@ typedef struct {
 DEFINE_PRINT_INTS(char)
 DEFINE_PRINT_INTS(short)
 DEFINE_PRINT_INTS(int)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 DEFINE_PRINT_INTS(long)
 #endif
 
@@ -293,7 +293,7 @@ int _cl_printf(const char* restrict format, ...)
           case 2: CALL_PRINT_INTS(short, int); break;
           case 0:
           case 4: CALL_PRINT_INTS(int, int); break;
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
           case 8: CALL_PRINT_INTS(long, long); break;
 #endif
           }

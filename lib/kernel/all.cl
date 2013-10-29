@@ -111,7 +111,7 @@ int _CL_OVERLOADABLE all(int16 a)
   return all(a.lo) && all(a.hi);
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 int _CL_OVERLOADABLE all(long a)
 {
   return a < 0L;

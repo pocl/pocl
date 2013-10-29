@@ -18,7 +18,7 @@ constant size_t ushort_values_length = sizeof(ushort_values) / sizeof(ushort_val
 constant size_t int_values_length = sizeof(int_values) / sizeof(int_values[0]);
 constant size_t uint_values_length = sizeof(uint_values) / sizeof(uint_values[0]);
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 constant long long_values[6] = { 0, 1, LONG_MIN, LONG_MAX, LONG_MIN / 2, LONG_MAX / 2 };
 constant ulong ulong_values[6] = { 0, 1, 0, ULONG_MAX, 0 / 2, ULONG_MAX / 2 };
 
@@ -145,7 +145,7 @@ void compare_char_elements_uint(char const* name, size_t sample, constant uint* 
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_char_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const char* expected, const char* actual, size_t n)
@@ -160,7 +160,7 @@ void compare_char_elements_long(char const* name, size_t sample, constant long* 
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_char_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const char* expected, const char* actual, size_t n)
@@ -267,7 +267,7 @@ void compare_uchar_elements_uint(char const* name, size_t sample, constant uint*
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_uchar_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const uchar* expected, const uchar* actual, size_t n)
@@ -282,7 +282,7 @@ void compare_uchar_elements_long(char const* name, size_t sample, constant long*
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_uchar_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const uchar* expected, const uchar* actual, size_t n)
@@ -389,7 +389,7 @@ void compare_short_elements_uint(char const* name, size_t sample, constant uint*
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_short_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const short* expected, const short* actual, size_t n)
@@ -404,7 +404,7 @@ void compare_short_elements_long(char const* name, size_t sample, constant long*
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_short_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const short* expected, const short* actual, size_t n)
@@ -511,7 +511,7 @@ void compare_ushort_elements_uint(char const* name, size_t sample, constant uint
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ushort_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const ushort* expected, const ushort* actual, size_t n)
@@ -526,7 +526,7 @@ void compare_ushort_elements_long(char const* name, size_t sample, constant long
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ushort_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const ushort* expected, const ushort* actual, size_t n)
@@ -633,7 +633,7 @@ void compare_int_elements_uint(char const* name, size_t sample, constant uint* o
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_int_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const int* expected, const int* actual, size_t n)
@@ -648,7 +648,7 @@ void compare_int_elements_long(char const* name, size_t sample, constant long* o
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_int_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const int* expected, const int* actual, size_t n)
@@ -755,7 +755,7 @@ void compare_uint_elements_uint(char const* name, size_t sample, constant uint* 
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_uint_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const uint* expected, const uint* actual, size_t n)
@@ -770,7 +770,7 @@ void compare_uint_elements_long(char const* name, size_t sample, constant long* 
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_uint_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const uint* expected, const uint* actual, size_t n)
@@ -811,7 +811,7 @@ void compare_uint_elements_double(char const* name, size_t sample, constant doub
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const long* expected, const long* actual, size_t n)
@@ -826,7 +826,7 @@ void compare_long_elements_char(char const* name, size_t sample, constant char* 
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const long* expected, const long* actual, size_t n)
@@ -841,7 +841,7 @@ void compare_long_elements_uchar(char const* name, size_t sample, constant uchar
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const long* expected, const long* actual, size_t n)
@@ -856,7 +856,7 @@ void compare_long_elements_short(char const* name, size_t sample, constant short
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const long* expected, const long* actual, size_t n)
@@ -871,7 +871,7 @@ void compare_long_elements_ushort(char const* name, size_t sample, constant usho
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const long* expected, const long* actual, size_t n)
@@ -886,7 +886,7 @@ void compare_long_elements_int(char const* name, size_t sample, constant int* or
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const long* expected, const long* actual, size_t n)
@@ -901,7 +901,7 @@ void compare_long_elements_uint(char const* name, size_t sample, constant uint* 
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const long* expected, const long* actual, size_t n)
@@ -916,7 +916,7 @@ void compare_long_elements_long(char const* name, size_t sample, constant long* 
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const long* expected, const long* actual, size_t n)
@@ -931,7 +931,7 @@ void compare_long_elements_ulong(char const* name, size_t sample, constant ulong
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const long* expected, const long* actual, size_t n)
@@ -948,7 +948,7 @@ void compare_long_elements_float(char const* name, size_t sample, constant float
 
 #ifdef cl_khr_fp64
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_long_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const long* expected, const long* actual, size_t n)
@@ -965,7 +965,7 @@ void compare_long_elements_double(char const* name, size_t sample, constant doub
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_char(char const* name, size_t sample, constant char* original1, const char* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -980,7 +980,7 @@ void compare_ulong_elements_char(char const* name, size_t sample, constant char*
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_uchar(char const* name, size_t sample, constant uchar* original1, const uchar* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -995,7 +995,7 @@ void compare_ulong_elements_uchar(char const* name, size_t sample, constant ucha
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_short(char const* name, size_t sample, constant short* original1, const short* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1010,7 +1010,7 @@ void compare_ulong_elements_short(char const* name, size_t sample, constant shor
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_ushort(char const* name, size_t sample, constant ushort* original1, const ushort* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1025,7 +1025,7 @@ void compare_ulong_elements_ushort(char const* name, size_t sample, constant ush
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_int(char const* name, size_t sample, constant int* original1, const int* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1040,7 +1040,7 @@ void compare_ulong_elements_int(char const* name, size_t sample, constant int* o
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_uint(char const* name, size_t sample, constant uint* original1, const uint* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1055,7 +1055,7 @@ void compare_ulong_elements_uint(char const* name, size_t sample, constant uint*
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1070,7 +1070,7 @@ void compare_ulong_elements_long(char const* name, size_t sample, constant long*
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1085,7 +1085,7 @@ void compare_ulong_elements_ulong(char const* name, size_t sample, constant ulon
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_float(char const* name, size_t sample, constant float* original1, const float* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1102,7 +1102,7 @@ void compare_ulong_elements_float(char const* name, size_t sample, constant floa
 
 #ifdef cl_khr_fp64
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_ulong_elements_double(char const* name, size_t sample, constant double* original1, const double* original2, const ulong* expected, const ulong* actual, size_t n)
@@ -1185,7 +1185,7 @@ void compare_float_elements_uint(char const* name, size_t sample, constant uint*
   }
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_float_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const float* expected, const float* actual, size_t n)
@@ -1200,7 +1200,7 @@ void compare_float_elements_long(char const* name, size_t sample, constant long*
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_float_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const float* expected, const float* actual, size_t n)
@@ -1333,7 +1333,7 @@ void compare_double_elements_uint(char const* name, size_t sample, constant uint
 
 #ifdef cl_khr_fp64
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_double_elements_long(char const* name, size_t sample, constant long* original1, const long* original2, const double* expected, const double* actual, size_t n)
@@ -1352,7 +1352,7 @@ void compare_double_elements_long(char const* name, size_t sample, constant long
 
 #ifdef cl_khr_fp64
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 _CL_NOINLINE
 void compare_double_elements_ulong(char const* name, size_t sample, constant ulong* original1, const ulong* original2, const double* expected, const double* actual, size_t n)
@@ -1911,7 +1911,7 @@ kernel void test_convert_type()
     compare_uint_elements_char("convert_uint16_sat(char16)", i, &char_values[i], 0, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
@@ -1932,7 +1932,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
@@ -1953,7 +1953,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
@@ -1974,7 +1974,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
@@ -1995,7 +1995,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
@@ -2016,7 +2016,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
@@ -2037,7 +2037,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
@@ -2058,7 +2058,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
@@ -2079,7 +2079,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
@@ -2100,7 +2100,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
     const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
@@ -2631,7 +2631,7 @@ kernel void test_convert_type()
     compare_uint_elements_uchar("convert_uint16_sat(uchar16)", i, &uchar_values[i], 0, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
@@ -2652,7 +2652,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
@@ -2673,7 +2673,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
@@ -2694,7 +2694,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
@@ -2715,7 +2715,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
@@ -2736,7 +2736,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
@@ -2757,7 +2757,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
@@ -2778,7 +2778,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
@@ -2799,7 +2799,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
@@ -2820,7 +2820,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
     const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
@@ -3351,7 +3351,7 @@ kernel void test_convert_type()
     compare_uint_elements_short("convert_uint16_sat(short16)", i, &short_values[i], 0, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
@@ -3372,7 +3372,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
@@ -3393,7 +3393,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
@@ -3414,7 +3414,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
@@ -3435,7 +3435,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
@@ -3456,7 +3456,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
@@ -3477,7 +3477,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
@@ -3498,7 +3498,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
@@ -3519,7 +3519,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
@@ -3540,7 +3540,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
     const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
@@ -4071,7 +4071,7 @@ kernel void test_convert_type()
     compare_uint_elements_ushort("convert_uint16_sat(ushort16)", i, &ushort_values[i], 0, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
@@ -4092,7 +4092,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
@@ -4113,7 +4113,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
@@ -4134,7 +4134,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
@@ -4155,7 +4155,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
@@ -4176,7 +4176,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
@@ -4197,7 +4197,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
@@ -4218,7 +4218,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
@@ -4239,7 +4239,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
@@ -4260,7 +4260,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
     const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
@@ -4791,7 +4791,7 @@ kernel void test_convert_type()
     compare_uint_elements_int("convert_uint16_sat(int16)", i, &int_values[i], 0, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
@@ -4812,7 +4812,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
@@ -4833,7 +4833,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
@@ -4854,7 +4854,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
@@ -4875,7 +4875,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
@@ -4896,7 +4896,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
@@ -4917,7 +4917,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
@@ -4938,7 +4938,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
@@ -4959,7 +4959,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
@@ -4980,7 +4980,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
     const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
@@ -5511,7 +5511,7 @@ kernel void test_convert_type()
     compare_uint_elements_uint("convert_uint16_sat(uint16)", i, &uint_values[i], 0, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (LONG_MIN > 0) ? (uint)LONG_MIN : 0;
@@ -5532,7 +5532,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (LONG_MIN > 0) ? (uint)LONG_MIN : 0;
@@ -5553,7 +5553,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (LONG_MIN > 0) ? (uint)LONG_MIN : 0;
@@ -5574,7 +5574,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (LONG_MIN > 0) ? (uint)LONG_MIN : 0;
@@ -5595,7 +5595,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (LONG_MIN > 0) ? (uint)LONG_MIN : 0;
@@ -5616,7 +5616,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (0 > 0) ? (uint)0 : 0;
@@ -5637,7 +5637,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (0 > 0) ? (uint)0 : 0;
@@ -5658,7 +5658,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (0 > 0) ? (uint)0 : 0;
@@ -5679,7 +5679,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (0 > 0) ? (uint)0 : 0;
@@ -5700,7 +5700,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
     const uint min_expected = (0 > 0) ? (uint)0 : 0;
@@ -5721,7 +5721,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
@@ -5742,7 +5742,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
@@ -5763,7 +5763,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
@@ -5784,7 +5784,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
@@ -5805,7 +5805,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
@@ -5826,7 +5826,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -5847,7 +5847,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -5868,7 +5868,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -5889,7 +5889,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -5910,7 +5910,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -5931,7 +5931,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
@@ -5952,7 +5952,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
@@ -5973,7 +5973,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
@@ -5994,7 +5994,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
@@ -6015,7 +6015,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
@@ -6036,7 +6036,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6057,7 +6057,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6078,7 +6078,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6099,7 +6099,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6120,7 +6120,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6141,7 +6141,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
@@ -6162,7 +6162,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
@@ -6183,7 +6183,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
@@ -6204,7 +6204,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
@@ -6225,7 +6225,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
@@ -6246,7 +6246,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6267,7 +6267,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6288,7 +6288,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6309,7 +6309,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6330,7 +6330,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6351,7 +6351,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
@@ -6372,7 +6372,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
@@ -6393,7 +6393,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
@@ -6414,7 +6414,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
@@ -6435,7 +6435,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
@@ -6456,7 +6456,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6477,7 +6477,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6498,7 +6498,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6519,7 +6519,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6540,7 +6540,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
     const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
@@ -6561,7 +6561,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
@@ -6582,7 +6582,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
@@ -6603,7 +6603,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
@@ -6624,7 +6624,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
@@ -6645,7 +6645,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
@@ -6666,7 +6666,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6687,7 +6687,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6708,7 +6708,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6729,7 +6729,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6750,7 +6750,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6771,7 +6771,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
@@ -6792,7 +6792,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
@@ -6813,7 +6813,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
@@ -6834,7 +6834,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
@@ -6855,7 +6855,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
@@ -6876,7 +6876,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6897,7 +6897,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6918,7 +6918,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6939,7 +6939,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6960,7 +6960,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -6981,7 +6981,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (INT_MIN > 0) ? (ulong)INT_MIN : 0;
@@ -7002,7 +7002,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (INT_MIN > 0) ? (ulong)INT_MIN : 0;
@@ -7023,7 +7023,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (INT_MIN > 0) ? (ulong)INT_MIN : 0;
@@ -7044,7 +7044,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (INT_MIN > 0) ? (ulong)INT_MIN : 0;
@@ -7065,7 +7065,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (INT_MIN > 0) ? (ulong)INT_MIN : 0;
@@ -7086,7 +7086,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7107,7 +7107,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7128,7 +7128,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7149,7 +7149,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7170,7 +7170,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7191,7 +7191,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
@@ -7212,7 +7212,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
@@ -7233,7 +7233,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
@@ -7254,7 +7254,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
@@ -7275,7 +7275,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
@@ -7296,7 +7296,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7317,7 +7317,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7338,7 +7338,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7359,7 +7359,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -7380,7 +7380,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
     const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
@@ -10761,7 +10761,7 @@ kernel void test_convert_type()
     compare_uint_elements_float("convert_uint16_sat_rtn(float16)", i, 0, &sat_input, expected.raw, actual.raw, 16);
   }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -10877,7 +10877,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -10993,7 +10993,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11109,7 +11109,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11225,7 +11225,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11341,7 +11341,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11457,7 +11457,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11573,7 +11573,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11689,7 +11689,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -11805,7 +11805,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
@@ -15401,7 +15401,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -15521,7 +15521,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -15641,7 +15641,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -15761,7 +15761,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -15881,7 +15881,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -16001,7 +16001,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -16121,7 +16121,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -16241,7 +16241,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -16361,7 +16361,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 
@@ -16481,7 +16481,7 @@ kernel void test_convert_type()
 
 #endif
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 
 #ifdef cl_khr_fp64
 

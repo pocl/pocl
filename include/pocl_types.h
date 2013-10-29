@@ -2,8 +2,8 @@
 
 #include "pocl_features.h"
 
-#if defined cl_khr_fp64 && !defined cles_khr_int64
-#  error "cl_khr_fp64 requires cles_khr_int64"
+#if defined cl_khr_fp64 && !defined cl_khr_int64
+#  error "cl_khr_fp64 requires cl_khr_int64"
 #endif
 
 
@@ -15,7 +15,7 @@
    accidentally using them if the compiler does not disable these
    types, but only e.g. defines them with an incorrect size.*/
 
-#ifndef cles_khr_int64
+#ifndef cl_khr_int64
 typedef struct error_undefined_type_long error_undefined_type_long;
 #  define long error_undefined_type_long
 typedef struct error_undefined_type_ulong error_undefined_type_ulong;
@@ -39,7 +39,7 @@ typedef struct error_undefined_type_double error_undefined_type_double;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 typedef unsigned long ulong;
 #endif
 

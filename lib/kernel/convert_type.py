@@ -98,13 +98,13 @@ def conditional_guard(src, dst):
   elif dst in float64_types:
     float64_count = float64_count + 1
   if float64_count > 0 and int64_count > 0:
-    print("#if defined(cl_khr_fp64) && defined(cles_khr_int64)")
+    print("#if defined(cl_khr_fp64) && defined(cl_khr_int64)")
     return True
   elif float64_count > 0:
     print("#ifdef cl_khr_fp64")
     return True
   elif int64_count > 0:
-    print("#ifdef cles_khr_int64")
+    print("#ifdef cl_khr_int64")
     return True
   return False
 

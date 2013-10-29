@@ -38,7 +38,7 @@ typedef uint uint4  __attribute__((__ext_vector_type__( 4)));
 typedef uint uint8  __attribute__((__ext_vector_type__( 8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 #define long vml_std::int64_t
 typedef long long2  __attribute__((__ext_vector_type__( 2)));
 typedef long long3  __attribute__((__ext_vector_type__( 3)));
@@ -78,7 +78,7 @@ struct pair_int4  { int4  lo, hi; };
 struct pair_int8  { int8  lo, hi; };
 struct pair_int16 { int16 lo, hi; };
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 struct pair_long   { long   lo, hi; };
 struct pair_long2  { long2  lo, hi; };
 struct pair_long3  { long3  lo, hi; };
