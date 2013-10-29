@@ -126,14 +126,13 @@ then
 EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-mem-ops-only"
 fi
 
-#EXTRA_OPTS+="-vectorize-loops"
-
-WG_VECTORIZER=""
 if test "x$POCL_WORK_GROUP_METHOD" = "xloopvec";
 then
+# The loop vectorizer is on by default in LLVM 3.3 and later.
+# Just make the work-item loops as easily vectorizable as possible and 
+# let the vectorizer make the unroll decisions.
 export POCL_WORK_GROUP_METHOD=loops
 export POCL_WILOOPS_MAX_UNROLL_COUNT=1
-WG_VECTORIZER="-vectorize-loops -vectorizer-min-trip-count 1"
 fi
 
 #set -x
@@ -145,9 +144,9 @@ fi
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
+    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
     -target-address-spaces \
-    ${OPT_SWITCH} ${WG_VECTORIZER} ${EXTRA_OPTS} -instcombine -o ${output_file} ${linked_bc}
+    ${OPT_SWITCH} ${EXTRA_OPTS} -instcombine -o ${output_file} ${linked_bc}
 
 #set +x
