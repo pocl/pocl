@@ -128,11 +128,17 @@ fi
 
 if test "x$POCL_WORK_GROUP_METHOD" = "xloopvec";
 then
-# The loop vectorizer is on by default in LLVM 3.3 and later.
-# Just make the work-item loops as easily vectorizable as possible and 
-# let the vectorizer make the unroll decisions.
 export POCL_WORK_GROUP_METHOD=loops
 export POCL_WILOOPS_MAX_UNROLL_COUNT=1
+
+# The loop vectorizer is on by default in LLVM 3.4 and later.
+# Just make the work-item loops as easily vectorizable as possible and 
+# let the vectorizer make the unroll decisions.
+
+case @LLVM_VERSION@ in
+  3.3*)  EXTRA_OPTS="$EXTRA_OPTS -loop-vectorize";;     
+esac
+
 fi
 
 #set -x
