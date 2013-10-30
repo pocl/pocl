@@ -88,8 +88,10 @@ kernel_h_pch=$full_target_dir/_kernel.h.pch
 
 # END REMOVE ONCE INSTALLED
 
-# Use precompiled headers, if available.
-if test -e $kernel_h_pch;
+# Use precompiled headers, if available. Do not use it if USER_OPTIONS is 
+# passed (clBuildProgram options) because the pch has to be compiled with the
+# same options.
+if test -e $kernel_h_pch -a -z "$USER_OPTIONS";
 then
     include_cmd="-Xclang -include-pch -Xclang $kernel_h_pch"
 else
