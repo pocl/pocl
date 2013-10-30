@@ -30,7 +30,7 @@ KERNEL_TARGET=@OCL_KERNEL_TARGET@
 TARGET_DIR=arm
 
 targetpkglibdir = $(pkglibdir)/arm
-targetpkglib_DATA = kernel-@OCL_KERNEL_TARGET@.bc
+targetpkglib_DATA = kernel-@OCL_KERNEL_TARGET@.bc _kernel.h.pch
 
 include ../sources.mk
 all: kernel-@OCL_KERNEL_TARGET@.bc

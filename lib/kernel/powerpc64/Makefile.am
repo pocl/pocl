@@ -26,7 +26,7 @@
 
 LEX =
 
-targetpkglibdir = $(pkglibdir)/powerpc64
+targetpkglibdir = $(pkglibdir)/powerpc64 _kernel.h.pch
 targetpkglib_LIBRARIES = libkernel.a
 
 vpath %.cl @srcdir@:@srcdir@/..

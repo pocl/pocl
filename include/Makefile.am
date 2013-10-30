@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h _kernel_c.h
+pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h _kernel_c.h 
 
 # The sort command (also) removes duplicate entries which might appear 
 # due to @TARGET@ and/or @HOST@ being one of the manually defined 
@@ -39,3 +39,4 @@ include_HEADERS = poclu.h
 EXTRA_DIST = utlist.h types.host.in types.target.in
 
 SUBDIRS = CL OpenCL
+

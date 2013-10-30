@@ -674,7 +674,14 @@ fi
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
-AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
+AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [Additional CL compiler flags.])
+
+# The Clang flags that are used always when compiling OpenCL C code.
+FORCED_CLFLAGS="-Xclang -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm"
+AC_DEFINE_UNQUOTED([FORCED_CLFLAGS], 
+["$FORCED_CLFLAGS"], 
+[Always used flags for Clang when compiling OpenCL C code.])
+AC_SUBST([FORCED_CLFLAGS], ["$FORCED_CLFLAGS"])
 
 LLVM_PROG([OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLVM_OPT], [opt], [LLVM optimizer])

@@ -26,8 +26,7 @@ KERNEL_TARGET=@TARGET@
 TARGET_DIR=x86_64
 
 targetpkglibdir = $(pkglibdir)/x86_64
-targetpkglib_DATA = kernel-@TARGET@.bc
-
+targetpkglib_DATA = kernel-@TARGET@.bc _kernel.h.pch
 
 if USE_VECMATHLIB
 include ../sources-vecmathlib.mk

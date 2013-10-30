@@ -200,6 +200,17 @@ LKERNEL_SRCS =								\
 
 OBJ = $(LKERNEL_SRCS:%=%.bc)
 
+# Generate a precompiled header for the built-in function declarations, in
+# case supported by the target.
+
+# Note: the precompiled header must be compiled with the same features as the kernels
+# will be. That is, use exactly the same frontend feature switches. Otherwise it will
+# fail when compiling the kernel against the precompiled header.
+_kernel.h.pch: @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
+	@CLANG@ @FORCED_CLFLAGS@ @CLFLAGS@ -Xclang -ffake-address-space-map -c -target ${KERNEL_TARGET} -x cl \
+	-include @top_builddir@/include/${TARGET_DIR}/types.h \
+	-Xclang -emit-pch @top_srcdir@/include/_kernel.h -o _kernel.h.pch 
+
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
 %.c.bc: %.c @top_builddir@/include/${TARGET_DIR}/types.h
@@ -207,7 +218,9 @@ OBJ = $(LKERNEL_SRCS:%=%.bc)
 %.cc.bc: %.cc @top_builddir@/include/${TARGET_DIR}/types.h
 	@CLANGXX@ -Xclang -ffake-address-space-map -fno-exceptions -emit-llvm ${EXTRA_CLANGFLAGS} ${CLANGXX_FLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} $< -include ../../../include/${TARGET_DIR}/types.h
 %.cl.bc: %.cl @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
-	@CLANG@ -Xclang -ffake-address-space-map -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -fsigned-char -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< -include ../../../include/${TARGET_DIR}/types.h -include ${abs_top_srcdir}/include/_kernel.h
+	@CLANG@ @FORCED_CLFLAGS@ -emit-llvm ${CLFLAGS} ${EXTRA_CLANGFLAGS} -c -target ${KERNEL_TARGET} -o ${notdir $@} -x cl $< \
+	-include @top_builddir@/include/${TARGET_DIR}/types.h \
+	-include @top_srcdir@/include/_kernel.h	
 %.ll.bc: %.ll
 	@LLVM_AS@ -o $@ $<
 
