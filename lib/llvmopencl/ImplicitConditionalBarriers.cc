@@ -37,8 +37,6 @@
 #include "llvm/IR/Module.h"
 #endif
 
-#include "VariableUniformityAnalysis.h"
-
 #include <iostream>
 
 //#define DEBUG_COND_BARRIERS
@@ -59,9 +57,6 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
-
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
 }
 
 bool
