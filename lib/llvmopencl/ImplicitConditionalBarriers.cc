@@ -72,8 +72,6 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
   
   PDT = &getAnalysis<PostDominatorTree>();
 
-  
-
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
   BarrierBlockIndex conditionalBarriers;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
@@ -106,6 +104,8 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
       assert (pred_begin(b) == pred_end(b));
     }
     BasicBlock *pred = *pred_begin(b);
+    if (pred == b) continue; // Traced across a loop edge, skip this case.
+
     while (PDT->dominates(b, pred) && !isa<BarrierBlock>(pred)) {
       pos = pred;
       // If our BB post dominates the given block, we know it is not the
