@@ -229,20 +229,20 @@ WorkitemLoops::CreateLoopAround
   llvm::BasicBlock *loopBodyEntryBB = entryBB;
   llvm::LLVMContext &C = loopBodyEntryBB->getContext();
   llvm::Function *F = loopBodyEntryBB->getParent();
-  loopBodyEntryBB->setName("pregion.for.body");
+  loopBodyEntryBB->setName(std::string("pregion_for_entry.") + entryBB->getName().str());
 
   assert (exitBB->getTerminator()->getNumSuccessors() == 1);
 
   llvm::BasicBlock *oldExit = exitBB->getTerminator()->getSuccessor(0);
 
   llvm::BasicBlock *forInitBB = 
-    BasicBlock::Create(C, "pregion.for.init", F, loopBodyEntryBB);
+    BasicBlock::Create(C, "pregion_for_init", F, loopBodyEntryBB);
 
   llvm::BasicBlock *loopEndBB = 
-    BasicBlock::Create(C, "pregion.for.end", F, exitBB);
+    BasicBlock::Create(C, "pregion_for_end", F, exitBB);
 
   llvm::BasicBlock *forCondBB = 
-    BasicBlock::Create(C, "pregion.for.cond", F, exitBB);
+    BasicBlock::Create(C, "pregion_for_cond", F, exitBB);
 
   DT->runOnFunction(*F);
 
@@ -941,7 +941,7 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
        parallel loop.   
 */
     if (!VUA.shouldBePrivatized(instr->getParent()->getParent(), instr)) {
-#if DEBUG_WORK_ITEM_LOOPS
+#ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### based on VUA, not context saving:";
       instr->dump();
 #endif     
