@@ -149,10 +149,10 @@ fi
 # the code it wants to convert e.g. to a memset or a memcpy
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-cond-barriers -implicit-loop-barriers \
+    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
     -target-address-spaces \
-    ${OPT_SWITCH} ${EXTRA_OPTS} -instcombine -o ${output_file} ${linked_bc}
+     ${OPT_SWITCH} ${EXTRA_OPTS} -instcombine -o ${output_file} ${linked_bc}
 
 #set +x

@@ -68,8 +68,8 @@ AT_CLEANUP
 AT_SETUP([Conditional barrier (full replication)])
 AT_DATA([expout],
 [LOCAL_ID=0 before if
-LOCAL_ID=0 inside if
 LOCAL_ID=1 before if
+LOCAL_ID=0 inside if
 LOCAL_ID=1 inside if
 LOCAL_ID=0 after if
 LOCAL_ID=1 after if
@@ -81,8 +81,8 @@ AT_CLEANUP
 AT_SETUP([Conditional barrier (loops)])
 AT_DATA([expout],
 [LOCAL_ID=0 before if
-LOCAL_ID=0 inside if
 LOCAL_ID=1 before if
+LOCAL_ID=0 inside if
 LOCAL_ID=1 inside if
 LOCAL_ID=0 after if
 LOCAL_ID=1 after if
