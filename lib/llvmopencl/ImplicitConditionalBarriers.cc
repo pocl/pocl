@@ -104,7 +104,7 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
 
   bool changed = false;
 
-  F.viewCFG();
+  //F.viewCFG();
 
   for (BarrierBlockIndex::const_iterator i = conditionalBarriers.begin();
        i != conditionalBarriers.end(); ++i) {
@@ -147,7 +147,7 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
     changed = true;
   }
 
-  F.viewCFG();
+  //F.viewCFG();
 
   return changed;
 }
