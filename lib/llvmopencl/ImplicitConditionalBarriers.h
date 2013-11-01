@@ -74,7 +74,11 @@ namespace pocl {
     virtual bool runOnFunction (llvm::Function &F);
 
   private:
+    
+    llvm::BasicBlock* firstNonBackedgePredecessor(llvm::BasicBlock *bb);
+
     llvm::PostDominatorTree *PDT;
+    llvm::PostDominatorTree *DT;
 
   };
 }

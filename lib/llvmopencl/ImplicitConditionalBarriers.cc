@@ -57,6 +57,27 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
+  AU.addRequired<DominatorTree>();
+  AU.addPreserved<DominatorTree>();
+
+}
+
+/**
+ * Finds a predecessor that does not come from a back edge.
+ *
+ * This is used to include loops in the parallel region.
+ */
+BasicBlock*
+ImplicitConditionalBarriers::firstNonBackedgePredecessor(
+    llvm::BasicBlock *bb) {
+
+    DominatorTree *DT = &getAnalysis<DominatorTree>();
+
+    pred_iterator I = pred_begin(bb), E = pred_end(bb);
+    if (I == E) return NULL;
+    while (DT->dominates(bb, *I) && I != E) ++I;
+    if (I == E) return NULL;
+    else return *I;
 }
 
 bool
@@ -83,7 +104,7 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
 
   bool changed = false;
 
-  //F.viewCFG();
+  F.viewCFG();
 
   for (BarrierBlockIndex::const_iterator i = conditionalBarriers.begin();
        i != conditionalBarriers.end(); ++i) {
@@ -98,13 +119,17 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
       b->dump();
       assert (pred_begin(b) == pred_end(b));
     }
-    BasicBlock *pred = *pred_begin(b);
+    BasicBlock *pred = firstNonBackedgePredecessor(b);
 
     while (!isa<BarrierBlock>(pred) && PDT->dominates(b, pred)) {
+
+#ifdef DEBUG_COND_BARRIERS
+      std::cerr << "### looking at BB " << pred->getName().str() << std::endl;
+#endif
       pos = pred;
       // If our BB post dominates the given block, we know it is not the
       // branching block that makes the barrier conditional.
-      pred = *pred_begin(pred);
+      pred = firstNonBackedgePredecessor(pred);
 
       if (pred == b) break; // Traced across a loop edge, skip this case.
 
@@ -122,7 +147,7 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
     changed = true;
   }
 
-  //F.viewCFG();
+  F.viewCFG();
 
   return changed;
 }
