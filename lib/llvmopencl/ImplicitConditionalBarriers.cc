@@ -99,13 +99,15 @@ ImplicitConditionalBarriers::runOnFunction (Function &F) {
       assert (pred_begin(b) == pred_end(b));
     }
     BasicBlock *pred = *pred_begin(b);
-    if (pred == b) continue; // Traced across a loop edge, skip this case.
 
-    while (PDT->dominates(b, pred) && !isa<BarrierBlock>(pred)) {
+    while (!isa<BarrierBlock>(pred) && PDT->dominates(b, pred)) {
       pos = pred;
       // If our BB post dominates the given block, we know it is not the
       // branching block that makes the barrier conditional.
       pred = *pred_begin(pred);
+
+      if (pred == b) break; // Traced across a loop edge, skip this case.
+
     }
 
     if (isa<BarrierBlock>(pos)) continue;
