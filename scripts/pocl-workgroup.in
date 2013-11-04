@@ -136,8 +136,13 @@ EXTRA_OPTS="$EXTRA_OPTS -decompose-vector-load-store -decompose-vectors"
 # Just make the work-item loops as easily vectorizable as possible and 
 # let the vectorizer make the unroll decisions.
 
+# Use vectorizer-min-trip-count 2 because LoopVectorize does not seem
+# to take in account the outer loop trip counts. An inner loop with
+# "only" 2 iterations might be profitable to be vectorized when it's
+# executed inside a loop.
+
 case @LLVM_VERSION@ in
-  3.3*)  EXTRA_OPTS="$EXTRA_OPTS -loop-vectorize";;     
+  3.3*)  EXTRA_OPTS="$EXTRA_OPTS -mem2reg -loop-vectorize -vectorizer-min-trip-count 2 -vectorize-slp";;     
 esac
 
 fi
@@ -150,10 +155,10 @@ fi
 # the code it wants to convert e.g. to a memset or a memcpy
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-cond-barriers -implicit-loop-barriers \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers  \
     -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
     -target-address-spaces \
-     ${OPT_SWITCH} ${EXTRA_OPTS} -instcombine -o ${output_file} ${linked_bc}
+     ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -o ${output_file} ${linked_bc}
 
 #set +x
