@@ -131,6 +131,7 @@ then
 export POCL_WORK_GROUP_METHOD=loops
 export POCL_WILOOPS_MAX_UNROLL_COUNT=1
 
+EXTRA_OPTS="$EXTRA_OPTS -decompose-vector-load-store -decompose-vectors"
 # The loop vectorizer is on by default in LLVM 3.4 and later.
 # Just make the work-item loops as easily vectorizable as possible and 
 # let the vectorizer make the unroll decisions.
