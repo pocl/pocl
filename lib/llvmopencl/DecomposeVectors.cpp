@@ -19,7 +19,13 @@
 
 using namespace llvm;
 
+namespace llvm {
+void initializeDecomposeVectorsPass(PassRegistry&);
+};
+
 namespace {
+FunctionPass *createDecomposeVectorsPass();
+
 // Used to store the scattered form of a vector.
 typedef SmallVector<Value *, 8> ValueVector;
 
@@ -98,7 +104,9 @@ public:
 
   DecomposeVectors() :
     FunctionPass(ID) {
+#if 0
     initializeDecomposeVectorsPass(*PassRegistry::getPassRegistry());
+#endif
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -136,9 +144,14 @@ static cl::opt<bool> DecomposeVectorLoadStore
   ("decompose-vector-load-store", cl::Hidden, cl::init(false),
    cl::desc("Allow the decompose-vectors pass to decompose loads and store"));
 
+static RegisterPass<DecomposeVectors> X("decompose-vectors", 
+                                        "Decompose vector operations into smaller pieces",
+                                        false, false);
+#if 0
 INITIALIZE_PASS(DecomposeVectors, "decompose-vectors",
                 "Decompose vector operations into smaller pieces",
                 false, false)
+#endif
 
 Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
                      ValueVector *cachePtr)
@@ -533,6 +546,8 @@ bool DecomposeVectors::finish() {
   return true;
 }
 
-FunctionPass *llvm::createDecomposeVectorsPass() {
+namespace llvm {
+FunctionPass *createDecomposeVectorsPass() {
   return new DecomposeVectors();
+}
 }
