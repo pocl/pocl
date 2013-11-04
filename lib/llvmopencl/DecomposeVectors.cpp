@@ -481,10 +481,14 @@ bool DecomposeVectors::visitLoadInst(LoadInst &LI) {
   Res.resize(NumElems);
   
   MDNode *Tag = LI.getMetadata(LLVMContext::MD_tbaa);
+  MDNode *ParallelLoopAccess = LI.getMetadata("llvm.mem.parallel_loop_access");
+
   for (unsigned I = 0; I < NumElems; ++I) {
-    LoadInst *New = Builder.CreateLoad(Ptr[I], LI.getName() + ".i" + Twine(I));
+    LoadInst *New = Builder.CreateLoad(Ptr[I], LI.getName() + ".i" + Twine(I));    
     if (Tag)
       New->setMetadata(LLVMContext::MD_tbaa, Tag);
+    if (ParallelLoopAccess)
+      New->setMetadata("llvm.mem.parallel_loop_access", ParallelLoopAccess);
     Res[I] = New;    
   }
   gather(&LI, Res);
@@ -509,10 +513,14 @@ bool DecomposeVectors::visitStoreInst(StoreInst &SI) {
   Scatterer Val = scatter(&SI, FullValue);
 
   MDNode *Tag = SI.getMetadata(LLVMContext::MD_tbaa);
+  MDNode *ParallelLoopAccess = SI.getMetadata("llvm.mem.parallel_loop_access");
+
   for (unsigned I = 0; I < NumElems; ++I) {
     StoreInst *New = Builder.CreateStore(Val[I], Ptr[I]);
     if (Tag)
       New->setMetadata(LLVMContext::MD_tbaa, Tag);
+    if (ParallelLoopAccess)
+      New->setMetadata("llvm.mem.parallel_loop_access", ParallelLoopAccess);
   }
   return true;
 }
