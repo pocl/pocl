@@ -110,7 +110,7 @@ then
 
 if test "x$POCL_WORK_GROUP_METHOD" != "xloopvec";
 then
-OPT_SWITCH="-O3"
+OPT_SWITCH=""
 EXTRA_OPTS="-O3 -wi-vectorize"
 fi
 
