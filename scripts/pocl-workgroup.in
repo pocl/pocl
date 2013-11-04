@@ -107,8 +107,13 @@ fi
 EXTRA_OPTS=""
 if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
 then
+
+if test "x$POCL_WORK_GROUP_METHOD" != "xloopvec";
+then
 OPT_SWITCH="-O3"
-EXTRA_OPTS="-wi-vectorize"
+EXTRA_OPTS="-O3 -wi-vectorize"
+fi
+
 fi
 
 if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
