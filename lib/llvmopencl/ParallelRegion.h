@@ -105,6 +105,8 @@ class Kernel;
 
     void LocalizeIDLoads();
 
+    int GetID() const { return pRegionId; }
+
   private:
     llvm::Instruction* LocalIDXLoadInstr;
     llvm::Instruction* LocalIDYLoadInstr;

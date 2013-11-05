@@ -63,15 +63,16 @@
 #include <sstream>
 #include <vector>
 
-//#define DUMP_RESULT_CFG
+//#define DUMP_CFGS
 
-#ifdef DUMP_RESULT_CFG
-#include "llvm/Analysis/CFGPrinter.h"
+#ifdef DUMP_CFGS
+#include "DebugHelpers.h"
 #endif
 
 //#define DEBUG_WORK_ITEM_LOOPS
 
 #include "VariableUniformityAnalysis.h"
+
 
 using namespace llvm;
 using namespace pocl;
@@ -124,12 +125,14 @@ WorkitemLoops::runOnFunction(Function &F)
   std::cerr << "### original:" << std::endl;
   F.viewCFG();
 #endif
+//  F.viewCFGOnly();
 
   bool changed = ProcessFunction(F);
-#ifdef DUMP_RESULT_CFG
-  FunctionPass* cfgPrinter = createCFGOnlyPrinterPass();
-  cfgPrinter->runOnFunction(F);
-#endif  
+
+#ifdef DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", 
+          original_parallel_regions);
+#endif
 
 #if 0
   std::cerr << "### after:" << std::endl;
@@ -366,6 +369,12 @@ WorkitemLoops::ProcessFunction(Function &F)
   original_parallel_regions =
     K->getParallelRegions(LI);
 
+#ifdef DUMP_CFGS
+  F.dump();
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", 
+          original_parallel_regions);
+#endif
+
   IRBuilder<> builder(F.getEntryBlock().getFirstInsertionPt());
   localIdXFirstVar = 
     builder.CreateAlloca
@@ -375,7 +384,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
 #if 0
   std::cerr << "### Original" << std::endl;
-  F.viewCFG();
+  F.viewCFGOnly();
 #endif
 
 #if 0
@@ -939,7 +948,7 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
        variable to each work item and hope the latter optimizations
        reduce them back to a single induction variable outside the
        parallel loop.   
-*/
+    */
     if (!VUA.shouldBePrivatized(instr->getParent()->getParent(), instr)) {
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### based on VUA, not context saving:";
@@ -961,7 +970,7 @@ WorkitemLoops::AppendIncBlock
   assert (oldExit != NULL);
 
   llvm::BasicBlock *forIncBB = 
-    BasicBlock::Create(C, "pregion.for.inc", after->getParent());
+    BasicBlock::Create(C, "pregion_for_inc", after->getParent());
 
   after->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
 
