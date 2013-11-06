@@ -127,6 +127,13 @@ AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_
 ])
 AT_CLEANUP
 
+AT_SETUP([Different implicit barrier injection scenarios (loops)])
+AT_KEYWORDS([workgroup implicit])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=loops $abs_top_builddir/tests/workgroup/run_kernel implicit_barriers.cl 1 2 1 1], 0, 
+[$(cat $abs_top_srcdir/tests/workgroup/implicit_barriers_1_2_1_1.stdout)
+])
+AT_CLEANUP
+
 AT_SETUP([a loop with two paths to the latch (full replication)])
 AT_KEYWORDS([twolatchpaths workgroup])
 AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel for_bug.cl 1 2 1 1], 0,
