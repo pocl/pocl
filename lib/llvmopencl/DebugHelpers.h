@@ -33,11 +33,18 @@
 #else
 #include "llvm/IR/Function.h"
 #endif
+#include "llvm/Pass.h"
 
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.
   void dumpCFG(llvm::Function& F, std::string fname="", 
                ParallelRegion::ParallelRegionVector* regions=NULL);
+
+  // Split large basic blocks to smaller one so dot doesn't crash when
+  // calling viewCFG on it. This should be fixed in LLVM upstream.
+  //
+  // @return True in case the function was changed.
+  bool chopBBs(llvm::Function& F, llvm::Pass &P);
 };
 
 #endif
