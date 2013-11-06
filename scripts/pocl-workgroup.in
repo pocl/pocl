@@ -1,5 +1,6 @@
 #!/bin/sh
-# pocl-workgroup - Parallelize a kernel from an OpenCL bytecode file.
+# pocl-workgroup - Create a work-item parallel work-group function from 
+#                  an OpenCL bytecode file.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 #               2011-2013 Pekka Jääskeläinen / Tampere University of Technology
@@ -87,7 +88,7 @@ full_target_dir="@pkglibdir@/${target_dir}"
 full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
 # END REMOVE ONCE INSTALLED
 
-@LLVM_LINK@ -o ${linked_bc}  $1 "$full_target_dir"/kernel-$target.bc 
+@LLVM_LINK@ -o ${linked_bc} $1 $full_target_dir/kernel-$target.bc 
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
@@ -160,10 +161,23 @@ fi
 # the code it wants to convert e.g. to a memset or a memcpy
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers  \
-    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
+    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
     -target-address-spaces \
      ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -o ${output_file} ${linked_bc}
+
+# Notes about the kernel compiler phase ordering:
+#
+# -implicit-cond-barriers after -implicit-loop-barriers because the latter can inject
+# barriers to loops inside conditional regions after which the peeling should be 
+# avoided by injecting the implicit conditional barriers
+#
+# -loop-barriers, -barriertails, and -barriers should be ran after the implicit barrier 
+# injection passes so they "normalize" the implicit barriers also
+#
+# -phistoallocas before -workitemloops as otherwise it cannot inject context
+# restore code (PHIs need to be at the beginning of the BB and so one cannot
+# context restore them with non-PHI code if the value is needed in another PHI)
 
 #set +x
