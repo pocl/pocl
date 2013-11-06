@@ -42,6 +42,8 @@
 #include "llvm/IR/Module.h"
 #endif
 
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
 using namespace llvm;
 
 namespace pocl {
@@ -148,6 +150,33 @@ void dumpCFG(llvm::Function& F, std::string fname,
   s << "}" << std::endl;
   s.close();
   std::cout << "### dumped CFG to " << fname << std::endl;
+}
+
+bool chopBBs(llvm::Function &F, llvm::Pass &P) {
+  bool fchanged = false;
+  const int MAX_INSTRUCTIONS_PER_BB = 70;
+  do {
+    fchanged = false;
+    for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
+      BasicBlock *b = i;
+      
+      if (b->size() > MAX_INSTRUCTIONS_PER_BB + 1)
+        {
+          int count = 0;
+          BasicBlock::iterator splitPoint = b->begin();
+          while (count < MAX_INSTRUCTIONS_PER_BB || isa<PHINode>(splitPoint))
+            {
+              ++splitPoint;
+              ++count;
+            }
+          SplitBlock(b, splitPoint, &P);
+          fchanged = true;
+          break;
+        }
+    }  
+
+  } while (fchanged);
+  return fchanged;
 }
     
 };
