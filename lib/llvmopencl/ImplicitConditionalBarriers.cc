@@ -115,47 +115,51 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
     // barrier or the split point that makes the barrier conditional. 
     // In case of the latter, add a new barrier to both branches of the split point. 
 
-    // BB before which to inject the barrier.
-    BasicBlock *pos = b;
-    if (pred_begin(b) == pred_end(b)) {
-      b->dump();
-      assert (pred_begin(b) == pred_end(b));
-    }
-    BasicBlock *pred = firstNonBackedgePredecessor(b);
+    // The split BB where to inject the barriers. The barriers will be
+    // injected to the beginning of each of the blocks it branch to to
+    // minimize the peeling effect.
+    BasicBlock *pos = firstNonBackedgePredecessor(b);
 
-    while (!isa<BarrierBlock>(pred) && PDT->dominates(b, pred)) {
+    // If our BB post dominates the given block, we know it is not the
+    // branching block that makes the barrier conditional.
+    while (!isa<BarrierBlock>(pos) && PDT->dominates(b, pos)) {
 
 #ifdef DEBUG_COND_BARRIERS
-      std::cerr << "### looking at BB " << pred->getName().str() << std::endl;
+      std::cerr << "### looking at BB " << pos->getName().str() << std::endl;
 #endif
-      pos = pred;
-      // If our BB post dominates the given block, we know it is not the
-      // branching block that makes the barrier conditional.
-      pred = firstNonBackedgePredecessor(pred);
+      // Find the first edge that is not a loop edge so we include loops
+      // inside the new parallel region.
+      pos = firstNonBackedgePredecessor(pos);
 
-      if (pred == b) break; // Traced across a loop edge, skip this case.
-
+      if (pos == b) break; // Traced across a loop edge, skip this case.
     }
 
-    if (isa<BarrierBlock>(pos)) continue;
-    // Inject a barrier at the beginning of the BB and let the CanonicalizeBarrier
-    // to clean it up (split to a separate BB).
+    if (isa<BarrierBlock>(pos) || pos == b) continue;
+
+    // Inject a barrier at the destinations of the branch BB and let 
+    // the CanonicalizeBarrier to clean it up (split to separate BBs).
 
     // mri-q of parboil breaks in case injected at the beginning
     // TODO: investigate. It might related to the alloca-converted
     // PHIs. It has a loop that is autoconverted to a b-loop and the
     // conditional barrier is inserted after the loop short cut check.
-    Barrier::Create(pos->getFirstNonPHI());
+    llvm::TerminatorInst *term = pos->getTerminator();
+    for (unsigned i = 0; i < term->getNumSuccessors(); ++i) 
+    {
+        BasicBlock *succ = term->getSuccessor(i);    
+        Instruction *where = succ->getFirstNonPHI();
+        if (isa<Barrier>(where)) continue;
+        Barrier::Create(where);
 #ifdef DEBUG_COND_BARRIERS
-    std::cerr << "### added an implicit barrier to the BB" << std::endl;
-    pos->dump();
+        std::cerr << "### added an implicit barrier to the BB" << std::endl;
+        succ->dump();
 #endif
-
+    }
     changed = true;
   }
 
-//  F.dump();
-//  F.viewCFGOnly();
+  //F.dump();
+  //F.viewCFG();
 
   return changed;
 }
