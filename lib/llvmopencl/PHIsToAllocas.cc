@@ -64,7 +64,7 @@ PHIsToAllocas::runOnFunction(Function &F)
     return false;
 
   /* Skip PHIsToAllocas when we are not creating the work item loops,
-     as leads to worse code without benefits for the full replication method.
+     as it leads to worse code without benefits for the full replication method.
   */
   if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
       pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
