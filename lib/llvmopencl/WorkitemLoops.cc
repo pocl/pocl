@@ -65,9 +65,7 @@
 
 //#define DUMP_CFGS
 
-#ifdef DUMP_CFGS
 #include "DebugHelpers.h"
-#endif
 
 //#define DEBUG_WORK_ITEM_LOOPS
 
@@ -123,6 +121,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   std::cerr << "### original:" << std::endl;
+  chopBBs(F, *this);
   F.viewCFG();
 #endif
 //  F.viewCFGOnly();
@@ -143,30 +142,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   /* Split large BBs so we can print the Dot without it crashing. */
-  bool fchanged = false;
-  const int MAX_INSTRUCTIONS_PER_BB = 70;
-  do {
-    fchanged = false;
-    for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      BasicBlock *b = i;
-      
-      if (b->size() > MAX_INSTRUCTIONS_PER_BB + 1)
-        {
-          int count = 0;
-          BasicBlock::iterator splitPoint = b->begin();
-          while (count < MAX_INSTRUCTIONS_PER_BB || isa<PHINode>(splitPoint))
-            {
-              ++splitPoint;
-              ++count;
-            }
-          SplitBlock(b, splitPoint, this);
-          fchanged = true;
-          break;
-        }
-    }  
-
-  } while (fchanged);
-
+  changed |= chopBBs(F, *this);
   F.viewCFG();
 #endif
 
@@ -630,11 +606,14 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
             {
               Instruction *user;
               if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
-              // if the instruction is used outside this region inside another
+              // If the instruction is used outside this region inside another
               // region (not in a regionless BB like the B-loop construct BBs),
               // need to context save it.
-              if (instructionsInRegion.find(user) == instructionsInRegion.end() &&
-                  RegionOfBlock(user->getParent()) != NULL)
+              // Allocas (private arrays) should be privatized always. Otherwise
+              // we end up reading the same array, but replicating the GEP to that.
+              if (isa<AllocaInst>(instruction) || 
+                  (instructionsInRegion.find(user) == instructionsInRegion.end() &&
+                   RegionOfBlock(user->getParent())) != NULL)
                 {
                   instructionsToFix.push_back(instruction);
                   break;
