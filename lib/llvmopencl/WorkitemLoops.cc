@@ -71,7 +71,7 @@
 
 #include "VariableUniformityAnalysis.h"
 
-#define CONTEXT_ARRAY_ALIGN 512
+#define CONTEXT_ARRAY_ALIGN 64
 
 using namespace llvm;
 using namespace pocl;
