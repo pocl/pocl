@@ -71,6 +71,7 @@
 
 #include "VariableUniformityAnalysis.h"
 
+#define CONTEXT_ARRAY_ALIGN 512
 
 using namespace llvm;
 using namespace pocl;
@@ -613,7 +614,7 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
               // we end up reading the same array, but replicating the GEP to that.
               if (isa<AllocaInst>(instruction) || 
                   (instructionsInRegion.find(user) == instructionsInRegion.end() &&
-                   RegionOfBlock(user->getParent())) != NULL)
+                   RegionOfBlock(user->getParent()) != NULL))
                 {
                   instructionsToFix.push_back(instruction);
                   break;
@@ -774,12 +775,23 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
     {
       elementType = instruction->getType();
     }
+
+  /* 3D context array. */
   llvm::Type *contextArrayType = 
-    ArrayType::get(ArrayType::get(ArrayType::get(elementType, LocalSizeX), LocalSizeY), LocalSizeZ);
+    ArrayType::get(
+        ArrayType::get(
+            ArrayType::get(
+                elementType, LocalSizeX), 
+            LocalSizeY), LocalSizeZ);
 
   /* Allocate the context data array for the variable. */
-  llvm::Instruction *alloca = 
+  llvm::AllocaInst *alloca = 
     builder.CreateAlloca(contextArrayType, 0, varName);
+  /* Align the context arrays to stack to enable wide vectors
+     accesses to them. Also, LLVM 3.3 seems to produce illegal
+     code at least with Core i5 when aligned only at the element
+     size. */
+  alloca->setAlignment(CONTEXT_ARRAY_ALIGN);
 
   contextArrays[varName] = alloca;
   return alloca;
