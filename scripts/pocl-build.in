@@ -65,19 +65,30 @@ CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off"
 
 preprocessed_file=${output_file}.i
 
+# Set up the paths assuming we are running an installed pocl.
+full_target_dir="@pkglibdir@/${target_dir}"
+kernel_h=@pkgincludedir@/_kernel.h
+kernel_h_pch=$full_target_dir/_kernel.h.pch
+
 # BEGIN REMOVE ONCE INSTALLED
-@CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${preprocessed_file} -x cl $1
-if false ; then
-# END REMOVE ONCE INSTALLED
-@CLANG@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} @CLFLAGS@ -E -include @pkgincludedir@/_kernel.h -o ${preprocessed_file} -x cl $1
-# BEGIN REMOVE ONCE INSTALLED
-fi
+# Override the paths here so we find the files from the build dir
+# until pocl is installed to enable development testing without
+# installing pocl all the time.
+
+full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
+kernel_h=@abs_top_srcdir@/include/_kernel.h
+kernel_h_pch=$full_target_dir/_kernel.h.pch
+
 # END REMOVE ONCE INSTALLED
 
-# Use -fno-builtin to avoid clang producing extra memcpys etc. from
-# kernel loops. Otherwise, it a) ruins wg-vectorization b) causes
-# issues with embedded devices such as TCE which do not have OS and a
-# system linker.
-# Use -Wno-format to avoid warnings for printf, where we currently
-# have to use %lld for long arguments (to handle 32-bit architectures).
-@CLANG@ -fblocks -fno-builtin -Wno-format ${CLANG_FLAGS} @CLFLAGS@ -c -emit-llvm -o ${output_file} -x cl ${preprocessed_file}
+# Use precompiled headers, if available. Do not use it if USER_OPTIONS is 
+# passed (clBuildProgram options) because the pch has to be compiled with the
+# same options.
+if test -e $kernel_h_pch -a -z "$USER_OPTIONS";
+then
+    include_cmd="-Xclang -include-pch -Xclang $kernel_h_pch"
+else
+    include_cmd="-include $kernel_h"
+fi
+
+@CLANG@ @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c ${include_cmd} -emit-llvm -o ${output_file} -x cl $1

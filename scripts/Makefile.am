@@ -34,6 +34,7 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]pkglibexecdir[@],$(pkglibexecdir),g'		\
                -e 's,[@]CLANG[@],$(CLANG),g'				\
                -e 's,[@]CLFLAGS[@],$(CLFLAGS),g'			\
+               -e 's,[@]FORCED_CLFLAGS[@],$(FORCED_CLFLAGS),g'		\
                -e 's,[@]LD_SHARED[@],$(LD_SHARED),g'			\
                -e 's,[@]TARGET[@],$(TARGET),g'				\
                -e 's,[@]TARGET_CLANG_FLAGS[@],$(TARGET_CLANG_FLAGS),g'	\

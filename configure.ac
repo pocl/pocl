@@ -684,14 +684,23 @@ then
 fi
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
-AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [CL compiler flags.])
+AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [Additional CL compiler flags.])
+
+# The Clang flags that are used always when compiling OpenCL C code.
+# Note: We use -Wno-format to avoid warnings for printf, where we
+# currently have to use %lld for long arguments (to handle 32-bit
+# architectures).
+FORCED_CLFLAGS="-Xclang -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm -Wno-format"
+AC_DEFINE_UNQUOTED([FORCED_CLFLAGS], 
+["$FORCED_CLFLAGS"], 
+[Always used flags for Clang when compiling OpenCL C code.])
+AC_SUBST([FORCED_CLFLAGS], ["$FORCED_CLFLAGS"])
 
 # TODO: this is duplicated
 LLVM_PROG([OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLVM_OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLC], [llc], [LLVM static compiler])
 LLVM_PROG([LLVM_AS], [llvm-as], [LLVM assembler])
-LLVM_PROG([LLVM_AR], [llvm-ar], [LLVM archiver])
 LLVM_PROG([LLVM_LINK], [llvm-link], [LLVM IR linker])
 
 

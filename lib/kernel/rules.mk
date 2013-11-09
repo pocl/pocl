@@ -58,6 +58,22 @@ vpath %.cc @top_srcdir@/lib/kernel
 vpath %.cl @top_srcdir@/lib/kernel
 vpath %.ll @top_srcdir@/lib/kernel
 
+
+
+# Generate a precompiled header for the built-in function
+# declarations, in case supported by the target.
+
+# Note: the precompiled header must be compiled with the same features
+# as the kernels will be. That is, use exactly the same frontend
+# feature switches. Otherwise it will fail when compiling the kernel
+# against the precompiled header.
+_kernel.h.pch: @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include/_kernel.h
+	@CLANG@ @FORCED_CLFLAGS@ @CLFLAGS@ -Xclang -ffake-address-space-map -c -target ${KERNEL_TARGET} -x cl \
+	-include @top_builddir@/include/${TARGET_DIR}/types.h \
+	-Xclang -emit-pch @top_srcdir@/include/_kernel.h -o _kernel.h.pch 
+
+
+
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
 %.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h

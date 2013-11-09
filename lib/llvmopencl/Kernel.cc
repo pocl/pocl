@@ -162,6 +162,11 @@ verify_no_barriers(const BasicBlock *B)
   return true;
 }
 
+/**
+ * The main entry to the "parallel region formation", phase which search
+ * for the regions between barriers that can be freely parallelized 
+ * across work-items in the work-group.
+ */
 ParallelRegion::ParallelRegionVector *
 Kernel::getParallelRegions(llvm::LoopInfo *LI) {
   ParallelRegion::ParallelRegionVector *parallel_regions =

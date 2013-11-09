@@ -105,7 +105,7 @@ pocl_lib="@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so"
 full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
 # END REMOVE ONCE INSTALLED
 
-llvm-link -o ${linked_bc} ${kernel_bc} ${full_target_dir}/kernel*.bc
+@LLVM_LINK@ -o ${linked_bc} ${kernel_bc} ${full_target_dir}/kernel*.bc
 
 OPT_SWITCH="-O3"
 

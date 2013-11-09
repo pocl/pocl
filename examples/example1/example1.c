@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 
-#define N 4
+#define N 128
 
 extern int exec_dot_product_kernel (const char *program_source, 
 				    int n, void *srcA, void *srcB, void *dst);
@@ -79,7 +79,7 @@ main (void)
   ierr = exec_dot_product_kernel (source, N, srcA, srcB, dst);
   if (ierr) printf ("ERROR\n");
 
-  for (i = 0; i < N; ++i)
+  for (i = 0; i < 4; ++i)
     {
       printf ("(%f, %f, %f, %f) . (%f, %f, %f, %f) = %f\n",
 	      srcA[i].x, srcA[i].y, srcA[i].z, srcA[i].w,

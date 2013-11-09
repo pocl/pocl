@@ -54,7 +54,8 @@ PASSES_SOURCES = Barrier.h						\
 						TargetAddressSpaces.h TargetAddressSpaces.cc \
 						LLVMUtils.cc LLVMUtils.h \
 						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc \
-						AutomaticLocals.cc 
+						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
+						ImplicitConditionalBarriers.h
 
 if USE_LLVM_API
 libllvmpasses_la_SOURCES = ${PASSES_SOURCES}

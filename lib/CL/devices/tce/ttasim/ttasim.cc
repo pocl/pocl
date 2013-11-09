@@ -68,7 +68,7 @@ static void *pocl_ttasim_thread (void *p);
 class TTASimDevice : public TCEDevice {
 public:
   TTASimDevice(cl_device_id dev, const char* adfName) :
-    TCEDevice(dev, adfName), simulator(adfName), 
+    TCEDevice(dev, adfName), simulator(adfName, true), 
     simulatorCLI(simulator.frontend()), debuggerRequested(false),
     shutdownRequested(false), produceStandAloneProgram_(true) {
     char dev_name[256];

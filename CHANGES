@@ -1,16 +1,25 @@
 0.9  unreleased
 ===============
 
-[changes checked from bzr history until 2013-05-23]
-The OpenCL Runtime (OpenCL 1.2 Chapter 5)
------------------------------------------
+[changes checked from bzr history until 2013-10-30]
+
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+Overall
+-------
+- Support most of the piglit CL tests
+
+OpenCL Runtime/Platform API support
+-----------------------------------
 - clCreateImage2D() and clCreateImage3D() implementation moved to 
   clCreateImage()
 - Image creation now uses clCreateBuffer() 
 - clBuildProgram: Propagate the supported -cl* compiler options to Clang's 
   OpenCL frontend. 
 - clFinish: works with commands with event wait lists.
-- Refactored clEnqueue* functions to use pocl_create_event/command() functions.
+- Preliminary support for OpenCL 2.0 blocks
+- Added support for clEnqueueNativeKernel()
 
 Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 ----------------------------------------------------------
@@ -26,11 +35,17 @@ Device Drivers
   * pthread now uses read/write_rect implementation from basic
 - Added fill_rect function to device driver.
 
-Performance
------------
+Performance Improvements
+------------------------
 - kernel compiler now tries to avoid replicating uniform variables,
   this leads to less context data to be saved per work-item and cleaner
   kernel bitcode for later optimizations
+- use a precompiled header for OpenCL C builtin declarations to speed up
+  the kernel compilation
+
+Bugfixes
+--------
+- Correct isequal, isnan, and similar routines
 
 Misc.
 -----
