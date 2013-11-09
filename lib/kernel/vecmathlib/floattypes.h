@@ -26,6 +26,12 @@
 
 namespace vml_std {
   using namespace std;
+  
+  // template<typename T> inline bool vml_isfinite(T x) { return isfinite(x); }
+  // template<typename T> inline bool vml_isinf(T x) { return isinf(x); }
+  // template<typename T> inline bool vml_isnan(T x) { return isnan(x); }
+  // template<typename T> inline bool vml_isnormal(T x) { return isnormal(x); }
+  // template<typename T> inline bool vml_signbit(T x) { return signbit(x); }
 }
 
 
@@ -33,39 +39,19 @@ namespace vml_std {
 #else
 // C++11 is not supported, work around the missing pieces
 
-// <cmath> does not work witha all compilers; e.g. IBM's xlC on a Blue
+// <cmath> does not work with all compilers; e.g. IBM's xlC on a Blue
 // Gene/Q then does not provide macros for isnan, but provides
 // functions instead.
 #include <math.h>
 #include <stdint.h>
 
-#define static_assert(cond, msg)
-
-
-
-namespace vml_std {
-  
-  // Make some type definitions from stdint.h available in std
-  typedef ::uint8_t uint8_t;
-  typedef ::int8_t int8_t;
-  typedef ::uint16_t uint16_t;
-  typedef ::int16_t int16_t;
-  typedef ::uint32_t uint32_t;
-  typedef ::int32_t int32_t;
-#if __SIZEOF_LONG__ == 8
-  // Even if both "long" and "long long" have the same size, they are
-  // still different types. In many cases, it is then preferable to
-  // use "long" instead of "long long" in this case.
-  typedef unsigned long uint64_t;
-  typedef long int64_t;
-#else
-  typedef ::uint64_t uint64_t;
-  typedef ::int64_t int64_t;
+#ifndef static_assert
+#  define static_assert(cond, msg)
 #endif
-  
-  
-  
-  // Capture macros into functions, then undefine the macros
+
+
+
+// Capture libc macros, then undefine them
 #ifndef isfinite
 #  error "isfinite is not a macro"
 #endif
@@ -81,18 +67,45 @@ namespace vml_std {
 #ifndef signbit
 #  error "signbit is not a macro"
 #endif
-  namespace {
-    template<typename T> inline int libc_isfinite(T x) { return isfinite(x); }
-    template<typename T> inline int libc_isinf(T x) { return isinf(x); }
-    template<typename T> inline int libc_isnan(T x) { return isnan(x); }
-    template<typename T> inline int libc_isnormal(T x) { return isnormal(x); }
-    template<typename T> inline int libc_signbit(T x) { return signbit(x); }
-  }
+
+namespace {
+  template<typename T> inline int libc_isfinite(T x) { return isfinite(x); }
+  template<typename T> inline int libc_isinf(T x) { return isinf(x); }
+  template<typename T> inline int libc_isnan(T x) { return isnan(x); }
+  template<typename T> inline int libc_isnormal(T x) { return isnormal(x); }
+  template<typename T> inline int libc_signbit(T x) { return signbit(x); }
+}
+
+// Include this before undefining the macros below
+#include <cmath>
+
 #undef isfinite
 #undef isinf
-#undef isnan
+#undef isnon
 #undef isnormal
 #undef signbit
+
+
+
+namespace vml_std {
+  
+  // Make some type definitions from stdint.h available in std
+  typedef ::uint8_t uint8_t;
+  typedef ::int8_t int8_t;
+  typedef ::uint16_t uint16_t;
+  typedef ::int16_t int16_t;
+  typedef ::uint32_t uint32_t;
+  typedef ::int32_t int32_t;
+#if __SIZEOF_LONG__ == 8
+  // Even if both "long" and "long long" have the same size, they are
+  // still different types. In many cases, it is then preferable to
+  // use "long" instead of "long long".
+  typedef unsigned long uint64_t;
+  typedef long int64_t;
+#else
+  typedef ::uint64_t uint64_t;
+  typedef ::int64_t int64_t;
+#endif
   
   
   
