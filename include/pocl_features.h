@@ -3,10 +3,11 @@
 // LLVM always supports fp16 (aka half)
 #define cl_khr_fp16
 
-// Is long supported?
+// Is long supported in OpenCL C?
 // Note: The definitions of "long" below differs between languages. We
-// therefore need to check "long long" as well.
-#if __SIZEOF_LONG__ == 8 || __SIZEOF_LONG_LONG__ == 8
+// therefore need to check "long long" as well when compiling OpenCL
+// C.
+#if __SIZEOF_LONG__ == 8 || (defined __OPENCL_VERSION__ && __SIZEOF_LONG_LONG__ == 8)
 #  define cl_khr_int64
 #else
 #  undef cl_khr_int64

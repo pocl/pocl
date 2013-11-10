@@ -662,6 +662,11 @@ CXXFLAGS=$old_CXXFLAGS
 
 fi
 
+# Define the OpenCL version when compiling OpenCL C code. This also
+# serves as indicator for the OpenCL C language, similar to
+# __cplusplus for C++.
+CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=110"
+
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
