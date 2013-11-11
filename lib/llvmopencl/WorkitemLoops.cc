@@ -63,15 +63,15 @@
 #include <sstream>
 #include <vector>
 
-//#define DUMP_RESULT_CFG
+//#define DUMP_CFGS
 
-#ifdef DUMP_RESULT_CFG
-#include "llvm/Analysis/CFGPrinter.h"
-#endif
+#include "DebugHelpers.h"
 
 //#define DEBUG_WORK_ITEM_LOOPS
 
 #include "VariableUniformityAnalysis.h"
+
+#define CONTEXT_ARRAY_ALIGN 64
 
 using namespace llvm;
 using namespace pocl;
@@ -122,14 +122,17 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   std::cerr << "### original:" << std::endl;
+  chopBBs(F, *this);
   F.viewCFG();
 #endif
+//  F.viewCFGOnly();
 
   bool changed = ProcessFunction(F);
-#ifdef DUMP_RESULT_CFG
-  FunctionPass* cfgPrinter = createCFGOnlyPrinterPass();
-  cfgPrinter->runOnFunction(F);
-#endif  
+
+#ifdef DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", 
+          original_parallel_regions);
+#endif
 
 #if 0
   std::cerr << "### after:" << std::endl;
@@ -140,30 +143,7 @@ WorkitemLoops::runOnFunction(Function &F)
 
 #if 0
   /* Split large BBs so we can print the Dot without it crashing. */
-  bool fchanged = false;
-  const int MAX_INSTRUCTIONS_PER_BB = 70;
-  do {
-    fchanged = false;
-    for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      BasicBlock *b = i;
-      
-      if (b->size() > MAX_INSTRUCTIONS_PER_BB + 1)
-        {
-          int count = 0;
-          BasicBlock::iterator splitPoint = b->begin();
-          while (count < MAX_INSTRUCTIONS_PER_BB || isa<PHINode>(splitPoint))
-            {
-              ++splitPoint;
-              ++count;
-            }
-          SplitBlock(b, splitPoint, this);
-          fchanged = true;
-          break;
-        }
-    }  
-
-  } while (fchanged);
-
+  changed |= chopBBs(F, *this);
   F.viewCFG();
 #endif
 
@@ -366,6 +346,12 @@ WorkitemLoops::ProcessFunction(Function &F)
   original_parallel_regions =
     K->getParallelRegions(LI);
 
+#ifdef DUMP_CFGS
+  F.dump();
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", 
+          original_parallel_regions);
+#endif
+
   IRBuilder<> builder(F.getEntryBlock().getFirstInsertionPt());
   localIdXFirstVar = 
     builder.CreateAlloca
@@ -375,7 +361,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
 #if 0
   std::cerr << "### Original" << std::endl;
-  F.viewCFG();
+  F.viewCFGOnly();
 #endif
 
 #if 0
@@ -621,11 +607,14 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
             {
               Instruction *user;
               if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
-              // if the instruction is used outside this region inside another
+              // If the instruction is used outside this region inside another
               // region (not in a regionless BB like the B-loop construct BBs),
               // need to context save it.
-              if (instructionsInRegion.find(user) == instructionsInRegion.end() &&
-                  RegionOfBlock(user->getParent()) != NULL)
+              // Allocas (private arrays) should be privatized always. Otherwise
+              // we end up reading the same array, but replicating the GEP to that.
+              if (isa<AllocaInst>(instruction) || 
+                  (instructionsInRegion.find(user) == instructionsInRegion.end() &&
+                   RegionOfBlock(user->getParent()) != NULL))
                 {
                   instructionsToFix.push_back(instruction);
                   break;
@@ -786,12 +775,23 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
     {
       elementType = instruction->getType();
     }
+
+  /* 3D context array. */
   llvm::Type *contextArrayType = 
-    ArrayType::get(ArrayType::get(ArrayType::get(elementType, LocalSizeX), LocalSizeY), LocalSizeZ);
+    ArrayType::get(
+        ArrayType::get(
+            ArrayType::get(
+                elementType, LocalSizeX), 
+            LocalSizeY), LocalSizeZ);
 
   /* Allocate the context data array for the variable. */
-  llvm::Instruction *alloca = 
+  llvm::AllocaInst *alloca = 
     builder.CreateAlloca(contextArrayType, 0, varName);
+  /* Align the context arrays to stack to enable wide vectors
+     accesses to them. Also, LLVM 3.3 seems to produce illegal
+     code at least with Core i5 when aligned only at the element
+     size. */
+  alloca->setAlignment(CONTEXT_ARRAY_ALIGN);
 
   contextArrays[varName] = alloca;
   return alloca;
@@ -939,7 +939,7 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
        variable to each work item and hope the latter optimizations
        reduce them back to a single induction variable outside the
        parallel loop.   
-*/
+    */
     if (!VUA.shouldBePrivatized(instr->getParent()->getParent(), instr)) {
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### based on VUA, not context saving:";
@@ -961,7 +961,7 @@ WorkitemLoops::AppendIncBlock
   assert (oldExit != NULL);
 
   llvm::BasicBlock *forIncBB = 
-    BasicBlock::Create(C, "pregion.for.inc", after->getParent());
+    BasicBlock::Create(C, "pregion_for_inc", after->getParent());
 
   after->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
 

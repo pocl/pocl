@@ -46,13 +46,14 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo '  [$(PACKAGE_URL)])'; \
 	} >'$(srcdir)/package.m4'
 
+TESTSUITE = $(srcdir)/testsuite
+
 EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at \
 	testsuite-rodinia.at testsuite-tce.at testsuite-runtime.at \
 	testsuite-workgroup.at testsuite-parboil.at testsuite-amd.at \
 	testsuite-vexcl.at testsuite-piglit.at $(srcdir)/package.m4 \
 	$(TESTSUITE) atlocal.in
 DISTCLEANFILES = atconfig
-TESTSUITE = $(srcdir)/testsuite
 
 check-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)

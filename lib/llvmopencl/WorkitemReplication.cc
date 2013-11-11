@@ -139,7 +139,8 @@ WorkitemReplication::ProcessFunction(Function &F)
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
 
-  std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(workitem_count);
+  std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(
+      workitem_count);
 
   parallel_regions[0] = *original_parallel_regions;
 
@@ -164,7 +165,8 @@ WorkitemReplication::ProcessFunction(Function &F)
 #endif
 
   for (SmallVector<ParallelRegion *, 8>::iterator
-         i = original_parallel_regions->begin(), e = original_parallel_regions->end();
+         i = original_parallel_regions->begin(), 
+           e = original_parallel_regions->end();
        i != e; ++i) {
     ParallelRegion *pr = (*i);
     

@@ -32,7 +32,7 @@ uncertainties (was: Portable OpenCL). It's still pronounced "pogle"! :)</p>
 
 <p>The source package, the change log, and the release annoucement are <a href="/downloads">here</a>.</p> 
 
-<h1>Current status (2013-01-01)</h1>
+<h1>Current status (updated: 2013-11-10)</h1>
 
 <p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
 unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new tested applications.</p>
@@ -46,8 +46,10 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li><a href="http://lava.cs.virginia.edu/Rodinia/download_links.htm">Rodinia</a> 2.0.1</li>
   <li><a href="http://impact.crhc.illinois.edu/parboil.aspx">Parboil</a> Benchmarks (most of them)</a>
   <li><a href="https://code.google.com/p/opencl-book-samples/">OpenCL Programming Guide</a> book samples (most of them)</a>
-  <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.8</a> OpenCL samples (most of them)</a>
+  <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.8</a> 
+  OpenCL samples (most of them)</a>
   <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
+  <li><a href="http://piglit.freedesktop.org/">piglit (97%+ of the tests pass)</a>
 </ul>
 
 <p>pocl has been tested on the following platforms <a href="http://llvm.org/docs/GettingStarted.html#hardware">supported by LLVM</a>:</p>
@@ -60,9 +62,20 @@ unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new te
   <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> in heterogeneous host-device setups.</li>
 </ul>
   
-<h1>Feature highlights (2013-01-01)</h1>
+<h1>Feature highlights (updated: 2013-11-10)</h1>
 <ul>
-  <li>icd support</li>
-  <li>configurable list of devices</li>
-  <li>two ways to generate work-group code: work-item loops and full work-item replication</li>
+  <li>portable kernel compiler with horizontal autovectorization of work-groups (experimental)</li>
+  <li>efficient math built-in libraries</li>
+  <li>core APIs implemented in C for improved portability to bare bone machines</li>
+  <li>ICD support</li>
 </ul>
+
+<br />
+<hr />
+<p align="center">
+
+<a class="twitter-timeline"  href="https://twitter.com/portablecl"  data-widget-id="399622661979918336">Tweets from @portablecl</a>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
+</p>
+
