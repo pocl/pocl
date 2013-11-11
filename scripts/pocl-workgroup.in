@@ -78,7 +78,7 @@ esac
 
 case $target in
   tce*)     CLANG_FLAGS="@HOST_CLANG_FLAGS@"
-            LLC_FLAGS="@HOST_LLC_FLAGS@"
+            LLC_FLAGS=""
             LD_FLAGS="@HOST_LD_FLAGS@";;
   @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
             LLC_FLAGS="@HOST_LLC_FLAGS@"
