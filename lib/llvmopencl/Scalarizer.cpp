@@ -184,6 +184,12 @@ private:
 char Scalarizer::ID = 0;
 } // end anonymous namespace
 
+namespace {
+  static
+  RegisterPass<Scalarizer> X("scalarizer", 
+                             "Scalarize vector code.");
+}
+
 // Overrides the TargetTransformInfo preference.
 static cl::opt<bool> EnableScalarizer
   ("enable-scalarizer", cl::Hidden, cl::init(false),

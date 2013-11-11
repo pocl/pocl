@@ -55,7 +55,7 @@ PASSES_SOURCES = Barrier.h						\
 						LLVMUtils.cc LLVMUtils.h \
 						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc \
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
-						ImplicitConditionalBarriers.h DecomposeVectors.cpp \
+						ImplicitConditionalBarriers.h Scalarizer.cpp \
 						DebugHelpers.h DebugHelpers.cc
 
 if USE_LLVM_API

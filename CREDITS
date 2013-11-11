@@ -23,4 +23,4 @@ Peter Colberg
 Mikael Lepistö
 Clément Léger
 Logan Chien
-Richard Sandiford (DecomposeVectors.cpp)
+Richard Sandiford (Scalarizer.cpp)
