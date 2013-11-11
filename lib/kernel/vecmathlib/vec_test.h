@@ -59,7 +59,7 @@ namespace vecmathlib {
     booltestvec(bool const* as) { for (int d=0; d<size; ++d) v[d]=as[d]; }
     
     bool operator[](int n) const { return v[n]; }
-    booltestvec& set_elt(int n, bool a) { return v[n]=a, *this; }
+    boolvec_t& set_elt(int n, bool a) { return v[n]=a, *this; }
     
     
     
@@ -68,34 +68,34 @@ namespace vecmathlib {
     
     
     
-    booltestvec operator!() const
+    boolvec_t operator!() const
     {
-      booltestvec res;
+      boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = !v[d];
       return res;
     }
     
-    booltestvec operator&&(booltestvec x) const
+    boolvec_t operator&&(boolvec_t x) const
     {
-      booltestvec res;
+      boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] && x.v[d];
       return res;
     }
-    booltestvec operator||(booltestvec x) const
+    boolvec_t operator||(boolvec_t x) const
     {
-      booltestvec res;
+      boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] || x.v[d];
       return res;
     }
-    booltestvec operator==(booltestvec x) const
+    boolvec_t operator==(boolvec_t x) const
     {
-      booltestvec res;
+      boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] == x.v[d];
       return res;
     }
-    booltestvec operator!=(booltestvec x) const
+    boolvec_t operator!=(boolvec_t x) const
     {
-      booltestvec res;
+      boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] != x.v[d];
       return res;
     }
@@ -161,15 +161,15 @@ namespace vecmathlib {
     //inttestvec(vector_t x): v(x) {}
     inttestvec(int_t a) { for (int d=0; d<size; ++d) v[d]=a; }
     inttestvec(int_t const* as) { for (int d=0; d<size; ++d) v[d]=as[d]; }
-    static inttestvec iota()
+    static intvec_t iota()
     {
-      inttestvec res;
+      intvec_t res;
       for (int d=0; d<size; ++d) res.v[d]=d;
       return res;
     }
     
     int_t operator[](int n) const { return v[n]; }
-    inttestvec& set_elt(int n, int_t a) { return v[n]=a, *this; }
+    intvec_t& set_elt(int n, int_t a) { return v[n]=a, *this; }
     
     
     
@@ -186,213 +186,221 @@ namespace vecmathlib {
     
     
     
-    inttestvec operator+() const
+    intvec_t operator+() const
     {
-      inttestvec res;
+      intvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = + v[d];
       return res;
     }
-    inttestvec operator-() const
+    intvec_t operator-() const
     {
-      inttestvec res;
+      intvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = - v[d];
       return res;
     }
     
-    inttestvec& operator+=(inttestvec const& x)
+    intvec_t& operator+=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] += x.v[d];
       return *this;
     }
-    inttestvec& operator-=(inttestvec const& x)
+    intvec_t& operator-=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] -= x.v[d];
       return *this;
     }
-    inttestvec& operator*=(inttestvec const& x)
+    intvec_t& operator*=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] *= x.v[d];
       return *this;
     }
-    inttestvec& operator/=(inttestvec const& x)
+    intvec_t& operator/=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] /= x.v[d];
       return *this;
     }
-    inttestvec& operator%=(inttestvec const& x)
+    intvec_t& operator%=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] %= x.v[d];
       return *this;
     }
     
-    inttestvec operator+(inttestvec x) const
+    intvec_t operator+(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res += x;
     }
-    inttestvec operator-(inttestvec x) const
+    intvec_t operator-(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res -= x;
     }
-    inttestvec operator*(inttestvec x) const
+    intvec_t operator*(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res *= x;
     }
-    inttestvec operator/(inttestvec x) const
+    intvec_t operator/(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res /= x;
     }
-    inttestvec operator%(inttestvec x) const
+    intvec_t operator%(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res %= x;
     }
     
     
     
-    inttestvec operator~() const
+    intvec_t operator~() const
     {
-      inttestvec res;
+      intvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = ~ v[d];
       return res;
     }
     
-    inttestvec& operator&=(inttestvec const& x)
+    intvec_t& operator&=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] &= x.v[d];
       return *this;
     }
-    inttestvec& operator|=(inttestvec const& x)
+    intvec_t& operator|=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] |= x.v[d];
       return *this;
     }
-    inttestvec& operator^=(inttestvec const& x)
+    intvec_t& operator^=(intvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] ^= x.v[d];
       return *this;
     }
     
-    inttestvec operator&(inttestvec x) const
+    intvec_t operator&(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res &= x;
     }
-    inttestvec operator|(inttestvec x) const
+    intvec_t operator|(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res |= x;
     }
-    inttestvec operator^(inttestvec x) const
+    intvec_t operator^(intvec_t x) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res ^= x;
     }
     
-    
-    
-    inttestvec lsr(int_t n) const
+    intvec_t bitifthen(intvec_t x, intvec_t y) const
     {
-      inttestvec res;
+      return MF::vml_bitifthen(*this, x, y);
+    }
+    
+    
+    
+    intvec_t lsr(int_t n) const
+    {
+      intvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = I(U(v[d]) >> U(n));
       return res;
     }
-    inttestvec& operator>>=(int_t n)
+    intvec_t rotate(int_t n) const { return MF::vml_rotate(*this, n); }
+    intvec_t& operator>>=(int_t n)
     {
       for (int d=0; d<size; ++d) v[d] >>= n;
       return *this;
     }
-    inttestvec& operator<<=(int_t n)
+    intvec_t& operator<<=(int_t n)
     {
       for (int d=0; d<size; ++d) v[d] <<= n;
       return *this;
     }
-    inttestvec operator>>(int_t n) const
+    intvec_t operator>>(int_t n) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res >>= n;
     }
-    inttestvec operator<<(int_t n) const
+    intvec_t operator<<(int_t n) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res <<= n;
     }
     
-    inttestvec lsr(inttestvec n) const
+    intvec_t lsr(intvec_t n) const
     {
-      inttestvec res;
+      intvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = I(U(v[d]) >> U(n.v[d]));
       return res;
     }
-    inttestvec& operator>>=(inttestvec n)
+    intvec_t rotate(intvec_t n) const { return MF::vml_rotate(*this, n); }
+    intvec_t& operator>>=(intvec_t n)
     {
       for (int d=0; d<size; ++d) v[d] >>= n.v[d];
       return *this;
     }
-    inttestvec& operator<<=(inttestvec n)
+    intvec_t& operator<<=(intvec_t n)
     {
       for (int d=0; d<size; ++d) v[d] <<= n.v[d];
       return *this;
     }
-    inttestvec operator>>(inttestvec n) const
+    intvec_t operator>>(intvec_t n) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res >>= n;
     }
-    inttestvec operator<<(inttestvec n) const
+    intvec_t operator<<(intvec_t n) const
     {
-      inttestvec res = *this;
+      intvec_t res = *this;
       return res <<= n;
     }
     
+    intvec_t clz() const { return MF::vml_clz(*this); }
+    intvec_t popcount() const { return MF::vml_popcount(*this); }
     
     
-    boolvec_t signbit() const
-    {
-      boolvec_t res;
-      for (int d=0; d<size; ++d) res.set_elt(d, v[d] < 0);
-      return res;
-    }
     
-    boolvec_t operator==(inttestvec const& x) const
+    boolvec_t operator==(intvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] == x.v[d];
       return res;
     }
-    boolvec_t operator!=(inttestvec const& x) const
+    boolvec_t operator!=(intvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] != x.v[d];
       return res;
     }
-    boolvec_t operator<(inttestvec const& x) const
+    boolvec_t operator<(intvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] < x.v[d];
       return res;
     }
-    boolvec_t operator<=(inttestvec const& x) const
+    boolvec_t operator<=(intvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] <= x.v[d];
       return res;
     }
-    boolvec_t operator>(inttestvec const& x) const
+    boolvec_t operator>(intvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] > x.v[d];
       return res;
     }
-    boolvec_t operator>=(inttestvec const& x) const
+    boolvec_t operator>=(intvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] >= x.v[d];
       return res;
     }
+    
+    intvec_t abs() const { return MF::vml_abs(*this); }
+    boolvec_t isignbit() const { return MF::vml_isignbit(*this); }
+    intvec_t max(intvec_t x) const { return MF::vml_max(*this, x); }
+    intvec_t min(intvec_t x) const { return MF::vml_min(*this, x); }
   };
   
   
@@ -475,7 +483,7 @@ namespace vecmathlib {
     realtestvec(real_t const* as) { for (int d=0; d<size; ++d) v[d]=as[d]; }
     
     real_t operator[](int n) const { return v[n]; }
-    realtestvec& set_elt(int n, real_t a) { return v[n]=a, *this; }
+    realvec_t& set_elt(int n, real_t a) { return v[n]=a, *this; }
     
     
     
@@ -551,71 +559,71 @@ namespace vecmathlib {
     
     
     
-    realtestvec operator+() const
+    realvec_t operator+() const
     {
-      realtestvec res;
+      realvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = + v[d];
       return res;
     }
-    realtestvec operator-() const
+    realvec_t operator-() const
     {
-      realtestvec res;
+      realvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = - v[d];
       return res;
     }
     
-    realtestvec& operator+=(realtestvec const& x)
+    realvec_t& operator+=(realvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] += x.v[d];
       return *this;
     }
-    realtestvec& operator-=(realtestvec const& x)
+    realvec_t& operator-=(realvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] -= x.v[d];
       return *this;
     }
-    realtestvec& operator*=(realtestvec const& x)
+    realvec_t& operator*=(realvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] *= x.v[d];
       return *this;
     }
-    realtestvec& operator/=(realtestvec const& x)
+    realvec_t& operator/=(realvec_t const& x)
     {
       for (int d=0; d<size; ++d) v[d] /= x.v[d];
       return *this;
     }
     
-    realtestvec operator+(realtestvec x) const
+    realvec_t operator+(realvec_t x) const
     {
-      realtestvec res = *this;
+      realvec_t res = *this;
       return res += x;
     }
-    realtestvec operator-(realtestvec x) const
+    realvec_t operator-(realvec_t x) const
     {
-      realtestvec res = *this;
+      realvec_t res = *this;
       return res -= x;
     }
-    realtestvec operator*(realtestvec x) const
+    realvec_t operator*(realvec_t x) const
     {
-      realtestvec res = *this;
+      realvec_t res = *this;
       return res *= x;
     }
-    realtestvec operator/(realtestvec x) const
+    realvec_t operator/(realvec_t x) const
     {
-      realtestvec res = *this;
+      realvec_t res = *this;
       return res /= x;
     }
     
     real_t maxval() const
     {
       real_t res = v[0];
-      for (int d=1; d<size; ++d) res = std::fmax(res, v[d]);
+      for (int d=1; d<size; ++d) res = vml_std::fmax(res, v[d]);
       return res;
     }
     real_t minval() const
     {
       real_t res = v[0];
-      for (int d=1; d<size; ++d) res = std::fmin(res, v[d]);
+      for (int d=1; d<size; ++d) res = vml_std::fmin(res, v[d]);
       return res;
     }
     real_t prod() const
@@ -633,37 +641,37 @@ namespace vecmathlib {
     
     
     
-    boolvec_t operator==(realtestvec const& x) const
+    boolvec_t operator==(realvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] == x.v[d];
       return res;
     }
-    boolvec_t operator!=(realtestvec const& x) const
+    boolvec_t operator!=(realvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] != x.v[d];
       return res;
     }
-    boolvec_t operator<(realtestvec const& x) const
+    boolvec_t operator<(realvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] < x.v[d];
       return res;
     }
-    boolvec_t operator<=(realtestvec const& x) const
+    boolvec_t operator<=(realvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] <= x.v[d];
       return res;
     }
-    boolvec_t operator>(realtestvec const& x) const
+    boolvec_t operator>(realvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] > x.v[d];
       return res;
     }
-    boolvec_t operator>=(realtestvec const& x) const
+    boolvec_t operator>=(realvec_t const& x) const
     {
       boolvec_t res;
       for (int d=0; d<size; ++d) res.v[d] = v[d] >= x.v[d];
@@ -672,68 +680,68 @@ namespace vecmathlib {
     
     
     
-    realtestvec acos() const { return MF::vml_acos(*this); }
-    realtestvec acosh() const { return MF::vml_acosh(*this); }
-    realtestvec asin() const { return MF::vml_asin(*this); }
-    realtestvec asinh() const { return MF::vml_asinh(*this); }
-    realtestvec atan() const { return MF::vml_atan(*this); }
-    realtestvec atan2(realtestvec y) const { return MF::vml_atan2(*this, y); }
-    realtestvec atanh() const { return MF::vml_atanh(*this); }
-    realtestvec cbrt() const { return MF::vml_cbrt(*this); }
-    realtestvec ceil() const { return MF::vml_ceil(*this); }
-    realtestvec copysign(realtestvec y) const
+    realvec_t acos() const { return MF::vml_acos(*this); }
+    realvec_t acosh() const { return MF::vml_acosh(*this); }
+    realvec_t asin() const { return MF::vml_asin(*this); }
+    realvec_t asinh() const { return MF::vml_asinh(*this); }
+    realvec_t atan() const { return MF::vml_atan(*this); }
+    realvec_t atan2(realvec_t y) const { return MF::vml_atan2(*this, y); }
+    realvec_t atanh() const { return MF::vml_atanh(*this); }
+    realvec_t cbrt() const { return MF::vml_cbrt(*this); }
+    realvec_t ceil() const { return MF::vml_ceil(*this); }
+    realvec_t copysign(realvec_t y) const
     {
       return MF::vml_copysign(*this, y);
     }
-    realtestvec cos() const { return MF::vml_cos(*this); }
-    realtestvec cosh() const { return MF::vml_cosh(*this); }
-    realtestvec exp() const { return MF::vml_exp(*this); }
-    realtestvec exp10() const { return MF::vml_exp10(*this); }
-    realtestvec exp2() const { return MF::vml_exp2(*this); }
-    realtestvec expm1() const { return MF::vml_expm1(*this); }
-    realtestvec fabs() const { return MF::vml_fabs(*this); }
-    realtestvec fdim(realtestvec y) const { return MF::vml_fdim(*this, y); }
-    realtestvec floor() const { return MF::vml_floor(*this); }
-    realtestvec fma(realtestvec y, realtestvec z) const 
+    realvec_t cos() const { return MF::vml_cos(*this); }
+    realvec_t cosh() const { return MF::vml_cosh(*this); }
+    realvec_t exp() const { return MF::vml_exp(*this); }
+    realvec_t exp10() const { return MF::vml_exp10(*this); }
+    realvec_t exp2() const { return MF::vml_exp2(*this); }
+    realvec_t expm1() const { return MF::vml_expm1(*this); }
+    realvec_t fabs() const { return MF::vml_fabs(*this); }
+    realvec_t fdim(realvec_t y) const { return MF::vml_fdim(*this, y); }
+    realvec_t floor() const { return MF::vml_floor(*this); }
+    realvec_t fma(realvec_t y, realvec_t z) const
     {
       return MF::vml_fma(*this, y, z);
     }
-    realtestvec fmax(realtestvec y) const { return MF::vml_fmax(*this, y); }
-    realtestvec fmin(realtestvec y) const { return MF::vml_fmin(*this, y); }
-    realtestvec fmod(realtestvec y) const { return MF::vml_fmod(*this, y); }
-    realtestvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
-    realtestvec hypot(realtestvec y) const { return MF::vml_hypot(*this, y); }
+    realvec_t fmax(realvec_t y) const { return MF::vml_fmax(*this, y); }
+    realvec_t fmin(realvec_t y) const { return MF::vml_fmin(*this, y); }
+    realvec_t fmod(realvec_t y) const { return MF::vml_fmod(*this, y); }
+    realvec_t frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
+    realvec_t hypot(realvec_t y) const { return MF::vml_hypot(*this, y); }
     intvec_t ilogb() const { return MF::vml_ilogb(*this); }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }
     boolvec_t isinf() const { return MF::vml_isinf(*this); }
     boolvec_t isnan() const { return MF::vml_isnan(*this); }
     boolvec_t isnormal() const { return MF::vml_isnormal(*this); }
-    realtestvec ldexp(int_t n) const { return MF::vml_ldexp(*this, n); }
-    realtestvec ldexp(intvec_t n) const { return MF::vml_ldexp(*this, n); }
-    realtestvec log() const { return MF::vml_log(*this); }
-    realtestvec log10() const { return MF::vml_log10(*this); }
-    realtestvec log1p() const { return MF::vml_log1p(*this); }
-    realtestvec log2() const { return MF::vml_log2(*this); }
-    realtestvec nextafter(realtestvec y) const
+    realvec_t ldexp(int_t n) const { return MF::vml_ldexp(*this, n); }
+    realvec_t ldexp(intvec_t n) const { return MF::vml_ldexp(*this, n); }
+    realvec_t log() const { return MF::vml_log(*this); }
+    realvec_t log10() const { return MF::vml_log10(*this); }
+    realvec_t log1p() const { return MF::vml_log1p(*this); }
+    realvec_t log2() const { return MF::vml_log2(*this); }
+    realvec_t nextafter(realvec_t y) const
     {
       return MF::vml_nextafter(*this, y);
     }
-    realtestvec pow(realtestvec y) const { return MF::vml_pow(*this, y); }
-    realtestvec rcp() const { return MF::vml_rcp(*this); }
-    realtestvec remainder(realtestvec y) const
+    realvec_t pow(realvec_t y) const { return MF::vml_pow(*this, y); }
+    realvec_t rcp() const { return MF::vml_rcp(*this); }
+    realvec_t remainder(realvec_t y) const
     {
       return MF::vml_remainder(*this, y);
     }
-    realtestvec rint() const { return MF::vml_rint(*this); }
-    realtestvec round() const { return MF::vml_round(*this); }
-    realtestvec rsqrt() const { return MF::vml_rsqrt(*this); }
+    realvec_t rint() const { return MF::vml_rint(*this); }
+    realvec_t round() const { return MF::vml_round(*this); }
+    realvec_t rsqrt() const { return MF::vml_rsqrt(*this); }
     boolvec_t signbit() const { return MF::vml_signbit(*this); }
-    realtestvec sin() const { return MF::vml_sin(*this); }
-    realtestvec sinh() const { return MF::vml_sinh(*this); }
-    realtestvec sqrt() const { return MF::vml_sqrt(*this); }
-    realtestvec tan() const { return MF::vml_tan(*this); }
-    realtestvec tanh() const { return MF::vml_tanh(*this); }
-    realtestvec trunc() const { return MF::vml_trunc(*this); }
+    realvec_t sin() const { return MF::vml_sin(*this); }
+    realvec_t sinh() const { return MF::vml_sinh(*this); }
+    realvec_t sqrt() const { return MF::vml_sqrt(*this); }
+    realvec_t tan() const { return MF::vml_tan(*this); }
+    realvec_t tanh() const { return MF::vml_tanh(*this); }
+    realvec_t trunc() const { return MF::vml_trunc(*this); }
   };
   
   
@@ -742,14 +750,16 @@ namespace vecmathlib {
   
   template<typename T, int N>
   inline
-  typename booltestvec<T,N>::intvec_t booltestvec<T,N>::as_int() const
+  typename booltestvec<T,N>::intvec_t
+  booltestvec<T,N>::as_int() const
   {
     return convert_int();
   }
   
   template<typename T, int N>
   inline
-  typename booltestvec<T,N>::intvec_t booltestvec<T,N>::convert_int() const
+  typename booltestvec<T,N>::intvec_t
+  booltestvec<T,N>::convert_int() const
   {
     intvec_t res;
     for (int d=0; d<size; ++d) res.v[d] = v[d];
@@ -792,7 +802,8 @@ namespace vecmathlib {
   
   template<typename T, int N>
   inline
-  typename inttestvec<T,N>::realvec_t inttestvec<T,N>::as_float() const
+  typename inttestvec<T,N>::realvec_t
+  inttestvec<T,N>::as_float() const
   {
     realvec_t res;
     for (int d=0; d<size; ++d) res.v[d] = FP::as_float(v[d]);
@@ -801,7 +812,8 @@ namespace vecmathlib {
   
   template<typename T, int N>
   inline
-  typename inttestvec<T,N>::realvec_t inttestvec<T,N>::convert_float() const
+  typename inttestvec<T,N>::realvec_t
+  inttestvec<T,N>::convert_float() const
   {
     return MF::vml_convert_float(*this);
   }
@@ -813,13 +825,15 @@ namespace vecmathlib {
   // booltestvec wrappers
   
   template<typename real_t, int size>
-  inline inttestvec<real_t, size> as_int(booltestvec<real_t, size> x)
+  inline
+  inttestvec<real_t, size> as_int(booltestvec<real_t, size> x)
   {
     return x.as_int();
   }
   
   template<typename real_t, int size>
-  inline inttestvec<real_t, size> convert_int(booltestvec<real_t, size> x)
+  inline
+  inttestvec<real_t, size> convert_int(booltestvec<real_t, size> x)
   {
     return x.convert_int();
   }
@@ -862,15 +876,15 @@ namespace vecmathlib {
   // inttestvec wrappers
   
   template<typename real_t, int size>
-  inline booltestvec<real_t, size> as_bool(inttestvec<real_t, size> x)
+  inline inttestvec<real_t, size> abs(inttestvec<real_t, size> x)
   {
-    return x.as_bool();
+    return x.abs();
   }
   
   template<typename real_t, int size>
-  inline booltestvec<real_t, size> convert_bool(inttestvec<real_t, size> x)
+  inline booltestvec<real_t, size> as_bool(inttestvec<real_t, size> x)
   {
-    return x.convert_bool();
+    return x.as_bool();
   }
   
   template<typename real_t, int size>
@@ -880,9 +894,36 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
+  inline
+  inttestvec<real_t, size> bitifthen(inttestvec<real_t, size> x,
+                                     inttestvec<real_t, size> y,
+                                     inttestvec<real_t, size> z)
+  {
+    return x.bitifthen(y, z);
+  }
+  
+  template<typename real_t, int size>
+  inline inttestvec<real_t, size> clz(inttestvec<real_t, size> x)
+  {
+    return x.clz();
+  }
+  
+  template<typename real_t, int size>
+  inline booltestvec<real_t, size> convert_bool(inttestvec<real_t, size> x)
+  {
+    return x.convert_bool();
+  }
+  
+  template<typename real_t, int size>
   inline realtestvec<real_t, size> convert_float(inttestvec<real_t, size> x)
   {
     return x.convert_float();
+  }
+  
+  template<typename real_t, int size>
+  inline booltestvec<real_t, size> isignbit(inttestvec<real_t, size> x)
+  {
+    return x.isignbit();
   }
   
   template<typename real_t, int size>
@@ -894,16 +935,50 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
-  inline inttestvec<real_t, size> lsr(inttestvec<real_t, size> x,
-                                      inttestvec<real_t, size> n)
+  inline
+  inttestvec<real_t, size> lsr(inttestvec<real_t, size> x,
+                               inttestvec<real_t, size> n)
   {
     return x.lsr(n);
   }
   
   template<typename real_t, int size>
-  inline booltestvec<real_t, size> signbit(inttestvec<real_t, size> x)
+  inline
+  inttestvec<real_t, size> max(inttestvec<real_t, size> x,
+                               inttestvec<real_t, size> y)
   {
-    return x.signbit();
+    return x.max(y);
+  }
+  
+  template<typename real_t, int size>
+  inline
+  inttestvec<real_t, size> min(inttestvec<real_t, size> x,
+                               inttestvec<real_t, size> y)
+  {
+    return x.min(y);
+  }
+  
+  template<typename real_t, int size>
+  inline
+  inttestvec<real_t, size> popcount(inttestvec<real_t, size> x)
+  {
+    return x.popcount();
+  }
+  
+  template<typename real_t, int size>
+  inline
+  inttestvec<real_t, size> rotate(inttestvec<real_t, size> x,
+                                  typename inttestvec<real_t, size>::int_t n)
+  {
+    return x.rotate(n);
+  }
+  
+  template<typename real_t, int size>
+  inline
+  inttestvec<real_t, size> rotate(inttestvec<real_t, size> x,
+                                  inttestvec<real_t, size> n)
+  {
+    return x.rotate(n);
   }
   
   
@@ -911,7 +986,8 @@ namespace vecmathlib {
   // realtestvec wrappers
   
   template<typename real_t, int size>
-  inline realtestvec<real_t, size>
+  inline
+  realtestvec<real_t, size>
   loada(real_t const* p,
         realtestvec<real_t, size> x,
         typename realtestvec<real_t, size>::mask_t const& m)
@@ -929,7 +1005,8 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
-  inline realtestvec<real_t, size>
+  inline
+  realtestvec<real_t, size>
   loadu(real_t const* p, size_t ioff,
         realtestvec<real_t, size> x,
         typename realtestvec<real_t, size>::mask_t const& m)
@@ -1164,7 +1241,7 @@ namespace vecmathlib {
   
   template<typename real_t, int size>
   inline realtestvec<real_t, size> frexp(realtestvec<real_t, size> x,
-                                         inttestvec<real_t, size>& r)
+                                         inttestvec<real_t, size>* r)
   {
     return x.frexp(r);
   }

@@ -27,8 +27,8 @@ namespace vecmathlib {
     // TODO: divide by M_SQRT2 if ilogb_x % 2 == 1 ?
 #else
     real_t correction =
-      std::ldexp(R(FP::exponent_offset & 1 ? M_SQRT2 : 1.0),
-                 FP::exponent_offset >> 1);
+      vml_std::ldexp(R(FP::exponent_offset & 1 ? M_SQRT2 : 1.0),
+                     FP::exponent_offset >> 1);
     realvec_t r = lsr(x.as_int(), 1).as_float() * RV(correction);
 #endif
     
@@ -73,7 +73,7 @@ namespace vecmathlib {
   realvec_t mathfuncs<realvec_t>::vml_rsqrt(realvec_t x)
   {
     // Initial guess
-    VML_ASSERT(all(x > RV(0.0)));
+    // VML_ASSERT(all(x > RV(0.0)));
     intvec_t ilogb_x = ilogb(x);
     realvec_t s =
       ifthen(convert_bool(ilogb_x & IV(I(1))), RV(R(0.583)), RV(R(0.824)));

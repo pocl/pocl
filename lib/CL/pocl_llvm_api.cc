@@ -357,9 +357,7 @@ int call_pocl_workgroup( char* function_name,
   if (getenv("POCL_BUILDING") != NULL)
   {
     kernellib =BUILDDIR;
-    kernellib+="/lib/kernel/";
-    kernellib+=KERNEL_DIR;
-    kernellib+="/kernel-";
+    kernellib+="/lib/kernel/kernel-";
     kernellib+=OCL_KERNEL_TARGET;
     kernellib+=".bc";   
   }

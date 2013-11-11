@@ -1,10 +1,6 @@
-# Process this file with automake to produce Makefile.in (in this,
-# and all subdirectories).
-# Makefile.am for pocl/lib/kernel/tce. 
-#
-# The TCE (http://tce.cs.tut.fi) target.
+# Process this file with automake to produce Makefile.in
 # 
-# Copyright (c) 2011-2013 Pekka Jääskeläinen 
+# Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,19 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-KERNEL_TARGET=tce-tut-llvm
-TARGET_DIR=tce
 
-targetpkglibdir = ${pkglibdir}/tce
-targetpkglib_DATA = kernel-tce-tut-llvm.bc
 
+KERNEL_TARGET = tce-tut-llvm
+
+# Use TARGET flags:
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target tce-tut-llvm 
+LLC_FLAGS   = @TARGET_LLC_FLAGS@
+LD_FLAGS    = @TARGET_LD_FLAGS@
+
+include ../rules.mk
 include ../sources.mk
 
-# TCE's software emulation chokes on the fmuladd intrinsics
-# generated automatically. Force it off for now until it's
-# supported more properly in TCE.
-EXTRA_CLANGFLAGS = -ffp-contract=off -target tce-tut-llvm
-EXTRA_KERNEL_LIB_OPT_FLAGS = "-disable-simplify-libcalls"
-
-all: kernel-${KERNEL_TARGET}.bc
-
+# Use the libc (newlib) printf() for now because the pocl's
+# fails in TCE code gen:
+# SplitVectorResult #0: 0x24c5ae0: v8i16,ch = vaarg 0x20628e8, 0x2423ed0, 0x24c59e0, 0x24c4fe0 [ORD=223] [ID=0]
+# LLVM ERROR: Do not know how to split the result of this operator!
+LKERNEL_SRCS_EXCLUDE = printf.cl

@@ -86,18 +86,23 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
+NEW_PRINTF_WORKS=true
+
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
 case "$LLVM_VERSION" in
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
+     NEW_PRINTF_WORKS=false
    ;;
      3.3*)
-     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3 RC")     
+     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")     
+     NEW_PRINTF_WORKS=false
    ;; 
      3.4*)
      AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
      AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
+     NEW_PRINTF_WORKS=true
    ;;   
      *)
    AC_MSG_ERROR(
@@ -108,6 +113,7 @@ Unsupported LLVM version. Please use LLVM 3.2 or later.
    ;;
 esac
 
+AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 #Temporary option to enable the switch from scripts to llvm API build
 use_llvm_api="no"
@@ -305,14 +311,6 @@ if test "$enable_testsuite_piglit" = "yes" ; then
     enable_testsuite_piglit=no
   fi
 fi   
-
-#All ViennaCL tests use doubles, thus they fail on these platforms
-case $host_cpu in
-  arm* | powerpc* | x86 | i?86 )
-    AC_MSG_WARN([Looks like this host doesn't support doubles. Disabling all ViennaCL tests])
-    enable_testsuite_viennacl=no
-    ;;
-esac
 
 AM_CONDITIONAL([TEST_SUITE_SAMPLES], [test "$enable_testsuite_opencl_book_samples" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"])
@@ -664,25 +662,46 @@ CXXFLAGS=$old_CXXFLAGS
 
 fi
 
+# Define the OpenCL version when compiling OpenCL C code. This also
+# serves as indicator for the OpenCL C language, similar to
+# __cplusplus for C++.
+CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=110"
+
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
+AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
+AC_ARG_VAR([CLANGXX_FLAGS], [Flags to be used when compiling C++ sources with clang])
+
 if test x"$use_vecmathlib" = xyes; then
   AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
+  CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
 fi
 
-AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
+use_vecmathlib_builtins="no"
+AC_ARG_ENABLE([vecmathlib-builtins],
+              [AS_HELP_STRING([--enable-vecmathlib-builtins], [Use only __builtin_* functions in the kernel library.])],
+              [use_vecmathlib_builtins="yes"])
+if test "$use_vecmathlib_builtins" = "yes"
+then
+	CLFLAGS="$CLFLAGS -DPOCL_VECMATHLIB_BUILTIN"
+	CLANGXX_FLAGS="$CLANGXX_FLAGS -DPOCL_VECMATHLIB_BUILTIN"
+fi
 
 AC_DEFINE_UNQUOTED([CLANG], ["$CLANG"], [clang executable.])
 AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [Additional CL compiler flags.])
 
 # The Clang flags that are used always when compiling OpenCL C code.
-FORCED_CLFLAGS="-Xclang -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm"
+# Note: We use -Wno-format to avoid warnings for printf, where we
+# currently have to use %lld for long arguments (to handle 32-bit
+# architectures).
+FORCED_CLFLAGS="-Xclang -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm -Wno-format"
 AC_DEFINE_UNQUOTED([FORCED_CLFLAGS], 
 ["$FORCED_CLFLAGS"], 
 [Always used flags for Clang when compiling OpenCL C code.])
 AC_SUBST([FORCED_CLFLAGS], ["$FORCED_CLFLAGS"])
 
+# TODO: this is duplicated
 LLVM_PROG([OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLVM_OPT], [opt], [LLVM optimizer])
 LLVM_PROG([LLC], [llc], [LLVM static compiler])
@@ -696,6 +715,19 @@ export LLC
 
 AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 
+AC_MSG_CHECKING([Linker option to build a shared library])
+if echo $host | grep -q darwin; then
+  LD_SHARED="-dylib"
+else
+  LD_SHARED="-shared"
+fi
+AC_MSG_RESULT($LD_SHARED)
+
+HOST_CLANG_FLAGS=""
+HOST_LLC_FLAGS="-relocation-model=pic"
+HOST_LD_FLAGS="$LD_SHARED"
+
+
 # Targets.
 # This is the target architecture of the basic and pthreads devices.
 # These always are the same arch as host (in current pocl implementation).
@@ -703,8 +735,42 @@ AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
 # We have: 
 # target triplet: the OCL device target triple
 # kernel dir: where to search for the ocl lib kernel
-HOST_LLC_FLAGS="-relocation-model=pic"
-HOST_LD_FLAGS="-shared"
+
+# The option for specifying the target changed; try the modern syntax
+# first, and fall back to the old-style syntax if this failed
+AC_MSG_CHECKING([Clang option to specify the target])
+if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='--target='
+elif [ $CLANG -target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='-target='
+else
+  AC_MSG_ERROR([Cannot determine Clang option to specify the target])
+fi
+AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
+
+# TODO: We need to set both target-triple and cpu-type when
+# building, since the ABI depends on both. We can either add flags
+# to all the scripts, or set the respective flags here in
+# *_CLANG_FLAGS and *_LLC_FLAGS. Note that clang and llc use
+# different option names to set these. Note that clang calls the
+# triple "target" and the cpu "architecture", which is different
+# from llc.
+
+# Normalise the triple. Otherwise, clang normalises it when
+# passing it to llc, which is then different from the triple we
+# pass to llc. This would lead to inconsistent bytecode files,
+# depending on whether they are generated via clang or directly
+# via llc.
+
+AC_MSG_CHECKING([LLC target triple (for host $host)])
+dnl The quadrigraphs @<:@ and @:>@ turn into [ and ].
+llc_triple=$($CLANG ${CLANG_TARGET_OPTION}$host -x c /dev/null -S -emit-llvm -o - | grep -e 'target triple' | sed -E -e 's/^.*target triple = "+(@<:@^ @:>@+).*"$/\1/')
+AC_MSG_RESULT($llc_triple)
+test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
+AC_MSG_CHECKING([LLC host CPU])
+llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
+AC_MSG_RESULT($llc_host_cpu)
+test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 
 case $host_os in
   darwin* )
@@ -720,12 +786,25 @@ case $host_os in
 esac
 AC_SUBST([ICD_LD_FLAGS])
 case $host_cpu in
+  armv6l)
+    AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET=$host
+    CL_DEVICE_ADDRESS_BITS=32
+    case $host in
+      *gnueabihf)
+      case $llc_host_cpu in
+        arm1176jz-s) llc_host_cpu=arm1176jzf-s;;
+      esac;;
+    esac
+    ;;
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # check for gnueabihf, and set clang target accordingly
     case $host in
       armv7l*gnueabihf)
          OCL_KERNEL_TARGET="armv7l-unknown-linux-gnueabihf"
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
       *)
          #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
@@ -734,29 +813,37 @@ case $host_cpu in
 
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -target $OCL_KERNEL_TARGET -mfloat-abi=hard"
-    kernel_dir="arm"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
   amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
-    kernel_dir="x86_64"
     CL_DEVICE_ADDRESS_BITS=64
     ;;
   i?86)
     AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     OCL_KERNEL_TARGET=$host
-    kernel_dir="x86_64"
     CL_DEVICE_ADDRESS_BITS=32
     ;;
  
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    kernel_dir="tce"
+    OCL_KERNEL_TARGET=tce-tut-llvm
+    ;;
+
+  powerpc64*)
+    #on all tested operating systems with PowerPC, the processor is 64bit,
+    #but the operating system is 32 bit. Therefore, when on powerpc, always build
+    #for 32 bit ppc. If this does not work for you ... patches welcome.
+    AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
+    HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
+    OCL_KERNEL_TARGET="powerpc64-unknown-linux-gnu"
+    CL_DEVICE_ADDRESS_BITS=32
+    #TODO: not all PowerPCs have Altivec?
+    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
     ;;
 
   powerpc*)
@@ -765,18 +852,30 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    kernel_dir="powerpc"
     OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
     ;;
+
   *)
     AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
 esac
+kernel_dir="host"
 OCL_TARGETS=$kernel_dir
-
+HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple -march=$llc_host_cpu"
+HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
+# Note: Clang 3.3 reports a warning about an "unused argument" for
+# -target when generating byte code. This warning is wrong, as the
+# target specification actually does influence the ABI, and hence the
+# generated byte code. This warning is harmless, but interfers with
+# -Werror or the test cases which don't expect this output. Therefore,
+# we use -Qunused-arguments to disable it.
+case "$LLVM_VERSION" in
+    3.3*)
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -Qunused-arguments";;
+esac
 
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
@@ -799,12 +898,14 @@ AC_SUBST([HOST_CPU], [$host_cpu])
 AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
 AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
+AC_SUBST([OCL_KERNEL_ARCH],[$OCL_KERNEL_ARCH])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_ARCH], ["$OCL_KERNEL_ARCH"], [The kernel architecture.])
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
                    ["$HOST_CLANG_FLAGS"],
                    [Parameters to for host compilation.])
-AC_SUBST([HOST_LLC_FLAGS])
+AC_ARG_VAR([HOST_LLC_FLAGS])
 AC_DEFINE_UNQUOTED([HOST_LLC_FLAGS],
                    ["$HOST_LLC_FLAGS"], 
                    [Parameters to llc for code generation in the host.])
@@ -917,14 +1018,6 @@ AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 
 AC_SUBST([OCL_TARGETS])
 
-AC_CONFIG_FILES([lib/kernel/arm/Makefile
-                 lib/kernel/tce/Makefile
-                 lib/kernel/cellspu/Makefile
-                 lib/kernel/powerpc/Makefile
-                 lib/kernel/powerpc64/Makefile
-                 lib/kernel/x86_64/Makefile])
-
-
 AC_DEFINE_UNQUOTED([BUILDDIR], ["`pwd`"], [Absolute path of build directory.])
 AC_DEFINE_UNQUOTED([SRCDIR], ["`cd $srcdir && pwd`"], [Root for the project sources.])
 
@@ -949,16 +1042,20 @@ CC=$srcdir/config/xclang
 CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
-
-AC_CONFIG_FILES([include/arm/types.h
-                 include/tce/types.h
-                 include/powerpc/types.h
-                 include/powerpc64/types.h
-                 include/cellspu/types.h
-                 include/x86_64/types.h])
-
+for flag in $old_CPPFLAGS; do
+    if echo " $flag" | grep -q -e -Werror; then
+       CPPFLAGS="$CPPFLAGS $flag"
+    fi
+done
+for flag in $old_CFLAGS; do
+    if echo " $flag" | grep -q -e -Werror; then
+       CFLAGS="$CFLAGS $flag"
+    fi
+done
 
 AC_MSG_CHECKING([for aligned_alloc])
+# Ensure that aligned_alloc can be linked, and that a prototype with
+# the correct signature is available
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
         [[ #include <stdlib.h> ]],
@@ -1069,6 +1166,9 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/cellspu/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
+                 lib/kernel/cellspu/Makefile
+                 lib/kernel/host/Makefile
+                 lib/kernel/tce/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile

@@ -52,10 +52,10 @@ namespace vecmathlib {
   
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_frexp(realvec_t x,
-                                            typename realvec_t::intvec_t& ir)
+                                            typename realvec_t::intvec_t* irp)
   {
     intvec_t e = lsr(as_int(x) & IV(FP::exponent_mask), FP::mantissa_bits);
-    ir = e - IV(FP::exponent_offset - 1);
+    intvec_t ir = e - IV(FP::exponent_offset - 1);
     ir = ifthen(convert_bool(e), ir, IV(std::numeric_limits<int_t>::min()));
 #if defined VML_HAVE_INF
     ir = ifthen(isinf(x), IV(std::numeric_limits<int_t>::max()), ir);
@@ -69,6 +69,7 @@ namespace vecmathlib {
     boolvec_t iszero = x == RV(0.0);
     ir = ifthen(iszero, IV(I(0)), ir);
     r = ifthen(iszero, copysign(RV(R(0.0)), r), r);
+    *irp = ir;
     return r;
   }
   

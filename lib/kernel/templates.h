@@ -884,7 +884,7 @@
   uchar __attribute__ ((overloadable))                          \
   NAME(char a)                                                  \
   {                                                             \
-    return __builtin_##NAME##h(a);                              \
+    return __builtin_##NAME##hh(a);                             \
   }                                                             \
   uchar __attribute__ ((overloadable))                          \
   NAME(uchar a)                                                 \

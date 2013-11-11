@@ -46,7 +46,7 @@ LLAS_COMPILE = $(LLVM_AS) $(LLVMFLAGS) $(LLVM_DEFS) \
         $(AM_LLVM_CPPFLAGS) $(LLVM_CPPFLAGS) $(AM_LLVM_ASFLAGS) $(LLVM_ASFLAGS)
 
 
-# We include too much dependency files, but we cannot do better without
+# We include too many dependency files, but we cannot do better without
 # proper automake support (that generate explicitly all these includes based
 # on sources)
 -include ./$(DEPDIR)/*.Po

@@ -359,12 +359,20 @@ def output_vmlfunc_vml(func, vectype):
     out("  return bitcast<%s,%s>(%s(r));" % (convtype, bitcasttype, convfunc))
     out("}")
 
-def output_vmlfunc_libm(func, vectype):
+def output_vmlfunc_special(specialtype, func, vectype):
     (name, args, ret, vmlargs, vmlret) = func
-    out("// Implement %s by calling libm" % name)
+    if specialtype=="builtin":
+        specialname = "builtin"
+    elif specialtype=="pseudo":
+        specialname = "libm"
+    elif specialtype=="test":
+        specialname = "vecmathlib"
+    else:
+        specialname = "???"
+    out("// Implement %s by calling %s" % (name, specialname))
     (basetype, size) = re.match("([A-Za-z]+)([0-9]*)", vectype).groups()
     size = 1 if size=="" else int(size)
-    othertype = "vecmathlib::realpseudovec<%s,%d>" % (basetype, size)
+    othertype = "vecmathlib::real%svec<%s,%d>" % (specialtype, basetype, size)
     otherinttype = "%s::intvec_t" % othertype
     funcargstr = ", ".join(map(lambda (n, arg):
                                    "%s x%d" % (mktype(arg, vectype), n),
@@ -408,6 +416,12 @@ def output_vmlfunc_libm(func, vectype):
             raise "missing"
     out("  return %s(r)[0];" % convfunc)
     out("}")
+
+def output_vmlfunc_builtin(func, vectype):
+    output_vmlfunc_special("builtin", func, vectype)
+
+def output_vmlfunc_libm(func, vectype):
+    output_vmlfunc_special("pseudo", func, vectype)
 
 def output_vmlfunc_upcast(func, vectype):
     (name, args, ret, vmlargs, vmlret) = func
@@ -527,7 +541,8 @@ def output_vmlfunc(func):
     (name, args, ret, vmlargs, vmlret) = func
     is_first_open = out_open("%s.cc" % name)
     if is_first_open:
-        out("// Note: This file has been automatically generated. Do not modify.")
+        out("// Note: This file has been automatically generated. "
+            "Do not modify.")
         out("")
         out("#include \"pocl-compat.h\"")
         out("")
@@ -555,13 +570,16 @@ def output_vmlfunc(func):
             # always use vecmathlib if available
             out("")
             out("// %s: VF=%s" % (name, vectype))
-            out("#if defined VECMATHLIB_HAVE_VEC_%s_%d" %
+            out("#if defined VECMATHLIB_HAVE_VEC_%s_%d && "
+                "! defined POCL_VECMATHLIB_BUILTIN" %
                 (basetype.upper(), size))
             output_vmlfunc_vml(func, vectype)
             if size==1:
                 # a scalar type: use libm
-                out("#else")
+                out("#elif ! defined POCL_VECMATHLIB_BUILTIN")
                 output_vmlfunc_libm(func, vectype)
+                out("#else")
+                output_vmlfunc_builtin(func, vectype)
             else:
                 # a vector type: try upcasting to next power of 2
                 sizes = [4, 8, 16]
@@ -573,7 +591,8 @@ def output_vmlfunc(func):
                     condstr = ("%sdefined VECMATHLIB_HAVE_VEC_%s_%d" %
                                (condstr, basetype.upper(), s))
                 if condstr != "":
-                    out("#elif %s" % condstr)
+                    out("#elif (%s) && ! defined POCL_VECMATHLIB_BUILTIN " %
+                        condstr)
                     output_vmlfunc_upcast(func, vectype)
                 # a vector type: split into smaller vector type
                 out("#else")
@@ -590,7 +609,8 @@ def output_directfunc(func):
     (name, args, ret, impl) = func
     is_first_open = out_open("%s.cl" % name)
     if is_first_open:
-        out("// Note: This file has been automatically generated. Do not modify.")
+        out("// Note: This file has been automatically generated. "
+            "Do not modify.")
         out("")
         out("// Needed for fract()")
         out("#define POCL_FRACT_MIN   0x1.fffffffffffffp-1")

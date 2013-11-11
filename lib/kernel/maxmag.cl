@@ -31,7 +31,7 @@ float __builtin_maxmagf(float x, float y)
   return fmax(x, y);
 }
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 double __builtin_maxmag(double x, double y)
 {
   if (fabs(x) > fabs(y)) return x;

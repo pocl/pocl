@@ -31,7 +31,7 @@ DEFINE_EXPR_G_GG(rotate,
                  ({
                    int bits = CHAR_BIT * sizeof(sgtype);
                    sgtype count_mask = bits - 1;
-                   gtype left = a << (b & count_mask);
+                   gtype left = U2G(G2U(a) << G2U(b & count_mask));
                    gtype right = U2G(G2U(a) >> G2U(-b & count_mask));
                    left | right;
                  }))

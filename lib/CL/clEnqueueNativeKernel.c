@@ -5,6 +5,8 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 
+#include <limits.h>
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 					  void (CL_CALLBACK * user_func)(void *), 

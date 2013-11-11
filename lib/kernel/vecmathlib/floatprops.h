@@ -35,8 +35,8 @@ namespace vecmathlib {
   template<>
   struct floatprops<fp8> {
     typedef fp8 real_t;
-    typedef std::int8_t int_t;
-    typedef std::uint8_t uint_t;
+    typedef vml_std::int8_t int_t;
+    typedef vml_std::uint8_t uint_t;
     
     static char const* name() { return "fp8"; }
     
@@ -83,6 +83,12 @@ namespace vecmathlib {
       std::memcpy(&res, &x, sizeof res);
       return res;
     }
+    static int_t replicate_byte(unsigned char byte)
+    {
+      int_t res;
+      std::memset(&res, byte, sizeof res);
+      return res;
+    }
     
     // Convert values (truncate)
     static real_t convert_float(int_t x) { __builtin_unreachable(); }
@@ -95,8 +101,8 @@ namespace vecmathlib {
   template<>
   struct floatprops<fp16> {
     typedef fp16 real_t;
-    typedef std::int16_t int_t;
-    typedef std::uint16_t uint_t;
+    typedef vml_std::int16_t int_t;
+    typedef vml_std::uint16_t uint_t;
     
     static char const* name() { return "fp16"; }
     
@@ -143,6 +149,12 @@ namespace vecmathlib {
       std::memcpy(&res, &x, sizeof res);
       return res;
     }
+    static int_t replicate_byte(unsigned char byte)
+    {
+      int_t res;
+      std::memset(&res, byte, sizeof res);
+      return res;
+    }
     
     // Convert values (truncate)
     static real_t convert_float(int_t x) { __builtin_unreachable(); }
@@ -155,8 +167,8 @@ namespace vecmathlib {
   template<>
   struct floatprops<float>: std::numeric_limits<float> {
     typedef float real_t;
-    typedef std::int32_t int_t;
-    typedef std::uint32_t uint_t;
+    typedef vml_std::int32_t int_t;
+    typedef vml_std::uint32_t uint_t;
     
     static char const* name() { return "float"; }
     
@@ -198,6 +210,12 @@ namespace vecmathlib {
       std::memcpy(&res, &x, sizeof res);
       return res;
     }
+    static int_t replicate_byte(unsigned char byte)
+    {
+      int_t res;
+      std::memset(&res, byte, sizeof res);
+      return res;
+    }
     
     // Convert values (truncate)
     static real_t convert_float(int_t x) { return real_t(x); }
@@ -210,8 +228,8 @@ namespace vecmathlib {
   template<>
   struct floatprops<double>: std::numeric_limits<double> {
     typedef double real_t;
-    typedef std::int64_t int_t;
-    typedef std::uint64_t uint_t;
+    typedef vml_std::int64_t int_t;
+    typedef vml_std::uint64_t uint_t;
     
     static char const* name() { return "double"; }
     
@@ -251,6 +269,12 @@ namespace vecmathlib {
     {
       int_t res;
       std::memcpy(&res, &x, sizeof res);
+      return res;
+    }
+    static int_t replicate_byte(unsigned char byte)
+    {
+      int_t res;
+      std::memset(&res, byte, sizeof res);
       return res;
     }
     

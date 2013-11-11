@@ -145,7 +145,6 @@ GEN_PROTOTYPES (cellspu)
   NULL, /*pocl_cellspu_build_program */	 \
   NULL, /* get_supported_image_formats */ \
   NULL, /* data */                               \
-  "cellspu", /* kernel_lib_target (forced kernel library dir) */    \
   "cellspu-v0", /* llvm_target_triplet */               \
   0 /* dev_id */ \
 }

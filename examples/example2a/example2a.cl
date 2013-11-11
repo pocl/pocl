@@ -5,8 +5,6 @@
 #define WIDTH           (256) 
 #define HEIGHT          (4096) 
 
-int printf(const char *restrict format, ...);
- 
 __kernel void
 matrix_transpose(__global float *output, 
 		 __global float *input)
