@@ -1,10 +1,6 @@
-# Process this file with automake to produce Makefile.in (in this,
-# and all subdirectories).
-# Makefile.am for pocl/lib/kernel/tce. 
-#
-# The PowerPC32 target.
+# Process this file with automake to produce Makefile.in
 # 
-# Copyright (c) 2012 Pekka Jääskeläinen
+# Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-KERNEL_TARGET=@OCL_KERNEL_TARGET@
-TARGET_DIR=powerpc
 
+
+KERNEL_TARGET = @HOST@
+
+# Use HOST flags:
+CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
+LLC_FLAGS   = @HOST_LLC_FLAGS@
+LD_FLAGS    = @HOST_LD_FLAGS@
+
+include ../rules.mk
 include ../sources.mk
-all: kernel-@OCL_KERNEL_TARGET@.bc
-
+include ../sources-vml.mk

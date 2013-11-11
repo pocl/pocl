@@ -53,6 +53,45 @@ AT_CLEANUP
         
 AT_BANNER([Kernel runtime library])
 
+AT_SETUP([Kernel functions convert_char*])
+AT_KEYWORDS([short16])
+AT_DATA([expout],
+[Running test test_short16...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_short16], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions printf])
+# On 32-bit x86, accessing int4 via va_arg segfaults (wrong alignment?)
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i686])
+AT_XFAIL_IF([! grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
+AT_KEYWORDS([printf])
+AT_DATA([expout],
+[Running test test_printf...
+1
+2
+3
+4
+5
+         6
+0000000007
+0000000008
+9,9,9,9
+1.0
+2.000000
+3.000000
+4
+5
+  6.000000
+7.0000000000
+8.0000000000
+9.000000,9.000000,9.000000,9.000000
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_printf], 0, expout)
+AT_CLEANUP
+
 AT_SETUP([Kernel functions as_type])
 AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
@@ -64,11 +103,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_as_type], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
-#LLVM PPC backend regression, most likely
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
-             grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
-#Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
+# Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
 AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
@@ -137,8 +172,6 @@ AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd
 #Fails on tce due to bug #1160383
 #AT_KEYWORDS([tce])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-#fails with: undefined symbol: _Z5rhaddcc. Probably related to the crash mentioned in the fabs test above.
-AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 #Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
 AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_DATA([expout],
@@ -192,10 +225,6 @@ AT_CLEANUP
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
-#lack of double support on ppc, arm, x86-32bit
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i.86])
 AT_KEYWORDS([scalarwave])
 AT_DATA([expout],
 [Initial condition: t=0

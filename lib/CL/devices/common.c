@@ -24,6 +24,7 @@
 */
 #include "common.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -42,6 +43,9 @@
  */
 const char*
 llvm_codegen (const char* tmpdir) {
+
+  const char* pocl_verbose_ptr = getenv("POCL_VERBOSE");
+  int pocl_verbose = pocl_verbose_ptr && *pocl_verbose_ptr;
 
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
@@ -76,35 +80,39 @@ llvm_codegen (const char* tmpdir) {
 			bytecode);
       assert (error >= 0);
       
-      /* printf("[pocl] executing [%s]\n", command); */
-      /* fflush(stdout); */
+      if (pocl_verbose) {
+        fprintf(stderr, "[pocl] executing [%s]\n", command);
+        fflush(stderr);
+      }
       error = system (command);
       assert (error == 0);
           
       // For the pthread device, use device type is always the same as the host. 
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " -target %s %s -c -o %s.o %s",
-			OCL_KERNEL_TARGET,
-			HOST_CLANG_FLAGS,
+			CLANG " " HOST_CLANG_FLAGS " -c -o %s.o %s",
 			module,
 			assembly);
       assert (error >= 0);
       
-      /* printf("[pocl] executing [%s]\n", command); */
-      /* fflush(stdout); */
+      if (pocl_verbose) {
+        fprintf(stderr, "[pocl] executing [%s]\n", command);
+        fflush(stderr);
+      }
       error = system (command);
       assert (error == 0);
 
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-                       LINK_CMD " -target "OCL_KERNEL_TARGET 
-                       " " HOST_LD_FLAGS " -o %s %s.o",
+                       LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " "
+                        "-o %s %s.o",
                        module,
                        module);
       assert (error >= 0);
 
-      /* printf("[pocl] executing [%s]\n", command); */
-      /* fflush(stdout); */
+      if (pocl_verbose) {
+        fprintf(stderr, "[pocl] executing [%s]\n", command);
+        fflush(stderr);
+      }
       error = system (command);
       assert (error == 0);
     }

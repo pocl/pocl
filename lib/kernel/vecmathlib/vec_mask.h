@@ -36,8 +36,8 @@ namespace vecmathlib {
       if (__builtin_expect(all_m, true)) {
         m = true;
       } else {
-        m = (! signbit(intvec_t(i          - imin) + intvec_t::iota()) &&
-               signbit(intvec_t(i + size-1 - imax) + intvec_t::iota()));
+        m = (! isignbit(intvec_t(i          - imin) + intvec_t::iota()) &&
+               isignbit(intvec_t(i + size-1 - imax) + intvec_t::iota()));
       }
     }
     
@@ -49,8 +49,8 @@ namespace vecmathlib {
       if (__builtin_expect(all_m, true)) {
         m = true;
       } else {
-        m = (! signbit(intvec_t(i          - imin) + intvec_t::iota()) &&
-               signbit(intvec_t(i + size-1 - imax) + intvec_t::iota()));
+        m = (! isignbit(intvec_t(i          - imin) + intvec_t::iota()) &&
+               isignbit(intvec_t(i + size-1 - imax) + intvec_t::iota()));
       }
     }
     
@@ -68,7 +68,7 @@ namespace vecmathlib {
       if (__builtin_expect(all_m, true)) {
         m = true;
       } else {
-        m = signbit(intvec_t(i + size-1 - imax) + intvec_t::iota());
+        m = isignbit(intvec_t(i + size-1 - imax) + intvec_t::iota());
       }
     }
   };

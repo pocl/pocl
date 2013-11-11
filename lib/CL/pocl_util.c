@@ -44,9 +44,9 @@ typedef struct list_item
 void 
 remove_directory (const char *path_name) 
 {
-  int str_size = 8 + strlen(path_name) + 1;
+  int str_size = 10 + strlen(path_name) + 1;
   char *cmd = (char*)malloc(str_size);
-  snprintf (cmd, str_size, "rm -fr %s", path_name);
+  snprintf (cmd, str_size, "rm -fr '%s'", path_name);
   system (cmd);
   free (cmd);
 }

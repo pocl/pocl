@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "Barrier.h"
 #include "Workgroup.h"
 
 #include "CanonicalizeBarriers.h"
@@ -187,7 +188,7 @@ Workgroup::runOnModule(Module &M)
   }
 
   Function *barrier = cast<Function> 
-    (M.getOrInsertFunction("pocl.barrier",
+    (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
                            Type::getVoidTy(M.getContext()),
                            NULL));
   BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);

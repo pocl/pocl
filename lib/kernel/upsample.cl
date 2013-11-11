@@ -57,7 +57,7 @@ IMPLEMENT_UPSAMPLE_LG_GUG(ushort3 , ushort, ushort3 , uint3   )
 IMPLEMENT_UPSAMPLE_LG_GUG(ushort4 , ushort, ushort4 , uint4   )
 IMPLEMENT_UPSAMPLE_LG_GUG(ushort8 , ushort, ushort8 , uint8   )
 IMPLEMENT_UPSAMPLE_LG_GUG(ushort16, ushort, ushort16, uint16  )
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 IMPLEMENT_UPSAMPLE_LG_GUG(int     , int   , uint    , long    )
 IMPLEMENT_UPSAMPLE_LG_GUG(int2    , int   , uint2   , long2   )
 IMPLEMENT_UPSAMPLE_LG_GUG(int3    , int   , uint3   , long3   )

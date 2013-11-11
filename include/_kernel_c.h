@@ -27,6 +27,8 @@
 #ifndef _KERNEL_C_H
 #define _KERNEL_C_H
 
+#include "pocl_types.h"
+
 /* Function/type attributes supported by Clang/SPIR */
 #if __has_attribute(__always_inline__)
 #  define _CL_ALWAYSINLINE __attribute__((__always_inline__))
@@ -60,9 +62,6 @@
 #else
 #  define _CL_UNAVAILABLE
 #endif
-
-// We align the 3-vectors, so that their sizeof is correct. Is there a
-// better way? Should we also align the other vectors?
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
 typedef char char3  __attribute__((__ext_vector_type__(3)));

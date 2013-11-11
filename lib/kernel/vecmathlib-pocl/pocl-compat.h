@@ -24,29 +24,29 @@
 
 // Define vector types
 
-#define int std::int32_t
+#define int vml_std::int32_t
 typedef int int2  __attribute__((__ext_vector_type__( 2)));
 typedef int int3  __attribute__((__ext_vector_type__( 3)));
 typedef int int4  __attribute__((__ext_vector_type__( 4)));
 typedef int int8  __attribute__((__ext_vector_type__( 8)));
 typedef int int16 __attribute__((__ext_vector_type__(16)));
 
-#define uint std::uint32_t
+#define uint vml_std::uint32_t
 typedef uint uint2  __attribute__((__ext_vector_type__( 2)));
 typedef uint uint3  __attribute__((__ext_vector_type__( 3)));
 typedef uint uint4  __attribute__((__ext_vector_type__( 4)));
 typedef uint uint8  __attribute__((__ext_vector_type__( 8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#ifdef cles_khr_int64
-#define long std::int64_t
+#ifdef cl_khr_int64
+#define long vml_std::int64_t
 typedef long long2  __attribute__((__ext_vector_type__( 2)));
 typedef long long3  __attribute__((__ext_vector_type__( 3)));
 typedef long long4  __attribute__((__ext_vector_type__( 4)));
 typedef long long8  __attribute__((__ext_vector_type__( 8)));
 typedef long long16 __attribute__((__ext_vector_type__(16)));
 
-#define ulong std::uint64_t
+#define ulong vml_std::uint64_t
 typedef ulong ulong2  __attribute__((__ext_vector_type__( 2)));
 typedef ulong ulong3  __attribute__((__ext_vector_type__( 3)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__( 4)));
@@ -78,7 +78,7 @@ struct pair_int4  { int4  lo, hi; };
 struct pair_int8  { int8  lo, hi; };
 struct pair_int16 { int16 lo, hi; };
 
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 struct pair_long   { long   lo, hi; };
 struct pair_long2  { long2  lo, hi; };
 struct pair_long3  { long3  lo, hi; };

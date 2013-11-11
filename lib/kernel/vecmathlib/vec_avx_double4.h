@@ -77,7 +77,7 @@ namespace vecmathlib {
     {
       return to_bool(vecmathlib::get_elt<BV,bvector_t,uint_t>(v, n));
     }
-    boolvec& set_elt(int n, bool a)
+    boolvec_t& set_elt(int n, bool a)
     {
       return
         vecmathlib::set_elt<BV,bvector_t,uint_t>(v, n, from_bool(a)), *this;
@@ -90,12 +90,12 @@ namespace vecmathlib {
     
     
     
-    boolvec operator!() const { return _mm256_xor_pd(boolvec(true), v); }
+    boolvec_t operator!() const { return _mm256_xor_pd(boolvec(true), v); }
     
-    boolvec operator&&(boolvec x) const { return _mm256_and_pd(v, x.v); }
-    boolvec operator||(boolvec x) const { return _mm256_or_pd(v, x.v); }
-    boolvec operator==(boolvec x) const { return !(*this!=x); }
-    boolvec operator!=(boolvec x) const { return _mm256_xor_pd(v, x.v); }
+    boolvec_t operator&&(boolvec_t x) const { return _mm256_and_pd(v, x.v); }
+    boolvec_t operator||(boolvec_t x) const { return _mm256_or_pd(v, x.v); }
+    boolvec_t operator==(boolvec_t x) const { return !(*this!=x); }
+    boolvec_t operator!=(boolvec_t x) const { return _mm256_xor_pd(v, x.v); }
     
     bool all() const
     {
@@ -105,7 +105,7 @@ namespace vecmathlib {
     bool any() const
     {
       // return (*this)[0] || (*this)[1] || (*this)[2] || (*this)[3];
-      return ! _mm256_testz_pd(v, v);
+      return ! bool(_mm256_testz_pd(v, v));
     }
     
     
@@ -155,7 +155,7 @@ namespace vecmathlib {
     intvec(ivector_t x): v(x) {}
     intvec(int_t a): v(_mm256_set1_epi64x(a)) {}
     intvec(int_t const* as): v(_mm256_set_epi64x(as[3], as[2], as[1], as[0])) {}
-    static intvec iota() { return _mm256_set_epi64x(3, 2, 1, 0); }
+    static intvec_t iota() { return _mm256_set_epi64x(3, 2, 1, 0); }
     
     operator ivector_t() const { return v; }
     int_t operator[](int n) const
@@ -175,8 +175,8 @@ namespace vecmathlib {
       // Result: convert_bool(0)=false, convert_bool(else)=true
       // There is no intrinsic to compare with zero. Instead, we check
       // whether x is positive and x-1 is negative.
-      intvec x = *this;
-      // We know that boolvec values depend only on the sign bit
+      intvec_t x = *this;
+      // We know that boolvec_t values depend only on the sign bit
       // return (~(x-1) | x).as_bool();
       // return x.as_bool() || !(x-1).as_bool();
       return x.as_bool() || (x + (FP::signbit_mask - 1)).as_bool();
@@ -188,10 +188,10 @@ namespace vecmathlib {
     
     // Note: not all arithmetic operations are supported!
     
-    intvec operator+() const { return *this; }
-    intvec operator-() const { return IV(I(0)) - *this; }
+    intvec_t operator+() const { return *this; }
+    intvec_t operator-() const { return IV(I(0)) - *this; }
     
-    intvec operator+(intvec x) const
+    intvec_t operator+(intvec_t x) const
     {
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
@@ -201,7 +201,7 @@ namespace vecmathlib {
       vhi = _mm_add_epi64(vhi, xvhi);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
     }
-    intvec operator-(intvec x) const
+    intvec_t operator-(intvec_t x) const
     {
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
@@ -212,36 +212,38 @@ namespace vecmathlib {
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
     }
     
-    intvec& operator+=(intvec const& x) { return *this=*this+x; }
-    intvec& operator-=(intvec const& x) { return *this=*this-x; }
+    intvec_t& operator+=(intvec_t const& x) { return *this=*this+x; }
+    intvec_t& operator-=(intvec_t const& x) { return *this=*this-x; }
     
     
     
-    intvec operator~() const { return IV(~U(0)) ^ *this; }
+    intvec_t operator~() const { return IV(~U(0)) ^ *this; }
     
-    intvec operator&(intvec x) const
+    intvec_t operator&(intvec_t x) const
     {
       return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(v),
                                                _mm256_castsi256_pd(x.v)));
     }
-    intvec operator|(intvec x) const
+    intvec_t operator|(intvec_t x) const
     {
       return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(v),
                                               _mm256_castsi256_pd(x.v)));
     }
-    intvec operator^(intvec x) const
+    intvec_t operator^(intvec_t x) const
     {
       return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(v),
                                                _mm256_castsi256_pd(x.v)));
     }
     
-    intvec& operator&=(intvec const& x) { return *this=*this&x; }
-    intvec& operator|=(intvec const& x) { return *this=*this|x; }
-    intvec& operator^=(intvec const& x) { return *this=*this^x; }
+    intvec_t& operator&=(intvec_t const& x) { return *this=*this&x; }
+    intvec_t& operator|=(intvec_t const& x) { return *this=*this|x; }
+    intvec_t& operator^=(intvec_t const& x) { return *this=*this^x; }
+    
+    intvec_t bitifthen(intvec_t x, intvec_t y) const;
     
     
     
-    intvec lsr(int_t n) const
+    intvec_t lsr(int_t n) const
     {
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
@@ -249,7 +251,8 @@ namespace vecmathlib {
       vhi = _mm_srli_epi64(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
     }
-    intvec operator>>(int_t n) const
+    intvec_t rotate(int_t n) const;
+    intvec_t operator>>(int_t n) const
     {
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
@@ -280,7 +283,7 @@ namespace vecmathlib {
 #endif
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
     }
-    intvec operator<<(int_t n) const
+    intvec_t operator<<(int_t n) const
     {
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
@@ -288,52 +291,51 @@ namespace vecmathlib {
       vhi = _mm_slli_epi64(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
     }
-    intvec& operator>>=(int_t n) { return *this=*this>>n; }
-    intvec& operator<<=(int_t n) { return *this=*this<<n; }
+    intvec_t& operator>>=(int_t n) { return *this=*this>>n; }
+    intvec_t& operator<<=(int_t n) { return *this=*this<<n; }
     
-    intvec lsr(intvec n) const
+    intvec_t lsr(intvec_t n) const
     {
-      intvec r;
+      intvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, U((*this)[i]) >> U(n[i]));
       }
       return r;
     }
-    intvec operator>>(intvec n) const
+    intvec_t rotate(intvec_t n) const;
+    intvec_t operator>>(intvec_t n) const
     {
-      intvec r;
+      intvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, (*this)[i] >> n[i]);
       }
       return r;
     }
-    intvec operator<<(intvec n) const
+    intvec_t operator<<(intvec_t n) const
     {
-      intvec r;
+      intvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, (*this)[i] << n[i]);
       }
       return r;
     }
-    intvec& operator>>=(intvec n) { return *this=*this>>n; }
-    intvec& operator<<=(intvec n) { return *this=*this<<n; }
+    intvec_t& operator>>=(intvec_t n) { return *this=*this>>n; }
+    intvec_t& operator<<=(intvec_t n) { return *this=*this<<n; }
+    
+    intvec_t clz() const;
+    intvec_t popcount() const;
     
     
     
-    boolvec_t signbit() const
-    {
-      return as_bool();
-    }
-    
-    boolvec_t operator==(intvec const& x) const
+    boolvec_t operator==(intvec_t const& x) const
     {
       return ! (*this != x);
     }
-    boolvec_t operator!=(intvec const& x) const
+    boolvec_t operator!=(intvec_t const& x) const
     {
       return (*this ^ x).convert_bool();
     }
-    boolvec_t operator<(intvec const& x) const
+    boolvec_t operator<(intvec_t const& x) const
     {
       // return (*this - x).as_bool();
       boolvec_t r;
@@ -342,18 +344,23 @@ namespace vecmathlib {
       }
       return r;
     }
-    boolvec_t operator<=(intvec const& x) const
+    boolvec_t operator<=(intvec_t const& x) const
     {
       return ! (*this > x);
     }
-    boolvec_t operator>(intvec const& x) const
+    boolvec_t operator>(intvec_t const& x) const
     {
       return x < *this;
     }
-    boolvec_t operator>=(intvec const& x) const
+    boolvec_t operator>=(intvec_t const& x) const
     {
       return ! (*this < x);
     }
+    
+    intvec_t abs() const;
+    boolvec_t isignbit() const;
+    intvec_t max(intvec_t x) const;
+    intvec_t min(intvec_t x) const;
   };
   
   
@@ -481,10 +488,9 @@ namespace vecmathlib {
       if (__builtin_expect(m.all_m, true)) {
         storeu(p);
       } else {
-        if (m.m[0]) p[0] = (*this)[0];
-        if (m.m[1]) p[1] = (*this)[1];
-        if (m.m[2]) p[2] = (*this)[2];
-        if (m.m[3]) p[3] = (*this)[3];
+        for (int d=0; d<size; ++d) {
+          if (m.m[d]) p[d] = (*this)[d];
+        }
       }
     }
     void storeu(real_t* p, std::ptrdiff_t ioff, mask_t const& m) const
@@ -500,45 +506,44 @@ namespace vecmathlib {
     intvec_t convert_int() const
     {
       intvec_t r;
-      r.set_elt(0, floatprops::convert_int((*this)[0]));
-      r.set_elt(1, floatprops::convert_int((*this)[1]));
-      r.set_elt(2, floatprops::convert_int((*this)[2]));
-      r.set_elt(3, floatprops::convert_int((*this)[3]));
+      for (int d=0; d<size; ++d) {
+        r.set_elt(d, floatprops::convert_int((*this)[d]));
+      }
       return r;
     }
     
     
     
-    realvec operator+() const { return *this; }
-    realvec operator-() const { return RV(0.0) - *this; }
+    realvec_t operator+() const { return *this; }
+    realvec_t operator-() const { return RV(0.0) - *this; }
     
-    realvec operator+(realvec x) const { return _mm256_add_pd(v, x.v); }
-    realvec operator-(realvec x) const { return _mm256_sub_pd(v, x.v); }
-    realvec operator*(realvec x) const { return _mm256_mul_pd(v, x.v); }
-    realvec operator/(realvec x) const { return _mm256_div_pd(v, x.v); }
+    realvec_t operator+(realvec_t x) const { return _mm256_add_pd(v, x.v); }
+    realvec_t operator-(realvec_t x) const { return _mm256_sub_pd(v, x.v); }
+    realvec_t operator*(realvec_t x) const { return _mm256_mul_pd(v, x.v); }
+    realvec_t operator/(realvec_t x) const { return _mm256_div_pd(v, x.v); }
     
-    realvec& operator+=(realvec const& x) { return *this=*this+x; }
-    realvec& operator-=(realvec const& x) { return *this=*this-x; }
-    realvec& operator*=(realvec const& x) { return *this=*this*x; }
-    realvec& operator/=(realvec const& x) { return *this=*this/x; }
+    realvec_t& operator+=(realvec_t const& x) { return *this=*this+x; }
+    realvec_t& operator-=(realvec_t const& x) { return *this=*this-x; }
+    realvec_t& operator*=(realvec_t const& x) { return *this=*this*x; }
+    realvec_t& operator/=(realvec_t const& x) { return *this=*this/x; }
     
     real_t maxval() const
     {
-      // return std::fmax(std::fmax((*this)[0], (*this)[1]),
-      //                  std::fmax((*this)[2], (*this)[3]));
+      // return vml_std::fmax(vml_std::fmax((*this)[0], (*this)[1]),
+      //                      vml_std::fmax((*this)[2], (*this)[3]));
       realvec_t x0123 = *this;
       realvec_t x1032 = _mm256_shuffle_pd(x0123, x0123, 0b0101);
       realvec_t y0022 = x0123.fmax(x1032);
-      return std::fmax(y0022[0], y0022[2]);
+      return vml_std::fmax(y0022[0], y0022[2]);
     }
     real_t minval() const
     {
-      // return std::fmin(std::fmin((*this)[0], (*this)[1]),
-      //                  std::fmin((*this)[2], (*this)[3]));
+      // return vml_std::fmin(vml_std::fmin((*this)[0], (*this)[1]),
+      //                      vml_std::fmin((*this)[2], (*this)[3]));
       realvec_t x0123 = *this;
       realvec_t x1032 = _mm256_shuffle_pd(x0123, x0123, 0b0101);
       realvec_t y0022 = x0123.fmin(x1032);
-      return std::fmin(y0022[0], y0022[2]);
+      return vml_std::fmin(y0022[0], y0022[2]);
     }
     real_t prod() const
     {
@@ -554,65 +559,68 @@ namespace vecmathlib {
       // __m256d x = _mm256_hadd_pd(v, v);
       // __m128d xlo = _mm256_extractf128_pd(x, 0);
       // __m128d xhi = _mm256_extractf128_pd(x, 1);
-      realvec x = *this;
+      realvec_t x = *this;
       x = _mm256_hadd_pd(x.v, x.v);
       return x[0] + x[2];
     }
     
     
     
-    boolvec_t operator==(realvec const& x) const
+    boolvec_t operator==(realvec_t const& x) const
     {
       return _mm256_cmp_pd(v, x.v, _CMP_EQ_OQ);
     }
-    boolvec_t operator!=(realvec const& x) const
+    boolvec_t operator!=(realvec_t const& x) const
     {
       return _mm256_cmp_pd(v, x.v, _CMP_NEQ_UQ); // Note: _UQ here
     }
-    boolvec_t operator<(realvec const& x) const
+    boolvec_t operator<(realvec_t const& x) const
     {
       return _mm256_cmp_pd(v, x.v, _CMP_LT_OQ);
     }
-    boolvec_t operator<=(realvec const& x) const
+    boolvec_t operator<=(realvec_t const& x) const
     {
       return _mm256_cmp_pd(v, x.v, _CMP_LE_OQ);
     }
-    boolvec_t operator>(realvec const& x) const
+    boolvec_t operator>(realvec_t const& x) const
     {
       return _mm256_cmp_pd(v, x.v, _CMP_GT_OQ);
     }
-    boolvec_t operator>=(realvec const& x) const
+    boolvec_t operator>=(realvec_t const& x) const
     {
       return _mm256_cmp_pd(v, x.v, _CMP_GE_OQ);
     }
     
     
     
-    realvec acos() const { return MF::vml_acos(*this); }
-    realvec acosh() const { return MF::vml_acosh(*this); }
-    realvec asin() const { return MF::vml_asin(*this); }
-    realvec asinh() const { return MF::vml_asinh(*this); }
-    realvec atan() const { return MF::vml_atan(*this); }
-    realvec atan2(realvec y) const { return MF::vml_atan2(*this, y); }
-    realvec atanh() const { return MF::vml_atanh(*this); }
-    realvec cbrt() const { return MF::vml_cbrt(*this); }
-    realvec ceil() const { return _mm256_ceil_pd(v); }
-    realvec copysign(realvec y) const { return MF::vml_copysign(*this, y); }
-    realvec cos() const { return MF::vml_cos(*this); }
-    realvec cosh() const { return MF::vml_cosh(*this); }
-    realvec exp() const { return MF::vml_exp(*this); }
-    realvec exp10() const { return MF::vml_exp10(*this); }
-    realvec exp2() const { return MF::vml_exp2(*this); }
-    realvec expm1() const { return MF::vml_expm1(*this); }
-    realvec fabs() const { return MF::vml_fabs(*this); }
-    realvec fdim(realvec y) const { return MF::vml_fdim(*this, y); }
-    realvec floor() const { return _mm256_floor_pd(v); }
-    realvec fma(realvec y, realvec z) const { return MF::vml_fma(*this, y, z); }
-    realvec fmax(realvec y) const { return _mm256_max_pd(v, y.v); }
-    realvec fmin(realvec y) const { return _mm256_min_pd(v, y.v); }
-    realvec fmod(realvec y) const { return MF::vml_fmod(*this, y); }
-    realvec frexp(intvec_t& r) const { return MF::vml_frexp(*this, r); }
-    realvec hypot(realvec y) const { return MF::vml_hypot(*this, y); }
+    realvec_t acos() const { return MF::vml_acos(*this); }
+    realvec_t acosh() const { return MF::vml_acosh(*this); }
+    realvec_t asin() const { return MF::vml_asin(*this); }
+    realvec_t asinh() const { return MF::vml_asinh(*this); }
+    realvec_t atan() const { return MF::vml_atan(*this); }
+    realvec_t atan2(realvec_t y) const { return MF::vml_atan2(*this, y); }
+    realvec_t atanh() const { return MF::vml_atanh(*this); }
+    realvec_t cbrt() const { return MF::vml_cbrt(*this); }
+    realvec_t ceil() const { return _mm256_ceil_pd(v); }
+    realvec_t copysign(realvec_t y) const { return MF::vml_copysign(*this, y); }
+    realvec_t cos() const { return MF::vml_cos(*this); }
+    realvec_t cosh() const { return MF::vml_cosh(*this); }
+    realvec_t exp() const { return MF::vml_exp(*this); }
+    realvec_t exp10() const { return MF::vml_exp10(*this); }
+    realvec_t exp2() const { return MF::vml_exp2(*this); }
+    realvec_t expm1() const { return MF::vml_expm1(*this); }
+    realvec_t fabs() const { return MF::vml_fabs(*this); }
+    realvec_t fdim(realvec_t y) const { return MF::vml_fdim(*this, y); }
+    realvec_t floor() const { return _mm256_floor_pd(v); }
+    realvec_t fma(realvec_t y, realvec_t z) const
+    {
+      return MF::vml_fma(*this, y, z);
+    }
+    realvec_t fmax(realvec_t y) const { return _mm256_max_pd(v, y.v); }
+    realvec_t fmin(realvec_t y) const { return _mm256_min_pd(v, y.v); }
+    realvec_t fmod(realvec_t y) const { return MF::vml_fmod(*this, y); }
+    realvec_t frexp(intvec_t* r) const { return MF::vml_frexp(*this, r); }
+    realvec_t hypot(realvec_t y) const { return MF::vml_hypot(*this, y); }
     intvec_t ilogb() const { return MF::vml_ilogb(*this); }
     boolvec_t isfinite() const { return MF::vml_isfinite(*this); }
     boolvec_t isinf() const { return MF::vml_isinf(*this); }
@@ -625,29 +633,35 @@ namespace vecmathlib {
 #endif
     }
     boolvec_t isnormal() const { return MF::vml_isnormal(*this); }
-    realvec ldexp(int_t n) const { return MF::vml_ldexp(*this, n); }
-    realvec ldexp(intvec_t n) const { return MF::vml_ldexp(*this, n); }
-    realvec log() const { return MF::vml_log(*this); }
-    realvec log10() const { return MF::vml_log10(*this); }
-    realvec log1p() const { return MF::vml_log1p(*this); }
-    realvec log2() const { return MF::vml_log2(*this); }
-    realvec nextafter(realvec y) const { return MF::vml_nextafter(*this, y); }
-    realvec pow(realvec y) const { return MF::vml_pow(*this, y); }
-    realvec rcp() const { return _mm256_div_pd(_mm256_set1_pd(1.0), v); }
-    realvec remainder(realvec y) const { return MF::vml_remainder(*this, y); }
-    realvec rint() const
+    realvec_t ldexp(int_t n) const { return MF::vml_ldexp(*this, n); }
+    realvec_t ldexp(intvec_t n) const { return MF::vml_ldexp(*this, n); }
+    realvec_t log() const { return MF::vml_log(*this); }
+    realvec_t log10() const { return MF::vml_log10(*this); }
+    realvec_t log1p() const { return MF::vml_log1p(*this); }
+    realvec_t log2() const { return MF::vml_log2(*this); }
+    realvec_t nextafter(realvec_t y) const
+    {
+      return MF::vml_nextafter(*this, y);
+    }
+    realvec_t pow(realvec_t y) const { return MF::vml_pow(*this, y); }
+    realvec_t rcp() const { return _mm256_div_pd(_mm256_set1_pd(1.0), v); }
+    realvec_t remainder(realvec_t y) const
+    {
+      return MF::vml_remainder(*this, y);
+    }
+    realvec_t rint() const
     {
       return _mm256_round_pd(v, _MM_FROUND_TO_NEAREST_INT);
     }
-    realvec round() const { return MF::vml_round(*this); }
-    realvec rsqrt() const { return MF::vml_rsqrt(*this); }
+    realvec_t round() const { return MF::vml_round(*this); }
+    realvec_t rsqrt() const { return MF::vml_rsqrt(*this); }
     boolvec_t signbit() const { return v; }
-    realvec sin() const { return MF::vml_sin(*this); }
-    realvec sinh() const { return MF::vml_sinh(*this); }
-    realvec sqrt() const { return _mm256_sqrt_pd(v); }
-    realvec tan() const { return MF::vml_tan(*this); }
-    realvec tanh() const { return MF::vml_tanh(*this); }
-    realvec trunc() const { return _mm256_round_pd(v, _MM_FROUND_TO_ZERO); }
+    realvec_t sin() const { return MF::vml_sin(*this); }
+    realvec_t sinh() const { return MF::vml_sinh(*this); }
+    realvec_t sqrt() const { return _mm256_sqrt_pd(v); }
+    realvec_t tan() const { return MF::vml_tan(*this); }
+    realvec_t tanh() const { return MF::vml_tanh(*this); }
+    realvec_t trunc() const { return _mm256_round_pd(v, _MM_FROUND_TO_ZERO); }
   };
   
   
@@ -687,6 +701,22 @@ namespace vecmathlib {
   
   // intvec definitions
   
+  inline intvec<double,4> intvec<double,4>::abs() const
+  {
+    return MF::vml_abs(*this);
+  }
+  
+  inline
+  intvec<double,4> intvec<double,4>::bitifthen(intvec_t x, intvec_t y) const
+  {
+    return MF::vml_bitifthen(*this, x, y);
+  }
+  
+  inline intvec<double,4> intvec<double,4>::clz() const
+  {
+    return MF::vml_clz(*this);
+  }
+  
   inline realvec<double,4> intvec<double,4>::as_float() const
   {
     return _mm256_castsi256_pd(v);
@@ -695,11 +725,40 @@ namespace vecmathlib {
   inline realvec<double,4> intvec<double,4>::convert_float() const
   {
     realvec_t r;
-    r.set_elt(0, floatprops::convert_float((*this)[0]));
-    r.set_elt(1, floatprops::convert_float((*this)[1]));
-    r.set_elt(2, floatprops::convert_float((*this)[2]));
-    r.set_elt(3, floatprops::convert_float((*this)[3]));
+    for (int d=0; d<size; ++d) {
+      r.set_elt(d, floatprops::convert_float((*this)[d]));
+    }
     return r;
+  }
+  
+  inline boolvec<double,4> intvec<double,4>::isignbit() const
+  {
+    return MF::vml_isignbit(*this);
+  }
+  
+  inline intvec<double,4> intvec<double,4>::max(intvec_t x) const
+  {
+    return MF::vml_max(*this, x);
+  }
+  
+  inline intvec<double,4> intvec<double,4>::min(intvec_t x) const
+  {
+    return MF::vml_min(*this, x);
+  }
+  
+  inline intvec<double,4> intvec<double,4>::popcount() const
+  {
+    return MF::vml_popcount(*this);
+  }
+  
+  inline intvec<double,4> intvec<double,4>::rotate(int_t n) const
+  {
+    return MF::vml_rotate(*this, n);
+  }
+  
+  inline intvec<double,4> intvec<double,4>::rotate(intvec_t n) const
+  {
+    return MF::vml_rotate(*this, n);
   }
   
 } // namespace vecmathlib

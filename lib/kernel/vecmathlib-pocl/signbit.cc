@@ -5,7 +5,7 @@
 // signbit: ['VF'] -> VJ
 
 // signbit: VF=float
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_1
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int _cl_signbit(float x0)
 {
@@ -13,7 +13,7 @@ int _cl_signbit(float x0)
   vecmathlib::realvec<float,1>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<float,1>::intvec_t,int>(vecmathlib::convert_int(r));
 }
-#else
+#elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling libm
 int _cl_signbit(float x0)
 {
@@ -21,10 +21,18 @@ int _cl_signbit(float x0)
   vecmathlib::realpseudovec<float,1>::boolvec_t r = signbit(y0);
   return vecmathlib::convert_int(r)[0];
 }
+#else
+// Implement signbit by calling builtin
+int _cl_signbit(float x0)
+{
+  vecmathlib::realbuiltinvec<float,1> y0 = x0;
+  vecmathlib::realbuiltinvec<float,1>::boolvec_t r = signbit(y0);
+  return vecmathlib::convert_int(r)[0];
+}
 #endif
 
 // signbit: VF=float2
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_2
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_2 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int2 _cl_signbit(float2 x0)
 {
@@ -32,7 +40,7 @@ int2 _cl_signbit(float2 x0)
   vecmathlib::realvec<float,2>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<float,2>::intvec_t,int2>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 int4 _cl_signbit(float4);
 int2 _cl_signbit(float2 x0)
@@ -56,7 +64,7 @@ int2 _cl_signbit(float2 x0)
 #endif
 
 // signbit: VF=float3
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_3
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_3 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int3 _cl_signbit(float3 x0)
 {
@@ -64,7 +72,7 @@ int3 _cl_signbit(float3 x0)
   vecmathlib::realvec<float,3>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<float,3>::intvec_t,int3>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 int4 _cl_signbit(float4);
 int3 _cl_signbit(float3 x0)
@@ -88,7 +96,7 @@ int3 _cl_signbit(float3 x0)
 #endif
 
 // signbit: VF=float4
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_4
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_4 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int4 _cl_signbit(float4 x0)
 {
@@ -96,7 +104,7 @@ int4 _cl_signbit(float4 x0)
   vecmathlib::realvec<float,4>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<float,4>::intvec_t,int4>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 int8 _cl_signbit(float8);
 int4 _cl_signbit(float4 x0)
@@ -120,7 +128,7 @@ int4 _cl_signbit(float4 x0)
 #endif
 
 // signbit: VF=float8
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_8
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_8 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int8 _cl_signbit(float8 x0)
 {
@@ -128,7 +136,7 @@ int8 _cl_signbit(float8 x0)
   vecmathlib::realvec<float,8>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<float,8>::intvec_t,int8>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 int16 _cl_signbit(float16);
 int8 _cl_signbit(float8 x0)
@@ -152,7 +160,7 @@ int8 _cl_signbit(float8 x0)
 #endif
 
 // signbit: VF=float16
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_16 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int16 _cl_signbit(float16 x0)
 {
@@ -177,7 +185,7 @@ int16 _cl_signbit(float16 x0)
 #ifdef cl_khr_fp64
 
 // signbit: VF=double
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_1
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 int _cl_signbit(double x0)
 {
@@ -185,7 +193,7 @@ int _cl_signbit(double x0)
   vecmathlib::realvec<double,1>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<double,1>::intvec_t,long>(vecmathlib::convert_int(r));
 }
-#else
+#elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling libm
 int _cl_signbit(double x0)
 {
@@ -193,10 +201,18 @@ int _cl_signbit(double x0)
   vecmathlib::realpseudovec<double,1>::boolvec_t r = signbit(y0);
   return vecmathlib::convert_int(r)[0];
 }
+#else
+// Implement signbit by calling builtin
+int _cl_signbit(double x0)
+{
+  vecmathlib::realbuiltinvec<double,1> y0 = x0;
+  vecmathlib::realbuiltinvec<double,1>::boolvec_t r = signbit(y0);
+  return vecmathlib::convert_int(r)[0];
+}
 #endif
 
 // signbit: VF=double2
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 long2 _cl_signbit(double2 x0)
 {
@@ -204,7 +220,7 @@ long2 _cl_signbit(double2 x0)
   vecmathlib::realvec<double,2>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<double,2>::intvec_t,long2>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 long4 _cl_signbit(double4);
 long2 _cl_signbit(double2 x0)
@@ -228,7 +244,7 @@ long2 _cl_signbit(double2 x0)
 #endif
 
 // signbit: VF=double3
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_3
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_3 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 long3 _cl_signbit(double3 x0)
 {
@@ -236,7 +252,7 @@ long3 _cl_signbit(double3 x0)
   vecmathlib::realvec<double,3>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<double,3>::intvec_t,long3>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 long4 _cl_signbit(double4);
 long3 _cl_signbit(double3 x0)
@@ -260,7 +276,7 @@ long3 _cl_signbit(double3 x0)
 #endif
 
 // signbit: VF=double4
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_4
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_4 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 long4 _cl_signbit(double4 x0)
 {
@@ -268,7 +284,7 @@ long4 _cl_signbit(double4 x0)
   vecmathlib::realvec<double,4>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<double,4>::intvec_t,long4>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 long8 _cl_signbit(double8);
 long4 _cl_signbit(double4 x0)
@@ -292,7 +308,7 @@ long4 _cl_signbit(double4 x0)
 #endif
 
 // signbit: VF=double8
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 long8 _cl_signbit(double8 x0)
 {
@@ -300,7 +316,7 @@ long8 _cl_signbit(double8 x0)
   vecmathlib::realvec<double,8>::boolvec_t r = vecmathlib::signbit(y0);
   return bitcast<vecmathlib::realvec<double,8>::intvec_t,long8>(-vecmathlib::convert_int(r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement signbit by using a larger vector size
 long16 _cl_signbit(double16);
 long8 _cl_signbit(double8 x0)
@@ -324,7 +340,7 @@ long8 _cl_signbit(double8 x0)
 #endif
 
 // signbit: VF=double16
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_16 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement signbit by calling vecmathlib
 long16 _cl_signbit(double16 x0)
 {

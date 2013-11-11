@@ -24,6 +24,10 @@
 
 #include "templates.h"
 
+#if __has_builtin(__builtin_clz)
+
+
+
 /* These implementations return 8*sizeof(TYPE) when the input is 0 */
 
 /* __builtin_clz() is undefined for 0 */
@@ -41,6 +45,73 @@
 #define __builtin_clz0h(n)  __builtin_clz0uh(n)
 #define __builtin_clz0(n)   __builtin_clz0u(n)
 #define __builtin_clz0l(n)  __builtin_clz0ul(n)
+
+
+
+#else  /* !__has_builtin(__builtin_clz) */
+
+
+
+/* These implementations return 8*sizeof(TYPE) when the input is 0 */
+
+/* These explicit implementations are taken from
+   <http://aggregate.org/MAGIC/>:
+   
+   @techreport{magicalgorithms,
+   author={Henry Gordon Dietz},
+   title={{The Aggregate Magic Algorithms}},
+   institution={University of Kentucky},
+   howpublished={Aggregate.Org online technical report},
+   date={2013-03-25},
+   URL={http://aggregate.org/MAGIC/}
+   }
+*/
+
+#define __builtin_clz0uhh(n)                    \
+  ({                                            \
+    uchar __n=(n);                              \
+    __n |= __n >> 1;                            \
+    __n |= __n >> 2;                            \
+    __n |= __n >> 4;                            \
+    8 - popcount(__n);                          \
+  })
+
+#define __builtin_clz0uh(n)                     \
+  ({                                            \
+    ushort __n=(n);                             \
+    __n |= __n >> 1;                            \
+    __n |= __n >> 2;                            \
+    __n |= __n >> 4;                            \
+    __n |= __n >> 8;                            \
+    16 - popcount(__n);                         \
+  })
+
+#define __builtin_clz0u(n)                      \
+  ({                                            \
+    uint __n=(n);                               \
+    __n |= __n >> 1;                            \
+    __n |= __n >> 2;                            \
+    __n |= __n >> 4;                            \
+    __n |= __n >> 8;                            \
+    __n |= __n >> 16;                           \
+    32 - popcount(__n);                         \
+  })
+
+#define __builtin_clz0ul(n)                     \
+  ({                                            \
+    ulong __n=(n);                              \
+    __n |= __n >> 1;                            \
+    __n |= __n >> 2;                            \
+    __n |= __n >> 4;                            \
+    __n |= __n >> 8;                            \
+    __n |= __n >> 16;                           \
+    __n |= __n >> 32;                           \
+    64 - popcount(__n);                         \
+  })
+
+#endif
+
+
 
 #define clz0 clz
 DEFINE_BUILTIN_G_G(clz0)

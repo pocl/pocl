@@ -35,6 +35,10 @@ namespace vecmathlib {
   template realvec<float,1> round(realvec<float,1> x);
 #endif
   
+#ifdef VECMATHLIB_HAVE_VEC_FLOAT_8
+  template intvec<float,8> popcount(intvec<float,8>);
+#endif
+  
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_1
   template realvec<double,1> exp(realvec<double,1> x);
   template realvec<double,1> log(realvec<double,1> x);
@@ -68,6 +72,7 @@ namespace vecmathlib {
   template realvec<double,4> set_elt<realvec<double,4>,1>(realvec<double,4> x, realvec<double,4>::real_t a);
   template realvec<double,4> set_elt<realvec<double,4>,2>(realvec<double,4> x, realvec<double,4>::real_t a);
   template realvec<double,4> set_elt<realvec<double,4>,3>(realvec<double,4> x, realvec<double,4>::real_t a);
+  template intvec<double,4> popcount(intvec<double,4>);
 #endif
   
 }

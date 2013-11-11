@@ -50,7 +50,7 @@
 #endif
 
 /* Define some feature macros to help write generic code */
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 #  define __IF_INT64(x) x
 #else
 #  define __IF_INT64(x)
@@ -64,10 +64,6 @@
 #  define __IF_FP64(x) x
 #else
 #  define __IF_FP64(x)
-#endif
-
-#if defined(cl_khr_fp64) && !defined(cles_khr_int64)
-#  error "cl_khr_fp64 requires cles_khr_int64"
 #endif
 
 
@@ -86,25 +82,9 @@ typedef enum {
 
 /* Data types */
 
-/* Disable undefined datatypes */
-#ifndef cles_khr_int64
-typedef struct error_undefined_type_long error_undefined_type_long;
-#  define long error_undefined_type_long
-typedef struct error_undefined_type_ulong error_undefined_type_ulong;
-#  define ulong error_undefined_type_ulong
-#endif
-#ifndef cl_khr_fp16
-typedef struct error_undefined_type_half error_undefined_type_half;
-#  define half error_undefined_type_half
-#endif
-#ifndef cl_khr_fp64
-typedef struct error_undefined_type_double error_undefined_type_double;
-#  define double error_undefined_type_double
-#endif
 
 
-
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 typedef long long2  __attribute__((__ext_vector_type__(2)));
 typedef long long3  __attribute__((__ext_vector_type__(3)));
 typedef long long4  __attribute__((__ext_vector_type__(4)));
@@ -179,7 +159,7 @@ _CL_STATIC_ASSERT(uint4 , sizeof(uint4 ) == 4 *sizeof(uint));
 _CL_STATIC_ASSERT(uint8 , sizeof(uint8 ) == 8 *sizeof(uint));
 _CL_STATIC_ASSERT(uint16, sizeof(uint16) == 16*sizeof(uint));
 
-#ifdef cles_khr_int64 
+#ifdef cl_khr_int64 
 _CL_STATIC_ASSERT(long  , sizeof(long  ) == 8);
 _CL_STATIC_ASSERT(long2 , sizeof(long2 ) == 2 *sizeof(long));
 _CL_STATIC_ASSERT(long3 , sizeof(long3 ) == 4 *sizeof(long));
@@ -1124,7 +1104,7 @@ _CL_DECLARE_FUNC_F_F(native_tan)
 #define CHAR_MIN  SCHAR_MIN
 #define INT_MAX   2147483647
 #define INT_MIN   (-2147483647 - 1)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 #define LONG_MAX  0x7fffffffffffffffL
 #define LONG_MIN  (-0x7fffffffffffffffL - 1)
 #endif
@@ -1135,7 +1115,7 @@ _CL_DECLARE_FUNC_F_F(native_tan)
 #define UCHAR_MAX 255
 #define USHRT_MAX 65535
 #define UINT_MAX  0xffffffff
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 #define ULONG_MAX 0xffffffffffffffffUL
 #endif
 
@@ -1726,7 +1706,7 @@ _CL_DECLARE_VLOAD(short , __global)
 _CL_DECLARE_VLOAD(ushort, __global)
 _CL_DECLARE_VLOAD(int   , __global)
 _CL_DECLARE_VLOAD(uint  , __global)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VLOAD(long  , __global)
 _CL_DECLARE_VLOAD(ulong , __global)
 #endif
@@ -1741,7 +1721,7 @@ _CL_DECLARE_VLOAD(short , __local)
 _CL_DECLARE_VLOAD(ushort, __local)
 _CL_DECLARE_VLOAD(int   , __local)
 _CL_DECLARE_VLOAD(uint  , __local)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VLOAD(long  , __local)
 _CL_DECLARE_VLOAD(ulong , __local)
 #endif
@@ -1756,7 +1736,7 @@ _CL_DECLARE_VLOAD(short , __constant)
 _CL_DECLARE_VLOAD(ushort, __constant)
 _CL_DECLARE_VLOAD(int   , __constant)
 _CL_DECLARE_VLOAD(uint  , __constant)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VLOAD(long  , __constant)
 _CL_DECLARE_VLOAD(ulong , __constant)
 #endif
@@ -1771,7 +1751,7 @@ _CL_DECLARE_VLOAD(short , __private)
 _CL_DECLARE_VLOAD(ushort, __private)
 _CL_DECLARE_VLOAD(int   , __private)
 _CL_DECLARE_VLOAD(uint  , __private)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VLOAD(long  , __private)
 _CL_DECLARE_VLOAD(ulong , __private)
 #endif
@@ -1793,7 +1773,7 @@ _CL_DECLARE_VSTORE(short , __global)
 _CL_DECLARE_VSTORE(ushort, __global)
 _CL_DECLARE_VSTORE(int   , __global)
 _CL_DECLARE_VSTORE(uint  , __global)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VSTORE(long  , __global)
 _CL_DECLARE_VSTORE(ulong , __global)
 #endif
@@ -1808,7 +1788,7 @@ _CL_DECLARE_VSTORE(short , __local)
 _CL_DECLARE_VSTORE(ushort, __local)
 _CL_DECLARE_VSTORE(int   , __local)
 _CL_DECLARE_VSTORE(uint  , __local)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VSTORE(long  , __local)
 _CL_DECLARE_VSTORE(ulong , __local)
 #endif
@@ -1823,7 +1803,7 @@ _CL_DECLARE_VSTORE(short , __private)
 _CL_DECLARE_VSTORE(ushort, __private)
 _CL_DECLARE_VSTORE(int   , __private)
 _CL_DECLARE_VSTORE(uint  , __private)
-#ifdef cles_khr_int64
+#ifdef cl_khr_int64
 _CL_DECLARE_VSTORE(long  , __private)
 _CL_DECLARE_VSTORE(ulong , __private)
 #endif
@@ -2038,8 +2018,19 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
 // shuffle2
 
 
-int printf(const /*constant*/ char * restrict format, ...)
+// Note: Using "const" instead of "constant", since string literals
+// are currently "const" instead of "constant".
+int _cl_printf(/*constant*/ const char* restrict format, ...)
   __attribute__((format(printf, 1, 2)));
+
+#if ((__clang_major__ == 3) && (__clang_minor__ > 3)) && !defined (__TCE__)
+// this will be overridden in printf.cl by an OpenCL-compliant printf
+#define printf _cl_printf
+#else
+// The new printf requires Clang 3.4. Fall back to the libc one
+// if using an older version.
+int printf(const char* restrict fmt, ...);
+#endif
 
 
 /* Async Copies from Global to Local Memory, Local to

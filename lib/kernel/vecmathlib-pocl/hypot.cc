@@ -5,7 +5,7 @@
 // hypot: ['VF', 'VF'] -> VF
 
 // hypot: VF=float
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_1
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 float _cl_hypot(float x0, float x1)
 {
@@ -14,7 +14,7 @@ float _cl_hypot(float x0, float x1)
   vecmathlib::realvec<float,1> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<float,1>,float>((r));
 }
-#else
+#elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling libm
 float _cl_hypot(float x0, float x1)
 {
@@ -23,10 +23,19 @@ float _cl_hypot(float x0, float x1)
   vecmathlib::realpseudovec<float,1> r = hypot(y0, y1);
   return (r)[0];
 }
+#else
+// Implement hypot by calling builtin
+float _cl_hypot(float x0, float x1)
+{
+  vecmathlib::realbuiltinvec<float,1> y0 = x0;
+  vecmathlib::realbuiltinvec<float,1> y1 = x1;
+  vecmathlib::realbuiltinvec<float,1> r = hypot(y0, y1);
+  return (r)[0];
+}
 #endif
 
 // hypot: VF=float2
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_2
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_2 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 float2 _cl_hypot(float2 x0, float2 x1)
 {
@@ -35,7 +44,7 @@ float2 _cl_hypot(float2 x0, float2 x1)
   vecmathlib::realvec<float,2> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<float,2>,float2>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 float4 _cl_hypot(float4, float4);
 float2 _cl_hypot(float2 x0, float2 x1)
@@ -61,7 +70,7 @@ float2 _cl_hypot(float2 x0, float2 x1)
 #endif
 
 // hypot: VF=float3
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_3
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_3 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 float3 _cl_hypot(float3 x0, float3 x1)
 {
@@ -70,7 +79,7 @@ float3 _cl_hypot(float3 x0, float3 x1)
   vecmathlib::realvec<float,3> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<float,3>,float3>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 float4 _cl_hypot(float4, float4);
 float3 _cl_hypot(float3 x0, float3 x1)
@@ -96,7 +105,7 @@ float3 _cl_hypot(float3 x0, float3 x1)
 #endif
 
 // hypot: VF=float4
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_4
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_4 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 float4 _cl_hypot(float4 x0, float4 x1)
 {
@@ -105,7 +114,7 @@ float4 _cl_hypot(float4 x0, float4 x1)
   vecmathlib::realvec<float,4> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<float,4>,float4>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 float8 _cl_hypot(float8, float8);
 float4 _cl_hypot(float4 x0, float4 x1)
@@ -131,7 +140,7 @@ float4 _cl_hypot(float4 x0, float4 x1)
 #endif
 
 // hypot: VF=float8
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_8
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_8 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 float8 _cl_hypot(float8 x0, float8 x1)
 {
@@ -140,7 +149,7 @@ float8 _cl_hypot(float8 x0, float8 x1)
   vecmathlib::realvec<float,8> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<float,8>,float8>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 float16 _cl_hypot(float16, float16);
 float8 _cl_hypot(float8 x0, float8 x1)
@@ -166,7 +175,7 @@ float8 _cl_hypot(float8 x0, float8 x1)
 #endif
 
 // hypot: VF=float16
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_16 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 float16 _cl_hypot(float16 x0, float16 x1)
 {
@@ -193,7 +202,7 @@ float16 _cl_hypot(float16 x0, float16 x1)
 #ifdef cl_khr_fp64
 
 // hypot: VF=double
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_1
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 double _cl_hypot(double x0, double x1)
 {
@@ -202,7 +211,7 @@ double _cl_hypot(double x0, double x1)
   vecmathlib::realvec<double,1> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<double,1>,double>((r));
 }
-#else
+#elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling libm
 double _cl_hypot(double x0, double x1)
 {
@@ -211,10 +220,19 @@ double _cl_hypot(double x0, double x1)
   vecmathlib::realpseudovec<double,1> r = hypot(y0, y1);
   return (r)[0];
 }
+#else
+// Implement hypot by calling builtin
+double _cl_hypot(double x0, double x1)
+{
+  vecmathlib::realbuiltinvec<double,1> y0 = x0;
+  vecmathlib::realbuiltinvec<double,1> y1 = x1;
+  vecmathlib::realbuiltinvec<double,1> r = hypot(y0, y1);
+  return (r)[0];
+}
 #endif
 
 // hypot: VF=double2
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 double2 _cl_hypot(double2 x0, double2 x1)
 {
@@ -223,7 +241,7 @@ double2 _cl_hypot(double2 x0, double2 x1)
   vecmathlib::realvec<double,2> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<double,2>,double2>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 double4 _cl_hypot(double4, double4);
 double2 _cl_hypot(double2 x0, double2 x1)
@@ -249,7 +267,7 @@ double2 _cl_hypot(double2 x0, double2 x1)
 #endif
 
 // hypot: VF=double3
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_3
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_3 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 double3 _cl_hypot(double3 x0, double3 x1)
 {
@@ -258,7 +276,7 @@ double3 _cl_hypot(double3 x0, double3 x1)
   vecmathlib::realvec<double,3> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<double,3>,double3>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 double4 _cl_hypot(double4, double4);
 double3 _cl_hypot(double3 x0, double3 x1)
@@ -284,7 +302,7 @@ double3 _cl_hypot(double3 x0, double3 x1)
 #endif
 
 // hypot: VF=double4
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_4
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_4 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 double4 _cl_hypot(double4 x0, double4 x1)
 {
@@ -293,7 +311,7 @@ double4 _cl_hypot(double4 x0, double4 x1)
   vecmathlib::realvec<double,4> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<double,4>,double4>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 double8 _cl_hypot(double8, double8);
 double4 _cl_hypot(double4 x0, double4 x1)
@@ -319,7 +337,7 @@ double4 _cl_hypot(double4 x0, double4 x1)
 #endif
 
 // hypot: VF=double8
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 double8 _cl_hypot(double8 x0, double8 x1)
 {
@@ -328,7 +346,7 @@ double8 _cl_hypot(double8 x0, double8 x1)
   vecmathlib::realvec<double,8> r = vecmathlib::hypot(y0, y1);
   return bitcast<vecmathlib::realvec<double,8>,double8>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement hypot by using a larger vector size
 double16 _cl_hypot(double16, double16);
 double8 _cl_hypot(double8 x0, double8 x1)
@@ -354,7 +372,7 @@ double8 _cl_hypot(double8 x0, double8 x1)
 #endif
 
 // hypot: VF=double16
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_16 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement hypot by calling vecmathlib
 double16 _cl_hypot(double16 x0, double16 x1)
 {

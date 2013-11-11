@@ -23,9 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-#echo 0=$0 @=$@
-#set -x
-#set -e
+if [ -n "$POCL_VERBOSE" ]; then
+    set -x
+    set -e
+    echo 0=$0 @=$@
+fi
 
 target=@HOST@
 
@@ -68,19 +70,26 @@ then
     echo >&2 "Usage: $0 -k <kernel> [-x <size>] [-y <size>] [-z <size>] -o <output_file> <input_file>" && exit 1
 fi
 
+case $target in
+  cellspu-*) target_dir="cellspu";;
+  tce-*)     target_dir="tce";;
+  *)         target_dir="host";;
+esac
+
+case $target in
+  tce*)     CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+            LLC_FLAGS=""
+            LD_FLAGS="@HOST_LD_FLAGS@";;
+  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+            LLC_FLAGS="@HOST_LLC_FLAGS@"
+            LD_FLAGS="@HOST_LD_FLAGS@";;
+  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
+            LLC_FLAGS="@TARGET_LLC_FLAGS@"
+            LD_FLAGS="@TARGET_LD_FLAGS@";;
+esac
+
 linked_bc="`dirname $1`/`basename $1 .bc`_linked.bc"
 linked_out="${linked_bc}.out"
-
-target_dir=${target}
-case $target in
-  arm*)        target_dir="arm";;
-  cellspu-*)   target_dir="cellspu";;
-  powerpc-*)   target_dir="powerpc";;
-  powerpc64-*) target_dir="powerpc64";;
-  tce-*)       target_dir="tce";;
-  i?86*)       target_dir="x86_64";;
-  x86_64-*)    target_dir="x86_64";;
-esac
 
 full_target_dir="@pkglibdir@/${target_dir}"
 # BEGIN REMOVE ONCE INSTALLED
@@ -160,7 +169,8 @@ fi
 # also be harmful for wg-vectorization where we want to try to vectorize
 # the code it wants to convert e.g. to a memset or a memcpy
 
-@OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
+@OPT@ ${LLC_FLAGS} \
+    -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
     -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \

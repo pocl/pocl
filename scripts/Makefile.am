@@ -34,15 +34,19 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]pkglibexecdir[@],$(pkglibexecdir),g'		\
                -e 's,[@]CLANG[@],$(CLANG),g'				\
                -e 's,[@]CLFLAGS[@],$(CLFLAGS),g'			\
-               -e 's,[@]FORCED_CLFLAGS[@],$(FORCED_CLFLAGS),g'			\
-               -e 's,[@]TARGET[@],$(TARGET),g'	\
+               -e 's,[@]FORCED_CLFLAGS[@],$(FORCED_CLFLAGS),g'		\
+               -e 's,[@]LD_SHARED[@],$(LD_SHARED),g'			\
+               -e 's,[@]TARGET[@],$(TARGET),g'				\
                -e 's,[@]TARGET_CLANG_FLAGS[@],$(TARGET_CLANG_FLAGS),g'	\
-               -e 's,[@]HOST[@],$(HOST),g'	\
+               -e 's,[@]TARGET_LLC_FLAGS[@],$(TARGET_LLC_FLAGS),g'	\
+               -e 's,[@]TARGET_LD_FLAGS[@],$(TARGET_LD_FLAGS),g'	\
+               -e 's,[@]HOST[@],$(HOST),g'				\
                -e 's,[@]HOST_CLANG_FLAGS[@],$(HOST_CLANG_FLAGS),g'	\
+               -e 's,[@]HOST_LLC_FLAGS[@],$(HOST_LLC_FLAGS),g'		\
                -e 's,[@]HOST_LD_FLAGS[@],$(HOST_LD_FLAGS),g'		\
                -e 's,[@]OPT[@],$(OPT),g'				\
                -e 's,[@]LLVM_LINK[@],$(LLVM_LINK),g'			\
-               -e 's,[@]LLC[@],$(LLC),g' \
+               -e 's,[@]LLC[@],$(LLC),g' 				\
                -e 's,[@]LLVM_VERSION[@],$(LLVM_VERSION),g' 
 
 pocl-build pocl-kernel pocl-workgroup pocl-standalone: %: %.in Makefile ../install-paths.h

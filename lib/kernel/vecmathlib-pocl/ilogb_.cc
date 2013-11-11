@@ -5,7 +5,7 @@
 // ilogb_: ['VF'] -> VJ
 
 // ilogb_: VF=float
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_1
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int _cl_ilogb_(float x0)
 {
@@ -13,7 +13,7 @@ int _cl_ilogb_(float x0)
   vecmathlib::realvec<float,1>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<float,1>::intvec_t,int>((r));
 }
-#else
+#elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling libm
 int _cl_ilogb_(float x0)
 {
@@ -21,10 +21,18 @@ int _cl_ilogb_(float x0)
   vecmathlib::realpseudovec<float,1>::intvec_t r = ilogb(y0);
   return (r)[0];
 }
+#else
+// Implement ilogb_ by calling builtin
+int _cl_ilogb_(float x0)
+{
+  vecmathlib::realbuiltinvec<float,1> y0 = x0;
+  vecmathlib::realbuiltinvec<float,1>::intvec_t r = ilogb(y0);
+  return (r)[0];
+}
 #endif
 
 // ilogb_: VF=float2
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_2
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_2 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int2 _cl_ilogb_(float2 x0)
 {
@@ -32,7 +40,7 @@ int2 _cl_ilogb_(float2 x0)
   vecmathlib::realvec<float,2>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<float,2>::intvec_t,int2>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 int4 _cl_ilogb_(float4);
 int2 _cl_ilogb_(float2 x0)
@@ -56,7 +64,7 @@ int2 _cl_ilogb_(float2 x0)
 #endif
 
 // ilogb_: VF=float3
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_3
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_3 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int3 _cl_ilogb_(float3 x0)
 {
@@ -64,7 +72,7 @@ int3 _cl_ilogb_(float3 x0)
   vecmathlib::realvec<float,3>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<float,3>::intvec_t,int3>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_4 || defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 int4 _cl_ilogb_(float4);
 int3 _cl_ilogb_(float3 x0)
@@ -88,7 +96,7 @@ int3 _cl_ilogb_(float3 x0)
 #endif
 
 // ilogb_: VF=float4
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_4
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_4 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int4 _cl_ilogb_(float4 x0)
 {
@@ -96,7 +104,7 @@ int4 _cl_ilogb_(float4 x0)
   vecmathlib::realvec<float,4>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<float,4>::intvec_t,int4>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_8 || defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 int8 _cl_ilogb_(float8);
 int4 _cl_ilogb_(float4 x0)
@@ -120,7 +128,7 @@ int4 _cl_ilogb_(float4 x0)
 #endif
 
 // ilogb_: VF=float8
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_8
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_8 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int8 _cl_ilogb_(float8 x0)
 {
@@ -128,7 +136,7 @@ int8 _cl_ilogb_(float8 x0)
   vecmathlib::realvec<float,8>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<float,8>::intvec_t,int8>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#elif (defined VECMATHLIB_HAVE_VEC_FLOAT_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 int16 _cl_ilogb_(float16);
 int8 _cl_ilogb_(float8 x0)
@@ -152,7 +160,7 @@ int8 _cl_ilogb_(float8 x0)
 #endif
 
 // ilogb_: VF=float16
-#if defined VECMATHLIB_HAVE_VEC_FLOAT_16
+#if defined VECMATHLIB_HAVE_VEC_FLOAT_16 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int16 _cl_ilogb_(float16 x0)
 {
@@ -177,7 +185,7 @@ int16 _cl_ilogb_(float16 x0)
 #ifdef cl_khr_fp64
 
 // ilogb_: VF=double
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_1
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 int _cl_ilogb_(double x0)
 {
@@ -185,7 +193,7 @@ int _cl_ilogb_(double x0)
   vecmathlib::realvec<double,1>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<double,1>::intvec_t,long>((r));
 }
-#else
+#elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling libm
 int _cl_ilogb_(double x0)
 {
@@ -193,10 +201,18 @@ int _cl_ilogb_(double x0)
   vecmathlib::realpseudovec<double,1>::intvec_t r = ilogb(y0);
   return (r)[0];
 }
+#else
+// Implement ilogb_ by calling builtin
+int _cl_ilogb_(double x0)
+{
+  vecmathlib::realbuiltinvec<double,1> y0 = x0;
+  vecmathlib::realbuiltinvec<double,1>::intvec_t r = ilogb(y0);
+  return (r)[0];
+}
 #endif
 
 // ilogb_: VF=double2
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_2 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 long2 _cl_ilogb_(double2 x0)
 {
@@ -204,7 +220,7 @@ long2 _cl_ilogb_(double2 x0)
   vecmathlib::realvec<double,2>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<double,2>::intvec_t,long2>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 long4 _cl_ilogb_(double4);
 long2 _cl_ilogb_(double2 x0)
@@ -228,7 +244,7 @@ long2 _cl_ilogb_(double2 x0)
 #endif
 
 // ilogb_: VF=double3
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_3
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_3 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 long3 _cl_ilogb_(double3 x0)
 {
@@ -236,7 +252,7 @@ long3 _cl_ilogb_(double3 x0)
   vecmathlib::realvec<double,3>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<double,3>::intvec_t,long3>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_4 || defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 long4 _cl_ilogb_(double4);
 long3 _cl_ilogb_(double3 x0)
@@ -260,7 +276,7 @@ long3 _cl_ilogb_(double3 x0)
 #endif
 
 // ilogb_: VF=double4
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_4
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_4 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 long4 _cl_ilogb_(double4 x0)
 {
@@ -268,7 +284,7 @@ long4 _cl_ilogb_(double4 x0)
   vecmathlib::realvec<double,4>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<double,4>::intvec_t,long4>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_8 || defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 long8 _cl_ilogb_(double8);
 long4 _cl_ilogb_(double4 x0)
@@ -292,7 +308,7 @@ long4 _cl_ilogb_(double4 x0)
 #endif
 
 // ilogb_: VF=double8
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_8 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 long8 _cl_ilogb_(double8 x0)
 {
@@ -300,7 +316,7 @@ long8 _cl_ilogb_(double8 x0)
   vecmathlib::realvec<double,8>::intvec_t r = vecmathlib::ilogb(y0);
   return bitcast<vecmathlib::realvec<double,8>::intvec_t,long8>((r));
 }
-#elif defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#elif (defined VECMATHLIB_HAVE_VEC_DOUBLE_16) && ! defined POCL_VECMATHLIB_BUILTIN 
 // Implement ilogb_ by using a larger vector size
 long16 _cl_ilogb_(double16);
 long8 _cl_ilogb_(double8 x0)
@@ -324,7 +340,7 @@ long8 _cl_ilogb_(double8 x0)
 #endif
 
 // ilogb_: VF=double16
-#if defined VECMATHLIB_HAVE_VEC_DOUBLE_16
+#if defined VECMATHLIB_HAVE_VEC_DOUBLE_16 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
 long16 _cl_ilogb_(double16 x0)
 {

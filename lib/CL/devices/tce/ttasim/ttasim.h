@@ -129,7 +129,6 @@ GEN_PROTOTYPES (ttasim)
   pocl_tce_build_program, \
   NULL, /* get_supported_image_formats */      \
   NULL, /* data */                               \
-  "tce", /* kernel_lib_target (forced kernel library dir) */    \
   "tce-tut-llvm", /* llvm_target_triplet */               \
   0 /* dev_id */ \
 }

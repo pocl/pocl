@@ -34,7 +34,6 @@ include/arm/types.h
 include/cellspu/types.h
 include/powerpc/types.h
 include/powerpc64/types.h
-include/tce/types.h
 include/x86_64/types.h
 install-paths.h
 libtool

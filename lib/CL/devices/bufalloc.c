@@ -79,7 +79,7 @@
 void
 print_chunk (chunk_info_t *chunk)
 {
-  printf ("### chunk %p: allocated: %d start: %zx size: %lu prev: %p next: %p\n", 
+  printf ("### chunk %p: allocated: %d start: %zx size: %zu prev: %p next: %p\n", 
           chunk, chunk->is_allocated, chunk->start_address,
           chunk->size, chunk->prev, chunk->next);
 }

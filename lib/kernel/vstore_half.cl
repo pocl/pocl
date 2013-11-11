@@ -1,7 +1,6 @@
 /* OpenCL built-in library: vstore_half()
 
-   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
-                      Perimeter Institute for Theoretical Physics
+   Copyright (c) 2011 Universidad Rey Juan Carlos
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +25,61 @@
 
 #ifdef cl_khr_fp16
 
+
+
 /*
-  half:   1 sign bit,  5 exponent bits, 10 mantissa bits
-  float:  1 sign bit,  7 exponent bits, 23 mantissa bits
-  double: 1 sign bit, 10 exponent bits, 53 mantissa bits
+  half:        1 sign bit,  5 exponent bits,  10 mantissa bits, exponent offset 15
+  float:       1 sign bit,  8 exponent bits,  23 mantissa bits, exponent offset 127
+  double:      1 sign bit, 10 exponent bits,  53 mantissa bits, exponent offset 1023
+  long double: 1 sign bit, 15 exponent bits, 112 mantissa bits, exponent offset 16383
 */
+
+// Clang supports "half" only on ARM
+// TODO: Create autoconf test for this
+#ifdef __ARM_ARCH
+
+ushort _cl_float2half(float data)
+{
+  half hdata = data;
+  return *(const ushort*)&hdata;
+}
+
+#else
 
 #define HALF_MAXPLUS 0x1.ffdp15f /* "one more" than HALF_MAX */
 #define HALF_MIN     0x1.0p-14f
 #define HALF_ZERO    ((short)0x0000) /* zero */
 #define HALF_INF     ((short)0x4000) /* infinity */
 #define HALF_SIGN    ((short)0x8000) /* sign bit */
+
+ushort _cl_float2half(float data)
+{
+  /* IDEA: modify data (e.g. add "1/2") to round correctly */
+  uint fval = as_uint(data);
+  uint fsign = (fval & 0x80000000U) >> 31U;
+  uint fexp = (fval & 0x7f800000U) >> 23U;
+  uint fmant = fval & 0x007fffffU;
+  bool isdenorm = fexp == 0U;
+  bool isinfnan = fexp == 255U;
+  fexp -= 127U;
+  ushort hsign = (ushort)fsign << (ushort)15;
+  ushort hexp = (__builtin_expect(isdenorm, false) ? (ushort)0 :
+                 __builtin_expect(isinfnan, false) ? (ushort)31 :
+                 (ushort)fexp + (ushort)15);
+  /* TODO: this always truncates */
+  ushort hmant = (ushort)(fmant >> 13);
+  ushort hval;
+  if (__builtin_expect(fabs(data) >= HALF_MAXPLUS, false)) {
+    hval = signbit(data)==0 ? HALF_INF : HALF_INF | HALF_SIGN;
+  } else if (__builtin_expect(fabs(data) < HALF_MIN, false)) {
+    hval = signbit(data)==0 ? HALF_ZERO : HALF_ZERO | HALF_SIGN;
+  } else {
+    hval = hsign | hexp | hmant;
+  }
+  return hval;
+}
+
+#endif
 
 
 
@@ -45,29 +88,7 @@
   void _CL_OVERLOADABLE                                                 \
   vstore_half##SUFFIX(float data, size_t offset, MOD half *p)           \
   {                                                                     \
-    /* IDEA: modify data (e.g. add "1/2") to round correctly */         \
-    int fval = as_int(data);                                            \
-    int fsign = (fval & 0x80000000) >> 31;                              \
-    int fexp = (fval & 0x7f800000) >> 23;                               \
-    int fmant = fval & 0x007fffff;                                      \
-    bool isdenorm = fexp == 0;                                          \
-    bool isinfnan = fexp == 255;                                        \
-    fexp -= 127;                                                        \
-    short hsign = (short)fsign << (short)15;                            \
-    short hexp = (__builtin_expect(isdenorm, false) ? (short)0 :        \
-                  __builtin_expect(isinfnan, false) ? (short)31 :       \
-                  (short)fexp + (short)15);                             \
-    /* TODO: this always truncates */                                   \
-    short hmant = (short)(fmant >> 13);                                 \
-    short hval;                                                         \
-    if (__builtin_expect(fabs(data) >= HALF_MAXPLUS, false)) {          \
-      hval = data > 0.0f ? HALF_INF : HALF_INF | HALF_SIGN;             \
-    } else if (__builtin_expect(fabs(data) < HALF_MIN, false)) {        \
-      hval = signbit(data)==0 ? HALF_ZERO : HALF_ZERO | HALF_SIGN;      \
-    } else {                                                            \
-      hval = hsign | hexp | hmant;                                      \
-    }                                                                   \
-    ((MOD short*)p)[offset] = hval;                                     \
+    ((MOD ushort*)p)[offset] = _cl_float2half(data);                    \
   }                                                                     \
                                                                         \
   void _CL_OVERLOADABLE                                                 \
@@ -142,20 +163,20 @@
 
 
 
-IMPLEMENT_VSTORE_HALF(__global ,     )
-IMPLEMENT_VSTORE_HALF(__global , _rte)
-IMPLEMENT_VSTORE_HALF(__global , _rtz)
-IMPLEMENT_VSTORE_HALF(__global , _rtp)
-IMPLEMENT_VSTORE_HALF(__global , _rtn)
-IMPLEMENT_VSTORE_HALF(__local  ,     )
-IMPLEMENT_VSTORE_HALF(__local  , _rte)
-IMPLEMENT_VSTORE_HALF(__local  , _rtz)
-IMPLEMENT_VSTORE_HALF(__local  , _rtp)
-IMPLEMENT_VSTORE_HALF(__local  , _rtn)
-/* IMPLEMENT_VSTORE_HALF(__private,     ) */
-/* IMPLEMENT_VSTORE_HALF(__private, _rte) */
-/* IMPLEMENT_VSTORE_HALF(__private, _rtz) */
-/* IMPLEMENT_VSTORE_HALF(__private, _rtp) */
-/* IMPLEMENT_VSTORE_HALF(__private, _rtn) */
+IMPLEMENT_VSTORE_HALF(__global  ,     )
+IMPLEMENT_VSTORE_HALF(__global  , _rte)
+IMPLEMENT_VSTORE_HALF(__global  , _rtz)
+IMPLEMENT_VSTORE_HALF(__global  , _rtp)
+IMPLEMENT_VSTORE_HALF(__global  , _rtn)
+IMPLEMENT_VSTORE_HALF(__local   ,     )
+IMPLEMENT_VSTORE_HALF(__local   , _rte)
+IMPLEMENT_VSTORE_HALF(__local   , _rtz)
+IMPLEMENT_VSTORE_HALF(__local   , _rtp)
+IMPLEMENT_VSTORE_HALF(__local   , _rtn)
+IMPLEMENT_VSTORE_HALF(__private ,     )
+IMPLEMENT_VSTORE_HALF(__private , _rte)
+IMPLEMENT_VSTORE_HALF(__private , _rtz)
+IMPLEMENT_VSTORE_HALF(__private , _rtp)
+IMPLEMENT_VSTORE_HALF(__private , _rtn)
 
 #endif

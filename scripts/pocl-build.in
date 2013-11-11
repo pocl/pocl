@@ -22,9 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-#echo 0=$0 @=$@
-#set -x
-#set -e
+if [ -n "$POCL_VERBOSE" ]; then
+    set -x
+    set -e
+    echo 0=$0 @=$@
+fi
 
 target=@HOST@
 
@@ -43,36 +45,28 @@ then
     echo >&2 "Usage: $0 [-t <llvm_target_triplet>] -o output input" && exit 1
 fi
 
-target_dir=${target}
 case $target in
-  arm*gnueabihf)    target_dir="arm"
-                    target="armv7l-unknown-linux-gnueabihf";;
-  arm*)        target_dir="arm"
-               target="armv7";;
-  cellspu-*)   target_dir="cellspu";;
-  powerpc-*) target_dir="powerpc";;
-  powerpc64-*) target_dir="powerpc64";;
-  tce-*)       target_dir="tce";;
-  amd64-*|x86*|i?86-*)    target_dir="x86_64";;
+    tce*)     CLANG_FLAGS="-target tce-tut-llvm"
+              LLC_FLAGS="@HOST_LLC_FLAGS@"
+              LD_FLAGS="@HOST_LD_FLAGS@";;
+    @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+              LLC_FLAGS="@HOST_LLC_FLAGS@"
+              LD_FLAGS="@HOST_LD_FLAGS@";;
+    @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
+              LLC_FLAGS="@TARGET_LLC_FLAGS@"
+              LD_FLAGS="@TARGET_LD_FLAGS@";;
 esac
-
-case $target in
-  arm*)     CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
-  @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@";;
-  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@";;
-esac
-CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map -target $target "
+CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map"
 
 # With fp-contract we get calls to fma with processors which do not
 # have fma instructions. These ruin the performance. Better to have
 # the mul+add separated in the IR.
-CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off "
+CLANG_FLAGS="$CLANG_FLAGS -ffp-contract=off"
 
 preprocessed_file=${output_file}.i
 
 # Set up the paths assuming we are running an installed pocl.
 full_target_dir="@pkglibdir@/${target_dir}"
-types_h=@pkgincludedir@/${target_dir}/types.h
 kernel_h=@pkgincludedir@/_kernel.h
 kernel_h_pch=$full_target_dir/_kernel.h.pch
 
@@ -82,7 +76,6 @@ kernel_h_pch=$full_target_dir/_kernel.h.pch
 # installing pocl all the time.
 
 full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
-types_h=@abs_top_builddir@/include/${target_dir}/types.h
 kernel_h=@abs_top_srcdir@/include/_kernel.h
 kernel_h_pch=$full_target_dir/_kernel.h.pch
 
@@ -95,8 +88,7 @@ if test -e $kernel_h_pch -a -z "$USER_OPTIONS" -a "x$POCL_USE_PCH" = "x1";
 then
     include_cmd="-Xclang -include-pch -Xclang $kernel_h_pch"
 else
-    include_cmd="-include $types_h -include $kernel_h"
+    include_cmd="-include $kernel_h"
 fi
 
 @CLANG@ @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c ${include_cmd} -emit-llvm -o ${output_file} -x cl $1
-

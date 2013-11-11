@@ -21,6 +21,8 @@
    THE SOFTWARE.
 */
 
+#include "templates.h"
+
 /* The default implementation for "async copies" is a 
    blocking one which doesn't actually need events for 
    anything. 
@@ -28,44 +30,39 @@
    The devices (actually, platforms) should override these to
    implement proper block copies or similar. */
 
-#include "templates.h"
-
-#define IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)              \
-    __attribute__ ((overloadable))                              \
-  event_t async_work_group_copy (__local GENTYPE *dst,          \
-                                 const __global GENTYPE *src,   \
-                                 size_t num_gentypes,           \
-                                 event_t event)                 \
-  {                                                             \
-      __SINGLE_WI {                                             \
-          size_t i;                                             \
-          for (i = 0; i < num_gentypes; ++i) dst[i] = src[i];   \
-      }                                                         \
-      return event;                                             \
-  }                                                             \
-                                                                \
-                                                                \
-    __attribute__ ((overloadable))                              \
-  event_t async_work_group_copy (__global GENTYPE *dst,         \
-                                 const __local GENTYPE *src,    \
-                                 size_t num_gentypes,           \
-                                 event_t event)                 \
-  {                                                             \
-      __SINGLE_WI {                                             \
-          size_t i;                                             \
-          for (i = 0; i < num_gentypes; ++i) dst[i] = src[i];   \
-      }                                                         \
-      return event;                                             \
-  }                                                             \
+#define IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)                      \
+  __attribute__((overloadable))                                         \
+  event_t async_work_group_copy(__local GENTYPE *dst,                   \
+                                const __global GENTYPE *src,            \
+                                size_t num_gentypes,                    \
+                                event_t event)                          \
+  {                                                                     \
+    __SINGLE_WI {                                                       \
+      for (size_t i = 0; i < num_gentypes; ++i) dst[i] = src[i];        \
+    }                                                                   \
+    return event;                                                       \
+  }                                                                     \
+                                                                        \
+  __attribute__((overloadable))                                         \
+  event_t async_work_group_copy(__global GENTYPE *dst,                  \
+                                const __local GENTYPE *src,             \
+                                size_t num_gentypes,                    \
+                                event_t event)                          \
+  {                                                                     \
+    __SINGLE_WI {                                                       \
+      for (size_t i = 0; i < num_gentypes; ++i) dst[i] = src[i];        \
+    }                                                                   \
+    return event;                                                       \
+  }
 
 
-#define IMPLEMENT_ASYNC_COPY_FUNCS(GENTYPE)      \
-  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)     \
-  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##2)   \
-  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##3)   \
-  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##4)   \
-  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##8)   \
-  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##16)  \
+#define IMPLEMENT_ASYNC_COPY_FUNCS(GENTYPE)             \
+  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)            \
+  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##2)         \
+  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##3)         \
+  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##4)         \
+  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##8)         \
+  IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##16)
 
 IMPLEMENT_ASYNC_COPY_FUNCS(char);
 IMPLEMENT_ASYNC_COPY_FUNCS(uchar);
@@ -76,7 +73,5 @@ IMPLEMENT_ASYNC_COPY_FUNCS(uint);
 __IF_INT64(IMPLEMENT_ASYNC_COPY_FUNCS(long));
 __IF_INT64(IMPLEMENT_ASYNC_COPY_FUNCS(ulong));
 
-__IF_FP16(IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(half));
 IMPLEMENT_ASYNC_COPY_FUNCS(float);
 __IF_FP64(IMPLEMENT_ASYNC_COPY_FUNCS(double));
-

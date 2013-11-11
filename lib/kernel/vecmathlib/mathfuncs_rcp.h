@@ -63,7 +63,7 @@ namespace vecmathlib {
     // Initial guess
     VML_ASSERT(all(x > RV(0.0)));
     intvec_t x_exp;
-    x = frexp(x, x_exp);
+    x = frexp(x, &x_exp);
     VML_ASSERT(all(x >= RV(0.5) && x < RV(1.0)));
     realvec_t r = RV(R(48.0)/R(17.0)) - RV(R(32.0)/R(17.0)) * x;
     

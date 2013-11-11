@@ -5,6 +5,8 @@
 
 #include "mathfuncs_base.h"
 
+#include "mathfuncs_int.h"
+
 #include "mathfuncs_asin.h"
 #include "mathfuncs_asinh.h"
 #include "mathfuncs_convert.h"
