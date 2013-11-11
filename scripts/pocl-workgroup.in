@@ -1,5 +1,6 @@
 #!/bin/sh
-# pocl-workgroup - Parallelize a kernel from an OpenCL bytecode file.
+# pocl-workgroup - Create a work-item parallel work-group function from 
+#                  an OpenCL bytecode file.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 #               2011-2013 Pekka Jääskeläinen / Tampere University of Technology
@@ -87,7 +88,7 @@ full_target_dir="@pkglibdir@/${target_dir}"
 full_target_dir="@abs_top_builddir@/lib/kernel/${target_dir}"
 # END REMOVE ONCE INSTALLED
 
-@LLVM_LINK@ -o ${linked_bc}  $1 "$full_target_dir"/kernel-$target.bc 
+@LLVM_LINK@ -o ${linked_bc} $1 $full_target_dir/kernel-$target.bc 
 
 header="`dirname $1`/`basename $1 .bc`_header.h"
 
@@ -107,8 +108,13 @@ fi
 EXTRA_OPTS=""
 if test "x$POCL_VECTORIZE_WORK_GROUPS" = "x1";
 then
-OPT_SWITCH="-O3"
-EXTRA_OPTS="-wi-vectorize"
+
+if test "x$POCL_WORK_GROUP_METHOD" != "xloopvec";
+then
+OPT_SWITCH=""
+EXTRA_OPTS="-O3 -wi-vectorize"
+fi
+
 fi
 
 if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
@@ -131,12 +137,18 @@ then
 export POCL_WORK_GROUP_METHOD=loops
 export POCL_WILOOPS_MAX_UNROLL_COUNT=1
 
+EXTRA_OPTS="$EXTRA_OPTS -decompose-vector-load-store -decompose-vectors"
 # The loop vectorizer is on by default in LLVM 3.4 and later.
 # Just make the work-item loops as easily vectorizable as possible and 
 # let the vectorizer make the unroll decisions.
 
+# Use vectorizer-min-trip-count 2 because LoopVectorize does not seem
+# to take in account the outer loop trip counts. An inner loop with
+# "only" 2 iterations might be profitable to be vectorized when it's
+# executed inside a loop.
+
 case @LLVM_VERSION@ in
-  3.3*)  EXTRA_OPTS="$EXTRA_OPTS -loop-vectorize";;     
+  3.3*)  EXTRA_OPTS="$EXTRA_OPTS -mem2reg -loop-vectorize -vectorizer-min-trip-count 2 -vectorize-slp";;     
 esac
 
 fi
@@ -149,10 +161,23 @@ fi
 # the code it wants to convert e.g. to a memset or a memcpy
 
 @OPT@ -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-cond-barriers -implicit-loop-barriers \
-    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops  \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
+    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
     -target-address-spaces \
-     ${OPT_SWITCH} ${EXTRA_OPTS} -instcombine -o ${output_file} ${linked_bc}
+     ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -o ${output_file} ${linked_bc}
+
+# Notes about the kernel compiler phase ordering:
+#
+# -implicit-cond-barriers after -implicit-loop-barriers because the latter can inject
+# barriers to loops inside conditional regions after which the peeling should be 
+# avoided by injecting the implicit conditional barriers
+#
+# -loop-barriers, -barriertails, and -barriers should be ran after the implicit barrier 
+# injection passes so they "normalize" the implicit barriers also
+#
+# -phistoallocas before -workitemloops as otherwise it cannot inject context
+# restore code (PHIs need to be at the beginning of the BB and so one cannot
+# context restore them with non-PHI code if the value is needed in another PHI)
 
 #set +x

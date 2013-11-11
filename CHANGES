@@ -6,9 +6,11 @@
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
 
-Overall
--------
-- Support most of the piglit CL tests
+Highlights
+----------
+- Major improvements to the kernel compiler's vectorization 
+  performance. Twofold speedups in some benchmarks
+- Support for most of the piglit CL tests
 
 OpenCL Runtime/Platform API support
 -----------------------------------
@@ -31,17 +33,25 @@ Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 
 Device Drivers
 --------------
-- removed redundancy in pthread and basic:
-  * pthread now uses read/write_rect implementation from basic
 - Added fill_rect function to device driver.
 
 Performance Improvements
 ------------------------
-- kernel compiler now tries to avoid replicating uniform variables,
+- Kernel compiler now tries to avoid replicating uniform variables,
   this leads to less context data to be saved per work-item and cleaner
   kernel bitcode for later optimizations
-- use a precompiled header for OpenCL C builtin declarations to speed up
+- Use a precompiled header for OpenCL C builtin declarations to speed up
   the kernel compilation
+- Kernel compiler vectorization optimizations:
+  - Inject implicit barriers both to loop starts and ends to
+    horizontally vectorize the inner loop.
+  - Reduce "peeling" by minimizing the conditional barrier region
+    by injecting implicit barrier close to the branch points for
+    conditional barrier cases.
+  - Breaking of vector datatypes for more efficient loop 
+    vectorization.
+  - Support LLVM 3.4 parallel loop metadata.
+
 
 Bugfixes
 --------

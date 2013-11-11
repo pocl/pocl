@@ -219,12 +219,17 @@ class AMDBenchmarkCase(BenchmarkCase):
         # Iterate 10 times to amortize the kernel compilation time.
         # In a real application, the kernel compilation overheads can be excluded 
         # (to some extent, at least) by using the binary API of OpenCL, so it 
-        # should be realistc to exclude it.
+        # should be realistic to exclude it.
         cmd = self.name + "/build/debug/x86_64/" + self.command + " -i 10"
         timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
         if timeout or rc != 0:
             sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
                              ( cmd, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
             sys.exit(1)
         
         result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
@@ -323,7 +328,6 @@ def print_environment_info():
     sys.stdout.write(" CPU: " + cpumodel + "\n\n")
 
 
-
 if __name__ == "__main__":
 
     parser = optparse.OptionParser('usage: %prog [options]')
@@ -333,6 +337,8 @@ if __name__ == "__main__":
                         help='Write log to this file, instead of stdout')
     parser.add_option('--lightweight', action="store_true", dest='lightweight', default=False,
                       help='Use a lightweight test suite for platforms with low memory.')
+    parser.add_option('--filter', type="string", dest="filter", default="",
+                      help="Include only tests with the given string in the name.")
 
     args, free_args = parser.parse_args()
  
@@ -360,6 +366,10 @@ if __name__ == "__main__":
         benchmarks = amd_benchmarks_lowmem
     else:
         benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
+
+    if args.filter != "":
+        new_benchmarks = [x for x in benchmarks if args.filter in x.name]
+        benchmarks = new_benchmarks
 
     for case in benchmarks:
         sys.stdout.write(case.name.ljust(colwidths[0]))
