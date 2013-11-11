@@ -16,9 +16,16 @@
 
 #define DEBUG_TYPE "scalarizer"
 #include "llvm/ADT/STLExtras.h"
+#include "config.h"
+#ifdef LLVM_3_2
+#include "llvm/TargetTransformInfo.h"
+#include "llvm/IRBuilder.h"
+#include "llvm/Support/InstVisitor.h"
+#else
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/InstVisitor.h"
+#endif
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Scalar.h"
@@ -137,7 +144,6 @@ public:
 
   Scalarizer() :
     FunctionPass(ID) {
-    initializeScalarizerPass(*PassRegistry::getPassRegistry());
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -189,9 +195,6 @@ static cl::opt<bool> EnableScalarizer
 static cl::opt<bool> ScalarizeLoadStore
   ("scalarize-load-store", cl::Hidden, cl::init(false),
    cl::desc("Allow the scalarizer pass to scalarize loads and store"));
-
-INITIALIZE_PASS(Scalarizer, "scalarizer", "Scalarize vector operations",
-                false, false)
 
 Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
                      ValueVector *cachePtr)
@@ -263,10 +266,6 @@ bool Scalarizer::doInitialization(Module &M) {
 bool Scalarizer::runOnFunction(Function &F) {
   const TargetTransformInfo *TTI = &getAnalysis<TargetTransformInfo>();
   TDL = getAnalysisIfAvailable<DataLayout>();
-  if (EnableScalarizer.getNumOccurrences() > 0
-      ? !EnableScalarizer
-      : !TTI->shouldScalarize())
-    return false;
 
   for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = BBI;
@@ -336,7 +335,9 @@ bool Scalarizer::canTransferMetadata(unsigned Tag) {
   return (Tag == LLVMContext::MD_tbaa
           || Tag == LLVMContext::MD_fpmath
           || Tag == LLVMContext::MD_tbaa_struct
+#ifndef LLVM_3_2
           || Tag == LLVMContext::MD_invariant_load
+#endif
           || Tag == ParallelLoopAccessMDKind);
 }
 
@@ -648,6 +649,3 @@ bool Scalarizer::finish() {
   return true;
 }
 
-FunctionPass *llvm::createScalarizerPass() {
-  return new Scalarizer();
-}
