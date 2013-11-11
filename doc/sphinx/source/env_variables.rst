@@ -65,6 +65,11 @@ below.
  containing kernels with the same name might use the wrong kernels
  when using this env.
 
+* POCL_USE_PCH
+
+ Use precompiled headers for the OpenCL C built-ins when compiling kernels.
+ This is an experimental feature which is known to break on some platforms.
+
 * POCL_VECTORIZE_WORK_GROUPS
 
  If set to 1, enables the (experimental) work group vectorizer that builds
