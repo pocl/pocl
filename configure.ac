@@ -665,7 +665,7 @@ fi
 # Define the OpenCL version when compiling OpenCL C code. This also
 # serves as indicator for the OpenCL C language, similar to
 # __cplusplus for C++.
-CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=110"
+CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=120"
 
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
@@ -1079,7 +1079,7 @@ AC_LINK_IFELSE(
 AC_MSG_NOTICE([Checking target compiler characteristics])
 CFLAGS="-h $target"
 AC_CHECK_SIZEOF([long])
-AC_SUBST([TARGET_SIZEOF_LONG], [$ac_cv_sizeof_long])
+AC_SUBST([TARGET_SIZEF_LONG], [$ac_cv_sizeof_long])
 AC_CHECK_SIZEOF([__fp16])
 AC_SUBST([TARGET_SIZEOF_HALF], [$ac_cv_sizeof___fp16])
 AC_CHECK_SIZEOF([double])
