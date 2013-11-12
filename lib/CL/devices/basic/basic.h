@@ -138,6 +138,7 @@ GEN_PROTOTYPES (basic)
   pocl_basic_get_supported_image_formats, /* get_supported_image_formats */ \
   NULL, /* data */                                      \
   OCL_KERNEL_TARGET, /* llvm_target_triplet */                           \
+  OCL_KERNEL_TARGET_CPU,  /* llvm_cpu */ \
   0     /* dev_id */           \
 }
 

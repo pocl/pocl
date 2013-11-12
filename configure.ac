@@ -898,6 +898,8 @@ AC_SUBST([HOST_CPU], [$host_cpu])
 AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
 AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
+AC_SUBST([OCL_KERNEL_TARGET_CPU],[$llc_host_cpu])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET_CPU], ["$llc_host_cpu"], [The kernel target CPU variant.])
 AC_SUBST([OCL_KERNEL_ARCH],[$OCL_KERNEL_ARCH])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_ARCH], ["$OCL_KERNEL_ARCH"], [The kernel architecture.])
 AC_ARG_VAR([HOST_CLANG_FLAGS],

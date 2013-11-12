@@ -150,25 +150,25 @@ if USE_LLVM_API
 #causes the entire pocl project to be linked with g++, which in turn
 #exposes a gcc/autoconf m4 macro issue
 # see: http://stackoverflow.com/questions/17055279/autotools-for-pthreads-not-setting-correct-linker-flags
-noinst_LIBRARIES = libpoclllvm.a
+noinst_LTLIBRARIES = libpoclllvm.la
 
-libpoclllvm_a_SOURCES = pocl_llvm_api.cc
-libpoclllvm_a_CPPFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
-libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags`
+libpoclllvm_la_SOURCES = pocl_llvm_api.cc
+libpoclllvm_la_CPPFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
+libpoclllvm_la_LDFLAGS = `@LLVM_CONFIG@ --ldflags` @LLVM_LIBS@
+libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags` @LLVM_LIBS@
 #the explicit '-fno-rtti' is a work-around for llvm bug 14200
 AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -fno-rtti
 
 libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/
-libpocl_la_LIBADD += libpoclllvm.a
-libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
+libpocl_la_LIBADD += libpoclllvm.la
+#libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
 libpocl_la_LIBADD += -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization
 libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangARCMigrate -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST 
 libpocl_la_LIBADD += @LLVM_LIBS@ -lstdc++ -lm
-else
-libpocl_la_SOURCES += pocl_llvm.c
 endif
+libpocl_la_SOURCES += pocl_llvm.c
 
 if ! BUILD_ICD
 libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}

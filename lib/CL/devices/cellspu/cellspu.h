@@ -146,6 +146,7 @@ GEN_PROTOTYPES (cellspu)
   NULL, /* get_supported_image_formats */ \
   NULL, /* data */                               \
   "cellspu-v0", /* llvm_target_triplet */               \
+  "cellspu",  /* llvm_cpu */ \
   0 /* dev_id */ \
 }
 

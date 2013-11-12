@@ -23,10 +23,13 @@
 # THE SOFTWARE.
 
 if USE_LLVM_API
+# This library is linked against libpocl to call the kernel compiler
+# directly.
 noinst_LTLIBRARIES = libllvmpasses.la
-else
-pkglib_LTLIBRARIES = llvmopencl.la
 endif
+# This creates a separate llvmopencl.so that is loaded to 'opt'
+# for the pocl-workgroup version.
+pkglib_LTLIBRARIES = llvmopencl.la
 
 AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags` -fno-rtti
 AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`

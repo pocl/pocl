@@ -1,3 +1,27 @@
+/* pocl_llvm.c: C wrappers for calling the scripts that direct the kernel
+   compilation process (by calling clang and opt from the shell)
+
+   Copyright (c) 2013 Kalle Raiskila
+   
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+   
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #include "config.h"
 #include "install-paths.h"
 #include "pocl_llvm.h"
@@ -10,6 +34,8 @@
 // TODO: copies...
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 128
+
+#if !defined(USE_LLVM_API) || USE_LLVM_API != 1
 
 int call_pocl_build( cl_device_id device, 
                      const char* source_file_name,
@@ -152,6 +178,10 @@ int call_pocl_kernel(cl_program program,
   return 0;
 }
 
+#endif
+
+/* The WG generation does not yet work through the API. 
+   Always call the script version for now. */
 
 int call_pocl_workgroup( char* function_name, 
                     size_t local_x, size_t local_y, size_t local_z,

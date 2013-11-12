@@ -1,3 +1,26 @@
+/* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs
+
+   Copyright (c) 2013 Kalle Raiskila
+   
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+   
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -27,11 +50,14 @@
 using namespace clang;
 using namespace llvm;
 
-#if defined LLVM_3_2 or defined LLVM_3_3
-using llvm::raw_fd_ostream::F_Binary;
+#if defined LLVM_3_2 || defined LLVM_3_3
+#include "llvm/Support/raw_ostream.h"
+#define F_Binary llvm::raw_fd_ostream::F_Binary
 #else
 using llvm::sys::fs::F_Binary;
 #endif
+
+//#define INCLUDE_UNFINISHED
 
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
@@ -39,11 +65,11 @@ using llvm::sys::fs::F_Binary;
  * unlike the script, a intermediate preprocessed 
  * program.bc.i file is not produced.
  */
-int call_pocl_build( cl_device_id device, 
-                     const char* source_file_name,
-                     const char* binary_file_name,
-                     const char* device_tmpdir,
-                     const char* user_options )
+int call_pocl_build(cl_device_id device, 
+                    const char* source_file_name,
+                    const char* binary_file_name,
+                    const char* device_tmpdir,
+                    const char* user_options)
 
 {
    
@@ -52,64 +78,71 @@ int call_pocl_build( cl_device_id device,
 
   //TODO: why does getLangOpts return a pointer, when the other getXXXOpts() return a reference?
   LangOptions *la = pocl_build.getLangOpts();
+  pocl_build.setLangDefaults(*la, clang::IK_OpenCL); // -x cl
+
   // the per-file types don't seem to override this :/
-  // FIXME: setting of the language standard (OCL 1.2, etc.) left as 'undefined' here
-  la->FakeAddressSpaceMap=true;
-  la->Blocks=true; //-fblocks
-  pocl_build.setLangDefaults(*la, clang::IK_OpenCL);
-  
+  la->OpenCLVersion = 120;
+  la->FakeAddressSpaceMap = true;
+  la->Blocks = true; //-fblocks
+  la->MathErrno = false; // -fno-math-errno
+  la->NoBuiltin = true;  // -fno-builtin
+  la->AsmBlocks = true;  // -fasm (?)
+
+  // -Wno-format
+  PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+  po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
+
+  // TODO: user_options (clBuildProgram options) are not passed
+
   // FIXME: print out any diagnostics to stdout for now. These should go to a buffer for the user
   // to dig out. (and probably to stdout too, overridable with environment variables) 
-  #ifdef LLVM_3_2
+#ifdef LLVM_3_2
   CI.createDiagnostics(0, NULL);
-  #else
+#else
   CI.createDiagnostics();
-  #endif 
+#endif 
  
   FrontendOptions &fe = pocl_build.getFrontendOpts();
-  fe.Inputs.push_back(FrontendInputFile(source_file_name, clang::IK_OpenCL));
-  fe.OutputFile=std::string(binary_file_name);
+  fe.Inputs.push_back
+    (FrontendInputFile(source_file_name, clang::IK_OpenCL));
+  fe.OutputFile = std::string(binary_file_name);
 
   PreprocessorOptions &pp = pocl_build.getPreprocessorOpts();
-  // FIXME: these paths are wrong!
-  std::string typesh;
   std::string kernelh;
   if (getenv("POCL_BUILDING") != NULL)
-  {
-    typesh = BUILDDIR;
-    typesh+= "/include/";
-    typesh+= KERNEL_DIR;
-    typesh+= "/types.h"; 
-  
-    kernelh = SRCDIR;
-    kernelh+= "/include/_kernel.h";
-  }
+    { 
+      kernelh  = SRCDIR;
+      kernelh += "/include/_kernel.h";
+    }
   else
-  {
-    typesh = PKGDATADIR;
-    typesh+= "/include/pocl/";
-    typesh+= KERNEL_DIR;
-    typesh+= "/types.h"; 
-
-    kernelh = PKGDATADIR;
-    kernelh+= "/include/_kernel.h";
-  }
-  pp.Includes.push_back(typesh);
+    {
+      kernelh = PKGDATADIR;
+      kernelh += "/include/_kernel.h";
+    }
   pp.Includes.push_back(kernelh);
 
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
   assert(device->llvm_target_triplet && "Device has no target triple set"); 
   const char* triple = device->llvm_target_triplet;
   ta.Triple = triple;
+  ta.CPU = device->llvm_cpu; "core-avx-i"; // device->llvm_cpu
+
   
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
-  // This is the "-O" flag for clang - setting it to 3 breaks barriers,
-  // leaving it low causes slow code.
-  cg.OptimizationLevel = 2;
+  // This is the "-O" flag for clang. We should not optimize
+  // the single work-item description, or we risk breaking 
+  // barrier semantics. The kernel compiler (pocl-workgroup) 
+  // will optimize it later on after barriers are converted to
+  // control flow.
+  cg.OptimizationLevel = 0;
+
+  // TODO: use pch: it is possible to disable the strict checking for
+  // the compilation flags used to compile it and the current translation
+  // unit via the preprocessor options directly.
 
   // TODO: switch to EmitLLVMOnlyAction, when intermediate file is not needed
   CodeGenAction *action = new clang::EmitBCAction(&llvm::getGlobalContext());
-  return CI.ExecuteAction(*action) ? CL_SUCCESS:CL_BUILD_PROGRAM_FAILURE;
+  return CI.ExecuteAction(*action) ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
 }
 
 /* Emulate calling the pocl_kernel script.
@@ -125,7 +158,7 @@ int call_pocl_kernel(cl_program program,
                      const char* kernel_name,
                      const char* device_tmpdir, 
                      char* descriptor_filename,
-                     int *errcode )
+                     int *errcode)
 {
 
   int error, i;
@@ -137,7 +170,8 @@ int call_pocl_kernel(cl_program program,
   char binary_filename[POCL_FILENAME_LENGTH];
   char tmpdir[POCL_FILENAME_LENGTH];
 
-  assert(program->devices[device_i]->llvm_target_triplet && "Device has no target triple set"); 
+  assert(program->devices[device_i]->llvm_target_triplet && 
+         "Device has no target triple set"); 
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
@@ -161,13 +195,14 @@ int call_pocl_kernel(cl_program program,
   fclose(binary_file); 
 
   input = ParseIRFile(binary_filename, Err, Context);
-  if( !input ) {
-    // TODO:
-    raw_os_ostream os(std::cout);
-    Err.print( "Pocl error: bad kernel file ", os);
-    os.flush();
-    exit(1);
-  }
+  if(!input) 
+    {
+      // TODO:
+      raw_os_ostream os(std::cout);
+      Err.print("pocl error: bad kernel file ", os);
+      os.flush();
+      exit(1);
+    }
   
   PassManager Passes;
   DataLayout *TD = 0;
@@ -176,7 +211,7 @@ int call_pocl_kernel(cl_program program,
     TD = new DataLayout(ModuleDataLayout);
 
   llvm::Function *kernel_function = input->getFunction(kernel_name);
-  assert( kernel_function && "TODO: make better check here");
+  assert(kernel_function && "TODO: make better check here");
 
   const llvm::Function::ArgumentListType &arglist = 
       kernel_function->getArgumentList();
@@ -197,7 +232,7 @@ int call_pocl_kernel(cl_program program,
     }
   }
 
-  kernel->num_locals=locals.size();
+  kernel->num_locals = locals.size();
 
   /* This is from clCreateKernel.c */
   /* Temporary store for the arguments that are set with clSetKernelArg. */
@@ -315,6 +350,7 @@ namespace pocl {
 extern llvm::cl::list<int> LocalSize;
 } 
 
+#ifdef INCLUDE_UNFINISHED
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
  * runs pocl's LLVM passes on that module.
@@ -487,4 +523,4 @@ int call_pocl_workgroup( char* function_name,
 
   return 0;
 }
-
+#endif

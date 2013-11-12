@@ -330,7 +330,8 @@ void (*fill_rect) (void *data,
                                          cl_int *num_image_formats);
   
   void *data;
-  const char* llvm_target_triplet; /* the llvm target triplet to use (NULL for the current host default) */
+  const char* llvm_target_triplet; /* the llvm target triplet to use */
+  const char* llvm_cpu; /* the llvm CPU variant to use */
   /* A running number (starting from zero) across all the device instances. Used for 
      indexing  arrays in data structures with device specific entries. */
   int dev_id;
