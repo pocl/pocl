@@ -1081,7 +1081,7 @@ AC_LINK_IFELSE(
 AC_MSG_NOTICE([Checking target compiler characteristics])
 CFLAGS="-h $target"
 AC_CHECK_SIZEOF([long])
-AC_SUBST([TARGET_SIZEF_LONG], [$ac_cv_sizeof_long])
+AC_SUBST([TARGET_SIZEOF_LONG], [$ac_cv_sizeof_long])
 AC_CHECK_SIZEOF([__fp16])
 AC_SUBST([TARGET_SIZEOF_HALF], [$ac_cv_sizeof___fp16])
 AC_CHECK_SIZEOF([double])
