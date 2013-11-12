@@ -30,10 +30,9 @@ Builtin Function Implementations (OpenCL 1.2 Section 6.12)
 - Introduced new macro based implementation for read/write_image()-functions
 - Added sampler implementation for CLK_ADDRESS_CLAMP and 
   CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
-
-Device Drivers
---------------
-- Added fill_rect function to device driver.
+- Most of the printf() format strings now works. Missing features:
+  - long on 32-bit architectures
+  - %c, %s, and %p 
 
 Performance Improvements
 ------------------------
@@ -52,6 +51,9 @@ Performance Improvements
     vectorization.
   - Support LLVM 3.4 parallel loop metadata.
 
+Misc.
+-----
+- __OPENCL_VERSION__ defined to 120
 
 Bugfixes
 --------
