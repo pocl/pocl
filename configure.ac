@@ -873,7 +873,7 @@ HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
 # -Werror or the test cases which don't expect this output. Therefore,
 # we use -Qunused-arguments to disable it.
 case "$LLVM_VERSION" in
-    3.3*)
+    3.3* | 3.2*)
     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -Qunused-arguments";;
 esac
 
