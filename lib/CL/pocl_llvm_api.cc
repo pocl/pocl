@@ -125,9 +125,8 @@ int call_pocl_build(cl_device_id device,
   assert(device->llvm_target_triplet && "Device has no target triple set"); 
   const char* triple = device->llvm_target_triplet;
   ta.Triple = triple;
-  ta.CPU = device->llvm_cpu; "core-avx-i"; // device->llvm_cpu
+  ta.CPU = device->llvm_cpu;
 
-  
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   // This is the "-O" flag for clang. We should not optimize
   // the single work-item description, or we risk breaking 
