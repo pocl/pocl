@@ -864,8 +864,14 @@ case $host_cpu in
 esac
 kernel_dir="host"
 OCL_TARGETS=$kernel_dir
-HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple -march=$llc_host_cpu"
-HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple -mcpu=$llc_host_cpu"
+HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
+HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple"
+if [ "$llc_host_cpu" != "(unknown)" ]
+then
+  HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
+  HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
+fi
+	
 # Note: Clang 3.3 reports a warning about an "unused argument" for
 # -target when generating byte code. This warning is wrong, as the
 # target specification actually does influence the ABI, and hence the
@@ -1260,4 +1266,6 @@ fi
 echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES
 echo
-
+echo Basic and pthreads devices optimized for:
+echo architecture: $host_cpu
+echo cpu variant: $llc_host_cpu
