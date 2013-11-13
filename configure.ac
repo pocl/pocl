@@ -922,11 +922,13 @@ AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
 
-# Work-around a clang bug in LLVM 3.3: size of Open CL C long is not 8
-# bytes in all platforms
+# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
+# of Open CL C long is not 8 bytes 
 if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
-then 
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -DPOCL_DISABLE_OPENCL_C_LONG"
+then
+    : # OpenCL C long is supported
+else
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
 fi
 rm -f ./-.s
 
