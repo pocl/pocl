@@ -922,12 +922,13 @@ AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
 
-#Work-around a clang bug in LLVM 3.3: size of long is not 8 bytes in all platforms 
-if [echo "constant int test[ sizeof(long)==8?1:-1];" | clang $HOST_CLANG_FLAGS -S -x cl - ]
+# Work-around a clang bug in LLVM 3.3: size of Open CL C long is not 8
+# bytes in all platforms
+if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
 then 
-  AC_DEFINE([host_cl_khr_int64], [], "Does host have 64bit longs in OpenCL-C")
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -DPOCL_DISABLE_OPENCL_C_LONG"
 fi
-
+rm -f ./-.s
 
 ####################################################################
 # Determine which device drivers to build.

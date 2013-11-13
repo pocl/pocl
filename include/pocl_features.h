@@ -5,7 +5,7 @@
 
 // Is long supported in OpenCL C?
 // This is checked at configure-time
-#if host_cl_khr_int64
+#ifndef POCL__DISABLE_OPENCL_C_LONG
 #  define cl_khr_int64
 #else
 #  undef cl_khr_int64
