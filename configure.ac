@@ -800,6 +800,8 @@ case $host_cpu in
     ;;
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
+    #GNU as does not understand 'march=cortex-a8' that clang sends it
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -integrated-as"
     # check for gnueabihf, and set clang target accordingly
     case $host in
       armv7l*gnueabihf)
