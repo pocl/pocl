@@ -4,10 +4,8 @@
 #define cl_khr_fp16
 
 // Is long supported in OpenCL C?
-// Note: The definitions of "long" below differs between languages. We
-// therefore need to check "long long" as well when compiling OpenCL
-// C.
-#if __SIZEOF_LONG__ == 8 || (defined __OPENCL_VERSION__ && __SIZEOF_LONG_LONG__ == 8)
+// This is checked at configure-time
+#if host_cl_khr_int64
 #  define cl_khr_int64
 #else
 #  undef cl_khr_int64
