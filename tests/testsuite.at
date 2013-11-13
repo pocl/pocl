@@ -87,6 +87,9 @@ AT_DATA([expout],
 7.0000000000
 8.0000000000
 9.000000,9.000000,9.000000,9.000000
+|a|   b|c   |
+|aa|  bb|cc  |dddddddddd|
+|0x1| 0x2|0x3 |
 OK
 ])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_printf], 0, expout)

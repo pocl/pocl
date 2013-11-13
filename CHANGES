@@ -32,7 +32,6 @@ Builtin Function Implementations (OpenCL 1.2 Section 6.12)
   CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
 - Most of the printf() format strings now works. Missing features:
   - long on 32-bit architectures
-  - %c, %s, and %p 
 
 Performance Improvements
 ------------------------

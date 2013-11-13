@@ -214,7 +214,7 @@ namespace vecmathlib {
     
     intvec_t bitifthen(intvec_t x, intvec_t y) const
     {
-      return vbslq_s32(vreinterpretq_u32_s32(v), x.v, y.v)
+      return vbslq_s32(vreinterpretq_u32_s32(v), x.v, y.v);
     }
     
     

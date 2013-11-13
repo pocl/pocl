@@ -208,7 +208,7 @@ namespace vecmathlib {
     
     intvec_t bitifthen(intvec_t x, intvec_t y) const
     {
-      return vbsl_s32(vreinterpret_u32_s32(v), x.v, y.v)
+      return vbsl_s32(vreinterpret_u32_s32(v), x.v, y.v);
     }
     
     

@@ -142,6 +142,49 @@ DEFINE_PRINT_FLOATS(double)
 
 
 
+// Helper routines to output characters, strings, and pointers
+
+void _cl_print_char(flags_t flags, int field_width, int val)
+{
+  DEBUG_PRINTF(("[printf:char]\n"));
+  char outfmt[1000];
+  snprintf(outfmt, sizeof outfmt,
+           "%%%s%.0dc",
+           flags.left ? "-" : "",
+           field_width);
+  DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
+  printf(outfmt, val);
+  DEBUG_PRINTF(("[printf:char:done]\n"));
+}
+
+void _cl_print_string(flags_t flags, int field_width, const char* val)
+{
+  DEBUG_PRINTF(("[printf:char]\n"));
+  char outfmt[1000];
+  snprintf(outfmt, sizeof outfmt,
+           "%%%s%.0ds",
+           flags.left ? "-" : "",
+           field_width);
+  DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
+  printf(outfmt, val);
+  DEBUG_PRINTF(("[printf:char:done]\n"));
+}
+
+void _cl_print_pointer(flags_t flags, int field_width, const void* val)
+{
+  DEBUG_PRINTF(("[printf:char]\n"));
+  char outfmt[1000];
+  snprintf(outfmt, sizeof outfmt,
+           "%%%s%.0dp",
+           flags.left ? "-" : "",
+           field_width);
+  DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
+  printf(outfmt, val);
+  DEBUG_PRINTF(("[printf:char:done]\n"));
+}
+
+
+
 // The OpenCL printf routine.
 
 // The implementation is straightforward:
@@ -204,7 +247,7 @@ int _cl_printf(const char* restrict format, ...)
         DEBUG_PRINTF(("[printf:width=%d]\n", field_width));
         
         // Precision
-        int precision;
+        int precision = -1;
         if (ch == '.') {
           ch = *++format;
           precision = 0;
@@ -213,8 +256,6 @@ int _cl_printf(const char* restrict format, ...)
             precision = 10 * precision + (ch - '0');
             ch = *++format;
           }
-        } else {
-          precision = -1;
         }
         DEBUG_PRINTF(("[printf:precision=%d]\n", precision));
         
@@ -233,7 +274,6 @@ int _cl_printf(const char* restrict format, ...)
                  vector_length == 4 ||
                  vector_length == 8 ||
                  vector_length == 16)) goto error;
-          
         }
         DEBUG_PRINTF(("[printf:vector_length=%d]\n", vector_length));
         
@@ -348,9 +388,43 @@ int _cl_printf(const char* restrict format, ...)
           
           break;
           
-        case 'c': goto error;   // not yet implemented
-        case 's': goto error;   // not yet implemented
-        case 'p': goto error;   // not yet implemented
+          // Output a character
+        case 'c': {
+          DEBUG_PRINTF(("[printf:char]\n"));
+          if (flags.plus || flags.space || flags.alt || flags.zero) goto error;
+          DEBUG_PRINTF(("[printf:char1]\n"));
+          if (precision != -1) goto error;
+          DEBUG_PRINTF(("[printf:char2]\n"));
+          if (vector_length != 1) goto error;
+          DEBUG_PRINTF(("[printf:char3]\n"));
+          if (length != 0) goto error;
+          DEBUG_PRINTF(("[printf:char4]\n"));
+          int val = va_arg(ap, int);
+          _cl_print_char(flags, field_width, val);
+          break;
+        }
+          
+          // Output a string
+        case 's': {
+          if (flags.plus || flags.space || flags.alt || flags.zero) goto error;
+          if (precision != -1) goto error;
+          if (vector_length != 1) goto error;
+          if (length != 0) goto error;
+          const char* val = va_arg(ap, const char*);
+          _cl_print_string(flags, field_width, val);
+          break;
+        }
+          
+          // Output a pointer
+        case 'p': {
+          if (flags.plus || flags.space || flags.alt || flags.zero) goto error;
+          if (precision != -1) goto error;
+          if (vector_length != 1) goto error;
+          if (length != 0) goto error;
+          const void* val = va_arg(ap, const void*);
+          _cl_print_pointer(flags, field_width, val);
+          break;
+        }
           
         default: goto error;
         }
@@ -359,7 +433,7 @@ int _cl_printf(const char* restrict format, ...)
       } // not a literal %
 
     } else {
-      DEBUG_PRINTF(("[printf:char]\n"));
+      DEBUG_PRINTF(("[printf:literal]\n"));
       printf("%c", ch);
       ch = *++format;
     }
@@ -372,5 +446,6 @@ int _cl_printf(const char* restrict format, ...)
  error:;
   va_end(ap);
   DEBUG_PRINTF(("[printf:error]\n"));
+  printf("(printf format string error)");
   return -1;
 }
