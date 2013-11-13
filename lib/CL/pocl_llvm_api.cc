@@ -21,17 +21,31 @@
    THE SOFTWARE.
 */
 
+#include "config.h"
+
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/Linker.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+
+#ifdef LLVM_3_2
+#include "llvm/Function.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/Support/IRReader.h"
+#include "llvm/DataLayout.h"
+#else
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IRReader/IRReader.h"
+#endif
+
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_os_ostream.h"
@@ -41,7 +55,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
+
 #include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
@@ -71,28 +90,84 @@ int call_pocl_build(cl_device_id device,
                     const char* device_tmpdir,
                     const char* user_options)
 
-{
-   
+{ 
+
+  // Use CompilerInvocation::CreateFromArgs to initialize
+  // CompilerInvocation. This way we can reuse the Clang's
+  // command line parsing.
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagID = 
+    new clang::DiagnosticIDs();
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = 
+    new clang::DiagnosticOptions();
+  clang::TextDiagnosticBuffer *diagsBuffer = 
+    new clang::TextDiagnosticBuffer();
+
+  clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
+
   CompilerInstance CI;
   CompilerInvocation &pocl_build = CI.getInvocation();
 
-  //TODO: why does getLangOpts return a pointer, when the other getXXXOpts() return a reference?
-  LangOptions *la = pocl_build.getLangOpts();
-  pocl_build.setLangDefaults(*la, clang::IK_OpenCL); // -x cl
+  // TODO: call device->prepare_build() that can return
+  // device-specific switches too, to replace the build_program()
+  // API TCE uses to include the custom op macros.
+  std::stringstream ss;
+  // This is required otherwise the initialization fails with
+  // unknown triplet ''
+  ss << "-triple=" << device->llvm_target_triplet << " ";
+  ss << "-target " << device->llvm_target_triplet << " ";
+  ss << "-target-cpu " << device->llvm_cpu;
+  std::istream_iterator<std::string> begin(ss);
+  std::istream_iterator<std::string> end;
+  std::istream_iterator<std::string> i = begin;
+  std::vector<const char*> items;
+  while (i != end) 
+    {
+      items.push_back((*i).c_str());
+      ++i;
+    }
 
-  // the per-file types don't seem to override this :/
+  if (!CompilerInvocation::CreateFromArgs
+      (pocl_build, items.data(), items.data() + items.size(), 
+       diags)) 
+    {
+      for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(), 
+             e = diagsBuffer->err_end(); i != e; ++i) 
+        {
+          // TODO: transfer the errors to clGetProgramBuildInfo
+          std::cerr << "error: " << (*i).second << std::endl;
+        }
+      return CL_INVALID_BUILD_OPTIONS;
+    }
+      
+  LangOptions *la = pocl_build.getLangOpts();
+  pocl_build.setLangDefaults
+    (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
+
+  // the per-file types don't seem to override this 
   la->OpenCLVersion = 120;
   la->FakeAddressSpaceMap = true;
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
+#ifndef LLVM_3_2
   la->AsmBlocks = true;  // -fasm (?)
+#endif
 
   // -Wno-format
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
   po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
 
   // TODO: user_options (clBuildProgram options) are not passed
+
+  clang::TargetOptions &ta = pocl_build.getTargetOpts();
+  assert(device->llvm_target_triplet && 
+         "Device has no LLVM target triple set"); 
+  assert(device->llvm_cpu && 
+         "Device has no LLVM CPU type set"); 
+  ta.Triple = device->llvm_target_triplet;
+  ta.CPU = device->llvm_cpu;
+
+  // printf("### Triple: %s, CPU: %s\n", ta.Triple.c_str(), ta.CPU.c_str());
 
   // FIXME: print out any diagnostics to stdout for now. These should go to a buffer for the user
   // to dig out. (and probably to stdout too, overridable with environment variables) 
@@ -103,6 +178,8 @@ int call_pocl_build(cl_device_id device,
 #endif 
  
   FrontendOptions &fe = pocl_build.getFrontendOpts();
+  // The CreateFromArgs created an stdin input which we should remove first.
+  fe.Inputs.clear(); 
   fe.Inputs.push_back
     (FrontendInputFile(source_file_name, clang::IK_OpenCL));
   fe.OutputFile = std::string(binary_file_name);
@@ -121,12 +198,6 @@ int call_pocl_build(cl_device_id device,
     }
   pp.Includes.push_back(kernelh);
 
-  clang::TargetOptions &ta = pocl_build.getTargetOpts();
-  assert(device->llvm_target_triplet && "Device has no target triple set"); 
-  const char* triple = device->llvm_target_triplet;
-  ta.Triple = triple;
-  ta.CPU = device->llvm_cpu;
-
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   // This is the "-O" flag for clang. We should not optimize
   // the single work-item description, or we risk breaking 
@@ -134,6 +205,7 @@ int call_pocl_build(cl_device_id device,
   // will optimize it later on after barriers are converted to
   // control flow.
   cg.OptimizationLevel = 0;
+  cg.EmitOpenCLArgMetadata = 1;
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
@@ -141,7 +213,8 @@ int call_pocl_build(cl_device_id device,
 
   // TODO: switch to EmitLLVMOnlyAction, when intermediate file is not needed
   CodeGenAction *action = new clang::EmitBCAction(&llvm::getGlobalContext());
-  return CI.ExecuteAction(*action) ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
+  bool success = CI.ExecuteAction(*action);
+  return success ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
 }
 
 /* Emulate calling the pocl_kernel script.
