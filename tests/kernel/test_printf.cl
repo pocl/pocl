@@ -19,4 +19,8 @@ kernel void test_printf()
   printf("%.10f\n", 7.0f);
   printf("%10.10f\n", 8.0f);
   printf("%v4hlf\n", (float4)9.0f);
+  
+  printf("|%c|%4c|%-4c|\n", 'a', 'b', 'c');
+  printf("|%s|%4s|%-4s|%4s|\n", "aa", "bb", "cc", "dddddddddd");
+  printf("|%p|%4p|%-4p|\n", (void*)1, (void*)2, (void*)3);
 }
