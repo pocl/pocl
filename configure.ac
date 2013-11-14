@@ -741,8 +741,8 @@ HOST_LD_FLAGS="$LD_SHARED"
 AC_MSG_CHECKING([Clang option to specify the target])
 if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
   CLANG_TARGET_OPTION='--target='
-elif [ $CLANG -target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
-  CLANG_TARGET_OPTION='-target='
+elif [ $CLANG -target $host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='-target '
 else
   AC_MSG_ERROR([Cannot determine Clang option to specify the target])
 fi
