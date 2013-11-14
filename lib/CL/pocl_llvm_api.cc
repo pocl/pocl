@@ -76,6 +76,8 @@ using namespace llvm;
 using llvm::sys::fs::F_Binary;
 #endif
 
+//#define DEBUG_POCL_LLVM_API
+
 //#define INCLUDE_UNFINISHED
 
 /* "emulate" the pocl_build script.
@@ -113,21 +115,30 @@ int call_pocl_build(cl_device_id device,
   std::stringstream ss;
   // This is required otherwise the initialization fails with
   // unknown triplet ''
+  ss << "-I. ";
   ss << "-triple=" << device->llvm_target_triplet << " ";
-  ss << "-target " << device->llvm_target_triplet << " ";
-  ss << "-target-cpu " << device->llvm_cpu;
+  ss << "-target-cpu " << device->llvm_cpu << " ";
+  ss << user_options << " ";
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;
   std::istream_iterator<std::string> i = begin;
-  std::vector<const char*> items;
+  std::vector<const char*> itemcstrs;
+  std::vector<std::string> itemstrs;
   while (i != end) 
     {
-      items.push_back((*i).c_str());
+      itemstrs.push_back(*i);
+      itemcstrs.push_back(itemstrs.back().c_str());
       ++i;
     }
+#ifdef DEBUG_POCL_LLVM_API
+  // TODO: for some reason the user_options are replicated,
+  // they appear twice in a row in the output
+  std::cerr << "### options: " << ss.str() 
+            << "user_options: " << user_options << std::endl;
+#endif
 
   if (!CompilerInvocation::CreateFromArgs
-      (pocl_build, items.data(), items.data() + items.size(), 
+      (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(), 
        diags)) 
     {
       for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(), 
@@ -135,6 +146,12 @@ int call_pocl_build(cl_device_id device,
         {
           // TODO: transfer the errors to clGetProgramBuildInfo
           std::cerr << "error: " << (*i).second << std::endl;
+        }
+      for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(), 
+             e = diagsBuffer->warn_end(); i != e; ++i) 
+        {
+          // TODO: transfer the warnings to clGetProgramBuildInfo
+          std::cerr << "warning: " << (*i).second << std::endl;
         }
       return CL_INVALID_BUILD_OPTIONS;
     }
