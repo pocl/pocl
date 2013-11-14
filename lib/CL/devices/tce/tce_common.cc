@@ -394,7 +394,8 @@ pocl_tce_run
       d->loadProgramToDevice(assemblyFileName);
       d->restartProgram();
     } catch (Exception &e) {
-      POCL_ABORT("Failed to load program to the TTA.");
+      std::cerr << "error: " << e.errorMessage() << std::endl;
+      POCL_ABORT("error: Failed to load program to the TTA.");
     }
 
     const TTAProgram::Program* prog = d->currentProgram;
