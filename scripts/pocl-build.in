@@ -91,4 +91,4 @@ else
     include_cmd="-include $kernel_h"
 fi
 
-@CLANG@ @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c ${include_cmd} -emit-llvm -o ${output_file} -x cl $1
+@CLANG@ -I. @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c ${include_cmd} -emit-llvm -o ${output_file} -x cl $1
