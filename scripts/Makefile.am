@@ -31,6 +31,7 @@ do_subst = sed -e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'		\
                -e 's,[@]abs_top_builddir[@],$(abs_top_builddir),g'	\
                -e 's,[@]pkgincludedir[@],$(pkgincludedir),g'		\
                -e 's,[@]pkglibdir[@],$(pkglibdir),g'			\
+               -e 's,[@]pkgdatadir[@],$(pkgdatadir),g'			\
                -e 's,[@]pkglibexecdir[@],$(pkglibexecdir),g'		\
                -e 's,[@]CLANG[@],$(CLANG),g'				\
                -e 's,[@]CLFLAGS[@],$(CLFLAGS),g'			\

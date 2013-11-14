@@ -30,11 +30,11 @@
 # LLC_FLAGS
 # LD_FLAGS
 
+KERNEL_BC=kernel-${KERNEL_TARGET}.bc
 
+dist_pkgdata_DATA=${KERNEL_BC}
 
-all: kernel-${KERNEL_TARGET}.bc
-
-
+all: ${KERNEL_BC}
 
 # These may be necessary for powerpc64. If so: why? Is this maybe only
 # system-specific? Can this be enabled for all architectures?
@@ -93,5 +93,5 @@ CLEANFILES = kernel-${KERNEL_TARGET}.bc ${OBJ}
 
 # Optimize the bitcode library to speed up optimization times for the
 # OpenCL kernels
-kernel-${KERNEL_TARGET}.bc: ${OBJ}
+${KERNEL_BC}: ${OBJ}
 	@LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
