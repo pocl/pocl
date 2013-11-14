@@ -30,7 +30,8 @@
 #include <sys/stat.h>
 #include "pocl_llvm.h"
 
-/* supported compiler parameters */
+/* supported compiler parameters which should pass to the frontend directly
+   by using -Xclang */
 static char cl_parameters[] = 
   "-cl-single-precision-constant "
   "-cl-fp32-correctly-rounded-divide-sqrt "
@@ -110,7 +111,16 @@ CL_API_SUFFIX__VERSION_1_0
           if (strstr (token, "-cl") || strstr (token, "-w"))
             {
               if (strstr (cl_parameters, token))
-                strcat (modded_options, "-Xclang ");
+                {
+                  /* the LLVM API call pushes the parameters directly to the 
+                     frontend without using -Xclang */
+#if !defined (USE_LLVM_API) || USE_LLVM_API != 1
+                  /* ...but with the scripts version we call the 'clang' binary
+                     which needs the -Xclang modifier to pass the args to
+                     the frontend */
+                  strcat (modded_options, "-Xclang ");
+#endif
+                }
               else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
                 {
                   token = strtok_r (NULL, " ", &saveptr);  
