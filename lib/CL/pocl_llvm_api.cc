@@ -117,7 +117,8 @@ int call_pocl_build(cl_device_id device,
   // unknown triplet ''
   ss << "-I. ";
   ss << "-triple=" << device->llvm_target_triplet << " ";
-  ss << "-target-cpu " << device->llvm_cpu << " ";
+  if (device->llvm_cpu != NULL)
+    ss << "-target-cpu " << device->llvm_cpu << " ";
   ss << user_options << " ";
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;
@@ -174,15 +175,25 @@ int call_pocl_build(cl_device_id device,
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
   po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
 
+  std::string kernelh;
+  if (getenv("POCL_BUILDING") != NULL)
+    { 
+      kernelh  = SRCDIR;
+      kernelh += "/include/_kernel.h";
+    }
+  else
+    {
+      kernelh = PKGDATADIR;
+      kernelh += "/include/_kernel.h";
+    }
+  po.Includes.push_back(kernelh);
+
   // TODO: user_options (clBuildProgram options) are not passed
 
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
-  assert(device->llvm_target_triplet && 
-         "Device has no LLVM target triple set"); 
-  assert(device->llvm_cpu && 
-         "Device has no LLVM CPU type set"); 
   ta.Triple = device->llvm_target_triplet;
-  ta.CPU = device->llvm_cpu;
+  if (device->llvm_cpu != NULL)
+    ta.CPU = device->llvm_cpu;
 
   // printf("### Triple: %s, CPU: %s\n", ta.Triple.c_str(), ta.CPU.c_str());
 
@@ -201,19 +212,7 @@ int call_pocl_build(cl_device_id device,
     (FrontendInputFile(source_file_name, clang::IK_OpenCL));
   fe.OutputFile = std::string(binary_file_name);
 
-  PreprocessorOptions &pp = pocl_build.getPreprocessorOpts();
-  std::string kernelh;
-  if (getenv("POCL_BUILDING") != NULL)
-    { 
-      kernelh  = SRCDIR;
-      kernelh += "/include/_kernel.h";
-    }
-  else
-    {
-      kernelh = PKGDATADIR;
-      kernelh += "/include/_kernel.h";
-    }
-  pp.Includes.push_back(kernelh);
+
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   // This is the "-O" flag for clang. We should not optimize
@@ -229,7 +228,10 @@ int call_pocl_build(cl_device_id device,
   // unit via the preprocessor options directly.
 
   // TODO: switch to EmitLLVMOnlyAction, when intermediate file is not needed
-  CodeGenAction *action = new clang::EmitBCAction(&llvm::getGlobalContext());
+  // Do not give the global context to EmitBCAction as that leads to the
+  // image types clashing and a running number appended to them whenever a
+  // new module with the opaque type is reloaded.
+  CodeGenAction *action = new clang::EmitBCAction();
   bool success = CI.ExecuteAction(*action);
   return success ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
 }
@@ -253,7 +255,6 @@ int call_pocl_kernel(cl_program program,
   int error, i;
   unsigned n;
   llvm::Module *input;
-  LLVMContext &Context = getGlobalContext();
   SMDiagnostic Err;
   FILE *binary_file;
   char binary_filename[POCL_FILENAME_LENGTH];
@@ -276,14 +277,16 @@ int call_pocl_kernel(cl_program program,
   if (binary_file == NULL)
     return (CL_OUT_OF_HOST_MEMORY);
 
-  // TODO: check if we need this in the api branch at all
+  // TODO: dump the .bc only if we are using the kernel compiler
+  // cache (POCL_LEAVE_TEMP_DIRS). Otherwise store a Module*
+  // at clBuildProgram and reuse it here.
   n = fwrite(program->binaries[device_i], 1,
              program->binary_sizes[device_i], binary_file);
   if (n < program->binary_sizes[device_i])
     return (CL_OUT_OF_HOST_MEMORY);
   fclose(binary_file); 
 
-  input = ParseIRFile(binary_filename, Err, Context);
+  input = ParseIRFile(binary_filename, Err, getGlobalContext());
   if(!input) 
     {
       // TODO:
@@ -389,6 +392,13 @@ int call_pocl_kernel(cl_program program,
           kernel->arg_is_pointer[i] = false;
           kernel->arg_is_local[i] = false;
         }
+#ifdef DEBUG_POCL_LLVM_API
+        printf("### argument name %s img %d ptr %d local %d sampler %d\n",
+               name.c_str(),
+               kernel->arg_is_image[i], kernel->arg_is_pointer[i],
+               kernel->arg_is_local[i], kernel->arg_is_sampler[i]);
+#endif        
+
       }
     }
     i++;  
@@ -396,7 +406,10 @@ int call_pocl_kernel(cl_program program,
   
   // TODO: fill 'kernel->reqd_wg_size'!
 
-  // Generate the kernel_obj.c file
+  // Generate the kernel_obj.c file. This should be optional
+  // and generated only for the heterogeneous devices which need
+  // these definitions to accompany the kernels, for the launcher
+  // code.
   // TODO: the scripts use a generated kernel.h header file that
   // gets added to this file. No checks seem to fail if that file
   // is missing though, so it is left out from there for now
@@ -404,19 +417,24 @@ int call_pocl_kernel(cl_program program,
   kobj_s += ".kernel_obj.c"; 
   FILE *kobj_c = fopen( kobj_s.c_str(), "wc");
  
-  fprintf( kobj_c, "\n #include <pocl_device.h>\n");
+  fprintf(kobj_c, "\n #include <pocl_device.h>\n");
 
-  fprintf( kobj_c,
-    "void _%s_workgroup(void** args, struct pocl_context*);\n", kernel_name );
-  fprintf( kobj_c,
-    "void _%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name );
+  fprintf(kobj_c,
+    "void _%s_workgroup(void** args, struct pocl_context*);\n", kernel_name);
+  fprintf(kobj_c,
+    "void _%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name);
 
-  fprintf( kobj_c,
-    "__attribute__((address_space(3))) __kernel_metadata _%s_md = {\n", kernel_name );
-  fprintf( kobj_c,
+  fprintf(kobj_c,
+    "__attribute__((address_space(3))) __kernel_metadata _%s_md = {\n", kernel_name);
+  fprintf(kobj_c,
     "     \"%s\", /* name */ \n", kernel_name );
-  fprintf( kobj_c,"     _%s_NUM_ARGS, /* num_args */\n",      kernel_name );
-  fprintf( kobj_c,"     _%s_NUM_LOCALS, /* num_locals */\n",  kernel_name );
+  fprintf(kobj_c,"     %d, /* num_args */\n", kernel->num_args);
+  fprintf(kobj_c,"     %d, /* num_locals */\n", kernel->num_locals);
+#if 0
+  // These are not used anymore. The launcher knows the arguments
+  // and sets them up, the device just obeys and launches with
+  // whatever arguments it gets. Remove if none of the private
+  // branches need them neither.
   fprintf( kobj_c," #if _%s_NUM_LOCALS != 0\n",   kernel_name  );
   fprintf( kobj_c,"     _%s_LOCAL_SIZE,\n",       kernel_name  );
   fprintf( kobj_c," #else\n"    );
@@ -426,6 +444,7 @@ int call_pocl_kernel(cl_program program,
   fprintf( kobj_c,"     _%s_ARG_IS_POINTER,\n",  kernel_name  );
   fprintf( kobj_c,"     _%s_ARG_IS_IMAGE,\n",    kernel_name  );
   fprintf( kobj_c,"     _%s_ARG_IS_SAMPLER,\n",  kernel_name  );
+#endif
   fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
   fprintf( kobj_c," };\n");
   fclose(kobj_c);

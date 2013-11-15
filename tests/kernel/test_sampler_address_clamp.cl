@@ -5,7 +5,10 @@ void test_sampler_address_clamp(__read_only image2d_t image)
 {
   uint4 pixel = read_imageui(image, imageSampler, (int2)(0, 0));
   if(pixel.x != 1 || pixel.y !=1 || pixel.z != 1 || pixel.w != 1)
-    printf("in bounds read failed\n");
+    {
+      printf("in bounds read failed\n");
+      printf("got: %d %d %d %d\n", pixel.x, pixel.y, pixel.z, pixel.w);
+    }
   
   read_imageui(image, imageSampler, (int2)(3, 3));
   if(pixel.x != 1 || pixel.y !=1 || pixel.z != 1 || pixel.w != 1)

@@ -28,8 +28,8 @@
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in 
    bounds and returns false OR populates color with border colour and returns 
    true. If in bounds, returns false */
-int pocl_out_of_bounds (void* image, int4 coord, 
-                        void* sampler, void *color_)
+int __pocl_is_out_of_bounds (void* image, int4 coord, 
+                             void* sampler, void *color_)
 {
   dev_image_t* dev_image = *((dev_image_t**)image);
   dev_sampler_t* dev_sampler = (dev_sampler_t*)sampler;
@@ -76,7 +76,7 @@ int pocl_out_of_bounds (void* image, int4 coord,
 }
 
 /* Reads a four element pixel from image pointed by integer coords. */
-void pocl_read_pixel (void* color, void* image, int4 coord)
+void __pocl_read_pixel (void* color, void* image, int4 coord)
 {
 
   dev_image_t* dev_image = *((dev_image_t**)image);
@@ -121,11 +121,11 @@ void pocl_read_pixel (void* color, void* image, int4 coord)
     __RETVAL__ color;                                                   \
     int4 coord4;                                                        \
     INITCOORD##__COORD__(coord4, coord);                                \
-    if (pocl_out_of_bounds (&image, coord4, &sampler, &color))          \
+    if (__pocl_is_out_of_bounds (&image, coord4, &sampler, &color))          \
       {                                                                 \
         return color;                                                   \
       }                                                                 \
-    pocl_read_pixel (&color, &image, coord4);                           \
+    __pocl_read_pixel (&color, &image, coord4);                           \
                                                                         \
     return color;                                                       \
   }                                                                     \
@@ -135,8 +135,4 @@ void pocl_read_pixel (void* color, void* image, int4 coord)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
-
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int2)
-
-/*#endif*/
-
