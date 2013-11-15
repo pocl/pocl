@@ -130,7 +130,7 @@ GEN_PROTOTYPES (ttasim)
   NULL, /* get_supported_image_formats */      \
   NULL, /* data */                               \
   "tce-tut-llvm", /* llvm_target_triplet */               \
-  "", \
+  NULL, \
   0 /* dev_id */ \
 }
 
