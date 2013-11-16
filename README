@@ -6,6 +6,7 @@ which can be easily adapted for new targets.
 Please refer to the file INSTALL in this directory for building and installing
 pocl. 
 
-More documentation available at http://pocl.sf.net/docs/html/
-The main web page is at http://pocl.sf.net
+More documentation available at http://portablecl.org/docs/html/
+The main web page is at http://portablecl.org
+
 
