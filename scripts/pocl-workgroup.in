@@ -170,7 +170,7 @@ fi
 # the code it wants to convert e.g. to a memset or a memcpy
 
 @OPT@ ${LLC_FLAGS} \
-    -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
+    -load=${pocl_lib} -mem2reg -domtree -workitem-handler-chooser -break-constgeps -automatic-locals -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
     -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=${size_x} ${size_y} ${size_z} -disable-simplify-libcalls \
@@ -178,6 +178,9 @@ fi
      ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -o ${output_file} ${linked_bc}
 
 # Notes about the kernel compiler phase ordering:
+# -mem2reg first because we get unoptimized output from Clang where all
+# variables are allocas. Avoid context saving the allocas and make the
+# more readable by calling -mem2reg at the beginning.
 #
 # -implicit-cond-barriers after -implicit-loop-barriers because the latter can inject
 # barriers to loops inside conditional regions after which the peeling should be 
