@@ -60,8 +60,6 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-
-
 namespace {
   class AutomaticLocals : public ModulePass {
   
@@ -146,10 +144,7 @@ AutomaticLocals::ProcessAutomaticLocals(Function *F)
        i != e; ++i) {
     std::string funcName = "";
     funcName = F->getName().str();
-    if (i->getName().startswith(funcName + ".")) {
-      // Additional checks might be needed here. For now
-      // we assume any global starting with kernel name
-      // is declaring a local variable.
+    if (is_automatic_local(funcName, *i)) {
       locals.push_back(i);
       // Add the parameters to the end of the function parameter list.
       parameters.push_back(i->getType());

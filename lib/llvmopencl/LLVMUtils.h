@@ -23,16 +23,62 @@
 #ifndef _POCL_LLVM_UTILS_H
 #define _POCL_LLVM_UTILS_H
 
+#include "pocl.h"
 #include <map>
+#include <string>
+
+#ifdef LLVM_3_2
+#include <llvm/Module.h>
+#include <llvm/Metadata.h>
+#else
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Metadata.h>
+#endif
 
 namespace llvm {
     class Module;
     class Function;
+    class GlobalVariable;
 }
+
+namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 
 void
 regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
+
+inline bool
+is_automatic_local(const std::string& funcName, llvm::GlobalVariable &var) 
+{
+  return var.getName().startswith(funcName + ".") &&
+    llvm::isa<llvm::PointerType>(var.getType()) &&
+    var.getType()->getPointerAddressSpace() == POCL_ADDRESS_SPACE_LOCAL;
+}
+
+inline bool
+is_image_type(const llvm::Type& t) 
+{
+  if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) {
+    std::string name = t.getPointerElementType()->getStructName().str();
+    if (name == "opencl.image2d_t" || name == "opencl.image3d_t" || 
+        name == "opencl.image1d_t" || name == "struct.dev_image_t") 
+      return true;
+  }
+  return false;
+}
+
+inline bool
+is_sampler_type(const llvm::Type& t) 
+{
+  if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) 
+    {
+      std::string name = t.getPointerElementType()->getStructName().str();
+      if (name == "opencl.sampler_t_") return true;     
+    }
+  return false;
+}
+
+}
 
 #endif

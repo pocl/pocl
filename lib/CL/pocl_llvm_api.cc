@@ -66,6 +66,7 @@
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
 #include "install-paths.h"
+#include "LLVMUtils.h"
 
 using namespace clang;
 using namespace llvm;
@@ -134,7 +135,7 @@ int call_pocl_build(cl_device_id device,
   // Remove the inline keywords to force the user functions
   // to be included in the program. Otherwise they will
   // be removed and not inlined due to -O0.
-  ss << "-Dinline="" ";
+  ss << "-Dinline= ";
   // The current directory is a standard search path.
   ss << "-I. ";
 
@@ -254,12 +255,8 @@ int call_pocl_build(cl_device_id device,
   return success ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
 }
 
-/* Emulate calling the pocl_kernel script.
- * 
- * This is documented as:  
-# pocl-kernel - Examine a OpenCL bytecode and generate a loadable module
-#               with kernel function information.
- * 
+/* Retrieve metadata of the given kernel in the program to populate the
+ * cl_kernel object.
  */
 int call_pocl_kernel(cl_program program, 
                      cl_kernel kernel,
@@ -304,7 +301,11 @@ int call_pocl_kernel(cl_program program,
     return (CL_OUT_OF_HOST_MEMORY);
   fclose(binary_file); 
 
-  input = ParseIRFile(binary_filename, Err, getGlobalContext());
+  // Create own temporary context so we do not get duplicate image and sampler
+  // opaque types to the context. They will get running numbers and
+  // the name does not match anymore. 
+  LLVMContext context;
+  input = ParseIRFile(binary_filename, Err, context);
   if(!input) 
     {
       // TODO:
@@ -334,12 +335,10 @@ int call_pocl_kernel(cl_program program,
        i != e; ++i) {
     std::string funcName = "";
     funcName = kernel_function->getName().str();
-    if (i->getName().startswith(funcName + ".")) {
-      // Additional checks might be needed here. For now
-      // we assume any global starting with kernel name
-      // is declaring a local variable.
-      locals.push_back(i);
-    }
+    if (pocl::is_automatic_local(funcName, *i))
+      {
+        locals.push_back(i);
+      }
   }
 
   kernel->num_locals = locals.size();
@@ -359,9 +358,13 @@ int call_pocl_kernel(cl_program program,
   /* Fill up automatic local arguments. */
   for (unsigned i = 0; i < kernel->num_locals; ++i)
     {
-      kernel->dyn_arguments[kernel->num_args + i].value = NULL;
-      kernel->dyn_arguments[kernel->num_args + i].size =
+      unsigned auto_local_size = 
         TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
+      kernel->dyn_arguments[kernel->num_args + i].value = NULL;
+      kernel->dyn_arguments[kernel->num_args + i].size = auto_local_size;
+#ifdef DEBUG_POCL_LLVM_API
+      printf("### automatic local %d size %u\n", i, auto_local_size);
+#endif
     }
 
   // TODO: if the scripts are dumped, consider just having one list of 
@@ -387,38 +390,35 @@ int call_pocl_kernel(cl_program program,
       kernel->arg_is_pointer[i] = true;
       // index 0 is for function attributes, parameters start at 1.
       if (p->getAddressSpace() == POCL_ADDRESS_SPACE_GLOBAL ||
-          p->getAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT)
-        kernel->arg_is_local[i] = false;
+          p->getAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT ||
+          pocl::is_image_type(*t) || pocl::is_sampler_type(*t))
+        {
+          kernel->arg_is_local[i] = false;
+        }
       else
-        kernel->arg_is_local[i] = true;
+        {
+          if (p->getAddressSpace() != POCL_ADDRESS_SPACE_LOCAL)
+            {
+              p->dump();
+              assert(p->getAddressSpace() == POCL_ADDRESS_SPACE_LOCAL);
+            }
+          kernel->arg_is_local[i] = true;
+        }
     } else {
       kernel->arg_is_pointer[i] = false;
       kernel->arg_is_local[i] = false;
     }
-    
-    if (t->isPointerTy()) {
-      if (t->getPointerElementType()->isStructTy()) {
-        std::string name = t->getPointerElementType()->getStructName().str();
-        if (name == "opencl.image2d_t" || name == "opencl.image3d_t" || 
-            name == "opencl.image1d_t" || name == "struct.dev_image_t") {
-          kernel->arg_is_image[i] = true;
-          kernel->arg_is_pointer[i] = false;
-          kernel->arg_is_local[i] = false;
-        }
-        if (name == "opencl.sampler_t_") {
-          kernel->arg_is_sampler[i] = true;
-          kernel->arg_is_pointer[i] = false;
-          kernel->arg_is_local[i] = false;
-        }
-#ifdef DEBUG_POCL_LLVM_API
-        printf("### argument name %s img %d ptr %d local %d sampler %d\n",
-               name.c_str(),
-               kernel->arg_is_image[i], kernel->arg_is_pointer[i],
-               kernel->arg_is_local[i], kernel->arg_is_sampler[i]);
-#endif        
 
+    if (pocl::is_image_type(*t))
+      {
+        kernel->arg_is_image[i] = true;
+        kernel->arg_is_pointer[i] = false;
+      } 
+    else if (pocl::is_sampler_type(*t)) 
+      {
+        kernel->arg_is_sampler[i] = true;
+        kernel->arg_is_pointer[i] = false;
       }
-    }
     i++;  
   }
   
@@ -433,13 +433,15 @@ int call_pocl_kernel(cl_program program,
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
       if (KernelSizeInfo->getOperand(0) == kernel_function) {
-        reqdx = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-        reqdy = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-        reqdz = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+        reqdx = (llvm::cast<ConstantInt>
+                 (KernelSizeInfo->getOperand(1)))->getLimitedValue();
+        reqdy = (llvm::cast<ConstantInt>
+                 (KernelSizeInfo->getOperand(2)))->getLimitedValue();
+        reqdz = (llvm::cast<ConstantInt>
+                 (KernelSizeInfo->getOperand(3)))->getLimitedValue();
       }
     }
   }
-
   kernel->reqd_wg_size[0] = reqdx;
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;

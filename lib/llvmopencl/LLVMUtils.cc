@@ -22,6 +22,7 @@
 
 #include "LLVMUtils.h"
 
+#include "pocl.h"
 #include "config.h"
 
 #ifdef LLVM_3_2
@@ -33,6 +34,8 @@
 #endif
 
 using namespace llvm;
+
+namespace pocl {
 
 /**
  * Regenerates the metadata that points to the original kernel
@@ -86,5 +89,7 @@ regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels)
     MDNode *md = MDNode::get(M.getContext(), ArrayRef<Value *>((*i).second));
     nmd->addOperand(md);
   }
+}
+
 }
 
