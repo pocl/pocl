@@ -103,6 +103,7 @@ __attribute__((address_space(3))) __kernel_metadata _${kernel}_md = {
     "${kernel}", /* name */
     _${kernel}_NUM_ARGS, /* num_args */
     _${kernel}_NUM_LOCALS, /* num_locals */
+#if 0
 #if _${kernel}_NUM_LOCALS != 0
     _${kernel}_LOCAL_SIZE,
 #else
@@ -112,6 +113,7 @@ __attribute__((address_space(3))) __kernel_metadata _${kernel}_md = {
     _${kernel}_ARG_IS_POINTER,
     _${kernel}_ARG_IS_IMAGE,
     _${kernel}_ARG_IS_SAMPLER,
+#endif
     _${kernel}_workgroup_fast
 };
 EOF
