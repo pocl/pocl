@@ -75,13 +75,17 @@ Flatten::runOnModule(Module &M)
           f->addFnAttr(Attribute::NoInline);
 #elif defined LLVM_3_2
           AttrBuilder b;
-          f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::AlwaysInline)));
+          f->removeFnAttr
+            (Attributes::get(M.getContext(), 
+                             b.addAttribute(Attributes::AlwaysInline)));
           f->addFnAttr(Attributes::NoInline);
 #else
           AttributeSet attrs;
           f->removeAttributes(
               AttributeSet::FunctionIndex, 
-              attrs.addAttribute(M.getContext(), AttributeSet::FunctionIndex, Attribute::AlwaysInline));
+              attrs.addAttribute
+              (M.getContext(), 
+               AttributeSet::FunctionIndex, Attribute::AlwaysInline));
 
           f->addFnAttr(Attribute::NoInline);
 #endif
@@ -99,13 +103,17 @@ Flatten::runOnModule(Module &M)
           f->addFnAttr(Attribute::AlwaysInline);
 #elif defined LLVM_3_2
           AttrBuilder b;
-          f->removeFnAttr(Attributes::get(M.getContext(), b.addAttribute(Attributes::NoInline)));
+          f->removeFnAttr(Attributes::get
+                          (M.getContext(), 
+                           b.addAttribute(Attributes::NoInline)));
           f->addFnAttr(Attributes::AlwaysInline);
 #else
           AttributeSet attrs;
           f->removeAttributes(
               AttributeSet::FunctionIndex, 
-              attrs.addAttribute(M.getContext(), AttributeSet::FunctionIndex, Attribute::NoInline));
+              attrs.addAttribute(M.getContext(), 
+                                 AttributeSet::FunctionIndex, 
+                                 Attribute::NoInline));
           f->addFnAttr(Attribute::AlwaysInline);
 #endif
 

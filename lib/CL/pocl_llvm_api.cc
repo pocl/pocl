@@ -127,9 +127,18 @@ int call_pocl_build(cl_device_id device,
       free ((void*)device_switches);
     }
 
-  
+  // Ensure no optimizations are done to not mess up the
+  // barrier semantics etc.
+  ss << "-O0 ";
+
+  // Remove the inline keywords to force the user functions
+  // to be included in the program. Otherwise they will
+  // be removed and not inlined due to -O0.
+  ss << "-Dinline="" ";
   // The current directory is a standard search path.
   ss << "-I. ";
+
+  ss << "-fno-builtin ";
 
   // This is required otherwise the initialization fails with
   // unknown triplet ''
@@ -173,11 +182,11 @@ int call_pocl_build(cl_device_id device,
         }
       return CL_INVALID_BUILD_OPTIONS;
     }
-      
+  
   LangOptions *la = pocl_build.getLangOpts();
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
-
+  
   // the per-file types don't seem to override this 
   la->OpenCLVersion = 120;
   la->FakeAddressSpaceMap = true;
@@ -229,15 +238,7 @@ int call_pocl_build(cl_device_id device,
     (FrontendInputFile(source_file_name, clang::IK_OpenCL));
   fe.OutputFile = std::string(binary_file_name);
 
-
-
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
-  // This is the "-O" flag for clang. We should not optimize
-  // the single work-item description, or we risk breaking 
-  // barrier semantics. The kernel compiler (pocl-workgroup) 
-  // will optimize it later on after barriers are converted to
-  // control flow.
-  cg.OptimizationLevel = 0;
   cg.EmitOpenCLArgMetadata = 1;
 
   // TODO: use pch: it is possible to disable the strict checking for
@@ -421,8 +422,28 @@ int call_pocl_kernel(cl_program program,
     i++;  
   }
   
-  // TODO: fill 'kernel->reqd_wg_size'!
+  // fill 'kernel->reqd_wg_size'
+  kernel->reqd_wg_size = (int*)malloc(3*sizeof(int));
 
+  unsigned reqdx = 0, reqdy = 0, reqdz = 0;
+
+  llvm::NamedMDNode *size_info = 
+    kernel_function->getParent()->getNamedMetadata("opencl.kernel_wg_size_info");
+  if (size_info) {
+    for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
+      llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
+      if (KernelSizeInfo->getOperand(0) == kernel_function) {
+        reqdx = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+        reqdy = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+        reqdz = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+      }
+    }
+  }
+
+  kernel->reqd_wg_size[0] = reqdx;
+  kernel->reqd_wg_size[1] = reqdy;
+  kernel->reqd_wg_size[2] = reqdz;
+  
   // Generate the kernel_obj.c file. This should be optional
   // and generated only for the heterogeneous devices which need
   // these definitions to accompany the kernels, for the launcher
