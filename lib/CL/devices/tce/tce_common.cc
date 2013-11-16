@@ -590,9 +590,8 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
   return target;
 }
 
-int 
-pocl_tce_build_program (void *data, const char *source_fn, const char *binary_fn, 
-                        const char *default_cmd, const char *user_opts, const char *dev_tmpdir) 
+const char* 
+pocl_tce_init_build(void *data, const char *dev_tmpdir) 
 {
   TCEDevice *tce_dev = (TCEDevice*)data;
 
@@ -603,7 +602,7 @@ pocl_tce_build_program (void *data, const char *source_fn, const char *binary_fn
     std::string("tceopgen > ") + std::string(dev_tmpdir) + "/tceops.h";
   
   error = system (tceopgenCmd.c_str());
-  if (error == -1) return error;
+  if (error == -1) return NULL;
 
   std::string devextHeaderFn =
     std::string(dev_tmpdir) + std::string("/_devext.h");
@@ -613,11 +612,31 @@ pocl_tce_build_program (void *data, const char *source_fn, const char *binary_fn
     std::string(" > ") + devextHeaderFn;
 
   error = system (extgenCmd.c_str());
-  if (error == -1) return error;
+  if (error == -1) return NULL;
+
+  // gnu-keywords needed to support the inline asm blocks
+  // -fasm doesn't work in the frontend
+
+  std::string includeSwitch = 
+    std::string("-fgnu-keywords -Dasm=__asm__ -include ") + devextHeaderFn;
+  
+  const char *include_switch = strdup(includeSwitch.c_str());
+
+  return include_switch;
+}
+
+int 
+pocl_tce_build_program (void *data, const char *source_fn, const char *binary_fn, 
+                        const char *default_cmd, const char *user_opts, const char *dev_tmpdir) 
+{
+  const char *include_switch =
+    pocl_tce_init_build(data, dev_tmpdir);
 
   std::string buildCmd = 
-    std::string("EXTRA_CPPFLAGS=\"-include ") + devextHeaderFn +
+    std::string("EXTRA_CPPFLAGS=\"") + std::string(include_switch) +
     std::string("\" ") + std::string(default_cmd);
+
+  free ((void*)include_switch);
 
   return system (buildCmd.c_str());
 }

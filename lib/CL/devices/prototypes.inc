@@ -79,6 +79,8 @@
                                     const char *default_cmd,           \
                                     const char *user_opts,             \
                                     const char *dev_tmpdir);           \
+  const char* pocl_##__DRV__##_init_build (void *data, \
+                                         const char *dev_tmpdir); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
                                          cl_int *num_image_formats);\

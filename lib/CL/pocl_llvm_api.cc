@@ -1,6 +1,7 @@
 /* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs
 
-   Copyright (c) 2013 Kalle Raiskila
+   Copyright (c) 2013 Kalle Raiskila and
+                      Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -113,9 +114,25 @@ int call_pocl_build(cl_device_id device,
   // device-specific switches too, to replace the build_program()
   // API TCE uses to include the custom op macros.
   std::stringstream ss;
+
+  if (device->init_build != NULL) 
+    {
+      assert (device_tmpdir != NULL);
+      const char *device_switches = 
+        device->init_build (device->data, device_tmpdir);
+      if (device_switches != NULL) 
+        {
+          ss << device_switches << " ";
+        }
+      free ((void*)device_switches);
+    }
+
+  
+  // The current directory is a standard search path.
+  ss << "-I. ";
+
   // This is required otherwise the initialization fails with
   // unknown triplet ''
-  ss << "-I. ";
   ss << "-triple=" << device->llvm_target_triplet << " ";
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";

@@ -126,7 +126,8 @@ GEN_PROTOTYPES (ttasim)
   pocl_tce_run, /* run */                         \
   NULL, /* run_native */						\
   pocl_ttasim_get_timer_value,                \
-  pocl_tce_build_program, \
+  pocl_tce_build_program,                    \
+  pocl_tce_init_build, \
   NULL, /* get_supported_image_formats */      \
   NULL, /* data */                               \
   "tce-tut-llvm", /* llvm_target_triplet */               \

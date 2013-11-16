@@ -143,6 +143,7 @@ GEN_PROTOTYPES (cellspu)
   NULL, /* run_native */						\
   pocl_cellspu_get_timer_value,                \
   NULL, /*pocl_cellspu_build_program */	 \
+  NULL, /* init_build */ \
   NULL, /* get_supported_image_formats */ \
   NULL, /* data */                               \
   "cellspu-v0", /* llvm_target_triplet */               \
