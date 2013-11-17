@@ -27,6 +27,8 @@
 #include <map>
 #include <string>
 
+#include "config.h"
+
 #ifdef LLVM_3_2
 #include <llvm/Module.h>
 #include <llvm/Metadata.h>
