@@ -128,10 +128,15 @@ int call_pocl_build(cl_device_id device,
       free ((void*)device_switches);
     }
 
-  // Ensure no optimizations are done to not mess up the
-  // barrier semantics etc.
-  ss << "-O0 ";
+  // This can cause illegal optimizations when unaware
+  // of the barrier semantics. -O2 is the default opt level in
+  // Clang for OpenCL C and seems to affect the performance
+  // of the end result, even if we optimize the final WG
+  // func. TODO: There should be 'noduplicate' etc. flags in 
+  // the 'barrier' function to prevent them.
+  // ss << "-O2 ";
 
+  ss << "-x cl ";
   // Remove the inline keywords to force the user functions
   // to be included in the program. Otherwise they will
   // be removed and not inlined due to -O0.
@@ -139,7 +144,10 @@ int call_pocl_build(cl_device_id device,
   // The current directory is a standard search path.
   ss << "-I. ";
 
-  ss << "-fno-builtin ";
+/* With fp-contract we get calls to fma with processors which do not
+  have fma instructions. These ruin the performance. Better to have
+  the mul+add separated in the IR. */
+  ss << "-fno-builtin -ffp-contract=off ";
 
   // This is required otherwise the initialization fails with
   // unknown triplet ''
