@@ -108,6 +108,8 @@ AT_CLEANUP
 AT_SETUP([Kernel functions convert_type])
 # Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
 AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
+# ppc codegen issue, see bug #26
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
 [Running test test_convert_type...
@@ -160,9 +162,8 @@ AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel tes
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit isfinite isinf isnan isnormal copysign])
-#works with 3.3. Fails with 3.2
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && \
-             grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
+#Fails with what looks like rounding errors
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([])
 AT_DATA([expout],
 [Running test test_fabs...
@@ -229,6 +230,8 @@ AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
 AT_KEYWORDS([scalarwave])
+#this is a check for if doubles are available
+AT_SKIP_IF([grep DISABLE_LONG $abs_top_builddir/Makefile])
 AT_DATA([expout],
 [Initial condition: t=0
 Time step 1: t=0.03125
