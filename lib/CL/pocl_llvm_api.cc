@@ -196,6 +196,10 @@ int call_pocl_build(cl_device_id device,
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
   
+  // LLVM 3.3 and older do not set that char is signed which is
+  // defined by the OpenCL C specs (but not by C specs).
+  la->CharIsSigned = true;
+
   // the per-file types don't seem to override this 
   la->OpenCLVersion = 120;
   la->FakeAddressSpaceMap = true;
