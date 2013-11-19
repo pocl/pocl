@@ -695,7 +695,7 @@ AC_DEFINE_UNQUOTED([CLFLAGS], ["$CLFLAGS"], [Additional CL compiler flags.])
 # Note: We use -Wno-format to avoid warnings for printf, where we
 # currently have to use %lld for long arguments (to handle 32-bit
 # architectures).
-FORCED_CLFLAGS="-Xclang -Qunused-arguments -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm -Wno-format"
+FORCED_CLFLAGS="-Xclang -Qno-unused-arguments -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm -Wno-format"
 AC_DEFINE_UNQUOTED([FORCED_CLFLAGS], 
 ["$FORCED_CLFLAGS"], 
 [Always used flags for Clang when compiling OpenCL C code.])
