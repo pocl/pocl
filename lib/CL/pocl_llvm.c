@@ -178,14 +178,11 @@ int call_pocl_kernel(cl_program program,
   return 0;
 }
 
-#endif
-
 /* The WG generation does not yet work through the API. 
    Always call the script version for now. */
 
-int call_pocl_workgroup( char* function_name, 
+int call_pocl_workgroup(cl_device_id device, char* function_name, 
                     size_t local_x, size_t local_y, size_t local_z,
-                    const char* llvm_target_triplet, 
                     const char* parallel_filename,
                     const char* kernel_filename )
 {
@@ -200,7 +197,7 @@ int call_pocl_workgroup( char* function_name,
       else
         pocl_wg_script = POCL_WORKGROUP;
 
-      if (llvm_target_triplet != NULL) 
+      if (device->llvm_target_triplet != NULL) 
         {
           error = snprintf
             (command, COMMAND_LENGTH,
@@ -208,7 +205,7 @@ int call_pocl_workgroup( char* function_name,
              pocl_wg_script,
              function_name,
              local_x, local_y, local_z,
-             llvm_target_triplet,
+             device->llvm_target_triplet,
              parallel_filename, kernel_filename);
         }
       else
@@ -231,3 +228,5 @@ int call_pocl_workgroup( char* function_name,
 
       return 0;
 }
+
+#endif

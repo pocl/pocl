@@ -177,20 +177,4 @@ fi
     -target-address-spaces \
      ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -o ${output_file} ${linked_bc}
 
-# Notes about the kernel compiler phase ordering:
-# -mem2reg first because we get unoptimized output from Clang where all
-# variables are allocas. Avoid context saving the allocas and make the
-# more readable by calling -mem2reg at the beginning.
-#
-# -implicit-cond-barriers after -implicit-loop-barriers because the latter can inject
-# barriers to loops inside conditional regions after which the peeling should be 
-# avoided by injecting the implicit conditional barriers
-#
-# -loop-barriers, -barriertails, and -barriers should be ran after the implicit barrier 
-# injection passes so they "normalize" the implicit barriers also
-#
-# -phistoallocas before -workitemloops as otherwise it cannot inject context
-# restore code (PHIs need to be at the beginning of the BB and so one cannot
-# context restore them with non-PHI code if the value is needed in another PHI)
-
 #set +x

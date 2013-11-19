@@ -679,6 +679,7 @@ WorkitemLoops::AddContextRestore
  bool isAlloca)
 {
   assert (val != NULL);
+  assert (alloca != NULL);
   IRBuilder<> builder(alloca);
   if (before != NULL) 
     {

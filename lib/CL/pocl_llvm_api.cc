@@ -52,8 +52,10 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
 
@@ -80,7 +82,7 @@ using llvm::sys::fs::F_Binary;
 
 //#define DEBUG_POCL_LLVM_API
 
-//#define INCLUDE_UNFINISHED
+#define INCLUDE_UNFINISHED
 
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
@@ -505,6 +507,267 @@ int call_pocl_kernel(cl_program program,
   
 }
 
+/* helpers copied from LLVM opt START */
+
+static llvm::TargetOptions GetTargetOptions() {
+  llvm::TargetOptions Options;
+  /* TODO: propagate these from clBuildProgram options. */
+#if 0
+  Options.LessPreciseFPMADOption = EnableFPMAD;
+  Options.NoFramePointerElim = DisableFPElim;
+  Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
+  Options.AllowFPOpFusion = FuseFPOps;
+  Options.UnsafeFPMath = EnableUnsafeFPMath;
+  Options.NoInfsFPMath = EnableNoInfsFPMath;
+  Options.NoNaNsFPMath = EnableNoNaNsFPMath;
+  Options.HonorSignDependentRoundingFPMathOption =
+  EnableHonorSignDependentRoundingFPMath;
+  Options.UseSoftFloat = GenerateSoftFloatCalls;
+  if (FloatABIForCalls != FloatABI::Default)
+    Options.FloatABIType = FloatABIForCalls;
+  Options.NoZerosInBSS = DontPlaceZerosInBSS;
+  Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
+  Options.DisableTailCalls = DisableTailCalls;
+  Options.StackAlignmentOverride = OverrideStackAlignment;
+  Options.RealignStack = EnableRealignStack;
+  Options.TrapFuncName = TrapFuncName;
+  Options.PositionIndependentExecutable = EnablePIE;
+  Options.EnableSegmentedStacks = SegmentedStacks;
+  Options.UseInitArray = UseInitArray;
+  Options.SSPBufferSize = SSPBufferSize;
+#endif
+  return Options;
+}
+
+// Returns the TargetMachine instance or zero if no triple is provided.
+static TargetMachine* GetTargetMachine
+(Triple TheTriple, 
+ std::string MCPU,
+ const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
+
+  std::string Error;
+  const Target *TheTarget = 
+    TargetRegistry::lookupTarget("" /*MArch*/, TheTriple,
+                                 Error);
+  // Some modules don't specify a triple, and this is okay.
+  if (!TheTarget) {
+    return 0;
+  }
+
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MAttrs.size()) {
+    SubtargetFeatures Features;
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
+
+  return TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                        MCPU, FeaturesStr, GetTargetOptions(),
+                                        Reloc::Default, CodeModel::Default,
+                                        CodeGenOpt::Aggressive);
+}
+
+/* helpers copied from LLVM opt END */
+
+
+/**
+ * Prepare the kernel compiler passes.
+ *
+ * The passes are created only once per program run per device.
+ * The returned pass manager should not be modified, only the Module
+ * should be optimized using it.
+ */
+static PassManager& kernel_compiler_passes
+(cl_device_id device, std::string module_data_layout)
+{
+  static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
+
+  if (kernel_compiler_passes.find(device) != 
+      kernel_compiler_passes.end())
+    {
+      return *kernel_compiler_passes[device];
+    }
+
+  Triple triple(device->llvm_target_triplet);
+  StringMap<llvm::cl::Option*> opts;
+  llvm::cl::getRegisteredOptions(opts);
+  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+
+  if (kernel_compiler_passes.size() == 0) 
+    {
+      // We have not initialized any pass managers for any device yet.
+      // Run the global LLVM pass initialization functions.
+      InitializeAllTargets();
+      InitializeAllTargetMCs();
+
+      // TODO: do this globally, and just once per program
+      initializeCore(Registry);
+      initializeScalarOpts(Registry);
+      initializeVectorization(Registry);
+      initializeIPO(Registry);
+      initializeAnalysis(Registry);
+      initializeIPA(Registry);
+      initializeTransformUtils(Registry);
+      initializeInstCombine(Registry);
+      initializeInstrumentation(Registry);
+      initializeTarget(Registry);
+    }
+
+  PassManager *Passes = new PassManager();
+
+  // Need to setup the target info for target specific passes. */
+  TargetMachine *Machine = 
+    GetTargetMachine(triple, device->llvm_cpu ? device->llvm_cpu : "");
+  // Add internal analysis passes from the target machine.
+  Machine->addAnalysisPasses(*Passes);
+
+  if (module_data_layout != "")
+    Passes->add(new DataLayout(module_data_layout));
+ 
+
+  /* The kernel compiler passes to run, in order.
+
+     Notes about the kernel compiler phase ordering:
+     -mem2reg first because we get unoptimized output from Clang where all
+     variables are allocas. Avoid context saving the allocas and make the
+     more readable by calling -mem2reg at the beginning.
+
+     -implicit-cond-barriers after -implicit-loop-barriers because the latter can inject
+     barriers to loops inside conditional regions after which the peeling should be 
+     avoided by injecting the implicit conditional barriers
+
+     -loop-barriers, -barriertails, and -barriers should be ran after the implicit barrier 
+     injection passes so they "normalize" the implicit barriers also
+
+     -phistoallocas before -workitemloops as otherwise it cannot inject context
+     restore code (PHIs need to be at the beginning of the BB and so one cannot
+     context restore them with non-PHI code if the value is needed in another PHI). */
+
+  std::vector<std::string> passes;
+  passes.push_back("mem2reg");
+  passes.push_back("domtree");
+  passes.push_back("workitem-handler-chooser");
+  passes.push_back("break-constgeps");
+  passes.push_back("automatic-locals");
+  passes.push_back("flatten");
+  passes.push_back("always-inline");
+  passes.push_back("globaldce");
+  passes.push_back("simplifycfg");
+  passes.push_back("loop-simplify");
+  passes.push_back("phistoallocas");
+  passes.push_back("isolate-regions");
+  passes.push_back("uniformity");
+  passes.push_back("implicit-loop-barriers");
+  passes.push_back("implicit-cond-barriers");
+  passes.push_back("loop-barriers");
+  passes.push_back("barriertails");
+  passes.push_back("barriers");
+  passes.push_back("isolate-regions");
+  passes.push_back("wi-aa");
+  passes.push_back("workitemrepl");
+  passes.push_back("workitemloops");
+  passes.push_back("allocastoentry");
+  passes.push_back("workgroup");
+  passes.push_back("target-address-spaces");
+  passes.push_back("STANDARD_OPTS");
+  passes.push_back("instcombine");
+
+  llvm::cl::Option *O = opts["add-wi-metadata"];
+ 
+  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
+
+  /* This is a beginning of the handling of the fine-tuning parameters.
+   * TODO: POCL_KERNEL_COMPILER_OPT_SWITCH
+   * TODO: POCL_VECTORIZE_WORK_GROUPS
+   * TODO: POCL_VECTORIZE_VECTOR_WIDTH
+   * TODO: POCl_VECTORIZE_NO_FP
+   * TODO: pass LLC_FLAGS
+   */
+  std::string loopvec = "";
+  if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
+    {
+      loopvec = getenv("POCL_WORK_GROUP_METHOD");
+    }
+
+#ifndef LLVM_3_2
+  if (loopvec == "loopvec")
+    {
+      if (kernel_compiler_passes.size() == 0) {
+        // Set the options only once. TODO: fix it so that each
+        // device can reset their own options. Now one cannot compile
+        // with different options to different devices at one run.
+#if 0
+        llvm::cl::Option *O = opts["vectorize-loops"];
+        assert(O && "could not find LLVM option 'vectorize-loops'");
+        O->addOccurrence(1, StringRef("vectorize-loops"), StringRef(""), false); 
+#endif
+    
+        O = opts["vectorizer-min-trip-count"];
+        assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+        O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
+
+        O = opts["scalarize-load-store"];
+        assert(O && "could not find LLVM option 'scalarize-load-store'");
+        O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef(""), false); 
+
+        O = opts["enable-scalarizer"];
+        assert(O && "could not find LLVM option 'enable-scalarizer'");
+        O->addOccurrence(1, StringRef("enable-scalarizer"), StringRef(""), false); 
+
+#ifdef DEBUG_POCL_LLVM_API        
+        printf ("### autovectorizer enabled\n");
+
+        O = opts["debug-only"];
+        assert(O && "could not find LLVM option 'debug'");
+        O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
+
+#endif
+      }
+
+      passes.push_back("scalarizer");
+      passes.push_back("mem2reg");
+      passes.push_back("loop-vectorize");
+      passes.push_back("slp-vectorizer");
+    } 
+#endif
+   
+  // Now add the above passes 
+  for(unsigned i = 0; i < passes.size(); ++i)
+    {
+    
+      // This is (more or less) -O3
+      if (passes[i] == "STANDARD_OPTS")
+        {
+          PassManagerBuilder Builder;
+          Builder.OptLevel = 3;
+          Builder.SizeLevel = 0;
+#if defined LLVM_3_2 or defined LLVM_3_3
+          Builder.DisableSimplifyLibCalls = true;
+#endif
+          Builder.populateModulePassManager(*Passes);
+      
+          continue;
+        }
+
+      const PassInfo *PIs = Registry.getPassInfo(StringRef(passes[i]));
+      if(PIs)
+        {
+          //std::cout << "-"<<passes[i] << " ";
+          Pass *thispass = PIs->createPass();
+          Passes->add(thispass);
+        }
+      else
+        {
+          std::cerr << "Failed to create kernel compiler pass " << passes[i] << std::endl;
+          POCL_ABORT("FAIL");
+        }
+    }
+  kernel_compiler_passes[device] = Passes;
+  return *Passes;
+}
+
 /* kludge - this is the kernel dimensions command-line parameter to the workitem loop */
 namespace pocl {
 extern llvm::cl::list<int> LocalSize;
@@ -513,173 +776,98 @@ extern llvm::cl::list<int> LocalSize;
 #ifdef INCLUDE_UNFINISHED
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
- * runs pocl's LLVM passes on that module.
- * Output is a LLVM bitcode file.
+ * runs pocl's kernel compiler passes on that module to produce 
+ * a function that executes all work-items in a work-group.
+ *
+ * Output is a LLVM bitcode file. 
+ *
+ * TODO: rename these functions for something more descriptive.
+ * TODO: this is not thread-safe, it changes the LLVM global options to
+ * control the compilation. We should enforce only one compilations is done
+ * at a time or control the options through thread safe methods.
  */
-int call_pocl_workgroup( char* function_name, 
-                    size_t local_x, size_t local_y, size_t local_z,
-                    const char* llvm_target_triplet, 
-                    const char* parallel_filename,
-                    const char* kernel_filename )
+int call_pocl_workgroup(cl_device_id device,
+                        char* function_name, 
+                        size_t local_x, size_t local_y, size_t local_z,
+                        const char* parallel_filename,
+                        const char* kernel_filename)
 {
 
-  LLVMContext &Context = getGlobalContext();
-  SMDiagnostic Err;
-  std::string errmsg;
-  StringMap<llvm::cl::Option*> opts;
-  llvm::cl::getRegisteredOptions(opts);
-
-  // TODO: do this globally, and just once per program
-  PassRegistry &Registry = *PassRegistry::getPassRegistry();
-  initializeCore(Registry);
-  initializeScalarOpts(Registry);
-  initializeVectorization(Registry);
-  initializeIPO(Registry);
-  initializeAnalysis(Registry);
-  initializeIPA(Registry);
-  initializeTransformUtils(Registry);
-  initializeInstCombine(Registry);
-  initializeInstrumentation(Registry);
-  initializeTarget(Registry);
-
-  // FIXME: this too should be done only once!
+  // TODO pass these as parameters instead, this is not thread safe!
+  pocl::LocalSize.clear();
   pocl::LocalSize.addValue(local_x);
   pocl::LocalSize.addValue(local_y);
   pocl::LocalSize.addValue(local_z);
 
+  Triple triple(device->llvm_target_triplet);
 
-  //TODO sync with Nat Ferrus' improved linking
+  // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   if (getenv("POCL_BUILDING") != NULL)
-  {
-    kernellib =BUILDDIR;
-    kernellib+="/lib/kernel/kernel-";
-    kernellib+=OCL_KERNEL_TARGET;
-    kernellib+=".bc";   
-  }
+    {
+      kernellib = BUILDDIR;
+      kernellib += "/lib/kernel/";
+      // TODO: get this from the target triplet: TCE, cellspu
+      if (triple.getArch() == Triple::tce) 
+        {
+          kernellib += "tce";
+        }
+#ifdef LLVM_3_2 
+      else if (triple.getArch() == Triple::cellspu) 
+        {
+          kernellib += "cellspu";
+        }
+#endif
+      else 
+        {
+          kernellib += "host";
+        }
+      kernellib += "/kernel-"; 
+      kernellib += device->llvm_target_triplet;
+      kernellib +=".bc";   
+    }
   else
-  {
-    // TODO: vefify this is the correct place!
-    kernellib = PKGDATADIR;
-    kernellib+="/pocl/";
-    kernellib+=KERNEL_DIR;
-    kernellib+="/kernel-";
-    kernellib+=OCL_KERNEL_TARGET;
-    kernellib+=".bc";
-  }
+    {
+      // TODO: vefify this is the correct place!
+      kernellib = PKGDATADIR;
+      kernellib += KERNEL_DIR;
+      kernellib += "/kernel-";
+      kernellib += device->llvm_target_triplet;
+      kernellib += ".bc";
+    }
+
+  LLVMContext &Context = getGlobalContext();
+  SMDiagnostic Err;
+  std::string errmsg;
 
   // Link the kernel and runtime library
   llvm::Module *input = ParseIRFile(kernel_filename, Err, Context);
   llvm::Module *libmodule = ParseIRFile(kernellib, Err, Context);
-  Linker TheLinker( input );
-  TheLinker.linkInModule( libmodule, &errmsg );
+  if (libmodule == NULL) {
+    fprintf(stderr, 
+            "The built-in kernel library '%s' could not be loaded", 
+            kernellib); 
+    POCL_ABORT("FAIL");
+  }
+  Linker TheLinker(input);
+  TheLinker.linkInModule(libmodule, &errmsg);
   llvm::Module *linked_bc = TheLinker.getModule();
 
-  /* Start assembling the LLVM passes to run */
-  PassManager Passes;
-  DataLayout*TD = 0;
-  const std::string &ModuleDataLayout = linked_bc->getDataLayout();
-  if (!ModuleDataLayout.empty()) {
-    TD = new DataLayout(ModuleDataLayout);
-    Passes.add(TD);
-  }
-  else
-  {
-    // FIXME: panic more sublty
-    assert( false );
-  }
-
-  /* The passes to run, in order */
-  const char *passes[] = {"domtree", 
-                          "workitem-handler-chooser",
-                          "break-constgeps",
-                          "automatic-locals",
-                          "flatten", 
-                          "always-inline",
-                          "globaldce",
-                          "simplifycfg",
-                          "loop-simplify",
-                          "phistoallocas",
-                          "isolate-regions",
-                          "uniformity",
-                          "implicit-loop-barriers",
-                          "loop-barriers", 
-                          "barriertails",
-                          "barriers",
-                          "isolate-regions",
-                          "wi-aa",
-                          "workitemrepl", 
-                          "workitemloops",
-                          "allocastoentry",
-                          "workgroup",
-                          "target-address-spaces",
-                          "STANDARD_OPTS",
-                          "instcombine"}; 
-
-  // Now add the above passes 
-  for( unsigned i=0; i < sizeof(passes)/sizeof(const char*); i++ )
-  {
-    
-    // This is (more or less) -O3
-    if (strcmp("STANDARD_OPTS", passes[i])==0)
-    {
-      PassManagerBuilder Builder;
-      Builder.OptLevel = 3;
-      Builder.SizeLevel = 0;
-      #if defined LLVM_3_2 or defined LLVM_3_3
-      Builder.DisableSimplifyLibCalls=true;
-      #endif
-      Builder.populateModulePassManager( Passes );
-      
-      continue;
-    }
-
-    const PassInfo *PIs = Registry.getPassInfo(StringRef(passes[i]));
-    if(PIs)
-    {
-      //std::cout << "-"<<passes[i] << " ";
-      Pass *thispass = PIs->createPass();
-      Passes.add(thispass);
-    }
-    else
-    {
-      // TODO: fail more gracefully.
-      assert(false && "failed to create LLVM pass");
-    }
-  }
-
-  llvm::cl::Option *O = opts["add-wi-metadata"];
-  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
-
-  /* This is a beginning of the handling of the fine-tuning parameters.
-   * Lots more needed...
-   */
-  std::string loopvec="";
-  if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
-  {
-    loopvec = getenv("POCL_WORK_GROUP_METHOD");
-  }
-  if (loopvec == "loopvec")
-  {
-    llvm::cl::Option *O = opts["vectorize-loops"];
-    assert(O && "could not find LLVM option 'vectorize-loops'");
-    O->addOccurrence(1, StringRef("vectorize-loops"), StringRef(""), false); 
-    
-    O = opts["vectorizer-min-trip-count"];
-    assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
-    O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("1"), false); 
-  } 
+  assert (linked_bc != NULL);
 
   /* Now finally run the set of passes assembled above */
   std::string ErrorInfo;
-  tool_output_file *Out = new tool_output_file( parallel_filename, 
-                                                ErrorInfo, 
-                                                F_Binary);;
-  Passes.add(createBitcodeWriterPass(Out->os()));
-  Passes.run(*linked_bc);
+  tool_output_file *Out = new tool_output_file(parallel_filename, 
+                                               ErrorInfo, 
+                                               F_Binary);
+
+  kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
+
+  WriteBitcodeToFile(linked_bc, Out->os()); 
 
   Out->keep();
   delete Out;
+  //delete linked_bc;
 
   return 0;
 }

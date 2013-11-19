@@ -1,0 +1,13 @@
+A laundry list of things to clean up in the source base.
+
+runtime_config.c
+----------------
+Move all getenv() checks to a central location under APIs for fetching
+the option. getenv is a syscall and we want to avoid calling it as much
+as possible. We should call it only once and then store the result to
+a variable which is used in succeeding calls. 
+
+A centralized location for all the runtime options of pocl would also 
+allow more easier creation of a configuration file or another way of 
+setting the options.
+
