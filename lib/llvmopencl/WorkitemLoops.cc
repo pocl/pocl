@@ -146,6 +146,8 @@ WorkitemLoops::runOnFunction(Function &F)
   changed |= chopBBs(F, *this);
   F.viewCFG();
 #endif
+  contextArrays.clear();
+  tempInstructionIds.clear();
 
   return changed;
 }

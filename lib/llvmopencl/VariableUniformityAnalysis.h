@@ -57,6 +57,7 @@ namespace pocl {
                                      llvm::BasicBlock *previousUniformBB);
 
     virtual bool shouldBePrivatized(llvm::Function *f, llvm::Value *val);
+    virtual bool doFinalization(llvm::Module& M);
 
   private:
 

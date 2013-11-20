@@ -56,8 +56,6 @@ namespace pocl {
     typedef std::vector<llvm::Instruction* > InstructionVec;
     typedef std::map<std::string, llvm::Instruction*> StrInstructionMap;
 
-    InstructionIndex workGroupVariables;
-
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
     llvm::PostDominatorTree *PDT;

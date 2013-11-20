@@ -65,6 +65,13 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
     return false;
 
   Kernel *K = cast<Kernel> (&F);
+
+  /* FIXME: this is not thread safe. We cannot compile multiple kernels at
+     the same time with the same instances of these passes as they store
+     to private attributes and use global values to pass in the dimensions.
+     In the LLVMAPI version this logic should be at higher-level when
+     constructing the passes for the kernel, or done fully inside a single
+     FunctionPass that delegates to other passes. */    
   Initialize(K);
 
   std::string method = "auto";
