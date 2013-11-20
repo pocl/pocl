@@ -278,7 +278,7 @@ int call_pocl_kernel(cl_program program,
                      const char* kernel_name,
                      const char* device_tmpdir, 
                      char* descriptor_filename,
-                     int *errcode)
+                     int */*errcode*/)
 {
 
   int error, i;
@@ -591,8 +591,10 @@ static PassManager& kernel_compiler_passes
     }
 
   Triple triple(device->llvm_target_triplet);
+#ifndef LLVM_3_2
   StringMap<llvm::cl::Option*> opts;
   llvm::cl::getRegisteredOptions(opts);
+#endif
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
   if (kernel_compiler_passes.size() == 0) 
@@ -613,6 +615,12 @@ static PassManager& kernel_compiler_passes
       initializeInstCombine(Registry);
       initializeInstrumentation(Registry);
       initializeTarget(Registry);
+
+#ifndef LLVM_3_2
+      llvm::cl::Option *O = opts["add-wi-metadata"];
+      O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
+#endif
+
     }
 
   PassManager *Passes = new PassManager();
@@ -621,7 +629,9 @@ static PassManager& kernel_compiler_passes
   TargetMachine *Machine = 
     GetTargetMachine(triple, device->llvm_cpu ? device->llvm_cpu : "");
   // Add internal analysis passes from the target machine.
+#ifndef LLVM_3_2
   Machine->addAnalysisPasses(*Passes);
+#endif
 
   if (module_data_layout != "")
     Passes->add(new DataLayout(module_data_layout));
@@ -671,10 +681,6 @@ static PassManager& kernel_compiler_passes
   passes.push_back("allocastoentry");
   passes.push_back("workgroup");
   passes.push_back("target-address-spaces");
-
-  llvm::cl::Option *O = opts["add-wi-metadata"];
- 
-  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
 
   /* This is a beginning of the handling of the fine-tuning parameters.
    * TODO: POCL_KERNEL_COMPILER_OPT_SWITCH
@@ -837,14 +843,14 @@ int call_pocl_workgroup(cl_device_id device,
   // Link the kernel and runtime library
   llvm::Module *input = ParseIRFile(kernel_filename, Err, Context);
   llvm::Module *libmodule = ParseIRFile(kernellib, Err, Context);
-  if (libmodule == NULL) {
-    fprintf(stderr, 
-            "The built-in kernel library '%s' could not be loaded", 
-            kernellib); 
-    POCL_ABORT("FAIL");
-  }
+  assert (libmodule != NULL);
+#ifdef LLVM_3_2
+  Linker TheLinker("pocl", input);
+  TheLinker.LinkInModule(libmodule, &errmsg);
+#else
   Linker TheLinker(input);
   TheLinker.linkInModule(libmodule, &errmsg);
+#endif
   llvm::Module *linked_bc = TheLinker.getModule();
 
   assert (linked_bc != NULL);
@@ -861,7 +867,11 @@ int call_pocl_workgroup(cl_device_id device,
 
   Out->keep();
   delete Out;
+#ifndef LLVM_3_2
+  // In LLVM 3.2 the Linker object deletes the associated Modules.
+  // If we delete here, it will crash.
   delete linked_bc;
+#endif
 
   return 0;
 }
