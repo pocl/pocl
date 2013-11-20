@@ -703,7 +703,7 @@ static PassManager& kernel_compiler_passes
         // device can reset their own options. Now one cannot compile
         // with different options to different devices at one run.
    
-        O = opts["vectorizer-min-trip-count"];
+        llvm::cl::Option *O = opts["vectorizer-min-trip-count"];
         assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
         O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
 
