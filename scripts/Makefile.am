@@ -23,7 +23,10 @@
 # THE SOFTWARE.
 
 bin_SCRIPTS = pocl-standalone
+if ! USE_LLVM_API
 pkgdata_SCRIPTS = pocl-build pocl-kernel pocl-workgroup
+endif
+
 CLEANFILES = pocl-build pocl-kernel pocl-workgroup pocl-standalone
 EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in pocl-standalone.in
 
@@ -54,18 +57,6 @@ pocl-build pocl-kernel pocl-workgroup pocl-standalone: %: %.in Makefile ../insta
 	$(do_subst) < $< > $@
 	chmod +x $@
 
-#pocl-kernel: pocl-kernel.in Makefile
-#	$(do_subst) < $< > $@
-#	chmod +x $@
-#
-#pocl-workgroup: pocl-workgroup.in Makefile
-#	$(do_subst) < $< > $@
-#	chmod +x $@
-#
-#pocl-standalone: pocl-standalone.in Makefile
-#	$(do_subst) < $< > $@
-#	chmod +x $@
-
 install-exec-hook: $(bin_SCRIPTS) 
 	for f in $(bin_SCRIPTS) ; do \
 		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
@@ -74,6 +65,7 @@ install-exec-hook: $(bin_SCRIPTS)
 		chmod +x "$(DESTDIR)$(bindir)/$$f" ; \
 	done
 
+if ! USE_LLVM_API
 install-data-hook: $(pkgdata_SCRIPTS)
 	for f in $(pkgdata_SCRIPTS) ; do \
 		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
@@ -81,3 +73,4 @@ install-data-hook: $(pkgdata_SCRIPTS)
 			< "$$f" && \
 		chmod +x "$(DESTDIR)$(pkgdatadir)/$$f" ; \
 	done
+endif
