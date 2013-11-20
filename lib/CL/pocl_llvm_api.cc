@@ -671,8 +671,6 @@ static PassManager& kernel_compiler_passes
   passes.push_back("allocastoentry");
   passes.push_back("workgroup");
   passes.push_back("target-address-spaces");
-  passes.push_back("STANDARD_OPTS");
-  passes.push_back("instcombine");
 
   llvm::cl::Option *O = opts["add-wi-metadata"];
  
@@ -698,12 +696,7 @@ static PassManager& kernel_compiler_passes
         // Set the options only once. TODO: fix it so that each
         // device can reset their own options. Now one cannot compile
         // with different options to different devices at one run.
-#if 0
-        llvm::cl::Option *O = opts["vectorize-loops"];
-        assert(O && "could not find LLVM option 'vectorize-loops'");
-        O->addOccurrence(1, StringRef("vectorize-loops"), StringRef(""), false); 
-#endif
-    
+   
         O = opts["vectorizer-min-trip-count"];
         assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
         O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
@@ -732,8 +725,11 @@ static PassManager& kernel_compiler_passes
       passes.push_back("slp-vectorizer");
     } 
 #endif
+
+  passes.push_back("STANDARD_OPTS");
+  passes.push_back("instcombine");
    
-  // Now add the above passes 
+  // Now actually add the listed passes to the PassManager.
   for(unsigned i = 0; i < passes.size(); ++i)
     {
     
@@ -743,11 +739,9 @@ static PassManager& kernel_compiler_passes
           PassManagerBuilder Builder;
           Builder.OptLevel = 3;
           Builder.SizeLevel = 0;
-#if defined LLVM_3_2 or defined LLVM_3_3
           Builder.DisableSimplifyLibCalls = true;
-#endif
           Builder.populateModulePassManager(*Passes);
-      
+     
           continue;
         }
 
@@ -792,7 +786,6 @@ int call_pocl_workgroup(cl_device_id device,
                         const char* parallel_filename,
                         const char* kernel_filename)
 {
-
   // TODO pass these as parameters instead, this is not thread safe!
   pocl::LocalSize.clear();
   pocl::LocalSize.addValue(local_x);
@@ -836,7 +829,8 @@ int call_pocl_workgroup(cl_device_id device,
       kernellib += ".bc";
     }
 
-  LLVMContext &Context = getGlobalContext();
+  // Have one LLVMContext per compilation to be (more) thread safe.
+  LLVMContext Context;
   SMDiagnostic Err;
   std::string errmsg;
 
@@ -867,7 +861,7 @@ int call_pocl_workgroup(cl_device_id device,
 
   Out->keep();
   delete Out;
-  //delete linked_bc;
+  delete linked_bc;
 
   return 0;
 }
