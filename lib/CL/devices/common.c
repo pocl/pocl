@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 
 #include "pocl_image_util.h"
 
@@ -88,8 +89,16 @@ llvm_codegen (const char* tmpdir) {
       assert (error == 0);
           
       // For the pthread device, use device type is always the same as the host. 
+#ifdef LLVM_3_2
+// Clang 3.2 whines about the -march parameter even though it's used
+// for target-specific optimizations. Silence it here.
+#define ADDITIONAL_CMD_STR "2> /dev/null"
+#else
+#define ADDITIONAL_CMD_STR
+#endif
+
       error = snprintf (command, COMMAND_LENGTH,
-			CLANG " " HOST_CLANG_FLAGS " -c -o %s.o %s",
+			CLANG " " HOST_CLANG_FLAGS " -c -o %s.o %s " ADDITIONAL_CMD_STR,
 			module,
 			assembly);
       assert (error >= 0);
