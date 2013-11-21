@@ -334,7 +334,7 @@ void (*fill_rect) (void *data,
   /* Perform initialization steps and can return additional
      build options that are required for the device. The caller
      owns the returned string. */
-  const char* (*init_build) 
+  char* (*init_build) 
   (void *data, 
    const char *dev_tmpdir);
 

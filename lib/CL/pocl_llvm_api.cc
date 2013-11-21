@@ -120,13 +120,13 @@ int call_pocl_build(cl_device_id device,
   if (device->init_build != NULL) 
     {
       assert (device_tmpdir != NULL);
-      const char *device_switches = 
+      char *device_switches = 
         device->init_build (device->data, device_tmpdir);
       if (device_switches != NULL) 
         {
           ss << device_switches << " ";
         }
-      free ((void*)device_switches);
+      free (device_switches);
     }
 
   // This can cause illegal optimizations when unaware
