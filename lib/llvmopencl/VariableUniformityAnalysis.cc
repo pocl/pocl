@@ -405,8 +405,9 @@ VariableUniformityAnalysis::setUniform(llvm::Function *f,
 }
 
 bool
-VariableUniformityAnalysis::doFinalization(llvm::Module& M) {
+VariableUniformityAnalysis::doFinalization(llvm::Module& /*M*/) {
   uniformityCache_.clear();
+  return true;
 }
 
 }
