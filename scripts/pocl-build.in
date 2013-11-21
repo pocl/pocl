@@ -22,9 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+set -e                          # Abort on errors
 if [ -n "$POCL_VERBOSE" ]; then
     set -x
-    set -e
     echo 0=$0 @=$@
 fi
 
