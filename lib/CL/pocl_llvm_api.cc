@@ -67,6 +67,7 @@
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
+#include "pocl_runtime_config.h"
 #include "install-paths.h"
 #include "LLVMUtils.h"
 
@@ -144,9 +145,9 @@ int call_pocl_build(cl_device_id device,
   // The current directory is a standard search path.
   ss << "-I. ";
 
-/* With fp-contract we get calls to fma with processors which do not
-  have fma instructions. These ruin the performance. Better to have
-  the mul+add separated in the IR. */
+   /* With fp-contract we get calls to fma with processors which do not
+      have fma instructions. These ruin the performance. Better to have
+      the mul+add separated in the IR. */
   ss << "-fno-builtin -ffp-contract=off ";
 
   // This is required otherwise the initialization fails with
@@ -215,7 +216,7 @@ int call_pocl_build(cl_device_id device,
   po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
 
   std::string kernelh;
-  if (getenv("POCL_BUILDING") != NULL)
+  if (pocl_get_bool_option("POCL_BUILDING", 0))
     { 
       kernelh  = SRCDIR;
       kernelh += "/include/_kernel.h";
@@ -598,7 +599,9 @@ static PassManager& kernel_compiler_passes
 #endif
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
-  if (kernel_compiler_passes.size() == 0) 
+  const bool first_initialization_call = kernel_compiler_passes.size() == 0;
+
+  if (first_initialization_call) 
     {
       // We have not initialized any pass managers for any device yet.
       // Run the global LLVM pass initialization functions.
@@ -688,16 +691,16 @@ static PassManager& kernel_compiler_passes
    * TODO: POCL_VECTORIZE_WORK_GROUPS
    * TODO: POCL_VECTORIZE_VECTOR_WIDTH
    * TODO: POCl_VECTORIZE_NO_FP
-   * TODO: pass LLC_FLAGS
    */
-  std::string loopvec = "";
-  if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
-    {
-      loopvec = getenv("POCL_WORK_GROUP_METHOD");
-    }
+  const std::string wg_method = 
+    pocl_get_string_option("POCL_WORK_GROUP_METHOD", "auto");
+
+  const bool wi_vectorizer = 
+    pocl_get_bool_option("POCL_VECTORIZE_WORK_GROUPS", 0);
+
 
 #ifndef LLVM_3_2
-  if (loopvec == "loopvec")
+  if (wg_method == "loopvec")
     {
       if (kernel_compiler_passes.size() == 0) {
         // Set the options only once. TODO: fix it so that each
@@ -731,6 +734,43 @@ static PassManager& kernel_compiler_passes
       passes.push_back("loop-vectorize");
       passes.push_back("slp-vectorizer");
     } 
+  else if (wi_vectorizer) 
+    {
+      /* The legacy repl based WI autovectorizer. Deprecated but 
+         for still needed by some legacy TTA machines. */
+      passes.push_back("STANDARD_OPTS");
+      passes.push_back("wi-vectorize");
+      llvm::cl::Option *O;
+      if (pocl_is_option_set("POCL_VECTORIZE_VECTOR_WIDTH") && 
+          first_initialization_call) 
+        {
+          /* The options cannot be unset, it seems, so we must set them 
+             only once, globally. TODO: check further if there is some way to
+             unset the options so we can control them per kernel compilation. */
+          O = opts["wi-vectorize-vector-width"];
+          assert(O && "could not find LLVM option 'wi-vectorize-vector-width'");
+          O->addOccurrence(1, StringRef("wi-vectorize-vector-width"), 
+                           pocl_get_string_option("POCL_VECTORIZE_VECTOR_WIDTH", "0"), false); 
+
+        }
+
+      if (pocl_get_bool_option("POCL_VECTORIZE_NO_FP", 0) && 
+          first_initialization_call) 
+        {
+          O = opts["wi-vectorize-no-fp"];
+          assert(O && "could not find LLVM option 'wi-vectorize-no-fp'");
+          O->addOccurrence(1, StringRef("wi-vectorize-no-fp"), StringRef(""), false); 
+        }
+
+      if (pocl_get_bool_option("POCL_VECTORIZE_MEM_ONLY", 0) && 
+          first_initialization_call) 
+        {
+          O = opts["wi-vectorize-mem-ops-only"];
+          assert(O && "could not find LLVM option 'wi-vectorize-mem-ops-only'");
+          O->addOccurrence(1, StringRef("wi-vectorize-mem-ops-only"), StringRef(""), false); 
+        }
+
+    }
 #endif
 
   passes.push_back("STANDARD_OPTS");
@@ -802,7 +842,7 @@ int call_pocl_workgroup(cl_device_id device,
 
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
-  if (getenv("POCL_BUILDING") != NULL)
+  if (pocl_get_bool_option("POCL_BUILDING", 0))
     {
       kernellib = BUILDDIR;
       kernellib += "/lib/kernel/";
