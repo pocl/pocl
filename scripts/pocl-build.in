@@ -91,4 +91,8 @@ else
     include_cmd="-include $kernel_h"
 fi
 
-@CLANG@ -I. @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c ${include_cmd} -emit-llvm -o ${output_file} -x cl $1
+if echo '' "$USER_OPTIONS" '' | grep -q -e ' -DPOCL_KERNEL_CXX '; then
+    @CLANG@ -I. @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c -emit-llvm -o ${output_file} -x c++ $1
+else
+    @CLANG@ -I. @CLFLAGS@ @FORCED_CLFLAGS@ ${EXTRA_CPPFLAGS} ${USER_OPTIONS} ${CLANG_FLAGS} -c ${include_cmd} -emit-llvm -o ${output_file} -x cl $1
+fi
