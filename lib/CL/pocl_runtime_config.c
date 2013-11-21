@@ -23,6 +23,7 @@
 
 #include "pocl_runtime_config.h"
 #include <stdlib.h>
+#include <string.h>
 
 /* TODO: cache the options and to avoid calling getenv more than once 
    per option. */
