@@ -82,8 +82,6 @@ using llvm::sys::fs::F_Binary;
 
 //#define DEBUG_POCL_LLVM_API
 
-#define INCLUDE_UNFINISHED
-
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
  * (the "program.bc") file.
@@ -571,6 +569,9 @@ static TargetMachine* GetTargetMachine
 
 /* helpers copied from LLVM opt END */
 
+/* The kernel compiler passes are at the moment not thread safe,
+   ensure only one thread is using it at the time with a mutex. */
+static pocl_lock_t kernel_compiler_lock = POCL_LOCK_INITIALIZER;
 
 /**
  * Prepare the kernel compiler passes.
@@ -773,7 +774,6 @@ namespace pocl {
 extern llvm::cl::list<int> LocalSize;
 } 
 
-#ifdef INCLUDE_UNFINISHED
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
  * runs pocl's kernel compiler passes on that module to produce 
@@ -861,7 +861,9 @@ int call_pocl_workgroup(cl_device_id device,
                                                ErrorInfo, 
                                                F_Binary);
 
+  POCL_LOCK(kernel_compiler_lock);
   kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
+  POCL_UNLOCK(kernel_compiler_lock);
 
   WriteBitcodeToFile(linked_bc, Out->os()); 
 
@@ -875,4 +877,3 @@ int call_pocl_workgroup(cl_device_id device,
 
   return 0;
 }
-#endif
