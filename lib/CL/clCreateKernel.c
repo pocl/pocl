@@ -141,6 +141,7 @@ POname(clCreateKernel)(cl_program program,
   /* TODO: one of these two could be eliminated?  */
   kernel->function_name = strdup(kernel_name);
   kernel->name = strdup(kernel_name);
+
   kernel->context = program->context;
   kernel->program = program;
   kernel->next = NULL;

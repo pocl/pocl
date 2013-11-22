@@ -169,7 +169,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
-  if (kernel->program->llvm_irs == NULL)
+  if (kernel->program->llvm_irs[0] == NULL)
     {
       error = snprintf
         (kernel_filename, POCL_FILENAME_LENGTH,
@@ -185,10 +185,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
           if (kernel_file == NULL)
             return CL_OUT_OF_HOST_MEMORY;
 
-          n = fwrite(kernel->program->binaries[0], 1,
-                     kernel->program->binary_sizes[0], 
+          n = fwrite(kernel->program->binaries[command_queue->device->dev_id], 1,
+                     kernel->program->binary_sizes[command_queue->device->dev_id], 
                      kernel_file);
-          if (n < kernel->program->binary_sizes[0])
+          if (n < kernel->program->binary_sizes[command_queue->device->dev_id])
             return CL_OUT_OF_HOST_MEMORY;
   
           fclose(kernel_file);

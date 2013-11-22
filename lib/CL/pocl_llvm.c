@@ -186,7 +186,7 @@ int call_pocl_kernel(cl_program program,
 int call_pocl_workgroup(cl_device_id device, cl_kernel kernel,
                     size_t local_x, size_t local_y, size_t local_z,
                     const char* parallel_filename,
-                    const char* kernel_filename )
+                    const char* kernel_filename)
 {
   int error;
   char *pocl_wg_script;
@@ -205,7 +205,7 @@ int call_pocl_workgroup(cl_device_id device, cl_kernel kernel,
             (command, COMMAND_LENGTH,
              "%s -k %s -x %zu -y %zu -z %zu -t %s -o %s %s",
              pocl_wg_script,
-             function_name,
+             kernel->function_name,
              local_x, local_y, local_z,
              device->llvm_target_triplet,
              parallel_filename, kernel_filename);
@@ -216,7 +216,7 @@ int call_pocl_workgroup(cl_device_id device, cl_kernel kernel,
             (command, COMMAND_LENGTH,
              "%s -k %s -x %zu -y %zu -z %zu -o %s %s",
              pocl_wg_script,
-             function_name,
+             kernel->function_name,
              local_x, local_y, local_z,
              parallel_filename, kernel_filename);
         }
