@@ -523,7 +523,7 @@ struct _cl_sampler {
   do {                                                                  \
     if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
-        assert((*event)->status = CL_QUEUED);                           \
+        assert((*event)->status == CL_QUEUED);                           \
         (*event)->status = CL_SUBMITTED;                                \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_submit =                                       \
@@ -535,7 +535,7 @@ struct _cl_sampler {
   do {                                                                  \
     if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
-        assert((*event)->status = CL_SUBMITTED);                        \
+        assert((*event)->status == CL_SUBMITTED);                        \
         (*event)->status = CL_RUNNING;                                  \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_start =                                        \
@@ -547,7 +547,7 @@ struct _cl_sampler {
   do {                                                                  \
     if (event != NULL && (*event) != NULL)                              \
       {                                                                 \
-        assert((*event)->status = CL_RUNNING);                          \
+        assert((*event)->status == CL_RUNNING);                          \
         (*event)->status = CL_COMPLETE;                                 \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_end =                                          \
