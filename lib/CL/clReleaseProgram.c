@@ -27,13 +27,13 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_runtime_config.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
   cl_kernel k;
-  char *env = NULL;
 
   POCL_RELEASE_OBJECT (program, new_refcount);
 
@@ -59,12 +59,11 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         }
       free (program->binary_sizes);
 
-      env = getenv ("POCL_LEAVE_TEMP_DIRS");
-      if (!(env != NULL && strcmp (env, "1") == 0) &&
-          getenv("POCL_TEMP_DIR") == NULL)
+      if (!pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
         {
           remove_directory (program->temp_dir);
         }
+      
       free (program->temp_dir);
       free (program);
     }

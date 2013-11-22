@@ -162,13 +162,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
             local_x, local_y, local_z, offset_x, offset_y, offset_z);
   mkdir (tmpdir, S_IRWXU);
 
-  error = snprintf
-    (kernel_filename, POCL_FILENAME_LENGTH,
-     "%s/%s/%s/kernel.bc", kernel->program->temp_dir, 
-     command_queue->device->short_name, kernel->name);
-
-  if (error < 0)
-    return CL_OUT_OF_HOST_MEMORY;
   
   error = snprintf
     (parallel_filename, POCL_FILENAME_LENGTH,
@@ -176,35 +169,46 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
-  if (access (kernel_filename, F_OK) != 0) 
+  if (kernel->program->llvm_irs == NULL)
     {
-      kernel_file = fopen(kernel_filename, "w+");
-      if (kernel_file == NULL)
+      error = snprintf
+        (kernel_filename, POCL_FILENAME_LENGTH,
+         "%s/%s/%s/kernel.bc", kernel->program->temp_dir, 
+         command_queue->device->short_name, kernel->name);
+
+      if (error < 0)
         return CL_OUT_OF_HOST_MEMORY;
 
-      n = fwrite(kernel->program->binaries[0], 1,
-                 kernel->program->binary_sizes[0], 
-                 kernel_file);
-      if (n < kernel->program->binary_sizes[0])
-        return CL_OUT_OF_HOST_MEMORY;
+      if (access (kernel_filename, F_OK) != 0) 
+        {
+          kernel_file = fopen(kernel_filename, "w+");
+          if (kernel_file == NULL)
+            return CL_OUT_OF_HOST_MEMORY;
+
+          n = fwrite(kernel->program->binaries[0], 1,
+                     kernel->program->binary_sizes[0], 
+                     kernel_file);
+          if (n < kernel->program->binary_sizes[0])
+            return CL_OUT_OF_HOST_MEMORY;
   
-      fclose(kernel_file);
+          fclose(kernel_file);
 
 #ifdef DEBUG_NDRANGE
-      printf("[kernel bc written] ");
+          printf("[kernel bc written] ");
 #endif
-    }
-  else
-    {
+        }
+      else
+        {
 #ifdef DEBUG_NDRANGE
-      printf("[kernel bc already written] ");
+          printf("[kernel bc already written] ");
 #endif
+        }
     }
 
   if (access (parallel_filename, F_OK) != 0) 
     {
       error = call_pocl_workgroup(command_queue->device,
-                                  kernel->function_name, 
+                                  kernel, 
                                   local_x, local_y, local_z,
                                   parallel_filename, kernel_filename);
       if (error) return error;

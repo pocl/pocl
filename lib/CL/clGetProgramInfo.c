@@ -64,6 +64,7 @@ POname(clGetProgramInfo)(cl_program program,
       size_t const value_size = sizeof(size_t) * program->num_devices;
       if (param_value)
       {
+        pocl_llvm_update_binaries (program);
         if (param_value_size < value_size) return CL_INVALID_VALUE;
         memcpy(param_value, program->binary_sizes, value_size);
       }
