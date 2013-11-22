@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_llvm.h"
 #include "pocl_util.h"
 #include <string.h>
 
