@@ -214,8 +214,12 @@ int call_pocl_build(cl_program program,
   la->AsmBlocks = true;  // -fasm (?)
 #endif
 
-  // -Wno-format
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+  /* configure.ac sets a a few host specific flags for pthreads and
+     basic devices. */
+  if (device->has_64bit_long == 0)
+    po.addMacroDef("_CL_DISABLE_LONG");
+
   po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
 
   std::string kernelh;

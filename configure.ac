@@ -873,8 +873,19 @@ then
   HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
 fi
-	
 
+# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
+# of Open CL C long is not 8 bytes 
+if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
+then
+    : # OpenCL C long is supported
+else
+    # AC_DEFINE needed for host code, HOST_CLANG_FLGAS for kernel code.
+    AC_DEFINE_UNQUOTED([_CL_DISABLE_LONG],[],[Disable cl_khr_int64 on host based devices.])
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
+fi
+rm -f ./-.s
+	
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])
@@ -920,15 +931,6 @@ AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
 
-# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
-# of Open CL C long is not 8 bytes 
-if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
-then
-    : # OpenCL C long is supported
-else
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
-fi
-rm -f ./-.s
 
 ####################################################################
 # Determine which device drivers to build.

@@ -158,6 +158,11 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   if(!strcmp(device->llvm_cpu, "(unknown)"))
     device->llvm_cpu = NULL;
+
+  // work-around LLVM bug where sizeof(long)=4
+  #ifdef _CL_DISABLE_LONG
+  device->has_64bit_long=0;
+  #endif
 }
 
 void

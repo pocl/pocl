@@ -135,7 +135,8 @@ GEN_PROTOTYPES (basic)
   NULL, /* data */                                  \
   OCL_KERNEL_TARGET, /* llvm_target_triplet */                         \
   OCL_KERNEL_TARGET_CPU,  /* llvm_cpu */ \
-  0     /* dev_id */                                    \
+  0,     /* dev_id */                                    \
+  1     /* has_64bit_long */ \
 }
 
 

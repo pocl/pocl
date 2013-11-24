@@ -89,9 +89,11 @@ llvm_codegen (const char* tmpdir) {
       assert (error == 0);
           
       // For the pthread device, use device type is always the same as the host. 
-#ifdef LLVM_3_2
+#if defined LLVM_3_2 || defined _CL_DISABLE_LONG
 // Clang 3.2 whines about the -march parameter even though it's used
 // for target-specific optimizations. Silence it here.
+// _CL_DISABLE_LONG is passed both on command line compiling, and in
+// HOST_CLANG_FLAGS, when compiling assembly, it is unused 
 #define ADDITIONAL_CMD_STR "2> /dev/null"
 #else
 #define ADDITIONAL_CMD_STR

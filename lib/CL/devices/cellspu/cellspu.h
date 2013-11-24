@@ -148,7 +148,8 @@ GEN_PROTOTYPES (cellspu)
   NULL, /* data */                               \
   "cellspu-v0", /* llvm_target_triplet */               \
   "cellspu",  /* llvm_cpu */ \
-  0 /* dev_id */ \
+  0, /* dev_id */ \
+  0  /* has_64bit_long */ \
 }
 
 #ifdef __cplusplus

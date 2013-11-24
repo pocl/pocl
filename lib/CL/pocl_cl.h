@@ -349,6 +349,7 @@ void (*fill_rect) (void *data,
   /* A running number (starting from zero) across all the device instances. Used for 
      indexing  arrays in data structures with device specific entries. */
   int dev_id;
+  int has_64bit_long;  /* Does the device have 64bit longs */
 };
 
 struct _cl_platform_id {
