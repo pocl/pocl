@@ -78,7 +78,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       if (errcode != CL_SUCCESS)
         goto ERROR;
 
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
@@ -109,7 +109,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   if (host_ptr == NULL)
     {
-      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
       errcode = CL_MAP_FAILURE;
       goto ERROR;
     }
@@ -170,4 +170,3 @@ pocl_map_mem_cmd(cl_device_id device,
   return mapping_info->host_ptr;
 
 }
-

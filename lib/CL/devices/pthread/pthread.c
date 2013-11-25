@@ -469,13 +469,6 @@ pocl_pthread_run
   printf("### creating %d work group threads\n", num_threads);
   printf("### wgs per thread==%d leftover wgs==%d\n", wgs_per_thread, leftover_wgs);
 #endif
-
-  if (cmd->event != NULL)
-    {
-      cmd->event->status = CL_RUNNING;
-      if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        cmd->event->time_start = pocl_basic_get_timer_value(d);
-  }
   
   int first_gid_x = 0;
   int last_gid_x = wgs_per_thread - 1;
@@ -513,12 +506,6 @@ pocl_pthread_run
 #endif
   }
 
-  if (cmd->event != NULL)
-    {
-      cmd->event->status = CL_COMPLETE;
-      if (cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        cmd->event->time_end = pocl_basic_get_timer_value(d);
-    }
   free(threads);
   free(arguments);
 }

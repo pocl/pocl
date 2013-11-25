@@ -510,13 +510,6 @@ pocl_tce_run
 #endif
   d->copyHostToDevice (&dev_cmd, d->commandQueueAddr, sizeof(__kernel_exec_cmd) );
 
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
-      cmd->event->status = CL_RUNNING;
-      cmd->event->time_start = d->timeStamp();
-  }
-
   /* Ensure the READY status is written the last so the device doesn't
      start executing before all the cmd data has been written. We 
      need a flush or similar mechanism to ensure all the data has 
@@ -542,13 +535,6 @@ pocl_tce_run
       sleep(1);
 #endif
   } while (d->readWordFromDevice(d->commandQueueAddr) != POCL_KST_FINISHED);
-
-  if (cmd->event != NULL &&
-      cmd->event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-  {
-      cmd->event->status = CL_COMPLETE;
-      cmd->event->time_end = d->timeStamp();
-  }
 
 #ifdef DEBUG_TTA_DRIVER
   printf( "host: done. Freeing the command queue entry.\n");
@@ -744,4 +730,3 @@ pocl_tce_read_rect (void */*data*/,
               adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
               region[0]);
 }
-

@@ -83,7 +83,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
       if (errcode != CL_SUCCESS)
         return errcode;
       
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
 
@@ -103,8 +103,8 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
       POname(clRetainMemObject) (buffer);
       POname(clFinish)(command_queue);
     }
-  POCL_UPDATE_EVENT_SUBMITTED;
-  POCL_UPDATE_EVENT_RUNNING;
+  POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
+  POCL_UPDATE_EVENT_RUNNING(event, command_queue);
 
   /* TODO: offset computation doesn't work in case the ptr is not 
      a direct pointer */
@@ -114,7 +114,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
                     buffer_row_pitch, buffer_slice_pitch,
                     host_row_pitch, host_slice_pitch);
 
-  POCL_UPDATE_EVENT_COMPLETE;
+  POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
 
   POname(clReleaseMemObject) (buffer);
 

@@ -138,7 +138,7 @@ CL_API_SUFFIX__VERSION_1_0
                          tuned_origin, map_origin, tuned_region, 
                          image->image_row_pitch, image->image_slice_pitch, 
                          image->image_row_pitch, image->image_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
     }
   else
     {
@@ -157,7 +157,7 @@ CL_API_SUFFIX__VERSION_1_0
       cmd->command.map_image.rowpitch = image->image_row_pitch;
       cmd->command.map_image.slicepitch = image->image_slice_pitch;
       LL_APPEND(command_queue->root, cmd);
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
   *image_row_pitch = image->image_row_pitch;
   if (image_slice_pitch)

@@ -74,17 +74,16 @@ CL_API_SUFFIX__VERSION_1_0
       if (status != CL_SUCCESS)
         return status;
 
-      POCL_UPDATE_EVENT_QUEUED;
-      POname(clRetainCommandQueue) (command_queue);
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
   
   if (blocking_read)
     {
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
+      POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
+      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
       status = pocl_read_image(image, command_queue->device, origin, region,
                                host_row_pitch, host_slice_pitch, ptr);
-      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
       if (event != NULL)
         POname(clReleaseCommandQueue) (command_queue);
       return status;

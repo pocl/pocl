@@ -230,7 +230,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                                  CL_COMMAND_NDRANGE_KERNEL);
       if (error != CL_SUCCESS)
         return error;
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
   error = pocl_create_command (&command_node, command_queue,
