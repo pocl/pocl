@@ -155,6 +155,9 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
+
+  if(!strcmp(device->llvm_cpu, "(unknown)"))
+    device->llvm_cpu = NULL;
 }
 
 void

@@ -483,9 +483,17 @@ createWorkgroup(Module &M, Function *F)
      * as is to the function, no need to load form it first. */
     Value *value;
     if (ii->hasByValAttr()) {
+#if defined(LLVM_3_2) || defined(LLVM_3_3)
         value = builder.CreateBitCast(pointer, t);
+#else
+        value = builder.CreatePointerCast(pointer, t);
+#endif
     } else {
+#if defined(LLVM_3_2) || defined(LLVM_3_3)
         value = builder.CreateBitCast(pointer, t->getPointerTo());
+#else
+        value = builder.CreatePointerCast(pointer, t->getPointerTo());
+#endif
         value = builder.CreateLoad(value);
     }
 
@@ -543,7 +551,11 @@ createWorkgroupFast(Module &M, Function *F)
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         /* Assume the pointer is directly in the arg array. */
+#if defined(LLVM_3_2) || defined(LLVM_3_3)
         arguments.push_back(builder.CreateBitCast(pointer, t));
+#else
+        arguments.push_back(builder.CreatePointerCast(pointer, t));
+#endif
         continue;
       }
 

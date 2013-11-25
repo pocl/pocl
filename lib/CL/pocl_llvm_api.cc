@@ -32,6 +32,7 @@
 #include "llvm/Linker.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
 #ifdef LLVM_3_2
 #include "llvm/Function.h"
@@ -52,8 +53,10 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
 
@@ -65,6 +68,7 @@
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
+#include "pocl_runtime_config.h"
 #include "install-paths.h"
 #include "LLVMUtils.h"
 
@@ -80,15 +84,15 @@ using llvm::sys::fs::F_Binary;
 
 //#define DEBUG_POCL_LLVM_API
 
-//#define INCLUDE_UNFINISHED
-
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
  * (the "program.bc") file.
  * unlike the script, a intermediate preprocessed 
  * program.bc.i file is not produced.
  */
-int call_pocl_build(cl_device_id device, 
+int call_pocl_build(cl_program program, 
+                    cl_device_id device, 
+                    int device_i,     
                     const char* source_file_name,
                     const char* binary_file_name,
                     const char* device_tmpdir,
@@ -119,19 +123,24 @@ int call_pocl_build(cl_device_id device,
   if (device->init_build != NULL) 
     {
       assert (device_tmpdir != NULL);
-      const char *device_switches = 
+      char *device_switches = 
         device->init_build (device->data, device_tmpdir);
       if (device_switches != NULL) 
         {
           ss << device_switches << " ";
         }
-      free ((void*)device_switches);
+      free (device_switches);
     }
 
-  // Ensure no optimizations are done to not mess up the
-  // barrier semantics etc.
-  ss << "-O0 ";
+  // This can cause illegal optimizations when unaware
+  // of the barrier semantics. -O2 is the default opt level in
+  // Clang for OpenCL C and seems to affect the performance
+  // of the end result, even if we optimize the final WG
+  // func. TODO: There should be 'noduplicate' etc. flags in 
+  // the 'barrier' function to prevent them.
+  // ss << "-O2 ";
 
+  ss << "-x cl ";
   // Remove the inline keywords to force the user functions
   // to be included in the program. Otherwise they will
   // be removed and not inlined due to -O0.
@@ -139,7 +148,10 @@ int call_pocl_build(cl_device_id device,
   // The current directory is a standard search path.
   ss << "-I. ";
 
-  ss << "-fno-builtin ";
+   /* With fp-contract we get calls to fma with processors which do not
+      have fma instructions. These ruin the performance. Better to have
+      the mul+add separated in the IR. */
+  ss << "-fno-builtin -ffp-contract=off ";
 
   // This is required otherwise the initialization fails with
   // unknown triplet ''
@@ -188,6 +200,10 @@ int call_pocl_build(cl_device_id device,
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
   
+  // LLVM 3.3 and older do not set that char is signed which is
+  // defined by the OpenCL C specs (but not by C specs).
+  la->CharIsSigned = true;
+
   // the per-file types don't seem to override this 
   la->OpenCLVersion = 120;
   la->FakeAddressSpaceMap = true;
@@ -203,7 +219,7 @@ int call_pocl_build(cl_device_id device,
   po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
 
   std::string kernelh;
-  if (getenv("POCL_BUILDING") != NULL)
+  if (pocl_get_bool_option("POCL_BUILDING", 0))
     { 
       kernelh  = SRCDIR;
       kernelh += "/include/_kernel.h";
@@ -240,19 +256,35 @@ int call_pocl_build(cl_device_id device,
   fe.OutputFile = std::string(binary_file_name);
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
-  cg.EmitOpenCLArgMetadata = 1;
+  cg.EmitOpenCLArgMetadata = true;
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
 
+  bool success = true;
+  clang::CodeGenAction *action = NULL;
   // TODO: switch to EmitLLVMOnlyAction, when intermediate file is not needed
-  // Do not give the global context to EmitBCAction as that leads to the
-  // image types clashing and a running number appended to them whenever a
-  // new module with the opaque type is reloaded.
-  CodeGenAction *action = new clang::EmitBCAction();
-  bool success = CI.ExecuteAction(*action);
-  return success ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
+  // Dump the intermediate bitcode for the program to disk only if needed.
+  if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0)) 
+    action = new clang::EmitBCAction();
+  else
+    action = new clang::EmitLLVMOnlyAction();
+
+  success |= CI.ExecuteAction(*action);
+
+  if (!success) return CL_BUILD_PROGRAM_FAILURE;
+
+  llvm::Module **mod = (llvm::Module **)&program->llvm_irs[device_i];
+  if (*mod != NULL)
+    delete (llvm::Module*)*mod;
+  *mod = action->takeModule();
+
+  // FIXME: cannot delete action as it contains something the llvm::Module
+  // refers to. We should create it globally, at compiler initialization time.
+  //delete action;
+
+  return CL_SUCCESS;
 }
 
 /* Retrieve metadata of the given kernel in the program to populate the
@@ -264,12 +296,12 @@ int call_pocl_kernel(cl_program program,
                      const char* kernel_name,
                      const char* device_tmpdir, 
                      char* descriptor_filename,
-                     int *errcode)
+                     int */*errcode*/)
 {
 
   int error, i;
   unsigned n;
-  llvm::Module *input;
+  llvm::Module *input = NULL;
   SMDiagnostic Err;
   FILE *binary_file;
   char binary_filename[POCL_FILENAME_LENGTH];
@@ -278,55 +310,71 @@ int call_pocl_kernel(cl_program program,
   assert(program->devices[device_i]->llvm_target_triplet && 
          "Device has no target triple set"); 
 
+  LLVMContext *context = NULL;
+
+  if (program->llvm_irs != NULL) 
+    {
+      input = (llvm::Module*)program->llvm_irs[device_i];
+#ifdef DEBUG_POCL_LLVM_API
+      printf("### use a saved llvm::Module\n");
+#endif
+      context = &input->getContext();
+    }
+
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
-  mkdir (tmpdir, S_IRWXU);
+  mkdir(tmpdir, S_IRWXU);
 
-  error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
-                   "%s/kernel.bc",
-                   tmpdir);
   error |= snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
-                   "%s/%s/descriptor.so", device_tmpdir, kernel_name);
+                    "%s/%s/descriptor.so", device_tmpdir, kernel_name);
 
-  binary_file = fopen(binary_filename, "w+");
-  if (binary_file == NULL)
-    return (CL_OUT_OF_HOST_MEMORY);
-
-  // TODO: dump the .bc only if we are using the kernel compiler
-  // cache (POCL_LEAVE_TEMP_DIRS). Otherwise store a Module*
-  // at clBuildProgram and reuse it here.
-  n = fwrite(program->binaries[device_i], 1,
-             program->binary_sizes[device_i], binary_file);
-  if (n < program->binary_sizes[device_i])
-    return (CL_OUT_OF_HOST_MEMORY);
-  fclose(binary_file); 
-
-  // Create own temporary context so we do not get duplicate image and sampler
-  // opaque types to the context. They will get running numbers and
-  // the name does not match anymore. 
-  LLVMContext context;
-  input = ParseIRFile(binary_filename, Err, context);
-  if(!input) 
+  if (input == NULL)
     {
-      // TODO:
-      raw_os_ostream os(std::cout);
-      Err.print("pocl error: bad kernel file ", os);
-      os.flush();
-      exit(1);
+      // Reuse the held llvm::Module object, if available. No
+      // need to write the program to disk first.
+      error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
+                       "%s/kernel.bc",
+                       tmpdir);
+
+      binary_file = fopen(binary_filename, "w+");
+      if (binary_file == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+
+      n = fwrite(program->binaries[device_i], 1,
+                 program->binary_sizes[device_i], binary_file);
+      if (n < program->binary_sizes[device_i])
+        return CL_OUT_OF_HOST_MEMORY;
+      fclose(binary_file); 
+
+      context = new LLVMContext;
+      input = ParseIRFile(binary_filename, Err, *context);
+      if (!input) 
+        {
+          // TODO:
+          raw_os_ostream os(std::cout);
+          Err.print("pocl error: bad kernel file ", os);
+          os.flush();
+          exit(1);
+        }
     }
-  
-  PassManager Passes;
+
+
+#ifdef DEBUG_POCL_LLVM_API        
+  printf("### fetching kernel metadata for kernel %s program %x input llvm::Module %x\n",
+         kernel_name, program, input);
+#endif
+
+  llvm::Function *kernel_function = input->getFunction(kernel_name);
+  assert(kernel_function && "TODO: make better check here");
+
   DataLayout *TD = 0;
   const std::string &ModuleDataLayout = input->getDataLayout();
   if (!ModuleDataLayout.empty())
     TD = new DataLayout(ModuleDataLayout);
 
-  llvm::Function *kernel_function = input->getFunction(kernel_name);
-  assert(kernel_function && "TODO: make better check here");
-
   const llvm::Function::ArgumentListType &arglist = 
       kernel_function->getArgumentList();
-  kernel->num_args=arglist.size();
+  kernel->num_args = arglist.size();
 
   // This is from GenerateHeader.cc
   SmallVector<GlobalVariable *, 8> locals;
@@ -373,9 +421,8 @@ int call_pocl_kernel(cl_program program,
   kernel->arg_is_local = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
   kernel->arg_is_image = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
   kernel->arg_is_sampler = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
-  
-  // This is from GenerateHeader.cc
-  i=0;
+
+  i = 0;
   for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
                                           ee = arglist.end(); 
        ii != ee ; ii++)
@@ -493,182 +540,497 @@ int call_pocl_kernel(cl_program program,
   
 }
 
+/* helpers copied from LLVM opt START */
+
+static llvm::TargetOptions GetTargetOptions() {
+  llvm::TargetOptions Options;
+  /* TODO: propagate these from clBuildProgram options. */
+#if 0
+  Options.LessPreciseFPMADOption = EnableFPMAD;
+  Options.NoFramePointerElim = DisableFPElim;
+  Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
+  Options.AllowFPOpFusion = FuseFPOps;
+  Options.UnsafeFPMath = EnableUnsafeFPMath;
+  Options.NoInfsFPMath = EnableNoInfsFPMath;
+  Options.NoNaNsFPMath = EnableNoNaNsFPMath;
+  Options.HonorSignDependentRoundingFPMathOption =
+  EnableHonorSignDependentRoundingFPMath;
+  Options.UseSoftFloat = GenerateSoftFloatCalls;
+  if (FloatABIForCalls != FloatABI::Default)
+    Options.FloatABIType = FloatABIForCalls;
+  Options.NoZerosInBSS = DontPlaceZerosInBSS;
+  Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
+  Options.DisableTailCalls = DisableTailCalls;
+  Options.StackAlignmentOverride = OverrideStackAlignment;
+  Options.RealignStack = EnableRealignStack;
+  Options.TrapFuncName = TrapFuncName;
+  Options.PositionIndependentExecutable = EnablePIE;
+  Options.EnableSegmentedStacks = SegmentedStacks;
+  Options.UseInitArray = UseInitArray;
+  Options.SSPBufferSize = SSPBufferSize;
+#endif
+  return Options;
+}
+
+// Returns the TargetMachine instance or zero if no triple is provided.
+static TargetMachine* GetTargetMachine
+(Triple TheTriple, 
+ std::string MCPU,
+ const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
+
+  std::string Error;
+  const Target *TheTarget = 
+    TargetRegistry::lookupTarget("" /*MArch*/, TheTriple,
+                                 Error);
+  // Some modules don't specify a triple, and this is okay.
+  if (!TheTarget) {
+    return 0;
+  }
+
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MAttrs.size()) {
+    SubtargetFeatures Features;
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
+
+  return TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                        MCPU, FeaturesStr, GetTargetOptions(),
+                                        Reloc::Default, CodeModel::Default,
+                                        CodeGenOpt::Aggressive);
+}
+
+/* helpers copied from LLVM opt END */
+
+/* The kernel compiler passes are at the moment not thread safe,
+   ensure only one thread is using it at the time with a mutex. */
+static pocl_lock_t kernel_compiler_lock = POCL_LOCK_INITIALIZER;
+
+/**
+ * Prepare the kernel compiler passes.
+ *
+ * The passes are created only once per program run per device.
+ * The returned pass manager should not be modified, only the Module
+ * should be optimized using it.
+ */
+static PassManager& kernel_compiler_passes
+(cl_device_id device, std::string module_data_layout)
+{
+  static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
+
+  if (kernel_compiler_passes.find(device) != 
+      kernel_compiler_passes.end())
+    {
+      return *kernel_compiler_passes[device];
+    }
+
+  Triple triple(device->llvm_target_triplet);
+#ifndef LLVM_3_2
+  StringMap<llvm::cl::Option*> opts;
+  llvm::cl::getRegisteredOptions(opts);
+#endif
+  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+
+  const bool first_initialization_call = kernel_compiler_passes.size() == 0;
+
+  if (first_initialization_call) 
+    {
+      // We have not initialized any pass managers for any device yet.
+      // Run the global LLVM pass initialization functions.
+      InitializeAllTargets();
+      InitializeAllTargetMCs();
+
+      // TODO: do this globally, and just once per program
+      initializeCore(Registry);
+      initializeScalarOpts(Registry);
+      initializeVectorization(Registry);
+      initializeIPO(Registry);
+      initializeAnalysis(Registry);
+      initializeIPA(Registry);
+      initializeTransformUtils(Registry);
+      initializeInstCombine(Registry);
+      initializeInstrumentation(Registry);
+      initializeTarget(Registry);
+
+#ifndef LLVM_3_2
+      llvm::cl::Option *O = opts["add-wi-metadata"];
+      O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
+#endif
+
+    }
+
+  PassManager *Passes = new PassManager();
+
+  // Need to setup the target info for target specific passes. */
+  TargetMachine *Machine = 
+    GetTargetMachine(triple, device->llvm_cpu ? device->llvm_cpu : "");
+  // Add internal analysis passes from the target machine.
+#ifndef LLVM_3_2
+  Machine->addAnalysisPasses(*Passes);
+#endif
+
+  if (module_data_layout != "")
+    Passes->add(new DataLayout(module_data_layout));
+ 
+
+  /* The kernel compiler passes to run, in order.
+
+     Notes about the kernel compiler phase ordering:
+     -mem2reg first because we get unoptimized output from Clang where all
+     variables are allocas. Avoid context saving the allocas and make the
+     more readable by calling -mem2reg at the beginning.
+
+     -implicit-cond-barriers after -implicit-loop-barriers because the latter can inject
+     barriers to loops inside conditional regions after which the peeling should be 
+     avoided by injecting the implicit conditional barriers
+
+     -loop-barriers, -barriertails, and -barriers should be ran after the implicit barrier 
+     injection passes so they "normalize" the implicit barriers also
+
+     -phistoallocas before -workitemloops as otherwise it cannot inject context
+     restore code (PHIs need to be at the beginning of the BB and so one cannot
+     context restore them with non-PHI code if the value is needed in another PHI). */
+
+  std::vector<std::string> passes;
+  passes.push_back("mem2reg");
+  passes.push_back("domtree");
+  passes.push_back("workitem-handler-chooser");
+  passes.push_back("break-constgeps");
+  passes.push_back("automatic-locals");
+  passes.push_back("flatten");
+  passes.push_back("always-inline");
+  passes.push_back("globaldce");
+  passes.push_back("simplifycfg");
+  passes.push_back("loop-simplify");
+  passes.push_back("phistoallocas");
+  passes.push_back("isolate-regions");
+  passes.push_back("uniformity");
+  passes.push_back("implicit-loop-barriers");
+  passes.push_back("implicit-cond-barriers");
+  passes.push_back("loop-barriers");
+  passes.push_back("barriertails");
+  passes.push_back("barriers");
+  passes.push_back("isolate-regions");
+  passes.push_back("wi-aa");
+  passes.push_back("workitemrepl");
+  passes.push_back("workitemloops");
+  passes.push_back("allocastoentry");
+  passes.push_back("workgroup");
+  passes.push_back("target-address-spaces");
+
+  /* This is a beginning of the handling of the fine-tuning parameters.
+   * TODO: POCL_KERNEL_COMPILER_OPT_SWITCH
+   * TODO: POCL_VECTORIZE_WORK_GROUPS
+   * TODO: POCL_VECTORIZE_VECTOR_WIDTH
+   * TODO: POCl_VECTORIZE_NO_FP
+   */
+  const std::string wg_method = 
+    pocl_get_string_option("POCL_WORK_GROUP_METHOD", "auto");
+
+  const bool wi_vectorizer = 
+    pocl_get_bool_option("POCL_VECTORIZE_WORK_GROUPS", 0);
+
+
+#ifndef LLVM_3_2
+  if (wg_method == "loopvec")
+    {
+      if (kernel_compiler_passes.size() == 0) {
+        // Set the options only once. TODO: fix it so that each
+        // device can reset their own options. Now one cannot compile
+        // with different options to different devices at one run.
+   
+        llvm::cl::Option *O = opts["vectorizer-min-trip-count"];
+        assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+        O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
+
+        O = opts["scalarize-load-store"];
+        assert(O && "could not find LLVM option 'scalarize-load-store'");
+        O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef(""), false); 
+
+        O = opts["enable-scalarizer"];
+        assert(O && "could not find LLVM option 'enable-scalarizer'");
+        O->addOccurrence(1, StringRef("enable-scalarizer"), StringRef(""), false); 
+
+#ifdef DEBUG_POCL_LLVM_API        
+        printf ("### autovectorizer enabled\n");
+
+        O = opts["debug-only"];
+        assert(O && "could not find LLVM option 'debug'");
+        O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
+
+#endif
+      }
+
+      passes.push_back("scalarizer");
+      passes.push_back("mem2reg");
+      passes.push_back("loop-vectorize");
+      passes.push_back("slp-vectorizer");
+    } 
+  else if (wi_vectorizer) 
+    {
+      /* The legacy repl based WI autovectorizer. Deprecated but 
+         for still needed by some legacy TTA machines. */
+      passes.push_back("STANDARD_OPTS");
+      passes.push_back("wi-vectorize");
+      llvm::cl::Option *O;
+      if (pocl_is_option_set("POCL_VECTORIZE_VECTOR_WIDTH") && 
+          first_initialization_call) 
+        {
+          /* The options cannot be unset, it seems, so we must set them 
+             only once, globally. TODO: check further if there is some way to
+             unset the options so we can control them per kernel compilation. */
+          O = opts["wi-vectorize-vector-width"];
+          assert(O && "could not find LLVM option 'wi-vectorize-vector-width'");
+          O->addOccurrence(1, StringRef("wi-vectorize-vector-width"), 
+                           pocl_get_string_option("POCL_VECTORIZE_VECTOR_WIDTH", "0"), false); 
+
+        }
+
+      if (pocl_get_bool_option("POCL_VECTORIZE_NO_FP", 0) && 
+          first_initialization_call) 
+        {
+          O = opts["wi-vectorize-no-fp"];
+          assert(O && "could not find LLVM option 'wi-vectorize-no-fp'");
+          O->addOccurrence(1, StringRef("wi-vectorize-no-fp"), StringRef(""), false); 
+        }
+
+      if (pocl_get_bool_option("POCL_VECTORIZE_MEM_ONLY", 0) && 
+          first_initialization_call) 
+        {
+          O = opts["wi-vectorize-mem-ops-only"];
+          assert(O && "could not find LLVM option 'wi-vectorize-mem-ops-only'");
+          O->addOccurrence(1, StringRef("wi-vectorize-mem-ops-only"), StringRef(""), false); 
+        }
+
+    }
+#endif
+
+  passes.push_back("STANDARD_OPTS");
+  passes.push_back("instcombine");
+   
+  // Now actually add the listed passes to the PassManager.
+  for(unsigned i = 0; i < passes.size(); ++i)
+    {
+    
+      // This is (more or less) -O3
+      if (passes[i] == "STANDARD_OPTS")
+        {
+          PassManagerBuilder Builder;
+          Builder.OptLevel = 3;
+          Builder.SizeLevel = 0;
+#if defined(LLVM_3_2) || defined(LLVM_3_3)
+          // SimplifyLibCalls has been removed in LLVM 3.4.
+          Builder.DisableSimplifyLibCalls = true;
+#endif
+          Builder.populateModulePassManager(*Passes);
+     
+          continue;
+        }
+
+      const PassInfo *PIs = Registry.getPassInfo(StringRef(passes[i]));
+      if(PIs)
+        {
+          //std::cout << "-"<<passes[i] << " ";
+          Pass *thispass = PIs->createPass();
+          Passes->add(thispass);
+        }
+      else
+        {
+          std::cerr << "Failed to create kernel compiler pass " << passes[i] << std::endl;
+          POCL_ABORT("FAIL");
+        }
+    }
+  kernel_compiler_passes[device] = Passes;
+  return *Passes;
+}
+
 /* kludge - this is the kernel dimensions command-line parameter to the workitem loop */
 namespace pocl {
 extern llvm::cl::list<int> LocalSize;
 } 
 
-#ifdef INCLUDE_UNFINISHED
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
- * runs pocl's LLVM passes on that module.
- * Output is a LLVM bitcode file.
+ * runs pocl's kernel compiler passes on that module to produce 
+ * a function that executes all work-items in a work-group.
+ *
+ * Output is a LLVM bitcode file. 
+ *
+ * TODO: rename these functions for something more descriptive.
+ * TODO: this is not thread-safe, it changes the LLVM global options to
+ * control the compilation. We should enforce only one compilations is done
+ * at a time or control the options through thread safe methods.
  */
-int call_pocl_workgroup( char* function_name, 
-                    size_t local_x, size_t local_y, size_t local_z,
-                    const char* llvm_target_triplet, 
-                    const char* parallel_filename,
-                    const char* kernel_filename )
+int call_pocl_workgroup(cl_device_id device,
+                        cl_kernel kernel,
+                        size_t local_x, size_t local_y, size_t local_z,
+                        const char* parallel_filename,
+                        const char* kernel_filename)
 {
 
-  LLVMContext &Context = getGlobalContext();
+#ifdef DEBUG_POCL_LLVM_API        
+  printf("### calling the kernel compiler for kernel %s local_x %u local_y %u local_z %u parallel_filename: %s\n",
+         kernel->name, local_x, local_y, local_z, parallel_filename);
+#endif
+
+  Triple triple(device->llvm_target_triplet);
+
+  // TODO sync with Nat Ferrus' indexed linking
+  std::string kernellib;
+  if (pocl_get_bool_option("POCL_BUILDING", 0))
+    {
+      kernellib = BUILDDIR;
+      kernellib += "/lib/kernel/";
+      // TODO: get this from the target triplet: TCE, cellspu
+      if (triple.getArch() == Triple::tce) 
+        {
+          kernellib += "tce";
+        }
+#ifdef LLVM_3_2 
+      else if (triple.getArch() == Triple::cellspu) 
+        {
+          kernellib += "cellspu";
+        }
+#endif
+      else 
+        {
+          kernellib += "host";
+        }
+      kernellib += "/kernel-"; 
+      kernellib += device->llvm_target_triplet;
+      kernellib +=".bc";   
+    }
+  else
+    {
+      // TODO: vefify this is the correct place!
+      kernellib = PKGDATADIR;
+      kernellib += KERNEL_DIR;
+      kernellib += "/kernel-";
+      kernellib += device->llvm_target_triplet;
+      kernellib += ".bc";
+    }
+
+  LLVMContext *Context = NULL;
   SMDiagnostic Err;
   std::string errmsg;
-  StringMap<llvm::cl::Option*> opts;
-  llvm::cl::getRegisteredOptions(opts);
 
-  // TODO: do this globally, and just once per program
-  PassRegistry &Registry = *PassRegistry::getPassRegistry();
-  initializeCore(Registry);
-  initializeScalarOpts(Registry);
-  initializeVectorization(Registry);
-  initializeIPO(Registry);
-  initializeAnalysis(Registry);
-  initializeIPA(Registry);
-  initializeTransformUtils(Registry);
-  initializeInstCombine(Registry);
-  initializeInstrumentation(Registry);
-  initializeTarget(Registry);
+  // Link the kernel and runtime library
+  llvm::Module *input = NULL;
+  if (kernel->program->llvm_irs != NULL) 
+    {
+      input = 
+        llvm::CloneModule
+        ((llvm::Module*)kernel->program->llvm_irs[device->dev_id]);
+      Context = &input->getContext();
+    }
+  else
+    {
+      Context = new LLVMContext;
+      input = ParseIRFile(kernel_filename, Err, *Context);
+    }
 
-  // FIXME: this too should be done only once!
+  // OPTIMIZE: the built-in libs should be loaded only once per device.
+  // Later this should be replaced with indexed linking of source code
+  // and/or bitcode for each kernel.
+  llvm::Module *libmodule = ParseIRFile(kernellib, Err, *Context);
+  assert (libmodule != NULL);
+#ifdef LLVM_3_2
+  Linker TheLinker("pocl", input);
+  TheLinker.LinkInModule(libmodule, &errmsg);
+#else
+  Linker TheLinker(input);
+  TheLinker.linkInModule(libmodule, &errmsg);
+#endif
+  llvm::Module *linked_bc = TheLinker.getModule();
+
+  assert (linked_bc != NULL);
+
+  /* Now finally run the set of passes assembled above */
+  std::string ErrorInfo;
+  tool_output_file *Out = new tool_output_file(parallel_filename, 
+                                               ErrorInfo, 
+                                               F_Binary);
+
+  POCL_LOCK(kernel_compiler_lock);
+
+  // TODO pass these as parameters instead, this is not thread safe!
+  pocl::LocalSize.clear();
   pocl::LocalSize.addValue(local_x);
   pocl::LocalSize.addValue(local_y);
   pocl::LocalSize.addValue(local_z);
 
+  kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
+  POCL_UNLOCK(kernel_compiler_lock);
 
-  //TODO sync with Nat Ferrus' improved linking
-  std::string kernellib;
-  if (getenv("POCL_BUILDING") != NULL)
-  {
-    kernellib =BUILDDIR;
-    kernellib+="/lib/kernel/kernel-";
-    kernellib+=OCL_KERNEL_TARGET;
-    kernellib+=".bc";   
-  }
-  else
-  {
-    // TODO: vefify this is the correct place!
-    kernellib = PKGDATADIR;
-    kernellib+="/pocl/";
-    kernellib+=KERNEL_DIR;
-    kernellib+="/kernel-";
-    kernellib+=OCL_KERNEL_TARGET;
-    kernellib+=".bc";
-  }
+  WriteBitcodeToFile(linked_bc, Out->os()); 
 
-  // Link the kernel and runtime library
-  llvm::Module *input = ParseIRFile(kernel_filename, Err, Context);
-  llvm::Module *libmodule = ParseIRFile(kernellib, Err, Context);
-  Linker TheLinker( input );
-  TheLinker.linkInModule( libmodule, &errmsg );
-  llvm::Module *linked_bc = TheLinker.getModule();
-
-  /* Start assembling the LLVM passes to run */
-  PassManager Passes;
-  DataLayout*TD = 0;
-  const std::string &ModuleDataLayout = linked_bc->getDataLayout();
-  if (!ModuleDataLayout.empty()) {
-    TD = new DataLayout(ModuleDataLayout);
-    Passes.add(TD);
-  }
-  else
-  {
-    // FIXME: panic more sublty
-    assert( false );
-  }
-
-  /* The passes to run, in order */
-  const char *passes[] = {"domtree", 
-                          "workitem-handler-chooser",
-                          "break-constgeps",
-                          "automatic-locals",
-                          "flatten", 
-                          "always-inline",
-                          "globaldce",
-                          "simplifycfg",
-                          "loop-simplify",
-                          "phistoallocas",
-                          "isolate-regions",
-                          "uniformity",
-                          "implicit-loop-barriers",
-                          "loop-barriers", 
-                          "barriertails",
-                          "barriers",
-                          "isolate-regions",
-                          "wi-aa",
-                          "workitemrepl", 
-                          "workitemloops",
-                          "allocastoentry",
-                          "workgroup",
-                          "target-address-spaces",
-                          "STANDARD_OPTS",
-                          "instcombine"}; 
-
-  // Now add the above passes 
-  for( unsigned i=0; i < sizeof(passes)/sizeof(const char*); i++ )
-  {
-    
-    // This is (more or less) -O3
-    if (strcmp("STANDARD_OPTS", passes[i])==0)
-    {
-      PassManagerBuilder Builder;
-      Builder.OptLevel = 3;
-      Builder.SizeLevel = 0;
-      #if defined LLVM_3_2 or defined LLVM_3_3
-      Builder.DisableSimplifyLibCalls=true;
-      #endif
-      Builder.populateModulePassManager( Passes );
-      
-      continue;
-    }
-
-    const PassInfo *PIs = Registry.getPassInfo(StringRef(passes[i]));
-    if(PIs)
-    {
-      //std::cout << "-"<<passes[i] << " ";
-      Pass *thispass = PIs->createPass();
-      Passes.add(thispass);
-    }
-    else
-    {
-      // TODO: fail more gracefully.
-      assert(false && "failed to create LLVM pass");
-    }
-  }
-
-  llvm::cl::Option *O = opts["add-wi-metadata"];
-  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
-
-  /* This is a beginning of the handling of the fine-tuning parameters.
-   * Lots more needed...
-   */
-  std::string loopvec="";
-  if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
-  {
-    loopvec = getenv("POCL_WORK_GROUP_METHOD");
-  }
-  if (loopvec == "loopvec")
-  {
-    llvm::cl::Option *O = opts["vectorize-loops"];
-    assert(O && "could not find LLVM option 'vectorize-loops'");
-    O->addOccurrence(1, StringRef("vectorize-loops"), StringRef(""), false); 
-    
-    O = opts["vectorizer-min-trip-count"];
-    assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
-    O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("1"), false); 
-  } 
-
-  /* Now finally run the set of passes assembled above */
-  std::string ErrorInfo;
-  tool_output_file *Out = new tool_output_file( parallel_filename, 
-                                                ErrorInfo, 
-                                                F_Binary);;
-  Passes.add(createBitcodeWriterPass(Out->os()));
-  Passes.run(*linked_bc);
+  //  input->dump();
+  // linked_bc->dump();
 
   Out->keep();
   delete Out;
+#ifndef LLVM_3_2
+  // In LLVM 3.2 the Linker object deletes the associated Modules.
+  // If we delete here, it will crash.
+  /* OPTIMIZE: store the fully linked work-group function llvm::Module 
+     and pass it to code generation without writing to disk. */
+  delete linked_bc;
+#endif
 
   return 0;
 }
+
+void pocl_llvm_update_binaries (cl_program program) {
+  // Dump the LLVM IR Modules to memory buffers. 
+  assert (program->llvm_irs != NULL);
+#ifdef DEBUG_POCL_LLVM_API        
+  printf("### refreshing the binaries of the program %x\n", program);
 #endif
+
+   for (size_t i = 0; i < program->num_devices; ++i)
+    {
+      assert (program->llvm_irs[i] != NULL);
+
+      std::string binary_filename =
+        std::string(program->temp_dir) + "/" + 
+        program->devices[i]->short_name + "/" +
+        POCL_PROGRAM_BC_FILENAME;
+
+      std::string ErrorInfo;
+      tool_output_file *Out = new tool_output_file
+        (binary_filename.c_str(), 
+         ErrorInfo, 
+         F_Binary);
+
+      WriteBitcodeToFile((const llvm::Module*)program->llvm_irs[i], Out->os()); 
+      Out->keep();
+      delete Out;
+
+      FILE *binary_file = fopen(binary_filename.c_str(), "r");
+      if (binary_file == NULL)        
+        POCL_ABORT("Failed opening the binary file.");
+
+      fseek(binary_file, 0, SEEK_END);
+      
+      program->binary_sizes[i] = ftell(binary_file);
+      fseek(binary_file, 0, SEEK_SET);
+
+      unsigned char *binary = (unsigned char *) malloc(program->binary_sizes[i]);
+      if (binary == NULL)
+        POCL_ABORT("Failed allocating memory for the binary.");
+
+      int n = fread(binary, 1, program->binary_sizes[i], binary_file);
+      if (n < program->binary_sizes[i])
+        POCL_ABORT("Failed reading the binary from disk to memory.");
+      program->binaries[i] = binary;
+
+      fclose (binary_file);
+
+#ifdef DEBUG_POCL_LLVM_API        
+      printf("### binary for device %d was of size %u\n", i, program->binary_sizes[i]);
+#endif
+
+    }
+}

@@ -33,7 +33,7 @@
 
 static char
 kernelSourceCode[] =
-"void echo(int input, global int *output)\n"
+"kernel void echo(int input, global int *output)\n"
 "{\n"
 "  output[input] = input + 1;\n"
 "}\n";

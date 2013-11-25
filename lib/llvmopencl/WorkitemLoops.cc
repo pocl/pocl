@@ -146,6 +146,8 @@ WorkitemLoops::runOnFunction(Function &F)
   changed |= chopBBs(F, *this);
   F.viewCFG();
 #endif
+  contextArrays.clear();
+  tempInstructionIds.clear();
 
   return changed;
 }
@@ -679,6 +681,7 @@ WorkitemLoops::AddContextRestore
  bool isAlloca)
 {
   assert (val != NULL);
+  assert (alloca != NULL);
   IRBuilder<> builder(alloca);
   if (before != NULL) 
     {

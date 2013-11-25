@@ -27,12 +27,16 @@
 #include <map>
 #include <string>
 
+#include "config.h"
+
 #ifdef LLVM_3_2
 #include <llvm/Module.h>
 #include <llvm/Metadata.h>
+#include <llvm/DerivedTypes.h>
 #else
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Metadata.h>
+#include <llvm/IR/DerivedTypes.h>
 #endif
 
 namespace llvm {

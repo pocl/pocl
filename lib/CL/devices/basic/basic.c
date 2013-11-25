@@ -201,6 +201,9 @@ pocl_basic_init (cl_device_id device, const char* parameters)
      basic devices can be still used for task level parallelism 
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
+
+  if(!strcmp(device->llvm_cpu, "(unknown)"))
+    device->llvm_cpu = NULL;
 }
 
 void *

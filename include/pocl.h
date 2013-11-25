@@ -35,7 +35,7 @@
 
 #include <CL/opencl.h>
 
-#include <pocl_device.h>
+#include "pocl_device.h"
 
 /*
  * During pocl kernel compiler transformations we use the fixed address 

@@ -124,7 +124,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_util.c pocl_util.h \
                    pocl_image_util.c pocl_image_util.h \
                    pocl_icd.h \
-                   pocl_intfn.h
+                   pocl_intfn.h \
+				   pocl_runtime_config.c
 
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
@@ -161,7 +162,7 @@ AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -fno-rtti
 
 libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/
 libpocl_la_LIBADD += libpoclllvm.la
-#libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
+libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
 libpocl_la_LIBADD += -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization
 libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangARCMigrate -lclangStaticAnalyzerCore

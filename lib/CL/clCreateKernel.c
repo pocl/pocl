@@ -79,8 +79,8 @@ POname(clCreateKernel)(cl_program program,
          be OK by the standard. */
       if (access (device_tmpdir, F_OK) != 0) continue;
  
-      error = call_pocl_kernel( program, kernel, device_i, kernel_name, 
-                                device_tmpdir, descriptor_filename, &errcode );
+      error = call_pocl_kernel (program, kernel, device_i, kernel_name, 
+                                device_tmpdir, descriptor_filename, &errcode);
 
       if (error)
         {
@@ -88,7 +88,7 @@ POname(clCreateKernel)(cl_program program,
         } 
 
       /* when using the API, there is no descriptor file */
-      #ifndef USE_LLVM_API
+#ifndef USE_LLVM_API
       if (dlhandle == NULL)
         {
           if (access (descriptor_filename, R_OK) != 0)
@@ -104,10 +104,10 @@ POname(clCreateKernel)(cl_program program,
               goto ERROR_CLEAN_KERNEL;
             }
         }
-      #endif 
+#endif 
     }
 
-  #ifndef USE_LLVM_API
+#ifndef USE_LLVM_API
   kernel->num_args = *(cl_uint *) lt_dlsym(dlhandle, "_num_args");
   kernel->reqd_wg_size = (int*)lt_dlsym(dlhandle, "_reqd_wg_size");
   kernel->dlhandle = dlhandle; /* Store this, as the above is a pointer
@@ -136,11 +136,12 @@ POname(clCreateKernel)(cl_program program,
       kernel->dyn_arguments[kernel->num_args + i].size =
         ((unsigned *) lt_dlsym(dlhandle, "_local_sizes"))[i];
     }
-  #endif
+#endif
 
   /* TODO: one of these two could be eliminated?  */
   kernel->function_name = strdup(kernel_name);
   kernel->name = strdup(kernel_name);
+
   kernel->context = program->context;
   kernel->program = program;
   kernel->next = NULL;

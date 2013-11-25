@@ -54,12 +54,33 @@
 #  undef MAX
 
 
+
+// NOTE: Here and below we convert between an address-space qualified
+// pointer and a regular pointer. To avoid internal errors in LLVM, we
+// need to transform this via an intermediate int, since LLVM refuses
+// to cast between different address spaces.
+
+// On CPUs, we use -ffake-address-space-map to artifically introduce
+// address spaces. They do not exist in the hardware. Thus, the
+// bitwise casting between different address spaces is correct.
+
+// On other devices this may not be correct. To handle this case
+// correctly, LLVM would need to provide atomic builtins for different
+// address spaces. These do not exist yet, so bitwise casting is our
+// best hope anyway.
+
+
+
 // xchg is also supported for float as a special case
 __attribute__((overloadable))
 float atomic_xchg(volatile Q float *p, float val)
 {
   // NOTE: We compare the float as int here...
-  return __atomic_exchange_n((volatile int*)p, val, __ATOMIC_RELAXED);
+  union { volatile Q float *p; intptr_t i; } u1;
+  union { intptr_t i; volatile int *p; } u2;
+  u1.p = p;
+  u2.i = u1.i;
+  return __atomic_exchange_n(u2.p, val, __ATOMIC_RELAXED);
 }
 
 #else
@@ -72,7 +93,7 @@ float atomic_xchg(volatile Q float *p, float val)
 __attribute__((overloadable))
 T atomic_add(volatile Q T *p, T val)
 {
-  return __sync_fetch_and_add((volatile T*)p, val, __ATOMIC_RELAXED);
+  return __sync_fetch_and_add(p, val, __ATOMIC_RELAXED);
 }
 
 // read, subtract, store
@@ -86,7 +107,11 @@ T atomic_sub(volatile Q T *p, T val)
 __attribute__((overloadable))
 T atomic_xchg(volatile Q T *p, T val)
 {
-  return __atomic_exchange_n(p, val, __ATOMIC_RELAXED);
+  union { volatile Q T *p; intptr_t i; } u1;
+  union { intptr_t i; volatile T *p; } u2;
+  u1.p = p;
+  u2.i = u1.i;
+  return __atomic_exchange_n(u2.p, val, __ATOMIC_RELAXED);
 }
 
 // read, increment, store
@@ -107,7 +132,11 @@ T atomic_dec(volatile Q T *p)
 __attribute__((overloadable))
 T atomic_cmpxchg(volatile Q T *p, T cmp, T val)
 {
-  __atomic_compare_exchange_n(p, &cmp, val, false,
+  union { volatile Q T *p; intptr_t i; } u1;
+  union { intptr_t i; volatile T *p; } u2;
+  u1.p = p;
+  u2.i = u1.i;
+  __atomic_compare_exchange_n(u2.p, &cmp, val, false,
                               __ATOMIC_RELAXED, __ATOMIC_RELAXED);
   return cmp;
 }
@@ -117,13 +146,21 @@ T atomic_cmpxchg(volatile Q T *p, T cmp, T val)
 __attribute__((overloadable))
 T atomic_min(volatile Q T *p, T val)
 {
-  return MIN((volatile T*)p, val);
+  union { volatile Q T *p; intptr_t i; } u1;
+  union { intptr_t i; volatile T *p; } u2;
+  u1.p = p;
+  u2.i = u1.i;
+  return MIN(u2.p, val);
 }
 
 __attribute__((overloadable))
 T atomic_max(volatile Q T *p, T val)
 {
-  return MAX((volatile T*)p, val);
+  union { volatile Q T *p; intptr_t i; } u1;
+  union { intptr_t i; volatile T *p; } u2;
+  u1.p = p;
+  u2.i = u1.i;
+  return MAX(u2.p, val);
 }
 
 __attribute__((overloadable))
