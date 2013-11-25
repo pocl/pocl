@@ -30,11 +30,13 @@ extern "C" {
 #endif
 
 // compile kernel source to bitcode
-int call_pocl_build( cl_device_id device, 
-                     const char* source_file_name,
-                     const char* binary_filename,
-                     const char* device_tmpdir,
-                     const char* user_options );
+int call_pocl_build(cl_program program,
+                    cl_device_id device,
+                    int device_i,     
+                    const char* source_file_name,
+                    const char* binary_filename,
+                    const char* device_tmpdir,
+                    const char* user_options );
 
 
 // create wrapper code for compiling a LLVM IR 
@@ -51,10 +53,15 @@ int call_pocl_kernel(cl_program program,
  * and produce the 'paralellized' kernel file.
  */
 int call_pocl_workgroup(cl_device_id device,
-                        char* function_name, 
+                        cl_kernel kernel,
                         size_t local_x, size_t local_y, size_t local_z,
                         const char* parallel_filename,
                         const char* kernel_filename );
+
+/**
+ * Refresh the on binary representation of the program, update the
+ * data in the program object. */
+void pocl_llvm_update_binaries (cl_program program);
 
 #ifdef __cplusplus
 

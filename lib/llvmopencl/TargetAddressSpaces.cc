@@ -1,4 +1,5 @@
-// Header for TargetAddressSpaces
+// TargetAddressSpaces.cc - map the fixed "logical" address-space ids to
+//                          the target-specific ones, if needed
 // 
 // Copyright (c) 2013 Pekka Jääskeläinen / TUT
 // 
@@ -49,7 +50,7 @@ namespace {
   static
   RegisterPass<pocl::TargetAddressSpaces> X
   ("target-address-spaces", 
-   "Convert the 'fake' address space ids to the target specific ones.");
+   "Convert the logical address space ids to the target specific ones.");
 }
 
 char TargetAddressSpaces::ID = 0;

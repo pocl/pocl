@@ -37,11 +37,13 @@
 
 #if !defined(USE_LLVM_API) || USE_LLVM_API != 1
 
-int call_pocl_build( cl_device_id device, 
-                     const char* source_file_name,
-                     const char* binary_file_name,
-                     const char* device_tmpdir,
-                     const char* user_options )
+int call_pocl_build(cl_program program,
+                    cl_device_id device, 
+                    int device_i,     
+                    const char* source_file_name,
+                    const char* binary_file_name,
+                    const char* device_tmpdir,
+                    const char* user_options)
 {
   int error;
   const char *pocl_build_script;
@@ -181,10 +183,10 @@ int call_pocl_kernel(cl_program program,
 /* The WG generation does not yet work through the API. 
    Always call the script version for now. */
 
-int call_pocl_workgroup(cl_device_id device, char* function_name, 
+int call_pocl_workgroup(cl_device_id device, cl_kernel kernel,
                     size_t local_x, size_t local_y, size_t local_z,
                     const char* parallel_filename,
-                    const char* kernel_filename )
+                    const char* kernel_filename)
 {
   int error;
   char *pocl_wg_script;
@@ -203,7 +205,7 @@ int call_pocl_workgroup(cl_device_id device, char* function_name,
             (command, COMMAND_LENGTH,
              "%s -k %s -x %zu -y %zu -z %zu -t %s -o %s %s",
              pocl_wg_script,
-             function_name,
+             kernel->function_name,
              local_x, local_y, local_z,
              device->llvm_target_triplet,
              parallel_filename, kernel_filename);
@@ -214,7 +216,7 @@ int call_pocl_workgroup(cl_device_id device, char* function_name,
             (command, COMMAND_LENGTH,
              "%s -k %s -x %zu -y %zu -z %zu -o %s %s",
              pocl_wg_script,
-             function_name,
+             kernel->function_name,
              local_x, local_y, local_z,
              parallel_filename, kernel_filename);
         }
@@ -227,6 +229,13 @@ int call_pocl_workgroup(cl_device_id device, char* function_name,
         return CL_OUT_OF_RESOURCES;
 
       return 0;
+}
+
+
+void pocl_llvm_update_binaries (cl_program program) {
+    /* Nothing needs to be done in the scripts version as
+       the binaries are updated to disk always and their
+       data updated to the program object in clBuildProgram. */
 }
 
 #endif

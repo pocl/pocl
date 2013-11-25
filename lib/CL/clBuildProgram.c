@@ -189,10 +189,16 @@ CL_API_SUFFIX__VERSION_1_0
       snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/", program->temp_dir);
       mkdir (tmpdir, S_IRWXU);
 
+      /* FIXME: these might have allocated already. The user might want to
+         build the program with different compiler options and calls this
+         repeatedly for the same source. In that case there will be a memory
+         leak at the moment. */
       if (((program->binary_sizes =
-           (size_t *) malloc (sizeof (size_t) * real_num_devices)) == NULL) 
-              || (program->binaries = 
-           (unsigned char**) calloc( real_num_devices, sizeof (unsigned char*))) == NULL)
+            (size_t *) malloc (sizeof (size_t) * real_num_devices)) == NULL) || 
+          ((program->binaries = 
+            (unsigned char**) calloc (real_num_devices, sizeof (unsigned char*))) == NULL) ||
+          ((program->llvm_irs = 
+            (void**) calloc (real_num_devices, sizeof (void*))) == NULL)) 
       {
         errcode = CL_OUT_OF_HOST_MEMORY;
         goto ERROR_CLEAN_BINARIES;
@@ -219,7 +225,6 @@ CL_API_SUFFIX__VERSION_1_0
         goto ERROR_CLEAN_BINARIES;
       }
 
-
       /* Build the fully linked non-parallel bitcode for all
          devices. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
@@ -234,9 +239,9 @@ CL_API_SUFFIX__VERSION_1_0
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          error = call_pocl_build( device, source_file_name,
-                                   binary_file_name, device_tmpdir,
-                                   user_options );     
+          error = call_pocl_build(program, device, device_i, source_file_name,
+                                  binary_file_name, device_tmpdir,
+                                  user_options);     
 
           if (error != 0)
           {
@@ -244,33 +249,40 @@ CL_API_SUFFIX__VERSION_1_0
             goto ERROR_CLEAN_BINARIES;
           }
 
-          binary_file = fopen(binary_file_name, "r");
-          if (binary_file == NULL)
-          {
-            errcode = CL_OUT_OF_HOST_MEMORY;
-            goto ERROR_CLEAN_BINARIES;
-          }
-
-          fseek(binary_file, 0, SEEK_END);
-
-          program->binary_sizes[device_i] = ftell(binary_file);
-          fseek(binary_file, 0, SEEK_SET);
-
-          binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
-          if (binary == NULL)
-          {
-              errcode = CL_OUT_OF_HOST_MEMORY;
-              goto ERROR_CLEAN_BINARIES;
-          }
-
-          n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
-          if (n < program->binary_sizes[device_i])
+          /* In case we cached the llvm::Module, we might not have
+             dumped the bitcode yet. FIXME: always assume this and
+             fix this in the binary query API. */
+          if (program->llvm_irs[device->dev_id] == NULL)
             {
-                errcode = CL_OUT_OF_HOST_MEMORY;
-                goto ERROR_CLEAN_BINARIES;
+              binary_file = fopen(binary_file_name, "r");
+              if (binary_file == NULL)
+                {
+                  errcode = CL_OUT_OF_HOST_MEMORY;
+                  goto ERROR_CLEAN_BINARIES;
+                }
+
+              fseek(binary_file, 0, SEEK_END);
+              
+              program->binary_sizes[device_i] = ftell(binary_file);
+              fseek(binary_file, 0, SEEK_SET);
+
+              binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
+              if (binary == NULL)
+                {
+                  errcode = CL_OUT_OF_HOST_MEMORY;
+                  goto ERROR_CLEAN_BINARIES;
+                }
+
+              n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
+              if (n < program->binary_sizes[device_i])
+                {
+                  errcode = CL_OUT_OF_HOST_MEMORY;
+                  goto ERROR_CLEAN_BINARIES;
+                }
+              program->binaries[device_i] = binary;
             }
-          program->binaries[device_i] = binary;
         }
+        
     }
   else
     {

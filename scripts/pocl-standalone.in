@@ -85,21 +85,22 @@ mkdir ${tempdir}
 kernel_bc="${tempdir}/kernel.bc"
 
 # BEGIN REMOVE ONCE INSTALLED
+pocl_kernel_compiler_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
 @CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
-@OPT@ ${LLC_FLAGS} -load=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
+@OPT@ ${LLC_FLAGS} -load=$pocl_kernel_compiler_lib -generate-header -disable-output -header=${header} ${kernel_bc}
 if false ; then
 # END REMOVE ONCE INSTALLED
+pocl_kernel_compiler_lib=@pkglibdir@/llvmopencl.so
 @CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
-@OPT@ ${LLC_FLAGS} -load=@pkglibdir@/llvmopencl.so -generate-header -disable-output -header=${header} ${kernel_bc}
+@OPT@ ${LLC_FLAGS} -load=$pocl_kernel_compiler_lib -generate-header -disable-output -header=${header} ${kernel_bc}
 # BEGIN REMOVE ONCE INSTALLED
 fi
 # END REMOVE ONCE INSTALLED
 
 linked_bc="${tempdir}/linked.bc"
 linked_out="${linked_bc}.out"
-pocl_lib="@pkglibdir@/llvmopencl.so"
 full_target_dir="@pkgdatadir@"
 # BEGIN REMOVE ONCE INSTALLED
 # Fixing full_target_dir until the script is installed
@@ -138,11 +139,12 @@ fi
 # the code it wants to convert e.g. to a memset or a memcpy
 
 @OPT@ ${LLC_FLAGS} \
-    -load=${pocl_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls ${OPT_SWITCH} \
-    ${EXTRA_OPTS} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
+    -load=${pocl_kernel_compiler_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
+    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
+    -allocastoentry -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls \
+    -target-address-spaces \
+    ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
 
 
 rm -fr ${tempdir}

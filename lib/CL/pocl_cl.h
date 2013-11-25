@@ -444,6 +444,8 @@ struct _cl_program {
   char *temp_dir;
   /* implementation */
   cl_kernel kernels;
+  /* Used to store the llvm IR of the build to save disk I/O. */
+  void **llvm_irs;
 };
 
 struct _cl_kernel {
