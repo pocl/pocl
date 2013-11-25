@@ -171,7 +171,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL,Piglit])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -179,6 +179,7 @@ enable_testsuite_viennacl=no
 enable_testsuite_rodinia=no
 enable_testsuite_parboil=no
 enable_testsuite_amd=no
+enable_testsuite_amdsdk2_9=no
 enable_testsuite_vexcl=no
 enable_testsuite_piglit=no
 if test x"$enable_testsuites" = xcheck ; then
@@ -199,6 +200,9 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64.tgz" ; then
     enable_testsuite_amd=yes
   fi
+  if test -f "$srcdir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64.tgz" ; then
+     enable_testsuite_amdsdk2_9=yes
+  fi
   if test -f "$srcdir/examples/VexCL/vexcl/README.md" ; then
     enable_testsuite_vexcl=yes
   fi
@@ -207,7 +211,7 @@ if test x"$enable_testsuites" = xcheck ; then
   fi  
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL,piglit"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -229,6 +233,7 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,AMD,*|*,amd,*], [
     enable_testsuite_amd=yes
+    enable_testsuite_amdsdk2_9=yes
   ])
 AS_CASE([,"$enable_testsuites",],
   [*,VexCL,*|*,vexcl,*], [
@@ -282,6 +287,18 @@ if test "$enable_testsuite_amd" = "yes" ; then
     ])
 fi
 
+if test "$enable_testsuite_amdsdk2_9" = "yes" ; then
+   # Check for software and sources for AMD APP SDK
+  if ! test -f "$srcdir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64.tgz"; then
+    AC_MSG_WARN([disabling AMD APP SDK testsuite as the 2.9 lnx64 package not in '$srcdir/examples/AMDSDK2.9'.])
+    enable_testsuite_amdsdk2_9=no
+  fi
+  PKG_CHECK_MODULES([SDL], [sdl >= 1.2], [:], 
+    [ AC_MSG_WARN([pkg-config could not find libSDL, AMD APP SDK 2.9 testsuite is not used ]) 
+      enable_testsuite_amdsdk2_9=no
+    ])
+fi
+
 if test "$enable_testsuite_vexcl" = "yes" ; then
   # Check for software and sources for VexCL
   if ! test -f "$srcdir/examples/VexCL/vexcl/README.md"; then
@@ -317,6 +334,7 @@ AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "enable_testsuite_amdsdk2_9" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 
@@ -352,6 +370,12 @@ if test "$enable_testsuite_amd" = "yes"; then
   POAT_TESTSUITES="$POAT_TESTSUITES amd"
 else
   AC_MSG_NOTICE([tests from AMD APP SDK are disabled])
+fi
+if test "$enable_testsuite_amdsdk2_9" = "yes"; then
+  AC_MSG_NOTICE([tests from AMD APP SDK 2.9 are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES amdsdk2_9"
+else
+  AC_MSG_NOTICE([tests from AMD APP SDK 2.9 are disabled])
 fi
 if test "$enable_testsuite_vexcl" = "yes"; then
   AC_MSG_NOTICE([tests from VexCL are enabled])
@@ -1201,6 +1225,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Parboil/Makefile
                  examples/ViennaCL/Makefile
                  examples/AMD/Makefile
+                 examples/AMDSDK2.9/Makefile
                  examples/EinsteinToolkit/Makefile
                  examples/VexCL/Makefile
                  examples/piglit/Makefile
