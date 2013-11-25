@@ -101,7 +101,6 @@ fi
 
 linked_bc="${tempdir}/linked.bc"
 linked_out="${linked_bc}.out"
-pocl_lib="@pkglibdir@/llvmopencl.so"
 full_target_dir="@pkgdatadir@"
 # BEGIN REMOVE ONCE INSTALLED
 # Fixing full_target_dir until the script is installed
@@ -141,10 +140,11 @@ fi
 
 @OPT@ ${LLC_FLAGS} \
     -load=${pocl_kernel_compiler_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -loop-barriers \
-    -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls ${OPT_SWITCH} \
-    ${EXTRA_OPTS} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
+    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
+    -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
+    -allocastoentry -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls \
+    -target-address-spaces \
+    ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
 
 
 rm -fr ${tempdir}

@@ -820,7 +820,10 @@ static PassManager& kernel_compiler_passes
           PassManagerBuilder Builder;
           Builder.OptLevel = 3;
           Builder.SizeLevel = 0;
+#if defined(LLVM_3_2) || defined(LLVM_3_3)
+          // SimplifyLibCalls has been removed in LLVM 3.4.
           Builder.DisableSimplifyLibCalls = true;
+#endif
           Builder.populateModulePassManager(*Passes);
      
           continue;
