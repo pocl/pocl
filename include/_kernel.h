@@ -2035,8 +2035,9 @@ int printf(const char* restrict fmt, ...);
 // we implement it in C using a const format string (i.e. a format
 // string living in a different address space). This works only if all
 // address spaces are actually the same, e.g. on CPUs.
-int _cl_printf(constant char* restrict format, ...)
-     __attribute__((format(printf, 1, 2)));
+// Note: We cannot use __attribute__((format(printf, 1, 2))), since
+// Clang doesn't support the OpenCL C format specifiers yet.
+int _cl_printf(constant char* restrict format, ...);
 #define printf _cl_printf
 
 #endif
