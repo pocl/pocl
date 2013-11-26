@@ -2023,8 +2023,10 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
 // If Clang is too old, we just wrap the libc printf
 // Note: These older versions of Clang do not put string literals into
 // the "constant" address space, so we have to use "const" here.
-int printf(const char* restrict fmt, ...)
-     __attribute__((format(printf, 1, 2)));
+// Note: We cannot use __attribute__((format(printf, 1, 2))), since
+// this is confused about the difference between C long and OpenCL C
+// long.
+int printf(const char* restrict fmt, ...);
 
 #else
 
