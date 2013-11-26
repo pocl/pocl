@@ -8,7 +8,7 @@ using namespace std;
 #include "vecmathlib.h"
 using namespace vecmathlib;
 
-typedef double_vec realvec_t;
+typedef float64_vec realvec_t;
 typedef realvec_t::real_t real_t;
 typedef realvec_t::intvec_t intvec_t;
 typedef intvec_t::int_t int_t;

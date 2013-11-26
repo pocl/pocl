@@ -11,8 +11,10 @@
 #include <cmath>
 #include <climits>
 #include <cstdlib>
+#ifndef VML_NO_IOSTREAM
+#  include <sstream>
+#endif
 #include <string>
-#include <sstream>
 
 
 
@@ -364,18 +366,26 @@ namespace vecmathlib {
     {
       intvec_t res;
 #if defined __clang__ || defined __gcc__
-      if (sizeof(int_t) == sizeof(long long)) {
-        for (int d=0; d<size; ++d) res.v[d] = __builtin_clzll(v[d]);
-      } else if (sizeof(int_t) == sizeof(long)) {
-        for (int d=0; d<size; ++d) res.v[d] = __builtin_clzl(v[d]);
-      } else if (sizeof(int_t) == sizeof(int)) {
-        for (int d=0; d<size; ++d) res.v[d] = __builtin_clz(v[d]);
-      } else if (sizeof(int_t) <= sizeof(short)) {
-        for (int d=0; d<size; ++d)
-          res.v[d] =
-            CHAR_BIT * (sizeof(short) - sizeof(int_t)) + __builtin_clzs(v[d]);
-      } else {
-        __builtin_unreachable();
+      for (int d=0; d<size; ++d) {
+        if (v[d] == 0) {
+          res.v[d] = CHAR_BIT * sizeof v[d];
+        } else {
+          if (sizeof v[d] == sizeof(long long)) {
+            res.v[d] = __builtin_clzll(v[d]);
+          } else if (sizeof v[d] == sizeof(long)) {
+            res.v[d] = __builtin_clzl(v[d]);
+          } else if (sizeof v[d] == sizeof(int)) {
+            res.v[d] = __builtin_clz(v[d]);
+          } else if (sizeof v[d] == sizeof(short)) {
+            res.v[d] = __builtin_clzs(v[d]);
+          } else if (sizeof v[d] == sizeof(char)) {
+            res.v[d] =
+              __builtin_clzs((unsigned short)(unsigned char)v[d]) -
+              CHAR_BIT * (sizeof(short) - sizeof(char));
+          } else {
+            __builtin_unreachable();
+          }
+        }
       }
 #else
       res = MF::vml_clz(*this);
@@ -483,6 +493,7 @@ namespace vecmathlib {
     typedef real_t vector_t[size];
     static int const alignment = sizeof(real_t);
     
+#ifndef VML_NO_IOSTREAM
     static char const* name()
     {
       static std::string name_;
@@ -493,6 +504,7 @@ namespace vecmathlib {
       }
       return name_.c_str();
     }
+#endif
     void barrier()
     {
 #if defined __GNUC__ && !defined __clang__ && !defined __ICC
@@ -887,6 +899,22 @@ namespace vecmathlib {
     realvec_t log10() const { return map(vml_std::log10); }
     realvec_t log1p() const { return map(vml_std::log1p); }
     realvec_t log2() const { return map(vml_std::log2); }
+    intvec_t lrint() const
+    {
+      realvec_t res;
+      if (sizeof(int_t) <= sizeof(long)) {
+        for (int d=0; d<size; ++d) res.v[d] = vml_std::lrint(v[d]);
+      } else if (sizeof(int_t) <= sizeof(long long)) {
+        for (int d=0; d<size; ++d) res.v[d] = vml_std::llrint(v[d]);
+      } else {
+        __builtin_unreachable();
+      }
+      return res;
+    }
+    realvec_t mad(realvec_t y, realvec_t z) const
+    {
+      return MF::vml_mad(*this, y, z);
+    }
     realvec_t nextafter(realvec_t y) const
     {
       return map(vml_std::nextafter, y);
@@ -1503,6 +1531,20 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
+  inline intpseudovec<real_t, size> lrint(realpseudovec<real_t, size> x)
+  {
+    return x.lrint();
+  }
+  
+  template<typename real_t, int size>
+  inline realpseudovec<real_t, size> mad(realpseudovec<real_t, size> x,
+                                         realpseudovec<real_t, size> y,
+                                         realpseudovec<real_t, size> z)
+  {
+    return x.mad(y, z);
+  }
+  
+  template<typename real_t, int size>
   inline realpseudovec<real_t, size> nextafter(realpseudovec<real_t, size> x,
                                                realpseudovec<real_t, size> y)
   {
@@ -1591,6 +1633,7 @@ namespace vecmathlib {
   
   
   
+#ifndef VML_NO_IOSTREAM
   template<typename real_t, int size>
   std::ostream& operator<<(std::ostream& os,
                            boolpseudovec<real_t, size> const& x)
@@ -1629,6 +1672,7 @@ namespace vecmathlib {
     os << "]";
     return os;
   }
+#endif
   
 } // namespace vecmathlib
 

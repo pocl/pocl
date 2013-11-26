@@ -12,12 +12,6 @@
 namespace vecmathlib {
   
   template<typename realvec_t>
-  realvec_t mathfuncs<realvec_t>::vml_acosh(realvec_t x)
-  {
-    return log(x + sqrt(x*x - RV(1.0)));
-  }
-  
-  template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_asinh(realvec_t x)
   {
     // Reduce range
@@ -25,6 +19,12 @@ namespace vecmathlib {
     r = log(r + sqrt(r*r + RV(1.0)));
     r = copysign(r, x);
     return r;
+  }
+  
+  template<typename realvec_t>
+  realvec_t mathfuncs<realvec_t>::vml_acosh(realvec_t x)
+  {
+    return log(x + sqrt(x*x - RV(1.0)));
   }
   
   template<typename realvec_t>

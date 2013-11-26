@@ -212,6 +212,12 @@ namespace vecmathlib {
 #if __SIZEOF_LONG_DOUBLE__
   inline long double builtin_ldexp(long double x, int y) { return __builtin_ldexpl(x, y); }
 #endif
+  
+  inline long long builtin_llrint(float x) { return __builtin_llrintf(x); }
+  inline long long builtin_llrint(double x) { return __builtin_llrint(x); }
+#if __SIZEOF_LONG_DOUBLE__
+  inline long long builtin_llrint(long double x) { return __builtin_llrintl(x); }
+#endif
 
   inline float builtin_log(float x) { return __builtin_logf(x); }
   inline double builtin_log(double x) { return __builtin_log(x); }
@@ -235,6 +241,12 @@ namespace vecmathlib {
   inline double builtin_log2(double x) { return __builtin_log2(x); }
 #if __SIZEOF_LONG_DOUBLE__
   inline long double builtin_log2(long double x) { return __builtin_log2l(x); }
+#endif
+  
+  inline long builtin_lrint(float x) { return __builtin_lrintf(x); }
+  inline long builtin_lrint(double x) { return __builtin_lrint(x); }
+#if __SIZEOF_LONG_DOUBLE__
+  inline long builtin_lrint(long double x) { return __builtin_lrintl(x); }
 #endif
   
   inline float builtin_nextafter(float x, float y) { return __builtin_nextafterf(x, y); }

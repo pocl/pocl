@@ -12,88 +12,223 @@
 namespace vecmathlib {
   
   template<typename realvec_t>
-  realvec_t mathfuncs<realvec_t>::vml_sin(realvec_t x)
+  realvec_t mathfuncs<realvec_t>::vml_sin(realvec_t d)
   {
-    // Rescale input
-    x *= RV(1.0/(2.0*M_PI));
+    // Algorithm taken from SLEEF 2.80
     
-    // Reduce range: sin(x) = sin(x + 2pi)
-    x -= rint(x);
-    VML_ASSERT(all(x >= RV(-0.5) && x <= RV(+0.5)));
-    
-    // Reduce range: sin(x) = -sin(-x)
-    realvec_t sign = x;
-    x = fabs(x);
-    VML_ASSERT(all(x >= RV(0.0) && x <= RV(0.5)));
-    
-    // Reduce range: sin(x) = sin(pi - x)
-    x = fmin(x, RV(0.5)-x);
-    VML_ASSERT(all(x >= RV(0.0) && x <= RV(0.25)));
-    
-    // Polynomial expansion
-    realvec_t x2 = x*x;
-    realvec_t r;
+    real_t PI4_A, PI4_B, PI4_C, PI4_D;
     switch (sizeof(real_t)) {
-    case 4:
-#ifdef VML_HAVE_FP_CONTRACT
-      // float, error=9.87410297844129295403342670375e-9
-      r = RV(+39.6528001753697560443995227219);
-      r = fma(r, x2, RV(-76.56466773344087533597673461));
-      r = fma(r, x2, RV(+81.601631640211881069182778798));
-      r = fma(r, x2, RV(-41.3416646547590947908779056914));
-      r = fma(r, x2, RV(+6.2831851989440238363581945604));
-#else
-      // float, error=1.58016215200483927797284866108e-6, 
-      r = RV(-71.315978441592194407247888986);
-      r = fma(r, x2, RV(+81.371978532544677342208302432));
-      r = fma(r, x2, RV(-41.3379839486638336886792146778));
-      r = fma(r, x2, RV(+6.2831695125493457846550448487));
-#endif
+    default: __builtin_unreachable();
+    case sizeof(float):
+      PI4_A = 0.78515625f;
+      PI4_B = 0.00024187564849853515625f;
+      PI4_C = 3.7747668102383613586e-08f;
+      PI4_D = 1.2816720341285448015e-12f;
       break;
-    case 8:
-#ifdef VML_HAVE_FP_CONTRACT
-      // double, error=6.23674794993677351325343779135e-19
-      r = RV(+0.100807907479216992437490038615);
-      r = fma(r, x2, RV(-0.71770901464828231655437134119));
-      r = fma(r, x2, RV(+3.81992525864144427125360186953));
-      r = fma(r, x2, RV(-15.0946415041050550042911122547));
-      r = fma(r, x2, RV(+42.0586939194912275451623859862));
-      r = fma(r, x2, RV(-76.705859752708750470270935774));
-      r = fma(r, x2, RV(+81.605249276072410674251626791));
-      r = fma(r, x2, RV(-41.3417022403997512576544306479));
-      r = fma(r, x2, RV(+6.2831853071795864680224671155));
-#else
-      // double, error=1.35052419895760612440936163371e-13
-      r = RV(+3.66062453812577851620993390211);
-      r = fma(r, x2, RV(-15.0803528951943294831983114707));
-      r = fma(r, x2, RV(+42.0580411171712349980374012262));
-      r = fma(r, x2, RV(-76.705843817504942181869384713));
-      r = fma(r, x2, RV(+81.605249077126372940457689074));
-      r = fma(r, x2, RV(-41.3417022393099629778945111838));
-      r = fma(r, x2, RV(+6.2831853071778704147024863797));
-#endif
+    case sizeof(double):
+      PI4_A = 0.78539816290140151978;
+      PI4_B = 4.9604678871439933374e-10;
+      PI4_C = 1.1258708853173288931e-18;
+      PI4_D = 1.7607799325916000908e-27;
       break;
-    default:
-      __builtin_unreachable();
     }
-    r *= x;
     
-    // Undo range reduction
-    r = copysign(r, sign);
+    realvec_t q = rint(d * RV(M_1_PI));
+    intvec_t iq = convert_int(q);
     
-    return r;
-  }
-
-  template<typename realvec_t>
-  realvec_t mathfuncs<realvec_t>::vml_cos(realvec_t x)
-  {
-    return vml_sin(x + RV(M_PI_2));
+#ifdef VML_HAVE_FP_CONTRACT
+    d = mad(q, RV(-PI4_A*4), d);
+    d = mad(q, RV(-PI4_B*4), d);
+    d = mad(q, RV(-PI4_C*4), d);
+    d = mad(q, RV(-PI4_D*4), d);
+#else
+    d = mad(q, RV(-M_PI), d);
+#endif
+    
+    realvec_t s = d * d;
+    
+    d = ifthen(convert_bool(iq & IV(I(1))), -d, d);
+    
+    realvec_t u;
+    switch (sizeof(real_t)) {
+    default: __builtin_unreachable();
+    case sizeof(float):
+      u = RV(2.6083159809786593541503e-06f);
+      u = mad(u, s, RV(-0.0001981069071916863322258f));
+      u = mad(u, s, RV(0.00833307858556509017944336f));
+      u = mad(u, s, RV(-0.166666597127914428710938f));
+      break;
+    case sizeof(double):
+      u = RV(-7.97255955009037868891952e-18);
+      u = mad(u, s, RV(2.81009972710863200091251e-15));
+      u = mad(u, s, RV(-7.64712219118158833288484e-13));
+      u = mad(u, s, RV(1.60590430605664501629054e-10));
+      u = mad(u, s, RV(-2.50521083763502045810755e-08));
+      u = mad(u, s, RV(2.75573192239198747630416e-06));
+      u = mad(u, s, RV(-0.000198412698412696162806809));
+      u = mad(u, s, RV(0.00833333333333332974823815));
+      u = mad(u, s, RV(-0.166666666666666657414808));
+      break;
+    }
+    
+    u = mad(s, u * d, d);
+    
+    const real_t nan = std::numeric_limits<real_t>::quiet_NaN();
+    u = ifthen(isinf(d), RV(nan), u);
+    
+    return u;
   }
   
+  
+  
   template<typename realvec_t>
-  realvec_t mathfuncs<realvec_t>::vml_tan(realvec_t x)
+  realvec_t mathfuncs<realvec_t>::vml_cos(realvec_t d)
   {
-    return sin(x) / cos(x);
+    // Algorithm taken from SLEEF 2.80
+    
+    real_t PI4_A, PI4_B, PI4_C, PI4_D;
+    switch (sizeof(real_t)) {
+    default: __builtin_unreachable();
+    case sizeof(float):
+      PI4_A = 0.78515625f;
+      PI4_B = 0.00024187564849853515625f;
+      PI4_C = 3.7747668102383613586e-08f;
+      PI4_D = 1.2816720341285448015e-12f;
+      break;
+    case sizeof(double):
+      PI4_A = 0.78539816290140151978;
+      PI4_B = 4.9604678871439933374e-10;
+      PI4_C = 1.1258708853173288931e-18;
+      PI4_D = 1.7607799325916000908e-27;
+      break;
+    }
+    
+    realvec_t q = mad(RV(2.0), rint(mad(d, RV(M_1_PI), RV(-0.5))), RV(1.0));
+    intvec_t iq = convert_int(q);
+    
+#ifdef VML_HAVE_FP_CONTRACT
+    d = mad(q, RV(-PI4_A*2), d);
+    d = mad(q, RV(-PI4_B*2), d);
+    d = mad(q, RV(-PI4_C*2), d);
+    d = mad(q, RV(-PI4_D*2), d);
+#else
+    d = mad(q, RV(-M_PI_2), d);
+#endif
+    
+    realvec_t s = d * d;
+    
+    d = ifthen(convert_bool(iq & IV(I(2))), d, -d);
+    
+    realvec_t u;
+    switch (sizeof(real_t)) {
+    default: __builtin_unreachable();
+    case sizeof(float):
+      u = RV(2.6083159809786593541503e-06f);
+      u = mad(u, s, RV(-0.0001981069071916863322258f));
+      u = mad(u, s, RV(0.00833307858556509017944336f));
+      u = mad(u, s, RV(-0.166666597127914428710938f));
+      break;
+    case sizeof(double):
+      u = RV(-7.97255955009037868891952e-18);
+      u = mad(u, s, RV(2.81009972710863200091251e-15));
+      u = mad(u, s, RV(-7.64712219118158833288484e-13));
+      u = mad(u, s, RV(1.60590430605664501629054e-10));
+      u = mad(u, s, RV(-2.50521083763502045810755e-08));
+      u = mad(u, s, RV(2.75573192239198747630416e-06));
+      u = mad(u, s, RV(-0.000198412698412696162806809));
+      u = mad(u, s, RV(0.00833333333333332974823815));
+      u = mad(u, s, RV(-0.166666666666666657414808));
+      break;
+    }
+    
+    u = mad(s, u * d, d);
+    
+    const real_t nan = std::numeric_limits<real_t>::quiet_NaN();
+    u = ifthen(isinf(d), RV(nan), u);
+    
+    return u;
+  }
+  
+  
+  
+  template<typename realvec_t>
+  realvec_t mathfuncs<realvec_t>::vml_tan(realvec_t d)
+  {
+    // Algorithm taken from SLEEF 2.80
+    
+    real_t PI4_A, PI4_B, PI4_C, PI4_D;
+    switch (sizeof(real_t)) {
+    default: __builtin_unreachable();
+    case sizeof(float):
+      PI4_A = 0.78515625f;
+      PI4_B = 0.00024187564849853515625f;
+      PI4_C = 3.7747668102383613586e-08f;
+      PI4_D = 1.2816720341285448015e-12f;
+      break;
+    case sizeof(double):
+      PI4_A = 0.78539816290140151978;
+      PI4_B = 4.9604678871439933374e-10;
+      PI4_C = 1.1258708853173288931e-18;
+      PI4_D = 1.7607799325916000908e-27;
+      break;
+    }
+    
+    realvec_t q = rint(d * RV(2 * M_1_PI));
+    intvec_t iq = convert_int(q);
+    
+    realvec_t x = d;
+    
+#ifdef VML_HAVE_FP_CONTRACT
+    x = mad(q, RV(-PI4_A*2), x);
+    x = mad(q, RV(-PI4_B*2), x);
+    x = mad(q, RV(-PI4_C*2), x);
+    x = mad(q, RV(-PI4_D*2), x);
+#else
+    x = mad(q, RV(-M_PI_2), x);
+#endif
+    
+    realvec_t s = x * x;
+    
+    x = ifthen(convert_bool(iq & IV(I(1))), -x, x);
+    
+    realvec_t u;
+    switch (sizeof(real_t)) {
+    default: __builtin_unreachable();
+    case sizeof(float):
+      u = RV(0.00927245803177356719970703f);
+      u = mad(u, s, RV(0.00331984995864331722259521f));
+      u = mad(u, s, RV(0.0242998078465461730957031f));
+      u = mad(u, s, RV(0.0534495301544666290283203f));
+      u = mad(u, s, RV(0.133383005857467651367188f));
+      u = mad(u, s, RV(0.333331853151321411132812f));
+      break;
+    case sizeof(double):
+      u = RV(1.01419718511083373224408e-05);
+      u = mad(u, s, RV(-2.59519791585924697698614e-05));
+      u = mad(u, s, RV(5.23388081915899855325186e-05));
+      u = mad(u, s, RV(-3.05033014433946488225616e-05));
+      u = mad(u, s, RV(7.14707504084242744267497e-05));
+      u = mad(u, s, RV(8.09674518280159187045078e-05));
+      u = mad(u, s, RV(0.000244884931879331847054404));
+      u = mad(u, s, RV(0.000588505168743587154904506));
+      u = mad(u, s, RV(0.00145612788922812427978848));
+      u = mad(u, s, RV(0.00359208743836906619142924));
+      u = mad(u, s, RV(0.00886323944362401618113356));
+      u = mad(u, s, RV(0.0218694882853846389592078));
+      u = mad(u, s, RV(0.0539682539781298417636002));
+      u = mad(u, s, RV(0.133333333333125941821962));
+      u = mad(u, s, RV(0.333333333333334980164153));
+      break;
+    }
+    
+    u = mad(s, u * x, x);
+    
+    u = ifthen(convert_bool(iq & IV(I(1))), rcp(u), u);
+    
+    const real_t nan = std::numeric_limits<real_t>::quiet_NaN();
+    u = ifthen(isinf(d), RV(nan), u);
+    
+    return u;
   }
   
 }; // namespace vecmathlib

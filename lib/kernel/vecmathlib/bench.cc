@@ -298,45 +298,45 @@ template<template<typename> class func_t>
 void bench_func()
 {
   cout << "\n"
-       << "Benchmarking " << func_t<float_vec>().name() << ":\n";
+       << "Benchmarking " << func_t<float32_vec>().name() << ":\n";
   
-//   bench_type_func<realpseudovec<float,1>, func_t>();
-//   // bench_type_func<realbuiltinvec<float,1>, func_t>();
-//   bench_type_func<realtestvec<float,1>, func_t>();
-// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_1
-//   bench_type_func<realvec<float,1>, func_t>();
-// #endif
-// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_2
-//   bench_type_func<realpseudovec<float,2>, func_t>();
-//   // bench_type_func<realbuiltinvec<float,2>, func_t>();
-//   // bench_type_func<realtestvec<float,2>, func_t>();
-//   bench_type_func<realvec<float,2>, func_t>();
-// #endif
-// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_4
-//   bench_type_func<realpseudovec<float,4>, func_t>();
-//   // bench_type_func<realbuiltinvec<float,4>, func_t>();
-//   // bench_type_func<realtestvec<float,4>, func_t>();
-//   bench_type_func<realvec<float,4>, func_t>();
-// #endif
-// #ifdef VECMATHLIB_HAVE_VEC_FLOAT_8
-//   bench_type_func<realpseudovec<float,8>, func_t>();
-//   // bench_type_func<realbuiltinvec<float,8>, func_t>();
-//   // bench_type_func<realtestvec<float,8>, func_t>();
-//   bench_type_func<realvec<float,8>, func_t>();
-// #endif
+  bench_type_func<realpseudovec<float,1>, func_t>();
+  // bench_type_func<realbuiltinvec<float,1>, func_t>();
+  bench_type_func<realtestvec<float,1>, func_t>();
+#ifdef VECMATHLIB_HAVE_VEC_FLOAT_1
+  bench_type_func<realvec<float,1>, func_t>();
+#endif
+#ifdef VECMATHLIB_HAVE_VEC_FLOAT_2
+  bench_type_func<realpseudovec<float,2>, func_t>();
+  // bench_type_func<realbuiltinvec<float,2>, func_t>();
+  // bench_type_func<realtestvec<float,2>, func_t>();
+  bench_type_func<realvec<float,2>, func_t>();
+#endif
+#ifdef VECMATHLIB_HAVE_VEC_FLOAT_4
+  bench_type_func<realpseudovec<float,4>, func_t>();
+  // bench_type_func<realbuiltinvec<float,4>, func_t>();
+  // bench_type_func<realtestvec<float,4>, func_t>();
+  bench_type_func<realvec<float,4>, func_t>();
+#endif
+#ifdef VECMATHLIB_HAVE_VEC_FLOAT_8
+  bench_type_func<realpseudovec<float,8>, func_t>();
+  // bench_type_func<realbuiltinvec<float,8>, func_t>();
+  // bench_type_func<realtestvec<float,8>, func_t>();
+  bench_type_func<realvec<float,8>, func_t>();
+#endif
   
-//   bench_type_func<realpseudovec<double,1>, func_t>();
-//   // bench_type_func<realbuiltinvec<double,1>, func_t>();
-//   bench_type_func<realtestvec<double,1>, func_t>();
-// #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_1
-//   bench_type_func<realvec<double,1>, func_t>();
-// #endif
-// #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_2
-//   bench_type_func<realpseudovec<double,2>, func_t>();
-//   // bench_type_func<realbuiltinvec<double,2>, func_t>();
-//   // bench_type_func<realtestvec<double,2>, func_t>();
-//   bench_type_func<realvec<double,2>, func_t>();
-// #endif
+  bench_type_func<realpseudovec<double,1>, func_t>();
+  // bench_type_func<realbuiltinvec<double,1>, func_t>();
+  bench_type_func<realtestvec<double,1>, func_t>();
+#ifdef VECMATHLIB_HAVE_VEC_DOUBLE_1
+  bench_type_func<realvec<double,1>, func_t>();
+#endif
+#ifdef VECMATHLIB_HAVE_VEC_DOUBLE_2
+  bench_type_func<realpseudovec<double,2>, func_t>();
+  // bench_type_func<realbuiltinvec<double,2>, func_t>();
+  // bench_type_func<realtestvec<double,2>, func_t>();
+  bench_type_func<realvec<double,2>, func_t>();
+#endif
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_4
   bench_type_func<realpseudovec<double,4>, func_t>();
   // bench_type_func<realbuiltinvec<double,4>, func_t>();

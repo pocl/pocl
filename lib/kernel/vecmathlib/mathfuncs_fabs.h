@@ -170,6 +170,12 @@ namespace vecmathlib {
   }
   
   template<typename realvec_t>
+  realvec_t mathfuncs<realvec_t>::vml_mad(realvec_t x, realvec_t y, realvec_t z)
+  {
+    return x * y + z;
+  }
+  
+  template<typename realvec_t>
   typename realvec_t::boolvec_t mathfuncs<realvec_t>::vml_signbit(realvec_t x)
   {
     return convert_bool(as_int(x) & IV(FP::signbit_mask));
