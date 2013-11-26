@@ -770,7 +770,6 @@ test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
 AC_MSG_CHECKING([LLC host CPU])
 llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
 AC_MSG_RESULT($llc_host_cpu)
-test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 
 case $host_os in
   darwin* )
@@ -864,6 +863,10 @@ case $host_cpu in
     AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
 esac
+
+test -n "$HOST_CPU" && llc_host_cpu=$HOST_CPU 
+test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
+
 kernel_dir="host"
 OCL_TARGETS=$kernel_dir
 HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"

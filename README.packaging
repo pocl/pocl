@@ -11,3 +11,12 @@ has a full path to the installed libpocl.so file. When building
 for a multiarch, remove the "@libdir@/" from pocl.icd.in before
 building. This way the system library loader can pick up the correct
 architecture library. 
+
+
+Target(host) CPU
+----------------
+If not overridden, pocl uses LLVM(llc) to detect the host CPU, which
+is used to determine processor ISA extensions (like SSE and AVX). 
+Overriding of host is done with autoconf's '--host=<triple>' AND 
+the environment variable HOST_CPU (at configure time). 
+See pocl/doc/build-envs.txt.
