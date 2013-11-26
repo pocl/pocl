@@ -170,5 +170,5 @@ LKERNEL_SRCS_DEFAULT =				\
 	write_image.cl
 
 if NEW_PRINTF_WORKS
-LKERNEL_SRCS_DEFAULT += printf.cl
+LKERNEL_SRCS_DEFAULT += printf.c
 endif
