@@ -804,11 +804,13 @@ case $host_cpu in
     # check for gnueabihf, and set clang target accordingly
     case $host in
       armv7l*gnueabihf)
-         OCL_KERNEL_TARGET="armv7l-unknown-linux-gnueabihf"
+         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+         OCL_KERNEL_TARGET="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
       *)
-         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+         #this is for old arm distros (pre-hardfloat),
+         #probably not used, and kept here "just in case"
          OCL_KERNEL_TARGET="armv7";;
     esac
 

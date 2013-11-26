@@ -22,7 +22,7 @@
 
 
 
-KERNEL_TARGET = @HOST@
+KERNEL_TARGET = @OCL_KERNEL_TARGET@
 
 # Use HOST flags:
 CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
