@@ -29,7 +29,7 @@ if [ -n "$POCL_VERBOSE" ]; then
     echo 0=$0 @=$@
 fi
 
-target=@HOST@
+target=@OCL_KERNEL_TARGET@
 
 while getopts k:x:y:z:t:o: o
 do
@@ -80,7 +80,7 @@ case $target in
   tce*)     CLANG_FLAGS="@HOST_CLANG_FLAGS@"
             LLC_FLAGS=""
             LD_FLAGS="@HOST_LD_FLAGS@";;
-  @HOST@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+  @OCL_KERNEL_TARGET@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
             LLC_FLAGS="@HOST_LLC_FLAGS@"
             LD_FLAGS="@HOST_LD_FLAGS@";;
   @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
