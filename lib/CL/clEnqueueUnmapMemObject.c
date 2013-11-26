@@ -89,8 +89,6 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   cmd->command.unmap.mapping = mapping;
   LL_APPEND(command_queue->root, cmd);
 
-  POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
-
   return CL_SUCCESS;
 
  ERROR:
