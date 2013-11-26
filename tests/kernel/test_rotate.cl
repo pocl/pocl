@@ -2,7 +2,7 @@
 // TESTING: >>
 // TESTING: rotate
 
-#ifdef _CL_STRINGS_ARE_CONST
+#if __clang_major__ == 3 && __clang_minor__ < 4
 typedef const char* string;     /* for backward compatibility */
 #else
 typedef constant char* string;

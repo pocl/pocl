@@ -88,10 +88,6 @@ LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
 # Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
-# Whether string literals are const char* instead of constant char*
-# (they should be constant char*, but are const char* in older Clang
-# versions)
-STRINGS_ARE_CONST=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
@@ -99,12 +95,10 @@ case "$LLVM_VERSION" in
      3.2*)
      AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
      NEW_PRINTF_WORKS=false
-     STRINGS_ARE_CONST=true
    ;;
      3.3*)
      AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")     
      NEW_PRINTF_WORKS=false
-     STRINGS_ARE_CONST=true
    ;; 
      3.4*)
      AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
@@ -120,7 +114,6 @@ Unsupported LLVM version. Please use LLVM 3.2 or later.
 esac
 
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
-AM_CONDITIONAL([STRINGS_ARE_CONST], $STRINGS_ARE_CONST)
 
 #Temporary option to enable the switch from scripts to llvm API build
 use_llvm_api="no"
@@ -944,13 +937,6 @@ AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
 
-
-# Work-around older Clang versions where string literals are const
-# char* instead of constant char*
-if $STRINGS_ARE_CONST; then
-   HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_STRINGS_ARE_CONST"
-   TARGET_CLANG_FLAGS="$TARGET_CLANG_FLAGS -D_CL_STRINGS_ARE_CONST"
-fi
 
 
 ####################################################################
