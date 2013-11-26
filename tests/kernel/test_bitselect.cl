@@ -5,6 +5,12 @@
 // TESTING: min
 // TESTING: popcount
 
+#ifdef _CL_STRINGS_ARE_CONST
+typedef const char* string;     /* for backward compatibility */
+#else
+typedef constant char* string;
+#endif
+
 #define IMPLEMENT_BODY_G(NAME, BODY, SIZE, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
   void NAME##_##GTYPE()                                                    \
   {                                                                        \
@@ -12,7 +18,7 @@
     typedef SGTYPE sgtype;                                                 \
     typedef UGTYPE ugtype;                                                 \
     typedef SUGTYPE sugtype;                                               \
-    const char * const typename = #GTYPE;                                  \
+    string const typename = #GTYPE;                                        \
     const int vecsize = SIZE;                                              \
     BODY;                                                                  \
   }

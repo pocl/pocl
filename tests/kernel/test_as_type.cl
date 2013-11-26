@@ -1,5 +1,11 @@
 // TESTING: as_TYPEn
 
+#ifdef _CL_STRINGS_ARE_CONST
+typedef const char* string;     /* for backward compatibility */
+#else
+typedef constant char* string;
+#endif
+
 __attribute__((aligned(128)))
 constant char data[128] =
 {
@@ -31,7 +37,7 @@ void clear_bytes(uchar* p, uchar c, size_t n)
 
 _CL_NOINLINE
 void compare_bytes(
-    const char* name,
+    string name,
     const uchar* dst, size_t dst_size, size_t dst_elsize,
     const uchar* src, size_t src_size, size_t src_elsize)
 {

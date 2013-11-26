@@ -2,6 +2,12 @@
 // TESTING: >>
 // TESTING: rotate
 
+#ifdef _CL_STRINGS_ARE_CONST
+typedef const char* string;     /* for backward compatibility */
+#else
+typedef constant char* string;
+#endif
+
 #define IMPLEMENT_BODY_G(NAME, BODY, SIZE, GTYPE, SGTYPE, UGTYPE, SUGTYPE)  \
   void NAME##_##GTYPE()                                                     \
   {                                                                         \
@@ -9,7 +15,7 @@
     typedef SGTYPE sgtype;                                                  \
     typedef UGTYPE ugtype;                                                  \
     typedef SUGTYPE sugtype;                                                \
-    char const *const typename = #GTYPE;                                    \
+    string const typename = #GTYPE;                                         \
     const int vecsize = SIZE;                                               \
     BODY;                                                                   \
   }
