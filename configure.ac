@@ -789,7 +789,6 @@ case $host_cpu in
   armv6l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=$host
     CL_DEVICE_ADDRESS_BITS=32
     case $host in
       *gnueabihf)
@@ -806,13 +805,13 @@ case $host_cpu in
     case $host in
       armv7l*gnueabihf)
          #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
-         OCL_KERNEL_TARGET="armv7-unknown-linux-gnueabihf"
+         llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
-         OCL_KERNEL_TARGET="armv7";;
+         llc_triple="armv7";;
     esac
 
     # Assume -lm should not be used. TODO: add an embedded math lib
@@ -822,20 +821,18 @@ case $host_cpu in
   amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=$host
     CL_DEVICE_ADDRESS_BITS=64
     ;;
   i?86)
     AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=$host
     CL_DEVICE_ADDRESS_BITS=32
     ;;
  
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=tce-tut-llvm
+    llc_triple=tce-tut-llvm
     ;;
 
   powerpc64*)
@@ -844,7 +841,7 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET="powerpc64-unknown-linux-gnu"
+    llc_triple="powerpc64-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
@@ -856,7 +853,7 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
+    llc_triple="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
@@ -911,8 +908,8 @@ AC_SUBST([HOST], [$host])
 AC_DEFINE_UNQUOTED([HOST], "$host", [The host triple.])
 AC_SUBST([HOST_CPU], [$host_cpu])
 AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
-AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
-AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
+AC_SUBST([OCL_KERNEL_TARGET],[$llc_triple])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$llc_triple"], [The kernel target triplet.])
 AC_SUBST([OCL_KERNEL_TARGET_CPU],[$llc_host_cpu])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET_CPU], ["$llc_host_cpu"], [The kernel target CPU variant.])
 AC_SUBST([OCL_KERNEL_ARCH],[$OCL_KERNEL_ARCH])
