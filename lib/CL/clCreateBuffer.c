@@ -156,7 +156,7 @@ POname(clCreateBuffer)(cl_context context,
       if (i > 0)
         POname(clRetainMemObject) (mem);
       device = context->devices[i];
-      device_ptr = device->malloc(device->data, flags, size, host_ptr);
+      device_ptr = device->ops->malloc(device->data, flags, size, host_ptr);
       if (device_ptr == NULL)
         {
           errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;
@@ -182,7 +182,7 @@ POname(clCreateBuffer)(cl_context context,
   for (j = 0; j < i; ++j)
     {
       device = context->devices[j];
-      device->free(device->data, flags, mem->device_ptrs[device->dev_id]);
+      device->ops->free(device->data, flags, mem->device_ptrs[device->dev_id]);
     }
  ERROR_CLEAN_MEM:
   free(mem);

@@ -122,6 +122,11 @@ CL_API_SUFFIX__VERSION_1_0
          the mapping area in the host memory. */   
       assert (image->mem_host_ptr != NULL);
       map = image->mem_host_ptr + offset;
+      device->ops->read_rect (device->data, map, image->device_ptrs[device->dev_id],
+                         tuned_origin, map_origin, tuned_region, 
+                         image->image_row_pitch, image->image_slice_pitch, 
+                         image->image_row_pitch, image->image_slice_pitch);
+      POCL_UPDATE_EVENT_COMPLETE;
     }
   else
     {
