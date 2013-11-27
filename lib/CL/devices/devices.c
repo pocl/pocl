@@ -56,6 +56,15 @@ static struct _cl_device_id pocl_device_types[] = {
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_device_types) / sizeof((pocl_device_types)[0]))
 
+static inline void
+pocl_device_common_init(struct _cl_device_id* dev)
+{
+  POCL_INIT_OBJECT(dev);
+  dev->driver_version = PACKAGE_VERSION;
+  if(dev->version == NULL)
+    dev->version = "OpenCL 1.2 pocl";
+}
+
 void 
 pocl_init_devices()
 {
@@ -81,6 +90,9 @@ pocl_init_devices()
       ptr = NULL;
     }
   free (tofree);
+  
+  for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
+    pocl_device_common_init(&pocl_device_types[i]);
 
   pocl_devices = malloc (pocl_num_devices * sizeof *pocl_devices);
 
@@ -100,7 +112,7 @@ pocl_init_devices()
               
               if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", devcount) < 0)
                 POCL_ABORT("Unable to generate the env string.");
-
+		
               device_type = &pocl_device_types[i];
               memcpy (&pocl_devices[devcount], device_type, sizeof(struct _cl_device_id));
               pocl_devices[devcount].init(&pocl_devices[devcount], getenv(env_name));
