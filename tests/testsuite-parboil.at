@@ -103,6 +103,6 @@ POAT_PB_SETUP([lbm], [long])
 POAT_PB_CHECK_BUILD([lbm])
 AT_CHECK_UNQUOTED([make run-lbm -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
-])
+], ignore)
 #AT_XFAIL_IF(true)
 AT_CLEANUP
