@@ -42,19 +42,24 @@
 struct _cl_device_id* pocl_devices = NULL;
 int pocl_num_devices = 0;
 
-/* All device drivers available to the pocl. */
-static struct _cl_device_id pocl_device_types[] = {
-  POCL_DEVICES_PTHREAD,
-  POCL_DEVICES_BASIC,
+/* Init function prototype */
+typedef void (*init_device_ops)(struct pocl_device_ops*);
+
+/* All init function for device operations available to pocl */
+static init_device_ops pocl_devices_init_ops[] = {
+  pocl_pthread_init_device_ops,
+  pocl_basic_init_device_ops,
 #if defined(BUILD_SPU)
-  POCL_DEVICES_CELLSPU,
+  pocl_cellspu_init_device_ops,
 #endif
 #if defined(TCE_AVAILABLE)
-  POCL_DEVICES_TTASIM,
+  pocl_ttasim_init_device_ops,
 #endif
 };
 
-#define POCL_NUM_DEVICE_TYPES (sizeof(pocl_device_types) / sizeof((pocl_device_types)[0]))
+#define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
+
+static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES] = {0};
 
 static inline void
 pocl_device_common_init(struct _cl_device_id* dev)
@@ -63,6 +68,8 @@ pocl_device_common_init(struct _cl_device_id* dev)
   dev->driver_version = PACKAGE_VERSION;
   if(dev->version == NULL)
     dev->version = "OpenCL 1.2 pocl";
+
+  dev->short_name = dev->ops->short_name;
 }
 
 void 
@@ -92,19 +99,20 @@ pocl_init_devices()
   free (tofree);
   
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
-    pocl_device_common_init(&pocl_device_types[i]);
+    {
+      pocl_devices_init_ops[i](&pocl_device_ops[i]);
+    }
 
-  pocl_devices = malloc (pocl_num_devices * sizeof *pocl_devices);
+  pocl_devices = calloc (pocl_num_devices, sizeof *pocl_devices);
 
   ptr = tofree = strdup(device_list);
   devcount = 0;
   while ((token = strtok_r (ptr, " ", &saveptr)) != NULL)
     {
-      struct _cl_device_id* device_type = NULL;
-
+      char found = 0;
       for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
         {
-          if (strcmp(pocl_device_types[i].short_name, token) == 0)
+          if (strcmp(pocl_device_ops[i].short_name, token) == 0)
             {
               /* Check if there are device-specific parameters set in the
                  POCL_DEVICEn_PARAMETERS env. */
@@ -112,16 +120,21 @@ pocl_init_devices()
               
               if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", devcount) < 0)
                 POCL_ABORT("Unable to generate the env string.");
-		
-              device_type = &pocl_device_types[i];
-              memcpy (&pocl_devices[devcount], device_type, sizeof(struct _cl_device_id));
-              pocl_devices[devcount].init(&pocl_devices[devcount], getenv(env_name));
+
+              pocl_devices[devcount].ops = &pocl_device_ops[i];
+              assert(pocl_device_ops[i].init_device_infos);
+              pocl_device_ops[i].init_device_infos(&pocl_devices[devcount]);
+              assert(pocl_device_ops[i].init);
+              pocl_device_ops[i].init(&pocl_devices[devcount], getenv(env_name));
+              
+              pocl_device_common_init(&pocl_devices[devcount]);
               pocl_devices[devcount].dev_id = devcount;
               devcount++;
+              found = 1;
               break;
             }
         }
-      if (device_type == NULL) 
+      if (!found) 
           POCL_ABORT("device type not found\n");
       ptr = NULL;
     }

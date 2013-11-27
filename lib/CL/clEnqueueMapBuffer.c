@@ -102,7 +102,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
          the host memory. When the last argument is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
       
-      host_ptr = device->map_mem 
+      host_ptr = device->ops->map_mem 
         (device->data, buffer->device_ptrs[device->dev_id], offset, size, 
          NULL);
     }
@@ -162,7 +162,7 @@ pocl_map_mem_cmd(cl_device_id device,
   
   /* The second call ensures the memory is flushed/updated to the
      host location. */
-  device->map_mem 
+  device->ops->map_mem 
     (device->data, buffer->device_ptrs[device->dev_id], 
      mapping_info->offset, mapping_info->size, mapping_info->host_ptr);
   
@@ -170,4 +170,3 @@ pocl_map_mem_cmd(cl_device_id device,
   return mapping_info->host_ptr;
 
 }
-

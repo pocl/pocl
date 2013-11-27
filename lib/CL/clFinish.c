@@ -110,7 +110,7 @@ static void exec_commands (_cl_command_node *node_list)
         {
         case CL_COMMAND_READ_BUFFER:
           POCL_UPDATE_EVENT_RUNNING;
-          node->device->read
+          node->device->ops->read
             (node->command.read.data, 
              node->command.read.host_ptr, 
              node->command.read.device_ptr, 
@@ -120,7 +120,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_WRITE_BUFFER:
           POCL_UPDATE_EVENT_RUNNING;
-          node->device->write
+          node->device->ops->write
             (node->command.write.data, 
              node->command.write.host_ptr, 
              node->command.write.device_ptr, 
@@ -130,7 +130,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_COPY_BUFFER:
           POCL_UPDATE_EVENT_RUNNING;
-          node->device->copy
+          node->device->ops->copy
             (node->command.copy.data, 
              node->command.copy.src_ptr, 
              node->command.copy.dst_ptr,
@@ -147,7 +147,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_MAP_IMAGE:
           POCL_UPDATE_EVENT_RUNNING; 
-          node->device->read_rect 
+          node->device->ops->read_rect 
             (node->command.map_image.data, node->command.map_image.map_ptr,
              node->command.map_image.device_ptr, node->command.map_image.origin,
              node->command.map_image.origin, node->command.map_image.region, 
@@ -159,7 +159,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_WRITE_IMAGE:
           POCL_UPDATE_EVENT_RUNNING; 
-          node->device->write_rect 
+          node->device->ops->write_rect 
             (node->command.map_image.data, node->command.map_image.map_ptr,
              node->command.map_image.device_ptr, node->command.map_image.origin,
              node->command.map_image.origin, node->command.map_image.region, 
@@ -171,7 +171,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_READ_IMAGE:
           POCL_UPDATE_EVENT_RUNNING; 
-          node->device->read_rect 
+          node->device->ops->read_rect 
             (node->command.map_image.data, node->command.map_image.map_ptr,
              node->command.map_image.device_ptr, node->command.map_image.origin,
              node->command.map_image.origin, node->command.map_image.region, 
@@ -196,8 +196,8 @@ static void exec_commands (_cl_command_node *node_list)
             {
               /* TODO: fixme. The offset computation must be done at the device 
                  driver. */
-              if (node->device->unmap_mem != NULL)        
-                node->device->unmap_mem
+              if (node->device->ops->unmap_mem != NULL)        
+                node->device->ops->unmap_mem
                   (node->device->data, 
                    (node->command.unmap.mapping)->host_ptr, 
                    (node->command.unmap.memobj)->device_ptrs[node->device->dev_id], 
@@ -211,7 +211,7 @@ static void exec_commands (_cl_command_node *node_list)
         case CL_COMMAND_NDRANGE_KERNEL:
           assert (*event == node->event);
           POCL_UPDATE_EVENT_RUNNING;
-          node->device->run(node->command.run.data, node);
+          node->device->ops->run(node->command.run.data, node);
           POCL_UPDATE_EVENT_COMPLETE;
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
@@ -234,7 +234,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_NATIVE_KERNEL:
           POCL_UPDATE_EVENT_RUNNING;
-          node->device->run_native(node->command.native.data, node);
+          node->device->ops->run_native(node->command.native.data, node);
           POCL_UPDATE_EVENT_COMPLETE;
           for (i = 0; i < node->command.native.num_mem_objects; ++i)
             {
@@ -247,7 +247,7 @@ static void exec_commands (_cl_command_node *node_list)
 	      break;
         case CL_COMMAND_FILL_IMAGE:
           POCL_UPDATE_EVENT_RUNNING;
-          node->device->fill_rect 
+          node->device->ops->fill_rect 
             (node->command.fill_image.data, 
              node->command.fill_image.device_ptr,
              node->command.fill_image.buffer_origin,

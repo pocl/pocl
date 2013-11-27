@@ -100,6 +100,81 @@ static int get_max_thread_count();
 static void * workgroup_thread (void *p);
 
 void
+pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
+{
+  ops->short_name = "pthread";
+
+  /* implementation */
+  ops->init_device_infos = pocl_pthread_init_device_infos;
+  ops->uninit = pocl_pthread_uninit;
+  ops->init = pocl_pthread_init;
+  ops->malloc = pocl_pthread_malloc;
+  ops->free = pocl_pthread_free;
+  ops->read = pocl_pthread_read;
+  ops->read_rect = pocl_basic_read_rect;
+  ops->write = pocl_pthread_write;
+  ops->write_rect = pocl_basic_write_rect;
+  ops->copy = pocl_pthread_copy;
+  ops->copy_rect = pocl_pthread_copy_rect;
+  ops->fill_rect = pocl_basic_fill_rect;
+  ops->map_mem = pocl_basic_map_mem;
+  ops->run = pocl_pthread_run;
+  ops->run_native = pocl_basic_run_native;
+  ops->get_timer_value = pocl_basic_get_timer_value;
+  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+}
+
+void
+pocl_pthread_init_device_infos(struct _cl_device_id* dev)
+{
+  dev->type = CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT;
+  dev->max_work_item_dimensions = 3;
+  /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */
+  /* and may avoid errors in user code that uses int instead of size_t */
+  dev->max_work_item_sizes[0] = 1024;
+  dev->max_work_item_sizes[1] = 1024;
+  dev->max_work_item_sizes[2] = 1024;
+  dev->max_work_group_size = 1024;
+  dev->preferred_wg_size_multiple = 8;
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG ;
+  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  /* TODO: figure out what the difference between preferred and native widths are. */
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
+  dev->image_support = CL_TRUE;
+  dev->max_parameter_size = 1024;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->global_mem_cache_type = CL_NONE;
+  dev->local_mem_type = CL_GLOBAL;
+  dev->error_correction_support = CL_FALSE;
+  dev->host_unified_memory = CL_TRUE;
+  dev->endian_little = !(WORDS_BIGENDIAN);
+  dev->available = CL_TRUE;
+  dev->compiler_available = CL_TRUE;
+  dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
+  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  dev->short_name = "pthread";
+  dev->vendor = "pocl";
+  dev->profile = "FULL_PROFILE";
+  dev->extensions = "";
+  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+  dev->has_64bit_long = 1;
+}
+
+void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
