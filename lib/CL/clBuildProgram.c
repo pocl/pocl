@@ -43,7 +43,8 @@ static char cl_parameters[] =
   "-cl-std=CL1.2 "
   "-cl-std=CL1.1 "
   "-cl-kernel-arg-info "
-  "-w ";
+  "-w "
+  "-g ";
 
 static char cl_parameters_not_yet_supported_by_clang[] = 
   "-cl-strict-aliasing "
@@ -108,7 +109,8 @@ CL_API_SUFFIX__VERSION_1_0
       while (token != NULL)
         {
           /* check if parameter is supported compiler parameter */
-          if (strstr (token, "-cl") || strstr (token, "-w"))
+          if (strstr (token, "-cl") || strstr (token, "-w") 
+              || strstr(token, "-g"))
             {
               if (strstr (cl_parameters, token))
                 {

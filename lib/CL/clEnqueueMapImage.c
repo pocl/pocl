@@ -46,12 +46,13 @@ CL_API_SUFFIX__VERSION_1_0
   cl_int errcode;
   int elem_size;
   int num_channels;
-  int map_size;
+  int offset;
   void *map = NULL;
   cl_device_id device;
   _cl_command_node *cmd = NULL;
   mem_mapping_t *mapping_info = NULL;
 
+  device = command_queue->device;
   if (command_queue == NULL)
     {
       errcode =  CL_INVALID_COMMAND_QUEUE;
@@ -98,20 +99,8 @@ CL_API_SUFFIX__VERSION_1_0
   pocl_get_image_information(image->image_channel_order, 
                              image->image_channel_data_type, 
                              &num_channels, &elem_size);
-
-  map_size = elem_size * num_channels * region[0] * region[1] * region[2];
-  map = malloc (map_size);
-  if (map == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    }
-
-  size_t tuned_origin[3] = {origin[0] * elem_size * num_channels, origin[1], 
-                            origin[2]};
-  size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
-                            region[2]};
-  size_t map_origin[3] = {0, 0, 0}; 
+  
+  offset = num_channels * elem_size * origin[0];
 
   if (event != NULL)
     {
@@ -126,42 +115,61 @@ CL_API_SUFFIX__VERSION_1_0
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
-  mapping_info->host_ptr = map;
-  mapping_info->offset = 0;
-  mapping_info->size = map_size;
-  DL_APPEND (image->mappings, mapping_info);
-  
-  device = command_queue->device;
-  if (blocking_map)
+
+  if (image->flags & CL_MEM_USE_HOST_PTR)
     {
-      device->ops->read_rect (device->data, map, image->device_ptrs[device->dev_id],
-                         tuned_origin, map_origin, tuned_region, 
-                         image->image_row_pitch, image->image_slice_pitch, 
-                         image->image_row_pitch, image->image_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE;
+      /* In this case it should use the given host_ptr + offset as
+         the mapping area in the host memory. */   
+      assert (image->mem_host_ptr != NULL);
+      map = image->mem_host_ptr + offset;
     }
   else
     {
-      errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
-                                     event, num_events_in_wait_list, 
-                                     event_wait_list);
-      if (errcode != CL_SUCCESS)
-        goto ERROR;
+      /* The first call to the device driver's map mem tells where
+         the mapping will be stored (the last argument is NULL) in
+         the host memory. When the last argument is non-NULL, the
+         buffer will be mapped there (assumed it will succeed).  */
       
-      cmd->command.map_image.data = command_queue->device->data;
-      cmd->command.map_image.device_ptr = 
-        image->device_ptrs[command_queue->device->dev_id];
-      cmd->command.map_image.map_ptr = map;
-      memcpy ((cmd->command.map_image.origin), tuned_origin, 3*sizeof (size_t));
-      memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
-      cmd->command.map_image.rowpitch = image->image_row_pitch;
-      cmd->command.map_image.slicepitch = image->image_slice_pitch;
-      LL_APPEND(command_queue->root, cmd);
-      POCL_UPDATE_EVENT_QUEUED;
+      map = device->ops->map_mem (device->data, 
+                             image->device_ptrs[device->dev_id], 
+                             offset, 0/*size*/, NULL);
     }
+
+  if (map == NULL)
+    {
+      POCL_UPDATE_EVENT_COMPLETE;
+      errcode = CL_MAP_FAILURE;
+      goto ERROR;
+    }
+
+  mapping_info->host_ptr = map;
+  mapping_info->offset = offset;
+  mapping_info->size = 0;/* not needed ?? */
+  DL_APPEND (image->mappings, mapping_info);
+
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+      
+  
+  cmd->command.map.buffer = image;
+  cmd->command.map.mapping = mapping_info;
+  LL_APPEND(command_queue->root, cmd);
+  POCL_UPDATE_EVENT_QUEUED;  
+
+  if (blocking_map)
+    {
+      POname(clFinish) (command_queue);
+    }
+  
   *image_row_pitch = image->image_row_pitch;
   if (image_slice_pitch)
     *image_slice_pitch = image->image_slice_pitch;
+
+  if (errcode_ret != NULL)
+    (*errcode_ret) = CL_SUCCESS;
 
   return map;
  
