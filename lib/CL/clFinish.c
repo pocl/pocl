@@ -139,7 +139,6 @@ static void exec_commands (_cl_command_node *node_list)
           POname(clReleaseMemObject) (node->command.copy.src_buffer);
           POname(clReleaseMemObject) (node->command.copy.dst_buffer);
           break;
-        case CL_COMMAND_MAP_IMAGE:
         case CL_COMMAND_MAP_BUFFER: 
           POCL_UPDATE_EVENT_RUNNING;            
           pocl_map_mem_cmd (node->device, node->command.map.buffer, 
