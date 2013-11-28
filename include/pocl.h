@@ -143,11 +143,11 @@ typedef struct
 {
   void *data;
   void *device_ptr;
-  const void *host_ptr;
+  void *host_ptr;
   size_t origin[3];
   size_t region[3];
-  const size_t rowpitch;
-  const size_t slicepitch;
+  size_t rowpitch;
+  size_t slicepitch;
 } _cl_command_rw_image;
 
 /* clEnqueueUnMapMemObject */
