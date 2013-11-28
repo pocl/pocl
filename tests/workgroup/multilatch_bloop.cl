@@ -1,5 +1,3 @@
-int printf(const char *restrict format, ...);
-
 __kernel void
 test_kernel (void)
 {

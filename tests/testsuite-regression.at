@@ -173,4 +173,6 @@ op(1)=2.000000
 OK
 ])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_block], 0, expout)
+# LLVM 3.4's crashes with an illegal const expr cast. Unresolved.
+AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_srcdir/config.h])
 AT_CLEANUP

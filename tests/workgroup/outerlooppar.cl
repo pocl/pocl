@@ -5,8 +5,6 @@
  * The barrier should be inserted inside a barrierless loop in case pocl
  * can analyze it's safe to do so. The cases are tested here.
  */
-int printf(const char *restrict format, ...);
-
 __kernel void
 test_kernel (void)
 {
