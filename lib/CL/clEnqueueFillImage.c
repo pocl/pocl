@@ -182,7 +182,7 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
-  memcpy (&(cmd->command.fill_image.buffer_origin), tuned_origin, 
+  memcpy (&(cmd->command.fill_image.buffer_origin), /*tuned_*/origin, 
           3*sizeof(size_t));
   memcpy (&(cmd->command.fill_image.region), region, 3*sizeof(size_t));
   cmd->command.fill_image.rowpitch = image->image_row_pitch;
