@@ -55,9 +55,6 @@ build: $(testsuite_src_dir)
 		-DBUILD_BOLT=OFF .;\
 	make
 
-#find . -name "*.cl" | xargs perl -pi -e 's/cl_amd_fp64/cl_khr_fp64/g' && \
-	LDFLAGS="-lX11 ${LDFLAGS}" $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
-
 test_AsyncDataTransfer:
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/AsyncDataTransfer/bin/x86_64/Release/AsyncDataTransfer -e 
