@@ -214,8 +214,8 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->max_compute_units = 1;
   dev->max_work_item_dimensions = 3;
   dev->max_work_item_sizes[0] = CL_INT_MAX;
+  dev->max_work_item_sizes[1] = CL_INT_MAX;
   dev->max_work_item_sizes[2] = CL_INT_MAX;
-  dev->max_work_item_sizes[3] = CL_INT_MAX;
   dev->max_work_group_size = 1024;
   dev->preferred_wg_size_multiple = 8;
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
@@ -270,7 +270,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
-  dev->device_partition_properties[0];
+  dev->device_partition_properties[0] = 0;
   dev->printf_buffer_size = 0;
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
@@ -291,7 +291,6 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
   device->data = d;
-
   pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
 
