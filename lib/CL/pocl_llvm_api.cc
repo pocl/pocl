@@ -861,10 +861,14 @@ static PassManager& kernel_compiler_passes
   return *Passes;
 }
 
-/* kludge - this is the kernel dimensions command-line parameter to the workitem loop */
+/* This is used to communicate the work-group dimensions command-line parameter to the 
+   workitem loop. */
 namespace pocl {
 extern llvm::cl::list<int> LocalSize;
 } 
+
+/* This is used to control the kernel we want to process in the kernel compilation. */
+extern cl::opt<std::string> KernelName;
 
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
@@ -975,6 +979,7 @@ int call_pocl_workgroup(cl_device_id device,
   pocl::LocalSize.addValue(local_x);
   pocl::LocalSize.addValue(local_y);
   pocl::LocalSize.addValue(local_z);
+  KernelName = kernel->name;
 
   kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
   POCL_UNLOCK(kernel_compiler_lock);
