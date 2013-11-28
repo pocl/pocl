@@ -1,0 +1,162 @@
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/benchmark/MemoryOptimizations/MemoryOptimizations.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/benchmark/MemoryOptimizations/MemoryOptimizations.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/benchmark/MemoryOptimizations/MemoryOptimizations.cpp	2013-11-27 16:45:50.086641415 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/benchmark/MemoryOptimizations/MemoryOptimizations.cpp	2013-11-27 16:44:53.991107281 +0200
+@@ -185,12 +185,12 @@
+     //Set device info of given cl_device_id
+     retValue = deviceInfo.setDeviceInfo(devices[sampleArgs->deviceId]);
+     CHECK_ERROR(retValue, SDK_SUCCESS, "SDKDeviceInfo::setDeviceInfo() failed");
+-
++    /*
+     if(!strstr(deviceInfo.extensions, "cl_khr_global_int32_base_atomics"))
+     {
+         OPENCL_EXPECTED_ERROR("Device does not support global_int32_base_atomics!");
+     }
+-
++    */
+     {
+         // The block is to move the declaration of prop closer to its use
+         cl_command_queue_properties prop = 0;
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/BufferBandwidth/Shared.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/BufferBandwidth/Shared.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/BufferBandwidth/Shared.cpp	2013-11-27 16:45:50.150643166 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/BufferBandwidth/Shared.cpp	2013-11-27 16:44:54.055109032 +0200
+@@ -152,12 +152,14 @@
+     clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, extStringSize, deviceExtensions, NULL);
+ 
+     // Check if cl_khr_fp64 extension is supported 
++    /*
+     if(!strstr(deviceExtensions, "cl_khr_local_int32_base_atomics"))
+     {
+         fprintf( stderr, "Device does not support cl_khr_local_int32_base_atomics extension!\n");
+         delete deviceExtensions;
+         exit(0);
+     }
++    */
+     delete deviceExtensions;
+ 
+     // Get OpenCL device version
+@@ -266,15 +268,17 @@
+     }
+ 
+     ret = clGetDeviceIDs( platform,
+-                          devs[1],
++                          devs[0],
+                           128,
+                           devices,
+                           &num_devices );
++    /*
+     if((ret == CL_DEVICE_NOT_FOUND) || (num_devices == 0))
+     {
+         fprintf( stderr, "This sample requires a GPU to be present in order to execute");
+         exit(FAILURE);
+     }
++    */
+     ASSERT_CL_RETURN( ret );
+ 
+     device = devices[devnum];
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/ImageBandwidth/Shared.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/ImageBandwidth/Shared.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/ImageBandwidth/Shared.cpp	2013-11-27 16:45:50.127642535 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/ImageBandwidth/Shared.cpp	2013-11-27 16:44:54.032108402 +0200
+@@ -150,12 +150,14 @@
+     clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, extStringSize, deviceExtensions, NULL);
+ 
+     /* Check if cl_khr_fp64 extension is supported */
++    /*
+     if(!strstr(deviceExtensions, "cl_khr_local_int32_base_atomics"))
+     {
+         fprintf( stderr, "Device does not support cl_khr_local_int32_base_atomics extension!\n");
+         delete deviceExtensions;
+         exit(EXPECTED_FAILURE);
+     }
++    */
+     delete deviceExtensions;
+ 
+     /* Check for image support */
+@@ -270,7 +272,7 @@
+     }
+ 
+     ret = clGetDeviceIDs( platform,
+-                          devs[1],
++                          devs[0],
+                           128,
+                           devices,
+                           &num_devices );
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/Shared.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/Shared.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/Shared.cpp	2013-11-27 16:45:50.139642866 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/Shared.cpp	2013-11-27 16:44:54.043108703 +0200
+@@ -203,7 +203,7 @@
+     }
+ 
+     ret = clGetDeviceIDs( platform,
+-                          devs[1],
++                          devs[0],
+                           128,
+                           devices,
+                           &num_devices );
+@@ -243,13 +243,14 @@
+ 
+     ASSERT_CL_RETURN( ret );
+ 
++    /*
+     if(strstr(extensions,"cl_khr_local_int32_base_atomics") == NULL)
+     {
+         printf("Expected Error: cl_khr_local_int32_base_atomics is not supported by the device/n");
+         status = EXPECTED_FAILURE;
+ 		return;
+     }
+-
++    */
+     context = clCreateContext( NULL,
+                                1,
+                                &device,
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/TransferOverlap/TransferOverlap.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/TransferOverlap/TransferOverlap.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/TransferOverlap/TransferOverlap.cpp	2013-11-27 16:45:50.129642591 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/TransferOverlap/TransferOverlap.cpp	2013-11-27 16:44:54.033108429 +0200
+@@ -158,11 +158,12 @@
+     CHECK_ERROR(retValue, SDK_SUCCESS, "SDKDeviceInfo::setDeviceInfo() failed");
+ 
+     // Check device extensions
++    /*
+     if(!strstr(deviceInfo.extensions, "cl_khr_local_int32_base_atomics"))
+     {
+         OPENCL_EXPECTED_ERROR("Device does not support cl_khr_local_int32_base_atomics extension!");
+     }
+-
++    */
+     // Get OpenCL device version
+     std::string deviceVersionStr = std::string(deviceInfo.deviceVersion);
+     size_t vStart = deviceVersionStr.find(" ", 0);
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/CplusplusWrapper/CplusplusWrapper.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/CplusplusWrapper/CplusplusWrapper.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/CplusplusWrapper/CplusplusWrapper.cpp	2013-11-27 16:45:50.089641496 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/CplusplusWrapper/CplusplusWrapper.cpp	2013-11-27 16:44:53.994107363 +0200
+@@ -123,11 +123,13 @@
+     
+     cl::Event e;
+ 	cl::Platform platform = cl::Platform::getDefault();
++    /*
+ 	if(strcmp(platform.getInfo<CL_PLATFORM_VENDOR>().c_str(), "Advanced Micro Devices, Inc."))
+ 	{
+ 		std::cout<<"Default platform should be Advanced Micro Devices, Inc. to run this sample\n"<<std::endl;
+ 		exit(FAILURE);
+ 	}
++    */
+     // set arguments for kernel, and execute it.
+     cl::NDRange ndrg(NUM_ELEMENTS);
+     cl::NDRange ndrl(NUM_ELEMENTS);
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/HistogramAtomics/HistogramAtomics.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/HistogramAtomics/HistogramAtomics.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/HistogramAtomics/HistogramAtomics.cpp	2013-11-27 16:45:50.105641936 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/HistogramAtomics/HistogramAtomics.cpp	2013-11-27 16:44:54.010107800 +0200
+@@ -230,12 +230,13 @@
+                                         cl_uint4));
+ 
+     // Check if byte-addressable store is supported
++    /*
+     if(!strstr(deviceInfo.extensions, "cl_khr_local_int32_base_atomics"))
+     {
+         reqdExtSupport = false;
+         OPENCL_EXPECTED_ERROR("Device does not support local_int32_base_atomics extension!");
+     }
+-
++    */
+     // Create input buffer
+     inputBuffer = clCreateBuffer(context,
+                                  CL_MEM_READ_ONLY,

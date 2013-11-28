@@ -44,6 +44,7 @@ $(testsuite_src_dir): AMD-APP-SDK-v2.9-RC-lnx64.tgz
 
 build: $(testsuite_src_dir) 
 	cd $(testsuite_pocl_dir) && \
+	( patch -sNp1 < $(testsuite_pocl_dir)/AMDSDK2_9.patch || true ) && \
 	cd $(testsuite_src_dir)/samples/ && \
 	find . -name "CMakeLists.txt" -exec sed -i \
 		-e 's/mark_as_advanced( OPENCL_LIBRARIES )/set(OPENCL_LIBRARIES "-lOpenCL")/g' \
@@ -59,15 +60,15 @@ build: $(testsuite_src_dir)
 
 test_AsyncDataTransfer:
 	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/AsyncDataTransfer/bin/x86_64/Release/AsyncDataTransfer -e 
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/AsyncDataTransfer/bin/x86_64/Release/AsyncDataTransfer -e 
 
 test_AtomicCounters: 
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/AtomicCounters/bin/x86_64/Release/AtomicCounters -e 
 
 test_BasicDebug: 
-	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/BasicDebug/bin/x86_64/Release/BasicDebug -e
+	cd $(amd_app_dir)cl/BasicDebug/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./BasicDebug -e
 
 test_BinarySearch: 
 	cd $(amd_app_dir) && \
@@ -102,24 +103,24 @@ test_BoxFilterGL:
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/BoxFilterGL/bin/x86_64/Release/BoxFilterGL -e
 
 test_BufferBandwidth: 
-	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/BufferBandwidth/bin/x86_64/Release/BufferBandwidth -e
+	cd $(amd_app_dir)cl/BufferBandwidth/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./BufferBandwidth -e
 
 test_BufferImageInterop: 
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/BufferImageInterop/bin/x86_64/Release/BufferImageInterop -e
 
 test_ConcurrentKernel:
-	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/ConcurrentKernel/bin/x86_64/Release/ConcurrentKernel -e
+	cd $(amd_app_dir)cpp_cl/ConcurrentKernel/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./ConcurrentKernel -e
 
 test_ConstantBandwidth:
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors benchmark/ConstantBandwidth/bin/x86_64/Release/ConstantBandwidth -e
 
 test_CplusplusWrapper:
-	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/CplusplusWrapper/bin/x86_64/Release/CplusplusWrapper -e
+	cd $(amd_app_dir)cpp_cl/CplusplusWrapper/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./CplusplusWrapper -e
 
 test_DCT: 
 	cd $(amd_app_dir) && \
@@ -187,11 +188,11 @@ test_Histogram:
 
 test_HistogramAtomics:
 	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/HistogramAtomics/bin/x86_64/Release/HistogramAtomics -e
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/HistogramAtomics/bin/x86_64/Release/HistogramAtomics -e
 
 test_ImageBandwidth: 
-	cd $(amd_app_dir)/ImageOverlap && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/ImageOverlap/bin/x86_64/Release/ImageBandwidth -e
+	cd $(amd_app_dir)cl/ImageBandwidth/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./ImageBandwidth -e
 
 test_ImageOverlap: 
 	cd $(amd_app_dir)/ImageOverlap && \
@@ -201,17 +202,17 @@ test_IntroStaticCPPKernel:
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/IntroStaticCPPKernel/bin/x86_64/Release/IntroStaticCPPKernel -e
 
-test_KernelLauch:
-	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/KernelLauch/bin/x86_64/Release/KernelLaunch -e
+test_KernelLaunch:
+	cd $(amd_app_dir)cl/KernelLaunch/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./KernelLaunch -e
 
 test_KmeansAutoclustering:
 	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/KmeansAutoClustering/bin/x86_64/Release/KmeansAutoclustering -e
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/KmeansAutoclustering/bin/x86_64/Release/KmeansAutoclustering -e
 
 test_LDSBandwidth:
 	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/LDSBandwidth/bin/x86_64/Release/LDSBandwidth -e
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors benchmark/LDSBandwidth/bin/x86_64/Release/LDSBandwidth -e
 
 test_LUDecomposition: 
 	cd $(amd_app_dir) && \
@@ -312,7 +313,7 @@ test_SobelFilter:
 
 test_SobelFilterImage: 
 	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/SobelFilterImage/bin/x86_64/Release/SobelFilterImage -e
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cpp_cl/SobelFilterImage/bin/x86_64/Release/SobelFilterImage -e
 
 test_StringSearch:
 	cd $(amd_app_dir)cl/StringSearch/bin/x86_64/Release/ && \
