@@ -71,7 +71,7 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   cmd->command.rw_image.data = command_queue->device->data;
   cmd->command.rw_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
-  cmd->command.rw_image.host_ptr = ptr;
+  cmd->command.rw_image.host_ptr = (void*) ptr;
   memcpy ((cmd->command.map_image.origin), tuned_origin, 3*sizeof (size_t));
   memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.rw_image.rowpitch = image->image_row_pitch;
