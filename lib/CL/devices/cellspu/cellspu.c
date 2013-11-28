@@ -58,7 +58,7 @@ memory_region_t spe_local_mem;
 void
 pocl_cellspu_init_device_ops(struct pocl_device_ops *ops)
 {
-  ops->short_name = "cellspu";
+  ops->device_name = "cellspu";
         
   ops->init_device_infos = pocl_cellspu_init_device_infos;
   ops->uninit = pocl_cellspu_uninit;

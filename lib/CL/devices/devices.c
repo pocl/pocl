@@ -69,7 +69,7 @@ pocl_device_common_init(struct _cl_device_id* dev)
   if(dev->version == NULL)
     dev->version = "OpenCL 1.2 pocl";
 
-  dev->short_name = dev->ops->short_name;
+  dev->short_name = strdup(dev->ops->device_name);
 }
 
 void 
@@ -101,6 +101,7 @@ pocl_init_devices()
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
       pocl_devices_init_ops[i](&pocl_device_ops[i]);
+      assert(pocl_device_ops[i].device_name != NULL);
     }
 
   pocl_devices = calloc (pocl_num_devices, sizeof *pocl_devices);
@@ -112,7 +113,7 @@ pocl_init_devices()
       char found = 0;
       for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
         {
-          if (strcmp(pocl_device_ops[i].short_name, token) == 0)
+          if (strcmp(pocl_device_ops[i].device_name, token) == 0)
             {
               /* Check if there are device-specific parameters set in the
                  POCL_DEVICEn_PARAMETERS env. */
@@ -120,14 +121,13 @@ pocl_init_devices()
               
               if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", devcount) < 0)
                 POCL_ABORT("Unable to generate the env string.");
-
               pocl_devices[devcount].ops = &pocl_device_ops[i];
               assert(pocl_device_ops[i].init_device_infos);
               pocl_device_ops[i].init_device_infos(&pocl_devices[devcount]);
+              pocl_device_common_init(&pocl_devices[devcount]);
               assert(pocl_device_ops[i].init);
               pocl_device_ops[i].init(&pocl_devices[devcount], getenv(env_name));
               
-              pocl_device_common_init(&pocl_devices[devcount]);
               pocl_devices[devcount].dev_id = devcount;
               devcount++;
               found = 1;

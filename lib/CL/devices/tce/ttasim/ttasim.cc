@@ -67,7 +67,7 @@ static void *pocl_ttasim_thread (void *p);
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 {
-  ops->short_name = "ttasim";
+  ops->device_name = "ttasim";
 
   ops->init_device_infos = pocl_ttasim_init_device_infos;
   ops->uninit = pocl_ttasim_uninit;

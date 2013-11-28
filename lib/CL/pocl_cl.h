@@ -196,7 +196,7 @@ struct pocl_argument {
 };
 
 struct pocl_device_ops {
-  char *short_name;
+  char *device_name;
   void (*init_device_infos) (struct _cl_device_id*);
   /* implementation */
   void (*uninit) (cl_device_id device);
