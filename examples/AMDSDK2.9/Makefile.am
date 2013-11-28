@@ -30,7 +30,7 @@ AMD-APP-SDK-v2.9-RC-lnx64.tgz:
 
 EXTRA_DIST = *.patch
 
-if TEST_SUITE_AMD
+if TEST_SUITE_AMDSDK2_9
 testsuite_pocl_dir=${abs_top_srcdir}/examples/AMDSDK2.9
 testsuite_src_dir=${testsuite_pocl_dir}/AMD-APP-SDK-v2.9-RC-lnx64
 amd_app_dir=$(testsuite_src_dir)/samples/opencl/
