@@ -121,6 +121,14 @@ namespace vecmathlib {
     return ifthen(x<RV(0.0), vml_antitrunc(x), trunc(x));
   }
   
+  // Round to nearest integer, breaking ties using prevailing rounding
+  // mode (default: round to even), returning an integer
+  template<typename realvec_t>
+  typename realvec_t::intvec_t mathfuncs<realvec_t>::vml_lrint(realvec_t x)
+  {
+    return convert_int(rint(x));
+  }
+  
   // Round to nearest integer, breaking ties away from zero
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_round(realvec_t x)

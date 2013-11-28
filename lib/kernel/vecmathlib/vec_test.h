@@ -8,6 +8,9 @@
 #include "vec_base.h"
 
 #include <cmath>
+#ifndef VML_NO_IOSTREAM
+#  include <sstream>
+#endif
 
 
 
@@ -417,6 +420,7 @@ namespace vecmathlib {
     typedef real_t vector_t[size];
     static int const alignment = sizeof(real_t);
     
+#ifndef VML_NO_IOSTREAM
     static char const* name()
     {
       static std::string name_;
@@ -427,6 +431,7 @@ namespace vecmathlib {
       }
       return name_.c_str();
     }
+#endif
     void barrier()
     {
 #if defined __GNUC__ && !defined __clang__ && !defined __ICC
@@ -722,6 +727,11 @@ namespace vecmathlib {
     realvec_t log10() const { return MF::vml_log10(*this); }
     realvec_t log1p() const { return MF::vml_log1p(*this); }
     realvec_t log2() const { return MF::vml_log2(*this); }
+    intvec_t lrint() const { return MF::vml_lrint(*this); }
+    realvec_t mad(realvec_t y, realvec_t z) const
+    {
+      return MF::vml_mad(*this, y, z);
+    }
     realvec_t nextafter(realvec_t y) const
     {
       return MF::vml_nextafter(*this, y);
@@ -1324,6 +1334,20 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
+  inline inttestvec<real_t, size> lrint(realtestvec<real_t, size> x)
+  {
+    return x.lrint();
+  }
+  
+  template<typename real_t, int size>
+  inline realtestvec<real_t, size> mad(realtestvec<real_t, size> x,
+                                       realtestvec<real_t, size> y,
+                                       realtestvec<real_t, size> z)
+  {
+    return x.mad(y, z);
+  }
+  
+  template<typename real_t, int size>
   inline realtestvec<real_t, size> nextafter(realtestvec<real_t, size> x,
                                              realtestvec<real_t, size> y)
   {
@@ -1412,6 +1436,7 @@ namespace vecmathlib {
   
   
   
+#ifndef VML_NO_IOSTREAM
   template<typename real_t, int size>
   std::ostream& operator<<(std::ostream& os,
                            booltestvec<real_t, size> const& x)
@@ -1450,6 +1475,7 @@ namespace vecmathlib {
     os << "]";
     return os;
   }
+#endif
   
 } // namespace vecmathlib
 

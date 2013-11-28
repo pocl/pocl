@@ -11,7 +11,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <sstream>
+#ifndef VML_NO_IOSTREAM
+#  include <sstream>
+#endif
 #include <string>
 
 
@@ -250,7 +252,9 @@ namespace vecmathlib {
     {
       intvec_t res;
       for (int d=0; d<size; ++d) {
-        res.set_elt(d, builtin_clz(U((*this)[d])));
+        int_t val = (*this)[d];
+        int_t cnt = val == 0 ? CHAR_BIT * sizeof val : builtin_clz(U(val));
+        res.set_elt(d, cnt);
       }
       return res;
     }
@@ -320,6 +324,7 @@ namespace vecmathlib {
     static_assert(size * sizeof(real_t) == sizeof(vector_t),
                   "vector size is wrong");
     
+#ifndef VML_NO_IOSTREAM
     static const char* name()
     {
       static std::string name_;
@@ -331,6 +336,7 @@ namespace vecmathlib {
       return name_.c_str();
     }
     void barrier() { volatile vector_t x __attribute__((__unused__)) = v; }
+#endif
     
     typedef boolbuiltinvec<real_t, size> boolvec_t;
     typedef intbuiltinvec<real_t, size> intvec_t;
@@ -686,6 +692,19 @@ namespace vecmathlib {
     realvec_t log10() const { return map(builtin_log10); }
     realvec_t log1p() const { return map(builtin_log1p); }
     realvec_t log2() const { return map(builtin_log2); }
+    intvec_t lrint() const
+    {
+      if (sizeof(int_t) <= sizeof(long)) {
+        return map(builtin_lrint);
+      } else if (sizeof(int_t) <= sizeof(long long)) {
+        return map(builtin_llrint);
+      }
+      __builtin_unreachable();
+    }
+    realvec_t mad(realvec_t y, realvec_t z) const
+    {
+      return MF::vml_mad(*this, y, z);
+    }
     realvec_t nextafter(realvec_t y) const { return map(builtin_nextafter, y); }
     realvec_t pow(realvec_t y) const { return map(builtin_pow, y); }
     realvec_t rcp() const { return RV(1.0) / *this; }
@@ -1294,6 +1313,20 @@ namespace vecmathlib {
   }
   
   template<typename real_t, int size>
+  inline intbuiltinvec<real_t, size> lrint(realbuiltinvec<real_t, size> x)
+  {
+    return x.lrint();
+  }
+  
+  template<typename real_t, int size>
+  inline realbuiltinvec<real_t, size> mad(realbuiltinvec<real_t, size> x,
+                                          realbuiltinvec<real_t, size> y,
+                                          realbuiltinvec<real_t, size> z)
+  {
+    return x.mad(y, z);
+  }
+  
+  template<typename real_t, int size>
   inline realbuiltinvec<real_t, size> nextafter(realbuiltinvec<real_t, size> x,
                                                 realbuiltinvec<real_t, size> y)
   {
@@ -1382,6 +1415,7 @@ namespace vecmathlib {
   
   
   
+#ifndef VML_NO_IOSTREAM
   template<typename real_t, int size>
   std::ostream& operator<<(std::ostream& os,
                            boolbuiltinvec<real_t, size> const& x)
@@ -1420,6 +1454,7 @@ namespace vecmathlib {
     os << "]";
     return os;
   }
+#endif
   
 } // namespace vecmathlib
 

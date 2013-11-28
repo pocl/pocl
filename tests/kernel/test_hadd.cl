@@ -8,6 +8,12 @@
 // TESTING: rhadd
 // TESTING: sub_sat
 
+#if __clang_major__ == 3 && __clang_minor__ < 4
+typedef const char* string;     /* for backward compatibility */
+#else
+typedef constant char* string;
+#endif
+
 
 
 /* Safe-but-slow arithmetic that can handle larger numbers without
@@ -353,7 +359,7 @@ DEFINE_SAFE_2(ulong , long ))
     typedef SGTYPE sgtype;                                                  \
     typedef UGTYPE ugtype;                                                  \
     typedef SUGTYPE sugtype;                                                \
-    char const *const typename = #GTYPE;                                    \
+    string const typename = #GTYPE;                                         \
     const int vecsize = SIZE;                                               \
     BODY;                                                                   \
   }

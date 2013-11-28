@@ -4,6 +4,12 @@
    $ python3 test_convert_type.py > test_convert_type.cl
 */
 
+#if __clang_major__ == 3 && __clang_minor__ < 4
+typedef const char* string;     /* for backward compatibility */
+#else
+typedef constant char* string;
+#endif
+
 constant char char_values[6] = { 0, 1, CHAR_MIN, CHAR_MAX, CHAR_MIN / 2, CHAR_MAX / 2 };
 constant uchar uchar_values[6] = { 0, 1, 0, UCHAR_MAX, 0 / 2, UCHAR_MAX / 2 };
 constant short short_values[6] = { 0, 1, SHRT_MIN, SHRT_MAX, SHRT_MIN / 2, SHRT_MAX / 2 };
@@ -80,7 +86,7 @@ constant size_t double_values_length = sizeof(double_values) / sizeof(double_val
 #endif
 
 _CL_NOINLINE
-void compare_char_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -91,7 +97,7 @@ void compare_char_elements_char(char const* name, size_t sample, constant char* 
 }
 
 _CL_NOINLINE
-void compare_char_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -102,7 +108,7 @@ void compare_char_elements_uchar(char const* name, size_t sample, constant uchar
 }
 
 _CL_NOINLINE
-void compare_char_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -113,7 +119,7 @@ void compare_char_elements_short(char const* name, size_t sample, constant short
 }
 
 _CL_NOINLINE
-void compare_char_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -124,7 +130,7 @@ void compare_char_elements_ushort(char const* name, size_t sample, constant usho
 }
 
 _CL_NOINLINE
-void compare_char_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -135,7 +141,7 @@ void compare_char_elements_int(char const* name, size_t sample, constant int* or
 }
 
 _CL_NOINLINE
-void compare_char_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -148,7 +154,7 @@ void compare_char_elements_uint(char const* name, size_t sample, constant uint* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_char_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -163,7 +169,7 @@ void compare_char_elements_long(char const* name, size_t sample, constant long* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_char_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -176,7 +182,7 @@ void compare_char_elements_ulong(char const* name, size_t sample, constant ulong
 #endif
 
 _CL_NOINLINE
-void compare_char_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -189,7 +195,7 @@ void compare_char_elements_float(char const* name, size_t sample, constant float
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_char_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const char* expected, const char* actual, size_t n)
+void compare_char_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const char* expected, const char* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -202,7 +208,7 @@ void compare_char_elements_double(char const* name, size_t sample, constant doub
 #endif
 
 _CL_NOINLINE
-void compare_uchar_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -213,7 +219,7 @@ void compare_uchar_elements_char(char const* name, size_t sample, constant char*
 }
 
 _CL_NOINLINE
-void compare_uchar_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -224,7 +230,7 @@ void compare_uchar_elements_uchar(char const* name, size_t sample, constant ucha
 }
 
 _CL_NOINLINE
-void compare_uchar_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -235,7 +241,7 @@ void compare_uchar_elements_short(char const* name, size_t sample, constant shor
 }
 
 _CL_NOINLINE
-void compare_uchar_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -246,7 +252,7 @@ void compare_uchar_elements_ushort(char const* name, size_t sample, constant ush
 }
 
 _CL_NOINLINE
-void compare_uchar_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -257,7 +263,7 @@ void compare_uchar_elements_int(char const* name, size_t sample, constant int* o
 }
 
 _CL_NOINLINE
-void compare_uchar_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -270,7 +276,7 @@ void compare_uchar_elements_uint(char const* name, size_t sample, constant uint*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_uchar_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -285,7 +291,7 @@ void compare_uchar_elements_long(char const* name, size_t sample, constant long*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_uchar_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -298,7 +304,7 @@ void compare_uchar_elements_ulong(char const* name, size_t sample, constant ulon
 #endif
 
 _CL_NOINLINE
-void compare_uchar_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -311,7 +317,7 @@ void compare_uchar_elements_float(char const* name, size_t sample, constant floa
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_uchar_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const uchar* expected, const uchar* actual, size_t n)
+void compare_uchar_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const uchar* expected, const uchar* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -324,7 +330,7 @@ void compare_uchar_elements_double(char const* name, size_t sample, constant dou
 #endif
 
 _CL_NOINLINE
-void compare_short_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -335,7 +341,7 @@ void compare_short_elements_char(char const* name, size_t sample, constant char*
 }
 
 _CL_NOINLINE
-void compare_short_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -346,7 +352,7 @@ void compare_short_elements_uchar(char const* name, size_t sample, constant ucha
 }
 
 _CL_NOINLINE
-void compare_short_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -357,7 +363,7 @@ void compare_short_elements_short(char const* name, size_t sample, constant shor
 }
 
 _CL_NOINLINE
-void compare_short_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -368,7 +374,7 @@ void compare_short_elements_ushort(char const* name, size_t sample, constant ush
 }
 
 _CL_NOINLINE
-void compare_short_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -379,7 +385,7 @@ void compare_short_elements_int(char const* name, size_t sample, constant int* o
 }
 
 _CL_NOINLINE
-void compare_short_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -392,7 +398,7 @@ void compare_short_elements_uint(char const* name, size_t sample, constant uint*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_short_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -407,7 +413,7 @@ void compare_short_elements_long(char const* name, size_t sample, constant long*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_short_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -420,7 +426,7 @@ void compare_short_elements_ulong(char const* name, size_t sample, constant ulon
 #endif
 
 _CL_NOINLINE
-void compare_short_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -433,7 +439,7 @@ void compare_short_elements_float(char const* name, size_t sample, constant floa
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_short_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const short* expected, const short* actual, size_t n)
+void compare_short_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const short* expected, const short* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -446,7 +452,7 @@ void compare_short_elements_double(char const* name, size_t sample, constant dou
 #endif
 
 _CL_NOINLINE
-void compare_ushort_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -457,7 +463,7 @@ void compare_ushort_elements_char(char const* name, size_t sample, constant char
 }
 
 _CL_NOINLINE
-void compare_ushort_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -468,7 +474,7 @@ void compare_ushort_elements_uchar(char const* name, size_t sample, constant uch
 }
 
 _CL_NOINLINE
-void compare_ushort_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -479,7 +485,7 @@ void compare_ushort_elements_short(char const* name, size_t sample, constant sho
 }
 
 _CL_NOINLINE
-void compare_ushort_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -490,7 +496,7 @@ void compare_ushort_elements_ushort(char const* name, size_t sample, constant us
 }
 
 _CL_NOINLINE
-void compare_ushort_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -501,7 +507,7 @@ void compare_ushort_elements_int(char const* name, size_t sample, constant int* 
 }
 
 _CL_NOINLINE
-void compare_ushort_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -514,7 +520,7 @@ void compare_ushort_elements_uint(char const* name, size_t sample, constant uint
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ushort_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -529,7 +535,7 @@ void compare_ushort_elements_long(char const* name, size_t sample, constant long
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ushort_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -542,7 +548,7 @@ void compare_ushort_elements_ulong(char const* name, size_t sample, constant ulo
 #endif
 
 _CL_NOINLINE
-void compare_ushort_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -555,7 +561,7 @@ void compare_ushort_elements_float(char const* name, size_t sample, constant flo
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_ushort_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const ushort* expected, const ushort* actual, size_t n)
+void compare_ushort_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const ushort* expected, const ushort* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -568,7 +574,7 @@ void compare_ushort_elements_double(char const* name, size_t sample, constant do
 #endif
 
 _CL_NOINLINE
-void compare_int_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -579,7 +585,7 @@ void compare_int_elements_char(char const* name, size_t sample, constant char* o
 }
 
 _CL_NOINLINE
-void compare_int_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -590,7 +596,7 @@ void compare_int_elements_uchar(char const* name, size_t sample, constant uchar*
 }
 
 _CL_NOINLINE
-void compare_int_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -601,7 +607,7 @@ void compare_int_elements_short(char const* name, size_t sample, constant short*
 }
 
 _CL_NOINLINE
-void compare_int_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -612,7 +618,7 @@ void compare_int_elements_ushort(char const* name, size_t sample, constant ushor
 }
 
 _CL_NOINLINE
-void compare_int_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -623,7 +629,7 @@ void compare_int_elements_int(char const* name, size_t sample, constant int* ori
 }
 
 _CL_NOINLINE
-void compare_int_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -636,7 +642,7 @@ void compare_int_elements_uint(char const* name, size_t sample, constant uint* o
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_int_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -651,7 +657,7 @@ void compare_int_elements_long(char const* name, size_t sample, constant long* o
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_int_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -664,7 +670,7 @@ void compare_int_elements_ulong(char const* name, size_t sample, constant ulong*
 #endif
 
 _CL_NOINLINE
-void compare_int_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -677,7 +683,7 @@ void compare_int_elements_float(char const* name, size_t sample, constant float*
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_int_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const int* expected, const int* actual, size_t n)
+void compare_int_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const int* expected, const int* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -690,7 +696,7 @@ void compare_int_elements_double(char const* name, size_t sample, constant doubl
 #endif
 
 _CL_NOINLINE
-void compare_uint_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -701,7 +707,7 @@ void compare_uint_elements_char(char const* name, size_t sample, constant char* 
 }
 
 _CL_NOINLINE
-void compare_uint_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -712,7 +718,7 @@ void compare_uint_elements_uchar(char const* name, size_t sample, constant uchar
 }
 
 _CL_NOINLINE
-void compare_uint_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -723,7 +729,7 @@ void compare_uint_elements_short(char const* name, size_t sample, constant short
 }
 
 _CL_NOINLINE
-void compare_uint_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -734,7 +740,7 @@ void compare_uint_elements_ushort(char const* name, size_t sample, constant usho
 }
 
 _CL_NOINLINE
-void compare_uint_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -745,7 +751,7 @@ void compare_uint_elements_int(char const* name, size_t sample, constant int* or
 }
 
 _CL_NOINLINE
-void compare_uint_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -758,7 +764,7 @@ void compare_uint_elements_uint(char const* name, size_t sample, constant uint* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_uint_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -773,7 +779,7 @@ void compare_uint_elements_long(char const* name, size_t sample, constant long* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_uint_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -786,7 +792,7 @@ void compare_uint_elements_ulong(char const* name, size_t sample, constant ulong
 #endif
 
 _CL_NOINLINE
-void compare_uint_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -799,7 +805,7 @@ void compare_uint_elements_float(char const* name, size_t sample, constant float
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_uint_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const uint* expected, const uint* actual, size_t n)
+void compare_uint_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const uint* expected, const uint* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -814,7 +820,7 @@ void compare_uint_elements_double(char const* name, size_t sample, constant doub
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -829,7 +835,7 @@ void compare_long_elements_char(char const* name, size_t sample, constant char* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -844,7 +850,7 @@ void compare_long_elements_uchar(char const* name, size_t sample, constant uchar
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -859,7 +865,7 @@ void compare_long_elements_short(char const* name, size_t sample, constant short
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -874,7 +880,7 @@ void compare_long_elements_ushort(char const* name, size_t sample, constant usho
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -889,7 +895,7 @@ void compare_long_elements_int(char const* name, size_t sample, constant int* or
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -904,7 +910,7 @@ void compare_long_elements_uint(char const* name, size_t sample, constant uint* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -919,7 +925,7 @@ void compare_long_elements_long(char const* name, size_t sample, constant long* 
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -934,7 +940,7 @@ void compare_long_elements_ulong(char const* name, size_t sample, constant ulong
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -951,7 +957,7 @@ void compare_long_elements_float(char const* name, size_t sample, constant float
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_long_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const long* expected, const long* actual, size_t n)
+void compare_long_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const long* expected, const long* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -968,7 +974,7 @@ void compare_long_elements_double(char const* name, size_t sample, constant doub
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -983,7 +989,7 @@ void compare_ulong_elements_char(char const* name, size_t sample, constant char*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -998,7 +1004,7 @@ void compare_ulong_elements_uchar(char const* name, size_t sample, constant ucha
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1013,7 +1019,7 @@ void compare_ulong_elements_short(char const* name, size_t sample, constant shor
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1028,7 +1034,7 @@ void compare_ulong_elements_ushort(char const* name, size_t sample, constant ush
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1043,7 +1049,7 @@ void compare_ulong_elements_int(char const* name, size_t sample, constant int* o
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1058,7 +1064,7 @@ void compare_ulong_elements_uint(char const* name, size_t sample, constant uint*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1073,7 +1079,7 @@ void compare_ulong_elements_long(char const* name, size_t sample, constant long*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1088,7 +1094,7 @@ void compare_ulong_elements_ulong(char const* name, size_t sample, constant ulon
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1105,7 +1111,7 @@ void compare_ulong_elements_float(char const* name, size_t sample, constant floa
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_ulong_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const ulong* expected, const ulong* actual, size_t n)
+void compare_ulong_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const ulong* expected, const ulong* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1120,7 +1126,7 @@ void compare_ulong_elements_double(char const* name, size_t sample, constant dou
 #endif
 
 _CL_NOINLINE
-void compare_float_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1131,7 +1137,7 @@ void compare_float_elements_char(char const* name, size_t sample, constant char*
 }
 
 _CL_NOINLINE
-void compare_float_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1142,7 +1148,7 @@ void compare_float_elements_uchar(char const* name, size_t sample, constant ucha
 }
 
 _CL_NOINLINE
-void compare_float_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1153,7 +1159,7 @@ void compare_float_elements_short(char const* name, size_t sample, constant shor
 }
 
 _CL_NOINLINE
-void compare_float_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1164,7 +1170,7 @@ void compare_float_elements_ushort(char const* name, size_t sample, constant ush
 }
 
 _CL_NOINLINE
-void compare_float_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1175,7 +1181,7 @@ void compare_float_elements_int(char const* name, size_t sample, constant int* o
 }
 
 _CL_NOINLINE
-void compare_float_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1188,7 +1194,7 @@ void compare_float_elements_uint(char const* name, size_t sample, constant uint*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_float_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1203,7 +1209,7 @@ void compare_float_elements_long(char const* name, size_t sample, constant long*
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_float_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1216,7 +1222,7 @@ void compare_float_elements_ulong(char const* name, size_t sample, constant ulon
 #endif
 
 _CL_NOINLINE
-void compare_float_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1229,7 +1235,7 @@ void compare_float_elements_float(char const* name, size_t sample, constant floa
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_float_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const float* expected, const float* actual, size_t n)
+void compare_float_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const float* expected, const float* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1244,7 +1250,7 @@ void compare_float_elements_double(char const* name, size_t sample, constant dou
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_char(char const* name, size_t sample, constant char* original_scalar, const char* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_char(string name, size_t sample, constant char* original_scalar, const char* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1259,7 +1265,7 @@ void compare_double_elements_char(char const* name, size_t sample, constant char
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_uchar(char const* name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_uchar(string name, size_t sample, constant uchar* original_scalar, const uchar* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1274,7 +1280,7 @@ void compare_double_elements_uchar(char const* name, size_t sample, constant uch
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_short(char const* name, size_t sample, constant short* original_scalar, const short* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_short(string name, size_t sample, constant short* original_scalar, const short* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1289,7 +1295,7 @@ void compare_double_elements_short(char const* name, size_t sample, constant sho
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_ushort(char const* name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_ushort(string name, size_t sample, constant ushort* original_scalar, const ushort* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1304,7 +1310,7 @@ void compare_double_elements_ushort(char const* name, size_t sample, constant us
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_int(char const* name, size_t sample, constant int* original_scalar, const int* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_int(string name, size_t sample, constant int* original_scalar, const int* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1319,7 +1325,7 @@ void compare_double_elements_int(char const* name, size_t sample, constant int* 
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_uint(char const* name, size_t sample, constant uint* original_scalar, const uint* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_uint(string name, size_t sample, constant uint* original_scalar, const uint* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1336,7 +1342,7 @@ void compare_double_elements_uint(char const* name, size_t sample, constant uint
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_double_elements_long(char const* name, size_t sample, constant long* original_scalar, const long* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_long(string name, size_t sample, constant long* original_scalar, const long* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1355,7 +1361,7 @@ void compare_double_elements_long(char const* name, size_t sample, constant long
 #ifdef cl_khr_int64
 
 _CL_NOINLINE
-void compare_double_elements_ulong(char const* name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_ulong(string name, size_t sample, constant ulong* original_scalar, const ulong* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1372,7 +1378,7 @@ void compare_double_elements_ulong(char const* name, size_t sample, constant ulo
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_float(char const* name, size_t sample, constant float* original_scalar, const float* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_float(string name, size_t sample, constant float* original_scalar, const float* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {
@@ -1387,7 +1393,7 @@ void compare_double_elements_float(char const* name, size_t sample, constant flo
 #ifdef cl_khr_fp64
 
 _CL_NOINLINE
-void compare_double_elements_double(char const* name, size_t sample, constant double* original_scalar, const double* original_array, const double* expected, const double* actual, size_t n)
+void compare_double_elements_double(string name, size_t sample, constant double* original_scalar, const double* original_array, const double* expected, const double* actual, size_t n)
 {
   for (size_t i = 0; i < n; ++i) {
     if (expected[i] != actual[i]) {

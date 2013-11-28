@@ -86,6 +86,7 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 
+# Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
@@ -102,7 +103,6 @@ case "$LLVM_VERSION" in
      3.4*)
      AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
      AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
-     NEW_PRINTF_WORKS=false
    ;;   
      *)
    AC_MSG_ERROR(
@@ -171,7 +171,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL,Piglit])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -179,6 +179,7 @@ enable_testsuite_viennacl=no
 enable_testsuite_rodinia=no
 enable_testsuite_parboil=no
 enable_testsuite_amd=no
+enable_testsuite_amdsdk2_9=no
 enable_testsuite_vexcl=no
 enable_testsuite_piglit=no
 if test x"$enable_testsuites" = xcheck ; then
@@ -199,6 +200,9 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64.tgz" ; then
     enable_testsuite_amd=yes
   fi
+  if test -f "$srcdir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64.tgz" ; then
+     enable_testsuite_amdsdk2_9=yes
+  fi
   if test -f "$srcdir/examples/VexCL/vexcl/README.md" ; then
     enable_testsuite_vexcl=yes
   fi
@@ -207,7 +211,7 @@ if test x"$enable_testsuites" = xcheck ; then
   fi  
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,VexCL,piglit"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -229,6 +233,7 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,AMD,*|*,amd,*], [
     enable_testsuite_amd=yes
+    enable_testsuite_amdsdk2_9=yes
   ])
 AS_CASE([,"$enable_testsuites",],
   [*,VexCL,*|*,vexcl,*], [
@@ -282,6 +287,18 @@ if test "$enable_testsuite_amd" = "yes" ; then
     ])
 fi
 
+if test "$enable_testsuite_amdsdk2_9" = "yes" ; then
+   # Check for software and sources for AMD APP SDK
+  if ! test -f "$srcdir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64.tgz"; then
+    AC_MSG_WARN([disabling AMD APP SDK testsuite as the 2.9 lnx64 package not in '$srcdir/examples/AMDSDK2.9'.])
+    enable_testsuite_amdsdk2_9=no
+  fi
+  PKG_CHECK_MODULES([SDL], [sdl >= 1.2], [:], 
+    [ AC_MSG_WARN([pkg-config could not find libSDL, AMD APP SDK 2.9 testsuite is not used ]) 
+      enable_testsuite_amdsdk2_9=no
+    ])
+fi
+
 if test "$enable_testsuite_vexcl" = "yes" ; then
   # Check for software and sources for VexCL
   if ! test -f "$srcdir/examples/VexCL/vexcl/README.md"; then
@@ -317,6 +334,7 @@ AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "$enable_testsuite_amdsdk2_9" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 
@@ -352,6 +370,12 @@ if test "$enable_testsuite_amd" = "yes"; then
   POAT_TESTSUITES="$POAT_TESTSUITES amd"
 else
   AC_MSG_NOTICE([tests from AMD APP SDK are disabled])
+fi
+if test "$enable_testsuite_amdsdk2_9" = "yes"; then
+  AC_MSG_NOTICE([tests from AMD APP SDK 2.9 are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES amdsdk2_9"
+else
+  AC_MSG_NOTICE([tests from AMD APP SDK 2.9 are disabled])
 fi
 if test "$enable_testsuite_vexcl" = "yes"; then
   AC_MSG_NOTICE([tests from VexCL are enabled])
@@ -728,6 +752,7 @@ HOST_LLC_FLAGS="-relocation-model=pic"
 HOST_LD_FLAGS="$LD_SHARED"
 
 
+
 # Targets.
 # This is the target architecture of the basic and pthreads devices.
 # These always are the same arch as host (in current pocl implementation).
@@ -770,7 +795,6 @@ test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
 AC_MSG_CHECKING([LLC host CPU])
 llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
 AC_MSG_RESULT($llc_host_cpu)
-test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 
 case $host_os in
   darwin* )
@@ -789,7 +813,6 @@ case $host_cpu in
   armv6l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=$host
     CL_DEVICE_ADDRESS_BITS=32
     case $host in
       *gnueabihf)
@@ -805,12 +828,14 @@ case $host_cpu in
     # check for gnueabihf, and set clang target accordingly
     case $host in
       armv7l*gnueabihf)
-         OCL_KERNEL_TARGET="armv7l-unknown-linux-gnueabihf"
+         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+         llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
       *)
-         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
-         OCL_KERNEL_TARGET="armv7";;
+         #this is for old arm distros (pre-hardfloat),
+         #probably not used, and kept here "just in case"
+         llc_triple="armv7";;
     esac
 
     # Assume -lm should not be used. TODO: add an embedded math lib
@@ -820,20 +845,18 @@ case $host_cpu in
   amd64|x86_64)
     AC_MSG_NOTICE([using the x86_64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=$host
     CL_DEVICE_ADDRESS_BITS=64
     ;;
   i?86)
     AC_MSG_NOTICE([using the x86 32bit optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=$host
     CL_DEVICE_ADDRESS_BITS=32
     ;;
  
   tce)
     AC_MSG_NOTICE([using the TCE optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET=tce-tut-llvm
+    llc_triple=tce-tut-llvm
     ;;
 
   powerpc64*)
@@ -842,7 +865,7 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET="powerpc64-unknown-linux-gnu"
+    llc_triple="powerpc64-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
@@ -854,7 +877,7 @@ case $host_cpu in
     #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
-    OCL_KERNEL_TARGET="powerpc-unknown-linux-gnu"
+    llc_triple="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
@@ -864,6 +887,10 @@ case $host_cpu in
     AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
 esac
+
+test -n "$HOST_CPU" && llc_host_cpu=$HOST_CPU 
+test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
+
 kernel_dir="host"
 OCL_TARGETS=$kernel_dir
 HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
@@ -873,8 +900,19 @@ then
   HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
 fi
-	
 
+# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
+# of Open CL C long is not 8 bytes 
+if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
+then
+    : # OpenCL C long is supported
+else
+    # AC_DEFINE needed for host code, HOST_CLANG_FLGAS for kernel code.
+    AC_DEFINE_UNQUOTED([_CL_DISABLE_LONG],[],[Disable cl_khr_int64 on host based devices.])
+    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
+fi
+rm -f ./-.s
+	
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])
@@ -894,8 +932,8 @@ AC_SUBST([HOST], [$host])
 AC_DEFINE_UNQUOTED([HOST], "$host", [The host triple.])
 AC_SUBST([HOST_CPU], [$host_cpu])
 AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
-AC_SUBST([OCL_KERNEL_TARGET],[$OCL_KERNEL_TARGET])
-AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$OCL_KERNEL_TARGET"], [The kernel target triplet.])
+AC_SUBST([OCL_KERNEL_TARGET],[$llc_triple])
+AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET], ["$llc_triple"], [The kernel target triplet.])
 AC_SUBST([OCL_KERNEL_TARGET_CPU],[$llc_host_cpu])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET_CPU], ["$llc_host_cpu"], [The kernel target CPU variant.])
 AC_SUBST([OCL_KERNEL_ARCH],[$OCL_KERNEL_ARCH])
@@ -920,15 +958,7 @@ AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
 
-# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
-# of Open CL C long is not 8 bytes 
-if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
-then
-    : # OpenCL C long is supported
-else
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
-fi
-rm -f ./-.s
+
 
 ####################################################################
 # Determine which device drivers to build.
@@ -1191,6 +1221,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Parboil/Makefile
                  examples/ViennaCL/Makefile
                  examples/AMD/Makefile
+                 examples/AMDSDK2.9/Makefile
                  examples/EinsteinToolkit/Makefile
                  examples/VexCL/Makefile
                  examples/piglit/Makefile

@@ -40,6 +40,7 @@ do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]CLFLAGS[@]|$(CLFLAGS)|g'			\
                -e 's|[@]FORCED_CLFLAGS[@]|$(FORCED_CLFLAGS)|g'		\
                -e 's|[@]LD_SHARED[@]|$(LD_SHARED)|g'			\
+               -e 's|[@]OCL_KERNEL_TARGET[@]|$(OCL_KERNEL_TARGET)|g'	\
                -e 's|[@]TARGET[@]|$(TARGET)|g'				\
                -e 's|[@]TARGET_CLANG_FLAGS[@]|$(TARGET_CLANG_FLAGS)|g'	\
                -e 's|[@]TARGET_LLC_FLAGS[@]|$(TARGET_LLC_FLAGS)|g'	\

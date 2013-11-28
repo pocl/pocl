@@ -94,8 +94,10 @@ namespace std { class type_info; }
 // useful as fallback)
 #include "vec_pseudo.h"
 
+#ifdef __clang__
 // Use compiler-provided vector types
-#include "vec_builtin.h"
+#  include "vec_builtin.h"
+#endif
 
 // Scalarise all vector operations; don't use libm, use only
 // Vecmathlib's functions (mostly useful for testing Vecmathlib)
@@ -217,23 +219,23 @@ namespace vecmathlib {
 #endif
   
 #ifdef VECMATHLIB_MAX_FLOAT_VECSIZE
-  typedef realvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE> float_vec;
-  typedef intvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE>  int_vec;
-  typedef boolvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE> bool_float_vec;
+  typedef realvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE> float32_vec;
+  typedef intvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE>  int32_vec;
+  typedef boolvec<float,VECMATHLIB_MAX_FLOAT_VECSIZE> bool32_vec;
 #else
-  typedef realpseudovec<float,1> float_vec;
-  typedef intpseudovec<float,1>  int_vec;
-  typedef boolpseudovec<float,1> bool_float_vec;
+  typedef realpseudovec<float,1> float32_vec;
+  typedef intpseudovec<float,1>  int32_vec;
+  typedef boolpseudovec<float,1> bool32_vec;
 #endif
   
 #ifdef VECMATHLIB_MAX_DOUBLE_VECSIZE
-  typedef realvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE> double_vec;
-  typedef intvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE>  long_vec;
-  typedef boolvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE> bool_double_vec;
+  typedef realvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE> float64_vec;
+  typedef intvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE>  int64_vec;
+  typedef boolvec<double,VECMATHLIB_MAX_DOUBLE_VECSIZE> bool64_vec;
 #else
-  typedef realpseudovec<double,1> double_vec;
-  typedef intpseudovec<double,1>  long_vec;
-  typedef boolpseudovec<double,1> bool_double_vec;
+  typedef realpseudovec<double,1> float64_vec;
+  typedef intpseudovec<double,1>  int64_vec;
+  typedef boolpseudovec<double,1> bool64_vec;
 #endif
 }
 

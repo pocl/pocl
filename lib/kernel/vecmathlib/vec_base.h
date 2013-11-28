@@ -3,6 +3,10 @@
 #ifndef VEC_BASE_H
 #define VEC_BASE_H
 
+#ifndef VML_NO_IOSTREAM
+#  include <iostream>
+#endif
+
 #include "vec_mask.h"
 
 
@@ -515,6 +519,20 @@ namespace vecmathlib {
   {
     return x.log2();
   }
+    
+  template<typename real_t, int size>
+  inline intvec<real_t, size> lrint(realvec<real_t, size> x)
+  {
+    return x.lrint();
+  }
+
+  template<typename real_t, int size>
+  inline realvec<real_t, size> mad(realvec<real_t, size> x,
+                                   realvec<real_t, size> y,
+                                   realvec<real_t, size> z)
+  {
+    return x.mad(y, z);
+  }
   
   template<typename real_t, int size>
   inline realvec<real_t, size> nextafter(realvec<real_t, size> x,
@@ -605,6 +623,7 @@ namespace vecmathlib {
   
   
   
+#ifndef VML_NO_IOSTREAM
   template<typename real_t, int size>
   std::ostream& operator<<(std::ostream& os, boolvec<real_t, size> const& x)
   {
@@ -640,6 +659,7 @@ namespace vecmathlib {
     os << "]";
     return os;
   }
+#endif
   
 } // namespace vecmathlib
 

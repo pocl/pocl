@@ -25,7 +25,90 @@
 // Make the C99 printf visible again
 #undef printf
 
+
+
+// Define the OpenCL C types
+// TODO: Include the relevant header files instead
+
+typedef __fp16 half;
+
+typedef char char2  __attribute__((__ext_vector_type__(2)));
+typedef char char3  __attribute__((__ext_vector_type__(3)));
+typedef char char4  __attribute__((__ext_vector_type__(4)));
+typedef char char8  __attribute__((__ext_vector_type__(8)));
+typedef char char16 __attribute__((__ext_vector_type__(16)));
+
+typedef uchar uchar2  __attribute__((__ext_vector_type__(2)));
+typedef uchar uchar3  __attribute__((__ext_vector_type__(3)));
+typedef uchar uchar4  __attribute__((__ext_vector_type__(4)));
+typedef uchar uchar8  __attribute__((__ext_vector_type__(8)));
+typedef uchar uchar16 __attribute__((__ext_vector_type__(16)));
+
+typedef short short2  __attribute__((__ext_vector_type__(2)));
+typedef short short3  __attribute__((__ext_vector_type__(3)));
+typedef short short4  __attribute__((__ext_vector_type__(4)));
+typedef short short8  __attribute__((__ext_vector_type__(8)));
+typedef short short16 __attribute__((__ext_vector_type__(16)));
+
+typedef ushort ushort2  __attribute__((__ext_vector_type__(2)));
+typedef ushort ushort3  __attribute__((__ext_vector_type__(3)));
+typedef ushort ushort4  __attribute__((__ext_vector_type__(4)));
+typedef ushort ushort8  __attribute__((__ext_vector_type__(8)));
+typedef ushort ushort16 __attribute__((__ext_vector_type__(16)));
+
+typedef int int2  __attribute__((__ext_vector_type__(2)));
+typedef int int3  __attribute__((__ext_vector_type__(3)));
+typedef int int4  __attribute__((__ext_vector_type__(4)));
+typedef int int8  __attribute__((__ext_vector_type__(8)));
+typedef int int16 __attribute__((__ext_vector_type__(16)));
+
+typedef uint uint2  __attribute__((__ext_vector_type__(2)));
+typedef uint uint3  __attribute__((__ext_vector_type__(3)));
+typedef uint uint4  __attribute__((__ext_vector_type__(4)));
+typedef uint uint8  __attribute__((__ext_vector_type__(8)));
+typedef uint uint16 __attribute__((__ext_vector_type__(16)));
+
+#ifdef cl_khr_int64
+typedef long long2  __attribute__((__ext_vector_type__(2)));
+typedef long long3  __attribute__((__ext_vector_type__(3)));
+typedef long long4  __attribute__((__ext_vector_type__(4)));
+typedef long long8  __attribute__((__ext_vector_type__(8)));
+typedef long long16 __attribute__((__ext_vector_type__(16)));
+
+typedef ulong ulong2  __attribute__((__ext_vector_type__(2)));
+typedef ulong ulong3  __attribute__((__ext_vector_type__(3)));
+typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
+typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
+typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
+#endif
+
+#ifdef cl_khr_fp16
+typedef half half2  __attribute__((__ext_vector_type__(2)));
+typedef half half3  __attribute__((__ext_vector_type__(3)));
+typedef half half4  __attribute__((__ext_vector_type__(4)));
+typedef half half8  __attribute__((__ext_vector_type__(8)));
+typedef half half16 __attribute__((__ext_vector_type__(16)));
+#endif
+
+typedef float float2  __attribute__((__ext_vector_type__(2)));
+typedef float float3  __attribute__((__ext_vector_type__(3)));
+typedef float float4  __attribute__((__ext_vector_type__(4)));
+typedef float float8  __attribute__((__ext_vector_type__(8)));
+typedef float float16 __attribute__((__ext_vector_type__(16)));
+
+#ifdef cl_khr_fp64
+typedef double double2  __attribute__((__ext_vector_type__(2)));
+typedef double double3  __attribute__((__ext_vector_type__(3)));
+typedef double double4  __attribute__((__ext_vector_type__(4)));
+typedef double double8  __attribute__((__ext_vector_type__(8)));
+typedef double double16 __attribute__((__ext_vector_type__(16)));
+#endif
+
+
+
+#include <limits.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 // We implement the OpenCL printf by calling the C99 printf. This is
 // not very efficient, but is easy to implement.

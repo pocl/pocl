@@ -637,6 +637,10 @@ namespace vecmathlib {
     realvec_t log10() const { return MF::vml_log10(*this); }
     realvec_t log1p() const { return MF::vml_log1p(*this); }
     realvec_t log2() const { return MF::vml_log2(*this); }
+    realvec_t mad(realvec_t y, realvec_t z) const
+    {
+      return MF::vml_mad(*this, y, z);
+    }
     realvec_t nextafter(realvec_t y) const
     {
       return MF::vml_nextafter(*this, y);

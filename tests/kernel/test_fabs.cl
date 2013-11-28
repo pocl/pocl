@@ -6,6 +6,12 @@
 // TESTING: isnormal
 // TESTING: signbit
 
+#if __clang_major__ == 3 && __clang_minor__ < 4
+typedef const char* string;     /* for backward compatibility */
+#else
+typedef constant char* string;
+#endif
+
 #define IMPLEMENT_BODY_V(NAME, BODY, SIZE, VTYPE, STYPE, JTYPE, SJTYPE) \
   void NAME##_##VTYPE()                                                 \
   {                                                                     \
@@ -13,7 +19,7 @@
     typedef STYPE stype;                                                \
     typedef JTYPE jtype;                                                \
     typedef SJTYPE sjtype;                                              \
-    const char * const typename = #VTYPE;                               \
+    string const typename = #VTYPE;                                     \
     const int vecsize = SIZE;                                           \
     BODY;                                                               \
   }

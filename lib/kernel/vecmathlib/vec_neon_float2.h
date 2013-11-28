@@ -496,10 +496,9 @@ namespace vecmathlib {
       // return vrndm_f32(v);
       return MF::vml_floor(*this);
     }
-    realvec fma(realvec y, realvec z) const
+    realvec_t fma(realvec_t y, realvec_t z) const
     {
-      // TODO: vfma_f32
-      return vmla_f32(z.v, v, y.v);
+      return vfma_f32(z.v, v, y.v);
     }
     realvec fmax(realvec y) const { return vmax_f32(v, y.v); }
     realvec fmin(realvec y) const { return vmin_f32(v, y.v); }
@@ -517,6 +516,11 @@ namespace vecmathlib {
     realvec log10() const { return MF::vml_log10(*this); }
     realvec log1p() const { return MF::vml_log1p(*this); }
     realvec log2() const { return MF::vml_log2(*this); }
+    realvec_t mad(realvec_t y, realvec_t z) const
+    {
+      // TODO: vfma_f32
+      return vmla_f32(z.v, v, y.v);
+    }
     realvec nextafter(realvec y) const { return MF::vml_nextafter(*this, y); }
     realvec pow(realvec y) const { return MF::vml_pow(*this, y); }
     realvec rcp() const

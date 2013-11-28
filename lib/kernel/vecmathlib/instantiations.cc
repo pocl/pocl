@@ -3,6 +3,8 @@
 
 #define VML_NODEBUG
 
+#define restrict __restrict__
+
 #include "vecmathlib.h"
 
 
@@ -168,8 +170,8 @@ void loop_add_aligned(real *restrict a,
 // Reduction loop
 extern "C"
 real loop_dot_reduce(real *restrict a,
-                       real *restrict b,
-                       ptrdiff_t n)
+                     real *restrict b,
+                     ptrdiff_t n)
 {
   realV sumV = 0.0;
   for (ptrdiff_t i=0; i<n; i+=vecsize) {

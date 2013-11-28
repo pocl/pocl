@@ -1166,9 +1166,10 @@ struct vecmathlib_test {
     return vml_std::ilogb(x);
   }
   static real_t local_ldexp(real_t x, int_t n) { return ldexp(x, n); }
+  static real_t local_mad(real_t x, real_t y, real_t z) { return x*y+z; }
   static void test_fabs()
   {
-    cout << "   testing + - + - * == != < <= > >= copysign fabs fdim fma fmax fmin frexp ilogb isfinite isinf isnan isnormal ldexp nextafter signbit...\n" << flush;
+    cout << "   testing + - + - * == != < <= > >= copysign fabs fdim fma fmax fmin frexp ilogb isfinite isinf isnan isnormal ldexp mad nextafter signbit...\n" << flush;
     
     const real_t eps = FP::epsilon();
     const real_t int_min = R(std::numeric_limits<int_t>::min());
@@ -1295,6 +1296,9 @@ struct vecmathlib_test {
 #endif
       check_real<RV,I>("ldexp", local_ldexp, vecmathlib::ldexp, x, n[0], 0.0);
       check_real<RV,IV>("ldexp", local_ldexp, vecmathlib::ldexp, x, n, 0.0);
+      check_real<RV,RV,RV>("mad",
+                           local_mad, vecmathlib::mad,
+                           x, y, z, R(10.0)*accuracy());
       check_real<RV,RV>("nextafter",
                         vml_std::nextafter, vecmathlib::nextafter, x, y, 0.0);
       check_bool<RV>("signbit", vml_std::signbit, vecmathlib::signbit, x);
@@ -1387,6 +1391,11 @@ struct vecmathlib_test {
       check_real<RV>("floor", vml_std::floor, vecmathlib::floor, fn2, accuracy());
       check_real<RV>("floor", vml_std::floor, vecmathlib::floor, fn1h, accuracy());
       check_real<RV>("floor", vml_std::floor, vecmathlib::floor, fn2h, accuracy());
+      // check_int<RV>("lrint", vml_std::lrint, vecmathlib::rint, x, accuracy());
+      // check_int<RV>("lrint", vml_std::lrint, vecmathlib::rint, fn1, accuracy());
+      // check_int<RV>("lrint", vml_std::lrint, vecmathlib::rint, fn2, accuracy());
+      // check_int<RV>("lrint", vml_std::lrint, vecmathlib::rint, fn1h, accuracy());
+      // check_int<RV>("lrint", vml_std::lrint, vecmathlib::rint, fn2h, accuracy());
       check_real<RV>("rint", vml_std::rint, vecmathlib::rint, x, accuracy());
       check_real<RV>("rint", vml_std::rint, vecmathlib::rint, fn1, accuracy());
       check_real<RV>("rint", vml_std::rint, vecmathlib::rint, fn2, accuracy());
@@ -1617,57 +1626,75 @@ int main(int argc, char** argv)
        << flush;
   
   vecmathlib_test<realpseudovec<float,1> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<float,1> >::test();
+#endif
   vecmathlib_test<realtestvec<float,1> >::test();
 #ifdef VECMATHLIB_HAVE_VEC_FLOAT_1
   vecmathlib_test<realvec<float,1> >::test();
 #endif
   vecmathlib_test<realpseudovec<float,2> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<float,2> >::test();
+#endif
   vecmathlib_test<realtestvec<float,2> >::test();
 #ifdef VECMATHLIB_HAVE_VEC_FLOAT_2
   vecmathlib_test<realvec<float,2> >::test();
 #endif
   vecmathlib_test<realpseudovec<float,4> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<float,4> >::test();
+#endif
   vecmathlib_test<realtestvec<float,4> >::test();
 #ifdef VECMATHLIB_HAVE_VEC_FLOAT_4
   vecmathlib_test<realvec<float,4> >::test();
 #endif
 #ifdef VECMATHLIB_HAVE_VEC_FLOAT_8
   vecmathlib_test<realpseudovec<float,8> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<float,8> >::test();
+#endif
   vecmathlib_test<realtestvec<float,8> >::test();
   vecmathlib_test<realvec<float,8> >::test();
 #endif
 #ifdef VECMATHLIB_HAVE_VEC_FLOAT_16
   vecmathlib_test<realpseudovec<float,16> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<float,16> >::test();
+#endif
   vecmathlib_test<realtestvec<float,16> >::test();
   vecmathlib_test<realvec<float,16> >::test();
 #endif
   
   vecmathlib_test<realpseudovec<double,1> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<double,1> >::test();
+#endif
   vecmathlib_test<realtestvec<double,1> >::test();
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_1
   vecmathlib_test<realvec<double,1> >::test();
 #endif
   vecmathlib_test<realpseudovec<double,2> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<double,2> >::test();
+#endif
   vecmathlib_test<realtestvec<double,2> >::test();
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_2
   vecmathlib_test<realvec<double,2> >::test();
 #endif
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_4
   vecmathlib_test<realpseudovec<double,4> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<double,4> >::test();
+#endif
   vecmathlib_test<realtestvec<double,4> >::test();
   vecmathlib_test<realvec<double,4> >::test();
 #endif
 #ifdef VECMATHLIB_HAVE_VEC_DOUBLE_8
   vecmathlib_test<realpseudovec<double,8> >::test();
+#ifdef __clang__
   vecmathlib_test<realbuiltinvec<double,8> >::test();
+#endif
   vecmathlib_test<realtestvec<double,8> >::test();
   vecmathlib_test<realvec<double,8> >::test();
 #endif

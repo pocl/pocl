@@ -2018,18 +2018,28 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
 // shuffle2
 
 
-// Note: Using "const" instead of "constant", since string literals
-// are currently "const" instead of "constant".
-int _cl_printf(/*constant*/ const char* restrict format, ...)
-  __attribute__((format(printf, 1, 2)));
+#if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 4)
 
-#if ((__clang_major__ == 3) && (__clang_minor__ > 3)) && !defined (__TCE__)
-// this will be overridden in printf.cl by an OpenCL-compliant printf
-#define printf _cl_printf
-#else
-// The new printf requires Clang 3.4. Fall back to the libc one
-// if using an older version.
+// If Clang is too old, we just wrap the libc printf
+// Note: These older versions of Clang do not put string literals into
+// the "constant" address space, so we have to use "const" here.
+// Note: We cannot use __attribute__((format(printf, 1, 2))), since
+// this is confused about the difference between C long and OpenCL C
+// long.
 int printf(const char* restrict fmt, ...);
+
+#else
+
+// We provide our own printf
+// Note: We declare our printf as taking a constant format string, but
+// we implement it in C using a const format string (i.e. a format
+// string living in a different address space). This works only if all
+// address spaces are actually the same, e.g. on CPUs.
+// Note: We cannot use __attribute__((format(printf, 1, 2))), since
+// Clang doesn't support the OpenCL C format specifiers yet.
+int _cl_printf(constant char* restrict format, ...);
+#define printf _cl_printf
+
 #endif
 
 

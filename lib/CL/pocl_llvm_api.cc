@@ -56,6 +56,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
@@ -214,8 +215,12 @@ int call_pocl_build(cl_program program,
   la->AsmBlocks = true;  // -fasm (?)
 #endif
 
-  // -Wno-format
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+  /* configure.ac sets a a few host specific flags for pthreads and
+     basic devices. */
+  if (device->has_64bit_long == 0)
+    po.addMacroDef("_CL_DISABLE_LONG");
+
   po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
 
   std::string kernelh;
@@ -627,10 +632,6 @@ static PassManager& kernel_compiler_passes
     }
 
   Triple triple(device->llvm_target_triplet);
-#ifndef LLVM_3_2
-  StringMap<llvm::cl::Option*> opts;
-  llvm::cl::getRegisteredOptions(opts);
-#endif
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
   const bool first_initialization_call = kernel_compiler_passes.size() == 0;
@@ -653,13 +654,12 @@ static PassManager& kernel_compiler_passes
       initializeInstCombine(Registry);
       initializeInstrumentation(Registry);
       initializeTarget(Registry);
+    }
 
 #ifndef LLVM_3_2
-      llvm::cl::Option *O = opts["add-wi-metadata"];
-      O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
+  StringMap<llvm::cl::Option*> opts;
+  llvm::cl::getRegisteredOptions(opts);
 #endif
-
-    }
 
   PassManager *Passes = new PassManager();
 
@@ -674,6 +674,15 @@ static PassManager& kernel_compiler_passes
   if (module_data_layout != "")
     Passes->add(new DataLayout(module_data_layout));
  
+
+  /* Disables automated generation of libcalls from code patterns. 
+     TCE doesn't have a runtime linker which could link the libs later on.
+     Also the libcalls might be harmful for WG autovectorization where we 
+     want to try to vectorize the code it converts to e.g. a memset or 
+     a memcpy */
+  TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
+  TLI->disableAllFunctions();
+  Passes->add(TLI);
 
   /* The kernel compiler passes to run, in order.
 
@@ -809,7 +818,12 @@ static PassManager& kernel_compiler_passes
 
   passes.push_back("STANDARD_OPTS");
   passes.push_back("instcombine");
-   
+
+#ifndef LLVM_3_2
+  llvm::cl::Option *O = opts["add-wi-metadata"];
+  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
+#endif
+ 
   // Now actually add the listed passes to the PassManager.
   for(unsigned i = 0; i < passes.size(); ++i)
     {
@@ -820,6 +834,7 @@ static PassManager& kernel_compiler_passes
           PassManagerBuilder Builder;
           Builder.OptLevel = 3;
           Builder.SizeLevel = 0;
+
 #if defined(LLVM_3_2) || defined(LLVM_3_3)
           // SimplifyLibCalls has been removed in LLVM 3.4.
           Builder.DisableSimplifyLibCalls = true;

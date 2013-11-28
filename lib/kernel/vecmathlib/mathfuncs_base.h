@@ -65,6 +65,7 @@ namespace vecmathlib {
     static realvec_t vml_convert_float(intvec_t x);
     static intvec_t vml_convert_int(realvec_t x);
     static realvec_t vml_floor(realvec_t x);
+    static intvec_t vml_lrint(realvec_t x);
     static realvec_t vml_rint(realvec_t x);
     static realvec_t vml_round(realvec_t x);
     static realvec_t vml_nextafter(realvec_t x, realvec_t y);
@@ -88,6 +89,7 @@ namespace vecmathlib {
     static boolvec_t vml_isnan(realvec_t x);
     static boolvec_t vml_isnormal(realvec_t x);
     static realvec_t vml_ldexp(realvec_t x, intvec_t n);
+    static realvec_t vml_mad(realvec_t x, realvec_t y, realvec_t z);
     static boolvec_t vml_signbit(realvec_t x);
     
     // exp
