@@ -130,7 +130,7 @@ CL_API_SUFFIX__VERSION_1_0
          the host memory. When the last argument is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
       
-      map = device->map_mem (device->data, 
+      map = device->ops->map_mem (device->data, 
                              image->device_ptrs[device->dev_id], 
                              offset, 0/*size*/, NULL);
     }

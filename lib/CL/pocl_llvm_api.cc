@@ -121,11 +121,11 @@ int call_pocl_build(cl_program program,
   // API TCE uses to include the custom op macros.
   std::stringstream ss;
 
-  if (device->init_build != NULL) 
+  if (device->ops->init_build != NULL) 
     {
       assert (device_tmpdir != NULL);
       char *device_switches = 
-        device->init_build (device->data, device_tmpdir);
+        device->ops->init_build (device->data, device_tmpdir);
       if (device_switches != NULL) 
         {
           ss << device_switches << " ";

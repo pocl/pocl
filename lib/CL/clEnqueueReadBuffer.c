@@ -110,7 +110,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
       POCL_UPDATE_EVENT_SUBMITTED;
       POCL_UPDATE_EVENT_RUNNING;
 
-      device->read (device->data, ptr, 
+      device->ops->read (device->data, ptr, 
                     buffer->device_ptrs[device->dev_id]+offset, cb);
 
       POCL_UPDATE_EVENT_COMPLETE;

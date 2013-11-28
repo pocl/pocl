@@ -52,7 +52,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           for (i = 0; i < memobj->context->num_devices; ++i)
             {
               device_id = memobj->context->devices[i];
-              device_id->free(device_id->data, memobj->flags, memobj->device_ptrs[device_id->dev_id]);
+              device_id->ops->free(device_id->data, memobj->flags, memobj->device_ptrs[device_id->dev_id]);
               memobj->device_ptrs[device_id->dev_id] = NULL;
             }
         } else 

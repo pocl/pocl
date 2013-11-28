@@ -64,6 +64,77 @@ size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 
 static void *pocl_ttasim_thread (void *p);
 
+void
+pocl_basic_init_device_ops(struct pocl_device_ops *ops)
+{
+  ops->device_name = "ttasim";
+
+  ops->init_device_infos = pocl_ttasim_init_device_infos;
+  ops->uninit = pocl_ttasim_uninit;
+  ops->init = pocl_ttasim_init;
+  ops->malloc = pocl_tce_malloc;
+  ops->create_sub_buffer = pocl_tce_create_sub_buffer;
+  ops->free = pocl_tce_free;
+  ops->read = pocl_tce_read;
+  ops->read_rect = pocl_tce_read_rect;
+  ops->write = pocl_tce_write;
+  ops->write_rect = pocl_tce_write_rect;
+  ops->copy = pocl_tce_copy;
+  ops->copy_rect = pocl_tce_copy_rect;
+  ops->map_mem = pocl_tce_map_mem;
+  ops->run = pocl_tce_run;
+  ops->get_timer_value = pocl_ttasim_get_timer_value;
+  ops->build_program = pocl_tce_build_program;
+  ops->build = pocl_tce_init_build;
+}
+
+
+void
+pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
+{
+  dev->type = CL_DEVICE_TYPE_GPU;
+  dev->max_compute_units = 1;
+  dev->max_work_item_dimensions = 3;
+  dev->max_work_item_sizes[0] = CL_INT_MAX;
+  dev->max_work_item_sizes[1] = CL_INT_MAX;
+  dev->max_work_item_sizes[2] = CL_INT_MAX;
+  dev->max_work_group_size = 8192;
+  dev->preferred_wg_size_multiple = 8;
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  /* TODO: figure out what the difference between preferred and native widths are. */
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  dev->max_clock_frequency = 100;
+  dev->image_support = CL_FALSE;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->global_mem_cache_type = CL_NONE;
+  dev->local_mem_type = CL_GLOBAL;
+  dev->error_correction_support = CL_FALSE;
+  dev->host_unified_memory = CL_FALSE;
+  dev->endian_little = CL_FALSE;
+  dev->available = CL_TRUE;
+  dev->compiler_available = CL_TRUE;
+  dev->execution_capabilities = CL_EXEC_KERNEL;
+  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  dev->vendor = "TTA-Based Co-design Environment";
+  dev->profile = "EMBEDDED_PROFILE";
+  dev->extensions = "";
+  dev->llvm_target_triplet = "tce-tut-llvm";
+  dev->has_64bit_long = 1;
+}
+
 
 class TTASimDevice : public TCEDevice {
 public:

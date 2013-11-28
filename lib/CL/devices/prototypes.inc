@@ -23,6 +23,8 @@
 
 #define GEN_PROTOTYPES(__DRV__)                                         \
   _Pragma ("GCC visibility push(hidden)")                               \
+  void pocl_##__DRV__##_init_device_infos(struct _cl_device_id* dev);  \
+  void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
   void pocl_##__DRV__##_init (cl_device_id device, const char* parameters); \
   void *pocl_##__DRV__##_malloc (void *data, cl_mem_flags flags,            \

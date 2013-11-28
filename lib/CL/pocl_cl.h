@@ -195,77 +195,9 @@ struct pocl_argument {
   void *value;
 };
 
-struct _cl_device_id {
-  POCL_ICD_OBJECT
-  POCL_OBJECT;
-  /* queries */
-  cl_device_type type;
-  cl_uint vendor_id;
-  cl_uint max_compute_units;
-  cl_uint max_work_item_dimensions;
-  size_t max_work_item_sizes[3];
-  size_t max_work_group_size;
-  size_t preferred_wg_size_multiple;
-  cl_uint preferred_vector_width_char;
-  cl_uint preferred_vector_width_short;
-  cl_uint preferred_vector_width_int;
-  cl_uint preferred_vector_width_long;
-  cl_uint preferred_vector_width_float;
-  cl_uint preferred_vector_width_double;
-  cl_uint preferred_vector_width_half;
-  cl_uint native_vector_width_char;
-  cl_uint native_vector_width_short;
-  cl_uint native_vector_width_int;
-  cl_uint native_vector_width_long;
-  cl_uint native_vector_width_float;
-  cl_uint native_vector_width_double;
-  cl_uint native_vector_width_half;
-  cl_uint max_clock_frequency;
-  cl_uint address_bits;
-  cl_ulong max_mem_alloc_size;
-  cl_bool image_support;
-  cl_uint max_read_image_args;
-  cl_uint max_write_image_args;
-  size_t image2d_max_width;
-  size_t image2d_max_height;
-  size_t image3d_max_width;
-  size_t image3d_max_height;
-  size_t image3d_max_depth;
-  size_t image_max_buffer_size;
-  size_t image_max_array_size;
-  cl_uint max_samplers;
-  size_t max_parameter_size;
-  cl_uint mem_base_addr_align;
-  cl_uint min_data_type_align_size;
-  cl_device_fp_config half_fp_config;
-  cl_device_fp_config single_fp_config;
-  cl_device_fp_config double_fp_config;
-  cl_device_mem_cache_type global_mem_cache_type;
-  cl_uint global_mem_cacheline_size;
-  cl_ulong global_mem_cache_size;
-  cl_ulong global_mem_size;
-  cl_ulong max_constant_buffer_size;
-  cl_uint max_constant_args;
-  cl_device_local_mem_type local_mem_type;
-  cl_ulong local_mem_size;
-  cl_bool error_correction_support;
-  cl_bool host_unified_memory;
-  size_t profiling_timer_resolution;
-  cl_bool endian_little;
-  cl_bool available;
-  cl_bool compiler_available;
-  cl_device_exec_capabilities execution_capabilities;
-  cl_command_queue_properties queue_properties;
-  cl_platform_id platform;
-  cl_device_partition_property device_partition_properties[1];
-  size_t printf_buffer_size;
-  char *short_name; 
-  char *long_name; 
-  char *vendor;
-  char *driver_version;
-  char *profile;
-  char *version;
-  char *extensions;
+struct pocl_device_ops {
+  char *device_name;
+  void (*init_device_infos) (struct _cl_device_id*);
   /* implementation */
   void (*uninit) (cl_device_id device);
   void (*init) (cl_device_id device, const char *parameters);
@@ -342,7 +274,81 @@ void (*fill_rect) (void *data,
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
                                          const cl_image_format **image_formats,
                                          cl_int *num_image_formats);
-  
+};
+
+struct _cl_device_id {
+  POCL_ICD_OBJECT
+  POCL_OBJECT;
+  /* queries */
+  cl_device_type type;
+  cl_uint vendor_id;
+  cl_uint max_compute_units;
+  cl_uint max_work_item_dimensions;
+  size_t max_work_item_sizes[3];
+  size_t max_work_group_size;
+  size_t preferred_wg_size_multiple;
+  cl_uint preferred_vector_width_char;
+  cl_uint preferred_vector_width_short;
+  cl_uint preferred_vector_width_int;
+  cl_uint preferred_vector_width_long;
+  cl_uint preferred_vector_width_float;
+  cl_uint preferred_vector_width_double;
+  cl_uint preferred_vector_width_half;
+  cl_uint native_vector_width_char;
+  cl_uint native_vector_width_short;
+  cl_uint native_vector_width_int;
+  cl_uint native_vector_width_long;
+  cl_uint native_vector_width_float;
+  cl_uint native_vector_width_double;
+  cl_uint native_vector_width_half;
+  cl_uint max_clock_frequency;
+  cl_uint address_bits;
+  cl_ulong max_mem_alloc_size;
+  cl_bool image_support;
+  cl_uint max_read_image_args;
+  cl_uint max_write_image_args;
+  size_t image2d_max_width;
+  size_t image2d_max_height;
+  size_t image3d_max_width;
+  size_t image3d_max_height;
+  size_t image3d_max_depth;
+  size_t image_max_buffer_size;
+  size_t image_max_array_size;
+  cl_uint max_samplers;
+  size_t max_parameter_size;
+  cl_uint mem_base_addr_align;
+  cl_uint min_data_type_align_size;
+  cl_device_fp_config half_fp_config;
+  cl_device_fp_config single_fp_config;
+  cl_device_fp_config double_fp_config;
+  cl_device_mem_cache_type global_mem_cache_type;
+  cl_uint global_mem_cacheline_size;
+  cl_ulong global_mem_cache_size;
+  cl_ulong global_mem_size;
+  cl_ulong max_constant_buffer_size;
+  cl_uint max_constant_args;
+  cl_device_local_mem_type local_mem_type;
+  cl_ulong local_mem_size;
+  cl_bool error_correction_support;
+  cl_bool host_unified_memory;
+  size_t profiling_timer_resolution;
+  cl_bool endian_little;
+  cl_bool available;
+  cl_bool compiler_available;
+  cl_device_exec_capabilities execution_capabilities;
+  cl_command_queue_properties queue_properties;
+  cl_platform_id platform;
+  cl_device_partition_property device_partition_properties[1];
+  size_t printf_buffer_size;
+  char *short_name;
+  char *long_name;
+
+  char *vendor;
+  char *driver_version;
+  char *profile;
+  char *version;
+  char *extensions;
+ 
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */
   const char* llvm_cpu; /* the llvm CPU variant to use */
@@ -350,6 +356,8 @@ void (*fill_rect) (void *data,
      indexing  arrays in data structures with device specific entries. */
   int dev_id;
   int has_64bit_long;  /* Does the device have 64bit longs */
+
+  struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
 };
 
 struct _cl_platform_id {
@@ -518,7 +526,7 @@ struct _cl_sampler {
         (*event)->status = CL_QUEUED;                                   \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_queue =                                        \
-            command_queue->device->get_timer_value(command_queue->device->data); \
+            command_queue->device->ops->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
@@ -530,7 +538,7 @@ struct _cl_sampler {
         (*event)->status = CL_SUBMITTED;                                \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_submit =                                       \
-            command_queue->device->get_timer_value(command_queue->device->data); \
+            command_queue->device->ops->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
@@ -542,7 +550,7 @@ struct _cl_sampler {
         (*event)->status = CL_RUNNING;                                  \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_start =                                        \
-            command_queue->device->get_timer_value(command_queue->device->data); \
+            command_queue->device->ops->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
@@ -554,7 +562,7 @@ struct _cl_sampler {
         (*event)->status = CL_COMPLETE;                                 \
         if (command_queue->properties & CL_QUEUE_PROFILING_ENABLE)      \
           (*event)->time_end =                                          \
-            command_queue->device->get_timer_value(command_queue->device->data); \
+            command_queue->device->ops->get_timer_value(command_queue->device->data); \
       }                                                                 \
   } while (0)                                                           \
 
