@@ -1,0 +1,7 @@
+Setting up AMD SDK 2.9 testsuite
+
+1) download AMD-APP-SDK-v2.9-lnx64.tgz to this folder
+
+2) reconfigure pocl
+
+3) amdsdk2.9 should appear in enabled testsuites list of configure

@@ -236,8 +236,8 @@ test_MatrixTranspose:
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/MatrixTranspose/bin/x86_64/Release/MatrixTranspose -e
 
 test_MemoryModel: 
-	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/MatrixTranspose/bin/x86_64/MemoryModel -e
+	cd $(amd_app_dir)cl/MemoryModel/bin/x86_64/Release && \
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./MemoryModel -e
 
 test_MemoryOptimizations: 
 	cd $(amd_app_dir) && \
