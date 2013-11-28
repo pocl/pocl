@@ -25,8 +25,8 @@
 
 AMD-APP-SDK-v2.9-RC-lnx64.tgz:
 	cd $(srcdir) && \
-	wget http://developer.amd.com.php53-23.ord1-1.websitetestlink.com/wordpress/media/2012/11/AMD-APP-SDK-v2.8-lnx64.tgz && \
-	tar xzf AMD-APP-SDK-v2.8-lnx64.tgz
+	wget http://developer.amd.com.php53-23.ord1-1.websitetestlink.com/wordpress/media/2012/11/AMD-APP-SDK-v2.9-lnx64.tgz && \
+	tar xzf AMD-APP-SDK-v2.9-lnx64.tgz
 
 EXTRA_DIST = *.patch
 
@@ -192,7 +192,7 @@ test_ImageBandwidth:
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors ./ImageBandwidth -e
 
 test_ImageOverlap: 
-	cd $(amd_app_dir)/ImageOverlap && \
+	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/ImageOverlap/bin/x86_64/Release/ImageOverlap -e
 
 test_IntroStaticCPPKernel:
@@ -237,8 +237,7 @@ test_MatrixTranspose:
 
 test_MemoryModel: 
 	cd $(amd_app_dir) && \
-	ln -sf $(amd_app_dir)/MemoryModel/MemoryModel_Kernels.cl $(amd_app_dir)/MemoryModel/build/debug/x86_64/ && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/MemoryModel -e
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/MatrixTranspose/bin/x86_64/MemoryModel -e
 
 test_MemoryOptimizations: 
 	cd $(amd_app_dir) && \

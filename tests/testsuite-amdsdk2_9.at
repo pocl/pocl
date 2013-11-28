@@ -189,7 +189,7 @@ AT_CHECK_UNQUOTED([make test_FastWalshTransform -sC $abs_top_builddir/examples/A
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([floydwarshall])
-AT_CHECK_UNQUOTED([make test_FloydWarshall -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([make test_FloydWarshall -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
@@ -208,7 +208,7 @@ POAT_AMDSDK_SETUP([fluidsimulation2d])
 # break with Intel OCL also.
 AT_XFAIL_IF(true)
 AT_KEYWORDS([cl_amd_fp64])
-AT_CHECK_UNQUOTED([make test_FluidSimulation2D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([make test_FluidSimulation2D -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ], ignore)
 AT_CLEANUP
@@ -274,7 +274,7 @@ AT_CLEANUP
 
 
 POAT_AMDSDK_SETUP([imageoverlap])
-AT_CHECK_UNQUOTED([make test_ImageOverlap -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([make test_ImageOverlap -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Verifying result - Passed!
 ])     
 AT_CLEANUP
@@ -359,13 +359,13 @@ AT_CHECK_UNQUOTED([make test_MatrixTranspose -sC $abs_top_builddir/examples/AMDS
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([memorymodel-repl])
-AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_MemoryModel -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_MemoryModel -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([memorymodel-loops])
-AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_MemoryModel -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_MemoryModel -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP

@@ -334,7 +334,7 @@ AM_CONDITIONAL([TEST_SUITE_VIENNACL], [test "$enable_testsuite_viennacl" = "yes"
 AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
-AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "enable_testsuite_amdsdk2_9" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "$enable_testsuite_amdsdk2_9" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 
