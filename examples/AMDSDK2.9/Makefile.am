@@ -23,11 +23,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-AMD-APP-SDK-v2.9-RC-lnx64.tgz:
-	cd $(srcdir) && \
-	wget http://developer.amd.com.php53-23.ord1-1.websitetestlink.com/wordpress/media/2012/11/AMD-APP-SDK-v2.9-lnx64.tgz && \
-	tar xzf AMD-APP-SDK-v2.9-lnx64.tgz
-
 EXTRA_DIST = *.patch
 
 if TEST_SUITE_AMDSDK2_9
