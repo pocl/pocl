@@ -590,7 +590,7 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
   return target;
 }
 
-const char* 
+char* 
 pocl_tce_init_build(void *data, const char *dev_tmpdir) 
 {
   TCEDevice *tce_dev = (TCEDevice*)data;
@@ -620,7 +620,7 @@ pocl_tce_init_build(void *data, const char *dev_tmpdir)
   std::string includeSwitch = 
     std::string("-fgnu-keywords -Dasm=__asm__ -include ") + devextHeaderFn;
   
-  const char *include_switch = strdup(includeSwitch.c_str());
+  char *include_switch = strdup(includeSwitch.c_str());
 
   return include_switch;
 }

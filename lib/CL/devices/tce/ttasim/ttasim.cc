@@ -26,6 +26,7 @@
 #include "bufalloc.h"
 #include "pocl_device.h"
 #include "pocl_util.h"
+#include "common.h"
 
 #include <assert.h>
 #include <string.h>
@@ -65,7 +66,7 @@ size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
 static void *pocl_ttasim_thread (void *p);
 
 void
-pocl_basic_init_device_ops(struct pocl_device_ops *ops)
+pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
 {
   ops->device_name = "ttasim";
 
@@ -85,7 +86,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->run = pocl_tce_run;
   ops->get_timer_value = pocl_ttasim_get_timer_value;
   ops->build_program = pocl_tce_build_program;
-  ops->build = pocl_tce_init_build;
+  ops->init_build = pocl_tce_init_build;
 }
 
 
