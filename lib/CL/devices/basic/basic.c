@@ -185,7 +185,7 @@ const cl_image_format supported_image_formats[] = {
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 {
-  ops->short_name = "basic";
+  ops->device_name = "basic";
 
   ops->init_device_infos = pocl_basic_init_device_infos;
   ops->uninit = pocl_basic_uninit;
