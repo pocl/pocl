@@ -33,7 +33,8 @@
 
 #endif
 #include <llvm/Transforms/Utils/ValueMapper.h>
-#include "llvm/Transforms/Utils/Cloning.h"
+#include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "TargetAddressSpaces.h"
 #include "Workgroup.h"
@@ -90,7 +91,7 @@ bool
 TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   std::string triple = M.getTargetTriple();
-  std::string arch = triple;
+  llvm::StringRef arch = triple;
   size_t dash = triple.find("-");
   if (dash != std::string::npos) {
     arch = triple.substr(0, dash);
@@ -104,6 +105,16 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
        an overhead and is not fully implemented.
     */
     return false; 
+  } else if (arch.startswith("arm")) {
+#if defined(LLVM_3_2) || defined(LLVM_3_3)
+    return false;
+#else
+    /* ARM chokes on the pointercasts in LLVM 3.4. */
+    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 
+      addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
+      addrSpaceMap[5] = 
+      addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
+#endif
   } else if (arch == "tce") {
     /* TCE requires the remapping. */
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
@@ -188,7 +199,9 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     funcReplacements[&F] = newFunc;
   }
   
-  /* Replace all references to the old function to the new one. */
+  /* Replace all references to the old function to the new one.
+     Also, for LLVM 3.4, replace the pointercasts to bitcasts in
+     case the new address spaces are the same in both sides. */
   llvm::Module::iterator fI = M.begin();
   llvm::Module::iterator fE = M.end();
   for (; fI != fE; ++fI) {
@@ -198,6 +211,28 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
       for (llvm::BasicBlock::iterator ii = bbi->begin(), ie = bbi->end(); ii != ie;
            ++ii) {
         llvm::Instruction *instr = ii;
+
+#if !(defined(LLVM_3_2) || defined(LLVM_3_3))
+        if (isa<AddrSpaceCastInst>(instr)) {
+          // Convert (now illegal) addresspacecasts to bitcasts.
+
+          // The old unconverted functions are still there, skip them.
+          if (instr->getOperand(0)->getType()->getPointerAddressSpace() !=
+              dyn_cast<CastInst>(instr)->getDestTy()->getPointerAddressSpace())
+            continue;
+
+          llvm::ReplaceInstWithInst
+          (instr, 
+           CastInst::CreatePointerCast
+           (instr->getOperand(0), dyn_cast<CastInst>(instr)->getDestTy()));
+
+          // Start from the beginning just in case the iterators have
+          // been invalidated.
+          ii = bbi->begin();
+          continue;
+        }
+#endif
+        
         if (!isa<CallInst>(instr)) continue;
         llvm::CallInst *call = dyn_cast<CallInst>(instr);
         llvm::Function *calledF = call->getCalledFunction();
@@ -207,11 +242,14 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
       }
   }
 
-  regenerate_kernel_metadata(M, funcReplacements);
-
   /* Delete the old functions. */
   for (FunctionMapping::iterator i = funcReplacements.begin(), 
          e = funcReplacements.end(); i != e; ++i) {
+    if (Workgroup::isKernelToProcess(*i->first)) {
+      FunctionMapping repl;
+      repl[i->first] = i->second;
+      regenerate_kernel_metadata(M, repl);
+    }
     i->first->eraseFromParent();
   }
 
