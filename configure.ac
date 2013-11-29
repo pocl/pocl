@@ -116,10 +116,10 @@ esac
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 #Temporary option to enable the switch from scripts to llvm API build
-use_llvm_api="no"
+use_llvm_api="yes"
 AC_ARG_ENABLE([llvmapi],
-              [AS_HELP_STRING([--enable-llvmapi], [Use LLVM via API, not scripts. (work in progress - do not use!)])],
-              [use_llvm_api="yes"])
+              [AS_HELP_STRING([--disable-llvmapi], [Use LLVM and Clang via the old shell scripts (deprecated, will be removed soon!)])],
+              [use_llvm_api="no"])
 if test "$use_llvm_api" = "yes"; then
   AC_DEFINE([USE_LLVM_API], [1], "Use LLVM via API, rather than scripts")
 fi
