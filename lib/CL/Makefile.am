@@ -168,8 +168,9 @@ libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST 
 libpocl_la_LIBADD += @LLVM_LIBS@ -lstdc++ -lm
-endif
+else
 libpocl_la_SOURCES += pocl_llvm.c
+endif
 
 if ! BUILD_ICD
 libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}
