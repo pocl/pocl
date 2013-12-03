@@ -32,6 +32,7 @@
 
 #include <libspe2.h>
 #include "pocl_device.h"
+#include "common.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
