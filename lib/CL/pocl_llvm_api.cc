@@ -925,7 +925,6 @@ int call_pocl_workgroup(cl_device_id device,
     {
       // TODO: vefify this is the correct place!
       kernellib = PKGDATADIR;
-      kernellib += KERNEL_DIR;
       kernellib += "/kernel-";
       kernellib += device->llvm_target_triplet;
       kernellib += ".bc";
