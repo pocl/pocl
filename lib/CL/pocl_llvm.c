@@ -79,9 +79,9 @@ int call_pocl_build(cl_program program,
 
   /* call the customized build command, if needed for the
      device driver */
-  if (device->build_program != NULL)
+  if (device->ops->build_program != NULL)
     {
-      error = device->build_program 
+      error = device->ops->build_program 
         (device->data, source_file_name, binary_file_name, 
          command, user_options, device_tmpdir);
     }

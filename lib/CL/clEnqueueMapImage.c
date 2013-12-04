@@ -122,6 +122,11 @@ CL_API_SUFFIX__VERSION_1_0
          the mapping area in the host memory. */   
       assert (image->mem_host_ptr != NULL);
       map = image->mem_host_ptr + offset;
+      device->ops->read_rect (device->data, map, image->device_ptrs[device->dev_id],
+                         origin, origin, region, 
+                         image->image_row_pitch, image->image_slice_pitch, 
+                         image->image_row_pitch, image->image_slice_pitch);
+      POCL_UPDATE_EVENT_COMPLETE;
     }
   else
     {
@@ -130,9 +135,10 @@ CL_API_SUFFIX__VERSION_1_0
          the host memory. When the last argument is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
       
-      map = device->map_mem (device->data, 
-                             image->device_ptrs[device->dev_id], 
-                             offset, 0/*size*/, NULL);
+      map = device->ops->map_mem 
+          (device->data, 
+           image->device_ptrs[device->dev_id], 
+           offset, 0/*size*/, NULL);
     }
 
   if (map == NULL)

@@ -131,7 +131,14 @@ main (int argc, char **argv)
   err = clEnqueueNDRangeKernel(cmd_queue, kernel, 3, NULL, 
 			       global_work_size, local_work_size,  
 			       0, NULL, NULL); 
-
+  if(err != CL_SUCCESS)
+    {
+       clReleaseKernel(kernel);
+       clReleaseProgram(program);
+       clReleaseCommandQueue(cmd_queue);
+       clReleaseContext(context);
+       return -1;
+    }
   clFinish(cmd_queue);
   clReleaseKernel(kernel); 
   clReleaseProgram(program); 

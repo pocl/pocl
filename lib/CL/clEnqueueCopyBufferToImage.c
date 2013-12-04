@@ -42,7 +42,7 @@ CL_API_SUFFIX__VERSION_1_0
     
   cl_device_id device_id = command_queue->device;
 
-  device_id->read
+  device_id->ops->read
     (device_id->data, 
      temp, 
      image->device_ptrs[device_id->dev_id], 

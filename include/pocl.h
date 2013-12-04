@@ -143,7 +143,7 @@ typedef struct
 {
   void *data;
   void *device_ptr;
-  const void *host_ptr;
+  void *host_ptr;
   size_t origin[3];
   size_t region[3];
   size_t rowpitch;

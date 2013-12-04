@@ -23,6 +23,8 @@
 
 #define GEN_PROTOTYPES(__DRV__)                                         \
   _Pragma ("GCC visibility push(hidden)")                               \
+  void pocl_##__DRV__##_init_device_infos(struct _cl_device_id* dev);  \
+  void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
   void pocl_##__DRV__##_init (cl_device_id device, const char* parameters); \
   void *pocl_##__DRV__##_malloc (void *data, cl_mem_flags flags,            \
@@ -79,7 +81,7 @@
                                     const char *default_cmd,           \
                                     const char *user_opts,             \
                                     const char *dev_tmpdir);           \
-  const char* pocl_##__DRV__##_init_build (void *data, \
+  char* pocl_##__DRV__##_init_build (void *data, \
                                          const char *dev_tmpdir); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\

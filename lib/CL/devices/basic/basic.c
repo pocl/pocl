@@ -183,6 +183,105 @@ const cl_image_format supported_image_formats[] = {
 
 
 void
+pocl_basic_init_device_ops(struct pocl_device_ops *ops)
+{
+  ops->device_name = "basic";
+
+  ops->init_device_infos = pocl_basic_init_device_infos;
+  ops->uninit = pocl_basic_uninit;
+  ops->init = pocl_basic_init;
+  ops->malloc = pocl_basic_malloc;
+  ops->free = pocl_basic_free;
+  ops->read = pocl_basic_read;
+  ops->read_rect = pocl_basic_read_rect;
+  ops->write = pocl_basic_write;
+  ops->write_rect = pocl_basic_write_rect;
+  ops->copy = pocl_basic_copy;
+  ops->copy_rect = pocl_basic_copy_rect;
+  ops->fill_rect = pocl_basic_fill_rect;
+  ops->map_mem = pocl_basic_map_mem;
+  ops->run = pocl_basic_run;
+  ops->run_native = pocl_basic_run_native;
+  ops->get_timer_value = pocl_basic_get_timer_value;
+  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+}
+
+void
+pocl_basic_init_device_infos(struct _cl_device_id* dev)
+{
+  dev->type = CL_DEVICE_TYPE_CPU;
+  dev->vendor_id = 0;
+  dev->max_compute_units = 1;
+  dev->max_work_item_dimensions = 3;
+  dev->max_work_item_sizes[0] = CL_INT_MAX;
+  dev->max_work_item_sizes[1] = CL_INT_MAX;
+  dev->max_work_item_sizes[2] = CL_INT_MAX;
+  dev->max_work_group_size = 1024;
+  dev->preferred_wg_size_multiple = 8;
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  /* TODO: figure out what the difference between preferred and native widths are */
+  dev->native_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->native_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->native_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->native_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->native_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->native_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  dev->max_clock_frequency = 0;
+  dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
+  dev->max_mem_alloc_size = 0;
+  dev->image_support = CL_TRUE;
+  dev->max_read_image_args = 0;
+  dev->max_write_image_args = 0;
+  dev->image2d_max_width = 0;
+  dev->image2d_max_height = 0;
+  dev->image3d_max_width = 0;
+  dev->image3d_max_height = 0;
+  dev->image3d_max_depth = 0;
+  dev->image_max_buffer_size = 0;
+  dev->image_max_array_size = 0;
+  dev->max_samplers = 0;
+  dev->max_parameter_size = 1024;
+  dev->mem_base_addr_align = 0;
+  dev->min_data_type_align_size = 0;
+  dev->half_fp_config = 0;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->global_mem_cache_type = CL_NONE;
+  dev->global_mem_cacheline_size = 0;
+  dev->global_mem_cache_size = 0;
+  dev->global_mem_size = 0;
+  dev->max_constant_buffer_size = 0;
+  dev->max_constant_args = 0;
+  dev->local_mem_type = CL_GLOBAL;
+  dev->local_mem_size = 0;
+  dev->error_correction_support = CL_FALSE;
+  dev->host_unified_memory = CL_TRUE;
+  dev->profiling_timer_resolution = 0;
+  dev->endian_little = !(WORDS_BIGENDIAN);
+  dev->available = CL_TRUE;
+  dev->compiler_available = CL_TRUE;
+  dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
+  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  dev->platform = 0;
+  dev->device_partition_properties[0] = 0;
+  dev->printf_buffer_size = 0;
+  dev->vendor = "pocl";
+  dev->profile = "FULL_PROFILE";
+  dev->extensions = "";
+  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+  dev->has_64bit_long = 1;
+}
+
+
+void
 pocl_basic_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
@@ -192,7 +291,6 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
   device->data = d;
-
   pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
 

@@ -61,7 +61,7 @@ CL_API_SUFFIX__VERSION_1_0
   for (i = 0; i < context->num_devices; ++i)
     {    
       device_id = context->devices[i];
-      errcode = device_id->get_supported_image_formats 
+      errcode = device_id->ops->get_supported_image_formats 
         (flags, dev_image_formats+i, dev_num_image_formats + i);
       
       if (errcode != CL_SUCCESS)

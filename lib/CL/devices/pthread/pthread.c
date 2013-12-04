@@ -100,6 +100,40 @@ static int get_max_thread_count();
 static void * workgroup_thread (void *p);
 
 void
+pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
+{
+  pocl_basic_init_device_ops(ops);
+
+  ops->device_name = "pthread";
+
+  /* implementation */
+  ops->init_device_infos = pocl_pthread_init_device_infos;
+  ops->uninit = pocl_pthread_uninit;
+  ops->init = pocl_pthread_init;
+  ops->malloc = pocl_pthread_malloc;
+  ops->free = pocl_pthread_free;
+  ops->read = pocl_pthread_read;
+  ops->write = pocl_pthread_write;
+  ops->copy = pocl_pthread_copy;
+  ops->copy_rect = pocl_pthread_copy_rect;
+  ops->run = pocl_pthread_run;
+}
+
+void
+pocl_pthread_init_device_infos(struct _cl_device_id* dev)
+{
+  pocl_basic_init_device_infos(dev);
+
+  dev->type = CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT;
+  /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */
+  /* and may avoid errors in user code that uses int instead of size_t */
+  dev->max_work_item_sizes[0] = 1024;
+  dev->max_work_item_sizes[1] = 1024;
+  dev->max_work_item_sizes[2] = 1024;
+
+}
+
+void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d;

@@ -146,9 +146,9 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
          structure instead of the actual buffer in memory, therefore
          call the device driver layer to produce the sub buffer
          reference */
-      if (device->create_sub_buffer != NULL)
+      if (device->ops->create_sub_buffer != NULL)
         mem->device_ptrs[device->dev_id] = 
-          device->create_sub_buffer
+          device->ops->create_sub_buffer
           (device->data, buffer->device_ptrs[device->dev_id], info->origin, info->size);
       else
         mem->device_ptrs[device->dev_id] = 
