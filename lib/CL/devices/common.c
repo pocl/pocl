@@ -100,7 +100,11 @@ llvm_codegen (const char* tmpdir) {
 #endif
 
       error = snprintf (command, COMMAND_LENGTH,
+#ifdef ASM_DRIVER_WORKAROUND
 			CLANG " -c -o %s.o %s " ADDITIONAL_CMD_STR,
+#else
+			CLANG " " HOST_CLANG_FLAGS " -c -o %s.o %s " ADDITIONAL_CMD_STR,
+#endif
 			module,
 			assembly);
       assert (error >= 0);
