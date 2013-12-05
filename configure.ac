@@ -823,15 +823,16 @@ case $host_cpu in
     ;;
   armv7l)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
-    #GNU as does not understand 'march=cortex-a8' that clang sends it
-    #HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -integrated-as"
     # check for gnueabihf, and set clang target accordingly
     case $host in
       armv7l*gnueabihf)
          #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
-         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard";;
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
+         #GNU as does not understand 'march=cortex-a8' that clang sends it
+         #alternative would be to pass -integrated-as as HOST_CLANG_FLAGS, but that is broken too on ARM
+         AC_DEFINE_UNQUOTED([ASM_DRIVER_WORKAROUND], [], [Workaround for clang driving GNU as on ARM]);;
       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
