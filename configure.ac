@@ -748,6 +748,7 @@ AC_MSG_RESULT($LD_SHARED)
 
 HOST_CLANG_FLAGS=""
 HOST_LLC_FLAGS="-relocation-model=pic"
+HOST_AS_FLAGS=""
 HOST_LD_FLAGS="$LD_SHARED"
 
 
@@ -816,8 +817,12 @@ case $host_cpu in
     case $host in
       *gnueabihf)
       case $llc_host_cpu in
-        arm1176jz-s) llc_host_cpu=arm1176jzf-s;;
-      esac;;
+        arm1176jz-s) 
+          llc_host_cpu=arm1176jzf-s;;
+      esac
+      HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
+      HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
+      HOST_AS_FLAGS="$HOST_AS_FLAGS -float-abi=hard";;
     esac
     ;;
   armv7l)
@@ -829,9 +834,7 @@ case $host_cpu in
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
-         #GNU as does not understand 'march=cortex-a8' that clang sends it
-         #alternative would be to pass -integrated-as as HOST_CLANG_FLAGS, but that is broken too on ARM
-         AC_DEFINE_UNQUOTED([ASM_DRIVER_WORKAROUND], [], [Workaround for clang driving GNU as on ARM]);;
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -float-abi=hard";;
       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
@@ -938,6 +941,7 @@ AC_SUBST([OCL_KERNEL_TARGET_CPU],[$llc_host_cpu])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_TARGET_CPU], ["$llc_host_cpu"], [The kernel target CPU variant.])
 AC_SUBST([OCL_KERNEL_ARCH],[$OCL_KERNEL_ARCH])
 AC_DEFINE_UNQUOTED([OCL_KERNEL_ARCH], ["$OCL_KERNEL_ARCH"], [The kernel architecture.])
+
 AC_ARG_VAR([HOST_CLANG_FLAGS],
            [Parameters to for host compilation.])
 AC_DEFINE_UNQUOTED([HOST_CLANG_FLAGS],
@@ -947,7 +951,10 @@ AC_ARG_VAR([HOST_LLC_FLAGS])
 AC_DEFINE_UNQUOTED([HOST_LLC_FLAGS],
                    ["$HOST_LLC_FLAGS"], 
                    [Parameters to llc for code generation in the host.])
-
+AC_ARG_VAR([HOST_AS_FLAGS])
+AC_DEFINE_UNQUOTED([HOST_AS_FLAGS],
+                   ["$HOST_AS_FLAGS"], 
+                   [Parameters to as for code generation in the host.])
 AC_SUBST([HOST_LD_FLAGS])
 AC_DEFINE_UNQUOTED([HOST_LD_FLAGS],
                    ["$HOST_LD_FLAGS"],

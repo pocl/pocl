@@ -72,9 +72,6 @@ llvm_codegen (const char* tmpdir) {
 			tmpdir);
       assert (error >= 0);
       
-      // "-relocation-model=dynamic-no-pic" is a magic string,
-      // I do not know why it has to be there to produce valid
-      // sos on x86_64
       error = snprintf (command, COMMAND_LENGTH,
 			LLC " " HOST_LLC_FLAGS " -o %s %s",
 			assembly,
@@ -88,23 +85,10 @@ llvm_codegen (const char* tmpdir) {
       error = system (command);
       assert (error == 0);
           
-      // For the pthread device, use device type is always the same as the host. 
-#if defined LLVM_3_2 || defined _CL_DISABLE_LONG
-// Clang 3.2 whines about the -march parameter even though it's used
-// for target-specific optimizations. Silence it here.
-// _CL_DISABLE_LONG is passed both on command line compiling, and in
-// HOST_CLANG_FLAGS, when compiling assembly, it is unused 
-#define ADDITIONAL_CMD_STR "2> /dev/null"
-#else
-#define ADDITIONAL_CMD_STR
-#endif
-
+      // For the pthread device, use device type is always the same as
+      // the host.
       error = snprintf (command, COMMAND_LENGTH,
-#ifdef ASM_DRIVER_WORKAROUND
-			CLANG " -c -o %s.o %s " ADDITIONAL_CMD_STR,
-#else
-			CLANG " " HOST_CLANG_FLAGS " -c -o %s.o %s " ADDITIONAL_CMD_STR,
-#endif
+			CLANG " " HOST_AS_FLAGS " -c -o %s.o %s ",
 			module,
 			assembly);
       assert (error >= 0);
