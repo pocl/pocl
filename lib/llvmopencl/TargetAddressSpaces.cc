@@ -106,15 +106,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     */
     return false; 
   } else if (arch.startswith("arm")) {
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
     return false;
-#else
-    /* ARM chokes on the pointercasts in LLVM 3.4. */
-    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 
-      addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
-      addrSpaceMap[5] = 
-      addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
-#endif
   } else if (arch == "tce") {
     /* TCE requires the remapping. */
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
