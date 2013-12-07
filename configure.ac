@@ -142,10 +142,9 @@ else
   LLVM_LIBS=-lLLVM-$LLVM_VERSION
 if test ! -e $LLVM_SHARED_LIB_FILE;
 then
-        AC_MSG_ERROR([
-$LLVM_SHARED_LIB_FILE not found. 
-Recompile and install LLVM after ./configure --enable-shared.
-Read the INSTALL file for details.])
+  LLVM_LIBS=$($LLVM_CONFIG --libs)
+  AC_MSG_NOTICE([
+$LLVM_SHARED_LIB_FILE not found. LLVM is built with cmake.])
 fi
 fi
 
