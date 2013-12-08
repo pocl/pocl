@@ -822,7 +822,7 @@ case $host_cpu in
       esac
       HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
       HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
-      HOST_AS_FLAGS="$HOST_AS_FLAGS -float-abi=hard";;
+      HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
     esac
     ;;
   armv7l)
@@ -834,7 +834,7 @@ case $host_cpu in
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
-         HOST_AS_FLAGS="$HOST_AS_FLAGS -float-abi=hard";;
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
