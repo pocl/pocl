@@ -304,7 +304,7 @@ WorkitemLoops::CreateLoopAround
   // We now have
   //   !1 = metadata !{metadata !1} <- self-referential root
 
-#ifdef LLVM_3_3
+#if defined(LLVM_3_3) || defined(LLVM_3_4)
   loopBranch->setMetadata("llvm.loop.parallel", Root);
 #else
   loopBranch->setMetadata("llvm.loop", Root);
