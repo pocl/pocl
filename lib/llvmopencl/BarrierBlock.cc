@@ -33,21 +33,7 @@
 using namespace llvm;
 using namespace pocl;
 
-static bool
-verify(const BasicBlock *B);
-
-bool
-BarrierBlock::classof(const BasicBlock *B)
-{
-  if ((B->size() == 2) &&
-      isa<Barrier> (&B->front())) {
-    assert(verify(B));
-    return true;
-  }
-
-  return false;
-}
-
+#ifndef NDEBUG
 static bool
 verify(const BasicBlock *B)
 {
@@ -69,5 +55,18 @@ verify(const BasicBlock *B)
   assert(isa<Barrier>(B->front()));
 
   return true;
+}
+#endif
+
+bool
+BarrierBlock::classof(const BasicBlock *B)
+{
+  if ((B->size() == 2) &&
+      isa<Barrier> (&B->front())) {
+    assert(verify(B));
+    return true;
+  }
+
+  return false;
 }
 

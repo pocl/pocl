@@ -74,12 +74,13 @@ Post-process object file:
    HOST_LD_FLAGS
 
 Fine-tune the host CPU:
-   HOST_CPU 
+   LLC_HOST_CPU 
     This overrides LLVM's autodetected host CPU at configure time. The CPU is used
     to fine-tune the host-based devices' ('basic' and 'pthread') kernel code.
     Useful when llc makes a mistake. See 'llvm-as < /dev/null -o - | llc -mcpu=help'
     for valid variables.
-
+    If the host cpu is "(unknown)", then "-march=" is not passed to clang, and 
+    "-mcpu=" is not passed to llc.
 
 
 

@@ -164,9 +164,9 @@ typedef pthread_mutex_t pocl_lock_t;
 
 #  define POname(name) PO##name
 #  define POdeclsym(name)			\
-  typeof(name) PO##name __attribute__((visibility("hidden")));
+  __typeof__(name) PO##name __attribute__((visibility("hidden")));
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
-  typeof(name) name __attribute__((alias ("PO" #name), visibility("default")));
+  __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 #  define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
 #  ifdef DIRECT_LINKAGE
 #    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)

@@ -142,10 +142,9 @@ else
   LLVM_LIBS=-lLLVM-$LLVM_VERSION
 if test ! -e $LLVM_SHARED_LIB_FILE;
 then
-        AC_MSG_ERROR([
-$LLVM_SHARED_LIB_FILE not found. 
-Recompile and install LLVM after ./configure --enable-shared.
-Read the INSTALL file for details.])
+  LLVM_LIBS=$($LLVM_CONFIG --libs)
+  AC_MSG_NOTICE([
+$LLVM_SHARED_LIB_FILE not found. LLVM is built with cmake.])
 fi
 fi
 
@@ -889,14 +888,14 @@ case $host_cpu in
     ;;
 esac
 
-test -n "$HOST_CPU" && llc_host_cpu=$HOST_CPU 
+test -n "$LLC_HOST_CPU" && llc_host_cpu=$LLC_HOST_CPU 
 test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 
 kernel_dir="host"
 OCL_TARGETS=$kernel_dir
 HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
 HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple"
-if test "$llc_host_cpu" != "(unknown)";
+if test "$llc_host_cpu" != "(unknown)"
 then
   HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
