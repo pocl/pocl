@@ -85,6 +85,7 @@ POAT_SAMPLES_SKIP
 AT_CHECK_UNQUOTED([ 
 cd ${abs_top_srcdir}/examples/opencl-book-samples/checkout/src/Chapter_8/ImageFilter2D ;
 cp ${abs_top_srcdir}/examples/opencl-book-samples/ImageFilter2D.cl ./
+sed "6s/float/constant float/" -i ImageFilter2D.cl ;
 sed '418cclFinish(commandQueue);' -i ImageFilter2D.cpp ;
 cd ${abs_top_builddir}/examples/opencl-book-samples/build/src/Chapter_8/ImageFilter2D ;
 make]
