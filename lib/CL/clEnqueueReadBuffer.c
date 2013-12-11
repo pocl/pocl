@@ -81,9 +81,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
       if (errcode != CL_SUCCESS)
         return errcode;
 
-      POname(clRetainCommandQueue) (command_queue);
-
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
 
@@ -107,13 +105,13 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
         }      
       /* TODO: offset computation doesn't work in case the ptr is not 
          a direct pointer */
-      POCL_UPDATE_EVENT_SUBMITTED;
-      POCL_UPDATE_EVENT_RUNNING;
+      POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
+      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
 
       device->ops->read (device->data, ptr, 
                     buffer->device_ptrs[device->dev_id]+offset, cb);
 
-      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
 
       POname(clReleaseMemObject) (buffer);
     }

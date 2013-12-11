@@ -63,7 +63,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
                                  CL_COMMAND_NATIVE_KERNEL);
       if (error != CL_SUCCESS)
         return error;
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
   /* Specification specifies that args passed to user_func is a copy of the

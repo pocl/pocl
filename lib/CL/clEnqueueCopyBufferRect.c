@@ -86,9 +86,7 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
       if (errcode != CL_SUCCESS)
         return errcode;
 
-      POname(clRetainCommandQueue) (command_queue);
-
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
 
@@ -109,8 +107,8 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
       POname(clRetainMemObject) (dst_buffer);
       POname(clFinish)(command_queue);
     }
-  POCL_UPDATE_EVENT_SUBMITTED;
-  POCL_UPDATE_EVENT_RUNNING;
+  POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
+  POCL_UPDATE_EVENT_RUNNING(event, command_queue);
 
   /* TODO: offset computation doesn't work in case the ptr is not 
      a direct pointer */
@@ -121,7 +119,7 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
                        src_row_pitch, src_slice_pitch,
                        dst_row_pitch, dst_slice_pitch);
 
-  POCL_UPDATE_EVENT_COMPLETE;
+  POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
 
   POname(clReleaseMemObject) (src_buffer);
   POname(clReleaseMemObject) (dst_buffer);
