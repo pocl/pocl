@@ -52,7 +52,7 @@ AT_CLEANUP
 AT_SETUP([Run Chapter 6: HelloBinaryWorld])
 AT_KEYWORDS([booksamples hellobinaryworld])
 POAT_SAMPLES_SKIP
-
+AT_XFAIL_IF([grep -q "define USE_LLVM_API 1" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([
 cd $abs_top_builddir/examples/opencl-book-samples/build/src/Chapter_6/HelloBinaryWorld
 rm -f HelloWorld.cl.bin
