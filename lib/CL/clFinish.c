@@ -139,22 +139,11 @@ static void exec_commands (_cl_command_node *node_list)
           POname(clReleaseMemObject) (node->command.copy.src_buffer);
           POname(clReleaseMemObject) (node->command.copy.dst_buffer);
           break;
+        case CL_COMMAND_MAP_IMAGE:
         case CL_COMMAND_MAP_BUFFER: 
           POCL_UPDATE_EVENT_RUNNING(event, command_queue);            
           pocl_map_mem_cmd (node->device, node->command.map.buffer, 
                             node->command.map.mapping);
-          POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
-          break;
-        case CL_COMMAND_MAP_IMAGE:
-          POCL_UPDATE_EVENT_RUNNING(event, command_queue); 
-          node->device->ops->read_rect 
-            (node->command.map_image.data, node->command.map_image.map_ptr,
-             node->command.map_image.device_ptr, node->command.map_image.origin,
-             node->command.map_image.origin, node->command.map_image.region, 
-             node->command.map_image.rowpitch, 
-             node->command.map_image.slicepitch,
-             node->command.map_image.rowpitch,
-             node->command.map_image.slicepitch);
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           break;
         case CL_COMMAND_WRITE_IMAGE:
