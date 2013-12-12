@@ -935,7 +935,8 @@ int call_pocl_workgroup(cl_device_id device,
 
   // Link the kernel and runtime library
   llvm::Module *input = NULL;
-  if (kernel->program->llvm_irs != NULL) 
+  if (kernel->program->llvm_irs != NULL && 
+      kernel->program->llvm_irs[device->dev_id] != NULL) 
     {
       input = 
         llvm::CloneModule
