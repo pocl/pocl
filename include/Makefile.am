@@ -24,10 +24,9 @@
 
 # Directory containing "private" headers
 pkgdataincludedir = $(pkgdatadir)/include
-pkgdatainclude_HEADERS = _kernel.h _kernel_c.h
+pkgdatainclude_HEADERS = _kernel.h _kernel_c.h pocl_types.h pocl_features.h pocl_device.h pocl.h
 
 # Public - and default - includes dir
-pkginclude_HEADERS = pocl.h pocl_device.h pocl_features.h pocl_types.h
 include_HEADERS = poclu.h utlist.h
 
 SUBDIRS = CL OpenCL
