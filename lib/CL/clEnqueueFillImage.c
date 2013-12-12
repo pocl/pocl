@@ -164,6 +164,8 @@ CL_API_SUFFIX__VERSION_1_2
       errcode = pocl_create_event(event, command_queue, CL_COMMAND_FILL_IMAGE);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN;
+      
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
   /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
@@ -202,4 +204,3 @@ CL_API_SUFFIX__VERSION_1_2
   return errcode;
 }
 POsym(clEnqueueFillImage)
-
