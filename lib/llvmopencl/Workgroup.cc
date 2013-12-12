@@ -483,13 +483,13 @@ createWorkgroup(Module &M, Function *F)
      * as is to the function, no need to load form it first. */
     Value *value;
     if (ii->hasByValAttr()) {
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
+#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4)
         value = builder.CreateBitCast(pointer, t);
 #else
         value = builder.CreatePointerCast(pointer, t);
 #endif
     } else {
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
+#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4)
         value = builder.CreateBitCast(pointer, t->getPointerTo());
 #else
         value = builder.CreatePointerCast(pointer, t->getPointerTo());
@@ -551,7 +551,7 @@ createWorkgroupFast(Module &M, Function *F)
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         /* Assume the pointer is directly in the arg array. */
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
+#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4)
         arguments.push_back(builder.CreateBitCast(pointer, t));
 #else
         arguments.push_back(builder.CreatePointerCast(pointer, t));
@@ -566,7 +566,7 @@ createWorkgroupFast(Module &M, Function *F)
 
     /* If it's a pass by value pointer argument, we just pass the pointer
      * as is to the function, no need to load from it first. */
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
+#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4)
     Value *value = builder.CreateBitCast
       (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
 #else

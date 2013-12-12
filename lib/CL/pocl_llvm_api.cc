@@ -76,7 +76,7 @@
 using namespace clang;
 using namespace llvm;
 
-#if defined LLVM_3_2 || defined LLVM_3_3
+#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
 #include "llvm/Support/raw_ostream.h"
 #define F_Binary llvm::raw_fd_ostream::F_Binary
 #else
