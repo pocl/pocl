@@ -70,6 +70,8 @@ pocl_device_common_init(struct _cl_device_id* dev)
     dev->version = "OpenCL 1.2 pocl";
 
   dev->short_name = strdup(dev->ops->device_name);
+  if(dev->long_name == NULL)
+    dev->long_name = dev->short_name;
 }
 
 void 
