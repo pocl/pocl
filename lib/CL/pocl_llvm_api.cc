@@ -262,6 +262,7 @@ int call_pocl_build(cl_program program,
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
+  cg.StackRealignment = true;
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
