@@ -463,8 +463,10 @@ int _cl_printf(const char* restrict format, ...)
             // is not supported
 #ifdef cl_khr_fp64
           case 8: CALL_PRINT_FLOATS(double, double); break;
-#endif
           case 4: CALL_PRINT_FLOATS(float, double); break;
+#else
+              break;
+#endif
           }
           
 #undef CALL_PRINT_FLOATS
