@@ -96,7 +96,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
   if (dash != std::string::npos) {
     arch = triple.substr(0, dash);
   }
-
+ 
   std::map<unsigned, unsigned> addrSpaceMap;
 
   if (arch == "x86_64") {
@@ -114,7 +114,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     /* LLVM 3.2 detects 'constant' as cuda_constant (5) in the fake
        address space map. Add it for compatibility. */
     addrSpaceMap[5] = addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 5;     
-
   } else {
     /* Assume the fake address space map works directly in case not
        overridden here.  */
@@ -229,20 +228,36 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
         llvm::CallInst *call = dyn_cast<CallInst>(instr);
         llvm::Function *calledF = call->getCalledFunction();
         if (funcReplacements.find(calledF) == funcReplacements.end()) continue;
-        
+         
         call->setCalledFunction(funcReplacements[calledF]);
       }
   }
 
+  FunctionMapping::iterator i = funcReplacements.begin();
   /* Delete the old functions. */
-  for (FunctionMapping::iterator i = funcReplacements.begin(), 
-         e = funcReplacements.end(); i != e; ++i) {
+  while (funcReplacements.size() > 0) {
+
     if (Workgroup::isKernelToProcess(*i->first)) {
       FunctionMapping repl;
       repl[i->first] = i->second;
       regenerate_kernel_metadata(M, repl);
     }
+
+    if (i->first->getNumUses() > 0) {
+      for (Value::use_iterator ui = i->first->use_begin(), 
+             ue = i->first->use_end(); ui != ue; ++ui) {
+        User* user = *ui;
+        user->dump();
+                   
+      }
+      
+      assert ("All users of the function were not fixed?" && 
+              i->first->getNumUses() == 0);
+      break;
+    }
     i->first->eraseFromParent();
+    funcReplacements.erase(i);
+    i = funcReplacements.begin();
   }
 
   return true;
