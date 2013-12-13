@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "devices.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
@@ -114,7 +115,9 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       (program->binaries = (unsigned char**) 
        malloc (sizeof (unsigned char*) * num_devices)) == NULL ||
       (program->binaries[0] = (unsigned char*)
-       malloc (sizeof (unsigned char) * total_binary_size)) == NULL)
+       malloc (sizeof (unsigned char) * total_binary_size)) == NULL ||
+      ((program->llvm_irs = 
+        (void**) calloc (pocl_num_devices, sizeof (void*))) == NULL))      
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;

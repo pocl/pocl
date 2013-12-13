@@ -126,7 +126,7 @@ CL_API_SUFFIX__VERSION_1_0
                          origin, origin, region, 
                          image->image_row_pitch, image->image_slice_pitch, 
                          image->image_row_pitch, image->image_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
     }
   else
     {
@@ -143,7 +143,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (map == NULL)
     {
-      POCL_UPDATE_EVENT_COMPLETE;
+      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
       errcode = CL_MAP_FAILURE;
       goto ERROR;
     }
@@ -163,7 +163,7 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.map.buffer = image;
   cmd->command.map.mapping = mapping_info;
   LL_APPEND(command_queue->root, cmd);
-  POCL_UPDATE_EVENT_QUEUED;  
+  POCL_UPDATE_EVENT_QUEUED(event, command_queue);  
 
   if (blocking_map)
     {

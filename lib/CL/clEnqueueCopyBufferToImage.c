@@ -28,8 +28,8 @@ CL_API_SUFFIX__VERSION_1_0
                                    CL_COMMAND_COPY_BUFFER_TO_IMAGE);
       if (errcode != CL_SUCCESS)
         return errcode;
-      POCL_UPDATE_EVENT_QUEUED;
-      POCL_UPDATE_EVENT_RUNNING;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
+      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
     }
 
   int host_elem_size;    
@@ -52,7 +52,7 @@ CL_API_SUFFIX__VERSION_1_0
                                       region, 0, 0, temp+src_offset);
     
   free (temp);
-  POCL_UPDATE_EVENT_COMPLETE;
+  POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
   return ret_code;
 }
 POsym(clEnqueueCopyBufferToImage) 

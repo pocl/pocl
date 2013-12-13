@@ -46,7 +46,7 @@ kernelSourceCode[] =
 "        ++pos;\n"
 "    }\n"
 "#ifdef cl_TCE_ABSF\n"
-"    clABSFTCE(input[0], input[0]); \n"
+"    clABSFTCE(input[0], output[0]); \n"
 "#else\n"
 "#error The machine should have ADDF in the ISA\n"
 "#endif\n"

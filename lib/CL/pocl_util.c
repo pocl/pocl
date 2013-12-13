@@ -247,6 +247,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
           free (*cmd);
           return err;
         }
+      POCL_UPDATE_EVENT_QUEUED(&new_event, command_queue);
     }
 
   /* if in-order command queue and queue is not empty, add event from 

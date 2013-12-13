@@ -54,7 +54,7 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
       if (status != CL_SUCCESS)
         return status;
       
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
       POname(clRetainCommandQueue) (command_queue);
     }
 
@@ -86,4 +86,3 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   return status;
 }
 POsym(clEnqueueWriteImage)
-

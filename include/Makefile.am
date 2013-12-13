@@ -22,7 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-pkginclude_HEADERS = pocl.h _kernel.h pocl_device.h _kernel_c.h pocl_features.h pocl_types.h
+# Directory containing "private" headers
+pkgdataincludedir = $(pkgdatadir)/include
+pkgdatainclude_HEADERS = _kernel.h _kernel_c.h pocl_types.h pocl_features.h pocl_device.h pocl.h
+
+# Public - and default - includes dir
 include_HEADERS = poclu.h utlist.h
 
 SUBDIRS = CL OpenCL

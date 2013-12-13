@@ -74,7 +74,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                                    CL_COMMAND_UNMAP_MEM_OBJECT);
       if (errcode != CL_SUCCESS)
         goto ERROR;
-      POCL_UPDATE_EVENT_QUEUED;
+      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
 
   errcode = pocl_create_command (&cmd, command_queue, 
@@ -88,8 +88,6 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   cmd->command.unmap.memobj = memobj;
   cmd->command.unmap.mapping = mapping;
   LL_APPEND(command_queue->root, cmd);
-
-  POCL_UPDATE_EVENT_SUBMITTED;
 
   return CL_SUCCESS;
 

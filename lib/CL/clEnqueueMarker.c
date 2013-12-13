@@ -42,7 +42,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_UPDATE_EVENT_QUEUED;
+  POCL_UPDATE_EVENT_QUEUED(event, command_queue);
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, 
                                  event, 0, NULL);
