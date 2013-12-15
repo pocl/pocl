@@ -7416,11 +7416,11 @@ kernel void test_convert_type()
     actual.value = convert_char((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -7437,11 +7437,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -7458,11 +7458,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -7479,11 +7479,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -7500,11 +7500,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -7528,11 +7528,11 @@ kernel void test_convert_type()
     actual.value = convert_char2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -7549,11 +7549,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -7570,11 +7570,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -7591,11 +7591,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -7612,11 +7612,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -7640,11 +7640,11 @@ kernel void test_convert_type()
     actual.value = convert_char4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -7661,11 +7661,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -7682,11 +7682,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -7703,11 +7703,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -7724,11 +7724,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -7752,11 +7752,11 @@ kernel void test_convert_type()
     actual.value = convert_char8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -7773,11 +7773,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -7794,11 +7794,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -7815,11 +7815,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -7836,11 +7836,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -7864,11 +7864,11 @@ kernel void test_convert_type()
     actual.value = convert_char16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -7885,11 +7885,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -7906,11 +7906,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -7927,11 +7927,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -7948,11 +7948,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_float("convert_char16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -7976,11 +7976,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -7997,11 +7997,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8018,11 +8018,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8039,11 +8039,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8060,11 +8060,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8088,11 +8088,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8109,11 +8109,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8130,11 +8130,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8151,11 +8151,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8172,11 +8172,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8200,11 +8200,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8221,11 +8221,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8242,11 +8242,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8263,11 +8263,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8284,11 +8284,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8312,11 +8312,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8333,11 +8333,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8354,11 +8354,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8375,11 +8375,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8396,11 +8396,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8424,11 +8424,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -8445,11 +8445,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -8466,11 +8466,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -8487,11 +8487,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -8508,11 +8508,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_float("convert_uchar16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -8536,11 +8536,11 @@ kernel void test_convert_type()
     actual.value = convert_short((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8557,11 +8557,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8578,11 +8578,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8599,11 +8599,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8620,11 +8620,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -8648,11 +8648,11 @@ kernel void test_convert_type()
     actual.value = convert_short2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8669,11 +8669,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8690,11 +8690,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8711,11 +8711,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8732,11 +8732,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -8760,11 +8760,11 @@ kernel void test_convert_type()
     actual.value = convert_short4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8781,11 +8781,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8802,11 +8802,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8823,11 +8823,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8844,11 +8844,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -8872,11 +8872,11 @@ kernel void test_convert_type()
     actual.value = convert_short8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8893,11 +8893,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8914,11 +8914,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8935,11 +8935,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8956,11 +8956,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -8984,11 +8984,11 @@ kernel void test_convert_type()
     actual.value = convert_short16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9005,11 +9005,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9026,11 +9026,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9047,11 +9047,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9068,11 +9068,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_float("convert_short16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9096,11 +9096,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9117,11 +9117,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9138,11 +9138,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9159,11 +9159,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9180,11 +9180,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9208,11 +9208,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9229,11 +9229,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9250,11 +9250,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9271,11 +9271,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9292,11 +9292,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9320,11 +9320,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9341,11 +9341,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9362,11 +9362,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9383,11 +9383,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9404,11 +9404,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9432,11 +9432,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -9453,11 +9453,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -9474,11 +9474,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -9495,11 +9495,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -9516,11 +9516,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -9544,11 +9544,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9565,11 +9565,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9586,11 +9586,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9607,11 +9607,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9628,11 +9628,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_float("convert_ushort16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -9656,11 +9656,11 @@ kernel void test_convert_type()
     actual.value = convert_int((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9677,11 +9677,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9698,11 +9698,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9719,11 +9719,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9740,11 +9740,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -9768,11 +9768,11 @@ kernel void test_convert_type()
     actual.value = convert_int2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9789,11 +9789,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9810,11 +9810,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9831,11 +9831,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9852,11 +9852,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -9880,11 +9880,11 @@ kernel void test_convert_type()
     actual.value = convert_int4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9901,11 +9901,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9922,11 +9922,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9943,11 +9943,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9964,11 +9964,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -9992,11 +9992,11 @@ kernel void test_convert_type()
     actual.value = convert_int8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10013,11 +10013,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10034,11 +10034,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10055,11 +10055,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10076,11 +10076,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10104,11 +10104,11 @@ kernel void test_convert_type()
     actual.value = convert_int16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10125,11 +10125,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10146,11 +10146,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10167,11 +10167,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10188,11 +10188,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_float("convert_int16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10216,11 +10216,11 @@ kernel void test_convert_type()
     actual.value = convert_uint((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10237,11 +10237,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10258,11 +10258,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10279,11 +10279,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10300,11 +10300,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10328,11 +10328,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10349,11 +10349,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10370,11 +10370,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10391,11 +10391,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10412,11 +10412,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10440,11 +10440,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -10461,11 +10461,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -10482,11 +10482,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -10503,11 +10503,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -10524,11 +10524,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -10552,11 +10552,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10573,11 +10573,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10594,11 +10594,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10615,11 +10615,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10636,11 +10636,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -10664,11 +10664,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10685,11 +10685,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10706,11 +10706,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10727,11 +10727,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10748,11 +10748,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_float("convert_uint16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -10778,11 +10778,11 @@ kernel void test_convert_type()
     actual.value = convert_long((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10799,11 +10799,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10820,11 +10820,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10841,11 +10841,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10862,11 +10862,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -10894,11 +10894,11 @@ kernel void test_convert_type()
     actual.value = convert_long2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10915,11 +10915,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10936,11 +10936,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10957,11 +10957,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -10978,11 +10978,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -11010,11 +11010,11 @@ kernel void test_convert_type()
     actual.value = convert_long4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11031,11 +11031,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11052,11 +11052,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11073,11 +11073,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11094,11 +11094,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11126,11 +11126,11 @@ kernel void test_convert_type()
     actual.value = convert_long8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11147,11 +11147,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11168,11 +11168,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11189,11 +11189,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11210,11 +11210,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11242,11 +11242,11 @@ kernel void test_convert_type()
     actual.value = convert_long16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11263,11 +11263,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11284,11 +11284,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11305,11 +11305,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11326,11 +11326,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_float("convert_long16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11358,11 +11358,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -11379,11 +11379,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rte((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong_rte(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -11400,11 +11400,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rtz((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong_rtz(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -11421,11 +11421,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rtp((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong_rtp(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -11442,11 +11442,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rtn((float)float_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong_rtn(float)", i, &float_values[i], 0, expected.raw, actual.raw, 1);
@@ -11474,11 +11474,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong2(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -11495,11 +11495,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rte((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong2_rte(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -11516,11 +11516,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rtz((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong2_rtz(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -11537,11 +11537,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rtp((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong2_rtp(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -11558,11 +11558,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rtn((float2)float_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong2_rtn(float2)", i, &float_values[i], 0, expected.raw, actual.raw, 2);
@@ -11590,11 +11590,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11611,11 +11611,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rte((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11632,11 +11632,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rtz((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11653,11 +11653,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rtp((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11674,11 +11674,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rtn((float4)float_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
@@ -11706,11 +11706,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong8(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11727,11 +11727,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rte((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong8_rte(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11748,11 +11748,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rtz((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong8_rtz(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11769,11 +11769,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rtp((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong8_rtp(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11790,11 +11790,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rtn((float8)float_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong8_rtn(float8)", i, &float_values[i], 0, expected.raw, actual.raw, 8);
@@ -11822,11 +11822,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong16(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11843,11 +11843,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rte((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rte[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong16_rte(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11864,11 +11864,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rtz((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtz[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong16_rtz(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11885,11 +11885,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rtp((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtp[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong16_rtp(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11906,11 +11906,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rtn((float16)float_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = float_values[i] < (float)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = float_rounded_values_rtn[i] < (float)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_float("convert_ulong16_rtn(float16)", i, &float_values[i], 0, expected.raw, actual.raw, 16);
@@ -11938,11 +11938,11 @@ kernel void test_convert_type()
     actual.value = convert_char((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -11959,11 +11959,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -11980,11 +11980,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12001,11 +12001,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12022,11 +12022,11 @@ kernel void test_convert_type()
     actual.value = convert_char_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12054,11 +12054,11 @@ kernel void test_convert_type()
     actual.value = convert_char2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12075,11 +12075,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12096,11 +12096,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12117,11 +12117,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12138,11 +12138,11 @@ kernel void test_convert_type()
     actual.value = convert_char2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12170,11 +12170,11 @@ kernel void test_convert_type()
     actual.value = convert_char4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12191,11 +12191,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12212,11 +12212,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12233,11 +12233,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12254,11 +12254,11 @@ kernel void test_convert_type()
     actual.value = convert_char4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12286,11 +12286,11 @@ kernel void test_convert_type()
     actual.value = convert_char8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12307,11 +12307,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12328,11 +12328,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12349,11 +12349,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12370,11 +12370,11 @@ kernel void test_convert_type()
     actual.value = convert_char8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12402,11 +12402,11 @@ kernel void test_convert_type()
     actual.value = convert_char16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -12423,11 +12423,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -12444,11 +12444,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -12465,11 +12465,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -12486,11 +12486,11 @@ kernel void test_convert_type()
     actual.value = convert_char16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (char)((char)0 - (char)1) >= (char)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (char)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (char)0;
+        actual.raw[n] = (char)0;
       }
     }
     compare_char_elements_double("convert_char16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -12518,11 +12518,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12539,11 +12539,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12560,11 +12560,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12581,11 +12581,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12602,11 +12602,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -12634,11 +12634,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12655,11 +12655,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12676,11 +12676,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12697,11 +12697,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12718,11 +12718,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -12750,11 +12750,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12771,11 +12771,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12792,11 +12792,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12813,11 +12813,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12834,11 +12834,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -12866,11 +12866,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12887,11 +12887,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12908,11 +12908,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12929,11 +12929,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12950,11 +12950,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -12982,11 +12982,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13003,11 +13003,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13024,11 +13024,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13045,11 +13045,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13066,11 +13066,11 @@ kernel void test_convert_type()
     actual.value = convert_uchar16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uchar)((uchar)0 - (uchar)1) >= (uchar)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uchar)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uchar)0;
+        actual.raw[n] = (uchar)0;
       }
     }
     compare_uchar_elements_double("convert_uchar16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13098,11 +13098,11 @@ kernel void test_convert_type()
     actual.value = convert_short((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13119,11 +13119,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13140,11 +13140,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13161,11 +13161,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13182,11 +13182,11 @@ kernel void test_convert_type()
     actual.value = convert_short_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13214,11 +13214,11 @@ kernel void test_convert_type()
     actual.value = convert_short2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13235,11 +13235,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13256,11 +13256,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13277,11 +13277,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13298,11 +13298,11 @@ kernel void test_convert_type()
     actual.value = convert_short2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13330,11 +13330,11 @@ kernel void test_convert_type()
     actual.value = convert_short4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13351,11 +13351,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13372,11 +13372,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13393,11 +13393,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13414,11 +13414,11 @@ kernel void test_convert_type()
     actual.value = convert_short4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13446,11 +13446,11 @@ kernel void test_convert_type()
     actual.value = convert_short8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -13467,11 +13467,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -13488,11 +13488,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -13509,11 +13509,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -13530,11 +13530,11 @@ kernel void test_convert_type()
     actual.value = convert_short8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -13562,11 +13562,11 @@ kernel void test_convert_type()
     actual.value = convert_short16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13583,11 +13583,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13604,11 +13604,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13625,11 +13625,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13646,11 +13646,11 @@ kernel void test_convert_type()
     actual.value = convert_short16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (short)((short)0 - (short)1) >= (short)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (short)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (short)0;
+        actual.raw[n] = (short)0;
       }
     }
     compare_short_elements_double("convert_short16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -13678,11 +13678,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13699,11 +13699,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13720,11 +13720,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13741,11 +13741,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13762,11 +13762,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -13794,11 +13794,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13815,11 +13815,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13836,11 +13836,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13857,11 +13857,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13878,11 +13878,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -13910,11 +13910,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13931,11 +13931,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13952,11 +13952,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13973,11 +13973,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -13994,11 +13994,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -14026,11 +14026,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14047,11 +14047,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14068,11 +14068,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14089,11 +14089,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14110,11 +14110,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14142,11 +14142,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14163,11 +14163,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14184,11 +14184,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14205,11 +14205,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14226,11 +14226,11 @@ kernel void test_convert_type()
     actual.value = convert_ushort16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ushort)((ushort)0 - (ushort)1) >= (ushort)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ushort)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ushort)0;
+        actual.raw[n] = (ushort)0;
       }
     }
     compare_ushort_elements_double("convert_ushort16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14258,11 +14258,11 @@ kernel void test_convert_type()
     actual.value = convert_int((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14279,11 +14279,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14300,11 +14300,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14321,11 +14321,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14342,11 +14342,11 @@ kernel void test_convert_type()
     actual.value = convert_int_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14374,11 +14374,11 @@ kernel void test_convert_type()
     actual.value = convert_int2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14395,11 +14395,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14416,11 +14416,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14437,11 +14437,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14458,11 +14458,11 @@ kernel void test_convert_type()
     actual.value = convert_int2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14490,11 +14490,11 @@ kernel void test_convert_type()
     actual.value = convert_int4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -14511,11 +14511,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -14532,11 +14532,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -14553,11 +14553,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -14574,11 +14574,11 @@ kernel void test_convert_type()
     actual.value = convert_int4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -14606,11 +14606,11 @@ kernel void test_convert_type()
     actual.value = convert_int8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14627,11 +14627,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14648,11 +14648,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14669,11 +14669,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14690,11 +14690,11 @@ kernel void test_convert_type()
     actual.value = convert_int8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -14722,11 +14722,11 @@ kernel void test_convert_type()
     actual.value = convert_int16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14743,11 +14743,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14764,11 +14764,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14785,11 +14785,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14806,11 +14806,11 @@ kernel void test_convert_type()
     actual.value = convert_int16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (int)((int)0 - (int)1) >= (int)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (int)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (int)0;
+        actual.raw[n] = (int)0;
       }
     }
     compare_int_elements_double("convert_int16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -14838,11 +14838,11 @@ kernel void test_convert_type()
     actual.value = convert_uint((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14859,11 +14859,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14880,11 +14880,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14901,11 +14901,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14922,11 +14922,11 @@ kernel void test_convert_type()
     actual.value = convert_uint_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -14954,11 +14954,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14975,11 +14975,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -14996,11 +14996,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15017,11 +15017,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15038,11 +15038,11 @@ kernel void test_convert_type()
     actual.value = convert_uint2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15070,11 +15070,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15091,11 +15091,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15112,11 +15112,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15133,11 +15133,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15154,11 +15154,11 @@ kernel void test_convert_type()
     actual.value = convert_uint4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15186,11 +15186,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15207,11 +15207,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15228,11 +15228,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15249,11 +15249,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15270,11 +15270,11 @@ kernel void test_convert_type()
     actual.value = convert_uint8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15302,11 +15302,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15323,11 +15323,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15344,11 +15344,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15365,11 +15365,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15386,11 +15386,11 @@ kernel void test_convert_type()
     actual.value = convert_uint16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (uint)((uint)0 - (uint)1) >= (uint)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (uint)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (uint)0;
+        actual.raw[n] = (uint)0;
       }
     }
     compare_uint_elements_double("convert_uint16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15420,11 +15420,11 @@ kernel void test_convert_type()
     actual.value = convert_long((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -15441,11 +15441,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -15462,11 +15462,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -15483,11 +15483,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -15504,11 +15504,11 @@ kernel void test_convert_type()
     actual.value = convert_long_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -15540,11 +15540,11 @@ kernel void test_convert_type()
     actual.value = convert_long2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15561,11 +15561,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15582,11 +15582,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15603,11 +15603,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15624,11 +15624,11 @@ kernel void test_convert_type()
     actual.value = convert_long2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -15660,11 +15660,11 @@ kernel void test_convert_type()
     actual.value = convert_long4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15681,11 +15681,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15702,11 +15702,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15723,11 +15723,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15744,11 +15744,11 @@ kernel void test_convert_type()
     actual.value = convert_long4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -15780,11 +15780,11 @@ kernel void test_convert_type()
     actual.value = convert_long8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15801,11 +15801,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15822,11 +15822,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15843,11 +15843,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15864,11 +15864,11 @@ kernel void test_convert_type()
     actual.value = convert_long8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -15900,11 +15900,11 @@ kernel void test_convert_type()
     actual.value = convert_long16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15921,11 +15921,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15942,11 +15942,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15963,11 +15963,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -15984,11 +15984,11 @@ kernel void test_convert_type()
     actual.value = convert_long16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (long)((long)0 - (long)1) >= (long)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (long)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (long)0;
+        actual.raw[n] = (long)0;
       }
     }
     compare_long_elements_double("convert_long16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -16020,11 +16020,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -16041,11 +16041,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rte((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong_rte(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -16062,11 +16062,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rtz((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong_rtz(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -16083,11 +16083,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rtp((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong_rtp(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -16104,11 +16104,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong_rtn((double)double_values[i]);
     for (size_t n=0; n<1; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong_rtn(double)", i, &double_values[i], 0, expected.raw, actual.raw, 1);
@@ -16140,11 +16140,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong2(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -16161,11 +16161,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rte((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong2_rte(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -16182,11 +16182,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rtz((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong2_rtz(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -16203,11 +16203,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rtp((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong2_rtp(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -16224,11 +16224,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong2_rtn((double2)double_values[i]);
     for (size_t n=0; n<2; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong2_rtn(double2)", i, &double_values[i], 0, expected.raw, actual.raw, 2);
@@ -16260,11 +16260,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -16281,11 +16281,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rte((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -16302,11 +16302,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rtz((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -16323,11 +16323,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rtp((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -16344,11 +16344,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong4_rtn((double4)double_values[i]);
     for (size_t n=0; n<4; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
@@ -16380,11 +16380,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong8(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -16401,11 +16401,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rte((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong8_rte(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -16422,11 +16422,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rtz((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong8_rtz(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -16443,11 +16443,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rtp((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong8_rtp(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -16464,11 +16464,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong8_rtn((double8)double_values[i]);
     for (size_t n=0; n<8; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong8_rtn(double8)", i, &double_values[i], 0, expected.raw, actual.raw, 8);
@@ -16500,11 +16500,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong16(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -16521,11 +16521,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rte((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rte[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong16_rte(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -16542,11 +16542,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rtz((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtz[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong16_rtz(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -16563,11 +16563,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rtp((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtp[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong16_rtp(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);
@@ -16584,11 +16584,11 @@ kernel void test_convert_type()
     actual.value = convert_ulong16_rtn((double16)double_values[i]);
     for (size_t n=0; n<16; ++n) {
       bool type_is_unsigned = (ulong)((ulong)0 - (ulong)1) >= (ulong)0;
-      bool origin_is_negative = double_values[i] < (double)0;
-      bool result_is_nonzero = actual.raw[n] != (ulong)0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = double_rounded_values_rtn[i] < (double)0;
+      if (type_is_unsigned && result_is_negative) {
+        // Ignore this result
+        expected.raw[n] = (ulong)0;
+        actual.raw[n] = (ulong)0;
       }
     }
     compare_ulong_elements_double("convert_ulong16_rtn(double16)", i, &double_values[i], 0, expected.raw, actual.raw, 16);

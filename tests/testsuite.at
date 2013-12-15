@@ -112,8 +112,6 @@ AT_SETUP([Kernel functions convert_type])
 AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-# Temporary skip this till issue #34 is resolved
-AT_SKIP_IF(true)
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
 [Running test test_convert_type...
