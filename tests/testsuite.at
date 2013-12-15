@@ -208,9 +208,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_rotate], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Trigonometric functions])
-#uninvestigated failure
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv7 &&
-             grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [OK
 ])

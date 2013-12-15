@@ -31,7 +31,8 @@ endif
 # for the pocl-workgroup version.
 pkglib_LTLIBRARIES = llvmopencl.la
 
-AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags` -fno-rtti
+#the explicit '-DNDEBUG' is a work-around for llvm bug 18253
+AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include `@LLVM_CONFIG@ --cxxflags` -fno-rtti -DNDEBUG
 AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
 #this static linking gets only added when we build pocl with "scripts", not "API"
 llvmopencl_la_LIBADD = @LLVM_LIBS@
