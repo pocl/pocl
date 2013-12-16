@@ -25,7 +25,7 @@
 KERNEL_TARGET = tce-tut-llvm
 
 # Use TARGET flags:
-CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target tce-tut-llvm 
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target tce-tut-llvm  -isystem `tce-config --prefix`/tce-llvm/include
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
 
@@ -36,4 +36,10 @@ include ../sources.mk
 # fails in TCE code gen:
 # SplitVectorResult #0: 0x24c5ae0: v8i16,ch = vaarg 0x20628e8, 0x2423ed0, 0x24c59e0, 0x24c4fe0 [ORD=223] [ID=0]
 # LLVM ERROR: Do not know how to split the result of this operator!
-LKERNEL_SRCS_EXCLUDE = printf.cl
+
+if NEW_PRINTF_WORKS
+LKERNEL_SRCS_EXCLUDE = printf.c 
+LKERNEL_SRCS_EXTRA = printf_constant.c
+endif
+
+
