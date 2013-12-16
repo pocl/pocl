@@ -229,11 +229,11 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
     actual.value = convert_{D}{N}{R}(({S}{N}){S}_values[i]);
     for (size_t n=0; n<{M}; ++n) {{
       bool type_is_unsigned = ({D})(({D})0 - ({D})1) >= ({D})0;
-      bool origin_is_negative = {S}_values[i] < ({S})0;
-      bool result_is_nonzero = actual.raw[n] != ({D})0;
-      if (type_is_unsigned && origin_is_negative && result_is_nonzero) {{
-        expected.raw[n] = 0;
-        actual.raw[n] = 0;
+      bool result_is_negative = {S}_rounded_values{R}[i] < ({S})0;
+      if (type_is_unsigned && result_is_negative) {{
+        // Ignore this result
+        expected.raw[n] = ({D})0;
+        actual.raw[n] = ({D})0;
       }}
     }}
     compare_{D}_elements_{S}("convert_{D}{N}{R}({S}{N})", i, &{S}_values[i], 0, expected.raw, actual.raw, {M});
