@@ -67,7 +67,7 @@ preprocessed_file=${output_file}.i
 
 # Set up the paths assuming we are running an installed pocl.
 full_target_dir="@pkglibdir@/${target_dir}"
-kernel_h=@pkgincludedir@/_kernel.h
+kernel_h=@pkgdataincludedir@/_kernel.h
 kernel_h_pch=$full_target_dir/_kernel.h.pch
 
 # BEGIN REMOVE ONCE INSTALLED

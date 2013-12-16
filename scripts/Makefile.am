@@ -26,13 +26,14 @@ bin_SCRIPTS = pocl-standalone
 if ! USE_LLVM_API
 pkgdata_SCRIPTS = pocl-build pocl-kernel pocl-workgroup
 endif
+pkgdataincludedir = $(pkgdatadir)/include
 
 CLEANFILES = pocl-build pocl-kernel pocl-workgroup pocl-standalone
 EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in pocl-standalone.in
 
 do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]abs_top_builddir[@]|$(abs_top_builddir)|g'	\
-               -e 's|[@]pkgincludedir[@]|$(pkgincludedir)|g'		\
+               -e 's|[@]pkgdataincludedir[@]|$(pkgdataincludedir)|g'		\
                -e 's|[@]pkglibdir[@]|$(pkglibdir)|g'			\
                -e 's|[@]pkgdatadir[@]|$(pkgdatadir)|g'			\
                -e 's|[@]pkglibexecdir[@]|$(pkglibexecdir)|g'		\
