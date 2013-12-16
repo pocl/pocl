@@ -108,8 +108,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_as_type], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type])
-# Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
-AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 # Temporary skip this till issue #34 is resolved
@@ -182,8 +180,6 @@ AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd
 #Fails on tce due to bug #1160383
 #AT_KEYWORDS([tce])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-#Probably a LLVM codegen issue. Found on one haswell processor (Ubuntu 12.04)
-AT_XFAIL_IF([ grep -q avx2 /proc/cpuinfo 2>/dev/null ])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
