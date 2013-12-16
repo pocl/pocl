@@ -1,0 +1,31 @@
+This patch is needed to fix 32bit targets without 64bit doubles,
+such as TCE for Clang 3.4 (and above).
+
+Index: lib/Basic/TargetInfo.cpp
+===================================================================
+--- lib/Basic/TargetInfo.cpp	(revision 197368)
++++ lib/Basic/TargetInfo.cpp	(working copy)
+@@ -245,7 +245,14 @@
+     LongLongWidth = LongLongAlign = 128;
+     HalfWidth = HalfAlign = 16;
+     FloatWidth = FloatAlign = 32;
+-    DoubleWidth = DoubleAlign = 64;
++    
++    // Embedded 32-bit targets (OpenCL EP) might have double C type 
++    // defined as float. Let's not override this as it might lead 
++    // to generating illegal code that uses 64bit doubles.
++    if (DoubleWidth != FloatWidth) {
++      DoubleWidth = DoubleAlign = 64;
++      DoubleFormat = &llvm::APFloat::IEEEdouble;
++    }
+     LongDoubleWidth = LongDoubleAlign = 128;
+ 
+     assert(PointerWidth == 32 || PointerWidth == 64);
+@@ -260,7 +267,6 @@
+ 
+     HalfFormat = &llvm::APFloat::IEEEhalf;
+     FloatFormat = &llvm::APFloat::IEEEsingle;
+-    DoubleFormat = &llvm::APFloat::IEEEdouble;
+     LongDoubleFormat = &llvm::APFloat::IEEEquad;
+   }
+ }
