@@ -794,6 +794,9 @@ AC_MSG_RESULT($llc_triple)
 test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
 AC_MSG_CHECKING([LLC host CPU])
 llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
+
+test -n "$LLC_HOST_CPU" && llc_host_cpu=$LLC_HOST_CPU 
+test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 AC_MSG_RESULT($llc_host_cpu)
 
 case $host_os in
@@ -840,6 +843,7 @@ case $host_cpu in
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=soft";;
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
@@ -893,8 +897,6 @@ case $host_cpu in
     ;;
 esac
 
-test -n "$LLC_HOST_CPU" && llc_host_cpu=$LLC_HOST_CPU 
-test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 
 kernel_dir="host"
 OCL_TARGETS=$kernel_dir
@@ -904,7 +906,6 @@ if test "$llc_host_cpu" != "(unknown)"
 then
   HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
-  HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
 fi
 
 # Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
