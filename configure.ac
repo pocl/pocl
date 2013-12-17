@@ -829,12 +829,17 @@ case $host_cpu in
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # check for gnueabihf, and set clang target accordingly
     case $host in
+      #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
       armv7l*gnueabihf)
-         #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
+      armv7l*gnueabi)
+         llc_triple="armv7-unknown-linux-gnueabi"
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft"
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=soft";;
       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
@@ -902,6 +907,7 @@ if test "$llc_host_cpu" != "(unknown)"
 then
   HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
+  HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
 fi
 
 # Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
