@@ -107,15 +107,50 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_as_type], 0, expout)
 AT_CLEANUP
 
-AT_SETUP([Kernel functions convert_type])
+AT_SETUP([Kernel functions convert_type - scalars])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
-AT_DATA([expout],
-[Running test test_convert_type...
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_1], 0,
+[Running test test_convert_type_1...
 OK
 ])
-AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type], 0, expout)
+AT_CLEANUP
+AT_SETUP([Kernel functions convert_type - vector of 2])
+# ppc codegen issue, see bug #26
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_KEYWORDS([conversion])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_2], 0,
+[Running test test_convert_type_2...
+OK
+])
+AT_CLEANUP
+AT_SETUP([Kernel functions convert_type - vector of 4])
+# ppc codegen issue, see bug #26
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_KEYWORDS([conversion])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_4], 0,
+[Running test test_convert_type_4...
+OK
+])
+AT_CLEANUP
+AT_SETUP([Kernel functions convert_type - vector of 8])
+# ppc codegen issue, see bug #26
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_KEYWORDS([conversion])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_8], 0,
+[Running test test_convert_type_8...
+OK
+])
+AT_CLEANUP
+AT_SETUP([Kernel functions convert_type - vector of 16])
+# ppc codegen issue, see bug #26
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_KEYWORDS([conversion])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_16], 0,
+[Running test test_convert_type_16...
+OK
+])
 AT_CLEANUP
 
 # This reproduces an issue that looks like an LLVM code gen issue.

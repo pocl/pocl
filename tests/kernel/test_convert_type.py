@@ -22,6 +22,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+
+
+# This creates testcase for type converison for a specified size of vector
+# see test_convert_type.sh
+
+import sys
+vector_to_test = sys.argv[1]
+if vector_to_test=="1":
+  vector_to_test = ''
+
+
 all_types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'float', 'double']
 int_types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong']
 signed_types = ['char', 'short', 'int', 'long', 'float', 'double']
@@ -72,8 +83,7 @@ printf_format_type = {
 def generate_conversions(src_types, dst_types):
   for src in src_types:
     for dst in dst_types:
-      for size in vector_sizes:
-        yield (src, dst, size)
+      yield (src, dst, vector_to_test)
 
 #
 # file header
@@ -173,7 +183,7 @@ void compare_{Type}_elements_{OrigType}(string name, size_t sample, constant {Or
 # conversion tests
 #
 
-print("\nkernel void test_convert_type()\n{", end="")
+print("\nkernel void test_convert_type_"+sys.argv[1]+"()\n{", end="")
 
 #
 # integer to integer conversions, with and without saturation
@@ -208,6 +218,7 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
 #
 # floating-point to integer conversions, with and without saturation
 #
+
 
 for (src, dst, size) in generate_conversions(float_types, int_types):
   if (dst in int64_types):
