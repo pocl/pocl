@@ -868,9 +868,6 @@ case $host_cpu in
     ;;
 
   powerpc64*)
-    #on all tested operating systems with PowerPC, the processor is 64bit,
-    #but the operating system is 32 bit. Therefore, when on powerpc, always build
-    #for 32 bit ppc. If this does not work for you ... patches welcome.
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     llc_triple="powerpc64-unknown-linux-gnu"
@@ -881,14 +878,14 @@ case $host_cpu in
 
   powerpc*)
     #on all tested operating systems with PowerPC, the processor is 64bit,
-    #but the operating system is 32 bit. Therefore, when on powerpc, always build
-    #for 32 bit ppc. If this does not work for you ... patches welcome.
+    #but the operating system is 32 bit. 
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     llc_triple="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
+    HOST_AS_FLAGS="$HOST_AS_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
     ;;
 
   *)
