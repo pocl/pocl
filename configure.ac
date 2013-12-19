@@ -1188,7 +1188,8 @@ AC_C_BIGENDIAN
 # 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
-AC_SUBST([LIB_VERSION], ["3:0:2"])
+# 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
+AC_SUBST([LIB_VERSION], ["4:0:3"])
 
 # The kernel compiler opt plugin shared library, however, changes more 
 # drastically. Let's try to follow the similar 'current' numbering as
