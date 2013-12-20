@@ -38,7 +38,6 @@ int pocl_is_option_set(const char *key)
 int pocl_get_int_option(const char *key, int default_value)
 {
   const char* val = getenv(key);
-  /* For now assume all bool options default to false. */
   if (val == NULL) return default_value;
   return atoi(val);
 }
@@ -47,7 +46,6 @@ int pocl_get_int_option(const char *key, int default_value)
 int pocl_get_bool_option(const char *key, int default_value) 
 {
   const char* val = getenv(key);
-  /* For now assume all bool options default to false. */
   if (val == NULL) return default_value;
   return strncmp(val, "1", 1) == 0;
 }
