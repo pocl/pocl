@@ -159,7 +159,10 @@ libpoclllvm_la_LDFLAGS = `@LLVM_CONFIG@ --ldflags` @LLVM_LIBS@
 libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags` @LLVM_LIBS@
 #the explicit '-fno-rtti' is a work-around for llvm bug 14200
 #the explicit '-DNDEBUG' is a work-around for llvm bug 18253
-AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -fno-rtti -DNDEBUG
+AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -fno-rtti
+if !LLVM_HAS_ASSERTIONS
+AM_CXXFLAGS += -DNDEBUG
+endif
 
 libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/
 libpocl_la_LIBADD += libpoclllvm.la

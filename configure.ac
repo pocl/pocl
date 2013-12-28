@@ -645,10 +645,10 @@ LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
 # builtins from vecmathlib.
 LLVM_PROG_WARN([CLANGXX], [clang++])
 
+# Test features of clang
+# -can it compile a simple program
+# -was LLVM built with NDEBUG or not
 if test ! -z "$CLANGXX"; then
-# Test that clang++ can compile a simple C++ program.
-
-#: ${CLANGXX_FLAGS:="-std=c++11"}
 
 AC_LANG([C++])
 
@@ -656,6 +656,8 @@ old_CXX=$CXX
 CXX=$CLANGXX
 old_CXXFLAGS=$CXXFLAGS
 CXXFLAGS=$CLANGXX_FLAGS
+old_LDLFAGS=$LDFLAGS
+old_LIBS=$LIBS
 
 # The namespace std { class type_info; } is needed for older libstdc++
 # versions such as the 4.4 in Debian 6.0.
@@ -680,9 +682,31 @@ AC_COMPILE_IFELSE(
    CLANGXX=""
    CLANGXX_FLAGS=""])
 
+# llvm-config does not always report the "-DNDEBUG" flag correctly
+# (see LLVM bug 18253). If LLVM and the pocl passes are built with 
+# different NDEBUG settings, problems arise 
+AC_MSG_CHECKING([if LLVM is built with assertions])
+CXXFLAGS="$CXXFLAGS $($LLVM_CONFIG --cxxflags) -UNDEBUG"
+LIBS="$LIBS $($LLVM_CONFIG --libs)"
+LDFLAGS="$LDFLAGS $($LLVM_CONFIG --ldflags)"
+
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <llvm/Support/Debug.h> ]],
+    [[ llvm::DebugFlag=true; ]]
+  )],
+  [#No linking error. The llvm::DebugFlags was found in the LLVM libraries 
+   AC_MSG_RESULT(yes)
+   AM_CONDITIONAL([LLVM_HAS_ASSERTIONS], true)
+  ],
+  [AC_MSG_RESULT(no)
+   AM_CONDITIONAL([LLVM_HAS_ASSERTIONS], false)
+  ])
+
 CXX=$old_CXX
 CXXFLAGS=$old_CXXFLAGS
-
+LDFLAGS=$old_LDFLAGS
+LIBS=$old_LIBS
 fi
 
 # Define the OpenCL version when compiling OpenCL C code. This also
