@@ -49,16 +49,13 @@ size_t pocl_size_ceil2(size_t x);
 
 /* Allocates aligned blocks of memory.
  *
- * Uses aligned_alloc or posix_memalign when available. Otherwise, uses
+ * Uses posix_memalign when available. Otherwise, uses
  * malloc to allocate a block of memory on the heap of the desired
  * size which is then aligned with the given alignment. The resulting
  * pointer must be freed with a call to pocl_aligned_free. Alignment
  * must be a non-zero power of 2.
  */
-#if defined HAVE_ALIGNED_ALLOC
-# define pocl_aligned_malloc aligned_alloc
-# define pocl_aligned_free free
-#elif defined HAVE_POSIX_MEMALIGN
+#if defined HAVE_POSIX_MEMALIGN
 void *pocl_aligned_malloc(size_t alignment, size_t size);
 # define pocl_aligned_free free
 #else
