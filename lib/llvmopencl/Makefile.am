@@ -38,8 +38,12 @@ AM_CXXFLAGS += -DNDEBUG
 endif
 
 AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
-#this static linking gets only added when we build pocl with "scripts", not "API"
+
+# When building in API mode, LLVM gets linked into libpocl. Linking
+# it in here too gives "symbol redefined" errors with the standalone build.
+if !USE_LLVM_API
 llvmopencl_la_LIBADD = @LLVM_LIBS@
+endif
 
 PASSES_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\
