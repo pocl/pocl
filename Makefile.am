@@ -37,10 +37,11 @@ icddir = $(sysconfdir)/OpenCL/vendors/
 icd_DATA = pocl.icd
 do_subst = sed -e 's,[@]libdir[@],$(libdir),g'
 
+#TODO: this naming scheme is used on other platforms (primarly BSDs?) too
 if FREEBSD_HOST_OS
-do_subst += -e 's,so.VER,so.2,g'
+do_subst += -e 's,so.VER,so.$(LIB_CURRENT_VERSION),g'
 else
-do_subst += -e 's,so.VER,so.1.2.0,g'
+do_subst += -e 's,so.VER,so.$(LIB_FIRST_VERSION).$(LIB_AGE_VERSION).$(LIB_REVISION_VERSION),g'
 endif
 
 pocl.icd:

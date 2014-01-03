@@ -1196,11 +1196,26 @@ AC_C_BIGENDIAN
 # The libtool library version string to use (passed to -version-info).
 # See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
 # libpocl.so should get only API additions as we are implementing a standard.
+#
+# The library version encodings into the library file name are platform
+# dependant. Therefore we need to be a bit verbose here for the pocl.icd file 
+# creation to succeed (see Makefile.am).
+# Chiefly, GNU differs from BSD, and others are untested. See e.g.
+# http://en.opensuse.org/openSUSE%3aShared_library_packaging_policy#Versioning_schemes
+#
 # 0:0:0 == 0.6
 # 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
-AC_SUBST([LIB_VERSION], ["3:0:2"])
+LIB_CURRENT_VERSION=3
+LIB_REVISION_VERSION=0
+LIB_AGE_VERSION=2
+LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
+AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
+AC_SUBST([LIB_CURRENT_VERSION], [$LIB_CURRENT_VERSION])
+AC_SUBST([LIB_REVISION_VERSION], [$LIB_REVISION_VERSION])
+AC_SUBST([LIB_AGE_VERSION], [$LIB_AGE_VERSION])
+AC_SUBST([LIB_FIRST_VERSION], [$LIB_FIRST_VERSION])
 
 # The kernel compiler opt plugin shared library, however, changes more 
 # drastically. Let's try to follow the similar 'current' numbering as
