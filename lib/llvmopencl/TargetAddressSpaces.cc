@@ -90,16 +90,11 @@ UpdateAddressSpace(llvm::Value& val, std::map<unsigned, unsigned> &addrSpaceMap)
 bool
 TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
-  std::string triple = M.getTargetTriple();
-  llvm::StringRef arch = triple;
-  size_t dash = triple.find("-");
-  if (dash != std::string::npos) {
-    arch = triple.substr(0, dash);
-  }
+  llvm::StringRef arch(M.getTargetTriple());
  
   std::map<unsigned, unsigned> addrSpaceMap;
 
-  if (arch == "x86_64") {
+  if (arch.startswith("x86_64")) {
     /* For x86_64 the default isel seems to work with the
        fake address spaces. Skip the processing as it causes 
        an overhead and is not fully implemented.
@@ -107,7 +102,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     return false; 
   } else if (arch.startswith("arm")) {
     return false;
-  } else if (arch == "tce") {
+  } else if (arch.startswith("tce")) {
     /* TCE requires the remapping. */
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
     addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] = 4;

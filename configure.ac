@@ -1127,18 +1127,6 @@ for flag in $old_CFLAGS; do
     fi
 done
 
-AC_MSG_CHECKING([for aligned_alloc])
-# Ensure that aligned_alloc can be linked, and that a prototype with
-# the correct signature is available
-AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM(
-        [[ #include <stdlib.h> ]],
-        [[ void* p = aligned_alloc(0, 0); ]]
-    )],
-    [AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_ALIGNED_ALLOC], [], [Defined if aligned_alloc is available.])],
-    [AC_MSG_RESULT(no)])
-
 AC_MSG_CHECKING([for posix_memalign])
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(
@@ -1208,12 +1196,27 @@ AC_C_BIGENDIAN
 # The libtool library version string to use (passed to -version-info).
 # See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
 # libpocl.so should get only API additions as we are implementing a standard.
+#
+# The library version encodings into the library file name are platform
+# dependant. Therefore we need to be a bit verbose here for the pocl.icd file 
+# creation to succeed (see Makefile.am).
+# Chiefly, GNU differs from BSD, and others are untested. See e.g.
+# http://en.opensuse.org/openSUSE%3aShared_library_packaging_policy#Versioning_schemes
+#
 # 0:0:0 == 0.6
 # 1:0:0 == 0.7 (not backwards compatible with 0:0:0 due to the ICD)
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
-AC_SUBST([LIB_VERSION], ["4:0:3"])
+LIB_CURRENT_VERSION=4
+LIB_REVISION_VERSION=0
+LIB_AGE_VERSION=3
+LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
+AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
+AC_SUBST([LIB_CURRENT_VERSION], [$LIB_CURRENT_VERSION])
+AC_SUBST([LIB_REVISION_VERSION], [$LIB_REVISION_VERSION])
+AC_SUBST([LIB_AGE_VERSION], [$LIB_AGE_VERSION])
+AC_SUBST([LIB_FIRST_VERSION], [$LIB_FIRST_VERSION])
 
 # The kernel compiler opt plugin shared library, however, changes more 
 # drastically. Let's try to follow the similar 'current' numbering as
