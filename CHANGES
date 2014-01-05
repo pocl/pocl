@@ -1,7 +1,5 @@
-0.9  unreleased
-===============
-
-[changes checked from bzr history until 2013-10-30]
+0.9 January 2014
+================
 
 This lists only the most interesting changes. Please
 refer to the version control log for a full listing.
@@ -50,19 +48,21 @@ Performance Improvements
     vectorization.
   - Support LLVM 3.4 parallel loop metadata.
 
-Misc.
------
+Misc
+----
+- Explicitly specify the target architecture/CPU for the 
+  kernel complier.
+- Kernel compiler frontend defaults to implementation using LLVM API
+  directly instead of the scripts. 
 - __OPENCL_VERSION__ defined to 120
+- poclu: helpers for converting between the C float and OpenCL cl_half
+  types
+- clEnqueueNativeKernel implemented
+- Static and cmake-builds of LLVM can now be used. 
 
 Bugfixes
 --------
 - Correct isequal, isnan, and similar routines
-
-Misc.
------
-- poclu: helpers for converting between the C float and OpenCL cl_half
-  types
-- clEnqueueNativeKernel implemented
 
 0.8  August 2013
 ================
