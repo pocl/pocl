@@ -101,8 +101,7 @@ case "$LLVM_VERSION" in
      NEW_PRINTF_WORKS=false
    ;; 
      3.4*)
-     AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
+     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
    ;;   
      *)
    AC_MSG_ERROR(
