@@ -3,8 +3,8 @@ below.
 
 * POCL_BUILDING
 
- If set, the pocl helper scripts are searched first from the
- pocl build directory.
+ If set, the pocl helper scripts, kernel library and headers are 
+ searched first from the pocl build directory.
 
 * POCL_DEVICES and POCL_DEVICEn_PARAMETERS
 

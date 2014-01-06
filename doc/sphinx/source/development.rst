@@ -145,16 +145,22 @@ And the second one with::
 
   $src/configure --disable-icd --enable-direct-linkage ...
 
-Multi-target support
---------------------
+Target and host CPU architectures for 'basic' and 'pthread' devices
+-------------------------------------------------------------------
 
-By default, pocl build system compiles the kernel libraries for:
+By default, pocl build system compiles the kernel libraries for
+the host CPU architecture, to be used by 'basic' and 'pthread' devices.
 
-* Each architecture with a dedicated library (in pocl/lib/kenrel)
-* Target architecture (as per --target, using standard GNU rules)
-* Host architecture (same)
+LLVM is used to detect the CPU variant to be used as target. This 
+can be overridden by passing LLC_HOST_CPU to './configure'.
+Valid options are best documented in the output of::
 
-Host and/or target can be one of the specialized architectures.
+  llvm-as /dev/null | llc -mcpu=help
+
+Cross-compilation where 'build' is different from 'host' has not been
+tested.
+Cross-compilation where 'host' is a different architecture from 'target'
+has not been tested for 'basic' and 'pthread' devices. 
 
 Writing documentation
 ---------------------
