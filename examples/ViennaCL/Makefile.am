@@ -83,3 +83,17 @@ distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
 	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.3.1-src.tar.gz
 endif
+
+EXTRA_DIST=                                            \
+       blas1.stdout                            \
+       custom-context.stdout.in        \
+       iterators-test.stdout           \
+       matrix-test.stdout                      \
+       sparse-test.stdout                      \
+       vectorbench.stdout                      \
+       fft.stdout                                      \
+       matrix_range-test.stdout        \
+       scalar-test.stdout                      \
+       structured-matrices-test.stdout \
+       vector_range-test.stdout
+
