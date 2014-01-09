@@ -20,3 +20,12 @@ is used to determine processor ISA extensions (like SSE and AVX).
 Overriding of host is done with autoconf's '--host=<triple>' AND 
 the environment variable HOST_CPU (at configure time). 
 See pocl/doc/build-envs.txt.
+
+
+Mesa (OpenGL) interoperability
+------------------------------
+On some current (Jan 2014) Linux distibutions, mesa is built with LLVMpipe. 
+If pocl is built against a shared LLVM library, the mesa calls to its LLVM
+will be re-routed to the LLVM linked in pocl, causing a segfault. Consider
+linking LLVM statically to pocl. At least 'nouveau' and 'swrast_dri' are 
+known to suffer from this. See https://github.com/pocl/pocl/issues/46
