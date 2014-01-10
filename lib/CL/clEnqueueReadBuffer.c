@@ -88,49 +88,23 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   /* enqueue the read, or execute directly */
   /* TODO: why do we implement both? direct execution seems
      unnecessary. */
+  
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+  
+  cmd->command.read.data = device->data;
+  cmd->command.read.host_ptr = ptr;
+  cmd->command.read.device_ptr = buffer->device_ptrs[device->dev_id]+offset;
+  cmd->command.read.cb = cb;
+  cmd->command.read.buffer = buffer;
+  POname(clRetainMemObject) (buffer);
+  LL_APPEND(command_queue->root, cmd);
+
   if (blocking_read)
-    {
-      if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-        {
-          /* wait for the event in event_wait_list to finish */
-          POCL_ABORT_UNIMPLEMENTED();
-        }
-      else
-        {
-          /* in-order queue - all previously enqueued commands must 
-           * finish before this read */
-          // ensure our buffer is not freed yet
-          POname(clRetainMemObject) (buffer);
-          POname(clFinish)(command_queue);
-        }      
-      /* TODO: offset computation doesn't work in case the ptr is not 
-         a direct pointer */
-      POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
-      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
-
-      device->ops->read (device->data, ptr, 
-                    buffer->device_ptrs[device->dev_id]+offset, cb);
-
-      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
-
-      POname(clReleaseMemObject) (buffer);
-    }
-  else
-  {
-    errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
-                                   event, num_events_in_wait_list, 
-                                   event_wait_list);
-    if (errcode != CL_SUCCESS)
-      return errcode;
-
-    cmd->command.read.data = device->data;
-    cmd->command.read.host_ptr = ptr;
-    cmd->command.read.device_ptr = buffer->device_ptrs[device->dev_id]+offset;
-    cmd->command.read.cb = cb;
-    cmd->command.read.buffer = buffer;
-    POname(clRetainMemObject) (buffer);
-    LL_APPEND(command_queue->root, cmd);
-  }
+    clFinish (command_queue);
 
   return CL_SUCCESS;
 }

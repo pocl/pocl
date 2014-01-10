@@ -80,7 +80,7 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   
   if (blocking_write)
     {
-      status = clFinish(command_queue);
+      status = POname(clFinish) (command_queue);
       return status;
     }
   return status;
