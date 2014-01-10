@@ -77,39 +77,30 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_UPDATE_EVENT_QUEUED(event, command_queue);
     }
   
+  status = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
+                                event, num_events_in_wait_list, 
+                                event_wait_list);
+  if (status != CL_SUCCESS)
+    {
+      if (event)
+        free (*event);
+      return status;
+    }
+  
+  cmd->command.rw_image.data = command_queue->device->data;
+  cmd->command.rw_image.device_ptr = 
+    image->device_ptrs[command_queue->device->dev_id];
+  cmd->command.rw_image.host_ptr = ptr;
+  memcpy ((cmd->command.rw_image.origin), tuned_origin, 3*sizeof (size_t));
+  memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
+  cmd->command.rw_image.rowpitch = image->image_row_pitch;
+  cmd->command.rw_image.slicepitch = image->image_slice_pitch;
+  LL_APPEND(command_queue->root, cmd);
+  
   if (blocking_read)
-    {
-      POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
-      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
-      status = pocl_read_image(image, command_queue->device, origin, region,
-                               host_row_pitch, host_slice_pitch, ptr);
-      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
-      if (event != NULL)
-        POname(clReleaseCommandQueue) (command_queue);
-      return status;
-    }
-  else /* non blocking */
-    {
-      status = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
-                                    event, num_events_in_wait_list, 
-                                    event_wait_list);
-      if (status != CL_SUCCESS)
-        {
-          if (event)
-            free (*event);
-          return status;
-        }
+    status = POname(clFinish) (command_queue);
 
-      cmd->command.rw_image.data = command_queue->device->data;
-      cmd->command.rw_image.device_ptr = 
-        image->device_ptrs[command_queue->device->dev_id];
-      cmd->command.rw_image.host_ptr = ptr;
-      memcpy ((cmd->command.rw_image.origin), tuned_origin, 3*sizeof (size_t));
-      memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
-      cmd->command.rw_image.rowpitch = image->image_row_pitch;
-      cmd->command.rw_image.slicepitch = image->image_slice_pitch;
-      LL_APPEND(command_queue->root, cmd);
-      return status;
-    }
+  return status;
+
 }
 POsym(clEnqueueReadImage)

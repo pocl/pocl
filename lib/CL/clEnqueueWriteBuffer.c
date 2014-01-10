@@ -87,47 +87,24 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   /* enqueue the write, or execute directly */
   /* TODO: why do we implement both? direct execution seems
      unnecessary. */
+
+  errcode = pocl_create_command (&cmd, command_queue, 
+                                 CL_COMMAND_WRITE_BUFFER, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+  
+  cmd->command.write.host_ptr = ptr;
+  cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
+  cmd->command.write.cb = cb;
+  cmd->command.write.buffer = buffer;
+  POname(clRetainMemObject) (buffer);
+  
+  LL_APPEND(command_queue->root, cmd);
+  
   if (blocking_write)
-    {
-      if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-        {
-          /* wait for the events in event_wait_list to finish */
-          POCL_ABORT_UNIMPLEMENTED();
-        }
-      else
-        {
-          /* in-order queue - all previously enqueued commands must 
-           * finish before this read */
-          POname(clRetainMemObject) (buffer);
-          POname(clFinish) (command_queue);
-        }
-
-      POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
-      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
-      /* TODO: fixme. The offset computation must be done at the device driver. */
-      device->ops->write(device->data, ptr, buffer->device_ptrs[device->dev_id]+offset, cb);
-      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
-
-      POname(clReleaseMemObject) (buffer);
-    }
-  else
-  {
-    errcode = pocl_create_command (&cmd, command_queue, 
-                                   CL_COMMAND_WRITE_BUFFER, 
-                                   event, num_events_in_wait_list, 
-                                   event_wait_list);
-    if (errcode != CL_SUCCESS)
-      return errcode;
-
-    cmd->command.write.data = device->data;
-    cmd->command.write.host_ptr = ptr;
-    cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
-    cmd->command.write.cb = cb;
-    cmd->command.write.buffer = buffer;
-    POname(clRetainMemObject) (buffer);
-
-    LL_APPEND(command_queue->root, cmd);
-  }
+    POname(clFinish) (command_queue);
 
   return CL_SUCCESS;
 }

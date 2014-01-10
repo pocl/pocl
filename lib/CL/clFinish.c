@@ -111,7 +111,7 @@ static void exec_commands (_cl_command_node *node_list)
         case CL_COMMAND_READ_BUFFER:
           POCL_UPDATE_EVENT_RUNNING(event, command_queue);
           node->device->ops->read
-            (node->command.read.data, 
+            (node->device->data, 
              node->command.read.host_ptr, 
              node->command.read.device_ptr, 
              node->command.read.cb); 
@@ -121,7 +121,7 @@ static void exec_commands (_cl_command_node *node_list)
         case CL_COMMAND_WRITE_BUFFER:
           POCL_UPDATE_EVENT_RUNNING(event, command_queue);
           node->device->ops->write
-            (node->command.write.data, 
+            (node->device->data, 
              node->command.write.host_ptr, 
              node->command.write.device_ptr, 
              node->command.write.cb);

@@ -136,7 +136,11 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       return mapping_info->host_ptr;
     }
   else
-    POname(clFinish) (command_queue);
+    errcode = POname(clFinish) (command_queue);
+
+  if (errcode_ret)
+    *errcode_ret = errcode;
+  
 
   POCL_SUCCESS ();
   return host_ptr;
