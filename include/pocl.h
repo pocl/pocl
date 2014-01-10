@@ -139,7 +139,6 @@ typedef struct
 /* clEnqueue(Write/Read)Image */
 typedef struct
 {
-  void *data;
   void *device_ptr;
   void *host_ptr;
   size_t origin[3];

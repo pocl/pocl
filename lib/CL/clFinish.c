@@ -149,25 +149,25 @@ static void exec_commands (_cl_command_node *node_list)
         case CL_COMMAND_WRITE_IMAGE:
           POCL_UPDATE_EVENT_RUNNING(event, command_queue); 
           node->device->ops->write_rect 
-            (node->command.map_image.data, node->command.map_image.map_ptr,
-             node->command.map_image.device_ptr, node->command.map_image.origin,
-             node->command.map_image.origin, node->command.map_image.region, 
-             node->command.map_image.rowpitch, 
-             node->command.map_image.slicepitch,
-             node->command.map_image.rowpitch,
-             node->command.map_image.slicepitch);
+            (node->device->data, node->command.rw_image.host_ptr,
+             node->command.rw_image.device_ptr, node->command.rw_image.origin,
+             node->command.rw_image.origin, node->command.rw_image.region, 
+             node->command.rw_image.rowpitch, 
+             node->command.rw_image.slicepitch,
+             node->command.rw_image.rowpitch,
+             node->command.rw_image.slicepitch);
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           break;
         case CL_COMMAND_READ_IMAGE:
           POCL_UPDATE_EVENT_RUNNING(event, command_queue); 
           node->device->ops->read_rect 
-            (node->command.map_image.data, node->command.map_image.map_ptr,
-             node->command.map_image.device_ptr, node->command.map_image.origin,
-             node->command.map_image.origin, node->command.map_image.region, 
-             node->command.map_image.rowpitch, 
-             node->command.map_image.slicepitch,
-             node->command.map_image.rowpitch,
-             node->command.map_image.slicepitch);
+            (node->device->data, node->command.rw_image.host_ptr,
+             node->command.rw_image.device_ptr, node->command.rw_image.origin,
+             node->command.rw_image.origin, node->command.rw_image.region, 
+             node->command.rw_image.rowpitch, 
+             node->command.rw_image.slicepitch,
+             node->command.rw_image.rowpitch,
+             node->command.rw_image.slicepitch);
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           break;
         case CL_COMMAND_UNMAP_MEM_OBJECT:
