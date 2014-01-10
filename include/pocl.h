@@ -91,7 +91,6 @@ typedef struct
 // clEnqueueReadBuffer
 typedef struct
 {
-  void *data;
   void *host_ptr;
   const void *device_ptr;
   size_t cb;
@@ -101,7 +100,6 @@ typedef struct
 // clEnqueueWriteBuffer
 typedef struct
 {
-  void *data;
   const void *host_ptr;
   void *device_ptr;
   size_t cb;

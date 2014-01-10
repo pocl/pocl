@@ -95,7 +95,6 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
   
-  cmd->command.read.data = device->data;
   cmd->command.read.host_ptr = ptr;
   cmd->command.read.device_ptr = buffer->device_ptrs[device->dev_id]+offset;
   cmd->command.read.cb = cb;

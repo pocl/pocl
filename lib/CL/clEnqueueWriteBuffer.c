@@ -95,7 +95,6 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
   
-  cmd->command.write.data = device->data;
   cmd->command.write.host_ptr = ptr;
   cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
   cmd->command.write.cb = cb;
