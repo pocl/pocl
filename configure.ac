@@ -655,7 +655,7 @@ old_CXX=$CXX
 CXX=$CLANGXX
 old_CXXFLAGS=$CXXFLAGS
 CXXFLAGS=$CLANGXX_FLAGS
-old_LDLFAGS=$LDFLAGS
+old_LDFLAGS=$LDFLAGS
 old_LIBS=$LIBS
 
 # The namespace std { class type_info; } is needed for older libstdc++
