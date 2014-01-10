@@ -104,7 +104,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   LL_APPEND(command_queue->root, cmd);
 
   if (blocking_read)
-    clFinish (command_queue);
+    POname(clFinish) (command_queue);
 
   return CL_SUCCESS;
 }
