@@ -68,7 +68,6 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
       return status;
     }  
 
-  cmd->command.rw_image.data = command_queue->device->data;
   cmd->command.rw_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
   cmd->command.rw_image.host_ptr = (void*) ptr;

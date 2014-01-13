@@ -87,7 +87,6 @@ CL_API_SUFFIX__VERSION_1_0
       return status;
     }
   
-  cmd->command.rw_image.data = command_queue->device->data;
   cmd->command.rw_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
   cmd->command.rw_image.host_ptr = ptr;
