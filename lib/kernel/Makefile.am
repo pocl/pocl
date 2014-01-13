@@ -39,4 +39,6 @@ EXTRA_DIST = *.c *.cl *.h *.ll			\
 	vecmathlib-pocl/*.cc			\
 	vecmathlib-pocl/*.cl			\
 	vecmathlib-pocl/*.h			\
-	vecmathlib-pocl/*.py
+	vecmathlib-pocl/*.py  \
+	cellspu/* \
+	tce/*

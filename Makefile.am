@@ -54,9 +54,10 @@ endif
 
 .PHONY: ${PHONIES}
 
-EXTRA_DIST = config/xclang doc/envs.txt tools/data/*.adf \
+EXTRA_DIST = config/xclang tools/data/*.adf \
+  doc/build-envs.txt doc/sphinx/* \
   CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
-  README.OSX README.ppc64
+  README.OSX README.powerpc README.packaging
 
 BUILT_SOURCES = install-paths.h
 

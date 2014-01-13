@@ -24,11 +24,11 @@
 
 noinst_PROGRAMS = kernel sampler_address_clamp image_query_funcs
 
-kernel_SOURCES = kernel.c test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
+kernel_SOURCES = kernel.c test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type_*.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
 kernel_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 kernel_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 
-sampler_address_clamp_SOURCES = sampler_address_clamp.c sampler_address_clamp.cl
+sampler_address_clamp_SOURCES = sampler_address_clamp.c test_sampler_address_clamp.cl
 sampler_address_clamp_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 smapler_address_clamp_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 

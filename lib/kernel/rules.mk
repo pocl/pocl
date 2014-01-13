@@ -32,7 +32,7 @@
 
 KERNEL_BC=kernel-${KERNEL_TARGET}.bc
 
-dist_pkgdata_DATA=${KERNEL_BC}
+nodist_pkgdata_DATA=${KERNEL_BC}
 
 all: ${KERNEL_BC}
 

@@ -2,6 +2,9 @@ Kernel compiler
 ---------------
 
 The compilation of kernels in pocl is performed roughly as follows.
+In release 0.9 the scripts (referred to below) were replaced by direct
+LLVM API calls. The structure remains, e.g. calling script ``pocl-build`` was
+replaced with calling function ``call_pocl_build()``. See ``lib/CL/pocl_llvm_api.cc``
 
 #. Produce an LLVM bitcode of the single kernel function.
 

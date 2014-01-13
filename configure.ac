@@ -101,8 +101,7 @@ case "$LLVM_VERSION" in
      NEW_PRINTF_WORKS=false
    ;; 
      3.4*)
-     AC_DEFINE([LLVM_3_4], [], "Using LLVM svn (upcoming 3.4)")     
-     AC_DEFINE([LLVM_SVN], [], "Using LLVM svn (upcoming 3.4)")     
+     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
    ;;   
      *)
    AC_MSG_ERROR(
@@ -126,18 +125,18 @@ fi
 AM_CONDITIONAL(USE_LLVM_API, test "$use_llvm_api" = "yes")
 
 # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
-# or risk causing version mismatches
-# Also note, when building LLVM with cmake, there is no libLLVM-<versionnumber>.so
+# or risk causing version mismatches. Also useful when other platform libraries use LLVM too, see issue #46.
+# Also note, when building shared LLVM libraries with cmake, there is no libLLVM-<versionnumber>.so
 link_llvm_static="no"
 AC_ARG_ENABLE([static-llvm],
               [AS_HELP_STRING([--enable-static-llvm],
-                              [Link LLVM statically. Default is dynamic. Only used if --enable-llvmapi is given.])],
+                              [Link LLVM statically. Default is dynamic.])],
               [link_llvm_static="yes"])
 
 LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM-$LLVM_VERSION$LIBRARY_SUFFIX
 
 if test "$link_llvm_static" = "yes"; then
-  LLVM_LIBS=$($LLVM_CONFIG --libs)
+  LLVM_LIBS=$($LLVM_CONFIG --libfiles)
 else
   LLVM_LIBS=-lLLVM-$LLVM_VERSION
 if test ! -e $LLVM_SHARED_LIB_FILE;
