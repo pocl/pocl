@@ -92,7 +92,7 @@ rm -f ${header}
 if false ; then
 # END REMOVE ONCE INSTALLED
 pocl_kernel_compiler_lib=@pkglibdir@/llvmopencl.so
-@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
+@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgdataincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
 @OPT@ ${LLC_FLAGS} -load=$pocl_kernel_compiler_lib -generate-header -disable-output -header=${header} ${kernel_bc}
 # BEGIN REMOVE ONCE INSTALLED
