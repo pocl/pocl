@@ -813,6 +813,14 @@ static PassManager& kernel_compiler_passes
           assert(O && "could not find LLVM option 'wi-vectorize-mem-ops-only'");
           O->addOccurrence(1, StringRef("wi-vectorize-mem-ops-only"), StringRef(""), false); 
         }
+       if (first_initialization_call)
+        {
+#ifndef LLVM_3_2
+          llvm::cl::Option *O = opts["add-wi-metadata"];
+          O->addOccurrence(1, StringRef("add-wi-metadata"), 
+                           StringRef(""), false); 
+#endif
+        }
 
     }
 #endif
@@ -820,11 +828,6 @@ static PassManager& kernel_compiler_passes
   passes.push_back("STANDARD_OPTS");
   passes.push_back("instcombine");
 
-#ifndef LLVM_3_2
-  llvm::cl::Option *O = opts["add-wi-metadata"];
-  O->addOccurrence(1, StringRef("add-wi-metadata"), StringRef(""), false); 
-#endif
- 
   // Now actually add the listed passes to the PassManager.
   for(unsigned i = 0; i < passes.size(); ++i)
     {
