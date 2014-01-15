@@ -109,8 +109,8 @@ CL_API_SUFFIX__VERSION_1_0
       while (token != NULL)
         {
           /* check if parameter is supported compiler parameter */
-          if (strstr (token, "-cl") || strstr (token, "-w") 
-              || strstr(token, "-g"))
+          if (memcmp (token, "-cl", 3) == 0 || memcmp (token, "-w", 2) == 0 
+              || memcmp(token, "-g", 2) == 0)
             {
               if (strstr (cl_parameters, token))
                 {
@@ -134,7 +134,7 @@ CL_API_SUFFIX__VERSION_1_0
                   goto ERROR_CLEAN_OPTIONS;
                 }
             }
-          else if (strstr (token, "-D") || strstr (token, "-I"))
+          else if (memcmp (token, "-D", 2) == 0 || memcmp (token, "-I", 2) == 0)
             {
               strcat (modded_options, token);
               strcat (modded_options, " ");
