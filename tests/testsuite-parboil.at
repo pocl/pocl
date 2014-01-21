@@ -75,7 +75,7 @@ AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil 2>&1 | gr
 [Pass
 ])
 # LLVM 3.4's SROA crashes with this. Reported in http://llvm.org/bugs/show_bug.cgi?id=15907
-AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_srcdir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_CLEANUP
 
 POAT_PB_SETUP([histo])
