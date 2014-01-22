@@ -67,16 +67,6 @@ CL_API_SUFFIX__VERSION_1_0
     }
   assert(i < command_queue->context->num_devices);
 
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_COPY_BUFFER);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-      
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
                                  event, num_events_in_wait_list, 
                                  event_wait_list);
@@ -96,7 +86,7 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.copy.dst_ptr = dst_buffer->device_ptrs[device_id->dev_id] + dst_offset;
   cmd->command.copy.cb = cb;
 
-  LL_APPEND(command_queue->root, cmd);
+  pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 }

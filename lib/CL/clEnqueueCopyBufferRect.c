@@ -79,17 +79,6 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
     }
   assert(i < command_queue->context->num_devices);
 
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_COPY_BUFFER_RECT);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
-
   /* execute directly */
   /* TODO: enqueue the read_rect if this is a non-blocking read (see
      clEnqueueReadBuffer) */

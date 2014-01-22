@@ -28,7 +28,19 @@ cl_int CL_API_CALL
 POname(clEnqueueBarrier)(cl_command_queue command_queue) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  _cl_command_node *cmd;
+
+  if (command_queue == NULL || command_queue->device == NULL ||
+      command_queue->context == NULL)
+    return CL_INVALID_COMMAND_QUEUE;
+
+  /* Even if we do not need to create a full command, the runtime requires it */
+  pocl_create_command (&cmd, command_queue, 
+                            CL_COMMAND_BARRIER, NULL, 
+                            0, NULL);
+
+  pocl_command_enqueue(command_queue, cmd);
+
   return CL_SUCCESS;
 }
 POsym(clEnqueueBarrier)

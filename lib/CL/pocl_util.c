@@ -218,12 +218,12 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
 cl_int pocl_create_command (_cl_command_node **cmd, 
                             cl_command_queue command_queue, 
-                            cl_command_type command_type, cl_event *event, 
+                            cl_command_type command_type, cl_event *event_p, 
                             cl_int num_events, const cl_event *wait_list)
 {
   int i;
   int err;
-  cl_event new_event = NULL;
+  cl_event *event = NULL;
 
   if ((wait_list == NULL && num_events != 0) ||
       (wait_list != NULL && num_events == 0))
@@ -239,16 +239,17 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
   
-  if (event == NULL)
+  /* if user does not provide event pointer, create event anyway */
+  event = &((*cmd)->event);
+  err = pocl_create_event(event, command_queue, command_type);
+  if (err != CL_SUCCESS)
     {
-      err = pocl_create_event(&new_event, command_queue, 0);
-      if (err != CL_SUCCESS)
-        {
-          free (*cmd);
-          return err;
-        }
-      POCL_UPDATE_EVENT_QUEUED(&new_event, command_queue);
+      free (*cmd);
+      return err;
     }
+  if (event_p)
+    *event_p = *event;
+  POCL_UPDATE_EVENT_QUEUED(event, command_queue);
 
   /* if in-order command queue and queue is not empty, add event from 
      previous command to new commands event_waitlist */
@@ -279,11 +280,16 @@ cl_int pocl_create_command (_cl_command_node **cmd,
     }
   (*cmd)->type = command_type;
   (*cmd)->next = NULL;
-  (*cmd)->event = event ? (*event) : new_event;
   (*cmd)->device = command_queue->device;
 
   //printf("create_command (end): event=%d new_event=%d cmd->event=%d cmd=%d\n", event, new_event, (*cmd)->event, *cmd);
   
 
   return CL_SUCCESS;
+}
+
+void pocl_command_enqueue(cl_command_queue command_queue, 
+                          _cl_command_node *node)
+{
+  LL_APPEND (command_queue->root, node);
 }

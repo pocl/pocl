@@ -73,21 +73,6 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
             break;
     }
   assert(i < command_queue->context->num_devices);
-
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_READ_BUFFER);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
-
-  /* enqueue the read, or execute directly */
-  /* TODO: why do we implement both? direct execution seems
-     unnecessary. */
   
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
                                  event, num_events_in_wait_list, 
@@ -100,7 +85,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   cmd->command.read.cb = cb;
   cmd->command.read.buffer = buffer;
   POname(clRetainMemObject) (buffer);
-  LL_APPEND(command_queue->root, cmd);
+  pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_read)
     POname(clFinish) (command_queue);

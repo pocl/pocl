@@ -97,4 +97,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_int num_events, const cl_event *wait_list);
   
 
+void pocl_command_enqueue(cl_command_queue command_queue, 
+                          _cl_command_node *node);
+
 #endif

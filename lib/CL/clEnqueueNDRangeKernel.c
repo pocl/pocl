@@ -223,16 +223,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       printf("[parallel bc already created]\n");
 #endif
     }
-
-  if (event != NULL)
-    {
-      error = pocl_create_event (event, command_queue, 
-                                 CL_COMMAND_NDRANGE_KERNEL);
-      if (error != CL_SUCCESS)
-        return error;
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
+  
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
                                event, num_events_in_wait_list,
@@ -325,7 +316,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       }
   }
 
-  LL_APPEND(command_queue->root, command_node);
+  pocl_command_enqueue(command_queue, command_node);
 
   return CL_SUCCESS;
 }

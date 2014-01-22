@@ -38,18 +38,12 @@ CL_API_SUFFIX__VERSION_1_0
   if (event == NULL)
     return CL_INVALID_VALUE;
 
-  errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, 
                                  event, 0, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  LL_APPEND(command_queue->root, cmd);
+  pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 }
