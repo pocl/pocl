@@ -101,13 +101,6 @@ CL_API_SUFFIX__VERSION_1_0
                              &num_channels, &elem_size);
   
   offset = num_channels * elem_size * origin[0];
-
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MAP_IMAGE);
-      if (errcode != CL_SUCCESS)
-        goto ERROR;
-    }
   
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
@@ -134,11 +127,11 @@ CL_API_SUFFIX__VERSION_1_0
          the mapping will be stored (the last argument is NULL) in
          the host memory. When the last argument is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
-      
+
       map = device->ops->map_mem 
-          (device->data, 
-           image->device_ptrs[device->dev_id], 
-           offset, 0/*size*/, NULL);
+        (device->data, 
+         image->device_ptrs[device->dev_id], 
+         offset, 0/*size*/, NULL);
     }
 
   if (map == NULL)
@@ -162,9 +155,8 @@ CL_API_SUFFIX__VERSION_1_0
   
   cmd->command.map.buffer = image;
   cmd->command.map.mapping = mapping_info;
-  LL_APPEND(command_queue->root, cmd);
-  POCL_UPDATE_EVENT_QUEUED(event, command_queue);  
-
+  pocl_command_enqueue(command_queue, cmd);
+  
   if (blocking_map)
     {
       POname(clFinish) (command_queue);

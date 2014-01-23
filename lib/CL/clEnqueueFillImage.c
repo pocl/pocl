@@ -159,15 +159,6 @@ CL_API_SUFFIX__VERSION_1_2
       memcpy (fill_pixel, fill_color, sizeof (cl_int4));      
     }
 
-  if (event != NULL)
-    {
-      errcode = pocl_create_event(event, command_queue, CL_COMMAND_FILL_IMAGE);
-      if (errcode != CL_SUCCESS)
-        goto ERROR_CLEAN;
-      
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
   /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
      test uses bottom-left corner as origin. Because of this we need to modify 
      y-coordinate so the fill goes in the right place. */
@@ -184,14 +175,14 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
-  memcpy (&(cmd->command.fill_image.buffer_origin), /*tuned_*/origin, 
+  memcpy (&(cmd->command.fill_image.buffer_origin), origin, 
           3*sizeof(size_t));
   memcpy (&(cmd->command.fill_image.region), region, 3*sizeof(size_t));
   cmd->command.fill_image.rowpitch = image->image_row_pitch;
   cmd->command.fill_image.slicepitch = image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
   cmd->command.fill_image.pixel_size = image_elem_size * num_image_channels;
-  LL_APPEND(command_queue->root, cmd);
+  pocl_command_enqueue(command_queue, cmd);
   
   free (supported_image_formats);
   return errcode;

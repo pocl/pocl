@@ -71,17 +71,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);
 
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_MAP_BUFFER);
-      if (errcode != CL_SUCCESS)
-        goto ERROR;
-
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
-  mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
+  mapping_info = (mem_mapping_t*) calloc (1, sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -123,13 +113,13 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   
   cmd->command.map.buffer = buffer;
   cmd->command.map.mapping = mapping_info;
-  LL_APPEND(command_queue->root, cmd);
-  
+    
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;
   DL_APPEND (buffer->mappings, mapping_info);  
-  
+  pocl_command_enqueue(command_queue, cmd);
+
   if (blocking_map != CL_TRUE)
     {
       POCL_SUCCESS ();

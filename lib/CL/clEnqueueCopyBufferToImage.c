@@ -22,16 +22,6 @@ CL_API_SUFFIX__VERSION_1_0
   if (region[2] != 1) //3D image
     POCL_ABORT_UNIMPLEMENTED();
     
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_COPY_BUFFER_TO_IMAGE);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-      POCL_UPDATE_EVENT_RUNNING(event, command_queue);
-    }
-
   int host_elem_size;    
   int host_channels;
   pocl_get_image_information (image->image_channel_order,

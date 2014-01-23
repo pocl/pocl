@@ -145,6 +145,7 @@ typedef struct
   size_t region[3];
   size_t rowpitch;
   size_t slicepitch;
+  cl_mem buffer;
 } _cl_command_rw_image;
 
 /* clEnqueueUnMapMemObject */

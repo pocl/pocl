@@ -57,15 +57,6 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   command_node->command.native.num_mem_objects = num_mem_objects;
   command_node->command.native.user_func = user_func;
 
-  if (event != NULL)
-    {
-      error = pocl_create_event (event, command_queue,
-                                 CL_COMMAND_NATIVE_KERNEL);
-      if (error != CL_SUCCESS)
-        return error;
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
   /* Specification specifies that args passed to user_func is a copy of the
    * one passed to this function */
   args_copy = malloc(cb_args);
@@ -121,7 +112,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
   POname(clRetainCommandQueue) (command_queue);
 
-  LL_APPEND(command_queue->root, command_node);
+  pocl_command_enqueue(command_queue, command_node);
 
   return CL_SUCCESS;
 }

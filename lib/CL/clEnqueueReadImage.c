@@ -66,16 +66,6 @@ CL_API_SUFFIX__VERSION_1_0
                             origin[2]};
   size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
                             region[2]};
-
-  if (event != NULL)
-    {
-      status = pocl_create_event (event, command_queue, 
-                                  CL_COMMAND_READ_IMAGE);
-      if (status != CL_SUCCESS)
-        return status;
-
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
   
   status = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
                                 event, num_events_in_wait_list, 
@@ -84,9 +74,8 @@ CL_API_SUFFIX__VERSION_1_0
     {
       if (event)
         free (*event);
-      return status;
     }
-  
+
   cmd->command.rw_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id];
   cmd->command.rw_image.host_ptr = ptr;
@@ -94,12 +83,13 @@ CL_API_SUFFIX__VERSION_1_0
   memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.rw_image.rowpitch = image->image_row_pitch;
   cmd->command.rw_image.slicepitch = image->image_slice_pitch;
-  LL_APPEND(command_queue->root, cmd);
-  
+  cmd->command.rw_image.buffer = image;
+  pocl_command_enqueue(command_queue, cmd);
+  POname(clRetainMemObject) (image);  
+
   if (blocking_read)
-    status = POname(clFinish) (command_queue);
-
+    POname(clFinish) (command_queue);
+  
   return status;
-
 }
 POsym(clEnqueueReadImage)

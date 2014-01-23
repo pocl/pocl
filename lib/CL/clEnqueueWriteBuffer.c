@@ -62,9 +62,11 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
     return CL_INVALID_EVENT_WAIT_LIST;
 
   for(i=0; i<num_events_in_wait_list; i++)
-    if (event_wait_list[i] == NULL)
-      return CL_INVALID_EVENT_WAIT_LIST;
-
+    {
+      if (event_wait_list[i] == NULL)
+        return CL_INVALID_EVENT_WAIT_LIST;
+    }
+  
   device = command_queue->device;
 
   for (i = 0; i < command_queue->context->num_devices; ++i)
@@ -73,20 +75,6 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
             break;
     }
   assert(i < command_queue->context->num_devices);
-
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_WRITE_BUFFER);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-
-  /* enqueue the write, or execute directly */
-  /* TODO: why do we implement both? direct execution seems
-     unnecessary. */
 
   errcode = pocl_create_command (&cmd, command_queue, 
                                  CL_COMMAND_WRITE_BUFFER, 
@@ -100,8 +88,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   cmd->command.write.cb = cb;
   cmd->command.write.buffer = buffer;
   POname(clRetainMemObject) (buffer);
-  
-  LL_APPEND(command_queue->root, cmd);
+  pocl_command_enqueue(command_queue, cmd);
   
   if (blocking_write)
     POname(clFinish) (command_queue);

@@ -38,14 +38,6 @@ CL_API_SUFFIX__VERSION_1_2
   
   if (command_queue == NULL)
     return CL_INVALID_COMMAND_QUEUE;
-
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, CL_COMMAND_MARKER);
-      if (errcode != CL_SUCCESS)
-        goto ERROR;
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
   
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, 
                                  event, num_events_in_wait_list, 
@@ -54,8 +46,8 @@ CL_API_SUFFIX__VERSION_1_2
     goto ERROR;
 
   cmd->command.marker.data = command_queue->device->data;
-  LL_APPEND(command_queue->root, cmd);
-      
+  pocl_command_enqueue(command_queue, cmd);
+        
   return CL_SUCCESS;
 
  ERROR:

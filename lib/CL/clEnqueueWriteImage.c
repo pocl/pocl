@@ -46,18 +46,6 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
                             origin[2]};
   size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
                             region[2]};
-
-  if (event != NULL)
-    {
-      status = pocl_create_event (event, command_queue, 
-                                  CL_COMMAND_WRITE_IMAGE);
-      if (status != CL_SUCCESS)
-        return status;
-      
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-      POname(clRetainCommandQueue) (command_queue);
-    }
-
   status = pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_IMAGE, 
                                 event, num_events_in_wait_list, 
                                 event_wait_list);
@@ -75,13 +63,12 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.rw_image.rowpitch = image->image_row_pitch;
   cmd->command.rw_image.slicepitch = image->image_slice_pitch;
-  LL_APPEND(command_queue->root, cmd);
+  cmd->command.rw_image.buffer = image;
+  pocl_command_enqueue(command_queue, cmd);
   
   if (blocking_write)
-    {
-      status = POname(clFinish) (command_queue);
-      return status;
-    }
+    status = POname(clFinish) (command_queue);
+    
   return status;
 }
 POsym(clEnqueueWriteImage)

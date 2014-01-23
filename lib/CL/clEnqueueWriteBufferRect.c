@@ -96,16 +96,6 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
       POname(clFinish)(command_queue);
     }
 
-  if (event != NULL)
-    {
-      errcode = pocl_create_event (event, command_queue, 
-                                   CL_COMMAND_WRITE_BUFFER_RECT);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-
-      POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-    }
-  POCL_UPDATE_EVENT_SUBMITTED(event, command_queue);
   POCL_UPDATE_EVENT_RUNNING(event, command_queue);
 
   /* TODO: offset computation doesn't work in case the ptr is not 
