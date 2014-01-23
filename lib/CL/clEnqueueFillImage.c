@@ -182,7 +182,6 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.slicepitch = image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
   cmd->command.fill_image.pixel_size = image_elem_size * num_image_channels;
-  POCL_UPDATE_EVENT_QUEUED(&cmd->event, command_queue);
   pocl_command_enqueue(command_queue, cmd);
   
   free (supported_image_formats);

@@ -155,7 +155,6 @@ CL_API_SUFFIX__VERSION_1_0
   
   cmd->command.map.buffer = image;
   cmd->command.map.mapping = mapping_info;
-  POCL_UPDATE_EVENT_QUEUED(event, command_queue);  
   pocl_command_enqueue(command_queue, cmd);
   
   if (blocking_map)

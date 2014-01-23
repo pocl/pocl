@@ -46,7 +46,6 @@ CL_API_SUFFIX__VERSION_1_2
     goto ERROR;
 
   cmd->command.marker.data = command_queue->device->data;
-  POCL_UPDATE_EVENT_QUEUED(&cmd->event, command_queue);
   pocl_command_enqueue(command_queue, cmd);
         
   return CL_SUCCESS;
