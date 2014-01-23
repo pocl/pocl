@@ -249,8 +249,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
     }
   if (event_p)
     *event_p = *event;
-  POCL_UPDATE_EVENT_QUEUED(event, command_queue);
-
+  
   /* if in-order command queue and queue is not empty, add event from 
      previous command to new commands event_waitlist */
   if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
@@ -291,5 +290,6 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 void pocl_command_enqueue(cl_command_queue command_queue, 
                           _cl_command_node *node)
 {
+  POCL_UPDATE_EVENT_QUEUED (&node->event, command_queue);
   LL_APPEND (command_queue->root, node);
 }
