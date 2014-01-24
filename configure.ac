@@ -821,6 +821,8 @@ llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
 test -n "$LLC_HOST_CPU" && llc_host_cpu=$LLC_HOST_CPU 
 test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 AC_MSG_RESULT($llc_host_cpu)
+#PPC has -march and -mcpu reversed, for clang
+CLANG_MARCH_FLAG=march
 
 case $host_os in
   darwin* )
@@ -902,6 +904,7 @@ case $host_cpu in
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
+    CLANG_MARCH_FLAG="mcpu"
     ;;
 
   powerpc*)
@@ -915,6 +918,7 @@ case $host_cpu in
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
     HOST_AS_FLAGS="$HOST_AS_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
+    CLANG_MARCH_FLAG="mcpu"
     ;;
 
   *)
@@ -929,7 +933,7 @@ HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
 HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple"
 if test "$llc_host_cpu" != "(unknown)"
 then
-  HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
+  HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -$CLANG_MARCH_FLAG=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
 fi
 
