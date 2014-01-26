@@ -714,15 +714,9 @@ fi
 CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=120"
 
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
-AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 AC_ARG_VAR([CLANGXX_FLAGS], [Flags to be used when compiling C++ sources with clang])
-
-if test x"$use_vecmathlib" = xyes; then
-  AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
-  CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
-fi
 
 use_vecmathlib_builtins="no"
 AC_ARG_ENABLE([vecmathlib-builtins],
@@ -915,8 +909,8 @@ case $host_cpu in
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     llc_triple="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
-    #TODO: not all PowerPCs have Altivec?
-    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
+    #Altivec on PPC32 seems to have a few codegen issues
+    use_vecmathlib=""
     HOST_AS_FLAGS="$HOST_AS_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
     CLANG_MARCH_FLAG="mcpu"
     ;;
@@ -997,6 +991,12 @@ AC_SUBST([POCL_DEVICE_ADDRESS_BITS], [$CL_DEVICE_ADDRESS_BITS])
 AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
+
+AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
+if test x"$use_vecmathlib" = xyes; then
+  AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
+  CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
+fi
 
 
 
