@@ -67,7 +67,9 @@ AT_KEYWORDS([cl_amd_fp64])
 #this causes assert on LLVM 3.1
 AT_SKIP_IF([ grep "#define LLVM_3_1" $abs_top_builddir/config.h ])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv &&
+             (grep -q "define LLVM_3_2" $abs_top_builddir/config.h ||
+              grep -q "define LLVM_3_3" $abs_top_builddir/config.h )])
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
@@ -158,7 +160,9 @@ POAT_AMDSDK_SETUP([ludecomposition])
 AT_KEYWORDS([cl_amd_fp64])
 #test uses doubles
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv &&
+             (grep -q "define LLVM_3_2" $abs_top_builddir/config.h ||
+              grep -q "define LLVM_3_3" $abs_top_builddir/config.h )])
 AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ], ignore)
