@@ -847,7 +847,7 @@ case $host_cpu in
       HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
     esac
     ;;
-  armv7l)
+  armv7*)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # check for gnueabihf, and set clang target accordingly
     case $host in
@@ -863,7 +863,13 @@ case $host_cpu in
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=soft";;
-      *)
+      armv7hl-redhat-linux-gnu)
+         llc_triple="armv7hl-redhat-linux-gnueabi"
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
+       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
          llc_triple="armv7";;
