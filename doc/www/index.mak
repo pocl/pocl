@@ -18,6 +18,9 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2014-01-29: <a href="pocl-0.9.html">Portable Computing Language
+(pocl) v0.9 released</a></h2>
+
 <h2>2013-09-12: <a href="rpm.html">pocl included in Fedora</a></h2>
 
 <h2>2013-08-12: <a href="pocl-0.8.html">Portable Computing Language
