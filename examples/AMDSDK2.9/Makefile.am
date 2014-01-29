@@ -39,6 +39,7 @@ $(testsuite_src_dir): AMD-APP-SDK-v2.9-RC-lnx64.tgz
 
 build: $(testsuite_src_dir) 
 	cd $(testsuite_pocl_dir) && \
+	( patch -sNp1 < $(testsuite_pocl_dir)/KernelLaunch.patch || true ) && \
 	( patch -sNp1 < $(testsuite_pocl_dir)/AMDSDK2_9.patch || true ) && \
 	cd $(testsuite_src_dir)/samples/ && \
 	find . -name "CMakeLists.txt" -exec sed -i \
