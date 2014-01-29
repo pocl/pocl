@@ -168,8 +168,13 @@ int call_pocl_build(cl_program program,
   while (i != end) 
     {
       itemstrs.push_back(*i);
-      itemcstrs.push_back(itemstrs.back().c_str());
       ++i;
+    }
+  for (int idx=0; idx<itemstrs.size(); idx++)
+    {
+      // note: if itemstrs is modified after this, itemcstrs will be full
+      // of invalid pointers! Could make copies, but would have to clean up then...
+      itemcstrs.push_back(itemstrs[idx].c_str());
     }
 #ifdef DEBUG_POCL_LLVM_API
   // TODO: for some reason the user_options are replicated,

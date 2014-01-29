@@ -714,15 +714,9 @@ fi
 CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=120"
 
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
-AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
 
 AC_ARG_VAR([CLFLAGS], [Flags to be used when compiling CL sources])
 AC_ARG_VAR([CLANGXX_FLAGS], [Flags to be used when compiling C++ sources with clang])
-
-if test x"$use_vecmathlib" = xyes; then
-  AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
-  CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
-fi
 
 use_vecmathlib_builtins="no"
 AC_ARG_ENABLE([vecmathlib-builtins],
@@ -821,6 +815,8 @@ llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
 test -n "$LLC_HOST_CPU" && llc_host_cpu=$LLC_HOST_CPU 
 test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 AC_MSG_RESULT($llc_host_cpu)
+#PPC has -march and -mcpu reversed, for clang
+CLANG_MARCH_FLAG=march
 
 case $host_os in
   darwin* )
@@ -851,7 +847,7 @@ case $host_cpu in
       HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
     esac
     ;;
-  armv7l)
+  armv7*)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # check for gnueabihf, and set clang target accordingly
     case $host in
@@ -867,7 +863,13 @@ case $host_cpu in
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=soft";;
-      *)
+      armv7hl-redhat-linux-gnu)
+         llc_triple="armv7hl-redhat-linux-gnueabi"
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
+       *)
          #this is for old arm distros (pre-hardfloat),
          #probably not used, and kept here "just in case"
          llc_triple="armv7";;
@@ -895,24 +897,28 @@ case $host_cpu in
     ;;
 
   powerpc64*)
+    test ${LLVM_VERSION:0:3} == "3.4" && AC_MSG_ERROR([LLVM 3.4 fails on PowerPC, use 3.3])
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     llc_triple="powerpc64-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
     #TODO: not all PowerPCs have Altivec?
     HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
+    CLANG_MARCH_FLAG="mcpu"
     ;;
 
   powerpc*)
+    test ${LLVM_VERSION:0:3} == "3.4" && AC_MSG_ERROR([LLVM 3.4 fails on PowerPC, use 3.3])
     #on all tested operating systems with PowerPC, the processor is 64bit,
     #but the operating system is 32 bit. 
     AC_MSG_NOTICE([using the ppc64 optimized kernel lib for the native device])
     HOST_LD_FLAGS="$HOST_LD_FLAGS -lm"
     llc_triple="powerpc-unknown-linux-gnu"
     CL_DEVICE_ADDRESS_BITS=32
-    #TODO: not all PowerPCs have Altivec?
-    HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mattr=altivec"
+    #Altivec on PPC32 seems to have a few codegen issues
+    use_vecmathlib=""
     HOST_AS_FLAGS="$HOST_AS_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
+    CLANG_MARCH_FLAG="mcpu"
     ;;
 
   *)
@@ -927,7 +933,7 @@ HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
 HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mtriple=$llc_triple"
 if test "$llc_host_cpu" != "(unknown)"
 then
-  HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -march=$llc_host_cpu"
+  HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -$CLANG_MARCH_FLAG=$llc_host_cpu"
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
 fi
 
@@ -991,6 +997,12 @@ AC_SUBST([POCL_DEVICE_ADDRESS_BITS], [$CL_DEVICE_ADDRESS_BITS])
 AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
                    [$CL_DEVICE_ADDRESS_BITS],
                    [Value based on host processor, for basic and pthreads devices])
+
+AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
+if test x"$use_vecmathlib" = xyes; then
+  AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
+  CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
+fi
 
 
 

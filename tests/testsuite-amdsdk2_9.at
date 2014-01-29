@@ -71,7 +71,7 @@ AT_CLEANUP
 POAT_AMDSDK_SETUP([blackscholesdp])
 AT_KEYWORDS([cl_amd_fp64])
 #this causes assert on LLVM 3.1
-AT_SKIP_IF([ grep "#define LLVM_3_1" $abs_top_srcdir/config.h ])
+AT_SKIP_IF([ grep "#define LLVM_3_1" $abs_top_builddir/config.h ])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
@@ -323,7 +323,7 @@ AT_CHECK_UNQUOTED([make test_LUDecomposition -sC $abs_top_builddir/examples/AMDS
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([mandelbrot])
-AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_srcdir/config.h ])
+AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_builddir/config.h ])
 # undefined symbol: _Z7std_fmaDv4_fS_S_ with VML
 AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
@@ -439,7 +439,7 @@ AT_CHECK_UNQUOTED([make test_MonteCarloAsianMultiGPU -sC $abs_top_builddir/examp
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([nbody])
-AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_srcdir/config.h ])
+AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_builddir/config.h ])
 AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])

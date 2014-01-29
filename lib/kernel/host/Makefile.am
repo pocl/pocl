@@ -31,4 +31,6 @@ LD_FLAGS    = @HOST_LD_FLAGS@
 
 include ../rules.mk
 include ../sources.mk
+if USE_VECMATHLIB
 include ../sources-vml.mk
+endif
