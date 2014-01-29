@@ -1,0 +1,12 @@
+diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/KernelLaunch.cpp b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/KernelLaunch.cpp
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/KernelLaunch.cpp	2014-01-29 14:00:39.541839617 +0200
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/KernelLaunch/KernelLaunch.cpp	2014-01-29 13:57:18.570073103 +0200
+@@ -410,7 +410,7 @@ void runKernelLaunchTest()
+       tlog->Msg( "\n%s\n\n", "GPU kernel read of inputBuffer" );
+ 
+       for(int i = 0; i < nRepeats; i++)
+-          timedReadKernelVerify( queue, read_kernel, inputBuffer, resultBuffer, nl & 0xff, true );
++          timedReadKernelVerify( queue, read_kernel, inputBuffer, resultBuffer, nl & 0xff, false );
+ 
+       tlog->Msg( "%s\n", "" );
+    }
