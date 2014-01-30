@@ -49,7 +49,7 @@ main (void)
   if (source_file == NULL) 
     source_file = fopen (SRCDIR "/example1.spir", "r");
 
-  assert(source_file != NULL && "example1.spir not found!");
+  assert(source_file != NULL && SRCDIR "example1.spir not found!!");
 
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);

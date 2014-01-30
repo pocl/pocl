@@ -22,10 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS = example1
+noinst_PROGRAMS = example1-spir
 
-example1_SOURCES = example1.c example1_exec.c example1.cl
-example1_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
-example1_CFLAGS = @OPENCL_CFLAGS@
+example1_spir_SOURCES = example1.c example1_exec.c example1.cl example1.spir
+example1_spir_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
+example1_spir_CFLAGS = @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
