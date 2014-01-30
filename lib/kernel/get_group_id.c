@@ -25,7 +25,7 @@ extern size_t _group_id_x;
 extern size_t _group_id_y;
 extern size_t _group_id_z;
 
-size_t
+size_t _CL_OVERLOADABLE
 get_group_id(unsigned int dimindx)
 {
   switch(dimindx)

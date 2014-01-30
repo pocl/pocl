@@ -37,10 +37,10 @@ extern size_t _global_offset_x;
 extern size_t _global_offset_y;
 extern size_t _global_offset_z;
 
-size_t
+size_t _CL_OVERLOADABLE
 get_local_id(unsigned int dimindx);
 
-size_t
+size_t _CL_OVERLOADABLE
 get_global_id(unsigned int dimindx)
 {
   switch(dimindx)

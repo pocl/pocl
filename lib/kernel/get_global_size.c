@@ -29,7 +29,7 @@ extern size_t _num_groups_x;
 extern size_t _num_groups_y;
 extern size_t _num_groups_z;
 
-size_t
+size_t _CL_OVERLOADABLE
 get_global_size(unsigned int dimindx)
 {
   switch(dimindx)
