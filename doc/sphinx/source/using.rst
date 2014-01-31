@@ -6,33 +6,6 @@ The basic usage of pocl should be as easy as any other OpenCL implementation.
 While it is possible to link against pocl directly, the recommended way is to 
 use the ICD interface. 
 
-Linking your program directly with pocl
----------------------------------------
-
-Passing the appropriate linker flags is enough to use pocl in your
-program. However, please bear in mind that:
-
-#. The current distribution only supports one device, "native",
-   which runs the kernels in the host system.
-#. Current implementation of both host and kernel runtime libraries
-   is not complete. If your program uses any of the unimplemented
-   API calls, it will not work. Please implement the mssing APIs
-   when you need them and submit us a patch :)
-
-The pkg-config tool is used to locate the libraries and headers in
-the installation directory. 
-
-Example of compiling an OpenCL host program against pocl using
-the pkg-config::
-
-   gcc example1.c -o example `pkg-config --libs --cflags pocl`
-
-In this link mode, your program will always require the pocl OpenCL library. It
-wont be able to run with another OpenCL implementation without recompilation.
-
-Pocl needs to be configured with the --enable-direct-linkage option (enabled
-by default)
-
 Linking your program with pocl through an icd loader
 ----------------------------------------------------
 
@@ -76,6 +49,33 @@ but NVidia, AMD, Intel, Khronos, and the free ocl-icd project each provides one.
 * `ocl-icd <https://forge.imag.fr/projects/ocl-icd/>`_
 * `Khronos <http://www.khronos.org/opencl/>`_
 
+Linking your program directly with pocl
+---------------------------------------
+
+Passing the appropriate linker flags is enough to use pocl in your
+program. However, please bear in mind that:
+
+#. The current distribution only supports one device, "native",
+   which runs the kernels in the host system.
+#. Current implementation of both host and kernel runtime libraries
+   is not complete. If your program uses any of the unimplemented
+   API calls, it will not work. Please implement the mssing APIs
+   when you need them and submit us a patch :)
+
+The pkg-config tool is used to locate the libraries and headers in
+the installation directory. 
+
+Example of compiling an OpenCL host program against pocl using
+the pkg-config::
+
+   gcc example1.c -o example `pkg-config --libs --cflags pocl`
+
+In this link mode, your program will always require the pocl OpenCL library. It
+wont be able to run with another OpenCL implementation without recompilation.
+
+Pocl needs to be configured with the --enable-direct-linkage option (enabled
+by default)
+
 Vecmathlib
 ----------
 
@@ -100,4 +100,5 @@ Wiki
 
 `Wiki <http://sourceforge.net/apps/mediawiki/pocl/index.php?title=Main_Page>`_
 contains some further information and serves as a "scratch pad".
+
 
