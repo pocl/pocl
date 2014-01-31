@@ -11,8 +11,9 @@ AT_BANNER([AMD APP SDK 2.9 tests])
 POAT_AMDSDK_SETUP([asyncdatatransfer])
 # needs asynch properties implemented
 AT_SKIP_IF(true)
-AT_CHECK_UNQUOTED([make test_AsyncDataTransfer -sC $abs_top_builddir/examples/AMDSDK2.9 | grep "Passed"], 0, 
-[Passed!
+AT_CHECK_UNQUOTED([make test_AsyncDataTransfer -sC $abs_top_builddir/examples/AMDSDK2.9 | grep "Passed" | sed -e 's/^[ \t]*//'], 0, 
+[SyncKernel verification  : Passed!
+AsyncKernel verification : Passed!
 ])
 AT_CLEANUP
 
