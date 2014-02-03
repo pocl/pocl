@@ -8,7 +8,7 @@ m4_define([POAT_AMDSDK_SETUP],[
 
 AT_BANNER([AMD APP SDK tests])
 
-POAT_AMDSDK_SETUP([aesencryptdecrypt-repl])
+POAT_AMDSDK_SETUP([aesencryptdecrypt-repl], [long])
 #This fails, and on LLVM 3.3 it takes more than an hour (on modest PPC hardware) to detect it.
 AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_AESEncryptDecrypt -sC $abs_top_builddir/examples/AMD | grep "Encryption Passed"], 0, 
@@ -42,7 +42,7 @@ AT_CHECK_UNQUOTED([make test_BinarySearch -sC $abs_top_builddir/examples/AMD | g
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([binomialoption-repl])
+POAT_AMDSDK_SETUP([binomialoption-repl], [long])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&
              grep -q "define LLVM_3_2" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_BinomialOption -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
@@ -136,7 +136,7 @@ HelloWorld
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([histogram-repl])
+POAT_AMDSDK_SETUP([histogram-repl], [long])
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_Histogram -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])     
@@ -198,7 +198,7 @@ AT_CHECK_UNQUOTED([make test_MatrixTranspose -sC $abs_top_builddir/examples/AMD 
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([memorymodel-repl])
+POAT_AMDSDK_SETUP([memorymodel-repl], [long])
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_MemoryModel -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
