@@ -46,13 +46,7 @@ It's highly recommended to use the latest development version of LLVM
 when developing pocl.
 
 However, as llvm-svn is a moving target, new revisions might break
-pocl compilation. The latest LLVM trunk revision pocl has been tested
-successfully with is:
-
-**180999**
-
-The test suite (make check) should pass with this revision with xfails
-used to mark known-broken tests.
+pocl compilation. 
 
 test suite
 ----------
@@ -116,9 +110,9 @@ used to run the pocl test suite:
    it. Copy the OpenCL headers to inc/CL like instructed in
    inc/README.txt.
 #. Apply a patch from the pocl checkout::
+     cd icd
 
-   cd icd;  
-   patch -p1 < ~/pocl/tools/patches/khronos-icd-loader.patch
+     patch -p1 < ~/pocl/tools/patches/khronos-icd-loader.patch
 
 #. Build it with 'make'.
 #. Copy the loader to a library search path: sudo cp bin/libOpenCL* /usr/lib

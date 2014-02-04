@@ -23,8 +23,8 @@
 
 extern unsigned int _work_dim;
 
-unsigned int
-get_work_dim()
+uint _CL_OVERLOADABLE
+get_work_dim(void)
 {
   return _work_dim;
 }

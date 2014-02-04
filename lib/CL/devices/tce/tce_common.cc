@@ -25,6 +25,7 @@
 
 #include "config.h"
 #include "install-paths.h"
+#include "pocl_runtime_config.h"
 
 #include <unistd.h>
 
@@ -202,7 +203,7 @@ TCEDevice::tceccCommandLine
 
   TCEString deviceMainSrc;
   TCEString poclIncludePathSwitch;
-  if (getenv("POCL_BUILDING") != NULL)
+  if (pocl_get_bool_option("POCL_BUILDING", 0))
     {
       deviceMainSrc = TCEString(BUILDDIR) + "/lib/CL/devices/tce/" + mainC;
       poclIncludePathSwitch = " -I " SRCDIR "/include";
@@ -211,7 +212,7 @@ TCEDevice::tceccCommandLine
     {
       deviceMainSrc = TCEString(PKGDATADIR) + "/" + mainC;
       assert(access(deviceMainSrc.c_str(), R_OK) == 0);
-      poclIncludePathSwitch = " -I " PKGINCLUDEDIR;
+      poclIncludePathSwitch = " -I " PKGDATADIR "/include";
     }
 
   TCEString extraFlags = extraParams;
@@ -224,8 +225,9 @@ TCEDevice::tceccCommandLine
   kernelObjSrc += tempDir;
   kernelObjSrc += "/../descriptor.so.kernel_obj.c";
 
-  if (getenv("POCL_TCECC_EXTRA_FLAGS") != NULL)
-    extraFlags += " " + TCEString(getenv("POCL_TCECC_EXTRA_FLAGS"));
+  if (pocl_is_option_set("POCL_TCECC_EXTRA_FLAGS"))
+    extraFlags += " " + 
+      TCEString(pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", ""));
 
   std::string userProgramBuildOptions;
   if (run_cmd->kernel->program->compiler_options != NULL)

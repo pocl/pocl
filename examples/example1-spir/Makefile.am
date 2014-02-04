@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples.
+# Makefile.am for pocl/examples/example1.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -22,6 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = example1 example1-spir example2 example2a trig scalarwave standalone \
-	opencl-book-samples VexCL ViennaCL Rodinia Parboil AMD AMDSDK2.9 \
-	EinsteinToolkit piglit
+noinst_PROGRAMS = example1-spir
+
+example1_spir_SOURCES = example1.c example1_exec.c example1.cl example1.spir
+example1_spir_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
+example1_spir_CFLAGS = @OPENCL_CFLAGS@
+
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'

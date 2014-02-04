@@ -39,6 +39,21 @@ OK
 AT_CHECK([$abs_top_builddir/examples/example1/example1], 0, expout)
 AT_CLEANUP
 
+AT_SETUP([example1: dot product (SPIR64)])
+# This SPIR example works because it does not use local memory nor
+# call builtins that are mangled with address spaces.
+AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
+AT_KEYWORDS([spir])
+AT_DATA([expout],
+[(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
+(1.000000, 1.000000, 1.000000, 1.000000) . (1.000000, 1.000000, 1.000000, 1.000000) = 4.000000
+(2.000000, 2.000000, 2.000000, 2.000000) . (2.000000, 2.000000, 2.000000, 2.000000) = 16.000000
+(3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
+OK
+])
+AT_CHECK([$abs_top_builddir/examples/example1-spir/example1-spir], 0, expout, ignore)
+AT_CLEANUP
+
 AT_SETUP([example2: matrix transpose])
 AT_KEYWORDS([tce])
 AT_CHECK([$abs_top_builddir/examples/example2/example2], 0, [OK

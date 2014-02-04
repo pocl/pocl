@@ -74,10 +74,10 @@
 #  define _CL_STATIC_ASSERT(_t, _x) typedef int __cl_ai##_t[(x) ? 1 : -1];
 #endif
 
-typedef enum {
-  CLK_LOCAL_MEM_FENCE = 0x1,
-  CLK_GLOBAL_MEM_FENCE = 0x2
-} cl_mem_fence_flags;
+#define CLK_LOCAL_MEM_FENCE 0x1
+#define CLK_GLOBAL_MEM_FENCE 0x2
+
+typedef uint cl_mem_fence_flags;
 
 
 /* Data types */
@@ -427,16 +427,16 @@ _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtn)
 
 /* Work-Item Functions */
 
-uint get_work_dim();
-size_t get_global_size(uint);
-size_t get_global_id(uint);
-size_t get_local_size(uint);
-size_t get_local_id(uint);
-size_t get_num_groups(uint);
-size_t get_group_id(uint);
-size_t get_global_offset(uint);
+uint _CL_OVERLOADABLE get_work_dim(void);
+size_t _CL_OVERLOADABLE get_global_size(uint);
+size_t _CL_OVERLOADABLE get_global_id(uint);
+size_t _CL_OVERLOADABLE get_local_size(uint);
+size_t _CL_OVERLOADABLE get_local_id(uint);
+size_t _CL_OVERLOADABLE get_num_groups(uint);
+size_t _CL_OVERLOADABLE get_group_id(uint);
+size_t _CL_OVERLOADABLE get_global_offset(uint);
 
-void barrier (cl_mem_fence_flags flags);
+void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 
 
 /* Math Constants */

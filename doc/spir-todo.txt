@@ -1,0 +1,54 @@
+pocl now loads SPIR binaries via the clCreateProgramWithBinary interface.
+However, support for SPIR is not complete. At least the following needs to
+be done:
+
+bitcode linkage warning
+-----------------------
+
+Data layouts and the target triplets differ (SPIR32/SPIR64 and the target 
+specific) one. Not sure if this causes more harm than the warning, though, 
+because the SPIR alignment settings of data types are wider than those of 
+the target's. Wider alignment should be compatible with shorter one, 
+thus this should be OK.
+
+mangling of address spaces
+--------------------------
+
+pocl now uses the -ffake-addr-space-map ids internally and for the kernel
+builtin library. The IDs do not match the ones in SPIR, therefore the SPIR
+refers to overloaded versions which might not be found in the kernel library.
+SPIR specs requires adding the AS id to the mangling.
+
+Alternative solutions:
+
+1) Somehow force the SPIR address space ids to be used when building the
+builtin library, which should result in the same mangling to be used
+regardless of when compiling from a source or from SPIR binary. There
+doesn't seem to be a switch for this (yet). Perhaps the cleanest way
+would be to submit a new clang switch that forces the SPIR IDs to be used
+after which pocl could use those internally instead of the fake ones.
+
+How badly would it break if the kernel library was built always with
+a SPIR target? We are not optimizing them at this phase anyways.
+At least we could provide spir32 and spir64 versions of the libraries
+which are linked only in case loaded from the binary.
+
+2) A new module pass that translates SPIR mangled functions to the ones 
+using the fake AS IDs, after which they can be found again.
+
+3) Produce the SPIR mangling by hand using C prototypes to kernel
+library. This is a bit ugly, but might work.
+
+SPIR address space ids vs. pocl internal ones
+---------------------------------------------
+
+Currently the SPIR AS IDs and the -ffake-addr-spacemap ids do not match,
+therefore pocl kernel compiler detects the SPIR address spaces wrongly.
+Especially the special treatment of local AS is thus broken.
+
+A solution would be to execute the TargetAddressSpaces pass to convert from 
+the SPIR ones to the target ones before proceeding with the other kernel
+compiler passes (that refer to the "logical ids"). The above 1) solution
+would fix this too.
+
+

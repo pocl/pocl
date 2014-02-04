@@ -1,6 +1,13 @@
 0.10 unreleased
 ===============
 
+[updated from git log last time on 2014-02-03]
+
+Bugfixes
+--------
+- TCE: kernel building was broken when running pocl
+  from install location 
+
 0.9 January 2014
 ================
 

@@ -76,9 +76,9 @@ _kernel.h.pch: @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include
 
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
-%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h
+%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h ${abs_top_srcdir}/include/_kernel_c.h
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_types.h
+	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel_c.h
 %.cc.bc: %.cc ${abs_top_srcdir}/include/pocl_features.h
 	mkdir -p ${dir $@}
 	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
