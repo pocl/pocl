@@ -323,7 +323,8 @@ int call_pocl_kernel(cl_program program,
 
   LLVMContext *context = NULL;
 
-  if (program->llvm_irs != NULL) 
+  if (program->llvm_irs != NULL &&
+      program->llvm_irs[device_i] != NULL)
     {
       input = (llvm::Module*)program->llvm_irs[device_i];
 #ifdef DEBUG_POCL_LLVM_API
