@@ -1261,7 +1261,8 @@ AC_CONFIG_FILES([Makefile
                  lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile
-                 examples/example1-spir/Makefile
+                 examples/example1-spir64/Makefile
+                 examples/example1-spir32/Makefile
                  examples/example2/Makefile
                  examples/example2a/Makefile
                  examples/standalone/Makefile
