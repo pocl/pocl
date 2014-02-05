@@ -66,7 +66,7 @@ AT_DATA([expout],
 (3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
 OK
 ])
-AT_CHECK([$abs_top_builddir/examples/example1-spir32/example1-spir], 0, expout, ignore)
+AT_CHECK([$abs_top_builddir/examples/example1-spir32/example1-spir32], 0, expout, ignore)
 AT_CLEANUP
 
 AT_SETUP([example2: matrix transpose])
