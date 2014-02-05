@@ -87,7 +87,7 @@ exec_dot_product_kernel(const char *program_source, size_t source_size,
   program = 
     clCreateProgramWithBinary
     (context, 1, devices, &source_size, 
-     (const char**)&program_source, NULL, NULL); 
+     (const unsigned char**)&program_source, NULL, NULL); 
   if (program == (cl_program)0) 
     { 
       delete_memobjs(memobjs, 3); 
