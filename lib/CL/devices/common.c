@@ -48,7 +48,8 @@
 const char*
 llvm_codegen (const char* tmpdir) {
 
-  const char* pocl_verbose_ptr = pocl_get_string_option("POCL_VERBOSE", NULL);
+  const char* pocl_verbose_ptr = 
+    pocl_get_string_option("POCL_VERBOSE", (char*)NULL);
   int pocl_verbose = pocl_verbose_ptr && *pocl_verbose_ptr;
 
   char command[COMMAND_LENGTH];
