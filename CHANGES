@@ -8,6 +8,10 @@ Bugfixes
 - TCE: kernel building was broken when running pocl
   from install location 
 
+OpenCL Runtime/Platform API support
+-----------------------------------
+- Implement clCreateKernelsInProgram()
+
 0.9 January 2014
 ================
 

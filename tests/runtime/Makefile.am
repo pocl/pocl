@@ -24,10 +24,12 @@
 
 noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
 	test_clCreateProgramWithBinary test_clGetSupportedImageFormats \
-	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
+	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram \
+  test_clCreateKernelsInProgram
 EXTRA_DIST= \
 	test_kernel_src_in_pwd.h \
+  test_clCreateKernelsInProgram.cl \
 	test_data/test_kernel_src_in_another_dir.h
 
-AM_LDFLAGS = @OPENCL_LIBS@
+AM_LDFLAGS = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"' @OPENCL_CFLAGS@

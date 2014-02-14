@@ -70,6 +70,13 @@ poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_el
 cl_context
 poclu_create_any_context();
 
+/* Set up a context, device and queue for platform 0, device 0.
+ * All input parameters must be allocated by caller!
+ * Returns CL_SUCCESS on success, or a descriptive OpenCL error code upon failure.
+ */
+cl_int
+poclu_get_any_device( cl_context *context, cl_device_id *device, cl_command_queue *queue);
+
 /**
  * cl_half related helpers.
  */
@@ -78,6 +85,11 @@ poclu_float_to_cl_half(float value);
 
 float
 poclu_cl_half_to_float(cl_half value);
+
+/* Read content of file to a malloc'd buffer, which is returned.
+ * Return NULL on errors */
+char *
+poclu_read_file(char* filemane);
 
 #ifdef __cplusplus
 }

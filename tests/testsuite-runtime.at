@@ -47,3 +47,11 @@ AT_SETUP([clGetSupportedImageFormats])
 AT_KEYWORDS([runtime])
 AT_CHECK([POCL_DEVICES="pthread pthread" $abs_top_builddir/tests/runtime/test_clGetSupportedImageFormats])
 AT_CLEANUP
+
+AT_SETUP([clCreateKernelsInProgram])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateKernelsInProgram] , 0,
+[Hello
+World
+])
+AT_CLEANUP

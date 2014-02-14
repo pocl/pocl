@@ -1063,3 +1063,31 @@ void pocl_llvm_update_binaries (cl_program program) {
 
     }
 }
+
+/* Get the function name pointers in program's LLVM IR modules,
+ * filling up to max_num_krn to the caller allocated knames
+ * return actual amount of kernel functions found (not filled)
+ */
+int
+get_kernel_names( cl_program program, const char **knames, int max_num_krn )
+{
+  typedef const char* cc;
+  const char* *rv=NULL;
+
+  // TODO: is it safe to assume every device (i.e. the index 0 here)
+  // has the same set of programs & kernels?
+  llvm::Module *mod = (llvm::Module *) program->llvm_irs[0];
+  llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
+  assert(md);
+  rv = (cc*)malloc((md->getNumOperands()+1)*sizeof(char*));
+
+  unsigned i;
+  for (i=0; i<md->getNumOperands(); i++) {
+    assert( md->getOperand(i)->getOperand(0) != NULL);
+    llvm::Function *k = cast<Function>(md->getOperand(i)->getOperand(0));
+    if (i<max_num_krn)
+      knames[i]= k->getName().data();
+  }
+  return i;
+}
+

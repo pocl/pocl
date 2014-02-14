@@ -238,4 +238,10 @@ void pocl_llvm_update_binaries (cl_program program) {
        data updated to the program object in clBuildProgram. */
 }
 
+int get_kernel_names( cl_program, const char **, int )
+{
+  /* implementation only done in API mode */
+  POCL_ABORT_UNIMPLEMENTED();
+  return NULL;
+}
 #endif

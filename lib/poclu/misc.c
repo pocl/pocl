@@ -1,6 +1,7 @@
 /* poclu_misc - misc generic OpenCL helper functions
 
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2014 Kalle Raiskila
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +25,7 @@
 #include "poclu.h"
 #include <CL/opencl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "config.h"
 
 cl_context
@@ -51,3 +53,57 @@ poclu_create_any_context()
   return context;
 }
 
+cl_int
+poclu_get_any_device( cl_context *context, cl_device_id *device, cl_command_queue *queue)
+{
+  cl_int err;  
+  cl_platform_id platform;
+
+  if (context == NULL ||
+      device  == NULL ||
+      queue   == NULL)
+    return CL_INVALID_VALUE;  
+
+  err = clGetPlatformIDs(1, &platform, NULL);
+  if (err != CL_SUCCESS)
+    return err;
+
+  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, device, NULL);
+  if (err != CL_SUCCESS)
+    return err;
+
+  *context = clCreateContext(NULL, 1, device, NULL, NULL, &err);
+  if (err != CL_SUCCESS)
+    return err;
+  
+  *queue = clCreateCommandQueue(*context, *device, 0, &err); 
+  if (err != CL_SUCCESS)
+    return err;
+
+  return CL_SUCCESS;
+}
+
+char *
+poclu_read_file(char *filename)
+{
+  FILE *file;
+  long size;
+  char* src;
+  
+  file = fopen(filename, "r");
+  if (file == NULL)
+    return NULL;
+  
+  fseek( file, 0, SEEK_END);
+  size = ftell(file);
+  src = (char*)malloc(size+1);
+  if (src == NULL)
+    return NULL;
+
+  fseek(file, 0, SEEK_SET);
+  fread(src, size, 1, file);
+  fclose(file);
+  src[size]=0;
+
+  return src;
+}

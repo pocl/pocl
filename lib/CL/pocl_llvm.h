@@ -63,8 +63,19 @@ int call_pocl_workgroup(cl_device_id device,
  * data in the program object. */
 void pocl_llvm_update_binaries (cl_program program);
 
-#ifdef __cplusplus
+/**
+ * Find the "__kernel" function names in 'program',
+ * filling the callee-allocated array with pointer to the program binary.
+ * No more than 'max_num_krn' are written.
+ *
+ * Results are valid as long as program binary is not modified.
+ *
+ * Returns the number of kernels found in the program (may be greater than
+ * 'max_num_krn')
+ */
+int get_kernel_names( cl_program program, const char **knames, int max_num_krn);
 
+#ifdef __cplusplus
 }
 #endif
 
