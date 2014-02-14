@@ -30,6 +30,9 @@
 #include "config.h"
 
 #include "pocl_image_util.h"
+#include "pocl_util.h"
+#include "devices.h"
+#include "pocl_mem_management.h"
 
 #define COMMAND_LENGTH 2048
 
@@ -45,7 +48,7 @@
 const char*
 llvm_codegen (const char* tmpdir) {
 
-  const char* pocl_verbose_ptr = getenv("POCL_VERBOSE");
+  const char* pocl_verbose_ptr = pocl_get_string_option("POCL_VERBOSE", NULL);
   int pocl_verbose = pocl_verbose_ptr && *pocl_verbose_ptr;
 
   char command[COMMAND_LENGTH];

@@ -30,6 +30,7 @@
 #include "pocl_util.h"
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "pocl_mem_management.h"
 
 #define TEMP_DIR_PATH_CHARS 16
 
@@ -203,15 +204,15 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 {
   if (event != NULL)
     {
-      *event = (cl_event)malloc (sizeof (struct _cl_event));
+      *event = pocl_mem_manager_new_event ();
       if (event == NULL)
         return CL_OUT_OF_HOST_MEMORY;
       
-      POCL_INIT_OBJECT(*event);
       (*event)->queue = command_queue;
       POname(clRetainCommandQueue) (command_queue);
       (*event)->command_type = command_type;
       (*event)->callback_list = NULL;
+      (*event)->next = NULL;
     }
   return CL_SUCCESS;
 }
@@ -235,7 +236,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
         return CL_INVALID_EVENT_WAIT_LIST;
     }
   
-  (*cmd) = (_cl_command_node*)malloc (sizeof (_cl_command_node));
+  *cmd = pocl_mem_manager_new_command ();
+
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
   

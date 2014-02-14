@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clReleaseEvent()
+/* pocl_cl.h - local runtime library declarations.
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2014 Ville Korhonen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,14 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_mem_management.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
-{
-  int new_refcount;
-  if (event == NULL || event->queue == NULL)
-    return CL_INVALID_EVENT;
 
-  POCL_RELEASE_OBJECT (event, new_refcount);
+void pocl_init_mem_manager (void);
 
-  if (new_refcount == 0)
-    {
-      POname(clReleaseCommandQueue) (event->queue);
-      pocl_mem_manager_free_event (event);
-    }
+cl_event pocl_mem_manager_new_event (void);
 
-  return CL_SUCCESS;
-}
-POsym(clReleaseEvent)
+void pocl_mem_manager_free_event (cl_event event);
+
+_cl_command_node* pocl_mem_manager_new_command (void);
+
+void pocl_mem_manager_free_command (_cl_command_node *cmd_ptr);

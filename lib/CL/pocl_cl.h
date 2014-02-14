@@ -508,6 +508,7 @@ struct _cl_event {
   cl_ulong time_start;  /* the time the command actually started executing */
   cl_ulong time_end;    /* the finish time of the command */   
 
+  _cl_event * volatile next;
 };
 
 typedef struct _cl_sampler cl_sampler_t;

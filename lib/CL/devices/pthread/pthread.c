@@ -428,14 +428,12 @@ static
 int 
 get_max_thread_count(cl_device_id device) 
 {
-  if (getenv(THREAD_COUNT_ENV) != NULL) 
-    {
-      return atoi(getenv(THREAD_COUNT_ENV));
-    }
+  /* if return THREAD_COUNT_ENV if set, 
+     else return fallback or max_compute_units */
   if (device->max_compute_units == 0)
-    return FALLBACK_MAX_THREAD_COUNT;
+    return pocl_get_int_option (THREAD_COUNT_ENV, FALLBACK_MAX_THREAD_COUNT);
   else
-    return device->max_compute_units;
+    return pocl_get_int_option(THREAD_COUNT_ENV, device->max_compute_units);
 }
 
 void

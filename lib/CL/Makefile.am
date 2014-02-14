@@ -126,7 +126,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_icd.h \
                    pocl_intfn.h \
                    pocl_llvm.h \
-                   pocl_runtime_config.c pocl_runtime_config.h
+                   pocl_runtime_config.c pocl_runtime_config.h \
+                   pocl_mem_management.c pocl_mem_management.h
 
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)

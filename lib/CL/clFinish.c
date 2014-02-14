@@ -267,7 +267,9 @@ static void exec_commands (_cl_command_node *node_list)
           cb_ptr->callback_function ((*event), cb_ptr->trigger_status, 
                                      cb_ptr->user_data);
         }
+      clReleaseEvent(*event);
     }
+  
   // free the queue contents
   node = node_list;
   node_list = NULL;
@@ -275,7 +277,7 @@ static void exec_commands (_cl_command_node *node_list)
     {
       _cl_command_node *tmp;
       tmp = node->next;
-      free (node);
+      pocl_mem_manager_free_command (node);
       node = tmp;
     }
 }

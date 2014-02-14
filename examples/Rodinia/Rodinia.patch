@@ -1,0 +1,16 @@
+diff -uNr a/rodinia_2.0.1/opencl/pathfinder/OpenCL.cpp b/rodinia_2.0.1/opencl/pathfinder/OpenCL.cpp
+--- a/rodinia_2.0.1/opencl/pathfinder/OpenCL.cpp	2011-09-20 16:45:58.000000000 +0300
++++ b/rodinia_2.0.1/opencl/pathfinder/OpenCL.cpp	2014-02-14 13:00:35.137395239 +0200
+@@ -120,10 +120,10 @@
+ 	source_size = ftell(theFile);
+ 	rewind(theFile);
+ 	// Read in the file.
+-	source_str = (char*) malloc(sizeof(char) * source_size);
++	source_str = (char*) malloc(sizeof(char) * source_size + 1);
+ 	fread(source_str, 1, source_size, theFile);
+ 	fclose(theFile);
+-
++	source_str[source_size] = 0;
+ 	// Create a program from the kernel source.
+ 	program = clCreateProgramWithSource(context,
+ 	                                    1,

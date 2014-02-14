@@ -68,7 +68,10 @@ main(void)
 	  if (clGetEventInfo(buf_event, CL_EVENT_REFERENCE_COUNT, sizeof(cl_uint), &ref_count, &param_val_size_ret) != CL_SUCCESS)
 	    return EXIT_FAILURE;
 	  if (param_val_size_ret != sizeof(cl_uint) || ref_count != 1)
-	    return EXIT_FAILURE;
+        {
+          printf("FAIL: expected refcount 1, got %d\n", ref_count);
+          return EXIT_FAILURE;
+        }
 
 	  clReleaseEvent(buf_event);
 	  clReleaseMemObject(buf);
