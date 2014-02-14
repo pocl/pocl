@@ -35,7 +35,7 @@ typedef struct env_data env_data;
 struct env_data
 {
   char *env;
-  void *value;
+  char *value;
   env_data *next;
 };
 

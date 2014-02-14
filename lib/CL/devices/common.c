@@ -33,6 +33,7 @@
 #include "pocl_util.h"
 #include "devices.h"
 #include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
 
 #define COMMAND_LENGTH 2048
 
