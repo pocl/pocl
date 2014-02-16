@@ -12,6 +12,10 @@ OpenCL Runtime/Platform API support
 -----------------------------------
 - Implement clCreateKernelsInProgram()
 
+Misc
+----
+- ViennaCL testsuite updated to 1.5.1
+
 0.9 January 2014
 ================
 

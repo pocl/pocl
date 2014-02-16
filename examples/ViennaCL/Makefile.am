@@ -24,76 +24,72 @@
 # THE SOFTWARE.
 
 if TEST_SUITE_VIENNACL
+# VIENNACL_VERSION comes from configure.ac
+viennacl_local_src_dir=ViennaCL-1.5.1
+viennacl_tarball=ViennaCL-1.5.1.tar.gz
 testsuite_pocl_dir=${abs_top_srcdir}/examples/ViennaCL
-testsuite_src_dir=${testsuite_pocl_dir}/ViennaCL-1.3.1-src
-testsuite_1_4_0_src_dir=${testsuite_pocl_dir}/ViennaCL-1.4.0-src
+testsuite_src_dir=${testsuite_pocl_dir}/${viennacl_local_src_dir}
 
 .PHONY: build
 
-all: $(testsuite_src_dir) 
+all: $(viennacl_local_src_dir) 
 
-$(srcdir)/ViennaCL-1.3.1-src.tar.gz:
+$(srcdir)/$(viennacl_tarball):
 	cd $(srcdir) && \
-	wget http://sourceforge.net/projects/viennacl/files/1.3.x/ViennaCL-1.3.1-src.tar.gz
+	wget http://sourceforge.net/projects/viennacl/files/1.5.x/$(viennacl_tarball)
 
-$(srcdir)/ViennaCL-1.4.0-src.tar.gz:
-	cd $(srcdir) && \
-	wget http://sourceforge.net/projects/viennacl/files/1.4.x/ViennaCL-1.4.0-src.tar.gz
-
-$(testsuite_src_dir):
-	$(MAKE) $(srcdir)/ViennaCL-1.3.1-src.tar.gz 
+$(viennacl_local_src_dir):
+	$(MAKE) $(srcdir)/$(viennacl_tarball) 
 	cd $(testsuite_pocl_dir) && \
-	tar xzf ViennaCL-1.3.1-src.tar.gz
-
-$(testsuite_1_4_0_src_dir):
-	$(MAKE) $(srcdir)/ViennaCL-1.4.0-src.tar.gz
-	cd $(testsuite_pocl_dir) && \
-	tar xzf ViennaCL-1.4.0-src.tar.gz
+	tar xzf $(viennacl_tarball)
 
 # ViennaCL must be built in the subdirectory build/ of the extracted source
 # (it does not work elsewhere) and its source tree is modified.
 # So, copying the source tree in our build tree if required
 # (ie if $(srcdir) is not $(CURDIR) )
 build:
-	if [ ! -d ViennaCL-1.3.1-src ]; then cp -aL $(testsuite_src_dir) . ; fi
-	cd ViennaCL-1.3.1-src/build; \
+	if [ ! -d $(viennacl_local_src_dir) ]; then cp -aL $(testsuite_src_dir) . ; fi
+	cd $(viennacl_local_src_dir)/build; \
 	cmake \
+		-D BUILD_TESTING:BOOL=ON \
 		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
 		-D BUILD_MANUAL:BOOL=OFF \
 		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \
 		$(OPENCL_CMAKE) \
 		..
 
-build-1.4.0:
-	if [ ! -d ViennaCL-1.4.0-src ]; then cp -aL $(testsuite_1_4_0_src_dir) . ; fi
-	cd ViennaCL-1.4.0-src/build; \
-	cmake \
-		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
-		-D BUILD_MANUAL:BOOL=OFF \
-		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \
-		$(OPENCL_CMAKE) \
-		..
-
-check-local: $(testsuite_src_dir) build
+check-local: $(viennacl_local_src_dir) build
 
 clean-local:
-	rm -fr ViennaCL-1.3.1-src
+	rm -fr $(viennacl_local_src_dir)
 
 distclean-local: clean-local
-	$(RM) -r $(testsuite_src_dir)
-	$(RM) $(testsuite_pocl_dir)/ViennaCL-1.3.1-src.tar.gz
+	$(RM) -r $(viennacl_local_src_dir)
+	$(RM) $(testsuite_pocl_dir)/$(viennacl_tarball)
 endif
 
-EXTRA_DIST=                                            \
-       blas1.stdout                            \
-       custom-context.stdout.in        \
-       iterators-test.stdout           \
-       matrix-test.stdout                      \
-       sparse-test.stdout                      \
-       vectorbench.stdout                      \
-       fft.stdout                                      \
-       matrix_range-test.stdout        \
-       scalar-test.stdout                      \
-       structured-matrices-test.stdout \
-       vector_range-test.stdout
+EXTRA_DIST=                                  \
+  fft.stdout                                 \
+  custom-context.stdout                      \
+  custom-kernels.stdout                      \
+  scheduler.stdout                           \
+  bandwidth-reduction.stdout                 \
+  blas3_solve_double-test-opencl.stdout      \
+  blas3_solve_float-test-opencl.stdout       \
+  external_linkage-opencl.stdout             \
+  global_variables-test-opencl.stdout        \
+  iterators-test-opencl.stdout               \
+  matrix_col_double-test-opencl.stdout       \
+  matrix_col_float-test-opencl.stdout        \
+  matrix_col_int-test-opencl.stdout          \
+  matrix_row_double-test-opencl.stdout       \
+  matrix_row_float-test-opencl.stdout        \
+  matrix_row_int-test-opencl.stdout          \
+  matrix_vector_int-test-opencl.stdout       \
+  matrix_vector-test-opencl.stdout           \
+  nmf-test-opencl.stdout                     \
+  scalar-test-opencl.stdout                  \
+  structured-matrices-test-opencl.stdout     \
+  vector_double-test-opencl.stdout
+
 

@@ -1,9 +1,9 @@
 ViennaCL (http://viennacl.sourceforge.net) is used as a test-case for pocl.
  
-You can use '--enable-testsuite-viennacl' configure option
+You can use '--enable-testsuites=viennacl' configure option
 or you can do it yourself:
 Download and unpack the ViennaCL package:
-http://sourceforge.net/projects/viennacl/files/1.3.x/ViennaCL-1.3.1-src.tar.gz
+http://downloads.sourceforge.net/project/viennacl/1.5.x/ViennaCL-1.5.1.tar.gz
 into this directory.
 
 Then, in pocl toplevel source dir run 'make check' or

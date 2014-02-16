@@ -1,0 +1,1017 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Matrix
+----------------------------------------------
+----------------------------------------------
+
+
+----------------------------------------------
+
+# Testing setup:
+  numeric: int
+  layout: row-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  numeric: int
+  layout: column-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  numeric: double
+  layout: row-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  numeric: double
+  layout: column-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+ --- PASSED ---
+# Test passed
+
+----------------------------------------------
+
+
+------- Test completed --------
+

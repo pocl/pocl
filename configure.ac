@@ -184,7 +184,7 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
   fi
-  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.3.1-src.tar.gz" ; then
+  if test -f "$srcdir/examples/ViennaCL/ViennaCL-1.5.1.tar.gz" ; then
     enable_testsuite_viennacl=yes
   fi
   if test -f "$srcdir/examples/Rodinia/rodinia_2.0.1.tar.gz" ; then
@@ -1238,7 +1238,6 @@ AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
                  pocl.pc
-                 examples/ViennaCL/custom-context.stdout
                  tests/atlocal
                  ocl-vendors/pocl-tests.icd
                  include/Makefile

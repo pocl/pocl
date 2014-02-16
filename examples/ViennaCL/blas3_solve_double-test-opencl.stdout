@@ -1,0 +1,2003 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: BLAS 3 routines
+----------------------------------------------
+----------------------------------------------
+
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     0.001
+  numeric: float
+////////////////////////////////
+/// Now testing A=row, B=row ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 6.79119e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.16861e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.73252e-07
+ * upper_tag:       passed! 5.73252e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45313e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.27037e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.58237e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.30961e-07
+ * upper_tag:       passed! 5.30961e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.09038e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+////////////////////////////////
+/// Now testing A=row, B=col ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 5.46907e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.4877e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 5.30192e-07
+ * upper_tag:       passed! 5.30192e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.65992e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.83919e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 4.71724e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.39571e-07
+ * upper_tag:       passed! 5.39571e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.45366e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+////////////////////////////////
+/// Now testing A=col, B=row ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 4.95899e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.13706e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 6.39818e-07
+ * upper_tag:       passed! 6.39818e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 7.18934e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 6.99403e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.29254e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.58759e-07
+ * upper_tag:       passed! 5.58759e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 6.00578e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+////////////////////////////////
+/// Now testing A=col, B=col ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 6.03407e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.11317e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 4.65597e-07
+ * upper_tag:       passed! 4.65597e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.19761e-07
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 5.48442e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.66634e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 5.79741e-07
+ * upper_tag:       passed! 5.79741e-07
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 5.87961e-07
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-11
+  numeric: double
+////////////////////////////////
+/// Now testing A=row, B=row ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+////////////////////////////////
+/// Now testing A=row, B=col ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+////////////////////////////////
+/// Now testing A=col, B=row ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+////////////////////////////////
+/// Now testing A=col, B=col ///
+////////////////////////////////
+--- Part 2: Testing matrix-matrix solver ---
+Now using A=matrix, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=matrix, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=range, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=matrix
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=range
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+Now using A=slice, B=slice
+Testing A \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B passed!
+Testing A \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A \ B^T passed!
+Testing A^T \ B: 
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B passed!
+Testing A^T \ B^T: 
+ * upper_tag:       passed! 0
+ * upper_tag:       passed! 0
+ * unit_upper_tag:  passed! 0
+ * lower_tag:       passed! 0
+ * unit_lower_tag:  passed! 0
+Test A^T \ B^T passed!
+# Test passed
+
+----------------------------------------------
+
+
+------- Test completed --------
+

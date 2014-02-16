@@ -1,0 +1,1821 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Matrix
+----------------------------------------------
+----------------------------------------------
+
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     0.001
+  numeric: float
+  layout: row-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+------------ Testing triangular solves ------------------
+* m = full, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+Full solver
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     0.001
+  numeric: float
+  layout: column-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+------------ Testing triangular solves ------------------
+* m = full, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+Full solver
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-11
+  numeric: double
+  layout: row-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+------------ Testing triangular solves ------------------
+* m = full, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+Full solver
+# Test passed
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-11
+  numeric: double
+  layout: column-major
+------------ Testing rank-1-updates and matrix-vector products ------------------
+* m = full, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = full, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = range, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = full, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = range, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = full
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = range
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+* m = slice, v1 = slice, v2 = slice
+Rank 1 update
+Scaled rank 1 update - CPU Scalar
+Scaled rank 1 update - GPU Scalar
+Matrix-Vector product
+Matrix-Vector product with scaled add
+Transposed Matrix-Vector product
+Transposed Matrix-Vector product with scaled add
+Row extraction from matrix
+Column extraction from matrix
+Diagonal extraction from matrix
+Matrix diagonal assignment from vector
+ --- PASSED ---
+------------ Testing triangular solves ------------------
+* m = full, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = full, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = range, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = full
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = range
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+* m = slice, v1 = slice
+Upper triangular solver
+Upper unit triangular solver
+Lower triangular solver
+Lower unit triangular solver
+Transposed upper triangular solver
+Transposed unit upper triangular solver
+Transposed lower triangular solver
+Transposed unit lower triangular solver
+ --- PASSED ---
+Full solver
+# Test passed
+
+----------------------------------------------
+
+
+------- Test completed --------
+

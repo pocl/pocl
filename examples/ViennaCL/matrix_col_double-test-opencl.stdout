@@ -1,0 +1,4386 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Matrix operations, column-major, double precision 
+----------------------------------------------
+----------------------------------------------
+
+# Testing setup:
+  eps:     1e-12
+  numeric: double
+
+//
+////////// Test: Copy CTOR //////////
+//
+Testing matrix created from range... PASSED!
+PASSED!
+Testing matrix created from slice... PASSED!
+PASSED!
+//
+////////// Test: Initializer for matrix type //////////
+//
+Testing initializer CTOR... PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing initializer assignment... PASSED!
+PASSED!
+PASSED!
+PASSED!
+//
+////////// Test: Norms //////////
+//
+PASSED!
+//
+////////// Test: Operations //////////
+//
+Testing A=matrix, B=matrix, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=matrix, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=matrix, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=range, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=range, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=range, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=slice, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=slice, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=matrix, B=slice, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=matrix, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=matrix, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=matrix, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=range, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=range, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=range, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=slice, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=slice, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=range, B=slice, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=matrix, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=matrix, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=matrix, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=range, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=range, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=range, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=slice, C=matrix ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=slice, C=range ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+Testing A=slice, B=slice, C=slice ...
+Checking for zero_matrix initializer...
+PASSED!
+Checking for scalar_matrix initializer...
+PASSED!
+PASSED!
+
+PASSED!
+Testing matrix assignment... PASSED!
+Testing upper left copy to GPU... PASSED!
+Testing lower right copy to GPU... PASSED!
+Testing upper left copy to A... PASSED!
+Testing lower right copy to C... PASSED!
+Inplace add: PASSED!
+Scaled inplace add: PASSED!
+Add: PASSED!
+Add with flipsign: PASSED!
+Scaled add (left): PASSED!
+Scaled add (left): PASSED!
+Scaled add (right): PASSED!
+Scaled add (right): PASSED!
+Scaled add (both): PASSED!
+Scaled add (both): PASSED!
+Inplace sub: PASSED!
+Scaled Inplace sub: PASSED!
+Sub: PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (left): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (right): PASSED!
+Scaled sub (both): PASSED!
+Scaled sub (both): PASSED!
+Unary operator-: PASSED!
+Multiplication with CPU scalar: PASSED!
+Multiplication with GPU scalar: PASSED!
+Division with CPU scalar: PASSED!
+Division with GPU scalar: PASSED!
+Testing elementwise multiplication...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary element_pow()...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Testing unary elementwise operations...
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+PASSED!
+Complicated expressions: PASSED!
+PASSED!
+PASSED!
+PASSED!
+
+----------------------------------------------
+
+
+------- Test completed --------
+

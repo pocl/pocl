@@ -1,0 +1,50 @@
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Structured Matrices
+----------------------------------------------
+----------------------------------------------
+
+# Testing setup:
+  eps:     0.001
+  numeric: float
+
+ -- Vandermonde matrix -- 
+Matrix-Vector Product: 5.69207e-07 [OK]
+Element manipulation: 8.11413e-07 [OK]
+ -- Circulant matrix -- 
+Matrix-Vector Product: 2.32354e-06 [OK]
+Matrix Addition: 0 [OK]
+Element manipulation: 0 [OK]
+ -- Toeplitz matrix -- 
+Matrix-Vector Product: 7.78078e-06 [OK]
+Matrix Addition: 0 [OK]
+Element manipulation: 0 [OK]
+ -- Hankel matrix -- 
+Matrix-Vector Product: 1.00607e-06 [OK]
+Matrix Addition: 0 [OK]
+Element manipulation: 0 [OK]
+
+
+# Testing setup:
+  eps:     1e-10
+  numeric: double
+
+ -- Vandermonde matrix -- 
+Matrix-Vector Product: 1.05617e-15 [OK]
+Element manipulation: 1.78132e-15 [OK]
+ -- Circulant matrix -- 
+Matrix-Vector Product: 8.48276e-15 [OK]
+Matrix Addition: 0 [OK]
+Element manipulation: 0 [OK]
+ -- Toeplitz matrix -- 
+Matrix-Vector Product: 2.4209e-14 [OK]
+Matrix Addition: 0 [OK]
+Element manipulation: 0 [OK]
+ -- Hankel matrix -- 
+Matrix-Vector Product: 3.74792e-15 [OK]
+Matrix Addition: 0 [OK]
+Element manipulation: 0 [OK]
+
+------- Test completed --------
+

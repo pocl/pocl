@@ -1,0 +1,11 @@
+-- Generating matrix --
+ * Unknowns: 262144
+ * Initial bandwidth: 8192
+ * Randomly reordered bandwidth: 262051
+-- Cuthill-McKee algorithm --
+ * Reordered bandwidth: 6207
+-- Advanced Cuthill-McKee algorithm --
+ * Reordered bandwidth: 6207
+-- Gibbs-Poole-Stockmeyer algorithm --
+ * Reordered bandwidth: 6207
+!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!
