@@ -806,7 +806,7 @@ AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
 
 AC_MSG_CHECKING([LLC target triple (for host $host)])
 dnl The quadrigraphs @<:@ and @:>@ turn into [ and ].
-llc_triple=$($CLANG ${CLANG_TARGET_OPTION}$host -x c /dev/null -S -emit-llvm -o - | grep -e 'target triple' | sed -E -e 's/^.*target triple = "+(@<:@^ @:>@+).*"$/\1/')
+llc_triple=$($CLANG ${CLANG_TARGET_OPTION}$host -x c /dev/null -S -emit-llvm -o - | grep -e 'target triple' | perl -p -e 's/^.*target triple = "+(@<:@^ @:>@+).*"$/\1/')
 AC_MSG_RESULT($llc_triple)
 test -z "$llc_triple" && AC_MSG_ERROR([Cannot determine LLC target triple])
 AC_MSG_CHECKING([LLC host CPU])
