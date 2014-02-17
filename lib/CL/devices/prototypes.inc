@@ -70,6 +70,7 @@
                            size_t const buffer_slice_pitch,    \
                            void *fill_pixel,    \
                            size_t pixel_size);  \
+  void pocl_##__DRV__##_compile_submitted_kernels (_cl_command_node *node);  \
   void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \
   void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \

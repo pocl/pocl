@@ -65,6 +65,7 @@ typedef struct
 {
   void *data;
   char *tmp_dir; 
+  pocl_workgroup wg;
   cl_kernel kernel;
   /* A list of argument buffers to free after the command has 
      been executed. */

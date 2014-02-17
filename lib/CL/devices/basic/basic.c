@@ -27,6 +27,7 @@
 #include "topology/pocl_topology.h"
 #include "install-paths.h"
 #include "common.h"
+#include "utlist.h"
 
 #include <assert.h>
 #include <string.h>
@@ -200,6 +201,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->copy_rect = pocl_basic_copy_rect;
   ops->fill_rect = pocl_basic_fill_rect;
   ops->map_mem = pocl_basic_map_mem;
+  ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
   ops->get_timer_value = pocl_basic_get_timer_value;
@@ -377,24 +379,11 @@ pocl_basic_run
   struct pocl_argument *al;
   size_t x, y, z;
   unsigned i;
-  pocl_workgroup w;
-  char* tmpdir = cmd->command.run.tmp_dir;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
 
   assert (data != NULL);
   d = (struct data *) data;
-
-  module_fn = llvm_codegen (tmpdir);
-      
-  d->current_dlhandle = lt_dlopen (module_fn);
-  if (d->current_dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module_fn, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
-      abort();
-    }
-
 
   d->current_kernel = kernel;
 
@@ -408,18 +397,6 @@ pocl_basic_run
           break;
         }
     }
-
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_%s_workgroup", kernel->function_name);
-  
-  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
-  if (w == NULL)
-    {
-      printf("pocl error: could not load the work-group function '%s' in module '%s'.\n",
-	     workgroup_string, module_fn);
-      abort();
-    }
-  free ((void*) module_fn);
 
   void *arguments[kernel->num_args + kernel->num_locals];
 
@@ -491,7 +468,7 @@ pocl_basic_run
               pc->group_id[1] = y;
               pc->group_id[2] = z;
 
-              w (arguments, pc);
+              cmd->command.run.wg (arguments, pc);
 
             }
         }
@@ -681,3 +658,70 @@ pocl_basic_get_supported_image_formats (cl_mem_flags flags,
     
     return CL_SUCCESS; 
 }
+
+typedef struct compiler_cache_item compiler_cache_item;
+struct compiler_cache_item
+{
+  char *tmp_dir;
+  char *function_name;
+  pocl_workgroup wg;
+  compiler_cache_item *next;
+};
+
+static compiler_cache_item *compiler_cache;
+static pocl_lock_t compiler_cache_lock;
+
+void check_compiler_cache (_cl_command_node *cmd)
+{
+  char* module_fn;
+  char workgroup_string[WORKGROUP_STRING_LENGTH];
+  lt_dlhandle dlhandle;
+  compiler_cache_item *ci = NULL;
+  
+  if (compiler_cache == NULL)
+    POCL_INIT_LOCK (compiler_cache_lock);
+
+  POCL_LOCK (compiler_cache_lock);
+  LL_FOREACH (compiler_cache, ci)
+    {
+      if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
+          strcmp (ci->function_name, 
+                  cmd->command.run.kernel->function_name) == 0)
+        {
+          POCL_UNLOCK (compiler_cache_lock);
+          cmd->command.run.wg = ci->wg;
+          return;
+        }
+    }
+  ci = malloc (sizeof (compiler_cache_item));
+  ci->next = NULL;
+  ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
+  ci->function_name = strdup (cmd->command.run.kernel->function_name);
+  module_fn = llvm_codegen (cmd->command.run.tmp_dir);
+  dlhandle = lt_dlopen (module_fn);     
+  if (dlhandle == NULL)
+    {
+      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
+              module_fn, lt_dlerror());
+      printf ("note: missing symbols in the kernel binary might be" 
+              "reported as 'file not found' errors.\n");
+      abort();
+    }
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+            "_%s_workgroup", cmd->command.run.kernel->function_name);
+  cmd->command.run.wg = ci->wg = 
+    (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
+
+  LL_APPEND (compiler_cache, ci);
+  POCL_UNLOCK (compiler_cache_lock);
+
+}
+
+void
+pocl_basic_compile_submitted_kernels (_cl_command_node *cmd)
+{
+  if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
+    check_compiler_cache (cmd);
+
+}
+

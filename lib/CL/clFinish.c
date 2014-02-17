@@ -84,7 +84,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           LL_APPEND (ready_list, node);
         }
     }
-  
+
   exec_commands(ready_list);
 
   return CL_SUCCESS;
@@ -105,6 +105,9 @@ static void exec_commands (_cl_command_node *node_list)
       /* Command queue is needed for POCL_UPDATE_EVENT macros */
       if (node->event)
         command_queue = node->event->queue;
+
+      if (node->device->ops->compile_submitted_kernels)
+        node->device->ops->compile_submitted_kernels (node);
 
       switch (node->type)
         {

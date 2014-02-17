@@ -30,11 +30,15 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include "pocl_runtime_config.h"
 #include "utlist.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
 #include "common.h"
 #include "config.h"
+#include "devices.h"
+#include "pocl_util.h"
+#include "pocl_mem_management.h"
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
@@ -71,7 +75,9 @@
    for the thread execution. */
 #define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
 
-struct thread_arguments {
+typedef struct thread_arguments thread_arguments;
+struct thread_arguments 
+{
   void *data;
   cl_kernel kernel;
   unsigned device;
@@ -79,6 +85,7 @@ struct thread_arguments {
   int last_gid_x; 
   pocl_workgroup workgroup;
   struct pocl_argument *kernel_args;
+  thread_arguments *volatile next;
 };
 
 struct data {
@@ -96,8 +103,43 @@ struct data {
 
 };
 
+
+static thread_arguments *volatile thread_argument_pool = 0;
+static int argument_pool_initialized = 0;
+pocl_lock_t ta_pool_lock;
 static int get_max_thread_count();
 static void * workgroup_thread (void *p);
+
+void pocl_init_thread_argument_manager (void)
+{
+  if (!argument_pool_initialized)
+    {
+      argument_pool_initialized = 1;
+      POCL_INIT_LOCK (ta_pool_lock);
+    }
+}
+
+thread_arguments* new_thread_arguments ()
+{
+  thread_arguments *ta = NULL;
+  POCL_LOCK (ta_pool_lock);
+  if (ta = thread_argument_pool)
+    {
+      LL_DELETE (thread_argument_pool, ta);
+      POCL_UNLOCK (ta_pool_lock);
+      return ta;
+    }
+  POCL_UNLOCK (ta_pool_lock);
+    
+  return calloc (1, sizeof (thread_arguments));
+}
+
+void free_thread_arguments (thread_arguments *ta)
+{
+  POCL_LOCK (ta_pool_lock);
+  LL_PREPEND (thread_argument_pool, ta);
+  POCL_UNLOCK (ta_pool_lock);
+}
 
 void
 pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
@@ -117,6 +159,8 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_pthread_copy;
   ops->copy_rect = pocl_pthread_copy_rect;
   ops->run = pocl_pthread_run;
+  ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
+
 }
 
 void
@@ -197,6 +241,9 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   #ifdef _CL_DISABLE_LONG
   device->has_64bit_long=0;
   #endif
+
+  pocl_init_thread_argument_manager();
+  
 }
 
 void
@@ -447,25 +494,12 @@ pocl_pthread_run
   unsigned device;
   cl_device_id device_ptr;
   unsigned i;
-  pocl_workgroup w;
-  const char *module_fn;
-  char* tmpdir = cmd->command.run.tmp_dir;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
+  struct thread_arguments *arguments;
+  static int max_threads = 0; /* this needs to be asked only once */
 
   d = (struct data *) data;
-
-  module_fn = llvm_codegen (tmpdir);
-      
-  d->current_dlhandle = lt_dlopen (module_fn);
-  if (d->current_dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", module_fn, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be reported as 'file not found' errors.\n");
-      abort();
-    }
-  free ((void*)module_fn);
-  d->current_kernel = kernel;
 
   /* Find which device number within the context correspond
      to current device.  */
@@ -479,21 +513,17 @@ pocl_pthread_run
         }
     }
 
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-	    "_%s_workgroup", kernel->function_name);
-  
-  w = (pocl_workgroup) lt_dlsym (d->current_dlhandle, workgroup_string);
-  assert (w != NULL);
+
   int num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the
      best option. This assumes x dimension has enough work groups to utilize
      all the threads. */
-  int max_threads = get_max_thread_count(device_ptr);
+  if (max_threads == 0)
+    max_threads = get_max_thread_count(device_ptr);
+
   int num_threads = min(max_threads, num_groups_x);
   pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
-  struct thread_arguments *arguments = 
-    (struct thread_arguments*) malloc (sizeof (struct thread_arguments)*num_threads);
-
+  
   int wgs_per_thread = num_groups_x / num_threads;
   /* In case the work group count is not divisible by the
      number of threads, we have to execute the remaining
@@ -518,21 +548,21 @@ pocl_pthread_run
     printf("### creating wg thread: first_gid_x==%d, last_gid_x==%d\n",
            first_gid_x, last_gid_x);
 #endif
-
-    arguments[i].data = data;
-    arguments[i].kernel = kernel;
-    arguments[i].device = device;
-    arguments[i].pc = *pc;
-    arguments[i].pc.group_id[0] = first_gid_x;
-    arguments[i].workgroup = w;
-    arguments[i].last_gid_x = last_gid_x;
-    arguments[i].kernel_args = cmd->command.run.arguments;
+    arguments = new_thread_arguments();
+    arguments->data = data;
+    arguments->kernel = kernel;
+    arguments->device = device;
+    arguments->pc = *pc;
+    arguments->pc.group_id[0] = first_gid_x;
+    arguments->workgroup = cmd->command.run.wg;
+    arguments->last_gid_x = last_gid_x;
+    arguments->kernel_args = cmd->command.run.arguments;
 
     /* TODO: pool of worker threads to avoid syscalls here */
     error = pthread_create (&threads[i],
                             NULL,
                             workgroup_thread,
-                            &arguments[i]);
+                            arguments);
     assert(!error);
   }
 
@@ -544,7 +574,6 @@ pocl_pthread_run
   }
 
   free(threads);
-  free(arguments);
 }
 
 void *
@@ -664,6 +693,7 @@ workgroup_thread (void *p)
       pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
       free (arguments[i]);
     }
-  
+  free_thread_arguments (ta);
+
   return NULL;
 }
