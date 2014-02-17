@@ -49,6 +49,7 @@ AT_CHECK([POCL_DEVICES="pthread pthread" $abs_top_builddir/tests/runtime/test_cl
 AT_CLEANUP
 
 AT_SETUP([clCreateKernelsInProgram])
+AT_XFAIL_IF([grep "USE_LLVM_API 1" $abs_top_builddir/config.h ])
 AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateKernelsInProgram] , 0,
 [Hello
