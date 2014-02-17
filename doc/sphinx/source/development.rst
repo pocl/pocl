@@ -39,15 +39,6 @@ HOST_CLANG_FLAGS     Parameters to for host compilation.
 All such special environment variables can be seen with the --help
 option of the configure script.
 
-using LLVM svn
---------------
-
-It's highly recommended to use the latest development version of LLVM
-when developing pocl.
-
-However, as llvm-svn is a moving target, new revisions might break
-pocl compilation. 
-
 test suite
 ----------
 
@@ -129,9 +120,16 @@ POCL_BUILDING=1 so pocl searches for its utility scripts from the
 build tree first, then the installation location. The "make check"
 testsuite does this automatically.
 
+There's a helper script that, when sourced, in addition to setting
+POCL_BUILDING setups the OCL_ICD_VENDORS path to point to the pocl in
+the build tree. This removes the need to install pocl to test the 
+built version. It should be executed in the source root::
+
+  . tools/scripts/devel-envs.sh
+
 To test as much as possible link options, it is recommended to
 configure pocl two times and run "make check" with both. One should be
-configurated with::
+configured with::
 
   $src/configure --enable-icd --disable-direct-linkage ...
 
