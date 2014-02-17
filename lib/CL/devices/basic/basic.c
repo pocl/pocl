@@ -673,7 +673,6 @@ static pocl_lock_t compiler_cache_lock;
 
 void check_compiler_cache (_cl_command_node *cmd)
 {
-  char* module_fn;
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   lt_dlhandle dlhandle;
   compiler_cache_item *ci = NULL;
@@ -697,7 +696,7 @@ void check_compiler_cache (_cl_command_node *cmd)
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->function_name);
-  module_fn = llvm_codegen (cmd->command.run.tmp_dir);
+  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir);
   dlhandle = lt_dlopen (module_fn);     
   if (dlhandle == NULL)
     {
