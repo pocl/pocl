@@ -38,7 +38,7 @@ uncertainties (was: Portable OpenCL). It's still pronounced "pogle"! :)</p>
 <h1>Current status (updated: 2013-11-10)</h1>
 
 <p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
-unimplemented OpenCL 1.2 APIs. These will be added gradually as needed by new tested applications.</p>
+unimplemented OpenCL APIs. These will be added gradually as needed by new tested applications.</p>
 
 <p>Patch contributions welcomed, of course!</p>
 
