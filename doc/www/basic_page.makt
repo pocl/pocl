@@ -29,7 +29,9 @@
 <body>
   <div id="page">
     <div id="header">
-      <h1 id="title"><a href="http://portablecl.org">pocl</a> - Portable Computing Language${sub_page}</h1>
+      <h1 id="title"><span style="height: 100%; vertical-align: middle;"></span>
+                    <a href="http://portablecl.org"><img src="/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
+                    <span style="height: 100%; vertical-align: middle;"> Portable Computing Language${sub_page}</span></h1>
     </div>
 
     <div id="navi">
@@ -49,9 +51,10 @@
     </div>
 
     <div id="footer">
-      <p class="footer">
-        pocl - Portable Computing Language &copy; 2010-2014 pocl developers 
-      </p>
+      <span style="height: 100%; vertical-align: middle;"></span>
+                    <a href="http://portablecl.org"><img src="/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
+                    <span style="height: 100%; vertical-align: middle;">Portable Computing Language &copy; 2010-2014 pocl developers 
+                    </span>
     </div>
 
     <div class="g-plusone" data-annotation="inline" data-width="300"></div>

@@ -10,7 +10,8 @@ h1#title
 {
     background-color: white;
     color: black;
-    padding: 10px;
+    padding: 0px;
+    vertical-align: middle;
 }
 
 p.footer {
@@ -54,8 +55,8 @@ h3
 
 #header
 {
-    border-style: solid;
-    border-color: black;
+    border-bottom-style: double;
+    border-bottom-color: black;
 }
 
 #footer

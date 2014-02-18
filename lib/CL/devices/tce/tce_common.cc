@@ -205,7 +205,7 @@ TCEDevice::tceccCommandLine
   TCEString poclIncludePathSwitch;
   if (pocl_get_bool_option("POCL_BUILDING", 0))
     {
-      deviceMainSrc = TCEString(BUILDDIR) + "/lib/CL/devices/tce/" + mainC;
+      deviceMainSrc = TCEString(SRCDIR) + "/lib/CL/devices/tce/" + mainC;
       poclIncludePathSwitch = " -I " SRCDIR "/include";
     }
   else 
