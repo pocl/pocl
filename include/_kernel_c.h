@@ -24,6 +24,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+/**
+ * Header that can be implemented in C compiled implementations of
+ * built-in functions to introduce the OpenCL C compatible types etc.
+ */
 #ifndef _KERNEL_C_H
 #define _KERNEL_C_H
 
@@ -99,11 +103,51 @@ typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
+#ifdef __CBUILD__
+/* NOTE: the Clang's __fp16 does not work robustly in C mode, 
+   it might produce invalid code at least with half vectors.
+   Using the native 'half' type in OpenCL C mode works better. */
+typedef __fp16 half;
+#endif
+
+#ifdef cl_khr_fp16
+typedef half half2  __attribute__((__ext_vector_type__(2)));
+typedef half half3  __attribute__((__ext_vector_type__(3)));
+typedef half half4  __attribute__((__ext_vector_type__(4)));
+typedef half half8  __attribute__((__ext_vector_type__(8)));
+typedef half half16 __attribute__((__ext_vector_type__(16)));
+#endif
+
 typedef float float2  __attribute__((__ext_vector_type__(2)));
 typedef float float3  __attribute__((__ext_vector_type__(3)));
 typedef float float4  __attribute__((__ext_vector_type__(4)));
 typedef float float8  __attribute__((__ext_vector_type__(8)));
 typedef float float16 __attribute__((__ext_vector_type__(16)));
+
+#ifdef cl_khr_fp64
+# ifndef __CBUILD__
+#  pragma OPENCL EXTENSION cl_khr_fp64 : enable
+# endif
+typedef double double2  __attribute__((__ext_vector_type__(2)));
+typedef double double3  __attribute__((__ext_vector_type__(3)));
+typedef double double4  __attribute__((__ext_vector_type__(4)));
+typedef double double8  __attribute__((__ext_vector_type__(8)));
+typedef double double16 __attribute__((__ext_vector_type__(16)));
+#endif
+
+#ifdef cl_khr_int64
+typedef long long2  __attribute__((__ext_vector_type__(2)));
+typedef long long3  __attribute__((__ext_vector_type__(3)));
+typedef long long4  __attribute__((__ext_vector_type__(4)));
+typedef long long8  __attribute__((__ext_vector_type__(8)));
+typedef long long16 __attribute__((__ext_vector_type__(16)));
+
+typedef ulong ulong2  __attribute__((__ext_vector_type__(2)));
+typedef ulong ulong3  __attribute__((__ext_vector_type__(3)));
+typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
+typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
+typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
+#endif
 
 /* Image support */
 

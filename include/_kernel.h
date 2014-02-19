@@ -80,41 +80,6 @@
 typedef uint cl_mem_fence_flags;
 
 
-/* Data types */
-
-
-
-#ifdef cl_khr_int64
-typedef long long2  __attribute__((__ext_vector_type__(2)));
-typedef long long3  __attribute__((__ext_vector_type__(3)));
-typedef long long4  __attribute__((__ext_vector_type__(4)));
-typedef long long8  __attribute__((__ext_vector_type__(8)));
-typedef long long16 __attribute__((__ext_vector_type__(16)));
-
-typedef ulong ulong2  __attribute__((__ext_vector_type__(2)));
-typedef ulong ulong3  __attribute__((__ext_vector_type__(3)));
-typedef ulong ulong4  __attribute__((__ext_vector_type__(4)));
-typedef ulong ulong8  __attribute__((__ext_vector_type__(8)));
-typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
-#endif
-
-#ifdef cl_khr_fp16
-typedef half half2  __attribute__((__ext_vector_type__(2)));
-typedef half half3  __attribute__((__ext_vector_type__(3)));
-typedef half half4  __attribute__((__ext_vector_type__(4)));
-typedef half half8  __attribute__((__ext_vector_type__(8)));
-typedef half half16 __attribute__((__ext_vector_type__(16)));
-#endif
-
-
-
-#ifdef cl_khr_fp64
-typedef double double2  __attribute__((__ext_vector_type__(2)));
-typedef double double3  __attribute__((__ext_vector_type__(3)));
-typedef double double4  __attribute__((__ext_vector_type__(4)));
-typedef double double8  __attribute__((__ext_vector_type__(8)));
-typedef double double16 __attribute__((__ext_vector_type__(16)));
-#endif
 
 /* Ensure the data types have the right sizes */
 _CL_STATIC_ASSERT(char  , sizeof(char  ) == 1);
