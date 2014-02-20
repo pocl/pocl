@@ -270,7 +270,6 @@ bool Scalarizer::doInitialization(Module &M) {
 }
 
 bool Scalarizer::runOnFunction(Function &F) {
-  const TargetTransformInfo *TTI = &getAnalysis<TargetTransformInfo>();
   TDL = getAnalysisIfAvailable<DataLayout>();
 
   for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {

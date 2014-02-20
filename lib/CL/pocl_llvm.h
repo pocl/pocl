@@ -73,7 +73,7 @@ void pocl_llvm_update_binaries (cl_program program);
  * Returns the number of kernels found in the program (may be greater than
  * 'max_num_krn')
  */
-int get_kernel_names( cl_program program, const char **knames, int max_num_krn);
+int get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn);
 
 #ifdef __cplusplus
 }

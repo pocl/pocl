@@ -170,7 +170,7 @@ int call_pocl_build(cl_program program,
       itemstrs.push_back(*i);
       ++i;
     }
-  for (int idx=0; idx<itemstrs.size(); idx++)
+  for (unsigned idx=0; idx<itemstrs.size(); idx++)
     {
       // note: if itemstrs is modified after this, itemcstrs will be full
       // of invalid pointers! Could make copies, but would have to clean up then...
@@ -1050,7 +1050,7 @@ void pocl_llvm_update_binaries (cl_program program) {
       if (binary == NULL)
         POCL_ABORT("Failed allocating memory for the binary.");
 
-      int n = fread(binary, 1, program->binary_sizes[i], binary_file);
+      size_t n = fread(binary, 1, program->binary_sizes[i], binary_file);
       if (n < program->binary_sizes[i])
         POCL_ABORT("Failed reading the binary from disk to memory.");
       program->binaries[i] = binary;
@@ -1069,17 +1069,13 @@ void pocl_llvm_update_binaries (cl_program program) {
  * return actual amount of kernel functions found (not filled)
  */
 int
-get_kernel_names( cl_program program, const char **knames, int max_num_krn )
+get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
 {
-  typedef const char* cc;
-  const char* *rv=NULL;
-
   // TODO: is it safe to assume every device (i.e. the index 0 here)
   // has the same set of programs & kernels?
   llvm::Module *mod = (llvm::Module *) program->llvm_irs[0];
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   assert(md);
-  rv = (cc*)malloc((md->getNumOperands()+1)*sizeof(char*));
 
   unsigned i;
   for (i=0; i<md->getNumOperands(); i++) {
