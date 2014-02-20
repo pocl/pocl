@@ -310,7 +310,7 @@ int call_pocl_kernel(cl_program program,
                      int */*errcode*/)
 {
 
-  int error, i;
+  int i;
   unsigned n;
   llvm::Module *input = NULL;
   SMDiagnostic Err;
@@ -337,14 +337,14 @@ int call_pocl_kernel(cl_program program,
             device_tmpdir, kernel_name);
   mkdir(tmpdir, S_IRWXU);
 
-  error |= snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
+  (void) snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
                     "%s/%s/descriptor.so", device_tmpdir, kernel_name);
 
   if (input == NULL)
     {
       // Reuse the held llvm::Module object, if available. No
       // need to write the program to disk first.
-      error = snprintf(binary_filename, POCL_FILENAME_LENGTH,
+      (void) snprintf(binary_filename, POCL_FILENAME_LENGTH,
                        "%s/kernel.bc",
                        tmpdir);
 
