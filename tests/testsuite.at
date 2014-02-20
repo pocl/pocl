@@ -25,6 +25,12 @@
 AT_INIT()
 AT_COLOR_TESTS
 
+AT_SETUP([check for pocl version])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_version], 0,
+[pthread
+])
+AT_CLEANUP
+
 AT_BANNER([OpenCL specification tests])
 
 AT_SETUP([example1: dot product])

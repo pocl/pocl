@@ -4,10 +4,8 @@
 #include <string.h>
 #include <CL/opencl.h>
 #include "poclu.h"
+#include "config.h"
 
-#ifndef SRCDIR
-#define SRCDIR "."
-#endif
 
 int main(int argc, char **argv)
 {
@@ -25,7 +23,7 @@ int main(int argc, char **argv)
   assert( did );
   assert( queue );
 
-  krn_src = poclu_read_file(SRCDIR "/test_clCreateKernelsInProgram.cl");
+  krn_src = poclu_read_file(SRCDIR "/tests/runtime/test_clCreateKernelsInProgram.cl");
   assert(krn_src);
 
   program = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, NULL);
