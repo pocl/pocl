@@ -37,7 +37,8 @@ int main(void)
 	}
 
 
-	/* *ALL* pocl devices have the form 'type'-'details'.
+	/* Pocl devices have the form 'type'-'details', if details are
+	 * available. If not, they are of the form 'type'.
 	 * print here only the type, as the details will be computer
 	 * dependent */
 	rv = clGetDeviceInfo( did, CL_DEVICE_NAME, 
@@ -46,9 +47,9 @@ int main(void)
 		return 3;
 	result[rvs]=0;
 	needle = strchr(result, '-');
-	if( needle == NULL )
-		return 4;	
-	*needle=0;		
+	if( needle != NULL ){
+		*needle=0;		
+	}
 	printf("%s\n", result);
 	
 
