@@ -159,12 +159,7 @@ libpoclllvm_la_SOURCES = pocl_llvm_api.cc
 libpoclllvm_la_CPPFLAGS = ${libpocl_la_CPPFLAGS} -I$(top_srcdir)/lib/llvmopencl/
 libpoclllvm_la_LDFLAGS = `@LLVM_CONFIG@ --ldflags` 
 libpocl_la_LDFLAGS += `@LLVM_CONFIG@ --ldflags`
-#the explicit '-fno-rtti' is a work-around for llvm bug 14200
-#the explicit '-DNDEBUG' is a work-around for llvm bug 18253
-AM_CXXFLAGS = @PTHREAD_CFLAGS@ `@LLVM_CONFIG@ --cxxflags` -fno-rtti
-if !LLVM_HAS_ASSERTIONS
-AM_CXXFLAGS += -DNDEBUG
-endif
+AM_CXXFLAGS = @PTHREAD_CFLAGS@ @LLVM_CXX_FLAGS@
 
 libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/ @ICD_LD_FLAGS@
 libpocl_la_LIBADD += libpoclllvm.la

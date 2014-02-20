@@ -681,6 +681,15 @@ AC_COMPILE_IFELSE(
    CLANGXX=""
    CLANGXX_FLAGS=""])
 
+#
+# A few work-arounds for llvm-config issues
+# - '-fno-rtti' is a work-around for llvm bug 14200
+# - '-DNDEBUG' is a work-around for llvm bug 18253
+# - pocl doesn't compile with '-pedantic'
+
+LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
+LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
+
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with 
 # different NDEBUG settings, problems arise 
@@ -696,10 +705,9 @@ AC_LINK_IFELSE(
   )],
   [#No linking error. The llvm::DebugFlags was found in the LLVM libraries 
    AC_MSG_RESULT(yes)
-   AM_CONDITIONAL([LLVM_HAS_ASSERTIONS], true)
   ],
   [AC_MSG_RESULT(no)
-   AM_CONDITIONAL([LLVM_HAS_ASSERTIONS], false)
+    LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -DNDEBUG"
   ])
 
 CXX=$old_CXX
@@ -707,6 +715,8 @@ CXXFLAGS=$old_CXXFLAGS
 LDFLAGS=$old_LDFLAGS
 LIBS=$old_LIBS
 fi
+AC_SUBST(LLVM_CXX_FLAGS)
+
 
 # Define the OpenCL version when compiling OpenCL C code. This also
 # serves as indicator for the OpenCL C language, similar to
