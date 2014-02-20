@@ -6,6 +6,7 @@
 from buildbot.process import factory
 from buildbot.steps import source
 from buildbot.steps.shell import ShellCommand, Compile
+from buildbot.status.results import *
 import os
 
 #The names of the external tests sources
@@ -63,24 +64,25 @@ def createPoclFactory(	environ={},
 				description="autoconfiging",
 				descriptionDone="autoconf"))
 
-
-	if os.path.exists(tests_dir+AMD_test_pkg):
-		f.addStep(ShellCommand(
-				haltOnFailure=True,
-				command=["cp", "-u", tests_dir+AMD_test_pkg,
-					 "examples/AMD/"+AMD_test_pkg],
-				name="copy AMD",
-				description="copying",
-				descriptionDone="copied" ))
-	if os.path.exists(tests_dir+ViennaCL_test_pkg):
-		f.addStep(ShellCommand(
-				haltOnFailure=True,
-				command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
-					 "examples/ViennaCL/"+ViennaCL_test_pkg],
-				name="copy ViennaCL",
-				description="copying",
-				descriptionDone="copied"
-				))
+	f.addStep(ShellCommand(
+		haltOnFailure=True,
+		command=["cp", "-u", tests_dir+AMD_test_pkg, 
+		         "examples/AMD/"+AMD_test_pkg],
+		name="copy AMD",
+		description="copying",
+		descriptionDone="copied AMD",
+		#kludge around 'cp' always complaining if source is missing
+		decodeRC={0:SUCCESS,1:SUCCESS}
+		))
+	f.addStep(ShellCommand(
+		haltOnFailure=False,
+		command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
+		         "examples/ViennaCL/"+ViennaCL_test_pkg],
+		name="copy ViennaCL",
+		description="copying",
+		descriptionDone="copied ViennaCL",
+		decodeRC={0:SUCCESS,1:SUCCESS}
+		))
 
 	configOpts=config_opts.split(' ')
 	if pedantic==True:
@@ -94,8 +96,7 @@ def createPoclFactory(	environ={},
 				env=environ,
 				description="configureing",
 				descriptionDone="configure"))
-	f.addStep(Compile(
-			env=environ ))
+	f.addStep(Compile(env=environ ))
 	
 	#enable this later
 	ttacheck=False

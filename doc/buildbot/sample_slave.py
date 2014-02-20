@@ -22,11 +22,11 @@ def sample_slave( c, common_branch ):
 
 	# lauch the builders listed in "builderNames" whenever the change poller notices a change to github pocl
 	c['schedulers'].append(
-		 SingleBranchScheduler(name="Sample build name that appears on the web page (but please keep it short)",
+		 SingleBranchScheduler(name="name for scheduler, not sure where this is used",
 			change_filter=filter.ChangeFilter(branch=common_branch),
 			treeStableTimer=60,
 			builderNames=[
-				"sample_builder_name"] ))
+				"sample_builder_name - this is the name that appears on the webpage"] ))
 
 	#create one set of steps to build pocl. See poclfactory.py for details
 	# on how to configure it
@@ -35,7 +35,7 @@ def sample_slave( c, common_branch ):
 	#register your build to the master
 	c['builders'].append(
 		BuilderConfig(
-			name = "sample_builder_name",
+			name = "sample_builder_name - this is the name that appears on the webpage",
 			slavenames=["sample_slave_name"],
 			factory = sample_factory ))
 
