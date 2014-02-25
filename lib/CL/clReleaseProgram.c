@@ -63,7 +63,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         {
           remove_directory (program->temp_dir);
         }
-      
+
+      free (program->llvm_irs);
       free (program->temp_dir);
       free (program);
     }
