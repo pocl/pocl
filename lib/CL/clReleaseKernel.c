@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
@@ -56,6 +57,16 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       
       free ((char*)kernel->function_name);
       free ((char*)kernel->name);
+
+      for (i = 0; i < kernel->num_args; i++)
+        {
+          p = &(kernel->dyn_arguments[i]);
+          if (p->value != NULL)
+            {
+              pocl_aligned_free (p->value);
+            }
+        }
+
       free (kernel->dyn_arguments);
 #if defined(USE_LLVM_API) && USE_LLVM_API == 1
       free (kernel->reqd_wg_size);
