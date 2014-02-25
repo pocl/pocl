@@ -146,6 +146,7 @@ LKERNEL_SRCS_DEFAULT =				\
 	round.cl				\
 	rsqrt.cl				\
 	select.cl				\
+	shuffle.cl				\
 	sign.cl					\
 	signbit.cl				\
 	sin.cl					\
@@ -172,3 +173,5 @@ LKERNEL_SRCS_DEFAULT =				\
 if NEW_PRINTF_WORKS
 LKERNEL_SRCS_DEFAULT += printf.c
 endif
+
+# vim: set noexpandtab ts=8:

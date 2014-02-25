@@ -11,6 +11,7 @@ Bugfixes
 OpenCL Runtime/Platform API support
 -----------------------------------
 - Implement clCreateKernelsInProgram()
+- OpenCL-C shuffle() and shuffle2() implementation added
 
 Misc
 ----

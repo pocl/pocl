@@ -22,7 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS = kernel sampler_address_clamp image_query_funcs
+noinst_PROGRAMS = kernel sampler_address_clamp image_query_funcs test_shuffle
+test_shuffle_SOURCES=test_shuffle.cc
 
 kernel_SOURCES = kernel.c test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type_*.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
 kernel_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
@@ -37,3 +38,4 @@ image_query_funcs_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 image_query_funcs_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
+AM_LDFLAGS = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la -lm

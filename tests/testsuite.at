@@ -299,6 +299,58 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/image_query_funcs], 0, expout)
 AT_CLEANUP 
         
+AT_SETUP([Kernel functions: shuffle charN])
+echo OK > expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle char], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle shortN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle short], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle ushortN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle ushort], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle halfN])
+#thus far fails on all known platforms
+AT_XFAIL_IF([true])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle half], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle intN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle int], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle uintN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle uint], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle floatN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle float], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle longN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle long], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle ulongN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle ulong], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([Kernel functions: shuffle doubleN])
+echo OK> expout
+AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle double], 0, expout)
+AT_CLEANUP
+
 AT_BANNER([Full applications])
 
 AT_SETUP([Scalar wave equation])
