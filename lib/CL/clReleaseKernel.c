@@ -29,7 +29,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
   cl_kernel *pk;
-
+  int i;
   POCL_RELEASE_OBJECT (kernel, new_refcount);
 
   if (new_refcount == 0)
@@ -60,7 +60,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
       for (i = 0; i < kernel->num_args; i++)
         {
-          p = &(kernel->dyn_arguments[i]);
+          struct pocl_argument *p = &(kernel->dyn_arguments[i]);
           if (p->value != NULL)
             {
               pocl_aligned_free (p->value);
