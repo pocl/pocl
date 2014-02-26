@@ -83,7 +83,9 @@ using namespace llvm;
 using llvm::sys::fs::F_Binary;
 #endif
 
+
 //#define DEBUG_POCL_LLVM_API
+
 
 /* "emulate" the pocl_build script.
  * This compiles an .cl file into LLVM IR 
@@ -643,6 +645,13 @@ static PassManager& kernel_compiler_passes
 
   const bool first_initialization_call = kernel_compiler_passes.size() == 0;
 
+#if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
+        // Scalarizer is in LLVM upstream since 3.4.
+      const bool SCALARIZE = pocl_is_option_set("POCL_SCALARIZE_KERNELS");
+#else
+      const bool SCALARIZE = false;
+#endif
+
   if (first_initialization_call) 
     {
       // We have not initialized any pass managers for any device yet.
@@ -752,34 +761,39 @@ static PassManager& kernel_compiler_passes
 #ifndef LLVM_3_2
   if (wg_method == "loopvec")
     {
-      if (kernel_compiler_passes.size() == 0) {
-        // Set the options only once. TODO: fix it so that each
-        // device can reset their own options. Now one cannot compile
-        // with different options to different devices at one run.
+
+      if (SCALARIZE)
+        {
+          printf("SCALARIZE\n");
+          passes.push_back("scalarizer");
+        }
+
+      if (kernel_compiler_passes.size() == 0) 
+        {
+          // Set the options only once. TODO: fix it so that each
+          // device can reset their own options. Now one cannot compile
+          // with different options to different devices at one run.
    
-        llvm::cl::Option *O = opts["vectorizer-min-trip-count"];
-        assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
-        O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
+          llvm::cl::Option *O = opts["vectorizer-min-trip-count"];
+          assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+          O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
 
-        O = opts["scalarize-load-store"];
-        assert(O && "could not find LLVM option 'scalarize-load-store'");
-        O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef(""), false); 
-
-        O = opts["enable-scalarizer"];
-        assert(O && "could not find LLVM option 'enable-scalarizer'");
-        O->addOccurrence(1, StringRef("enable-scalarizer"), StringRef(""), false); 
+          if (SCALARIZE) 
+            {
+              O = opts["scalarize-load-store"];
+              assert(O && "could not find LLVM option 'scalarize-load-store'");
+              O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef(""), false); 
+            }
 
 #ifdef DEBUG_POCL_LLVM_API        
-        printf ("### autovectorizer enabled\n");
+          printf ("### autovectorizer enabled\n");
 
-        O = opts["debug-only"];
-        assert(O && "could not find LLVM option 'debug'");
-        O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
+          O = opts["debug-only"];
+          assert(O && "could not find LLVM option 'debug'");
+          O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
 
 #endif
-      }
-
-      passes.push_back("scalarizer");
+        }
       passes.push_back("mem2reg");
       passes.push_back("loop-vectorize");
       passes.push_back("slp-vectorizer");
