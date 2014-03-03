@@ -78,7 +78,7 @@ class TCEDevice {
   virtual void setMachine(const TTAMachine::Machine& machine);
 
   virtual void notifyKernelRunCommandSent
-      (__kernel_exec_cmd& dev_cmd, _cl_command_run *run_cmd) {};
+      (__kernel_exec_cmd& /*dev_cmd*/, _cl_command_run* /*run_cmd*/) {};
 
   virtual bool isNewKernel(const _cl_command_run* runCmd);
 

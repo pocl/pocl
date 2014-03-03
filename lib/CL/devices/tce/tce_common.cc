@@ -279,6 +279,30 @@ TCEDevice::updateCurrentKernel(const _cl_command_run* runCmd,
   curLocalZ = runCmd->local_z;
 }
 
+cl_int
+pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
+{
+  void *b = NULL;
+  TCEDevice *d = (TCEDevice*)device->data;
+  cl_int flags = mem_obj->flags;
+
+  /* if memory for this global memory is not yet allocated -> do it */
+  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+    {
+      b = pocl_tce_malloc
+        (device->data, flags, mem_obj->size, mem_obj->mem_host_ptr);
+      if (b == NULL) return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
+      mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
+        device->global_mem_id;
+    }
+  /* copy already allocated global mem info to devices own slot */
+  mem_obj->device_ptrs[device->dev_id] = 
+    mem_obj->device_ptrs[device->global_mem_id];
+    
+  return CL_SUCCESS;
+
+}
 
 void *
 pocl_tce_malloc (void *device_data, cl_mem_flags flags,

@@ -163,6 +163,7 @@ POname(clCreateBuffer)(cl_context context,
       if (i > 0)
         POname(clRetainMemObject) (mem);
       device = context->devices[i];
+      assert (device->ops->alloc_mem_obj != NULL);
       if (device->ops->alloc_mem_obj (device, mem) != CL_SUCCESS)
         {
           errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;

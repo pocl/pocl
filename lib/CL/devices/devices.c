@@ -124,6 +124,11 @@ pocl_init_devices()
               if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", devcount) < 0)
                 POCL_ABORT("Unable to generate the env string.");
               pocl_devices[devcount].ops = &pocl_device_ops[i];
+              /* The default value for the global memory space identifier is
+                 the same as the device id. The device instance can then override 
+                 it to point to some other device's global memory id in case of
+                 a shared global memory. */
+              pocl_devices[devcount].global_mem_id = devcount;
               assert(pocl_device_ops[i].init_device_infos);
               pocl_device_ops[i].init_device_infos(&pocl_devices[devcount]);
               pocl_device_common_init(&pocl_devices[devcount]);
