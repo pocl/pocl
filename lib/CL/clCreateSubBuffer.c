@@ -128,7 +128,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
       mem->mem_host_ptr = buffer->mem_host_ptr + info->origin;
     }
 
-  mem->device_ptrs = (void **) malloc(pocl_num_devices * sizeof(void *));
+  mem->device_ptrs = 
+    malloc(pocl_num_devices * sizeof(pocl_mem_identifier *));
   if (mem->device_ptrs == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;
@@ -136,7 +137,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
     }
 
   for (i = 0; i < pocl_num_devices; ++i)
-    mem->device_ptrs[i] = NULL;
+    mem->device_ptrs[i].mem_ptr = NULL;
   
   for (i = 0; i < mem->context->num_devices; ++i)
     {
@@ -147,12 +148,13 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
          call the device driver layer to produce the sub buffer
          reference */
       if (device->ops->create_sub_buffer != NULL)
-        mem->device_ptrs[device->dev_id] = 
+        mem->device_ptrs[device->dev_id].mem_ptr = 
           device->ops->create_sub_buffer
-          (device->data, buffer->device_ptrs[device->dev_id], info->origin, info->size);
+          (device->data, buffer->device_ptrs[device->dev_id].mem_ptr, 
+           info->origin, info->size);
       else
-        mem->device_ptrs[device->dev_id] = 
-          buffer->device_ptrs[device->dev_id] + info->origin;
+        mem->device_ptrs[device->dev_id].mem_ptr = 
+          buffer->device_ptrs[device->dev_id].mem_ptr + info->origin;
     }
 
   POCL_RETAIN_OBJECT(mem->parent);

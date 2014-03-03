@@ -93,7 +93,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
         }
 
       /* put the device ptr of the clmem in the argument */
-      buf = mem_list[i]->device_ptrs[command_queue->device->dev_id];
+      buf = mem_list[i]->device_ptrs[command_queue->device->dev_id].mem_ptr;
 
       POname(clRetainMemObject) (mem_list[i]);
       /* args_mem_loc is a pointer relative to the original args, since we

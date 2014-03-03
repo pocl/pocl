@@ -102,8 +102,8 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
   /* TODO: offset computation doesn't work in case the ptr is not 
      a direct pointer */
   device_id->ops->copy_rect(device_id->data,
-                       src_buffer->device_ptrs[device_id->dev_id], 
-                       dst_buffer->device_ptrs[device_id->dev_id],
+                       src_buffer->device_ptrs[device_id->dev_id].mem_ptr, 
+                       dst_buffer->device_ptrs[device_id->dev_id].mem_ptr,
                        src_origin, dst_origin, region,
                        src_row_pitch, src_slice_pitch,
                        dst_row_pitch, dst_slice_pitch);

@@ -84,7 +84,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
     return errcode;
   
   cmd->command.write.host_ptr = ptr;
-  cmd->command.write.device_ptr = buffer->device_ptrs[i]+offset;
+  cmd->command.write.device_ptr = buffer->device_ptrs[i].mem_ptr+offset;
   cmd->command.write.cb = cb;
   cmd->command.write.buffer = buffer;
   POname(clRetainMemObject) (buffer);

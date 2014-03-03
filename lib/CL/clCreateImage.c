@@ -175,7 +175,7 @@ TYPE_SUPPORTED:
     for (j = 0; j < i; ++j) 
       {
         device_id = context->devices[j];
-        device_id->ops->free(device_id->data, 0, mem->device_ptrs[j]);
+        device_id->ops->free(device_id->data, 0, mem->device_ptrs[j].mem_ptr);
       }
     
  ERROR:

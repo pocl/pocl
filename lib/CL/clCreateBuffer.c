@@ -141,7 +141,8 @@ POname(clCreateBuffer)(cl_context context,
   /* Store the per device buffer pointers always to a known
      location in the buffer (dev_id), even though the context
      might not contain all the devices. */
-  mem->device_ptrs = (void **) malloc(pocl_num_devices * sizeof(void *));
+  mem->device_ptrs = 
+    (pocl_mem_identifier*) malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -149,28 +150,25 @@ POname(clCreateBuffer)(cl_context context,
     }  
   
   for (i = 0; i < pocl_num_devices; ++i)
-    mem->device_ptrs[i] = NULL;
+    {
+      mem->device_ptrs[i].mem_ptr = NULL;
+    }
+
+  mem->mem_host_ptr = host_ptr; 
+  mem->size = size;
+  mem->context = context;
   
   for (i = 0; i < context->num_devices; ++i)
     {
       if (i > 0)
         POname(clRetainMemObject) (mem);
       device = context->devices[i];
-      device_ptr = device->ops->malloc(device->data, flags, size, host_ptr);
-      if (device_ptr == NULL)
+      if (device->ops->alloc_mem_obj (device, mem) != CL_SUCCESS)
         {
           errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;
           goto ERROR_CLEAN_MEM_AND_DEVICE;
         }
-      mem->device_ptrs[device->dev_id] = device_ptr;
-      if (flags & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR))
-        mem->mem_host_ptr = host_ptr;      
-      else
-        mem->mem_host_ptr = NULL;
     }
-  
-  mem->size = size;
-  mem->context = context;
   
   POCL_RETAIN_OBJECT(context);
   
@@ -182,7 +180,8 @@ POname(clCreateBuffer)(cl_context context,
   for (j = 0; j < i; ++j)
     {
       device = context->devices[j];
-      device->ops->free(device->data, flags, mem->device_ptrs[device->dev_id]);
+      device->ops->free(device->data, flags, 
+                        mem->device_ptrs[device->dev_id].mem_ptr);
     }
  ERROR_CLEAN_MEM:
   free(mem);

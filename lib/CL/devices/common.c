@@ -131,7 +131,7 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                        cl_int device)
 {
   cl_mem mem = *(cl_mem *)parg->value;
-  di->data = (mem->device_ptrs[device]);  
+  di->data = (mem->device_ptrs[device].mem_ptr);  
   di->width = mem->image_width;
   di->height = mem->image_height;
   di->depth = mem->image_depth;

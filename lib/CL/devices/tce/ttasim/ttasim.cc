@@ -259,9 +259,9 @@ public:
           {
             if (al->value == NULL) continue;
             unsigned start_addr = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id]))->start_address;
+              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
             unsigned size = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id]))->size;
+              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->size;
 
             out << "__global__ char buffer_" << std::hex << start_addr 
                 << "[] = {" << std::endl << "\t";
@@ -342,7 +342,7 @@ public:
         else if (run_cmd->kernel->arg_is_pointer[a] && dev_cmd.args[a] != 0)
           {
             unsigned start_addr = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id]))->start_address;
+              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
             
             out << "(uint32_t)&buffer_" << std::hex << start_addr << "[0]";
           }

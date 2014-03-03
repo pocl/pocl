@@ -28,7 +28,8 @@
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
   void pocl_##__DRV__##_init (cl_device_id device, const char* parameters); \
   void *pocl_##__DRV__##_malloc (void *data, cl_mem_flags flags,            \
-                             size_t size, void *host_ptr);              \
+                                 size_t size, void *host_ptr);              \
+  cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj); \
   void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void* buffer, \
                                             size_t origin, size_t size); \
   void pocl_##__DRV__##_free (void *data, cl_mem_flags flags, void *ptr);   \

@@ -77,7 +77,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   cmd->command.rw_image.device_ptr = 
-    image->device_ptrs[command_queue->device->dev_id];
+    image->device_ptrs[command_queue->device->dev_id].mem_ptr;
   cmd->command.rw_image.host_ptr = ptr;
   memcpy ((cmd->command.rw_image.origin), tuned_origin, 3*sizeof (size_t));
   memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));

@@ -192,6 +192,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->uninit = pocl_basic_uninit;
   ops->init = pocl_basic_init;
   ops->malloc = pocl_basic_malloc;
+  ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
   ops->read = pocl_basic_read;
   ops->read_rect = pocl_basic_read_rect;
@@ -287,8 +288,17 @@ void
 pocl_basic_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
+  static int global_mem_id;
+  static int first_basic_init = 1;
   
-  d = (struct data *) malloc (sizeof (struct data));
+  if (first_basic_init)
+    {
+      first_basic_init = 0;
+      global_mem_id = device->dev_id;
+    }
+  device->global_mem_id = global_mem_id;
+
+  d = (struct data *) calloc (1, sizeof (struct data));
   
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
@@ -337,6 +347,38 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
     return b;
   
   return NULL;
+}
+
+cl_int
+pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
+{
+  void *b = NULL;
+  struct data* d = (struct data*)device->data;
+  cl_int flags = mem_obj->flags;
+
+  /* if memory for this global memory is not yet allocated -> do it */
+  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+    {
+      if (flags & CL_MEM_USE_HOST_PTR && mem_obj->mem_host_ptr != NULL)
+        {
+          b = mem_obj->mem_host_ptr;
+        }
+      else if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, 
+                               mem_obj->size) != 0)
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+      if (flags & CL_MEM_COPY_HOST_PTR)
+        memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
+    
+      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
+      mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
+        device->global_mem_id;
+    }
+  /* copy already allocated global mem info to devices own slot */
+  mem_obj->device_ptrs[device->dev_id] = 
+    mem_obj->device_ptrs[device->global_mem_id];
+    
+  return CL_SUCCESS;
 }
 
 void
@@ -423,7 +465,7 @@ pocl_basic_run
               *(void **)arguments[i] = NULL;
             }
           else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device]);
+            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device].mem_ptr);
         }
       else if (kernel->arg_is_image[i])
         {

@@ -35,7 +35,7 @@ CL_API_SUFFIX__VERSION_1_0
   device_id->ops->read
     (device_id->data, 
      temp, 
-     image->device_ptrs[device_id->dev_id], 
+     image->device_ptrs[device_id->dev_id].mem_ptr, 
      image->size); 
             
   cl_int ret_code = pocl_write_image (image, command_queue->device, dst_origin,

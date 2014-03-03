@@ -174,7 +174,7 @@ CL_API_SUFFIX__VERSION_1_2
 
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
-    image->device_ptrs[command_queue->device->dev_id];
+    image->device_ptrs[command_queue->device->dev_id].mem_ptr;
   memcpy (&(cmd->command.fill_image.buffer_origin), origin, 
           3*sizeof(size_t));
   memcpy (&(cmd->command.fill_image.region), region, 3*sizeof(size_t));

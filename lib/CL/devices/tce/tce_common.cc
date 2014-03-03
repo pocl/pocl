@@ -452,7 +452,7 @@ pocl_tce_run
             dev_cmd.args[i] = 0;
           else
             dev_cmd.args[i] = byteswap_uint32_t 
-              (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id]))->start_address, d->needsByteSwap);
+              (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id].mem_ptr))->start_address, d->needsByteSwap);
         }
       else /* The scalar values should be byteswapped by the user. */
         {

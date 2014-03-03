@@ -88,6 +88,11 @@ struct thread_arguments
   thread_arguments *volatile next;
 };
 
+typedef struct _mem_regions_management{
+  ba_lock_t mem_regions_lock;
+  struct memory_region *mem_regions;
+} mem_regions_management;
+
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
@@ -97,8 +102,7 @@ struct data {
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   /* Lock for protecting the mem_regions linked list. Held when new mem_regions
      are created or old ones freed. */
-  ba_lock_t mem_regions_lock;
-  struct memory_region *mem_regions;
+  mem_regions_management* mem_regions;
 #endif
 
 };
@@ -153,6 +157,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->uninit = pocl_pthread_uninit;
   ops->init = pocl_pthread_init;
   ops->malloc = pocl_pthread_malloc;
+  ops->alloc_mem_obj = pocl_pthread_alloc_mem_obj;
   ops->free = pocl_pthread_free;
   ops->read = pocl_pthread_read;
   ops->write = pocl_pthread_write;
@@ -180,7 +185,10 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
 void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
-  struct data *d;
+  struct data *d; 
+  static mem_regions_management* mrm = NULL;
+  static int global_mem_id;
+  int i;
 
   // TODO: this checks if the device was already initialized previously.
   // Should we instead have a separate bool field in device, or do the
@@ -195,8 +203,13 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   device->data = d;
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
-  BA_INIT_LOCK (d->mem_regions_lock);
-  d->mem_regions = NULL;
+  if (mrm == NULL)
+    {
+      mrm = malloc (sizeof (mem_regions_management));
+      BA_INIT_LOCK (mrm->mem_regions_lock);
+      mrm->mem_regions = NULL;
+    }
+  d->mem_regions = mrm;
 #endif  
 
   device->address_bits = sizeof(void*) * 8;
@@ -252,13 +265,13 @@ pocl_pthread_uninit (cl_device_id device)
   struct data *d = (struct data*)device->data;
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   memory_region_t *region, *temp;
-  DL_FOREACH_SAFE(d->mem_regions, region, temp)
+  DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
     {
-      DL_DELETE(d->mem_regions, region);
+      DL_DELETE(d->mem_regions->mem_regions, region);
       free ((void*)region->chunks->start_address);
       free (region);    
     }
-  d->mem_regions = NULL;
+  d->mem_regions->mem_regions = NULL;
 #endif  
   free (d);
   device->data = NULL;
@@ -269,8 +282,8 @@ pocl_pthread_uninit (cl_device_id device)
 static int
 allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
 {
-  BA_LOCK(d->mem_regions_lock);
-  chunk_info_t *chunk = alloc_buffer (d->mem_regions, size);
+  BA_LOCK(d->mem_regions->mem_regions_lock);
+  chunk_info_t *chunk = alloc_buffer (d->mem_regions->mem_regions, size);
   if (chunk == NULL)
     {
       memory_region_t *new_mem_region = 
@@ -278,7 +291,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 
       if (new_mem_region == NULL) 
         {
-          BA_UNLOCK (d->mem_regions_lock);
+          BA_UNLOCK (d->mem_regions->mem_regions_lock);
           return ENOMEM;
         }
 
@@ -298,7 +311,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
              the smallest possible region for the buffer. */
           if ((posix_memalign (&space, alignment, size)) != 0) 
             {
-              BA_UNLOCK (d->mem_regions_lock);
+              BA_UNLOCK (d->mem_regions->mem_regions_lock);
               return ENOMEM;
             }
           region_size = size;
@@ -306,7 +319,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 
       init_mem_region (new_mem_region, (memory_address_t)space, region_size);
       new_mem_region->alignment = alignment;
-      DL_APPEND (d->mem_regions, new_mem_region);
+      DL_APPEND (d->mem_regions->mem_regions, new_mem_region);
       chunk = alloc_buffer_from_region (new_mem_region, size);
 
       if (chunk == NULL)
@@ -319,7 +332,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
         assert (chunk != NULL);
       }
     }
-  BA_UNLOCK (d->mem_regions_lock);
+  BA_UNLOCK (d->mem_regions->mem_regions_lock);
   
   *memptr = (void*) chunk->start_address;
   return 0;
@@ -363,6 +376,38 @@ pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *h
   return NULL;
 }
 
+cl_int
+pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
+{
+  void *b = NULL;
+  struct data* d = (struct data*)device->data;
+  cl_int flags = mem_obj->flags;
+
+  /* if memory for this global memory is not yet allocated -> do it */
+  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+    {
+      if (flags & CL_MEM_USE_HOST_PTR && mem_obj->mem_host_ptr != NULL)
+        {
+          b = mem_obj->mem_host_ptr;
+        }
+      else if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, 
+                                        mem_obj->size) != 0)
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+      if (flags & CL_MEM_COPY_HOST_PTR)
+        memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
+    
+      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
+      mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
+        device->global_mem_id;
+    }
+  /* copy already allocated global mem info to devices own slot */
+  mem_obj->device_ptrs[device->dev_id] = 
+    mem_obj->device_ptrs[device->global_mem_id];
+    
+  return CL_SUCCESS;
+}
+
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 void
 pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
@@ -373,24 +418,24 @@ pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
   if (flags & CL_MEM_USE_HOST_PTR)
       return; /* The host code should free the host ptr. */
 
-  region = free_buffer (d->mem_regions, (memory_address_t)ptr);
+  region = free_buffer (d->mem_regions->mem_regions, (memory_address_t)ptr);
 
   assert(region != NULL && "Unable to find the region for chunk.");
 
 #if FREE_EMPTY_REGIONS == 1
-  BA_LOCK(d->mem_regions_lock);
+  BA_LOCK(d->mem_regions->mem_regions_lock);
   BA_LOCK(region->lock);
   if (region->last_chunk == region->chunks && 
       !region->chunks->is_allocated) 
     {
       /* All chunks have been deallocated. free() the whole 
          memory region at once. */
-      DL_DELETE(d->mem_regions, region);
+      DL_DELETE(d->mem_regions->mem_regions, region);
       free ((void*)region->last_chunk->start_address);
       free (region);    
     }  
   BA_UNLOCK(region->lock);
-  BA_UNLOCK(d->mem_regions_lock);
+  BA_UNLOCK(d->mem_regions->mem_regions_lock);
 #endif
 }
 
@@ -620,7 +665,10 @@ workgroup_thread (void *p)
             *(void **)arguments[i] = NULL;
           }
         else
-            arguments[i] = &((*(cl_mem *)(al->value))->device_ptrs[ta->device]);
+          {
+            arguments[i] = 
+              &((*(cl_mem *)(al->value))->device_ptrs[ta->device].mem_ptr);
+          }
       }
       else if (kernel->arg_is_image[i])
         {

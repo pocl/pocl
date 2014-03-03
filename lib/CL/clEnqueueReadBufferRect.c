@@ -98,7 +98,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   /* TODO: offset computation doesn't work in case the ptr is not 
      a direct pointer */
   device->ops->read_rect(device->data, ptr, 
-                    buffer->device_ptrs[device->dev_id],
+                    buffer->device_ptrs[device->dev_id].mem_ptr,
                     buffer_origin, host_origin, region,
                     buffer_row_pitch, buffer_slice_pitch,
                     host_row_pitch, host_slice_pitch);

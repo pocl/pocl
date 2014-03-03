@@ -122,7 +122,7 @@ pocl_write_image(cl_mem               image,
     return CL_INVALID_VALUE;
   
   device_id->ops->write_rect (device_id->data, ptr, 
-                         image->device_ptrs[device_id->dev_id],
+                         image->device_ptrs[device_id->dev_id].mem_ptr,
                          tuned_origin, tuned_origin, tuned_region,
                          image_row_pitch, image_slice_pitch,
                          image_row_pitch, image_slice_pitch);
@@ -180,7 +180,7 @@ pocl_read_image(cl_mem               image,
     return CL_INVALID_VALUE;
   
   device_id->ops->read_rect(device_id->data, ptr, 
-                       image->device_ptrs[device_id->dev_id],
+                       image->device_ptrs[device_id->dev_id].mem_ptr,
                        tuned_origin, tuned_origin, tuned_region,
                        image_row_pitch, image_slice_pitch,
                        image_row_pitch, image_slice_pitch);
