@@ -23,13 +23,10 @@
 # THE SOFTWARE.
 
 bin_SCRIPTS = pocl-standalone
-if ! USE_LLVM_API
-pkgdata_SCRIPTS = pocl-build pocl-kernel pocl-workgroup
-endif
 pkgdataincludedir = $(pkgdatadir)/include
 
-CLEANFILES = pocl-build pocl-kernel pocl-workgroup pocl-standalone
-EXTRA_DIST = pocl-build.in pocl-kernel.in pocl-workgroup.in pocl-standalone.in
+CLEANFILES = pocl-standalone
+EXTRA_DIST = pocl-standalone.in
 
 do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]abs_top_builddir[@]|$(abs_top_builddir)|g'	\
@@ -55,7 +52,7 @@ do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]LLC[@]|$(LLC)|g' 				\
                -e 's|[@]LLVM_VERSION[@]|$(LLVM_VERSION)|g' 
 
-pocl-build pocl-kernel pocl-workgroup pocl-standalone: %: %.in Makefile ../install-paths.h
+pocl-standalone: %: %.in Makefile ../install-paths.h
 	$(do_subst) < $< > $@
 	chmod +x $@
 
@@ -66,13 +63,3 @@ install-exec-hook: $(bin_SCRIPTS)
 			< "$$f" && \
 		chmod +x "$(DESTDIR)$(bindir)/$$f" ; \
 	done
-
-if ! USE_LLVM_API
-install-data-hook: $(pkgdata_SCRIPTS)
-	for f in $(pkgdata_SCRIPTS) ; do \
-		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
-			> "$(DESTDIR)$(pkgdatadir)/$$f" \
-			< "$$f" && \
-		chmod +x "$(DESTDIR)$(pkgdatadir)/$$f" ; \
-	done
-endif

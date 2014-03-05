@@ -147,7 +147,6 @@ if BUILD_SPU
 libpocl_la_LIBADD += -lspe2
 endif
 
-if USE_LLVM_API
 #Kludge: compile pocl_llvm_api.cc into a library of its own.
 #The source file is necessarely a C++ file, and having a C++ file
 #causes the entire pocl project to be linked with g++, which in turn
@@ -169,9 +168,6 @@ libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST 
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
-else
-libpocl_la_SOURCES += pocl_llvm.c
-endif
 
 if ! BUILD_ICD
 libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}

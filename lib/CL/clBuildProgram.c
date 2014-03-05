@@ -241,9 +241,10 @@ CL_API_SUFFIX__VERSION_1_0
             (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          error = call_pocl_build(program, device, device_i, source_file_name,
-                                  binary_file_name, device_tmpdir,
-                                  user_options);     
+          error = pocl_llvm_build_program
+              (program, device, device_i, source_file_name,
+               binary_file_name, device_tmpdir,
+               user_options);     
 
           if (error != 0)
           {

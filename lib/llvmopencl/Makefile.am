@@ -22,11 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-if USE_LLVM_API
 # This library is linked against libpocl to call the kernel compiler
-# directly.
+# passes directly from the host library.
 noinst_LTLIBRARIES = libllvmpasses.la
-endif
+
 # This creates a separate llvmopencl.so that is loaded to 'opt'
 # for the pocl-workgroup version.
 pkglib_LTLIBRARIES = llvmopencl.la
@@ -34,12 +33,6 @@ pkglib_LTLIBRARIES = llvmopencl.la
 AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include @LLVM_CXX_FLAGS@
 
 AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
-
-# When building in API mode, LLVM gets linked into libpocl. Linking
-# it in here too gives "symbol redefined" errors with the standalone build.
-if !USE_LLVM_API
-llvmopencl_la_LIBADD = @LLVM_LIBS@
-endif
 
 PASSES_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\
@@ -66,11 +59,8 @@ PASSES_SOURCES = Barrier.h						\
 						ImplicitConditionalBarriers.h \
 						DebugHelpers.h DebugHelpers.cc
 
-if USE_LLVM_API
 libllvmpasses_la_SOURCES = ${PASSES_SOURCES}
-endif
-# some scripts remain in the api version, and those require libopencl.so
-# so build it even when using the API
-llvmopencl_la_SOURCES = ${PASSES_SOURCES}
 
-#llvmopencl_la_LIBADD += @LIBS_LLVMTRANSFORMUTILS@
+# The offline compiler script (pocl-standalone) calls the kernel compiler passes 
+# from the command line, those require libllvmopencl.so.
+llvmopencl_la_SOURCES = ${PASSES_SOURCES}

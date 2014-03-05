@@ -1,7 +1,8 @@
-/* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs
+/* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs to invoke
+   the different kernel compilation phases.
 
-   Copyright (c) 2013 Kalle Raiskila and
-                      Pekka Jääskeläinen
+   Copyright (c) 2013 Kalle Raiskila 
+                 2013-2014 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -86,20 +87,13 @@ using llvm::sys::fs::F_Binary;
 
 //#define DEBUG_POCL_LLVM_API
 
-
-/* "emulate" the pocl_build script.
- * This compiles an .cl file into LLVM IR 
- * (the "program.bc") file.
- * unlike the script, a intermediate preprocessed 
- * program.bc.i file is not produced.
- */
-int call_pocl_build(cl_program program, 
-                    cl_device_id device, 
-                    int device_i,     
-                    const char* source_file_name,
-                    const char* binary_file_name,
-                    const char* device_tmpdir,
-                    const char* user_options)
+int pocl_llvm_build_program(cl_program program, 
+                            cl_device_id device, 
+                            int device_i,     
+                            const char* source_file_name,
+                            const char* binary_file_name,
+                            const char* device_tmpdir,
+                            const char* user_options)
 
 { 
 
@@ -300,16 +294,13 @@ int call_pocl_build(cl_program program,
   return CL_SUCCESS;
 }
 
-/* Retrieve metadata of the given kernel in the program to populate the
- * cl_kernel object.
- */
-int call_pocl_kernel(cl_program program, 
-                     cl_kernel kernel,
-                     int device_i,     
-                     const char* kernel_name,
-                     const char* device_tmpdir, 
-                     char* descriptor_filename,
-                     int */*errcode*/)
+int pocl_llvm_get_kernel_metadata(cl_program program, 
+                                  cl_kernel kernel,
+                                  int device_i,     
+                                  const char* kernel_name,
+                                  const char* device_tmpdir, 
+                                  char* descriptor_filename,
+                                  int */*errcode*/)
 {
 
   int i;
@@ -894,23 +885,11 @@ extern llvm::cl::list<int> LocalSize;
 /* This is used to control the kernel we want to process in the kernel compilation. */
 extern cl::opt<std::string> KernelName;
 
-/* This function links the input kernel LLVM bitcode and the
- * OpenCL kernel runtime library into one LLVM module, then
- * runs pocl's kernel compiler passes on that module to produce 
- * a function that executes all work-items in a work-group.
- *
- * Output is a LLVM bitcode file. 
- *
- * TODO: rename these functions for something more descriptive.
- * TODO: this is not thread-safe, it changes the LLVM global options to
- * control the compilation. We should enforce only one compilations is done
- * at a time or control the options through thread safe methods.
- */
-int call_pocl_workgroup(cl_device_id device,
-                        cl_kernel kernel,
-                        size_t local_x, size_t local_y, size_t local_z,
-                        const char* parallel_filename,
-                        const char* kernel_filename)
+int pocl_llvm_generate_workgroup_function(cl_device_id device,
+                                          cl_kernel kernel,
+                                          size_t local_x, size_t local_y, size_t local_z,
+                                          const char* parallel_filename,
+                                          const char* kernel_filename)
 {
 
 #ifdef DEBUG_POCL_LLVM_API        
@@ -1078,12 +1057,8 @@ void pocl_llvm_update_binaries (cl_program program) {
     }
 }
 
-/* Get the function name pointers in program's LLVM IR modules,
- * filling up to max_num_krn to the caller allocated knames
- * return actual amount of kernel functions found (not filled)
- */
 int
-get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
+pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
 {
   // TODO: is it safe to assume every device (i.e. the index 0 here)
   // has the same set of programs & kernels?

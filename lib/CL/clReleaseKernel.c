@@ -68,9 +68,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
         }
 
       free (kernel->dyn_arguments);
-#if defined(USE_LLVM_API) && USE_LLVM_API == 1
       free (kernel->reqd_wg_size);
-#endif
       free (kernel);
     }
   

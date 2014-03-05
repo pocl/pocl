@@ -207,10 +207,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   if (access (parallel_filename, F_OK) != 0) 
     {
-      error = call_pocl_workgroup(command_queue->device,
-                                  kernel, 
-                                  local_x, local_y, local_z,
-                                  parallel_filename, kernel_filename);
+      error = pocl_llvm_generate_workgroup_function
+          (command_queue->device,
+           kernel, local_x, local_y, local_z,
+           parallel_filename, kernel_filename);
       if (error) return error;
 
 #ifdef DEBUG_NDRANGE

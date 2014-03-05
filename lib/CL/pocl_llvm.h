@@ -29,38 +29,53 @@
 extern "C" {
 #endif
 
-// compile kernel source to bitcode
-int call_pocl_build(cl_program program,
-                    cl_device_id device,
-                    int device_i,     
-                    const char* source_file_name,
-                    const char* binary_filename,
-                    const char* device_tmpdir,
-                    const char* user_options );
-
-
-// create wrapper code for compiling a LLVM IR 
-// function as a OpenCL kernel
-int call_pocl_kernel(cl_program program, 
-                     cl_kernel kernel,
-                     int device_i,     
-                     const char* kernel_name,
-                     const char* device_tmpdir, 
-                     char* descriptor_filename,
-                     int *errcode );
-
-/* Run the pocl passes on a kernel in LLVM IR, link it with kernel, 
- * and produce the 'paralellized' kernel file.
+/* Compiles an .cl file into LLVM IR.
  */
-int call_pocl_workgroup(cl_device_id device,
-                        cl_kernel kernel,
-                        size_t local_x, size_t local_y, size_t local_z,
-                        const char* parallel_filename,
-                        const char* kernel_filename );
+int pocl_llvm_build_program
+(cl_program program,
+ cl_device_id device,
+ int device_i,     
+ const char* source_file_name,
+ const char* binary_filename,
+ const char* device_tmpdir,
+ const char* user_options);
+
+
+/* Retrieve metadata of the given kernel in the program to populate the
+ * cl_kernel object.
+ */
+int pocl_llvm_get_kernel_metadata
+(cl_program program, 
+ cl_kernel kernel,
+ int device_i,     
+ const char* kernel_name,
+ const char* device_tmpdir, 
+ char* descriptor_filename,
+ int *errcode);
+
+/* This function links the input kernel LLVM bitcode and the
+ * OpenCL kernel runtime library into one LLVM module, then
+ * runs pocl's kernel compiler passes on that module to produce 
+ * a function that executes all work-items in a work-group.
+ *
+ * Output is a LLVM bitcode file that contains a work-group function
+ * and its associated launchers. 
+ *
+ * TODO: this is not thread-safe, it changes the LLVM global options to
+ * control the compilation. We should enforce only one compilations is done
+ * at a time or control the options through thread safe methods.
+ */
+int pocl_llvm_generate_workgroup_function
+(cl_device_id device,
+ cl_kernel kernel,
+ size_t local_x, size_t local_y, size_t local_z,
+ const char* parallel_filename,
+ const char* kernel_filename);
 
 /**
  * Refresh the on binary representation of the program, update the
- * data in the program object. */
+ * data in the program object. 
+ */
 void pocl_llvm_update_binaries (cl_program program);
 
 /**
@@ -73,7 +88,7 @@ void pocl_llvm_update_binaries (cl_program program);
  * Returns the number of kernels found in the program (may be greater than
  * 'max_num_krn')
  */
-int get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn);
+int pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn);
 
 #ifdef __cplusplus
 }

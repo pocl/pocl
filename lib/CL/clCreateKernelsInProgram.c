@@ -22,7 +22,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
   const char** knames = (const char**)malloc( num_kernels*sizeof(const char *) ); 
   if( knames == NULL ) 
     return CL_OUT_OF_HOST_MEMORY;
-  num_kern_found = get_kernel_names( program, knames, num_kernels );
+  num_kern_found = pocl_llvm_get_kernel_names(program, knames, num_kernels);
 
   /* Sanity & quick return checks that the specs define */
   if( num_kernels_ret != NULL )
@@ -40,7 +40,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
   for( idx=0; idx<num_kern_found; idx++) {
   
     cl_int error_ret; 
-    kernels[idx] = POclCreateKernel( program, knames[idx], &error_ret);
+    kernels[idx] = POclCreateKernel(program, knames[idx], &error_ret);
 
     /* Check for errors, clean up & bail.
      * If we happened to pass a invalid kernel name after all
