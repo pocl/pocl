@@ -257,7 +257,7 @@ bool runtest( int n, int m, const char* ocl_type){
 
 int main( int argc, char *argv[])
 {
-	int num_errors;
+	int num_errors = 0;
 
 	if( argc != 2 ) {
 		std::cout << "give element type"<<std::endl;
