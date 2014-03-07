@@ -108,6 +108,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->binary_sizes = NULL;
   program->binaries = NULL;
   program->kernels = NULL;
+  program->llvm_irs = NULL;
 
   /* Create the temporary directory where all kernel files and compilation
      (intermediate) results are stored. */
