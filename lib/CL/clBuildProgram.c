@@ -116,12 +116,6 @@ CL_API_SUFFIX__VERSION_1_0
                 {
                   /* the LLVM API call pushes the parameters directly to the 
                      frontend without using -Xclang */
-#if !defined (USE_LLVM_API) || USE_LLVM_API != 1
-                  /* ...but with the scripts version we call the 'clang' binary
-                     which needs the -Xclang modifier to pass the args to
-                     the frontend */
-                  strcat (modded_options, "-Xclang ");
-#endif
                 }
               else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
                 {
