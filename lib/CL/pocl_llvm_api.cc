@@ -103,6 +103,22 @@ static llvm::sys::Mutex kernelCompilerLock;
 
 //#define DEBUG_POCL_LLVM_API
 
+// Write a kernel compilation intermediate result
+// to file on disk, if user has requested with environment
+// variable
+// TODO: what to do on errors?
+static inline void
+write_temporary_file( const llvm::Module *mod,
+                      const char *filename )
+{
+  std::string ErrorInfo;
+  tool_output_file *Out;
+  Out = new tool_output_file(filename, ErrorInfo, F_Binary);
+  WriteBitcodeToFile(mod, Out->os());
+  Out->keep();
+  delete Out;
+}
+
 int pocl_llvm_build_program(cl_program program, 
                             cl_device_id device, 
                             int device_i,     
@@ -274,7 +290,6 @@ int pocl_llvm_build_program(cl_program program,
   fe.Inputs.clear(); 
   fe.Inputs.push_back
     (FrontendInputFile(source_file_name, clang::IK_OpenCL));
-  fe.OutputFile = std::string(binary_file_name);
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
@@ -286,21 +301,18 @@ int pocl_llvm_build_program(cl_program program,
 
   bool success = true;
   clang::CodeGenAction *action = NULL;
-  // TODO: switch to EmitLLVMOnlyAction, when intermediate file is not needed
-  // Dump the intermediate bitcode for the program to disk only if needed.
-  if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0)) 
-    action = new clang::EmitBCAction(&globalContext);
-  else
-    action = new clang::EmitLLVMOnlyAction(&globalContext);
-
+  action = new clang::EmitLLVMOnlyAction(&globalContext);
   success |= CI.ExecuteAction(*action);
-
+  // FIXME: memleak, see FIXME below
   if (!success) return CL_BUILD_PROGRAM_FAILURE;
 
   llvm::Module **mod = (llvm::Module **)&program->llvm_irs[device_i];
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
   *mod = action->takeModule();
+
+  if (!pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
+    write_temporary_file(*mod, binary_file_name);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
@@ -1007,10 +1019,6 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   assert (linked_bc != NULL);
 
   /* Now finally run the set of passes assembled above */
-  std::string ErrorInfo;
-  tool_output_file *Out = new tool_output_file(parallel_filename, 
-                                               ErrorInfo, 
-                                               F_Binary);
 
   // TODO pass these as parameters instead, this is not thread safe!
   pocl::LocalSize.clear();
@@ -1021,13 +1029,9 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 
   kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
 
-  WriteBitcodeToFile(linked_bc, Out->os()); 
+  // TODO: don't write this once LLC is called via API, not system()
+  write_temporary_file(linked_bc, parallel_filename);
 
-  //  input->dump();
-  // linked_bc->dump();
-
-  Out->keep();
-  delete Out;
 #ifndef LLVM_3_2
   // In LLVM 3.2 the Linker object deletes the associated Modules.
   // If we delete here, it will crash.
@@ -1058,15 +1062,8 @@ void pocl_llvm_update_binaries (cl_program program) {
         program->devices[i]->short_name + "/" +
         POCL_PROGRAM_BC_FILENAME;
 
-      std::string ErrorInfo;
-      tool_output_file *Out = new tool_output_file
-        (binary_filename.c_str(), 
-         ErrorInfo, 
-         F_Binary);
-
-      WriteBitcodeToFile((const llvm::Module*)program->llvm_irs[i], Out->os()); 
-      Out->keep();
-      delete Out;
+      write_temporary_file((llvm::Module*)program->llvm_irs[i],
+                           binary_filename.c_str()); 
 
       FILE *binary_file = fopen(binary_filename.c_str(), "r");
       if (binary_file == NULL)        
