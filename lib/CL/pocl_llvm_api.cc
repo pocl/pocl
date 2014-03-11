@@ -998,8 +998,8 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   llvm::Module *libmodule = kernel_library(device, input);
   assert (libmodule != NULL);
 #ifdef LLVM_3_2
-  Linker TheLinker("pocl", input);
-  TheLinker.LinkInModule(libmodule, Linker::PreserveSource, &errmsg);
+  Linker TheLinker("pocl", input, Linker::PreserveSource);
+  TheLinker.LinkInModule(libmodule, &errmsg);
 #else
   Linker TheLinker(input);
   TheLinker.linkInModule(libmodule, Linker::PreserveSource, &errmsg);
