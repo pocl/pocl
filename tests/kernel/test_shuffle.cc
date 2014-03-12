@@ -14,10 +14,12 @@
  */
 
 #include "poclu.h"
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <CL/cl.h>
 #include <iostream>
+#include <cmath>
+#include <cstdlib>
 
 cl_context ctx;
 cl_device_id did;
