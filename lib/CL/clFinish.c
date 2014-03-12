@@ -192,7 +192,7 @@ static void exec_commands (_cl_command_node *node_list)
                 node->device->ops->unmap_mem
                   (node->device->data, 
                    (node->command.unmap.mapping)->host_ptr, 
-                   (node->command.unmap.memobj)->device_ptrs[node->device->dev_id], 
+                   (node->command.unmap.memobj)->device_ptrs[node->device->dev_id].mem_ptr, 
                    (node->command.unmap.mapping)->size);
             }
           DL_DELETE((node->command.unmap.memobj)->mappings, 
