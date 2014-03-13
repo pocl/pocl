@@ -36,6 +36,7 @@
 #  include "pocl_icd.h"
 #endif
 #include "pocl.h"
+#include "pocl_hash.h"
 
 #define POCL_FILENAME_LENGTH 1024
 
@@ -483,6 +484,8 @@ struct _cl_program {
   char *temp_dir;
   /* implementation */
   cl_kernel kernels;
+  /* program hash after build */
+  uint8_t build_hash[SHA1_DIGEST_SIZE];
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
 };

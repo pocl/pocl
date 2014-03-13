@@ -44,6 +44,14 @@ void pocl_remove_directory (const char *path_name);
 void pocl_remove_file (const char *file_path);
 void pocl_make_directory (const char *path_name);
 
+/**
+ * Return a path to store program geenrated file
+ * \param program the program for which a path is needed
+ *
+ * \return a string allocated on the heap
+ */
+char *pocl_get_program_dir(cl_program program);
+
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 

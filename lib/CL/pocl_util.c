@@ -290,6 +290,46 @@ pocl_create_binary_dirs (cl_program program, int size)
   program->temp_dir = path_name;
 }
 
+#define POCL_CACHE_DIR "POCL_CACHE_DIR"
+#define POCL_HOME_CACHE_DIR ".pocl"
+
+char *pocl_get_program_dir(cl_program program)
+{
+  char *tmp_path = getenv(POCL_CACHE_DIR), *cache_path = NULL;
+  unsigned int alloc_size;
+  char hash_str[SHA1_DIGEST_SIZE * 2 + 1];
+  int i;
+
+  for (i = 0; i < SHA1_DIGEST_SIZE; i++)
+    sprintf(&hash_str[i*2], "%02x", (unsigned int) program->build_hash[i]);
+
+  if (!tmp_path)
+    {
+      tmp_path = getenv("HOME");
+      if (!tmp_path)
+        POCL_ABORT("Can not get user home folder\n");
+
+      alloc_size = strlen(tmp_path) + strlen(POCL_HOME_CACHE_DIR) + (SHA1_DIGEST_SIZE * 2) + 3;
+      cache_path = malloc(alloc_size);
+      if (!cache_path)
+        POCL_ABORT("Can not allocate memory for pocl cache path\n");
+
+      snprintf(cache_path, alloc_size, "%s/"POCL_HOME_CACHE_DIR"/%s", tmp_path, hash_str);
+    }
+
+  else
+    {
+      alloc_size = strlen(tmp_path) + (SHA1_DIGEST_SIZE * 2) + 2;
+      cache_path = malloc(alloc_size);
+      if (!cache_path)
+        POCL_ABORT("Can not allocate memory for pocl cache path\n");
+
+      snprintf(cache_path, alloc_size, "%s/", tmp_path, hash_str);
+    }
+
+    return cache_path;
+}
+
 uint32_t
 byteswap_uint32_t (uint32_t word, char should_swap) 
 {

@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "pocl_llvm.h"
+#include "pocl_hash.h"
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
@@ -52,6 +53,22 @@ static char cl_parameters_not_yet_supported_by_clang[] =
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 #define COMMAND_LENGTH 4096
+
+static inline void
+build_program_compute_hash(cl_program program)
+{
+  SHA1_CTX hash_ctx;
+
+  pocl_SHA1_Init(&hash_ctx);
+
+  pocl_SHA1_Update(&hash_ctx, program->source, strlen(program->source));
+  if (program->compiler_options)
+    pocl_SHA1_Update(&hash_ctx, program->compiler_options, strlen(program->compiler_options));
+
+  pocl_SHA1_Final(&hash_ctx, program->build_hash);
+
+  return 0;
+}
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
@@ -211,6 +228,8 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (program->binaries == NULL)
     {
+      build_program_compute_hash(program);
+
       snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/", program->temp_dir);
 
       if (access (tmpdir, F_OK) != 0)
