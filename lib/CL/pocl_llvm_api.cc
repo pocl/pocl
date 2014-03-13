@@ -129,9 +129,7 @@ int pocl_llvm_build_program(cl_program program,
   CompilerInstance CI;
   CompilerInvocation &pocl_build = CI.getInvocation();
 
-  // TODO: call device->prepare_build() that can return
-  // device-specific switches too, to replace the build_program()
-  // API TCE uses to include the custom op macros.
+  // add device specific switches, if any
   std::stringstream ss;
 
   if (device->ops->init_build != NULL) 

@@ -86,7 +86,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->map_mem = pocl_tce_map_mem;
   ops->run = pocl_tce_run;
   ops->get_timer_value = pocl_ttasim_get_timer_value;
-  ops->build_program = pocl_tce_build_program;
   ops->init_build = pocl_tce_init_build;
 }
 

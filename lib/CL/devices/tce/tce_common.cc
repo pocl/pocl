@@ -637,22 +637,6 @@ pocl_tce_init_build(void *data, const char *dev_tmpdir)
   return include_switch;
 }
 
-int 
-pocl_tce_build_program (void *data, const char *source_fn, const char *binary_fn, 
-                        const char *default_cmd, const char *user_opts, const char *dev_tmpdir) 
-{
-  const char *include_switch =
-    pocl_tce_init_build(data, dev_tmpdir);
-
-  std::string buildCmd = 
-    std::string("EXTRA_CPPFLAGS=\"") + std::string(include_switch) +
-    std::string("\" ") + std::string(default_cmd);
-
-  free ((void*)include_switch);
-
-  return system (buildCmd.c_str());
-}
-
 void
 pocl_tce_copy (void */*data*/, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
