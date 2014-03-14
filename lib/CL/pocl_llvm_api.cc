@@ -64,6 +64,7 @@
 #include <sys/stat.h>
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -119,10 +120,41 @@ write_temporary_file( const llvm::Module *mod,
   delete Out;
 }
 
+// Read input source to clang::FrontendOptions.
+// The source is contained in the program->source array,
+// but if debugging option is enabled in the kernel compiler
+// we need to dump the file to disk first for the debugger
+// to find it.
+static inline int
+load_source( FrontendOptions &fe,
+             const char* temp_dir,
+             cl_program program )
+{
+  // TODO: dump also when debugging kernels
+  if (!pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0)) {
+    llvm::MemoryBuffer *buf;
+    buf = llvm::MemoryBuffer::getMemBuffer(program->source,
+                                         "kernel_source");
+    fe.Inputs.push_back
+      (FrontendInputFile(buf, clang::IK_OpenCL));
+  } else {
+    std::string kernel_file(temp_dir);
+    kernel_file += POCL_PROGRAM_CL_FILENAME;
+    std::ofstream ofs(kernel_file.c_str());
+    ofs << program->source;
+    if (!ofs.good())
+      return CL_OUT_OF_HOST_MEMORY;
+    fe.Inputs.push_back
+      (FrontendInputFile(kernel_file, clang::IK_OpenCL));
+  }
+
+  return 0;
+}
+
 int pocl_llvm_build_program(cl_program program, 
                             cl_device_id device, 
                             int device_i,     
-                            const char* source_file_name,
+                            const char* temp_dir,
                             const char* binary_file_name,
                             const char* device_tmpdir,
                             const char* user_options)
@@ -288,8 +320,8 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
-  fe.Inputs.push_back
-    (FrontendInputFile(source_file_name, clang::IK_OpenCL));
+  if (load_source(fe, temp_dir, program)!=0)
+    return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;

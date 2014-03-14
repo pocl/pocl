@@ -200,27 +200,6 @@ CL_API_SUFFIX__VERSION_1_0
         goto ERROR_CLEAN_BINARIES;
       }
 
-      snprintf 
-        (source_file_name, POCL_FILENAME_LENGTH, "%s/%s", tmpdir, 
-         POCL_PROGRAM_CL_FILENAME);
-
-      source_file = fopen(source_file_name, "w+");
-      if (source_file == NULL)
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_BINARIES;
-      }
-
-      n = fwrite (program->source, 1,
-                  strlen(program->source), source_file);
-      fclose(source_file);
-
-      if (n < strlen(program->source))
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_BINARIES;
-      }
-
       /* Build the fully linked non-parallel bitcode for all
          devices. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
@@ -236,7 +215,7 @@ CL_API_SUFFIX__VERSION_1_0
              device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
           error = pocl_llvm_build_program
-              (program, device, device_i, source_file_name,
+              (program, device, device_i, tmpdir,
                binary_file_name, device_tmpdir,
                user_options);     
 
