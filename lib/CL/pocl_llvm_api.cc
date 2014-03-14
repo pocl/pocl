@@ -130,14 +130,16 @@ load_source( FrontendOptions &fe,
              const char* temp_dir,
              cl_program program )
 {
+// this doesn't work
+#if 0 
   // TODO: dump also when debugging kernels
-  if (!pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0)) {
+  if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0)==0) {
     llvm::MemoryBuffer *buf;
-    buf = llvm::MemoryBuffer::getMemBuffer(program->source,
-                                         "kernel_source");
+    buf = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(program->source));
     fe.Inputs.push_back
       (FrontendInputFile(buf, clang::IK_OpenCL));
   } else {
+#endif
     std::string kernel_file(temp_dir);
     kernel_file += POCL_PROGRAM_CL_FILENAME;
     std::ofstream ofs(kernel_file.c_str());
@@ -146,7 +148,6 @@ load_source( FrontendOptions &fe,
       return CL_OUT_OF_HOST_MEMORY;
     fe.Inputs.push_back
       (FrontendInputFile(kernel_file, clang::IK_OpenCL));
-  }
 
   return 0;
 }
