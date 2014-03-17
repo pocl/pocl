@@ -93,8 +93,10 @@ using llvm::sys::fs::F_Binary;
  * new kernels. The CloneModule etc. seem to assume we are linking
  * bitcodes with a same LLVMContext. Unfortunately, this requires serializing
  * all calls to the LLVM APIs with mutex.
+ * Freeing/deleting the context crashes LLVM 3.2 (at program exit), as a
+ * work-around, allocate this from heap.
  */
-static LLVMContext globalContext;
+static LLVMContext *globalContext=NULL;
 
 /* The LLVM API interface functions are not at the moment not thread safe,
    ensure only one thread is using this layer at the time with a mutex. */
@@ -162,6 +164,10 @@ int pocl_llvm_build_program(cl_program program,
 
 { 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
+
+  /* TODO: This should be in a initialization function somewhere. */
+  if (globalContext==NULL)
+		globalContext = new LLVMContext();
 
   // Use CompilerInvocation::CreateFromArgs to initialize
   // CompilerInvocation. This way we can reuse the Clang's
@@ -334,7 +340,7 @@ int pocl_llvm_build_program(cl_program program,
 
   bool success = true;
   clang::CodeGenAction *action = NULL;
-  action = new clang::EmitLLVMOnlyAction(&globalContext);
+  action = new clang::EmitLLVMOnlyAction(globalContext);
   success |= CI.ExecuteAction(*action);
   // FIXME: memleak, see FIXME below
   if (!success) return CL_BUILD_PROGRAM_FAILURE;
@@ -374,6 +380,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   assert(program->devices[device_i]->llvm_target_triplet && 
          "Device has no target triple set"); 
 
+  /* TODO: This should be in a initialization function somewhere. */
+  if (globalContext==NULL)
+		globalContext = new LLVMContext();
+
   LLVMContext *context = NULL;
 
   if (program->llvm_irs != NULL &&
@@ -383,7 +393,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #ifdef DEBUG_POCL_LLVM_API
       printf("### use a saved llvm::Module\n");
 #endif
-      context = &globalContext; // &input->getContext();
+      context = globalContext;
     }
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
@@ -411,7 +421,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
         return CL_OUT_OF_HOST_MEMORY;
       fclose(binary_file); 
 
-      context = &globalContext;
+      context = globalContext;
       input = ParseIRFile(binary_filename, Err, *context);
       if (!input) 
         {
@@ -991,7 +1001,7 @@ kernel_library
     }
 
   SMDiagnostic Err;
-  llvm::Module *lib = ParseIRFile(kernellib, Err, globalContext);
+  llvm::Module *lib = ParseIRFile(kernellib, Err, *globalContext);
   assert (lib != NULL);
   libs[device] = lib;
 
@@ -1018,7 +1028,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   Triple triple(device->llvm_target_triplet);
 
 
-  LLVMContext *Context = &globalContext;
+  LLVMContext *Context = globalContext;
   SMDiagnostic Err;
   std::string errmsg;
 
@@ -1042,7 +1052,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   assert (libmodule != NULL);
 #ifdef LLVM_3_2
   Linker TheLinker("pocl", input, Linker::PreserveSource);
-  TheLinker.LinkInModule(libmodule, &errmsg);
+  Linker::LinkModules(input, libmodule, Linker::PreserveSource, &errmsg);
 #else
   Linker TheLinker(input);
   TheLinker.linkInModule(libmodule, Linker::PreserveSource, &errmsg);
