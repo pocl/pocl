@@ -630,6 +630,11 @@ AC_DEFUN([LLVM_PROG_WARN], [
 
 LLVM_PROG([CLANG], [clang], [Program to compile kernels to bytecode])
 
+if `$CLANG --version|grep -q SPIR`; 
+then 
+AC_DEFINE([CLANG_SPIR], [], "Using a SPIR generator Clang from Khronos.")
+fi
+
 # Check for a functioning clang++. It is needed to compile faster math 
 # builtins from vecmathlib.
 LLVM_PROG_WARN([CLANGXX], [clang++])
