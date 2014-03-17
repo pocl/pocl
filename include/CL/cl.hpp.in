@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2012 The Khronos Group Inc.
+ * Copyright (c) 2008-2013 The Khronos Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and/or associated documentation files (the
@@ -30,9 +30,11 @@
  *   Additions and fixes from:
  *       Brian Cole, March 3rd 2010 and April 2012 
  *       Matt Gruenke, April 2012.
+ *       Bruce Merry, February 2013.
+ *       Tom Deakin and Simon McIntosh-Smith, July 2013
  *   
- *   \version 1.2.4
- *   \date January 2013
+ *   \version 1.2.6
+ *   \date August 2013
  *
  *   Optional extension support
  *
@@ -58,8 +60,8 @@
  *
  * For detail documentation on the bindings see:
  *
- * The OpenCL C++ Wrapper API 1.1 (revision 04)
- *  http://www.khronos.org/registry/cl/specs/opencl-cplusplus-1.1.pdf
+ * The OpenCL C++ Wrapper API 1.2 (revision 09)
+ *  http://www.khronos.org/registry/cl/specs/opencl-cplusplus-1.2.pdf
  *
  * \section example Example
  *
@@ -256,6 +258,7 @@ class Device;
 class Context;
 class CommandQueue;
 class Memory;
+class Buffer;
 
 #if defined(__CL_ENABLE_EXCEPTIONS)
 /*! \brief Exception class 
@@ -1077,145 +1080,154 @@ public:
 
 namespace detail {
 
-// GetInfo help struct
-template <typename Functor, typename T>
-struct GetInfoHelper
+// Generic getInfoHelper. The final parameter is used to guide overload
+// resolution: the actual parameter passed is an int, which makes this
+// a worse conversion sequence than a specialization that declares the
+// parameter as an int.
+template<typename Functor, typename T>
+inline cl_int getInfoHelper(Functor f, cl_uint name, T* param, long)
 {
-    static cl_int
-    get(Functor f, cl_uint name, T* param)
-    {
-        return f(name, sizeof(T), param, NULL);
-    }
-};
+    return f(name, sizeof(T), param, NULL);
+}
 
-// Specialized GetInfoHelper for VECTOR_CLASS params
+// Specialized getInfoHelper for VECTOR_CLASS params
 template <typename Func, typename T>
-struct GetInfoHelper<Func, VECTOR_CLASS<T> >
+inline cl_int getInfoHelper(Func f, cl_uint name, VECTOR_CLASS<T>* param, long)
 {
-    static cl_int get(Func f, cl_uint name, VECTOR_CLASS<T>* param)
-    {
-        ::size_t required;
-        cl_int err = f(name, 0, NULL, &required);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        T* value = (T*) alloca(required);
-        err = f(name, required, value, NULL);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        param->assign(&value[0], &value[required/sizeof(T)]);
-        return CL_SUCCESS;
+    ::size_t required;
+    cl_int err = f(name, 0, NULL, &required);
+    if (err != CL_SUCCESS) {
+        return err;
     }
-};
 
-template <typename Func>
-struct GetInfoHelper<Func, VECTOR_CLASS<cl::Device> >
+    T* value = (T*) alloca(required);
+    err = f(name, required, value, NULL);
+    if (err != CL_SUCCESS) {
+        return err;
+    }
+
+    param->assign(&value[0], &value[required/sizeof(T)]);
+    return CL_SUCCESS;
+}
+
+/* Specialization for reference-counted types. This depends on the
+ * existence of Wrapper<T>::cl_type, and none of the other types having the
+ * cl_type member. Note that simplify specifying the parameter as Wrapper<T>
+ * does not work, because when using a derived type (e.g. Context) the generic
+ * template will provide a better match.
+ */
+template <typename Func, typename T>
+inline cl_int getInfoHelper(Func f, cl_uint name, VECTOR_CLASS<T>* param, int, typename T::cl_type = 0)
 {
-    static cl_int get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param)
-    {
-        ::size_t required;
-        cl_int err = f(name, 0, NULL, &required);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        cl_device_id* value = (cl_device_id*) alloca(required);
-        err = f(name, required, value, NULL);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
-        return CL_SUCCESS;
+    ::size_t required;
+    cl_int err = f(name, 0, NULL, &required);
+    if (err != CL_SUCCESS) {
+        return err;
     }
-};
+
+    typename T::cl_type * value = (typename T::cl_type *) alloca(required);
+    err = f(name, required, value, NULL);
+    if (err != CL_SUCCESS) {
+        return err;
+    }
+
+    ::size_t elements = required / sizeof(typename T::cl_type);
+    param->assign(&value[0], &value[elements]);
+    for (::size_t i = 0; i < elements; i++)
+    {
+        if (value[i] != NULL)
+        {
+            err = (*param)[i].retain();
+            if (err != CL_SUCCESS) {
+                return err;
+            }
+        }
+    }
+    return CL_SUCCESS;
+}
 
 // Specialized for getInfo<CL_PROGRAM_BINARIES>
 template <typename Func>
-struct GetInfoHelper<Func, VECTOR_CLASS<char *> >
+inline cl_int getInfoHelper(Func f, cl_uint name, VECTOR_CLASS<char *>* param, int)
 {
-    static cl_int
-    get(Func f, cl_uint name, VECTOR_CLASS<char *>* param)
-    {
-      cl_uint err = f(name, param->size() * sizeof(char *), &(*param)[0], NULL);
+    cl_int err = f(name, param->size() * sizeof(char *), &(*param)[0], NULL);
 
-      if (err != CL_SUCCESS) {
+    if (err != CL_SUCCESS) {
         return err;
-      }
-
-      return CL_SUCCESS;
     }
-};
+
+    return CL_SUCCESS;
+}
 
 // Specialized GetInfoHelper for STRING_CLASS params
 template <typename Func>
-struct GetInfoHelper<Func, STRING_CLASS>
+inline cl_int getInfoHelper(Func f, cl_uint name, STRING_CLASS* param, long)
 {
-    static cl_int get(Func f, cl_uint name, STRING_CLASS* param)
-    {
-        ::size_t required;
-        cl_int err = f(name, 0, NULL, &required);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        char* value = (char*) alloca(required);
-        err = f(name, required, value, NULL);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        *param = value;
-        return CL_SUCCESS;
+    ::size_t required;
+    cl_int err = f(name, 0, NULL, &required);
+    if (err != CL_SUCCESS) {
+        return err;
     }
-};
+
+    char* value = (char*) alloca(required);
+    err = f(name, required, value, NULL);
+    if (err != CL_SUCCESS) {
+        return err;
+    }
+
+    *param = value;
+    return CL_SUCCESS;
+}
 
 // Specialized GetInfoHelper for cl::size_t params
 template <typename Func, ::size_t N>
-struct GetInfoHelper<Func, size_t<N> >
+inline cl_int getInfoHelper(Func f, cl_uint name, size_t<N>* param, long)
 {
-    static cl_int get(Func f, cl_uint name, size_t<N>* param)
-    {
-        ::size_t required;
-        cl_int err = f(name, 0, NULL, &required);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        ::size_t* value = (::size_t*) alloca(required);
-        err = f(name, required, value, NULL);
-        if (err != CL_SUCCESS) {
-            return err;
-        }
-
-        for(int i = 0; i < N; ++i) {
-            (*param)[i] = value[i];
-        }
- 
-        return CL_SUCCESS;
+    ::size_t required;
+    cl_int err = f(name, 0, NULL, &required);
+    if (err != CL_SUCCESS) {
+        return err;
     }
-};
 
-#define __GET_INFO_HELPER_WITH_RETAIN(CPP_TYPE) \
-namespace detail { \
-template <typename Func> \
-struct GetInfoHelper<Func, CPP_TYPE> \
-{ \
-    static cl_int get(Func f, cl_uint name, CPP_TYPE* param) \
-    { \
-      cl_uint err = f(name, sizeof(CPP_TYPE), param, NULL); \
-      if (err != CL_SUCCESS) { \
-        return err; \
-      } \
-      \
-      return ReferenceHandler<CPP_TYPE::cl_type>::retain((*param)()); \
-    } \
-}; \
-} 
+    ::size_t* value = (::size_t*) alloca(required);
+    err = f(name, required, value, NULL);
+    if (err != CL_SUCCESS) {
+        return err;
+    }
 
+    for(int i = 0; i < N; ++i) {
+        (*param)[i] = value[i];
+    }
+
+    return CL_SUCCESS;
+}
+
+template<typename T> struct ReferenceHandler;
+
+/* Specialization for reference-counted types. This depends on the
+ * existence of Wrapper<T>::cl_type, and none of the other types having the
+ * cl_type member. Note that simplify specifying the parameter as Wrapper<T>
+ * does not work, because when using a derived type (e.g. Context) the generic
+ * template will provide a better match.
+ */
+template<typename Func, typename T>
+inline cl_int getInfoHelper(Func f, cl_uint name, T* param, int, typename T::cl_type = 0)
+{
+    typename T::cl_type value;
+    cl_int err = f(name, sizeof(value), &value, NULL);
+    if (err != CL_SUCCESS) {
+        return err;
+    }
+    *param = value;
+    if (value != NULL)
+    {
+        err = param->retain();
+        if (err != CL_SUCCESS) {
+            return err;
+        }
+    }
+    return CL_SUCCESS;
+}
 
 #define __PARAM_NAME_INFO_1_0(F) \
     F(cl_platform_info, CL_PLATFORM_PROFILE, STRING_CLASS) \
@@ -1366,6 +1378,8 @@ struct GetInfoHelper<Func, CPP_TYPE> \
     
 #if defined(CL_VERSION_1_2)
 #define __PARAM_NAME_INFO_1_2(F) \
+    F(cl_image_info, CL_IMAGE_BUFFER, cl::Buffer) \
+    \
     F(cl_program_info, CL_PROGRAM_NUM_KERNELS, ::size_t) \
     F(cl_program_info, CL_PROGRAM_KERNEL_NAMES, STRING_CLASS) \
     \
@@ -1487,7 +1501,7 @@ template <typename Func, typename T>
 inline cl_int
 getInfo(Func f, cl_uint name, T* param)
 {
-    return GetInfoHelper<Func, T>::get(f, name, param);
+    return getInfoHelper(f, name, param, 0);
 }
 
 template <typename Func, typename Arg0>
@@ -1513,8 +1527,7 @@ inline cl_int
 getInfo(Func f, const Arg0& arg0, cl_uint name, T* param)
 {
     GetInfoFunctor0<Func, Arg0> f0 = { f, arg0 };
-    return GetInfoHelper<GetInfoFunctor0<Func, Arg0>, T>
-        ::get(f0, name, param);
+    return getInfoHelper(f0, name, param, 0);
 }
 
 template <typename Func, typename Arg0, typename Arg1, typename T>
@@ -1522,8 +1535,7 @@ inline cl_int
 getInfo(Func f, const Arg0& arg0, const Arg1& arg1, cl_uint name, T* param)
 {
     GetInfoFunctor1<Func, Arg0, Arg1> f0 = { f, arg0, arg1 };
-    return GetInfoHelper<GetInfoFunctor1<Func, Arg0, Arg1>, T>
-        ::get(f0, name, param);
+    return getInfoHelper(f0, name, param, 0);
 }
 
 template<typename T>
@@ -1650,6 +1662,58 @@ struct ReferenceHandler<cl_event>
     { return ::clReleaseEvent(event); }
 };
 
+
+// Extracts version number with major in the upper 16 bits, minor in the lower 16
+static cl_uint getVersion(const char *versionInfo)
+{
+    int highVersion = 0;
+    int lowVersion = 0;
+    int index = 7;
+    while(versionInfo[index] != '.' ) {
+        highVersion *= 10;
+        highVersion += versionInfo[index]-'0';
+        ++index;
+    }
+    ++index;
+    while(versionInfo[index] != ' ' ) {
+        lowVersion *= 10;
+        lowVersion += versionInfo[index]-'0';
+        ++index;
+    }
+    return (highVersion << 16) | lowVersion;
+}
+
+static cl_uint getPlatformVersion(cl_platform_id platform)
+{
+    ::size_t size = 0;
+    clGetPlatformInfo(platform, CL_PLATFORM_VERSION, 0, NULL, &size);
+    char *versionInfo = (char *) alloca(size);
+    clGetPlatformInfo(platform, CL_PLATFORM_VERSION, size, &versionInfo[0], &size);
+    return getVersion(versionInfo);
+}
+
+static cl_uint getDevicePlatformVersion(cl_device_id device)
+{
+    cl_platform_id platform;
+    clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, NULL);
+    return getPlatformVersion(platform);
+}
+
+#if defined(CL_VERSION_1_2) && defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
+static cl_uint getContextPlatformVersion(cl_context context)
+{
+    // The platform cannot be queried directly, so we first have to grab a
+    // device and obtain its context
+    ::size_t size = 0;
+    clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &size);
+    if (size == 0)
+        return 0;
+    cl_device_id *devices = (cl_device_id *) alloca(size);
+    clGetContextInfo(context, CL_CONTEXT_DEVICES, size, devices, NULL);
+    return getDevicePlatformVersion(devices[0]);
+}
+#endif // #if defined(CL_VERSION_1_2) && defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
+
 template <typename T>
 class Wrapper
 {
@@ -1695,6 +1759,8 @@ public:
     cl_type& operator ()() { return object_; }
 
 protected:
+    template<typename Func, typename U>
+    friend inline cl_int getInfoHelper(Func, cl_uint, U*, int, typename U::cl_type);
 
     cl_int retain() const
     {
@@ -1717,37 +1783,14 @@ protected:
     cl_type object_;
     bool referenceCountable_;
 
-    static int getVersion(cl_device_id device)
-    {
-        ::size_t size = 0;
-        clGetDeviceInfo(device, CL_DEVICE_VERSION, 0, 0, &size);
-        STRING_CLASS versionInfo;
-        versionInfo.resize(size + 1);
-        clGetDeviceInfo(device, CL_DEVICE_VERSION, size, &versionInfo[0],
-&size);
-        int highVersion = 0;
-        int lowVersion = 0;
-        int index = 7;
-        while(versionInfo[index] != '.' ) {
-            highVersion *= 10;
-            highVersion += versionInfo[index]-'0';
-            ++index;
-        }
-        ++index;
-        while(versionInfo[index] != ' ' ) {
-            lowVersion *= 10;
-            lowVersion += versionInfo[index]-'0';
-            ++index;
-        }
-        return (highVersion << 16) | lowVersion;
-    }
-
     static bool isReferenceCountable(cl_device_id device)
     {
         bool retVal = false;
-        int version = getVersion(device);
-        if(version > ((1 << 16) + 1)) {
-            retVal = true;
+        if (device != NULL) {
+            int version = getDevicePlatformVersion(device);
+            if(version > ((1 << 16) + 1)) {
+                retVal = true;
+            }
         }
         return retVal;
     }
@@ -1796,6 +1839,11 @@ public:
     cl_type& operator ()() { return object_; }
 
 protected:
+    template<typename Func, typename U>
+    friend inline cl_int getInfoHelper(Func, cl_uint, U*, int, typename U::cl_type);
+
+    template<typename Func, typename U>
+    friend inline cl_int getInfoHelper(Func, cl_uint, VECTOR_CLASS<U>*, int, typename U::cl_type);
 
     cl_int retain() const
     {
@@ -2369,7 +2417,7 @@ public:
         }
     }
 
-    /*! \brief Constructs a context including all devices of a specified type.
+    /*! \brief Constructs a context including all or a subset of devices of a specified type.
      *
      *  Wraps clCreateContextFromType().
      */
@@ -2387,17 +2435,61 @@ public:
         cl_int error;
 
 #if !defined(__APPLE__) || !defined(__MACOS)
-        cl_context_properties prop[4] = {CL_CONTEXT_PLATFORM, 0, 0, 0 };	
+        cl_context_properties prop[4] = {CL_CONTEXT_PLATFORM, 0, 0, 0 };
+
         if (properties == NULL) {
-            prop[1] = (cl_context_properties)Platform::get(&error)();
+            // Get a valid platform ID as we cannot send in a blank one
+            VECTOR_CLASS<Platform> platforms;
+            error = Platform::get(&platforms);
             if (error != CL_SUCCESS) {
                 detail::errHandler(error, __CREATE_CONTEXT_FROM_TYPE_ERR);
                 if (err != NULL) {
                     *err = error;
-                    return;
+                }
+                return;
+            }
+
+            // Check the platforms we found for a device of our specified type
+            cl_context_properties platform_id = 0;
+            for (unsigned int i = 0; i < platforms.size(); i++) {
+
+                VECTOR_CLASS<Device> devices;
+
+#if defined(__CL_ENABLE_EXCEPTIONS)
+                try {
+#endif
+
+                    error = platforms[i].getDevices(type, &devices);
+
+#if defined(__CL_ENABLE_EXCEPTIONS)
+                } catch (Error) {}
+    // Catch if exceptions are enabled as we don't want to exit if first platform has no devices of type
+    // We do error checking next anyway, and can throw there if needed
+#endif
+
+                // Only squash CL_SUCCESS and CL_DEVICE_NOT_FOUND
+                if (error != CL_SUCCESS && error != CL_DEVICE_NOT_FOUND) {
+                    detail::errHandler(error, __CREATE_CONTEXT_FROM_TYPE_ERR);
+                    if (err != NULL) {
+                        *err = error;
+                    }
+                }
+
+                if (devices.size() > 0) {
+                    platform_id = (cl_context_properties)platforms[i]();
+                    break;
                 }
             }
 
+            if (platform_id == 0) {
+                detail::errHandler(CL_DEVICE_NOT_FOUND, __CREATE_CONTEXT_FROM_TYPE_ERR);
+                if (err != NULL) {
+                    *err = CL_DEVICE_NOT_FOUND;
+                }
+                return;
+            }
+
+            prop[1] = platform_id;
             properties = &prop[0];
         }
 #endif
@@ -2598,8 +2690,6 @@ __attribute__((weak)) Context Context::default_;
 __attribute__((weak)) volatile cl_int Context::default_error_ = CL_SUCCESS;
 #endif
 
-__GET_INFO_HELPER_WITH_RETAIN(cl::Context)
-
 /*! \brief Class interface for cl_event.
  *
  *  \note Copies of these objects are shallow, meaning that the copy will refer
@@ -2747,8 +2837,6 @@ public:
             __WAIT_FOR_EVENTS_ERR);
     }
 };
-
-__GET_INFO_HELPER_WITH_RETAIN(cl::Event)
 
 #if defined(CL_VERSION_1_1)
 /*! \brief Class interface for user events (a subset of cl_event's).
@@ -2906,7 +2994,7 @@ public:
      *  Wraps clSetMemObjectDestructorCallback().
      *
      *  Repeated calls to this function, for a given cl_mem value, will append
-     *  to the list of functions called (in reverse order) when memory object’s
+     *  to the list of functions called (in reverse order) when memory object's
      *  resources are freed and the memory object is deleted.
      *
      *  \note
@@ -2928,14 +3016,17 @@ public:
 
 };
 
-__GET_INFO_HELPER_WITH_RETAIN(cl::Memory)
-
 // Pre-declare copy functions
 class Buffer;
 template< typename IteratorType >
 cl_int copy( IteratorType startIterator, IteratorType endIterator, cl::Buffer &buffer );
 template< typename IteratorType >
-cl_int copy( cl::Buffer &buffer, IteratorType startIterator, IteratorType endIterator );
+cl_int copy( const cl::Buffer &buffer, IteratorType startIterator, IteratorType endIterator );
+template< typename IteratorType >
+cl_int copy( const CommandQueue &queue, IteratorType startIterator, IteratorType endIterator, cl::Buffer &buffer );
+template< typename IteratorType >
+cl_int copy( const CommandQueue &queue, const cl::Buffer &buffer, IteratorType startIterator, IteratorType endIterator );
+
 
 /*! \brief Class interface for Buffer Memory Objects.
  * 
@@ -2999,7 +3090,8 @@ public:
 
     /*!
      * \brief Construct a Buffer from a host container via iterators.
-     * If useHostPtr is specified iterators must be random access.
+     * IteratorType must be random access.
+     * If useHostPtr is specified iterators must represent contiguous data.
      */
     template< typename IteratorType >
     Buffer(
@@ -3046,6 +3138,15 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Construct a Buffer from a host container via iterators using a specified context.
+     * IteratorType must be random access.
+     * If useHostPtr is specified iterators must represent contiguous data.
+     */
+    template< typename IteratorType >
+    Buffer(const Context &context, IteratorType startIterator, IteratorType endIterator,
+        bool readOnly, bool useHostPtr = false, cl_int* err = NULL);
 
     //! \brief Default constructor - initializes to NULL.
     Buffer() : Memory() { }
@@ -3469,13 +3570,12 @@ public:
         cl_int* err = NULL)
     {
         cl_int error;
-        cl_image_desc desc;
-        desc.image_type = CL_MEM_OBJECT_IMAGE1D;
-        desc.image_width = width;
-        desc.image_row_pitch = 0;
-        desc.num_mip_levels = 0;
-        desc.num_samples = 0;
-        desc.buffer = 0;
+        cl_image_desc desc =
+        {
+            CL_MEM_OBJECT_IMAGE1D,
+            width,
+            0, 0, 0, 0, 0, 0, 0, 0
+        };
         object_ = ::clCreateImage(
             context(), 
             flags, 
@@ -3539,24 +3639,23 @@ public:
         cl_mem_flags flags,
         ImageFormat format,
         ::size_t width,
-        Buffer &buffer,
-        void* host_ptr = NULL,
+        const Buffer &buffer,
         cl_int* err = NULL)
     {
         cl_int error;
-        cl_image_desc desc;
-        desc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-        desc.image_width = width;
-        desc.image_row_pitch = 0;
-        desc.num_mip_levels = 0;
-        desc.num_samples = 0;
-        desc.buffer = buffer();
+        cl_image_desc desc =
+        {
+            CL_MEM_OBJECT_IMAGE1D_BUFFER,
+            width,
+            0, 0, 0, 0, 0, 0, 0,
+            buffer()
+        };
         object_ = ::clCreateImage(
             context(), 
             flags, 
             &format, 
             &desc, 
-            host_ptr, 
+            NULL, 
             &error);
 
         detail::errHandler(error, __CREATE_IMAGE_ERR);
@@ -3603,14 +3702,15 @@ public:
         cl_int* err = NULL)
     {
         cl_int error;
-        cl_image_desc desc;
-        desc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
-        desc.image_array_size = arraySize;
-        desc.image_width = width;
-        desc.image_row_pitch = rowPitch;
-        desc.num_mip_levels = 0;
-        desc.num_samples = 0;
-        desc.buffer = 0;
+        cl_image_desc desc =
+        {
+            CL_MEM_OBJECT_IMAGE1D_ARRAY,
+            width,
+            0, 0,  // height, depth (unused)
+            arraySize,
+            rowPitch,
+            0, 0, 0, 0
+        };
         object_ = ::clCreateImage(
             context(), 
             flags, 
@@ -3672,36 +3772,58 @@ public:
         cl_int* err = NULL)
     {
         cl_int error;
-#if defined(CL_VERSION_1_2)
-        cl_image_desc desc;
-        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-        desc.image_width = width;
-        desc.image_height = height;
-        desc.image_row_pitch = row_pitch;
-        desc.num_mip_levels = 0;
-        desc.num_samples = 0;
-        desc.buffer = 0;
-        object_ = ::clCreateImage(
-            context(), 
-            flags, 
-            &format, 
-            &desc, 
-            host_ptr, 
-            &error);
+        bool useCreateImage;
 
-        detail::errHandler(error, __CREATE_IMAGE_ERR);
-        if (err != NULL) {
-            *err = error;
+#if defined(CL_VERSION_1_2) && defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
+        // Run-time decision based on the actual platform
+        {
+            cl_uint version = detail::getContextPlatformVersion(context());
+            useCreateImage = (version >= 0x10002); // OpenCL 1.2 or above
         }
+#elif defined(CL_VERSION_1_2)
+        useCreateImage = true;
 #else
-        object_ = ::clCreateImage2D(
-            context(), flags,&format, width, height, row_pitch, host_ptr, &error);
+        useCreateImage = false;
+#endif
 
-        detail::errHandler(error, __CREATE_IMAGE2D_ERR);
-        if (err != NULL) {
-            *err = error;
+#if defined(CL_VERSION_1_2)
+        if (useCreateImage)
+        {
+            cl_image_desc desc =
+            {
+                CL_MEM_OBJECT_IMAGE2D,
+                width,
+                height,
+                0, 0, // depth, array size (unused)
+                row_pitch,
+                0, 0, 0, 0
+            };
+            object_ = ::clCreateImage(
+                context(),
+                flags,
+                &format,
+                &desc,
+                host_ptr,
+                &error);
+
+            detail::errHandler(error, __CREATE_IMAGE_ERR);
+            if (err != NULL) {
+                *err = error;
+            }
         }
 #endif // #if defined(CL_VERSION_1_2)
+#if !defined(CL_VERSION_1_2) || defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
+        if (!useCreateImage)
+        {
+            object_ = ::clCreateImage2D(
+                context(), flags,&format, width, height, row_pitch, host_ptr, &error);
+
+            detail::errHandler(error, __CREATE_IMAGE2D_ERR);
+            if (err != NULL) {
+                *err = error;
+            }
+        }
+#endif // #if !defined(CL_VERSION_1_2) || defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
     }
 
     //! \brief Default constructor - initializes to NULL.
@@ -3844,16 +3966,17 @@ public:
         cl_int* err = NULL)
     {
         cl_int error;
-        cl_image_desc desc;
-        desc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
-        desc.image_array_size = arraySize;
-        desc.image_width = width;
-        desc.image_height = height;
-        desc.image_row_pitch = rowPitch;
-        desc.image_slice_pitch = slicePitch;
-        desc.num_mip_levels = 0;
-        desc.num_samples = 0;
-        desc.buffer = 0;
+        cl_image_desc desc =
+        {
+            CL_MEM_OBJECT_IMAGE2D_ARRAY,
+            width,
+            height,
+            0,       // depth (unused)
+            arraySize,
+            rowPitch,
+            slicePitch,
+            0, 0, 0
+        };
         object_ = ::clCreateImage(
             context(), 
             flags, 
@@ -3916,39 +4039,61 @@ public:
         cl_int* err = NULL)
     {
         cl_int error;
+        bool useCreateImage;
+
+#if defined(CL_VERSION_1_2) && defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
+        // Run-time decision based on the actual platform
+        {
+            cl_uint version = detail::getContextPlatformVersion(context());
+            useCreateImage = (version >= 0x10002); // OpenCL 1.2 or above
+        }
+#elif defined(CL_VERSION_1_2)
+        useCreateImage = true;
+#else
+        useCreateImage = false;
+#endif
+
 #if defined(CL_VERSION_1_2)
-        cl_image_desc desc;
-        desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-        desc.image_width = width;
-        desc.image_height = height;
-        desc.image_depth = depth;
-        desc.image_row_pitch = row_pitch;
-        desc.image_slice_pitch = slice_pitch;
-        desc.num_mip_levels = 0;
-        desc.num_samples = 0;
-        desc.buffer = 0;
-        object_ = ::clCreateImage(
-            context(), 
-            flags, 
-            &format, 
-            &desc, 
-            host_ptr, 
-            &error);
+        if (useCreateImage)
+        {
+            cl_image_desc desc =
+            {
+                CL_MEM_OBJECT_IMAGE3D,
+                width,
+                height,
+                depth,
+                0,      // array size (unused)
+                row_pitch,
+                slice_pitch,
+                0, 0, 0
+            };
+            object_ = ::clCreateImage(
+                context(), 
+                flags, 
+                &format, 
+                &desc, 
+                host_ptr, 
+                &error);
 
-        detail::errHandler(error, __CREATE_IMAGE_ERR);
-        if (err != NULL) {
-            *err = error;
+            detail::errHandler(error, __CREATE_IMAGE_ERR);
+            if (err != NULL) {
+                *err = error;
+            }
         }
-#else  // #if defined(CL_VERSION_1_2)
-        object_ = ::clCreateImage3D(
-            context(), flags, &format, width, height, depth, row_pitch,
-            slice_pitch, host_ptr, &error);
+#endif  // #if defined(CL_VERSION_1_2)
+#if !defined(CL_VERSION_1_2) || defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
+        if (!useCreateImage)
+        {
+            object_ = ::clCreateImage3D(
+                context(), flags, &format, width, height, depth, row_pitch,
+                slice_pitch, host_ptr, &error);
 
-        detail::errHandler(error, __CREATE_IMAGE3D_ERR);
-        if (err != NULL) {
-            *err = error;
+            detail::errHandler(error, __CREATE_IMAGE3D_ERR);
+            if (err != NULL) {
+                *err = error;
+            }
         }
-#endif // #if defined(CL_VERSION_1_2)
+#endif // #if !defined(CL_VERSION_1_2) || defined(CL_USE_DEPRECATED_OPENCL_1_1_APIS)
     }
 
     //! \brief Default constructor - initializes to NULL.
@@ -4229,8 +4374,6 @@ public:
     }
 };
 
-__GET_INFO_HELPER_WITH_RETAIN(cl::Sampler)
-
 class Program;
 class CommandQueue;
 class Kernel;
@@ -4483,8 +4626,6 @@ public:
     }
 };
 
-__GET_INFO_HELPER_WITH_RETAIN(cl::Kernel)
-
 /*! \class Program
  * \brief Program interface that implements cl_program.
  */
@@ -4496,41 +4637,7 @@ public:
 
     Program(
         const STRING_CLASS& source,
-        cl_int* err = NULL)
-    {
-        cl_int error;
-
-        const char * strings = source.c_str();
-        const ::size_t length  = source.size();
-
-        Context context = Context::getDefault(err);
-
-        object_ = ::clCreateProgramWithSource(
-            context(), (cl_uint)1, &strings, &length, &error);
-
-        detail::errHandler(error, __CREATE_PROGRAM_WITH_SOURCE_ERR);
-
-        if (error == CL_SUCCESS) {
-
-            error = ::clBuildProgram(
-                object_,
-                0,
-                NULL,
-                "",
-                NULL,
-                NULL);
-
-            detail::errHandler(error, __BUILD_PROGRAM_ERR);
-        }
-
-        if (err != NULL) {
-            *err = error;
-        }
-    }
-
-    Program(
-        const STRING_CLASS& source,
-		bool build,
+		bool build = false,
         cl_int* err = NULL)
     {
         cl_int error;
@@ -4622,6 +4729,25 @@ public:
         }
     }
 
+    /**
+     * Construct a program object from a list of devices and a per-device list of binaries.
+     * \param context A valid OpenCL context in which to construct the program.
+     * \param devices A vector of OpenCL device objects for which the program will be created.
+     * \param binaries A vector of pairs of a pointer to a binary object and its length.
+     * \param binaryStatus An optional vector that on completion will be resized to
+     *   match the size of binaries and filled with values to specify if each binary
+     *   was successfully loaded.
+     *   Set to CL_SUCCESS if the binary was successfully loaded.
+     *   Set to CL_INVALID_VALUE if the length is 0 or the binary pointer is NULL.
+     *   Set to CL_INVALID_BINARY if the binary provided is not valid for the matching device.
+     * \param err if non-NULL will be set to CL_SUCCESS on successful operation or one of the following errors:
+     *   CL_INVALID_CONTEXT if context is not a valid context.
+     *   CL_INVALID_VALUE if the length of devices is zero; or if the length of binaries does not match the length of devices; 
+     *     or if any entry in binaries is NULL or has length 0.
+     *   CL_INVALID_DEVICE if OpenCL devices listed in devices are not in the list of devices associated with context.
+     *   CL_INVALID_BINARY if an invalid program binary was encountered for any device. binaryStatus will return specific status for each device.
+     *   CL_OUT_OF_HOST_MEMORY if there is a failure to allocate resources required by the OpenCL implementation on the host.
+     */
     Program(
         const Context& context,
         const VECTOR_CLASS<Device>& devices,
@@ -4630,26 +4756,41 @@ public:
         cl_int* err = NULL)
     {
         cl_int error;
-        const ::size_t n = binaries.size();
-        ::size_t* lengths = (::size_t*) alloca(n * sizeof(::size_t));
-        const unsigned char** images = (const unsigned char**) alloca(n * sizeof(const void*));
+        
+        const ::size_t numDevices = devices.size();
+        
+        // Catch size mismatch early and return
+        if(binaries.size() != numDevices) {
+            error = CL_INVALID_VALUE;
+            detail::errHandler(error, __CREATE_PROGRAM_WITH_BINARY_ERR);
+            if (err != NULL) {
+                *err = error;
+            }
+            return;
+        }
 
-        for (::size_t i = 0; i < n; ++i) {
-            images[i] = (const unsigned char*)binaries[(int)i].first;
+        ::size_t* lengths = (::size_t*) alloca(numDevices * sizeof(::size_t));
+        const unsigned char** images = (const unsigned char**) alloca(numDevices * sizeof(const unsigned char**));
+
+        for (::size_t i = 0; i < numDevices; ++i) {
+            images[i] = (const unsigned char*)binaries[i].first;
             lengths[i] = binaries[(int)i].second;
         }
 
-        ::size_t numDevices = devices.size();
         cl_device_id* deviceIDs = (cl_device_id*) alloca(numDevices * sizeof(cl_device_id));
         for( ::size_t deviceIndex = 0; deviceIndex < numDevices; ++deviceIndex ) {
             deviceIDs[deviceIndex] = (devices[deviceIndex])();
         }
 
+        if(binaryStatus) {
+            binaryStatus->resize(numDevices);
+        }
+        
         object_ = ::clCreateProgramWithBinary(
             context(), (cl_uint) devices.size(),
             deviceIDs,
             lengths, images, binaryStatus != NULL
-               ? (cl_int*) &binaryStatus->front()
+               ? &binaryStatus->front()
                : NULL, &error);
 
         detail::errHandler(error, __CREATE_PROGRAM_WITH_BINARY_ERR);
@@ -4847,7 +4988,7 @@ inline Program linkProgram(
     void* data = NULL,
     cl_int* err = NULL) 
 {
-    cl_int err_local;
+    cl_int err_local = CL_SUCCESS;
 
     cl_program programs[2] = { input1(), input2() };
 
@@ -4864,11 +5005,9 @@ inline Program linkProgram(
         data,
         &err_local);
 
-    if (err_local != CL_SUCCESS) {
-        err_local = detail::errHandler(err_local,__COMPILE_PROGRAM_ERR);
-        if (err != NULL) {
-            *err = err_local;
-        }
+    detail::errHandler(err_local,__COMPILE_PROGRAM_ERR);
+    if (err != NULL) {
+        *err = err_local;
     }
 
     return Program(prog);
@@ -4881,15 +5020,7 @@ inline Program linkProgram(
     void* data = NULL,
     cl_int* err = NULL) 
 {
-    cl_int err_local;
-
-    if (inputPrograms.size() == 0) {
-        err_local = detail::errHandler(CL_INVALID_VALUE,__COMPILE_PROGRAM_ERR);
-        if (err != NULL) {
-            *err = err_local;
-        }
-        return Program();
-    }
+    cl_int err_local = CL_SUCCESS;
 
     cl_program * programs = (cl_program*) alloca(inputPrograms.size() * sizeof(cl_program));
 
@@ -4898,13 +5029,6 @@ inline Program linkProgram(
           programs[i] = inputPrograms[i]();
         }
     } 
-    else {
-        err_local = detail::errHandler(CL_OUT_OF_HOST_MEMORY,__COMPILE_PROGRAM_ERR);
-        if (err != NULL) {
-            *err = err_local;
-        }
-        return Program();
-    }
 
     cl_program prog = ::clLinkProgram(
         Context::getDefault()(),
@@ -4917,11 +5041,9 @@ inline Program linkProgram(
         data,
         &err_local);
 
-    if (err_local != CL_SUCCESS) {
-        err_local = detail::errHandler(err_local,__COMPILE_PROGRAM_ERR);
-        if (err != NULL) {
-            *err = err_local;
-        }
+    detail::errHandler(err_local,__COMPILE_PROGRAM_ERR);
+    if (err != NULL) {
+        *err = err_local;
     }
 
     return Program(prog);
@@ -4947,8 +5069,6 @@ inline VECTOR_CLASS<char *> cl::Program::getInfo<CL_PROGRAM_BINARIES>(cl_int* er
     }
     return binaries;
 }
-
-__GET_INFO_HELPER_WITH_RETAIN(cl::Program)
 
 inline Kernel::Kernel(const Program& program, const char* name, cl_int* err)
 {
@@ -4998,6 +5118,37 @@ public:
                 *err = error;
             }
         }
+    }
+    /*!
+    * \brief Constructs a CommandQueue for an implementation defined device in the given context
+    */
+    explicit CommandQueue(
+        const Context& context,
+        cl_command_queue_properties properties = 0,
+        cl_int* err = NULL)
+    {
+        cl_int error;
+        VECTOR_CLASS<cl::Device> devices;
+        error = context.getInfo(CL_CONTEXT_DEVICES, &devices);
+
+        detail::errHandler(error, __CREATE_COMMAND_QUEUE_ERR);
+
+        if (error != CL_SUCCESS)
+        {
+            if (err != NULL) {
+                *err = error;
+            }
+            return;
+        }
+
+        object_ = ::clCreateCommandQueue(context(), devices[0](), properties, &error);
+
+        detail::errHandler(error, __CREATE_COMMAND_QUEUE_ERR);
+
+        if (err != NULL) {
+            *err = error;
+        }
+
     }
 
     CommandQueue(
@@ -6002,8 +6153,6 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
     }
 };
 
-__GET_INFO_HELPER_WITH_RETAIN(cl::CommandQueue)
-
 #ifdef _WIN32
 __declspec(selectany) volatile int CommandQueue::default_initialized_ = __DEFAULT_NOT_INITIALIZED;
 __declspec(selectany) CommandQueue CommandQueue::default_;
@@ -6013,6 +6162,57 @@ __attribute__((weak)) volatile int CommandQueue::default_initialized_ = __DEFAUL
 __attribute__((weak)) CommandQueue CommandQueue::default_;
 __attribute__((weak)) volatile cl_int CommandQueue::default_error_ = CL_SUCCESS;
 #endif
+
+template< typename IteratorType >
+Buffer::Buffer(
+    const Context &context,
+    IteratorType startIterator,
+    IteratorType endIterator,
+    bool readOnly,
+    bool useHostPtr,
+    cl_int* err)
+{
+    typedef typename std::iterator_traits<IteratorType>::value_type DataType;
+    cl_int error;
+
+    cl_mem_flags flags = 0;
+    if( readOnly ) {
+        flags |= CL_MEM_READ_ONLY;
+    }
+    else {
+        flags |= CL_MEM_READ_WRITE;
+    }
+    if( useHostPtr ) {
+        flags |= CL_MEM_USE_HOST_PTR;
+    }
+    
+    ::size_t size = sizeof(DataType)*(endIterator - startIterator);
+
+    if( useHostPtr ) {
+        object_ = ::clCreateBuffer(context(), flags, size, static_cast<DataType*>(&*startIterator), &error);
+    } else {
+        object_ = ::clCreateBuffer(context(), flags, size, 0, &error);
+    }
+
+    detail::errHandler(error, __CREATE_BUFFER_ERR);
+    if (err != NULL) {
+        *err = error;
+    }
+
+    if( !useHostPtr ) {
+        CommandQueue queue(context, 0, &error);
+        detail::errHandler(error, __CREATE_BUFFER_ERR);
+        if (err != NULL) {
+            *err = error;
+        }
+
+        error = cl::copy(queue, startIterator, endIterator, *this);
+        detail::errHandler(error, __CREATE_BUFFER_ERR);
+        if (err != NULL) {
+            *err = error;
+        }
+    }
+}
 
 inline cl_int enqueueReadBuffer(
     const Buffer& buffer,
@@ -6132,9 +6332,43 @@ inline cl_int enqueueCopyBuffer(
 
 /**
  * Blocking copy operation between iterators and a buffer.
+ * Host to Device.
+ * Uses default command queue.
  */
 template< typename IteratorType >
 inline cl_int copy( IteratorType startIterator, IteratorType endIterator, cl::Buffer &buffer )
+{
+    cl_int error;
+    CommandQueue queue = CommandQueue::getDefault(&error);
+    if (error != CL_SUCCESS)
+        return error;
+
+    return cl::copy(queue, startIterator, endIterator, buffer);
+}
+
+/**
+ * Blocking copy operation between iterators and a buffer.
+ * Device to Host.
+ * Uses default command queue.
+ */
+template< typename IteratorType >
+inline cl_int copy( const cl::Buffer &buffer, IteratorType startIterator, IteratorType endIterator )
+{
+    cl_int error;
+    CommandQueue queue = CommandQueue::getDefault(&error);
+    if (error != CL_SUCCESS)
+        return error;
+
+    return cl::copy(queue, buffer, startIterator, endIterator);
+}
+
+/**
+ * Blocking copy operation between iterators and a buffer.
+ * Host to Device.
+ * Uses specified queue.
+ */
+template< typename IteratorType >
+inline cl_int copy( const CommandQueue &queue, IteratorType startIterator, IteratorType endIterator, cl::Buffer &buffer )
 {
     typedef typename std::iterator_traits<IteratorType>::value_type DataType;
     cl_int error;
@@ -6143,7 +6377,7 @@ inline cl_int copy( IteratorType startIterator, IteratorType endIterator, cl::Bu
     ::size_t byteLength = length*sizeof(DataType);
 
     DataType *pointer = 
-        static_cast<DataType*>(enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_WRITE, 0, byteLength, 0, 0, &error));
+        static_cast<DataType*>(queue.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_WRITE, 0, byteLength, 0, 0, &error));
     // if exceptions enabled, enqueueMapBuffer will throw
     if( error != CL_SUCCESS ) {
         return error;
@@ -6158,7 +6392,7 @@ inline cl_int copy( IteratorType startIterator, IteratorType endIterator, cl::Bu
     std::copy(startIterator, endIterator, pointer);
 #endif
     Event endEvent;
-    error = enqueueUnmapMemObject(buffer, pointer, 0, &endEvent);
+    error = queue.enqueueUnmapMemObject(buffer, pointer, 0, &endEvent);
     // if exceptions enabled, enqueueUnmapMemObject will throw
     if( error != CL_SUCCESS ) { 
         return error;
@@ -6169,9 +6403,11 @@ inline cl_int copy( IteratorType startIterator, IteratorType endIterator, cl::Bu
 
 /**
  * Blocking copy operation between iterators and a buffer.
+ * Device to Host.
+ * Uses specified queue.
  */
 template< typename IteratorType >
-inline cl_int copy( cl::Buffer &buffer, IteratorType startIterator, IteratorType endIterator )
+inline cl_int copy( const CommandQueue &queue, const cl::Buffer &buffer, IteratorType startIterator, IteratorType endIterator )
 {
     typedef typename std::iterator_traits<IteratorType>::value_type DataType;
     cl_int error;
@@ -6180,14 +6416,14 @@ inline cl_int copy( cl::Buffer &buffer, IteratorType startIterator, IteratorType
     ::size_t byteLength = length*sizeof(DataType);
 
     DataType *pointer = 
-        static_cast<DataType*>(enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, byteLength, 0, 0, &error));
+        static_cast<DataType*>(queue.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, byteLength, 0, 0, &error));
     // if exceptions enabled, enqueueMapBuffer will throw
     if( error != CL_SUCCESS ) {
         return error;
     }
     std::copy(pointer, pointer + length, startIterator);
     Event endEvent;
-    error = enqueueUnmapMemObject(buffer, pointer, 0, &endEvent);
+    error = queue.enqueueUnmapMemObject(buffer, pointer, 0, &endEvent);
     // if exceptions enabled, enqueueUnmapMemObject will throw
     if( error != CL_SUCCESS ) { 
         return error;
@@ -6468,7 +6704,6 @@ inline cl_int finish(void)
     return queue.finish();
 }
 
-
 // Kernel Functor support
 // New interface as of September 2011
 // Requires the C++11 std::tr1::function (note do not support TR1)
@@ -6664,7 +6899,6 @@ struct SetArg
     }
 };  
 
-
 template<int index>
 struct SetArg<index, NullType>
 {
@@ -6672,7 +6906,6 @@ struct SetArg<index, NullType>
     { 
     }
 };
-
 
 template <
    typename T0,   typename T1,   typename T2,   typename T3,
@@ -6772,7 +7005,6 @@ public:
         SetArg<30, T30>::set(kernel_, t30);
         SetArg<31, T31>::set(kernel_, t31);
         
-
         args.queue_.enqueueNDRangeKernel(
             kernel_,
             args.offset_,
@@ -6781,7 +7013,6 @@ public:
             &args.events_,
             &event);
         
-
         return event;
     }
 
@@ -12192,8 +12423,6 @@ public:
 
 #undef __UNLOAD_COMPILER_ERR
 #endif //__CL_USER_OVERRIDE_ERROR_STRINGS
-
-#undef __GET_INFO_HELPER_WITH_RETAIN
 
 #undef __CL_FUNCTION_TYPE
 

@@ -1,6 +1,6 @@
---- include/CL/cl.hpp.in	2013-02-28 15:32:09.000000000 +0200
-+++ include/CL/cl.hpp	2013-02-28 15:32:41.000000000 +0200
-@@ -212,8 +212,6 @@
+--- include/CL/cl.hpp.in	2014-03-17 17:47:57.147223265 +0200
++++ include/CL/cl.hpp	2014-03-17 17:55:52.620234165 +0200
+@@ -214,8 +214,6 @@
  #if defined(linux) || defined(__APPLE__) || defined(__MACOSX)
  #include <alloca.h>
  
@@ -9,65 +9,14 @@
  #endif // linux
  
  #include <cstring>
-@@ -1035,7 +1033,7 @@
+@@ -1038,8 +1036,8 @@
  #endif // !_WIN32
      }
  
 -    inline void fence() { _mm_mfence(); }
+-}; // namespace detail
 +    inline void fence() { __sync_synchronize(); }
- }; // namespace detail
++} // namespace detail
  
      
-@@ -1114,23 +1114,7 @@
- template <typename Func>
- struct GetInfoHelper<Func, VECTOR_CLASS<cl::Device> >
- {
--    static cl_int get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param)
--    {
--        ::size_t required;
--        cl_int err = f(name, 0, NULL, &required);
--        if (err != CL_SUCCESS) {
--            return err;
--        }
--
--        cl_device_id* value = (cl_device_id*) alloca(required);
--        err = f(name, required, value, NULL);
--        if (err != CL_SUCCESS) {
--            return err;
--        }
--
--        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
--        return CL_SUCCESS;
--    }
-+    static cl_int get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param);
- };
- 
- // Specialized for getInfo<CL_PROGRAM_BINARIES>
-@@ -1990,6 +1974,26 @@
- #endif // #if defined(CL_VERSION_1_1)
- };
- 
-+template <typename Func>
-+cl_int detail::GetInfoHelper<Func, VECTOR_CLASS<cl::Device> >::
-+    get(Func f, cl_uint name, VECTOR_CLASS<cl::Device>* param)
-+    {
-+        ::size_t required;
-+        cl_int err = f(name, 0, NULL, &required);
-+        if (err != CL_SUCCESS) {
-+            return err;
-+        }
-+
-+        cl_device_id* value = (cl_device_id*) alloca(required);
-+        err = f(name, required, value, NULL);
-+        if (err != CL_SUCCESS) {
-+            return err;
-+        }
-+
-+        param->assign(&value[0], &value[required/sizeof(cl_device_id)]);
-+        return CL_SUCCESS;
-+    }
-+
- /*! \brief Class interface for cl_platform_id.
-  *
-  *  \note Copies of these objects are inexpensive, since they don't 'own'
-
+ /*! \brief class used to interface between C++ and
