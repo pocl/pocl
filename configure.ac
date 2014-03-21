@@ -689,6 +689,7 @@ CXXFLAGS="$CXXFLAGS $($LLVM_CONFIG --cxxflags) -UNDEBUG"
 LIBS="$LIBS $($LLVM_CONFIG --libs)"
 LDFLAGS="$LDFLAGS $($LLVM_CONFIG --ldflags)"
 
+CXX=$old_CXX
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM(
     [[ #include <llvm/Support/Debug.h> ]],
@@ -702,7 +703,6 @@ AC_LINK_IFELSE(
    AM_CONDITIONAL([LLVM_HAS_ASSERTIONS], false)
   ])
 
-CXX=$old_CXX
 CXXFLAGS=$old_CXXFLAGS
 LDFLAGS=$old_LDFLAGS
 LIBS=$old_LIBS
