@@ -25,5 +25,5 @@
 #include "templates.h"
 
 // Note: min() has no special semantics for inf/nan, even if fmin does
-DEFINE_EXPR_V_VV(min, select(b, a, (jtype)(a<=b)))
+DEFINE_EXPR_V_VV(min, a < b ? a : b)
 DEFINE_EXPR_V_VS(min, min(a, (vtype)b))

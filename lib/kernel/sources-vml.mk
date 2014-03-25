@@ -84,9 +84,7 @@ LKERNEL_SRCS_EXCLUDE =				\
 	log2.cl					\
 	logb.cl					\
 	mad.cl					\
-	max.cl					\
 	maxmag.cl				\
-	min.cl					\
 	minmag.cl				\
 	mix.cl					\
 	nan.cl					\
@@ -197,9 +195,7 @@ LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
 	log2.cc						\
 	logb.cl						\
 	mad.cl						\
-	max.cl						\
 	maxmag.cl					\
-	min.cl						\
 	minmag.cl					\
 	mix.cl						\
 	modf.cl						\
