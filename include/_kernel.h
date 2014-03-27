@@ -489,6 +489,13 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  );     \
   float8   _CL_OVERLOADABLE NAME(float8  );     \
   float16  _CL_OVERLOADABLE NAME(float16 );     \
+  __IF_FP16(                                    \
+  half     _CL_OVERLOADABLE NAME(half  );       \
+  half2    _CL_OVERLOADABLE NAME(half2 );       \
+  half3    _CL_OVERLOADABLE NAME(half3 );       \
+  half4    _CL_OVERLOADABLE NAME(half4 );       \
+  half8    _CL_OVERLOADABLE NAME(half8 );       \
+  half16   _CL_OVERLOADABLE NAME(half16);)      \
   __IF_FP64(                                    \
   double   _CL_OVERLOADABLE NAME(double  );     \
   double2  _CL_OVERLOADABLE NAME(double2 );     \
@@ -496,6 +503,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double4  _CL_OVERLOADABLE NAME(double4 );     \
   double8  _CL_OVERLOADABLE NAME(double8 );     \
   double16 _CL_OVERLOADABLE NAME(double16);)
+
 #define _CL_DECLARE_FUNC_V_VV(NAME)                     \
   float    _CL_OVERLOADABLE NAME(float   , float   );   \
   float2   _CL_OVERLOADABLE NAME(float2  , float2  );   \

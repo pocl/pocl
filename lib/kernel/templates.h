@@ -39,6 +39,17 @@
   IMPLEMENT_BUILTIN_V_V(NAME, float3  , lo, s2) \
   IMPLEMENT_BUILTIN_V_V(NAME, float8  , lo, hi) \
   IMPLEMENT_BUILTIN_V_V(NAME, float16 , lo, hi) \
+  __IF_FP16(                                    \
+  half __attribute__ ((overloadable))           \
+  NAME(half a)                                  \
+  {                                             \
+    return __builtin_##NAME##f((float)(a));     \
+  }                                             \
+  IMPLEMENT_BUILTIN_V_V(NAME, half2   , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, half3   , lo, s2) \
+  IMPLEMENT_BUILTIN_V_V(NAME, half4   , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, half8   , lo, hi) \
+  IMPLEMENT_BUILTIN_V_V(NAME, half16  , lo, hi))\
   __IF_FP64(                                    \
   double __attribute__ ((overloadable))         \
   NAME(double a)                                \
@@ -49,7 +60,7 @@
   IMPLEMENT_BUILTIN_V_V(NAME, double3 , lo, s2) \
   IMPLEMENT_BUILTIN_V_V(NAME, double4 , lo, hi) \
   IMPLEMENT_BUILTIN_V_V(NAME, double8 , lo, hi) \
-  IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi))
+  IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi)) 
 
 #define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, LO, HI)     \
   VTYPE __attribute__ ((overloadable))                  \

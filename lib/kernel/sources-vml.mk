@@ -108,7 +108,6 @@ LKERNEL_SRCS_EXCLUDE =				\
 	sinh.cl					\
 	sinpi.cl				\
 	smoothstep.cl				\
-	sqrt.cl					\
 	step.cl					\
 	tan.cl					\
 	tanh.cl					\
@@ -168,7 +167,6 @@ LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
 	half_recip.cl					\
 	half_rsqrt.cl					\
 	half_sin.cl					\
-	half_sqrt.cl					\
 	half_tan.cl					\
 	hypot.cc					\
 	ilogb.cl					\
@@ -212,7 +210,6 @@ LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
 	native_recip.cl					\
 	native_rsqrt.cl					\
 	native_sin.cl					\
-	native_sqrt.cl					\
 	native_tan.cl					\
 	normalize.cl					\
 	pow.cc						\
@@ -232,7 +229,6 @@ LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
 	sinh.cc						\
 	sinpi.cl					\
 	smoothstep.cl					\
-	sqrt.cc						\
 	step.cl						\
 	tan.cc						\
 	tanh.cc						\
