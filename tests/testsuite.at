@@ -328,7 +328,7 @@ AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
 ])
-#No failure on 3.2
+AT_SKIP_IF(true)
 AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h ||
              grep -q "#define LLVM_3_4" $abs_top_builddir/config.h ])
 AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle half], 0, expout)
