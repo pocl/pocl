@@ -1,7 +1,13 @@
 // Supported datataypes
 
-// LLVM always supports fp16 (aka half)
+// All supported Clang versions support __fp16 to some extent,
+// however, the support for 'half' of OpenCL C properly added
+// only in 3.3, and even that does not handle half vectors well
+// for targets without native support. 
+
+#ifndef LLVM_3_2
 #define cl_khr_fp16
+#endif
 
 // Is long supported in OpenCL C?
 // This is checked at configure-time
