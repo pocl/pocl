@@ -87,13 +87,18 @@ char WorkitemLoops::ID = 0;
 void
 WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 {
-  AU.addRequired<DominatorTree>();
+
   AU.addRequired<PostDominatorTree>();
   AU.addRequired<LoopInfo>();
 #ifdef LLVM_3_1
   AU.addRequired<TargetData>();
-#else
+#endif
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  AU.addRequired<DominatorTree>();
   AU.addRequired<DataLayout>();
+#else
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addRequired<DataLayoutPass>();
 #endif
 
   AU.addRequired<VariableUniformityAnalysis>();
@@ -114,7 +119,11 @@ WorkitemLoops::runOnFunction(Function &F)
       pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
     return false;
 
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
+  #else
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  #endif
   LI = &getAnalysis<LoopInfo>();
   PDT = &getAnalysis<PostDominatorTree>();
 
@@ -139,7 +148,11 @@ WorkitemLoops::runOnFunction(Function &F)
   F.viewCFG();
 #endif
 
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   changed |= fixUndominatedVariableUses(DT, F);
+#else
+  changed |= fixUndominatedVariableUses(DTP, F);
+#endif
 
 #if 0
   /* Split large BBs so we can print the Dot without it crashing. */
@@ -226,7 +239,12 @@ WorkitemLoops::CreateLoopAround
   llvm::BasicBlock *forCondBB = 
     BasicBlock::Create(C, "pregion_for_cond", F, exitBB);
 
+
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT->runOnFunction(*F);
+  #else
+  DTP->runOnFunction(*F);
+  #endif
 
   //  F->viewCFG();
   /* Fix the old edges jumping to the region to jump to the basic block

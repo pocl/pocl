@@ -31,6 +31,10 @@
 #include "llvm/IR/Function.h"
 #endif
 
+#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#include "llvm/IR/Dominators.h"
+#endif
+
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -55,8 +59,13 @@ namespace pocl {
   protected:
     
     void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
+    #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
     bool fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Function &F);
     bool dominatesUse(llvm::DominatorTree *DT, llvm::Instruction &I, unsigned i);
+    #else
+    bool fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT, llvm::Function &F);
+    bool dominatesUse(llvm::DominatorTreeWrapperPass *DT, llvm::Instruction &I, unsigned i);
+    #endif
 
     int LocalSizeX, LocalSizeY, LocalSizeZ;
 

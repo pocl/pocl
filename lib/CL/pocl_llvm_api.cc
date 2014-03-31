@@ -30,10 +30,14 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "llvm/LinkAllPasses.h"
-#include "llvm/Linker.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#include "llvm/Linker.h"
+#else
+#include "llvm/Linker/Linker.h"
+#endif
 
 #ifdef LLVM_3_2
 #include "llvm/Function.h"
@@ -82,8 +86,11 @@ using namespace llvm;
 #if defined LLVM_3_2 || defined LLVM_3_3
 #include "llvm/Support/raw_ostream.h"
 #define F_Binary llvm::raw_fd_ostream::F_Binary
-#else
+#elif defined LLVM_3_4
 using llvm::sys::fs::F_Binary;
+#else
+// a binary file is "not a text file"
+#define F_Binary llvm::sys::fs::F_None
 #endif
 
 
@@ -443,7 +450,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   assert(kernel_function && "TODO: make better check here");
 
   DataLayout *TD = 0;
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   const std::string &ModuleDataLayout = input->getDataLayout();
+  #else
+  const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
+  #endif
   if (!ModuleDataLayout.empty())
     TD = new DataLayout(ModuleDataLayout);
 
@@ -735,8 +746,11 @@ static PassManager& kernel_compiler_passes
 #endif
 
   if (module_data_layout != "")
+    #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
     Passes->add(new DataLayout(module_data_layout));
- 
+    #else
+    Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
+    #endif
 
   /* Disables automated generation of libcalls from code patterns. 
      TCE doesn't have a runtime linker which could link the libs later on.
@@ -1060,7 +1074,13 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   pocl::LocalSize.addValue(local_z);
   KernelName = kernel->name;
 
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
+  #else
+  kernel_compiler_passes(device,
+                         linked_bc->getDataLayout()->getStringRepresentation())
+                        .run(*linked_bc);
+  #endif
 
   // TODO: don't write this once LLC is called via API, not system()
   write_temporary_file(linked_bc, parallel_filename);

@@ -76,6 +76,13 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #endif
+
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#include "llvm/Support/ValueHandle.h"
+#else
+#include "llvm/IR/ValueHandle.h"
+#endif
+
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -91,12 +98,22 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/Transforms/Vectorize.h"
 #include <algorithm>
 #include <map>
 #include <iostream>
 using namespace llvm;
+
+// Prior to 3.5, C++11 was not desired in LLVM, so they used
+// work-arounds. Comply with this here too, just in case someone
+// has an old compiler
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#define NEXT llvm::next
+#define PRIOR llvm::prior
+#else
+#define NEXT std::next
+#define PRIOR std::prev
+#endif
 
 static cl::opt<bool>
 IgnoreTargetInfo("wi-vectorize-ignore-target-info",  cl::init(true),
@@ -206,8 +223,12 @@ namespace {
     DataLayout *TD;
     TargetTransformInfo *TTI;
     const VectorTargetTransformInfo *VTTI;    
-#else
+#elif (defined LLVM_3_3 or defined LLVM_3_4)
     DataLayout *TD;
+    TargetTransformInfo *TTI;
+    const TargetTransformInfo *VTTI;
+#else
+    const DataLayout *TD;
     TargetTransformInfo *TTI;
     const TargetTransformInfo *VTTI;
 #endif
@@ -380,8 +401,13 @@ namespace {
       TTI = IgnoreTargetInfo ? 0 :
         getAnalysisIfAvailable<TargetTransformInfo>();
       VTTI = TTI ? TTI->getVectorTargetTransformInfo() : 0;        
-#else
+#elif (defined LLVM_3_3 or defined LLVM_3_4)
       TD = getAnalysisIfAvailable<DataLayout>();
+      TTI = IgnoreTargetInfo ? 0 :
+        getAnalysisIfAvailable<TargetTransformInfo>();
+      VTTI = TTI;
+#else
+      TD = &getAnalysisIfAvailable<DataLayoutPass>()->getDataLayout();
       TTI = IgnoreTargetInfo ? 0 :
         getAnalysisIfAvailable<TargetTransformInfo>();
       VTTI = TTI;
@@ -750,18 +776,18 @@ namespace {
         BasicBlock::iterator Start = BB.getFirstInsertionPt();
         BasicBlock::iterator End = BB.end();
         for (BasicBlock::iterator I = Start; I != End; ++I) {
-            BasicBlock::iterator J = llvm::next(I);
+            BasicBlock::iterator J = NEXT(I);
             
             for ( ; J != End; ) {
                 
                 if (isa<AllocaInst>(I) || !I->isIdenticalTo(J)) {
-                    J = llvm::next(J);
+                    J = NEXT(J);
                     continue;
                 } else {
                     J->replaceAllUsesWith(I);
                     AA->replaceWithNewValue(J, I);  
                     SE->forgetValue(J);
-                    BasicBlock::iterator K = llvm::next(J);
+                    BasicBlock::iterator K = NEXT(J);
                     J->eraseFromParent();
                     J = K;
                 }
@@ -781,7 +807,7 @@ namespace {
             PHINode* node = dyn_cast<PHINode>(I);
             if (node) {
                 ValueVector* candidateVector = new ValueVector;
-                for (BasicBlock::iterator J = llvm::next(I);
+                for (BasicBlock::iterator J = NEXT(I);
                     J != End; ++J) {
                     PHINode* node2 = dyn_cast<PHINode>(J);
                     if (node2) {
@@ -868,7 +894,11 @@ namespace {
             // We have to extract it from same position of the vector phi node.
             Instruction::use_iterator useiter = orig->use_begin();            
             while (useiter != orig->use_end()) {
+                #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
                 llvm::User* tmp = *useiter;
+                #else
+                llvm::User* tmp = (*useiter).getUser();
+                #endif
                 if (isa<InsertElementInst>(tmp)) {
                     Value* in = tmp->getOperand(2);
                     if (isa<ConstantInt>(in)) {
@@ -897,7 +927,11 @@ namespace {
                 // We have to extract it from same position of the vector phi node.                
                 Instruction::use_iterator ui = tmp->use_begin();                
                 while (ui != tmp->use_end()) {
+                    #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
                     llvm::User* user = *ui;
+                    #else
+                    llvm::User* user = (*ui).getUser();
+                    #endif
                     if (isa<InsertElementInst>(user)) {
                         Value* in = user->getOperand(2);
                         if (isa<ConstantInt>(in)) {
@@ -1563,7 +1597,11 @@ namespace {
                                 }
                             }
                             if (!usedInVec) {
+                                #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
                                 usesToReplace.push_back(*it);
+                                #else
+                                usesToReplace.push_back((*it).getUser());
+                                #endif
                             }
                         }
                     }                    
@@ -1731,7 +1769,7 @@ namespace {
 
       DenseSet<Value *> Users;
       AliasSetTracker WriteSet(*AA);
-      for (BasicBlock::iterator J = llvm::next(I); J != E; ++J)
+      for (BasicBlock::iterator J = NEXT(I); J != E; ++J)
         (void) trackUsesOfI(Users, WriteSet, I, J);
 
       for (DenseSet<Value *>::iterator U = Users.begin(), E = Users.end();
@@ -2684,7 +2722,7 @@ namespace {
                      Instruction *&InsertionPt,
                      Instruction *I, Instruction *J) {
     // Skip to the first instruction past I.
-    BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
+    BasicBlock::iterator L = NEXT(BasicBlock::iterator(I));
 
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
@@ -2711,7 +2749,7 @@ namespace {
                      std::multimap<Value *, Value *> &LoadMoveSet,
                      Instruction *I) {
     // Skip to the first instruction past I.
-    BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
+    BasicBlock::iterator L = NEXT(BasicBlock::iterator(I));
 
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
@@ -2882,7 +2920,7 @@ namespace {
       }
 
       // Before removing I, set the iterator to the next instruction.
-      PI = llvm::next(BasicBlock::iterator(I));
+      PI = NEXT(BasicBlock::iterator(I));
       if (cast<Instruction>(PI) == J)
         ++PI;
 
@@ -2897,9 +2935,9 @@ namespace {
   void WIVectorize::dropUnused(BasicBlock& BB) {
     bool changed;
     do{
-        BasicBlock::iterator J = BB.end();     
+        BasicBlock::iterator J = BB.end();
         changed = false;
-        BasicBlock::iterator I = llvm::prior(J);        
+        BasicBlock::iterator I = PRIOR(J);
         while (I != BB.begin()) {
         
             if (isa<ShuffleVectorInst>(*I) ||
@@ -2915,10 +2953,10 @@ namespace {
                     // removed instruction could have messed up things
                     // start again from the end
                     I = BB.end();
-                    J = llvm::prior(I);
+                    J = PRIOR(I);
                     changed = true;
                 } else {
-                    J = llvm::prior(I);      		
+                    J = PRIOR(I);
                 }	  
             } else if (GlobalToExtras && 
                 (isa<LoadInst>(*I) || isa<StoreInst>(*I))) {
@@ -2961,11 +2999,11 @@ namespace {
                         changed = true;
                     }
                 }                                                   
-                J = llvm::prior(I);                         
+                J = PRIOR(I);
             } else {
-                J = llvm::prior(I);      		
+                J = PRIOR(I);
             }
-            I = J;      
+            I = J;
         }
     } while (changed);
   }
@@ -2974,13 +3012,21 @@ namespace {
     Instruction::use_iterator useiter = oldAlloca.use_begin();                
 
     while (useiter != oldAlloca.use_end()) {
+        #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
         llvm::User* user = *useiter;
+        #else
+        llvm::User* user = (*useiter).getUser();
+        #endif
         
         if (isa<BitCastInst>(user)) {
             BitCastInst* bitCast = cast<BitCastInst>(user);
             Instruction::use_iterator useIterBC = bitCast->use_begin();
             while (useIterBC != bitCast->use_end()) {
+                #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
                 llvm::User* bcUser = *useIterBC;
+                #else
+                llvm::User* bcUser = (*useIterBC).getUser();
+                #endif
                 if (isa<CallInst>(bcUser)) {
                     // TODO: check if it is llvm.lifetime.end() or
                     // llvm.lifetime.start()
@@ -3009,7 +3055,11 @@ namespace {
     Instruction::use_iterator useiter = oldAlloca.use_begin();                
 
     while (useiter != oldAlloca.use_end()) {
+        #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
         llvm::User* tmp = *useiter;
+        #else
+        llvm::User* tmp = (*useiter).getUser();
+        #endif
         
         if (isa<BitCastInst>(tmp)) {
             // Create new bitcast from new alloca to same type

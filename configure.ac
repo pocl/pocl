@@ -103,6 +103,9 @@ case "$LLVM_VERSION" in
      3.4*)
      AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
    ;;   
+     3.5*)
+     AC_DEFINE([LLVM_3_5], [], "Using upcoming LLVM 3.5")
+   ;;
      *)
    AC_MSG_ERROR(
    [
@@ -925,7 +928,7 @@ fi
 
 # Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
 # of Open CL C long is not 8 bytes 
-if [echo "constant int test[sizeof(long)==8?1:-1];" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
+if [echo "constant int test[sizeof(long)==8?1:-1]={1};" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
 then
     : # OpenCL C long is supported
 else

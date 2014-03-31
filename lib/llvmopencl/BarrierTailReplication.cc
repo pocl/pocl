@@ -56,8 +56,13 @@ char BarrierTailReplication::ID = 0;
 void
 BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
+#else
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
+#endif
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
 }
@@ -72,12 +77,21 @@ BarrierTailReplication::runOnFunction(Function &F)
   std::cerr << "### BTR on " << F.getName().str() << std::endl;
 #endif
 
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
+#else
+  DTP = &getAnalysis<DominatorTreeWrapperPass>();
+  DT = &DTP->getDomTree();
+#endif
   LI = &getAnalysis<LoopInfo>();
 
   bool changed = ProcessFunction(F);
 
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT->verifyAnalysis();
+#else
+  DT->verifyDomTree();
+#endif
   LI->verifyAnalysis();
 
   /* The created tails might contain PHI nodes with operands 
@@ -203,7 +217,12 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       {
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
+        #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
         DT->runOnFunction(*f);
+        #else
+        DTP->runOnFunction(*f);
+        #endif
+
         #ifdef LLVM_3_1
         LI->getBase().Calculate(DT->getBase());
         #else

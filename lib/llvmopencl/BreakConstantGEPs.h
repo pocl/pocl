@@ -25,7 +25,9 @@
 #else
 #include "llvm/IR/Module.h"
 #endif
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
+#endif
 #include "llvm/Pass.h"
 
 using namespace llvm;

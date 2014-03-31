@@ -37,6 +37,10 @@
 #include "llvm/IR/Module.h"
 #endif
 
+#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#include "llvm/IR/Dominators.h"
+#endif
+
 using namespace llvm;
 using namespace pocl;
 
@@ -92,13 +96,22 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     }
   }
 
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT = getAnalysisIfAvailable<DominatorTree>();
+#else
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+#endif
   LI = getAnalysisIfAvailable<LoopInfo>();
 
   bool changed = ProcessFunction(F);
 
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   if (DT)
     DT->verifyAnalysis();
+#else
+  if (DT)
+    DT->verifyDomTree();
+#endif
   if (LI)
     LI->verifyAnalysis();
 

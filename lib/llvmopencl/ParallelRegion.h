@@ -25,7 +25,6 @@
 #define _POCL_PARALLEL_REGION_H
 
 #include "BarrierBlock.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "config.h"
 #if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/BasicBlock.h"
@@ -34,8 +33,14 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/LLVMContext.h"
 #endif
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 #include "llvm/Support/CFG.h"
+#else
+#include "llvm/IR/CFG.h"
+#endif
+
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <sstream>

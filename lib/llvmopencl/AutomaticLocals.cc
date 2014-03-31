@@ -81,7 +81,11 @@ static RegisterPass<AutomaticLocals> X("automatic-locals",
 void
 AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const
 {
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   AU.addRequired<DataLayout>();
+  #else
+  AU.addRequired<DataLayoutPass>();
+  #endif
 }
 
 bool

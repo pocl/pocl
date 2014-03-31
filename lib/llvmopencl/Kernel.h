@@ -25,8 +25,12 @@
 
 #include "ParallelRegion.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#include "llvm/Analysis/Dominators.h"
+#else
+#include "llvm/IR/Dominators.h"
+#endif
 
 namespace pocl {
 

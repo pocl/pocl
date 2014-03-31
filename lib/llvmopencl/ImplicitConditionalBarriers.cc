@@ -57,9 +57,13 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
-
+  #else
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
+  #endif
 }
 
 /**
@@ -71,7 +75,11 @@ BasicBlock*
 ImplicitConditionalBarriers::firstNonBackedgePredecessor(
     llvm::BasicBlock *bb) {
 
+    #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
     DominatorTree *DT = &getAnalysis<DominatorTree>();
+    #else
+    DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    #endif
 
     pred_iterator I = pred_begin(bb), E = pred_end(bb);
     if (I == E) return NULL;

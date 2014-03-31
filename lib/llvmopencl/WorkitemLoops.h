@@ -23,8 +23,11 @@
 #ifndef _POCL_WORKITEM_LOOPS_H
 #define _POCL_WORKITEM_LOOPS_H
 
-#include "llvm/ADT/Twine.h"
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
+#endif
+
+#include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <map>
@@ -59,6 +62,9 @@ namespace pocl {
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
     llvm::PostDominatorTree *PDT;
+    #if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+    llvm::DominatorTreeWrapperPass *DTP;
+    #endif
 
     ParallelRegion::ParallelRegionVector *original_parallel_regions;
 

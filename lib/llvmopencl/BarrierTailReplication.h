@@ -30,7 +30,12 @@
 #include "llvm/IR/Function.h"
 #endif
 
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
+#else
+#include "llvm/IR/Dominators.h"
+#endif
+
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -56,6 +61,9 @@ namespace pocl {
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     llvm::DominatorTree *DT;
+#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+    llvm::DominatorTreeWrapperPass *DTP;
+#endif
     llvm::LoopInfo *LI;
 
     bool ProcessFunction(llvm::Function &F);

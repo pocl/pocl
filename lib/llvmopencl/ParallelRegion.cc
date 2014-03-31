@@ -293,7 +293,12 @@ ParallelRegion::insertLocalIdInit(llvm::BasicBlock* entry,
   Module *M = entry->getParent()->getParent();
 
   int size_t_width = 32;
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   if (M->getPointerSize() == llvm::Module::Pointer64)
+#else
+  // FIXME 0 here is the address space: this breaks (?) if _local_size_x is not stored in AS0
+  if (M->getDataLayout()->getPointerSize(0) == 8)
+#endif
     size_t_width = 64;
 
   GlobalVariable *gvx = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);

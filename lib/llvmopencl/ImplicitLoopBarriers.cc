@@ -35,6 +35,9 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #endif
+#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#include "llvm/IR/Dominators.h"
+#endif
 
 #include "VariableUniformityAnalysis.h"
 
@@ -56,8 +59,13 @@ char ImplicitLoopBarriers::ID = 0;
 void
 ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
+#else
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
+#endif
   AU.addRequired<VariableUniformityAnalysis>();
   AU.addPreserved<VariableUniformityAnalysis>();
 }

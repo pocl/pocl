@@ -153,6 +153,8 @@ static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 bool
 Workgroup::runOnModule(Module &M)
 {
+
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   if (M.getPointerSize() == llvm::Module::Pointer64)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(64);
@@ -165,6 +167,21 @@ Workgroup::runOnModule(Module &M)
     {
       assert (false && "Target has an unsupported pointer width.");
     }  
+#else
+// FIXME 0 here is the address space - this breaks (?) if _local_size_x is not stored in AS0
+  if (M.getDataLayout()->getPointerSize(0) == 8)
+    {
+      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
+    }
+  if (M.getDataLayout()->getPointerSize(0) == 4)
+    {
+      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
+    }
+  else 
+    {
+      assert (false && "Target has an unsupported pointer width.");
+    }
+#endif
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
@@ -246,7 +263,12 @@ createLauncher(Module &M, Function *F)
 
 
   int size_t_width = 32;
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   if (M.getPointerSize() == llvm::Module::Pointer64)
+#else
+  //FIXME 0 here is the address space: this breaks (?) if _local_size_x is not stored in AS0
+  if (M.getDataLayout()->getPointerSize(0) == 8)
+#endif
     size_t_width = 64;
 
   ptr = builder.CreateStructGEP(ai,

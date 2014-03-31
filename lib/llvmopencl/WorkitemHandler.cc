@@ -91,12 +91,21 @@ WorkitemHandler::Initialize(Kernel *K)
   }
 
   llvm::Type *localIdType; 
+  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   if (M->getPointerSize() == llvm::Module::Pointer64)
     size_t_width = 64;
   else if (M->getPointerSize() == llvm::Module::Pointer32)
     size_t_width = 32;
   else
     assert (false && "Only 32 and 64 bit size_t widths supported.");
+  #else
+  if (M->getDataLayout()->getPointerSize(0) == 8)
+    size_t_width = 64;
+  else if (M->getDataLayout()->getPointerSize(0) == 3)
+    size_t_width = 32;
+  else
+    assert (false && "Only 32 and 64 bit size_t widths supported.");
+  #endif
 
   localIdType = IntegerType::get(K->getContext(), size_t_width);
 
@@ -105,9 +114,17 @@ WorkitemHandler::Initialize(Kernel *K)
   localIdX = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, localIdType);
 }
 
+
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 bool
 WorkitemHandler::dominatesUse
 (llvm::DominatorTree *DT, Instruction &I, unsigned i) {
+#else
+bool
+WorkitemHandler::dominatesUse
+(llvm::DominatorTreeWrapperPass *DTP, Instruction &I, unsigned i) {
+  DominatorTree *DT = &DTP->getDomTree();
+#endif
   Instruction *Op = cast<Instruction>(I.getOperand(i));
   BasicBlock *OpBlock = Op->getParent();
   PHINode *PN = dyn_cast<PHINode>(&I);
@@ -164,9 +181,15 @@ WorkitemHandler::dominatesUse
    the old one. This should ensure the reachability without 
    the costly dominance analysis.
 */
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 bool
 WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, 
                                             llvm::Function &F) 
+#else
+bool
+WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
+                                            llvm::Function &F)
+#endif
 {
   bool changed = false;
   DT->runOnFunction(F);

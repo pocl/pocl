@@ -93,7 +93,11 @@ static RegisterPass<GenerateHeader> X("generate-header",
 void
 GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
 {
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   AU.addRequired<DataLayout>();
+#else
+  AU.addRequired<DataLayoutPass>();
+#endif
 }
 
 bool
@@ -268,7 +272,12 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
                                        raw_fd_ostream &out)
 {
   Module *M = F->getParent();
-  DataLayout &TD = getAnalysis<DataLayout>();
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  DataLayout &TDr = getAnalysis<DataLayout>();
+  DataLayout *TD=&TDr;
+#else
+  const DataLayout *TD = &getAnalysis<DataLayoutPass>().getDataLayout();
+#endif
   
   SmallVector<GlobalVariable *, 8> locals;
 
@@ -296,9 +305,9 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
   out << "#define _" << F->getName() << "_NUM_LOCALS "<< locals.size() << "\n";
   out << "#define _" << F->getName() << "_LOCAL_SIZE {";
   if (!locals.empty()) {
-    out << TD.getTypeAllocSize(locals[0]->getInitializer()->getType());
+    out << TD->getTypeAllocSize(locals[0]->getInitializer()->getType());
     for (unsigned i = 1; i < locals.size(); ++i)
-      out << ", " << TD.getTypeAllocSize(locals[i]->getInitializer()->getType());
+      out << ", " << TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
   }
   out << "}\n";    
 
