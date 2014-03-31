@@ -53,6 +53,7 @@
 #endif
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "WorkitemHandlerChooser.h"
+#include "DebugHelpers.h"
 
 #include <iostream>
 #include <map>
@@ -139,10 +140,12 @@ WorkitemReplication::ProcessFunction(Function &F)
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
 
-  std::vector<SmallVector<ParallelRegion *, 8> > parallel_regions(
+  std::vector<ParallelRegion::ParallelRegionVector> parallel_regions(
       workitem_count);
 
   parallel_regions[0] = *original_parallel_regions;
+
+//  pocl::dumpCFG(F, F.getName().str() + ".dot", original_parallel_regions);
 
   /* Enable to get region identification printouts */
 #if 0
@@ -247,6 +250,13 @@ WorkitemReplication::ProcessFunction(Function &F)
           if (index != 0) {
             region->remap(reference_map[index - 1]);
             region->chainAfter(parallel_regions[index - 1][i]);
+#ifdef DEBUG_PR_REPLICATION
+            std::ostringstream s;
+            s << F.getName().str() << ".before_purge_of_" << region->GetID()
+              << ".dot";
+            pocl::dumpCFG
+                (F, s.str(), &parallel_regions[index]);
+#endif
             region->purge();
           }
           region->insertPrologue(x, y, z);

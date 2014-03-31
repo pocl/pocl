@@ -176,3 +176,8 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_block], 0, expout)
 # LLVM 3.4's crashes with an illegal const expr cast. Unresolved.
 AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_CLEANUP
+
+AT_SETUP([case with multiple variable length loops and a barrier in one])
+AT_KEYWORDS([regression varlengthloops])
+AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_fors_with_var_iteration_counts], 0)
+AT_CLEANUP

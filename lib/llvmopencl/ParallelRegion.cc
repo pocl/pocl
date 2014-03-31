@@ -218,11 +218,26 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   t->setSuccessor(0, successor);
 }
 
+/**
+ * Removes known dead side exits from parallel regions.
+ *
+ * These occur with conditional barriers. The head of the path
+ * leading to the conditional barrier is shared by two PRs. The
+ * first work-item defines which path is taken (by definition the
+ * barrier is taken by all or none). The blocks in the branches
+ * are in different regions which can contain branches to blocks
+ * that are in known non-taken path. This method replaces the targets
+ * of such branches with undefined BBs so they will be cleaned up by the 
+ * optimizer.
+ */
 void
 ParallelRegion::purge()
 {
   SmallVector<BasicBlock *, 4> new_blocks;
 
+  // Go through all the BBs in the region and check their branch
+  // targets, looking for destinations that are outside the region.
+  // Only the last block in the PR can now contain such branches.
   for (iterator i = begin(), e = end(); i != e; ++i) {
 
     // Exit block has a successor out of the region.
@@ -238,14 +253,17 @@ ParallelRegion::purge()
       BasicBlock *successor = t->getSuccessor(ii);
       if (count(begin(), end(), successor) == 0) {
         // This successor is not on the parallel region, purge.
-        iterator next_block = i;
-        ++next_block;
-        assert ((*i)->getParent() != NULL && *next_block != NULL);
+#ifdef DEBUG_PURGE
+          std::cerr 
+              << "purging a branch to a block " 
+              << successor->getName().str() << " outside the region" 
+              << std::endl;
+#endif
+
         BasicBlock *unreachable =
           BasicBlock::Create((*i)->getContext(),
                              (*i)->getName() + ".unreachable",
-                             (*i)->getParent(),
-                             *next_block);
+                             (*i)->getParent(), back());
         new UnreachableInst(unreachable->getContext(),
                             unreachable);
         t->setSuccessor(ii, unreachable);

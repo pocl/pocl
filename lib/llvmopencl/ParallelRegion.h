@@ -38,6 +38,7 @@
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
+#include <sstream>
 
 namespace pocl {
 
