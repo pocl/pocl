@@ -505,6 +505,13 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double16 _CL_OVERLOADABLE NAME(double16);)
 
 #define _CL_DECLARE_FUNC_V_VV(NAME)                     \
+  __IF_FP16(                                            \
+  half     _CL_OVERLOADABLE NAME(half    , half    );   \
+  half2    _CL_OVERLOADABLE NAME(half2   , half2   );   \
+  half3    _CL_OVERLOADABLE NAME(half3   , half3   );   \
+  half4    _CL_OVERLOADABLE NAME(half4   , half4   );   \
+  half8    _CL_OVERLOADABLE NAME(half8   , half8   );   \
+  half16   _CL_OVERLOADABLE NAME(half16  , half16  );)  \
   float    _CL_OVERLOADABLE NAME(float   , float   );   \
   float2   _CL_OVERLOADABLE NAME(float2  , float2  );   \
   float3   _CL_OVERLOADABLE NAME(float3  , float3  );   \
@@ -1282,6 +1289,13 @@ _CL_DECLARE_FUNC_F_F(native_tan)
   uint4    _CL_OVERLOADABLE NAME(uint4   , uint4   , int4    );         \
   uint8    _CL_OVERLOADABLE NAME(uint8   , uint8   , int8    );         \
   uint16   _CL_OVERLOADABLE NAME(uint16  , uint16  , int16   );         \
+  __IF_FP16(                                                            \
+  half     _CL_OVERLOADABLE NAME(half    , half    , int     );         \
+  half2    _CL_OVERLOADABLE NAME(half2   , half2   , int2    );         \
+  half3    _CL_OVERLOADABLE NAME(half3   , half3   , int3    );         \
+  half4    _CL_OVERLOADABLE NAME(half4   , half4   , int4    );         \
+  half8    _CL_OVERLOADABLE NAME(half8   , half8   , int8    );         \
+  half16   _CL_OVERLOADABLE NAME(half16  , half16  , int16   );)        \
   __IF_INT64(                                                           \
   long     _CL_OVERLOADABLE NAME(long    , long    , long    );         \
   long2    _CL_OVERLOADABLE NAME(long2   , long2   , long2   );         \

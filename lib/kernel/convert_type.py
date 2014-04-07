@@ -28,11 +28,13 @@
 #
 # convert_<destTypen><_sat><_roundingMode>(<sourceTypen>)
 
-types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'float', 'double']
+types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'half', 'float', 
+         'double']
 int_types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong']
 unsigned_types = ['uchar', 'ushort', 'uint', 'ulong']
-float_types = ['float', 'double']
+float_types = ['half', 'float', 'double']
 int64_types = ['long', 'ulong']
+float16_types = ['half']
 float64_types = ['double']
 vector_sizes = ['', '2', '3', '4', '8', '16']
 half_sizes = [('2',''), ('4','2'), ('8','4'), ('16','8')]
@@ -50,6 +52,7 @@ bool_type = {'char'  : 'char',
              'uint'  : 'int',
              'long'  : 'long',
              'ulong' : 'long',
+             'half'  : 'int',
              'float'  : 'int',
              'double' : 'long'}
 
@@ -63,6 +66,7 @@ unsigned_type = {'char'  : 'uchar',
                  'ulong' : 'ulong'}
 
 sizeof_type = {'char'  : 1, 'uchar'  : 1,
+               'half'  : 2,
                'short' : 2, 'ushort' : 2,
                'int'   : 4, 'uint'   : 4,
                'long'  : 8, 'ulong'  : 8,
@@ -89,19 +93,33 @@ limit_min = {'char'  : 'CHAR_MIN',
 def conditional_guard(src, dst):
   int64_count = 0
   float64_count = 0
-  if src in int64_types:
+  float16_count = 0
+
+  if src in int64_types:    
     int64_count = int64_count +1
   elif src in float64_types:
     float64_count = float64_count + 1
+  elif src in float16_types:
+    float16_count += 1
+
   if dst in int64_types:
     int64_count = int64_count +1
   elif dst in float64_types:
     float64_count = float64_count + 1
+  elif dst in float16_types:
+    float16_count += 1
+
   if float64_count > 0 and int64_count > 0:
     print("#if defined(cl_khr_fp64) && defined(cl_khr_int64)")
     return True
   elif float64_count > 0:
     print("#ifdef cl_khr_fp64")
+    return True
+  elif float16_count > 0 and int64_count > 0:
+    print("#if defined(cl_khr_fp16) && defined(cl_khr_int64)")
+    return True
+  elif float16_count > 0:
+    print("#ifdef cl_khr_fp16")
     return True
   elif int64_count > 0:
     print("#ifdef cl_khr_int64")
