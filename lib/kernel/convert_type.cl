@@ -243,7 +243,7 @@ uint3 convert_uint3(char3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(char x)
 {
@@ -281,7 +281,7 @@ long3 convert_long3(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(char x)
 {
@@ -319,7 +319,7 @@ ulong3 convert_ulong3(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(char x)
 {
@@ -393,7 +393,7 @@ float3 convert_float3(char3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(char x)
 {
@@ -647,7 +647,7 @@ uint3 convert_uint3(uchar3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(uchar x)
 {
@@ -685,7 +685,7 @@ long3 convert_long3(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(uchar x)
 {
@@ -723,7 +723,7 @@ ulong3 convert_ulong3(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(uchar x)
 {
@@ -797,7 +797,7 @@ float3 convert_float3(uchar3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(uchar x)
 {
@@ -1051,7 +1051,7 @@ uint3 convert_uint3(short3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(short x)
 {
@@ -1089,7 +1089,7 @@ long3 convert_long3(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(short x)
 {
@@ -1127,7 +1127,7 @@ ulong3 convert_ulong3(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(short x)
 {
@@ -1201,7 +1201,7 @@ float3 convert_float3(short3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(short x)
 {
@@ -1455,7 +1455,7 @@ uint3 convert_uint3(ushort3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(ushort x)
 {
@@ -1493,7 +1493,7 @@ long3 convert_long3(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(ushort x)
 {
@@ -1531,7 +1531,7 @@ ulong3 convert_ulong3(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(ushort x)
 {
@@ -1605,7 +1605,7 @@ float3 convert_float3(ushort3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(ushort x)
 {
@@ -1859,7 +1859,7 @@ uint3 convert_uint3(int3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(int x)
 {
@@ -1897,7 +1897,7 @@ long3 convert_long3(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(int x)
 {
@@ -1935,7 +1935,7 @@ ulong3 convert_ulong3(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(int x)
 {
@@ -2009,7 +2009,7 @@ float3 convert_float3(int3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(int x)
 {
@@ -2263,7 +2263,7 @@ uint3 convert_uint3(uint3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(uint x)
 {
@@ -2301,7 +2301,7 @@ long3 convert_long3(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(uint x)
 {
@@ -2339,7 +2339,7 @@ ulong3 convert_ulong3(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(uint x)
 {
@@ -2413,7 +2413,7 @@ float3 convert_float3(uint3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(uint x)
 {
@@ -2451,7 +2451,7 @@ double3 convert_double3(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char(long x)
 {
@@ -2489,7 +2489,7 @@ char3 convert_char3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar(long x)
 {
@@ -2527,7 +2527,7 @@ uchar3 convert_uchar3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short(long x)
 {
@@ -2565,7 +2565,7 @@ short3 convert_short3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort(long x)
 {
@@ -2603,7 +2603,7 @@ ushort3 convert_ushort3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int(long x)
 {
@@ -2641,7 +2641,7 @@ int3 convert_int3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint(long x)
 {
@@ -2679,7 +2679,7 @@ uint3 convert_uint3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(long x)
 {
@@ -2717,7 +2717,7 @@ long3 convert_long3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(long x)
 {
@@ -2755,7 +2755,7 @@ ulong3 convert_ulong3(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(long x)
 {
@@ -2793,7 +2793,7 @@ half3 convert_half3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(long x)
 {
@@ -2869,7 +2869,7 @@ double3 convert_double3(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char(ulong x)
 {
@@ -2907,7 +2907,7 @@ char3 convert_char3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar(ulong x)
 {
@@ -2945,7 +2945,7 @@ uchar3 convert_uchar3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short(ulong x)
 {
@@ -2983,7 +2983,7 @@ short3 convert_short3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort(ulong x)
 {
@@ -3021,7 +3021,7 @@ ushort3 convert_ushort3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int(ulong x)
 {
@@ -3059,7 +3059,7 @@ int3 convert_int3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint(ulong x)
 {
@@ -3097,7 +3097,7 @@ uint3 convert_uint3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(ulong x)
 {
@@ -3135,7 +3135,7 @@ long3 convert_long3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(ulong x)
 {
@@ -3173,7 +3173,7 @@ ulong3 convert_ulong3(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(ulong x)
 {
@@ -3211,7 +3211,7 @@ half3 convert_half3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(ulong x)
 {
@@ -3287,7 +3287,7 @@ double3 convert_double3(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char(half x)
 {
@@ -3325,7 +3325,7 @@ char3 convert_char3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar(half x)
 {
@@ -3363,7 +3363,7 @@ uchar3 convert_uchar3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short(half x)
 {
@@ -3401,7 +3401,7 @@ short3 convert_short3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort(half x)
 {
@@ -3439,7 +3439,7 @@ ushort3 convert_ushort3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int(half x)
 {
@@ -3477,7 +3477,7 @@ int3 convert_int3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint(half x)
 {
@@ -3515,7 +3515,7 @@ uint3 convert_uint3(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(half x)
 {
@@ -3553,7 +3553,7 @@ long3 convert_long3(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(half x)
 {
@@ -3591,7 +3591,7 @@ ulong3 convert_ulong3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(half x)
 {
@@ -3629,7 +3629,7 @@ half3 convert_half3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(half x)
 {
@@ -3667,7 +3667,7 @@ float3 convert_float3(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(half x)
 {
@@ -3921,7 +3921,7 @@ uint3 convert_uint3(float3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(float x)
 {
@@ -3959,7 +3959,7 @@ long3 convert_long3(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(float x)
 {
@@ -3997,7 +3997,7 @@ ulong3 convert_ulong3(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(float x)
 {
@@ -4071,7 +4071,7 @@ float3 convert_float3(float3 x)
   return (float3)(convert_float2(x.s01), convert_float(x.s2));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(float x)
 {
@@ -4109,7 +4109,7 @@ double3 convert_double3(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char(double x)
 {
@@ -4147,7 +4147,7 @@ char3 convert_char3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar(double x)
 {
@@ -4185,7 +4185,7 @@ uchar3 convert_uchar3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short(double x)
 {
@@ -4223,7 +4223,7 @@ short3 convert_short3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort(double x)
 {
@@ -4261,7 +4261,7 @@ ushort3 convert_ushort3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int(double x)
 {
@@ -4299,7 +4299,7 @@ int3 convert_int3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint(double x)
 {
@@ -4413,7 +4413,7 @@ ulong3 convert_ulong3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half(double x)
 {
@@ -4451,7 +4451,7 @@ half3 convert_half3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(double x)
 {
@@ -4489,7 +4489,7 @@ float3 convert_float3(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(double x)
 {
@@ -5391,7 +5391,7 @@ uint3 convert_uint3_rtn(char3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(char x)
 {
@@ -5429,7 +5429,7 @@ long3 convert_long3_rtz(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(char x)
 {
@@ -5467,7 +5467,7 @@ long3 convert_long3_rte(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(char x)
 {
@@ -5505,7 +5505,7 @@ long3 convert_long3_rtp(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(char x)
 {
@@ -5543,7 +5543,7 @@ long3 convert_long3_rtn(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(char x)
 {
@@ -5581,7 +5581,7 @@ ulong3 convert_ulong3_rtz(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(char x)
 {
@@ -5619,7 +5619,7 @@ ulong3 convert_ulong3_rte(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(char x)
 {
@@ -5657,7 +5657,7 @@ ulong3 convert_ulong3_rtp(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(char x)
 {
@@ -6559,7 +6559,7 @@ uint3 convert_uint3_rtn(uchar3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(uchar x)
 {
@@ -6597,7 +6597,7 @@ long3 convert_long3_rtz(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(uchar x)
 {
@@ -6635,7 +6635,7 @@ long3 convert_long3_rte(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(uchar x)
 {
@@ -6673,7 +6673,7 @@ long3 convert_long3_rtp(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(uchar x)
 {
@@ -6711,7 +6711,7 @@ long3 convert_long3_rtn(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(uchar x)
 {
@@ -6749,7 +6749,7 @@ ulong3 convert_ulong3_rtz(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(uchar x)
 {
@@ -6787,7 +6787,7 @@ ulong3 convert_ulong3_rte(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(uchar x)
 {
@@ -6825,7 +6825,7 @@ ulong3 convert_ulong3_rtp(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(uchar x)
 {
@@ -7727,7 +7727,7 @@ uint3 convert_uint3_rtn(short3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(short x)
 {
@@ -7765,7 +7765,7 @@ long3 convert_long3_rtz(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(short x)
 {
@@ -7803,7 +7803,7 @@ long3 convert_long3_rte(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(short x)
 {
@@ -7841,7 +7841,7 @@ long3 convert_long3_rtp(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(short x)
 {
@@ -7879,7 +7879,7 @@ long3 convert_long3_rtn(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(short x)
 {
@@ -7917,7 +7917,7 @@ ulong3 convert_ulong3_rtz(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(short x)
 {
@@ -7955,7 +7955,7 @@ ulong3 convert_ulong3_rte(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(short x)
 {
@@ -7993,7 +7993,7 @@ ulong3 convert_ulong3_rtp(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(short x)
 {
@@ -8895,7 +8895,7 @@ uint3 convert_uint3_rtn(ushort3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(ushort x)
 {
@@ -8933,7 +8933,7 @@ long3 convert_long3_rtz(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(ushort x)
 {
@@ -8971,7 +8971,7 @@ long3 convert_long3_rte(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(ushort x)
 {
@@ -9009,7 +9009,7 @@ long3 convert_long3_rtp(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(ushort x)
 {
@@ -9047,7 +9047,7 @@ long3 convert_long3_rtn(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(ushort x)
 {
@@ -9085,7 +9085,7 @@ ulong3 convert_ulong3_rtz(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(ushort x)
 {
@@ -9123,7 +9123,7 @@ ulong3 convert_ulong3_rte(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(ushort x)
 {
@@ -9161,7 +9161,7 @@ ulong3 convert_ulong3_rtp(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(ushort x)
 {
@@ -10063,7 +10063,7 @@ uint3 convert_uint3_rtn(int3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(int x)
 {
@@ -10101,7 +10101,7 @@ long3 convert_long3_rtz(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(int x)
 {
@@ -10139,7 +10139,7 @@ long3 convert_long3_rte(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(int x)
 {
@@ -10177,7 +10177,7 @@ long3 convert_long3_rtp(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(int x)
 {
@@ -10215,7 +10215,7 @@ long3 convert_long3_rtn(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(int x)
 {
@@ -10253,7 +10253,7 @@ ulong3 convert_ulong3_rtz(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(int x)
 {
@@ -10291,7 +10291,7 @@ ulong3 convert_ulong3_rte(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(int x)
 {
@@ -10329,7 +10329,7 @@ ulong3 convert_ulong3_rtp(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(int x)
 {
@@ -11231,7 +11231,7 @@ uint3 convert_uint3_rtn(uint3 x)
   return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(uint x)
 {
@@ -11269,7 +11269,7 @@ long3 convert_long3_rtz(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(uint x)
 {
@@ -11307,7 +11307,7 @@ long3 convert_long3_rte(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(uint x)
 {
@@ -11345,7 +11345,7 @@ long3 convert_long3_rtp(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(uint x)
 {
@@ -11383,7 +11383,7 @@ long3 convert_long3_rtn(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(uint x)
 {
@@ -11421,7 +11421,7 @@ ulong3 convert_ulong3_rtz(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(uint x)
 {
@@ -11459,7 +11459,7 @@ ulong3 convert_ulong3_rte(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(uint x)
 {
@@ -11497,7 +11497,7 @@ ulong3 convert_ulong3_rtp(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(uint x)
 {
@@ -11535,7 +11535,7 @@ ulong3 convert_ulong3_rtn(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtz(long x)
 {
@@ -11573,7 +11573,7 @@ char3 convert_char3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rte(long x)
 {
@@ -11611,7 +11611,7 @@ char3 convert_char3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtp(long x)
 {
@@ -11649,7 +11649,7 @@ char3 convert_char3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtn(long x)
 {
@@ -11687,7 +11687,7 @@ char3 convert_char3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtz(long x)
 {
@@ -11725,7 +11725,7 @@ uchar3 convert_uchar3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rte(long x)
 {
@@ -11763,7 +11763,7 @@ uchar3 convert_uchar3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtp(long x)
 {
@@ -11801,7 +11801,7 @@ uchar3 convert_uchar3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtn(long x)
 {
@@ -11839,7 +11839,7 @@ uchar3 convert_uchar3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtz(long x)
 {
@@ -11877,7 +11877,7 @@ short3 convert_short3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rte(long x)
 {
@@ -11915,7 +11915,7 @@ short3 convert_short3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtp(long x)
 {
@@ -11953,7 +11953,7 @@ short3 convert_short3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtn(long x)
 {
@@ -11991,7 +11991,7 @@ short3 convert_short3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtz(long x)
 {
@@ -12029,7 +12029,7 @@ ushort3 convert_ushort3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rte(long x)
 {
@@ -12067,7 +12067,7 @@ ushort3 convert_ushort3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtp(long x)
 {
@@ -12105,7 +12105,7 @@ ushort3 convert_ushort3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtn(long x)
 {
@@ -12143,7 +12143,7 @@ ushort3 convert_ushort3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtz(long x)
 {
@@ -12181,7 +12181,7 @@ int3 convert_int3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rte(long x)
 {
@@ -12219,7 +12219,7 @@ int3 convert_int3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtp(long x)
 {
@@ -12257,7 +12257,7 @@ int3 convert_int3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtn(long x)
 {
@@ -12295,7 +12295,7 @@ int3 convert_int3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtz(long x)
 {
@@ -12333,7 +12333,7 @@ uint3 convert_uint3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rte(long x)
 {
@@ -12371,7 +12371,7 @@ uint3 convert_uint3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtp(long x)
 {
@@ -12409,7 +12409,7 @@ uint3 convert_uint3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtn(long x)
 {
@@ -12447,7 +12447,7 @@ uint3 convert_uint3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(long x)
 {
@@ -12485,7 +12485,7 @@ long3 convert_long3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(long x)
 {
@@ -12523,7 +12523,7 @@ long3 convert_long3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(long x)
 {
@@ -12561,7 +12561,7 @@ long3 convert_long3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(long x)
 {
@@ -12599,7 +12599,7 @@ long3 convert_long3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(long x)
 {
@@ -12637,7 +12637,7 @@ ulong3 convert_ulong3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(long x)
 {
@@ -12675,7 +12675,7 @@ ulong3 convert_ulong3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(long x)
 {
@@ -12713,7 +12713,7 @@ ulong3 convert_ulong3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(long x)
 {
@@ -12751,7 +12751,7 @@ ulong3 convert_ulong3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtz(ulong x)
 {
@@ -12789,7 +12789,7 @@ char3 convert_char3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rte(ulong x)
 {
@@ -12827,7 +12827,7 @@ char3 convert_char3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtp(ulong x)
 {
@@ -12865,7 +12865,7 @@ char3 convert_char3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtn(ulong x)
 {
@@ -12903,7 +12903,7 @@ char3 convert_char3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtz(ulong x)
 {
@@ -12941,7 +12941,7 @@ uchar3 convert_uchar3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rte(ulong x)
 {
@@ -12979,7 +12979,7 @@ uchar3 convert_uchar3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtp(ulong x)
 {
@@ -13017,7 +13017,7 @@ uchar3 convert_uchar3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtn(ulong x)
 {
@@ -13055,7 +13055,7 @@ uchar3 convert_uchar3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtz(ulong x)
 {
@@ -13093,7 +13093,7 @@ short3 convert_short3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rte(ulong x)
 {
@@ -13131,7 +13131,7 @@ short3 convert_short3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtp(ulong x)
 {
@@ -13169,7 +13169,7 @@ short3 convert_short3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtn(ulong x)
 {
@@ -13207,7 +13207,7 @@ short3 convert_short3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtz(ulong x)
 {
@@ -13245,7 +13245,7 @@ ushort3 convert_ushort3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rte(ulong x)
 {
@@ -13283,7 +13283,7 @@ ushort3 convert_ushort3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtp(ulong x)
 {
@@ -13321,7 +13321,7 @@ ushort3 convert_ushort3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtn(ulong x)
 {
@@ -13359,7 +13359,7 @@ ushort3 convert_ushort3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtz(ulong x)
 {
@@ -13397,7 +13397,7 @@ int3 convert_int3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rte(ulong x)
 {
@@ -13435,7 +13435,7 @@ int3 convert_int3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtp(ulong x)
 {
@@ -13473,7 +13473,7 @@ int3 convert_int3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtn(ulong x)
 {
@@ -13511,7 +13511,7 @@ int3 convert_int3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtz(ulong x)
 {
@@ -13549,7 +13549,7 @@ uint3 convert_uint3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rte(ulong x)
 {
@@ -13587,7 +13587,7 @@ uint3 convert_uint3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtp(ulong x)
 {
@@ -13625,7 +13625,7 @@ uint3 convert_uint3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtn(ulong x)
 {
@@ -13663,7 +13663,7 @@ uint3 convert_uint3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(ulong x)
 {
@@ -13701,7 +13701,7 @@ long3 convert_long3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(ulong x)
 {
@@ -13739,7 +13739,7 @@ long3 convert_long3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(ulong x)
 {
@@ -13777,7 +13777,7 @@ long3 convert_long3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(ulong x)
 {
@@ -13815,7 +13815,7 @@ long3 convert_long3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(ulong x)
 {
@@ -13853,7 +13853,7 @@ ulong3 convert_ulong3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(ulong x)
 {
@@ -13891,7 +13891,7 @@ ulong3 convert_ulong3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(ulong x)
 {
@@ -13929,7 +13929,7 @@ ulong3 convert_ulong3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(ulong x)
 {
@@ -14202,7 +14202,7 @@ uint16 convert_uint16_sat(char16 x)
   return convert_uint16(x);
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(char x)
 {
@@ -14210,7 +14210,7 @@ long convert_long_sat(char x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(char2 x)
 {
@@ -14218,7 +14218,7 @@ long2 convert_long2_sat(char2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(char3 x)
 {
@@ -14226,7 +14226,7 @@ long3 convert_long3_sat(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(char4 x)
 {
@@ -14234,7 +14234,7 @@ long4 convert_long4_sat(char4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(char8 x)
 {
@@ -14242,7 +14242,7 @@ long8 convert_long8_sat(char8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(char16 x)
 {
@@ -14250,7 +14250,7 @@ long16 convert_long16_sat(char16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(char x)
 {
@@ -14259,7 +14259,7 @@ ulong convert_ulong_sat(char x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(char2 x)
 {
@@ -14268,7 +14268,7 @@ ulong2 convert_ulong2_sat(char2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(char3 x)
 {
@@ -14277,7 +14277,7 @@ ulong3 convert_ulong3_sat(char3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(char4 x)
 {
@@ -14286,7 +14286,7 @@ ulong4 convert_ulong4_sat(char4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(char8 x)
 {
@@ -14295,7 +14295,7 @@ ulong8 convert_ulong8_sat(char8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(char16 x)
 {
@@ -14526,7 +14526,7 @@ uint16 convert_uint16_sat(uchar16 x)
   return convert_uint16(x);
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(uchar x)
 {
@@ -14534,7 +14534,7 @@ long convert_long_sat(uchar x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(uchar2 x)
 {
@@ -14542,7 +14542,7 @@ long2 convert_long2_sat(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(uchar3 x)
 {
@@ -14550,7 +14550,7 @@ long3 convert_long3_sat(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(uchar4 x)
 {
@@ -14558,7 +14558,7 @@ long4 convert_long4_sat(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(uchar8 x)
 {
@@ -14566,7 +14566,7 @@ long8 convert_long8_sat(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(uchar16 x)
 {
@@ -14574,7 +14574,7 @@ long16 convert_long16_sat(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(uchar x)
 {
@@ -14582,7 +14582,7 @@ ulong convert_ulong_sat(uchar x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(uchar2 x)
 {
@@ -14590,7 +14590,7 @@ ulong2 convert_ulong2_sat(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(uchar3 x)
 {
@@ -14598,7 +14598,7 @@ ulong3 convert_ulong3_sat(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(uchar4 x)
 {
@@ -14606,7 +14606,7 @@ ulong4 convert_ulong4_sat(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(uchar8 x)
 {
@@ -14614,7 +14614,7 @@ ulong8 convert_ulong8_sat(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(uchar16 x)
 {
@@ -14862,7 +14862,7 @@ uint16 convert_uint16_sat(short16 x)
   return convert_uint16(x);
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(short x)
 {
@@ -14870,7 +14870,7 @@ long convert_long_sat(short x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(short2 x)
 {
@@ -14878,7 +14878,7 @@ long2 convert_long2_sat(short2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(short3 x)
 {
@@ -14886,7 +14886,7 @@ long3 convert_long3_sat(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(short4 x)
 {
@@ -14894,7 +14894,7 @@ long4 convert_long4_sat(short4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(short8 x)
 {
@@ -14902,7 +14902,7 @@ long8 convert_long8_sat(short8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(short16 x)
 {
@@ -14910,7 +14910,7 @@ long16 convert_long16_sat(short16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(short x)
 {
@@ -14919,7 +14919,7 @@ ulong convert_ulong_sat(short x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(short2 x)
 {
@@ -14928,7 +14928,7 @@ ulong2 convert_ulong2_sat(short2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(short3 x)
 {
@@ -14937,7 +14937,7 @@ ulong3 convert_ulong3_sat(short3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(short4 x)
 {
@@ -14946,7 +14946,7 @@ ulong4 convert_ulong4_sat(short4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(short8 x)
 {
@@ -14955,7 +14955,7 @@ ulong8 convert_ulong8_sat(short8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(short16 x)
 {
@@ -15198,7 +15198,7 @@ uint16 convert_uint16_sat(ushort16 x)
   return convert_uint16(x);
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(ushort x)
 {
@@ -15206,7 +15206,7 @@ long convert_long_sat(ushort x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(ushort2 x)
 {
@@ -15214,7 +15214,7 @@ long2 convert_long2_sat(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(ushort3 x)
 {
@@ -15222,7 +15222,7 @@ long3 convert_long3_sat(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(ushort4 x)
 {
@@ -15230,7 +15230,7 @@ long4 convert_long4_sat(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(ushort8 x)
 {
@@ -15238,7 +15238,7 @@ long8 convert_long8_sat(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(ushort16 x)
 {
@@ -15246,7 +15246,7 @@ long16 convert_long16_sat(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(ushort x)
 {
@@ -15254,7 +15254,7 @@ ulong convert_ulong_sat(ushort x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(ushort2 x)
 {
@@ -15262,7 +15262,7 @@ ulong2 convert_ulong2_sat(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(ushort3 x)
 {
@@ -15270,7 +15270,7 @@ ulong3 convert_ulong3_sat(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(ushort4 x)
 {
@@ -15278,7 +15278,7 @@ ulong4 convert_ulong4_sat(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(ushort8 x)
 {
@@ -15286,7 +15286,7 @@ ulong8 convert_ulong8_sat(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(ushort16 x)
 {
@@ -15540,7 +15540,7 @@ uint16 convert_uint16_sat(int16 x)
   return convert_uint16(x);
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(int x)
 {
@@ -15548,7 +15548,7 @@ long convert_long_sat(int x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(int2 x)
 {
@@ -15556,7 +15556,7 @@ long2 convert_long2_sat(int2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(int3 x)
 {
@@ -15564,7 +15564,7 @@ long3 convert_long3_sat(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(int4 x)
 {
@@ -15572,7 +15572,7 @@ long4 convert_long4_sat(int4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(int8 x)
 {
@@ -15580,7 +15580,7 @@ long8 convert_long8_sat(int8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(int16 x)
 {
@@ -15588,7 +15588,7 @@ long16 convert_long16_sat(int16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(int x)
 {
@@ -15597,7 +15597,7 @@ ulong convert_ulong_sat(int x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(int2 x)
 {
@@ -15606,7 +15606,7 @@ ulong2 convert_ulong2_sat(int2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(int3 x)
 {
@@ -15615,7 +15615,7 @@ ulong3 convert_ulong3_sat(int3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(int4 x)
 {
@@ -15624,7 +15624,7 @@ ulong4 convert_ulong4_sat(int4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(int8 x)
 {
@@ -15633,7 +15633,7 @@ ulong8 convert_ulong8_sat(int8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(int16 x)
 {
@@ -15888,7 +15888,7 @@ uint16 convert_uint16_sat(uint16 x)
   return x;
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(uint x)
 {
@@ -15896,7 +15896,7 @@ long convert_long_sat(uint x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(uint2 x)
 {
@@ -15904,7 +15904,7 @@ long2 convert_long2_sat(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(uint3 x)
 {
@@ -15912,7 +15912,7 @@ long3 convert_long3_sat(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(uint4 x)
 {
@@ -15920,7 +15920,7 @@ long4 convert_long4_sat(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(uint8 x)
 {
@@ -15928,7 +15928,7 @@ long8 convert_long8_sat(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(uint16 x)
 {
@@ -15936,7 +15936,7 @@ long16 convert_long16_sat(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(uint x)
 {
@@ -15944,7 +15944,7 @@ ulong convert_ulong_sat(uint x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(uint2 x)
 {
@@ -15952,7 +15952,7 @@ ulong2 convert_ulong2_sat(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(uint3 x)
 {
@@ -15960,7 +15960,7 @@ ulong3 convert_ulong3_sat(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(uint4 x)
 {
@@ -15968,7 +15968,7 @@ ulong4 convert_ulong4_sat(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(uint8 x)
 {
@@ -15976,7 +15976,7 @@ ulong8 convert_ulong8_sat(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(uint16 x)
 {
@@ -15984,7 +15984,7 @@ ulong16 convert_ulong16_sat(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat(long x)
 {
@@ -15993,7 +15993,7 @@ char convert_char_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat(long2 x)
 {
@@ -16002,7 +16002,7 @@ char2 convert_char2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat(long3 x)
 {
@@ -16011,7 +16011,7 @@ char3 convert_char3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat(long4 x)
 {
@@ -16020,7 +16020,7 @@ char4 convert_char4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat(long8 x)
 {
@@ -16029,7 +16029,7 @@ char8 convert_char8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat(long16 x)
 {
@@ -16038,7 +16038,7 @@ char16 convert_char16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat(long x)
 {
@@ -16047,7 +16047,7 @@ uchar convert_uchar_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat(long2 x)
 {
@@ -16056,7 +16056,7 @@ uchar2 convert_uchar2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat(long3 x)
 {
@@ -16065,7 +16065,7 @@ uchar3 convert_uchar3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat(long4 x)
 {
@@ -16074,7 +16074,7 @@ uchar4 convert_uchar4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat(long8 x)
 {
@@ -16083,7 +16083,7 @@ uchar8 convert_uchar8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat(long16 x)
 {
@@ -16092,7 +16092,7 @@ uchar16 convert_uchar16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat(long x)
 {
@@ -16101,7 +16101,7 @@ short convert_short_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat(long2 x)
 {
@@ -16110,7 +16110,7 @@ short2 convert_short2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat(long3 x)
 {
@@ -16119,7 +16119,7 @@ short3 convert_short3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat(long4 x)
 {
@@ -16128,7 +16128,7 @@ short4 convert_short4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat(long8 x)
 {
@@ -16137,7 +16137,7 @@ short8 convert_short8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat(long16 x)
 {
@@ -16146,7 +16146,7 @@ short16 convert_short16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat(long x)
 {
@@ -16155,7 +16155,7 @@ ushort convert_ushort_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat(long2 x)
 {
@@ -16164,7 +16164,7 @@ ushort2 convert_ushort2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat(long3 x)
 {
@@ -16173,7 +16173,7 @@ ushort3 convert_ushort3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat(long4 x)
 {
@@ -16182,7 +16182,7 @@ ushort4 convert_ushort4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat(long8 x)
 {
@@ -16191,7 +16191,7 @@ ushort8 convert_ushort8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat(long16 x)
 {
@@ -16200,7 +16200,7 @@ ushort16 convert_ushort16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat(long x)
 {
@@ -16209,7 +16209,7 @@ int convert_int_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat(long2 x)
 {
@@ -16218,7 +16218,7 @@ int2 convert_int2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat(long3 x)
 {
@@ -16227,7 +16227,7 @@ int3 convert_int3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat(long4 x)
 {
@@ -16236,7 +16236,7 @@ int4 convert_int4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat(long8 x)
 {
@@ -16245,7 +16245,7 @@ int8 convert_int8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat(long16 x)
 {
@@ -16254,7 +16254,7 @@ int16 convert_int16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat(long x)
 {
@@ -16263,7 +16263,7 @@ uint convert_uint_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat(long2 x)
 {
@@ -16272,7 +16272,7 @@ uint2 convert_uint2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat(long3 x)
 {
@@ -16281,7 +16281,7 @@ uint3 convert_uint3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat(long4 x)
 {
@@ -16290,7 +16290,7 @@ uint4 convert_uint4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat(long8 x)
 {
@@ -16299,7 +16299,7 @@ uint8 convert_uint8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat(long16 x)
 {
@@ -16308,7 +16308,7 @@ uint16 convert_uint16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(long x)
 {
@@ -16316,7 +16316,7 @@ long convert_long_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(long2 x)
 {
@@ -16324,7 +16324,7 @@ long2 convert_long2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(long3 x)
 {
@@ -16332,7 +16332,7 @@ long3 convert_long3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(long4 x)
 {
@@ -16340,7 +16340,7 @@ long4 convert_long4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(long8 x)
 {
@@ -16348,7 +16348,7 @@ long8 convert_long8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(long16 x)
 {
@@ -16356,7 +16356,7 @@ long16 convert_long16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(long x)
 {
@@ -16365,7 +16365,7 @@ ulong convert_ulong_sat(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(long2 x)
 {
@@ -16374,7 +16374,7 @@ ulong2 convert_ulong2_sat(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(long3 x)
 {
@@ -16383,7 +16383,7 @@ ulong3 convert_ulong3_sat(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(long4 x)
 {
@@ -16392,7 +16392,7 @@ ulong4 convert_ulong4_sat(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(long8 x)
 {
@@ -16401,7 +16401,7 @@ ulong8 convert_ulong8_sat(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(long16 x)
 {
@@ -16410,7 +16410,7 @@ ulong16 convert_ulong16_sat(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat(ulong x)
 {
@@ -16419,7 +16419,7 @@ char convert_char_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat(ulong2 x)
 {
@@ -16428,7 +16428,7 @@ char2 convert_char2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat(ulong3 x)
 {
@@ -16437,7 +16437,7 @@ char3 convert_char3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat(ulong4 x)
 {
@@ -16446,7 +16446,7 @@ char4 convert_char4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat(ulong8 x)
 {
@@ -16455,7 +16455,7 @@ char8 convert_char8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat(ulong16 x)
 {
@@ -16464,7 +16464,7 @@ char16 convert_char16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat(ulong x)
 {
@@ -16473,7 +16473,7 @@ uchar convert_uchar_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat(ulong2 x)
 {
@@ -16482,7 +16482,7 @@ uchar2 convert_uchar2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat(ulong3 x)
 {
@@ -16491,7 +16491,7 @@ uchar3 convert_uchar3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat(ulong4 x)
 {
@@ -16500,7 +16500,7 @@ uchar4 convert_uchar4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat(ulong8 x)
 {
@@ -16509,7 +16509,7 @@ uchar8 convert_uchar8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat(ulong16 x)
 {
@@ -16518,7 +16518,7 @@ uchar16 convert_uchar16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat(ulong x)
 {
@@ -16527,7 +16527,7 @@ short convert_short_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat(ulong2 x)
 {
@@ -16536,7 +16536,7 @@ short2 convert_short2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat(ulong3 x)
 {
@@ -16545,7 +16545,7 @@ short3 convert_short3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat(ulong4 x)
 {
@@ -16554,7 +16554,7 @@ short4 convert_short4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat(ulong8 x)
 {
@@ -16563,7 +16563,7 @@ short8 convert_short8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat(ulong16 x)
 {
@@ -16572,7 +16572,7 @@ short16 convert_short16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat(ulong x)
 {
@@ -16581,7 +16581,7 @@ ushort convert_ushort_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat(ulong2 x)
 {
@@ -16590,7 +16590,7 @@ ushort2 convert_ushort2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat(ulong3 x)
 {
@@ -16599,7 +16599,7 @@ ushort3 convert_ushort3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat(ulong4 x)
 {
@@ -16608,7 +16608,7 @@ ushort4 convert_ushort4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat(ulong8 x)
 {
@@ -16617,7 +16617,7 @@ ushort8 convert_ushort8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat(ulong16 x)
 {
@@ -16626,7 +16626,7 @@ ushort16 convert_ushort16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat(ulong x)
 {
@@ -16635,7 +16635,7 @@ int convert_int_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat(ulong2 x)
 {
@@ -16644,7 +16644,7 @@ int2 convert_int2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat(ulong3 x)
 {
@@ -16653,7 +16653,7 @@ int3 convert_int3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat(ulong4 x)
 {
@@ -16662,7 +16662,7 @@ int4 convert_int4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat(ulong8 x)
 {
@@ -16671,7 +16671,7 @@ int8 convert_int8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat(ulong16 x)
 {
@@ -16680,7 +16680,7 @@ int16 convert_int16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat(ulong x)
 {
@@ -16689,7 +16689,7 @@ uint convert_uint_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat(ulong2 x)
 {
@@ -16698,7 +16698,7 @@ uint2 convert_uint2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat(ulong3 x)
 {
@@ -16707,7 +16707,7 @@ uint3 convert_uint3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat(ulong4 x)
 {
@@ -16716,7 +16716,7 @@ uint4 convert_uint4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat(ulong8 x)
 {
@@ -16725,7 +16725,7 @@ uint8 convert_uint8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat(ulong16 x)
 {
@@ -16734,7 +16734,7 @@ uint16 convert_uint16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(ulong x)
 {
@@ -16743,7 +16743,7 @@ long convert_long_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(ulong2 x)
 {
@@ -16752,7 +16752,7 @@ long2 convert_long2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(ulong3 x)
 {
@@ -16761,7 +16761,7 @@ long3 convert_long3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(ulong4 x)
 {
@@ -16770,7 +16770,7 @@ long4 convert_long4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(ulong8 x)
 {
@@ -16779,7 +16779,7 @@ long8 convert_long8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(ulong16 x)
 {
@@ -16788,7 +16788,7 @@ long16 convert_long16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(ulong x)
 {
@@ -16796,7 +16796,7 @@ ulong convert_ulong_sat(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(ulong2 x)
 {
@@ -16804,7 +16804,7 @@ ulong2 convert_ulong2_sat(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(ulong3 x)
 {
@@ -16812,7 +16812,7 @@ ulong3 convert_ulong3_sat(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(ulong4 x)
 {
@@ -16820,7 +16820,7 @@ ulong4 convert_ulong4_sat(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(ulong8 x)
 {
@@ -16828,7 +16828,7 @@ ulong8 convert_ulong8_sat(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(ulong16 x)
 {
@@ -16836,7 +16836,7 @@ ulong16 convert_ulong16_sat(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat(half x)
 {
@@ -16847,7 +16847,7 @@ char convert_char_sat(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat(half2 x)
 {
@@ -16858,7 +16858,7 @@ char2 convert_char2_sat(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat(half3 x)
 {
@@ -16869,7 +16869,7 @@ char3 convert_char3_sat(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat(half4 x)
 {
@@ -16880,7 +16880,7 @@ char4 convert_char4_sat(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat(half8 x)
 {
@@ -16891,7 +16891,7 @@ char8 convert_char8_sat(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat(half16 x)
 {
@@ -16902,7 +16902,7 @@ char16 convert_char16_sat(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat(half x)
 {
@@ -16913,7 +16913,7 @@ uchar convert_uchar_sat(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat(half2 x)
 {
@@ -16924,7 +16924,7 @@ uchar2 convert_uchar2_sat(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat(half3 x)
 {
@@ -16935,7 +16935,7 @@ uchar3 convert_uchar3_sat(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat(half4 x)
 {
@@ -16946,7 +16946,7 @@ uchar4 convert_uchar4_sat(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat(half8 x)
 {
@@ -16957,7 +16957,7 @@ uchar8 convert_uchar8_sat(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat(half16 x)
 {
@@ -16968,7 +16968,7 @@ uchar16 convert_uchar16_sat(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat(half x)
 {
@@ -16979,7 +16979,7 @@ short convert_short_sat(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat(half2 x)
 {
@@ -16990,7 +16990,7 @@ short2 convert_short2_sat(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat(half3 x)
 {
@@ -17001,7 +17001,7 @@ short3 convert_short3_sat(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat(half4 x)
 {
@@ -17012,7 +17012,7 @@ short4 convert_short4_sat(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat(half8 x)
 {
@@ -17023,7 +17023,7 @@ short8 convert_short8_sat(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat(half16 x)
 {
@@ -17034,7 +17034,7 @@ short16 convert_short16_sat(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat(half x)
 {
@@ -17045,7 +17045,7 @@ ushort convert_ushort_sat(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat(half2 x)
 {
@@ -17056,7 +17056,7 @@ ushort2 convert_ushort2_sat(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat(half3 x)
 {
@@ -17067,7 +17067,7 @@ ushort3 convert_ushort3_sat(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat(half4 x)
 {
@@ -17078,7 +17078,7 @@ ushort4 convert_ushort4_sat(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat(half8 x)
 {
@@ -17089,7 +17089,7 @@ ushort8 convert_ushort8_sat(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat(half16 x)
 {
@@ -17100,7 +17100,7 @@ ushort16 convert_ushort16_sat(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat(half x)
 {
@@ -17111,7 +17111,7 @@ int convert_int_sat(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat(half2 x)
 {
@@ -17122,7 +17122,7 @@ int2 convert_int2_sat(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat(half3 x)
 {
@@ -17133,7 +17133,7 @@ int3 convert_int3_sat(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat(half4 x)
 {
@@ -17144,7 +17144,7 @@ int4 convert_int4_sat(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat(half8 x)
 {
@@ -17155,7 +17155,7 @@ int8 convert_int8_sat(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat(half16 x)
 {
@@ -17166,7 +17166,7 @@ int16 convert_int16_sat(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat(half x)
 {
@@ -17177,7 +17177,7 @@ uint convert_uint_sat(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat(half2 x)
 {
@@ -17188,7 +17188,7 @@ uint2 convert_uint2_sat(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat(half3 x)
 {
@@ -17199,7 +17199,7 @@ uint3 convert_uint3_sat(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat(half4 x)
 {
@@ -17210,7 +17210,7 @@ uint4 convert_uint4_sat(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat(half8 x)
 {
@@ -17221,7 +17221,7 @@ uint8 convert_uint8_sat(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat(half16 x)
 {
@@ -17232,7 +17232,7 @@ uint16 convert_uint16_sat(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(half x)
 {
@@ -17243,7 +17243,7 @@ long convert_long_sat(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(half2 x)
 {
@@ -17254,7 +17254,7 @@ long2 convert_long2_sat(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(half3 x)
 {
@@ -17265,7 +17265,7 @@ long3 convert_long3_sat(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(half4 x)
 {
@@ -17276,7 +17276,7 @@ long4 convert_long4_sat(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(half8 x)
 {
@@ -17287,7 +17287,7 @@ long8 convert_long8_sat(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(half16 x)
 {
@@ -17298,7 +17298,7 @@ long16 convert_long16_sat(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(half x)
 {
@@ -17309,7 +17309,7 @@ ulong convert_ulong_sat(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(half2 x)
 {
@@ -17320,7 +17320,7 @@ ulong2 convert_ulong2_sat(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(half3 x)
 {
@@ -17331,7 +17331,7 @@ ulong3 convert_ulong3_sat(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(half4 x)
 {
@@ -17342,7 +17342,7 @@ ulong4 convert_ulong4_sat(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(half8 x)
 {
@@ -17353,7 +17353,7 @@ ulong8 convert_ulong8_sat(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(half16 x)
 {
@@ -17688,7 +17688,7 @@ uint16 convert_uint16_sat(float16 x)
   return y;
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(float x)
 {
@@ -17699,7 +17699,7 @@ long convert_long_sat(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(float2 x)
 {
@@ -17710,7 +17710,7 @@ long2 convert_long2_sat(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(float3 x)
 {
@@ -17721,7 +17721,7 @@ long3 convert_long3_sat(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(float4 x)
 {
@@ -17732,7 +17732,7 @@ long4 convert_long4_sat(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(float8 x)
 {
@@ -17743,7 +17743,7 @@ long8 convert_long8_sat(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(float16 x)
 {
@@ -17754,7 +17754,7 @@ long16 convert_long16_sat(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(float x)
 {
@@ -17765,7 +17765,7 @@ ulong convert_ulong_sat(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(float2 x)
 {
@@ -17776,7 +17776,7 @@ ulong2 convert_ulong2_sat(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(float3 x)
 {
@@ -17787,7 +17787,7 @@ ulong3 convert_ulong3_sat(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(float4 x)
 {
@@ -17798,7 +17798,7 @@ ulong4 convert_ulong4_sat(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(float8 x)
 {
@@ -17809,7 +17809,7 @@ ulong8 convert_ulong8_sat(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(float16 x)
 {
@@ -17820,7 +17820,7 @@ ulong16 convert_ulong16_sat(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat(double x)
 {
@@ -17831,7 +17831,7 @@ char convert_char_sat(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat(double2 x)
 {
@@ -17842,7 +17842,7 @@ char2 convert_char2_sat(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat(double3 x)
 {
@@ -17853,7 +17853,7 @@ char3 convert_char3_sat(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat(double4 x)
 {
@@ -17864,7 +17864,7 @@ char4 convert_char4_sat(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat(double8 x)
 {
@@ -17875,7 +17875,7 @@ char8 convert_char8_sat(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat(double16 x)
 {
@@ -17886,7 +17886,7 @@ char16 convert_char16_sat(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat(double x)
 {
@@ -17897,7 +17897,7 @@ uchar convert_uchar_sat(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat(double2 x)
 {
@@ -17908,7 +17908,7 @@ uchar2 convert_uchar2_sat(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat(double3 x)
 {
@@ -17919,7 +17919,7 @@ uchar3 convert_uchar3_sat(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat(double4 x)
 {
@@ -17930,7 +17930,7 @@ uchar4 convert_uchar4_sat(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat(double8 x)
 {
@@ -17941,7 +17941,7 @@ uchar8 convert_uchar8_sat(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat(double16 x)
 {
@@ -17952,7 +17952,7 @@ uchar16 convert_uchar16_sat(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat(double x)
 {
@@ -17963,7 +17963,7 @@ short convert_short_sat(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat(double2 x)
 {
@@ -17974,7 +17974,7 @@ short2 convert_short2_sat(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat(double3 x)
 {
@@ -17985,7 +17985,7 @@ short3 convert_short3_sat(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat(double4 x)
 {
@@ -17996,7 +17996,7 @@ short4 convert_short4_sat(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat(double8 x)
 {
@@ -18007,7 +18007,7 @@ short8 convert_short8_sat(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat(double16 x)
 {
@@ -18018,7 +18018,7 @@ short16 convert_short16_sat(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat(double x)
 {
@@ -18029,7 +18029,7 @@ ushort convert_ushort_sat(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat(double2 x)
 {
@@ -18040,7 +18040,7 @@ ushort2 convert_ushort2_sat(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat(double3 x)
 {
@@ -18051,7 +18051,7 @@ ushort3 convert_ushort3_sat(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat(double4 x)
 {
@@ -18062,7 +18062,7 @@ ushort4 convert_ushort4_sat(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat(double8 x)
 {
@@ -18073,7 +18073,7 @@ ushort8 convert_ushort8_sat(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat(double16 x)
 {
@@ -18084,7 +18084,7 @@ ushort16 convert_ushort16_sat(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat(double x)
 {
@@ -18095,7 +18095,7 @@ int convert_int_sat(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat(double2 x)
 {
@@ -18106,7 +18106,7 @@ int2 convert_int2_sat(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat(double3 x)
 {
@@ -18117,7 +18117,7 @@ int3 convert_int3_sat(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat(double4 x)
 {
@@ -18128,7 +18128,7 @@ int4 convert_int4_sat(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat(double8 x)
 {
@@ -18139,7 +18139,7 @@ int8 convert_int8_sat(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat(double16 x)
 {
@@ -18150,7 +18150,7 @@ int16 convert_int16_sat(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat(double x)
 {
@@ -18161,7 +18161,7 @@ uint convert_uint_sat(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat(double2 x)
 {
@@ -18172,7 +18172,7 @@ uint2 convert_uint2_sat(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat(double3 x)
 {
@@ -18183,7 +18183,7 @@ uint3 convert_uint3_sat(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat(double4 x)
 {
@@ -18194,7 +18194,7 @@ uint4 convert_uint4_sat(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat(double8 x)
 {
@@ -18205,7 +18205,7 @@ uint8 convert_uint8_sat(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat(double16 x)
 {
@@ -19356,7 +19356,7 @@ uint16 convert_uint16_sat_rtn(char16 x)
 }
 
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(char x)
 {
@@ -19365,7 +19365,7 @@ long convert_long_sat_rtz(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(char x)
 {
@@ -19374,7 +19374,7 @@ long convert_long_sat_rte(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(char x)
 {
@@ -19383,7 +19383,7 @@ long convert_long_sat_rtp(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(char x)
 {
@@ -19392,7 +19392,7 @@ long convert_long_sat_rtn(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(char2 x)
 {
@@ -19401,7 +19401,7 @@ long2 convert_long2_sat_rtz(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(char2 x)
 {
@@ -19410,7 +19410,7 @@ long2 convert_long2_sat_rte(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(char2 x)
 {
@@ -19419,7 +19419,7 @@ long2 convert_long2_sat_rtp(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(char2 x)
 {
@@ -19428,7 +19428,7 @@ long2 convert_long2_sat_rtn(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(char3 x)
 {
@@ -19437,7 +19437,7 @@ long3 convert_long3_sat_rtz(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(char3 x)
 {
@@ -19446,7 +19446,7 @@ long3 convert_long3_sat_rte(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(char3 x)
 {
@@ -19455,7 +19455,7 @@ long3 convert_long3_sat_rtp(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(char3 x)
 {
@@ -19464,7 +19464,7 @@ long3 convert_long3_sat_rtn(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(char4 x)
 {
@@ -19473,7 +19473,7 @@ long4 convert_long4_sat_rtz(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(char4 x)
 {
@@ -19482,7 +19482,7 @@ long4 convert_long4_sat_rte(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(char4 x)
 {
@@ -19491,7 +19491,7 @@ long4 convert_long4_sat_rtp(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(char4 x)
 {
@@ -19500,7 +19500,7 @@ long4 convert_long4_sat_rtn(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(char8 x)
 {
@@ -19509,7 +19509,7 @@ long8 convert_long8_sat_rtz(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(char8 x)
 {
@@ -19518,7 +19518,7 @@ long8 convert_long8_sat_rte(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(char8 x)
 {
@@ -19527,7 +19527,7 @@ long8 convert_long8_sat_rtp(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(char8 x)
 {
@@ -19536,7 +19536,7 @@ long8 convert_long8_sat_rtn(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(char16 x)
 {
@@ -19545,7 +19545,7 @@ long16 convert_long16_sat_rtz(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(char16 x)
 {
@@ -19554,7 +19554,7 @@ long16 convert_long16_sat_rte(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(char16 x)
 {
@@ -19563,7 +19563,7 @@ long16 convert_long16_sat_rtp(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(char16 x)
 {
@@ -19572,7 +19572,7 @@ long16 convert_long16_sat_rtn(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(char x)
 {
@@ -19581,7 +19581,7 @@ ulong convert_ulong_sat_rtz(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(char x)
 {
@@ -19590,7 +19590,7 @@ ulong convert_ulong_sat_rte(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(char x)
 {
@@ -19599,7 +19599,7 @@ ulong convert_ulong_sat_rtp(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(char x)
 {
@@ -19608,7 +19608,7 @@ ulong convert_ulong_sat_rtn(char x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(char2 x)
 {
@@ -19617,7 +19617,7 @@ ulong2 convert_ulong2_sat_rtz(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(char2 x)
 {
@@ -19626,7 +19626,7 @@ ulong2 convert_ulong2_sat_rte(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(char2 x)
 {
@@ -19635,7 +19635,7 @@ ulong2 convert_ulong2_sat_rtp(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(char2 x)
 {
@@ -19644,7 +19644,7 @@ ulong2 convert_ulong2_sat_rtn(char2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(char3 x)
 {
@@ -19653,7 +19653,7 @@ ulong3 convert_ulong3_sat_rtz(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(char3 x)
 {
@@ -19662,7 +19662,7 @@ ulong3 convert_ulong3_sat_rte(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(char3 x)
 {
@@ -19671,7 +19671,7 @@ ulong3 convert_ulong3_sat_rtp(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(char3 x)
 {
@@ -19680,7 +19680,7 @@ ulong3 convert_ulong3_sat_rtn(char3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(char4 x)
 {
@@ -19689,7 +19689,7 @@ ulong4 convert_ulong4_sat_rtz(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(char4 x)
 {
@@ -19698,7 +19698,7 @@ ulong4 convert_ulong4_sat_rte(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(char4 x)
 {
@@ -19707,7 +19707,7 @@ ulong4 convert_ulong4_sat_rtp(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(char4 x)
 {
@@ -19716,7 +19716,7 @@ ulong4 convert_ulong4_sat_rtn(char4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(char8 x)
 {
@@ -19725,7 +19725,7 @@ ulong8 convert_ulong8_sat_rtz(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(char8 x)
 {
@@ -19734,7 +19734,7 @@ ulong8 convert_ulong8_sat_rte(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(char8 x)
 {
@@ -19743,7 +19743,7 @@ ulong8 convert_ulong8_sat_rtp(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(char8 x)
 {
@@ -19752,7 +19752,7 @@ ulong8 convert_ulong8_sat_rtn(char8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(char16 x)
 {
@@ -19761,7 +19761,7 @@ ulong16 convert_ulong16_sat_rtz(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(char16 x)
 {
@@ -19770,7 +19770,7 @@ ulong16 convert_ulong16_sat_rte(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(char16 x)
 {
@@ -19779,7 +19779,7 @@ ulong16 convert_ulong16_sat_rtp(char16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(char16 x)
 {
@@ -20796,7 +20796,7 @@ uint16 convert_uint16_sat_rtn(uchar16 x)
 }
 
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(uchar x)
 {
@@ -20805,7 +20805,7 @@ long convert_long_sat_rtz(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(uchar x)
 {
@@ -20814,7 +20814,7 @@ long convert_long_sat_rte(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(uchar x)
 {
@@ -20823,7 +20823,7 @@ long convert_long_sat_rtp(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(uchar x)
 {
@@ -20832,7 +20832,7 @@ long convert_long_sat_rtn(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(uchar2 x)
 {
@@ -20841,7 +20841,7 @@ long2 convert_long2_sat_rtz(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(uchar2 x)
 {
@@ -20850,7 +20850,7 @@ long2 convert_long2_sat_rte(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(uchar2 x)
 {
@@ -20859,7 +20859,7 @@ long2 convert_long2_sat_rtp(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(uchar2 x)
 {
@@ -20868,7 +20868,7 @@ long2 convert_long2_sat_rtn(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(uchar3 x)
 {
@@ -20877,7 +20877,7 @@ long3 convert_long3_sat_rtz(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(uchar3 x)
 {
@@ -20886,7 +20886,7 @@ long3 convert_long3_sat_rte(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(uchar3 x)
 {
@@ -20895,7 +20895,7 @@ long3 convert_long3_sat_rtp(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(uchar3 x)
 {
@@ -20904,7 +20904,7 @@ long3 convert_long3_sat_rtn(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(uchar4 x)
 {
@@ -20913,7 +20913,7 @@ long4 convert_long4_sat_rtz(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(uchar4 x)
 {
@@ -20922,7 +20922,7 @@ long4 convert_long4_sat_rte(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(uchar4 x)
 {
@@ -20931,7 +20931,7 @@ long4 convert_long4_sat_rtp(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(uchar4 x)
 {
@@ -20940,7 +20940,7 @@ long4 convert_long4_sat_rtn(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(uchar8 x)
 {
@@ -20949,7 +20949,7 @@ long8 convert_long8_sat_rtz(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(uchar8 x)
 {
@@ -20958,7 +20958,7 @@ long8 convert_long8_sat_rte(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(uchar8 x)
 {
@@ -20967,7 +20967,7 @@ long8 convert_long8_sat_rtp(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(uchar8 x)
 {
@@ -20976,7 +20976,7 @@ long8 convert_long8_sat_rtn(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(uchar16 x)
 {
@@ -20985,7 +20985,7 @@ long16 convert_long16_sat_rtz(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(uchar16 x)
 {
@@ -20994,7 +20994,7 @@ long16 convert_long16_sat_rte(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(uchar16 x)
 {
@@ -21003,7 +21003,7 @@ long16 convert_long16_sat_rtp(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(uchar16 x)
 {
@@ -21012,7 +21012,7 @@ long16 convert_long16_sat_rtn(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(uchar x)
 {
@@ -21021,7 +21021,7 @@ ulong convert_ulong_sat_rtz(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(uchar x)
 {
@@ -21030,7 +21030,7 @@ ulong convert_ulong_sat_rte(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(uchar x)
 {
@@ -21039,7 +21039,7 @@ ulong convert_ulong_sat_rtp(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(uchar x)
 {
@@ -21048,7 +21048,7 @@ ulong convert_ulong_sat_rtn(uchar x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(uchar2 x)
 {
@@ -21057,7 +21057,7 @@ ulong2 convert_ulong2_sat_rtz(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(uchar2 x)
 {
@@ -21066,7 +21066,7 @@ ulong2 convert_ulong2_sat_rte(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(uchar2 x)
 {
@@ -21075,7 +21075,7 @@ ulong2 convert_ulong2_sat_rtp(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(uchar2 x)
 {
@@ -21084,7 +21084,7 @@ ulong2 convert_ulong2_sat_rtn(uchar2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(uchar3 x)
 {
@@ -21093,7 +21093,7 @@ ulong3 convert_ulong3_sat_rtz(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(uchar3 x)
 {
@@ -21102,7 +21102,7 @@ ulong3 convert_ulong3_sat_rte(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(uchar3 x)
 {
@@ -21111,7 +21111,7 @@ ulong3 convert_ulong3_sat_rtp(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(uchar3 x)
 {
@@ -21120,7 +21120,7 @@ ulong3 convert_ulong3_sat_rtn(uchar3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(uchar4 x)
 {
@@ -21129,7 +21129,7 @@ ulong4 convert_ulong4_sat_rtz(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(uchar4 x)
 {
@@ -21138,7 +21138,7 @@ ulong4 convert_ulong4_sat_rte(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(uchar4 x)
 {
@@ -21147,7 +21147,7 @@ ulong4 convert_ulong4_sat_rtp(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(uchar4 x)
 {
@@ -21156,7 +21156,7 @@ ulong4 convert_ulong4_sat_rtn(uchar4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(uchar8 x)
 {
@@ -21165,7 +21165,7 @@ ulong8 convert_ulong8_sat_rtz(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(uchar8 x)
 {
@@ -21174,7 +21174,7 @@ ulong8 convert_ulong8_sat_rte(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(uchar8 x)
 {
@@ -21183,7 +21183,7 @@ ulong8 convert_ulong8_sat_rtp(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(uchar8 x)
 {
@@ -21192,7 +21192,7 @@ ulong8 convert_ulong8_sat_rtn(uchar8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(uchar16 x)
 {
@@ -21201,7 +21201,7 @@ ulong16 convert_ulong16_sat_rtz(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(uchar16 x)
 {
@@ -21210,7 +21210,7 @@ ulong16 convert_ulong16_sat_rte(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(uchar16 x)
 {
@@ -21219,7 +21219,7 @@ ulong16 convert_ulong16_sat_rtp(uchar16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(uchar16 x)
 {
@@ -22236,7 +22236,7 @@ uint16 convert_uint16_sat_rtn(short16 x)
 }
 
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(short x)
 {
@@ -22245,7 +22245,7 @@ long convert_long_sat_rtz(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(short x)
 {
@@ -22254,7 +22254,7 @@ long convert_long_sat_rte(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(short x)
 {
@@ -22263,7 +22263,7 @@ long convert_long_sat_rtp(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(short x)
 {
@@ -22272,7 +22272,7 @@ long convert_long_sat_rtn(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(short2 x)
 {
@@ -22281,7 +22281,7 @@ long2 convert_long2_sat_rtz(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(short2 x)
 {
@@ -22290,7 +22290,7 @@ long2 convert_long2_sat_rte(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(short2 x)
 {
@@ -22299,7 +22299,7 @@ long2 convert_long2_sat_rtp(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(short2 x)
 {
@@ -22308,7 +22308,7 @@ long2 convert_long2_sat_rtn(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(short3 x)
 {
@@ -22317,7 +22317,7 @@ long3 convert_long3_sat_rtz(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(short3 x)
 {
@@ -22326,7 +22326,7 @@ long3 convert_long3_sat_rte(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(short3 x)
 {
@@ -22335,7 +22335,7 @@ long3 convert_long3_sat_rtp(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(short3 x)
 {
@@ -22344,7 +22344,7 @@ long3 convert_long3_sat_rtn(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(short4 x)
 {
@@ -22353,7 +22353,7 @@ long4 convert_long4_sat_rtz(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(short4 x)
 {
@@ -22362,7 +22362,7 @@ long4 convert_long4_sat_rte(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(short4 x)
 {
@@ -22371,7 +22371,7 @@ long4 convert_long4_sat_rtp(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(short4 x)
 {
@@ -22380,7 +22380,7 @@ long4 convert_long4_sat_rtn(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(short8 x)
 {
@@ -22389,7 +22389,7 @@ long8 convert_long8_sat_rtz(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(short8 x)
 {
@@ -22398,7 +22398,7 @@ long8 convert_long8_sat_rte(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(short8 x)
 {
@@ -22407,7 +22407,7 @@ long8 convert_long8_sat_rtp(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(short8 x)
 {
@@ -22416,7 +22416,7 @@ long8 convert_long8_sat_rtn(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(short16 x)
 {
@@ -22425,7 +22425,7 @@ long16 convert_long16_sat_rtz(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(short16 x)
 {
@@ -22434,7 +22434,7 @@ long16 convert_long16_sat_rte(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(short16 x)
 {
@@ -22443,7 +22443,7 @@ long16 convert_long16_sat_rtp(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(short16 x)
 {
@@ -22452,7 +22452,7 @@ long16 convert_long16_sat_rtn(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(short x)
 {
@@ -22461,7 +22461,7 @@ ulong convert_ulong_sat_rtz(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(short x)
 {
@@ -22470,7 +22470,7 @@ ulong convert_ulong_sat_rte(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(short x)
 {
@@ -22479,7 +22479,7 @@ ulong convert_ulong_sat_rtp(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(short x)
 {
@@ -22488,7 +22488,7 @@ ulong convert_ulong_sat_rtn(short x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(short2 x)
 {
@@ -22497,7 +22497,7 @@ ulong2 convert_ulong2_sat_rtz(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(short2 x)
 {
@@ -22506,7 +22506,7 @@ ulong2 convert_ulong2_sat_rte(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(short2 x)
 {
@@ -22515,7 +22515,7 @@ ulong2 convert_ulong2_sat_rtp(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(short2 x)
 {
@@ -22524,7 +22524,7 @@ ulong2 convert_ulong2_sat_rtn(short2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(short3 x)
 {
@@ -22533,7 +22533,7 @@ ulong3 convert_ulong3_sat_rtz(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(short3 x)
 {
@@ -22542,7 +22542,7 @@ ulong3 convert_ulong3_sat_rte(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(short3 x)
 {
@@ -22551,7 +22551,7 @@ ulong3 convert_ulong3_sat_rtp(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(short3 x)
 {
@@ -22560,7 +22560,7 @@ ulong3 convert_ulong3_sat_rtn(short3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(short4 x)
 {
@@ -22569,7 +22569,7 @@ ulong4 convert_ulong4_sat_rtz(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(short4 x)
 {
@@ -22578,7 +22578,7 @@ ulong4 convert_ulong4_sat_rte(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(short4 x)
 {
@@ -22587,7 +22587,7 @@ ulong4 convert_ulong4_sat_rtp(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(short4 x)
 {
@@ -22596,7 +22596,7 @@ ulong4 convert_ulong4_sat_rtn(short4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(short8 x)
 {
@@ -22605,7 +22605,7 @@ ulong8 convert_ulong8_sat_rtz(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(short8 x)
 {
@@ -22614,7 +22614,7 @@ ulong8 convert_ulong8_sat_rte(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(short8 x)
 {
@@ -22623,7 +22623,7 @@ ulong8 convert_ulong8_sat_rtp(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(short8 x)
 {
@@ -22632,7 +22632,7 @@ ulong8 convert_ulong8_sat_rtn(short8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(short16 x)
 {
@@ -22641,7 +22641,7 @@ ulong16 convert_ulong16_sat_rtz(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(short16 x)
 {
@@ -22650,7 +22650,7 @@ ulong16 convert_ulong16_sat_rte(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(short16 x)
 {
@@ -22659,7 +22659,7 @@ ulong16 convert_ulong16_sat_rtp(short16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(short16 x)
 {
@@ -23676,7 +23676,7 @@ uint16 convert_uint16_sat_rtn(ushort16 x)
 }
 
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(ushort x)
 {
@@ -23685,7 +23685,7 @@ long convert_long_sat_rtz(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(ushort x)
 {
@@ -23694,7 +23694,7 @@ long convert_long_sat_rte(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(ushort x)
 {
@@ -23703,7 +23703,7 @@ long convert_long_sat_rtp(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(ushort x)
 {
@@ -23712,7 +23712,7 @@ long convert_long_sat_rtn(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(ushort2 x)
 {
@@ -23721,7 +23721,7 @@ long2 convert_long2_sat_rtz(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(ushort2 x)
 {
@@ -23730,7 +23730,7 @@ long2 convert_long2_sat_rte(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(ushort2 x)
 {
@@ -23739,7 +23739,7 @@ long2 convert_long2_sat_rtp(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(ushort2 x)
 {
@@ -23748,7 +23748,7 @@ long2 convert_long2_sat_rtn(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(ushort3 x)
 {
@@ -23757,7 +23757,7 @@ long3 convert_long3_sat_rtz(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(ushort3 x)
 {
@@ -23766,7 +23766,7 @@ long3 convert_long3_sat_rte(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(ushort3 x)
 {
@@ -23775,7 +23775,7 @@ long3 convert_long3_sat_rtp(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(ushort3 x)
 {
@@ -23784,7 +23784,7 @@ long3 convert_long3_sat_rtn(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(ushort4 x)
 {
@@ -23793,7 +23793,7 @@ long4 convert_long4_sat_rtz(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(ushort4 x)
 {
@@ -23802,7 +23802,7 @@ long4 convert_long4_sat_rte(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(ushort4 x)
 {
@@ -23811,7 +23811,7 @@ long4 convert_long4_sat_rtp(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(ushort4 x)
 {
@@ -23820,7 +23820,7 @@ long4 convert_long4_sat_rtn(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(ushort8 x)
 {
@@ -23829,7 +23829,7 @@ long8 convert_long8_sat_rtz(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(ushort8 x)
 {
@@ -23838,7 +23838,7 @@ long8 convert_long8_sat_rte(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(ushort8 x)
 {
@@ -23847,7 +23847,7 @@ long8 convert_long8_sat_rtp(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(ushort8 x)
 {
@@ -23856,7 +23856,7 @@ long8 convert_long8_sat_rtn(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(ushort16 x)
 {
@@ -23865,7 +23865,7 @@ long16 convert_long16_sat_rtz(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(ushort16 x)
 {
@@ -23874,7 +23874,7 @@ long16 convert_long16_sat_rte(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(ushort16 x)
 {
@@ -23883,7 +23883,7 @@ long16 convert_long16_sat_rtp(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(ushort16 x)
 {
@@ -23892,7 +23892,7 @@ long16 convert_long16_sat_rtn(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(ushort x)
 {
@@ -23901,7 +23901,7 @@ ulong convert_ulong_sat_rtz(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(ushort x)
 {
@@ -23910,7 +23910,7 @@ ulong convert_ulong_sat_rte(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(ushort x)
 {
@@ -23919,7 +23919,7 @@ ulong convert_ulong_sat_rtp(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(ushort x)
 {
@@ -23928,7 +23928,7 @@ ulong convert_ulong_sat_rtn(ushort x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(ushort2 x)
 {
@@ -23937,7 +23937,7 @@ ulong2 convert_ulong2_sat_rtz(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(ushort2 x)
 {
@@ -23946,7 +23946,7 @@ ulong2 convert_ulong2_sat_rte(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(ushort2 x)
 {
@@ -23955,7 +23955,7 @@ ulong2 convert_ulong2_sat_rtp(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(ushort2 x)
 {
@@ -23964,7 +23964,7 @@ ulong2 convert_ulong2_sat_rtn(ushort2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(ushort3 x)
 {
@@ -23973,7 +23973,7 @@ ulong3 convert_ulong3_sat_rtz(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(ushort3 x)
 {
@@ -23982,7 +23982,7 @@ ulong3 convert_ulong3_sat_rte(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(ushort3 x)
 {
@@ -23991,7 +23991,7 @@ ulong3 convert_ulong3_sat_rtp(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(ushort3 x)
 {
@@ -24000,7 +24000,7 @@ ulong3 convert_ulong3_sat_rtn(ushort3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(ushort4 x)
 {
@@ -24009,7 +24009,7 @@ ulong4 convert_ulong4_sat_rtz(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(ushort4 x)
 {
@@ -24018,7 +24018,7 @@ ulong4 convert_ulong4_sat_rte(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(ushort4 x)
 {
@@ -24027,7 +24027,7 @@ ulong4 convert_ulong4_sat_rtp(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(ushort4 x)
 {
@@ -24036,7 +24036,7 @@ ulong4 convert_ulong4_sat_rtn(ushort4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(ushort8 x)
 {
@@ -24045,7 +24045,7 @@ ulong8 convert_ulong8_sat_rtz(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(ushort8 x)
 {
@@ -24054,7 +24054,7 @@ ulong8 convert_ulong8_sat_rte(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(ushort8 x)
 {
@@ -24063,7 +24063,7 @@ ulong8 convert_ulong8_sat_rtp(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(ushort8 x)
 {
@@ -24072,7 +24072,7 @@ ulong8 convert_ulong8_sat_rtn(ushort8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(ushort16 x)
 {
@@ -24081,7 +24081,7 @@ ulong16 convert_ulong16_sat_rtz(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(ushort16 x)
 {
@@ -24090,7 +24090,7 @@ ulong16 convert_ulong16_sat_rte(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(ushort16 x)
 {
@@ -24099,7 +24099,7 @@ ulong16 convert_ulong16_sat_rtp(ushort16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(ushort16 x)
 {
@@ -25116,7 +25116,7 @@ uint16 convert_uint16_sat_rtn(int16 x)
 }
 
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(int x)
 {
@@ -25125,7 +25125,7 @@ long convert_long_sat_rtz(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(int x)
 {
@@ -25134,7 +25134,7 @@ long convert_long_sat_rte(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(int x)
 {
@@ -25143,7 +25143,7 @@ long convert_long_sat_rtp(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(int x)
 {
@@ -25152,7 +25152,7 @@ long convert_long_sat_rtn(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(int2 x)
 {
@@ -25161,7 +25161,7 @@ long2 convert_long2_sat_rtz(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(int2 x)
 {
@@ -25170,7 +25170,7 @@ long2 convert_long2_sat_rte(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(int2 x)
 {
@@ -25179,7 +25179,7 @@ long2 convert_long2_sat_rtp(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(int2 x)
 {
@@ -25188,7 +25188,7 @@ long2 convert_long2_sat_rtn(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(int3 x)
 {
@@ -25197,7 +25197,7 @@ long3 convert_long3_sat_rtz(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(int3 x)
 {
@@ -25206,7 +25206,7 @@ long3 convert_long3_sat_rte(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(int3 x)
 {
@@ -25215,7 +25215,7 @@ long3 convert_long3_sat_rtp(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(int3 x)
 {
@@ -25224,7 +25224,7 @@ long3 convert_long3_sat_rtn(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(int4 x)
 {
@@ -25233,7 +25233,7 @@ long4 convert_long4_sat_rtz(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(int4 x)
 {
@@ -25242,7 +25242,7 @@ long4 convert_long4_sat_rte(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(int4 x)
 {
@@ -25251,7 +25251,7 @@ long4 convert_long4_sat_rtp(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(int4 x)
 {
@@ -25260,7 +25260,7 @@ long4 convert_long4_sat_rtn(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(int8 x)
 {
@@ -25269,7 +25269,7 @@ long8 convert_long8_sat_rtz(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(int8 x)
 {
@@ -25278,7 +25278,7 @@ long8 convert_long8_sat_rte(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(int8 x)
 {
@@ -25287,7 +25287,7 @@ long8 convert_long8_sat_rtp(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(int8 x)
 {
@@ -25296,7 +25296,7 @@ long8 convert_long8_sat_rtn(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(int16 x)
 {
@@ -25305,7 +25305,7 @@ long16 convert_long16_sat_rtz(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(int16 x)
 {
@@ -25314,7 +25314,7 @@ long16 convert_long16_sat_rte(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(int16 x)
 {
@@ -25323,7 +25323,7 @@ long16 convert_long16_sat_rtp(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(int16 x)
 {
@@ -25332,7 +25332,7 @@ long16 convert_long16_sat_rtn(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(int x)
 {
@@ -25341,7 +25341,7 @@ ulong convert_ulong_sat_rtz(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(int x)
 {
@@ -25350,7 +25350,7 @@ ulong convert_ulong_sat_rte(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(int x)
 {
@@ -25359,7 +25359,7 @@ ulong convert_ulong_sat_rtp(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(int x)
 {
@@ -25368,7 +25368,7 @@ ulong convert_ulong_sat_rtn(int x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(int2 x)
 {
@@ -25377,7 +25377,7 @@ ulong2 convert_ulong2_sat_rtz(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(int2 x)
 {
@@ -25386,7 +25386,7 @@ ulong2 convert_ulong2_sat_rte(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(int2 x)
 {
@@ -25395,7 +25395,7 @@ ulong2 convert_ulong2_sat_rtp(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(int2 x)
 {
@@ -25404,7 +25404,7 @@ ulong2 convert_ulong2_sat_rtn(int2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(int3 x)
 {
@@ -25413,7 +25413,7 @@ ulong3 convert_ulong3_sat_rtz(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(int3 x)
 {
@@ -25422,7 +25422,7 @@ ulong3 convert_ulong3_sat_rte(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(int3 x)
 {
@@ -25431,7 +25431,7 @@ ulong3 convert_ulong3_sat_rtp(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(int3 x)
 {
@@ -25440,7 +25440,7 @@ ulong3 convert_ulong3_sat_rtn(int3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(int4 x)
 {
@@ -25449,7 +25449,7 @@ ulong4 convert_ulong4_sat_rtz(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(int4 x)
 {
@@ -25458,7 +25458,7 @@ ulong4 convert_ulong4_sat_rte(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(int4 x)
 {
@@ -25467,7 +25467,7 @@ ulong4 convert_ulong4_sat_rtp(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(int4 x)
 {
@@ -25476,7 +25476,7 @@ ulong4 convert_ulong4_sat_rtn(int4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(int8 x)
 {
@@ -25485,7 +25485,7 @@ ulong8 convert_ulong8_sat_rtz(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(int8 x)
 {
@@ -25494,7 +25494,7 @@ ulong8 convert_ulong8_sat_rte(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(int8 x)
 {
@@ -25503,7 +25503,7 @@ ulong8 convert_ulong8_sat_rtp(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(int8 x)
 {
@@ -25512,7 +25512,7 @@ ulong8 convert_ulong8_sat_rtn(int8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(int16 x)
 {
@@ -25521,7 +25521,7 @@ ulong16 convert_ulong16_sat_rtz(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(int16 x)
 {
@@ -25530,7 +25530,7 @@ ulong16 convert_ulong16_sat_rte(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(int16 x)
 {
@@ -25539,7 +25539,7 @@ ulong16 convert_ulong16_sat_rtp(int16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(int16 x)
 {
@@ -26556,7 +26556,7 @@ uint16 convert_uint16_sat_rtn(uint16 x)
 }
 
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(uint x)
 {
@@ -26565,7 +26565,7 @@ long convert_long_sat_rtz(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(uint x)
 {
@@ -26574,7 +26574,7 @@ long convert_long_sat_rte(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(uint x)
 {
@@ -26583,7 +26583,7 @@ long convert_long_sat_rtp(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(uint x)
 {
@@ -26592,7 +26592,7 @@ long convert_long_sat_rtn(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(uint2 x)
 {
@@ -26601,7 +26601,7 @@ long2 convert_long2_sat_rtz(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(uint2 x)
 {
@@ -26610,7 +26610,7 @@ long2 convert_long2_sat_rte(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(uint2 x)
 {
@@ -26619,7 +26619,7 @@ long2 convert_long2_sat_rtp(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(uint2 x)
 {
@@ -26628,7 +26628,7 @@ long2 convert_long2_sat_rtn(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(uint3 x)
 {
@@ -26637,7 +26637,7 @@ long3 convert_long3_sat_rtz(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(uint3 x)
 {
@@ -26646,7 +26646,7 @@ long3 convert_long3_sat_rte(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(uint3 x)
 {
@@ -26655,7 +26655,7 @@ long3 convert_long3_sat_rtp(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(uint3 x)
 {
@@ -26664,7 +26664,7 @@ long3 convert_long3_sat_rtn(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(uint4 x)
 {
@@ -26673,7 +26673,7 @@ long4 convert_long4_sat_rtz(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(uint4 x)
 {
@@ -26682,7 +26682,7 @@ long4 convert_long4_sat_rte(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(uint4 x)
 {
@@ -26691,7 +26691,7 @@ long4 convert_long4_sat_rtp(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(uint4 x)
 {
@@ -26700,7 +26700,7 @@ long4 convert_long4_sat_rtn(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(uint8 x)
 {
@@ -26709,7 +26709,7 @@ long8 convert_long8_sat_rtz(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(uint8 x)
 {
@@ -26718,7 +26718,7 @@ long8 convert_long8_sat_rte(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(uint8 x)
 {
@@ -26727,7 +26727,7 @@ long8 convert_long8_sat_rtp(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(uint8 x)
 {
@@ -26736,7 +26736,7 @@ long8 convert_long8_sat_rtn(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(uint16 x)
 {
@@ -26745,7 +26745,7 @@ long16 convert_long16_sat_rtz(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(uint16 x)
 {
@@ -26754,7 +26754,7 @@ long16 convert_long16_sat_rte(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(uint16 x)
 {
@@ -26763,7 +26763,7 @@ long16 convert_long16_sat_rtp(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(uint16 x)
 {
@@ -26772,7 +26772,7 @@ long16 convert_long16_sat_rtn(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(uint x)
 {
@@ -26781,7 +26781,7 @@ ulong convert_ulong_sat_rtz(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(uint x)
 {
@@ -26790,7 +26790,7 @@ ulong convert_ulong_sat_rte(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(uint x)
 {
@@ -26799,7 +26799,7 @@ ulong convert_ulong_sat_rtp(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(uint x)
 {
@@ -26808,7 +26808,7 @@ ulong convert_ulong_sat_rtn(uint x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(uint2 x)
 {
@@ -26817,7 +26817,7 @@ ulong2 convert_ulong2_sat_rtz(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(uint2 x)
 {
@@ -26826,7 +26826,7 @@ ulong2 convert_ulong2_sat_rte(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(uint2 x)
 {
@@ -26835,7 +26835,7 @@ ulong2 convert_ulong2_sat_rtp(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(uint2 x)
 {
@@ -26844,7 +26844,7 @@ ulong2 convert_ulong2_sat_rtn(uint2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(uint3 x)
 {
@@ -26853,7 +26853,7 @@ ulong3 convert_ulong3_sat_rtz(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(uint3 x)
 {
@@ -26862,7 +26862,7 @@ ulong3 convert_ulong3_sat_rte(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(uint3 x)
 {
@@ -26871,7 +26871,7 @@ ulong3 convert_ulong3_sat_rtp(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(uint3 x)
 {
@@ -26880,7 +26880,7 @@ ulong3 convert_ulong3_sat_rtn(uint3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(uint4 x)
 {
@@ -26889,7 +26889,7 @@ ulong4 convert_ulong4_sat_rtz(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(uint4 x)
 {
@@ -26898,7 +26898,7 @@ ulong4 convert_ulong4_sat_rte(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(uint4 x)
 {
@@ -26907,7 +26907,7 @@ ulong4 convert_ulong4_sat_rtp(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(uint4 x)
 {
@@ -26916,7 +26916,7 @@ ulong4 convert_ulong4_sat_rtn(uint4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(uint8 x)
 {
@@ -26925,7 +26925,7 @@ ulong8 convert_ulong8_sat_rtz(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(uint8 x)
 {
@@ -26934,7 +26934,7 @@ ulong8 convert_ulong8_sat_rte(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(uint8 x)
 {
@@ -26943,7 +26943,7 @@ ulong8 convert_ulong8_sat_rtp(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(uint8 x)
 {
@@ -26952,7 +26952,7 @@ ulong8 convert_ulong8_sat_rtn(uint8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(uint16 x)
 {
@@ -26961,7 +26961,7 @@ ulong16 convert_ulong16_sat_rtz(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(uint16 x)
 {
@@ -26970,7 +26970,7 @@ ulong16 convert_ulong16_sat_rte(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(uint16 x)
 {
@@ -26979,7 +26979,7 @@ ulong16 convert_ulong16_sat_rtp(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(uint16 x)
 {
@@ -26988,7 +26988,7 @@ ulong16 convert_ulong16_sat_rtn(uint16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtz(long x)
 {
@@ -26997,7 +26997,7 @@ char convert_char_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rte(long x)
 {
@@ -27006,7 +27006,7 @@ char convert_char_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtp(long x)
 {
@@ -27015,7 +27015,7 @@ char convert_char_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtn(long x)
 {
@@ -27024,7 +27024,7 @@ char convert_char_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtz(long2 x)
 {
@@ -27033,7 +27033,7 @@ char2 convert_char2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rte(long2 x)
 {
@@ -27042,7 +27042,7 @@ char2 convert_char2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtp(long2 x)
 {
@@ -27051,7 +27051,7 @@ char2 convert_char2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtn(long2 x)
 {
@@ -27060,7 +27060,7 @@ char2 convert_char2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtz(long3 x)
 {
@@ -27069,7 +27069,7 @@ char3 convert_char3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rte(long3 x)
 {
@@ -27078,7 +27078,7 @@ char3 convert_char3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtp(long3 x)
 {
@@ -27087,7 +27087,7 @@ char3 convert_char3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtn(long3 x)
 {
@@ -27096,7 +27096,7 @@ char3 convert_char3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtz(long4 x)
 {
@@ -27105,7 +27105,7 @@ char4 convert_char4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rte(long4 x)
 {
@@ -27114,7 +27114,7 @@ char4 convert_char4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtp(long4 x)
 {
@@ -27123,7 +27123,7 @@ char4 convert_char4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtn(long4 x)
 {
@@ -27132,7 +27132,7 @@ char4 convert_char4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtz(long8 x)
 {
@@ -27141,7 +27141,7 @@ char8 convert_char8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rte(long8 x)
 {
@@ -27150,7 +27150,7 @@ char8 convert_char8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtp(long8 x)
 {
@@ -27159,7 +27159,7 @@ char8 convert_char8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtn(long8 x)
 {
@@ -27168,7 +27168,7 @@ char8 convert_char8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtz(long16 x)
 {
@@ -27177,7 +27177,7 @@ char16 convert_char16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rte(long16 x)
 {
@@ -27186,7 +27186,7 @@ char16 convert_char16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtp(long16 x)
 {
@@ -27195,7 +27195,7 @@ char16 convert_char16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtn(long16 x)
 {
@@ -27204,7 +27204,7 @@ char16 convert_char16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtz(long x)
 {
@@ -27213,7 +27213,7 @@ uchar convert_uchar_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rte(long x)
 {
@@ -27222,7 +27222,7 @@ uchar convert_uchar_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtp(long x)
 {
@@ -27231,7 +27231,7 @@ uchar convert_uchar_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtn(long x)
 {
@@ -27240,7 +27240,7 @@ uchar convert_uchar_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtz(long2 x)
 {
@@ -27249,7 +27249,7 @@ uchar2 convert_uchar2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rte(long2 x)
 {
@@ -27258,7 +27258,7 @@ uchar2 convert_uchar2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtp(long2 x)
 {
@@ -27267,7 +27267,7 @@ uchar2 convert_uchar2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtn(long2 x)
 {
@@ -27276,7 +27276,7 @@ uchar2 convert_uchar2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtz(long3 x)
 {
@@ -27285,7 +27285,7 @@ uchar3 convert_uchar3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rte(long3 x)
 {
@@ -27294,7 +27294,7 @@ uchar3 convert_uchar3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtp(long3 x)
 {
@@ -27303,7 +27303,7 @@ uchar3 convert_uchar3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtn(long3 x)
 {
@@ -27312,7 +27312,7 @@ uchar3 convert_uchar3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtz(long4 x)
 {
@@ -27321,7 +27321,7 @@ uchar4 convert_uchar4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rte(long4 x)
 {
@@ -27330,7 +27330,7 @@ uchar4 convert_uchar4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtp(long4 x)
 {
@@ -27339,7 +27339,7 @@ uchar4 convert_uchar4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtn(long4 x)
 {
@@ -27348,7 +27348,7 @@ uchar4 convert_uchar4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtz(long8 x)
 {
@@ -27357,7 +27357,7 @@ uchar8 convert_uchar8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rte(long8 x)
 {
@@ -27366,7 +27366,7 @@ uchar8 convert_uchar8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtp(long8 x)
 {
@@ -27375,7 +27375,7 @@ uchar8 convert_uchar8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtn(long8 x)
 {
@@ -27384,7 +27384,7 @@ uchar8 convert_uchar8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtz(long16 x)
 {
@@ -27393,7 +27393,7 @@ uchar16 convert_uchar16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rte(long16 x)
 {
@@ -27402,7 +27402,7 @@ uchar16 convert_uchar16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtp(long16 x)
 {
@@ -27411,7 +27411,7 @@ uchar16 convert_uchar16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtn(long16 x)
 {
@@ -27420,7 +27420,7 @@ uchar16 convert_uchar16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtz(long x)
 {
@@ -27429,7 +27429,7 @@ short convert_short_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rte(long x)
 {
@@ -27438,7 +27438,7 @@ short convert_short_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtp(long x)
 {
@@ -27447,7 +27447,7 @@ short convert_short_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtn(long x)
 {
@@ -27456,7 +27456,7 @@ short convert_short_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtz(long2 x)
 {
@@ -27465,7 +27465,7 @@ short2 convert_short2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rte(long2 x)
 {
@@ -27474,7 +27474,7 @@ short2 convert_short2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtp(long2 x)
 {
@@ -27483,7 +27483,7 @@ short2 convert_short2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtn(long2 x)
 {
@@ -27492,7 +27492,7 @@ short2 convert_short2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtz(long3 x)
 {
@@ -27501,7 +27501,7 @@ short3 convert_short3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rte(long3 x)
 {
@@ -27510,7 +27510,7 @@ short3 convert_short3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtp(long3 x)
 {
@@ -27519,7 +27519,7 @@ short3 convert_short3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtn(long3 x)
 {
@@ -27528,7 +27528,7 @@ short3 convert_short3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtz(long4 x)
 {
@@ -27537,7 +27537,7 @@ short4 convert_short4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rte(long4 x)
 {
@@ -27546,7 +27546,7 @@ short4 convert_short4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtp(long4 x)
 {
@@ -27555,7 +27555,7 @@ short4 convert_short4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtn(long4 x)
 {
@@ -27564,7 +27564,7 @@ short4 convert_short4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtz(long8 x)
 {
@@ -27573,7 +27573,7 @@ short8 convert_short8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rte(long8 x)
 {
@@ -27582,7 +27582,7 @@ short8 convert_short8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtp(long8 x)
 {
@@ -27591,7 +27591,7 @@ short8 convert_short8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtn(long8 x)
 {
@@ -27600,7 +27600,7 @@ short8 convert_short8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtz(long16 x)
 {
@@ -27609,7 +27609,7 @@ short16 convert_short16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rte(long16 x)
 {
@@ -27618,7 +27618,7 @@ short16 convert_short16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtp(long16 x)
 {
@@ -27627,7 +27627,7 @@ short16 convert_short16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtn(long16 x)
 {
@@ -27636,7 +27636,7 @@ short16 convert_short16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtz(long x)
 {
@@ -27645,7 +27645,7 @@ ushort convert_ushort_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rte(long x)
 {
@@ -27654,7 +27654,7 @@ ushort convert_ushort_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtp(long x)
 {
@@ -27663,7 +27663,7 @@ ushort convert_ushort_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtn(long x)
 {
@@ -27672,7 +27672,7 @@ ushort convert_ushort_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtz(long2 x)
 {
@@ -27681,7 +27681,7 @@ ushort2 convert_ushort2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rte(long2 x)
 {
@@ -27690,7 +27690,7 @@ ushort2 convert_ushort2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtp(long2 x)
 {
@@ -27699,7 +27699,7 @@ ushort2 convert_ushort2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtn(long2 x)
 {
@@ -27708,7 +27708,7 @@ ushort2 convert_ushort2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtz(long3 x)
 {
@@ -27717,7 +27717,7 @@ ushort3 convert_ushort3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rte(long3 x)
 {
@@ -27726,7 +27726,7 @@ ushort3 convert_ushort3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtp(long3 x)
 {
@@ -27735,7 +27735,7 @@ ushort3 convert_ushort3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtn(long3 x)
 {
@@ -27744,7 +27744,7 @@ ushort3 convert_ushort3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtz(long4 x)
 {
@@ -27753,7 +27753,7 @@ ushort4 convert_ushort4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rte(long4 x)
 {
@@ -27762,7 +27762,7 @@ ushort4 convert_ushort4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtp(long4 x)
 {
@@ -27771,7 +27771,7 @@ ushort4 convert_ushort4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtn(long4 x)
 {
@@ -27780,7 +27780,7 @@ ushort4 convert_ushort4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtz(long8 x)
 {
@@ -27789,7 +27789,7 @@ ushort8 convert_ushort8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rte(long8 x)
 {
@@ -27798,7 +27798,7 @@ ushort8 convert_ushort8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtp(long8 x)
 {
@@ -27807,7 +27807,7 @@ ushort8 convert_ushort8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtn(long8 x)
 {
@@ -27816,7 +27816,7 @@ ushort8 convert_ushort8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtz(long16 x)
 {
@@ -27825,7 +27825,7 @@ ushort16 convert_ushort16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rte(long16 x)
 {
@@ -27834,7 +27834,7 @@ ushort16 convert_ushort16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtp(long16 x)
 {
@@ -27843,7 +27843,7 @@ ushort16 convert_ushort16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtn(long16 x)
 {
@@ -27852,7 +27852,7 @@ ushort16 convert_ushort16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtz(long x)
 {
@@ -27861,7 +27861,7 @@ int convert_int_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rte(long x)
 {
@@ -27870,7 +27870,7 @@ int convert_int_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtp(long x)
 {
@@ -27879,7 +27879,7 @@ int convert_int_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtn(long x)
 {
@@ -27888,7 +27888,7 @@ int convert_int_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtz(long2 x)
 {
@@ -27897,7 +27897,7 @@ int2 convert_int2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rte(long2 x)
 {
@@ -27906,7 +27906,7 @@ int2 convert_int2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtp(long2 x)
 {
@@ -27915,7 +27915,7 @@ int2 convert_int2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtn(long2 x)
 {
@@ -27924,7 +27924,7 @@ int2 convert_int2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtz(long3 x)
 {
@@ -27933,7 +27933,7 @@ int3 convert_int3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rte(long3 x)
 {
@@ -27942,7 +27942,7 @@ int3 convert_int3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtp(long3 x)
 {
@@ -27951,7 +27951,7 @@ int3 convert_int3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtn(long3 x)
 {
@@ -27960,7 +27960,7 @@ int3 convert_int3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtz(long4 x)
 {
@@ -27969,7 +27969,7 @@ int4 convert_int4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rte(long4 x)
 {
@@ -27978,7 +27978,7 @@ int4 convert_int4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtp(long4 x)
 {
@@ -27987,7 +27987,7 @@ int4 convert_int4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtn(long4 x)
 {
@@ -27996,7 +27996,7 @@ int4 convert_int4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtz(long8 x)
 {
@@ -28005,7 +28005,7 @@ int8 convert_int8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rte(long8 x)
 {
@@ -28014,7 +28014,7 @@ int8 convert_int8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtp(long8 x)
 {
@@ -28023,7 +28023,7 @@ int8 convert_int8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtn(long8 x)
 {
@@ -28032,7 +28032,7 @@ int8 convert_int8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtz(long16 x)
 {
@@ -28041,7 +28041,7 @@ int16 convert_int16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rte(long16 x)
 {
@@ -28050,7 +28050,7 @@ int16 convert_int16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtp(long16 x)
 {
@@ -28059,7 +28059,7 @@ int16 convert_int16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtn(long16 x)
 {
@@ -28068,7 +28068,7 @@ int16 convert_int16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtz(long x)
 {
@@ -28077,7 +28077,7 @@ uint convert_uint_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rte(long x)
 {
@@ -28086,7 +28086,7 @@ uint convert_uint_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtp(long x)
 {
@@ -28095,7 +28095,7 @@ uint convert_uint_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtn(long x)
 {
@@ -28104,7 +28104,7 @@ uint convert_uint_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtz(long2 x)
 {
@@ -28113,7 +28113,7 @@ uint2 convert_uint2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rte(long2 x)
 {
@@ -28122,7 +28122,7 @@ uint2 convert_uint2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtp(long2 x)
 {
@@ -28131,7 +28131,7 @@ uint2 convert_uint2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtn(long2 x)
 {
@@ -28140,7 +28140,7 @@ uint2 convert_uint2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtz(long3 x)
 {
@@ -28149,7 +28149,7 @@ uint3 convert_uint3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rte(long3 x)
 {
@@ -28158,7 +28158,7 @@ uint3 convert_uint3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtp(long3 x)
 {
@@ -28167,7 +28167,7 @@ uint3 convert_uint3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtn(long3 x)
 {
@@ -28176,7 +28176,7 @@ uint3 convert_uint3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtz(long4 x)
 {
@@ -28185,7 +28185,7 @@ uint4 convert_uint4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rte(long4 x)
 {
@@ -28194,7 +28194,7 @@ uint4 convert_uint4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtp(long4 x)
 {
@@ -28203,7 +28203,7 @@ uint4 convert_uint4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtn(long4 x)
 {
@@ -28212,7 +28212,7 @@ uint4 convert_uint4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtz(long8 x)
 {
@@ -28221,7 +28221,7 @@ uint8 convert_uint8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rte(long8 x)
 {
@@ -28230,7 +28230,7 @@ uint8 convert_uint8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtp(long8 x)
 {
@@ -28239,7 +28239,7 @@ uint8 convert_uint8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtn(long8 x)
 {
@@ -28248,7 +28248,7 @@ uint8 convert_uint8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtz(long16 x)
 {
@@ -28257,7 +28257,7 @@ uint16 convert_uint16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rte(long16 x)
 {
@@ -28266,7 +28266,7 @@ uint16 convert_uint16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtp(long16 x)
 {
@@ -28275,7 +28275,7 @@ uint16 convert_uint16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtn(long16 x)
 {
@@ -28284,7 +28284,7 @@ uint16 convert_uint16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(long x)
 {
@@ -28293,7 +28293,7 @@ long convert_long_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(long x)
 {
@@ -28302,7 +28302,7 @@ long convert_long_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(long x)
 {
@@ -28311,7 +28311,7 @@ long convert_long_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(long x)
 {
@@ -28320,7 +28320,7 @@ long convert_long_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(long2 x)
 {
@@ -28329,7 +28329,7 @@ long2 convert_long2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(long2 x)
 {
@@ -28338,7 +28338,7 @@ long2 convert_long2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(long2 x)
 {
@@ -28347,7 +28347,7 @@ long2 convert_long2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(long2 x)
 {
@@ -28356,7 +28356,7 @@ long2 convert_long2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(long3 x)
 {
@@ -28365,7 +28365,7 @@ long3 convert_long3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(long3 x)
 {
@@ -28374,7 +28374,7 @@ long3 convert_long3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(long3 x)
 {
@@ -28383,7 +28383,7 @@ long3 convert_long3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(long3 x)
 {
@@ -28392,7 +28392,7 @@ long3 convert_long3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(long4 x)
 {
@@ -28401,7 +28401,7 @@ long4 convert_long4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(long4 x)
 {
@@ -28410,7 +28410,7 @@ long4 convert_long4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(long4 x)
 {
@@ -28419,7 +28419,7 @@ long4 convert_long4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(long4 x)
 {
@@ -28428,7 +28428,7 @@ long4 convert_long4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(long8 x)
 {
@@ -28437,7 +28437,7 @@ long8 convert_long8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(long8 x)
 {
@@ -28446,7 +28446,7 @@ long8 convert_long8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(long8 x)
 {
@@ -28455,7 +28455,7 @@ long8 convert_long8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(long8 x)
 {
@@ -28464,7 +28464,7 @@ long8 convert_long8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(long16 x)
 {
@@ -28473,7 +28473,7 @@ long16 convert_long16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(long16 x)
 {
@@ -28482,7 +28482,7 @@ long16 convert_long16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(long16 x)
 {
@@ -28491,7 +28491,7 @@ long16 convert_long16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(long16 x)
 {
@@ -28500,7 +28500,7 @@ long16 convert_long16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(long x)
 {
@@ -28509,7 +28509,7 @@ ulong convert_ulong_sat_rtz(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(long x)
 {
@@ -28518,7 +28518,7 @@ ulong convert_ulong_sat_rte(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(long x)
 {
@@ -28527,7 +28527,7 @@ ulong convert_ulong_sat_rtp(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(long x)
 {
@@ -28536,7 +28536,7 @@ ulong convert_ulong_sat_rtn(long x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(long2 x)
 {
@@ -28545,7 +28545,7 @@ ulong2 convert_ulong2_sat_rtz(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(long2 x)
 {
@@ -28554,7 +28554,7 @@ ulong2 convert_ulong2_sat_rte(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(long2 x)
 {
@@ -28563,7 +28563,7 @@ ulong2 convert_ulong2_sat_rtp(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(long2 x)
 {
@@ -28572,7 +28572,7 @@ ulong2 convert_ulong2_sat_rtn(long2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(long3 x)
 {
@@ -28581,7 +28581,7 @@ ulong3 convert_ulong3_sat_rtz(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(long3 x)
 {
@@ -28590,7 +28590,7 @@ ulong3 convert_ulong3_sat_rte(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(long3 x)
 {
@@ -28599,7 +28599,7 @@ ulong3 convert_ulong3_sat_rtp(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(long3 x)
 {
@@ -28608,7 +28608,7 @@ ulong3 convert_ulong3_sat_rtn(long3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(long4 x)
 {
@@ -28617,7 +28617,7 @@ ulong4 convert_ulong4_sat_rtz(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(long4 x)
 {
@@ -28626,7 +28626,7 @@ ulong4 convert_ulong4_sat_rte(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(long4 x)
 {
@@ -28635,7 +28635,7 @@ ulong4 convert_ulong4_sat_rtp(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(long4 x)
 {
@@ -28644,7 +28644,7 @@ ulong4 convert_ulong4_sat_rtn(long4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(long8 x)
 {
@@ -28653,7 +28653,7 @@ ulong8 convert_ulong8_sat_rtz(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(long8 x)
 {
@@ -28662,7 +28662,7 @@ ulong8 convert_ulong8_sat_rte(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(long8 x)
 {
@@ -28671,7 +28671,7 @@ ulong8 convert_ulong8_sat_rtp(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(long8 x)
 {
@@ -28680,7 +28680,7 @@ ulong8 convert_ulong8_sat_rtn(long8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(long16 x)
 {
@@ -28689,7 +28689,7 @@ ulong16 convert_ulong16_sat_rtz(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(long16 x)
 {
@@ -28698,7 +28698,7 @@ ulong16 convert_ulong16_sat_rte(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(long16 x)
 {
@@ -28707,7 +28707,7 @@ ulong16 convert_ulong16_sat_rtp(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(long16 x)
 {
@@ -28716,7 +28716,7 @@ ulong16 convert_ulong16_sat_rtn(long16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtz(ulong x)
 {
@@ -28725,7 +28725,7 @@ char convert_char_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rte(ulong x)
 {
@@ -28734,7 +28734,7 @@ char convert_char_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtp(ulong x)
 {
@@ -28743,7 +28743,7 @@ char convert_char_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtn(ulong x)
 {
@@ -28752,7 +28752,7 @@ char convert_char_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtz(ulong2 x)
 {
@@ -28761,7 +28761,7 @@ char2 convert_char2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rte(ulong2 x)
 {
@@ -28770,7 +28770,7 @@ char2 convert_char2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtp(ulong2 x)
 {
@@ -28779,7 +28779,7 @@ char2 convert_char2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtn(ulong2 x)
 {
@@ -28788,7 +28788,7 @@ char2 convert_char2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtz(ulong3 x)
 {
@@ -28797,7 +28797,7 @@ char3 convert_char3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rte(ulong3 x)
 {
@@ -28806,7 +28806,7 @@ char3 convert_char3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtp(ulong3 x)
 {
@@ -28815,7 +28815,7 @@ char3 convert_char3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtn(ulong3 x)
 {
@@ -28824,7 +28824,7 @@ char3 convert_char3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtz(ulong4 x)
 {
@@ -28833,7 +28833,7 @@ char4 convert_char4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rte(ulong4 x)
 {
@@ -28842,7 +28842,7 @@ char4 convert_char4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtp(ulong4 x)
 {
@@ -28851,7 +28851,7 @@ char4 convert_char4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtn(ulong4 x)
 {
@@ -28860,7 +28860,7 @@ char4 convert_char4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtz(ulong8 x)
 {
@@ -28869,7 +28869,7 @@ char8 convert_char8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rte(ulong8 x)
 {
@@ -28878,7 +28878,7 @@ char8 convert_char8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtp(ulong8 x)
 {
@@ -28887,7 +28887,7 @@ char8 convert_char8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtn(ulong8 x)
 {
@@ -28896,7 +28896,7 @@ char8 convert_char8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtz(ulong16 x)
 {
@@ -28905,7 +28905,7 @@ char16 convert_char16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rte(ulong16 x)
 {
@@ -28914,7 +28914,7 @@ char16 convert_char16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtp(ulong16 x)
 {
@@ -28923,7 +28923,7 @@ char16 convert_char16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtn(ulong16 x)
 {
@@ -28932,7 +28932,7 @@ char16 convert_char16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtz(ulong x)
 {
@@ -28941,7 +28941,7 @@ uchar convert_uchar_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rte(ulong x)
 {
@@ -28950,7 +28950,7 @@ uchar convert_uchar_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtp(ulong x)
 {
@@ -28959,7 +28959,7 @@ uchar convert_uchar_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtn(ulong x)
 {
@@ -28968,7 +28968,7 @@ uchar convert_uchar_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtz(ulong2 x)
 {
@@ -28977,7 +28977,7 @@ uchar2 convert_uchar2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rte(ulong2 x)
 {
@@ -28986,7 +28986,7 @@ uchar2 convert_uchar2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtp(ulong2 x)
 {
@@ -28995,7 +28995,7 @@ uchar2 convert_uchar2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtn(ulong2 x)
 {
@@ -29004,7 +29004,7 @@ uchar2 convert_uchar2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtz(ulong3 x)
 {
@@ -29013,7 +29013,7 @@ uchar3 convert_uchar3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rte(ulong3 x)
 {
@@ -29022,7 +29022,7 @@ uchar3 convert_uchar3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtp(ulong3 x)
 {
@@ -29031,7 +29031,7 @@ uchar3 convert_uchar3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtn(ulong3 x)
 {
@@ -29040,7 +29040,7 @@ uchar3 convert_uchar3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtz(ulong4 x)
 {
@@ -29049,7 +29049,7 @@ uchar4 convert_uchar4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rte(ulong4 x)
 {
@@ -29058,7 +29058,7 @@ uchar4 convert_uchar4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtp(ulong4 x)
 {
@@ -29067,7 +29067,7 @@ uchar4 convert_uchar4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtn(ulong4 x)
 {
@@ -29076,7 +29076,7 @@ uchar4 convert_uchar4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtz(ulong8 x)
 {
@@ -29085,7 +29085,7 @@ uchar8 convert_uchar8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rte(ulong8 x)
 {
@@ -29094,7 +29094,7 @@ uchar8 convert_uchar8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtp(ulong8 x)
 {
@@ -29103,7 +29103,7 @@ uchar8 convert_uchar8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtn(ulong8 x)
 {
@@ -29112,7 +29112,7 @@ uchar8 convert_uchar8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtz(ulong16 x)
 {
@@ -29121,7 +29121,7 @@ uchar16 convert_uchar16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rte(ulong16 x)
 {
@@ -29130,7 +29130,7 @@ uchar16 convert_uchar16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtp(ulong16 x)
 {
@@ -29139,7 +29139,7 @@ uchar16 convert_uchar16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtn(ulong16 x)
 {
@@ -29148,7 +29148,7 @@ uchar16 convert_uchar16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtz(ulong x)
 {
@@ -29157,7 +29157,7 @@ short convert_short_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rte(ulong x)
 {
@@ -29166,7 +29166,7 @@ short convert_short_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtp(ulong x)
 {
@@ -29175,7 +29175,7 @@ short convert_short_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtn(ulong x)
 {
@@ -29184,7 +29184,7 @@ short convert_short_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtz(ulong2 x)
 {
@@ -29193,7 +29193,7 @@ short2 convert_short2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rte(ulong2 x)
 {
@@ -29202,7 +29202,7 @@ short2 convert_short2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtp(ulong2 x)
 {
@@ -29211,7 +29211,7 @@ short2 convert_short2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtn(ulong2 x)
 {
@@ -29220,7 +29220,7 @@ short2 convert_short2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtz(ulong3 x)
 {
@@ -29229,7 +29229,7 @@ short3 convert_short3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rte(ulong3 x)
 {
@@ -29238,7 +29238,7 @@ short3 convert_short3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtp(ulong3 x)
 {
@@ -29247,7 +29247,7 @@ short3 convert_short3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtn(ulong3 x)
 {
@@ -29256,7 +29256,7 @@ short3 convert_short3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtz(ulong4 x)
 {
@@ -29265,7 +29265,7 @@ short4 convert_short4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rte(ulong4 x)
 {
@@ -29274,7 +29274,7 @@ short4 convert_short4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtp(ulong4 x)
 {
@@ -29283,7 +29283,7 @@ short4 convert_short4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtn(ulong4 x)
 {
@@ -29292,7 +29292,7 @@ short4 convert_short4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtz(ulong8 x)
 {
@@ -29301,7 +29301,7 @@ short8 convert_short8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rte(ulong8 x)
 {
@@ -29310,7 +29310,7 @@ short8 convert_short8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtp(ulong8 x)
 {
@@ -29319,7 +29319,7 @@ short8 convert_short8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtn(ulong8 x)
 {
@@ -29328,7 +29328,7 @@ short8 convert_short8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtz(ulong16 x)
 {
@@ -29337,7 +29337,7 @@ short16 convert_short16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rte(ulong16 x)
 {
@@ -29346,7 +29346,7 @@ short16 convert_short16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtp(ulong16 x)
 {
@@ -29355,7 +29355,7 @@ short16 convert_short16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtn(ulong16 x)
 {
@@ -29364,7 +29364,7 @@ short16 convert_short16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtz(ulong x)
 {
@@ -29373,7 +29373,7 @@ ushort convert_ushort_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rte(ulong x)
 {
@@ -29382,7 +29382,7 @@ ushort convert_ushort_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtp(ulong x)
 {
@@ -29391,7 +29391,7 @@ ushort convert_ushort_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtn(ulong x)
 {
@@ -29400,7 +29400,7 @@ ushort convert_ushort_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtz(ulong2 x)
 {
@@ -29409,7 +29409,7 @@ ushort2 convert_ushort2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rte(ulong2 x)
 {
@@ -29418,7 +29418,7 @@ ushort2 convert_ushort2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtp(ulong2 x)
 {
@@ -29427,7 +29427,7 @@ ushort2 convert_ushort2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtn(ulong2 x)
 {
@@ -29436,7 +29436,7 @@ ushort2 convert_ushort2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtz(ulong3 x)
 {
@@ -29445,7 +29445,7 @@ ushort3 convert_ushort3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rte(ulong3 x)
 {
@@ -29454,7 +29454,7 @@ ushort3 convert_ushort3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtp(ulong3 x)
 {
@@ -29463,7 +29463,7 @@ ushort3 convert_ushort3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtn(ulong3 x)
 {
@@ -29472,7 +29472,7 @@ ushort3 convert_ushort3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtz(ulong4 x)
 {
@@ -29481,7 +29481,7 @@ ushort4 convert_ushort4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rte(ulong4 x)
 {
@@ -29490,7 +29490,7 @@ ushort4 convert_ushort4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtp(ulong4 x)
 {
@@ -29499,7 +29499,7 @@ ushort4 convert_ushort4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtn(ulong4 x)
 {
@@ -29508,7 +29508,7 @@ ushort4 convert_ushort4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtz(ulong8 x)
 {
@@ -29517,7 +29517,7 @@ ushort8 convert_ushort8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rte(ulong8 x)
 {
@@ -29526,7 +29526,7 @@ ushort8 convert_ushort8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtp(ulong8 x)
 {
@@ -29535,7 +29535,7 @@ ushort8 convert_ushort8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtn(ulong8 x)
 {
@@ -29544,7 +29544,7 @@ ushort8 convert_ushort8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtz(ulong16 x)
 {
@@ -29553,7 +29553,7 @@ ushort16 convert_ushort16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rte(ulong16 x)
 {
@@ -29562,7 +29562,7 @@ ushort16 convert_ushort16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtp(ulong16 x)
 {
@@ -29571,7 +29571,7 @@ ushort16 convert_ushort16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtn(ulong16 x)
 {
@@ -29580,7 +29580,7 @@ ushort16 convert_ushort16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtz(ulong x)
 {
@@ -29589,7 +29589,7 @@ int convert_int_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rte(ulong x)
 {
@@ -29598,7 +29598,7 @@ int convert_int_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtp(ulong x)
 {
@@ -29607,7 +29607,7 @@ int convert_int_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtn(ulong x)
 {
@@ -29616,7 +29616,7 @@ int convert_int_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtz(ulong2 x)
 {
@@ -29625,7 +29625,7 @@ int2 convert_int2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rte(ulong2 x)
 {
@@ -29634,7 +29634,7 @@ int2 convert_int2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtp(ulong2 x)
 {
@@ -29643,7 +29643,7 @@ int2 convert_int2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtn(ulong2 x)
 {
@@ -29652,7 +29652,7 @@ int2 convert_int2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtz(ulong3 x)
 {
@@ -29661,7 +29661,7 @@ int3 convert_int3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rte(ulong3 x)
 {
@@ -29670,7 +29670,7 @@ int3 convert_int3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtp(ulong3 x)
 {
@@ -29679,7 +29679,7 @@ int3 convert_int3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtn(ulong3 x)
 {
@@ -29688,7 +29688,7 @@ int3 convert_int3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtz(ulong4 x)
 {
@@ -29697,7 +29697,7 @@ int4 convert_int4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rte(ulong4 x)
 {
@@ -29706,7 +29706,7 @@ int4 convert_int4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtp(ulong4 x)
 {
@@ -29715,7 +29715,7 @@ int4 convert_int4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtn(ulong4 x)
 {
@@ -29724,7 +29724,7 @@ int4 convert_int4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtz(ulong8 x)
 {
@@ -29733,7 +29733,7 @@ int8 convert_int8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rte(ulong8 x)
 {
@@ -29742,7 +29742,7 @@ int8 convert_int8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtp(ulong8 x)
 {
@@ -29751,7 +29751,7 @@ int8 convert_int8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtn(ulong8 x)
 {
@@ -29760,7 +29760,7 @@ int8 convert_int8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtz(ulong16 x)
 {
@@ -29769,7 +29769,7 @@ int16 convert_int16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rte(ulong16 x)
 {
@@ -29778,7 +29778,7 @@ int16 convert_int16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtp(ulong16 x)
 {
@@ -29787,7 +29787,7 @@ int16 convert_int16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtn(ulong16 x)
 {
@@ -29796,7 +29796,7 @@ int16 convert_int16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtz(ulong x)
 {
@@ -29805,7 +29805,7 @@ uint convert_uint_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rte(ulong x)
 {
@@ -29814,7 +29814,7 @@ uint convert_uint_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtp(ulong x)
 {
@@ -29823,7 +29823,7 @@ uint convert_uint_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtn(ulong x)
 {
@@ -29832,7 +29832,7 @@ uint convert_uint_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtz(ulong2 x)
 {
@@ -29841,7 +29841,7 @@ uint2 convert_uint2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rte(ulong2 x)
 {
@@ -29850,7 +29850,7 @@ uint2 convert_uint2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtp(ulong2 x)
 {
@@ -29859,7 +29859,7 @@ uint2 convert_uint2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtn(ulong2 x)
 {
@@ -29868,7 +29868,7 @@ uint2 convert_uint2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtz(ulong3 x)
 {
@@ -29877,7 +29877,7 @@ uint3 convert_uint3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rte(ulong3 x)
 {
@@ -29886,7 +29886,7 @@ uint3 convert_uint3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtp(ulong3 x)
 {
@@ -29895,7 +29895,7 @@ uint3 convert_uint3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtn(ulong3 x)
 {
@@ -29904,7 +29904,7 @@ uint3 convert_uint3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtz(ulong4 x)
 {
@@ -29913,7 +29913,7 @@ uint4 convert_uint4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rte(ulong4 x)
 {
@@ -29922,7 +29922,7 @@ uint4 convert_uint4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtp(ulong4 x)
 {
@@ -29931,7 +29931,7 @@ uint4 convert_uint4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtn(ulong4 x)
 {
@@ -29940,7 +29940,7 @@ uint4 convert_uint4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtz(ulong8 x)
 {
@@ -29949,7 +29949,7 @@ uint8 convert_uint8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rte(ulong8 x)
 {
@@ -29958,7 +29958,7 @@ uint8 convert_uint8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtp(ulong8 x)
 {
@@ -29967,7 +29967,7 @@ uint8 convert_uint8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtn(ulong8 x)
 {
@@ -29976,7 +29976,7 @@ uint8 convert_uint8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtz(ulong16 x)
 {
@@ -29985,7 +29985,7 @@ uint16 convert_uint16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rte(ulong16 x)
 {
@@ -29994,7 +29994,7 @@ uint16 convert_uint16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtp(ulong16 x)
 {
@@ -30003,7 +30003,7 @@ uint16 convert_uint16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtn(ulong16 x)
 {
@@ -30012,7 +30012,7 @@ uint16 convert_uint16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(ulong x)
 {
@@ -30021,7 +30021,7 @@ long convert_long_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(ulong x)
 {
@@ -30030,7 +30030,7 @@ long convert_long_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(ulong x)
 {
@@ -30039,7 +30039,7 @@ long convert_long_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(ulong x)
 {
@@ -30048,7 +30048,7 @@ long convert_long_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(ulong2 x)
 {
@@ -30057,7 +30057,7 @@ long2 convert_long2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(ulong2 x)
 {
@@ -30066,7 +30066,7 @@ long2 convert_long2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(ulong2 x)
 {
@@ -30075,7 +30075,7 @@ long2 convert_long2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(ulong2 x)
 {
@@ -30084,7 +30084,7 @@ long2 convert_long2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(ulong3 x)
 {
@@ -30093,7 +30093,7 @@ long3 convert_long3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(ulong3 x)
 {
@@ -30102,7 +30102,7 @@ long3 convert_long3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(ulong3 x)
 {
@@ -30111,7 +30111,7 @@ long3 convert_long3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(ulong3 x)
 {
@@ -30120,7 +30120,7 @@ long3 convert_long3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(ulong4 x)
 {
@@ -30129,7 +30129,7 @@ long4 convert_long4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(ulong4 x)
 {
@@ -30138,7 +30138,7 @@ long4 convert_long4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(ulong4 x)
 {
@@ -30147,7 +30147,7 @@ long4 convert_long4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(ulong4 x)
 {
@@ -30156,7 +30156,7 @@ long4 convert_long4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(ulong8 x)
 {
@@ -30165,7 +30165,7 @@ long8 convert_long8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(ulong8 x)
 {
@@ -30174,7 +30174,7 @@ long8 convert_long8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(ulong8 x)
 {
@@ -30183,7 +30183,7 @@ long8 convert_long8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(ulong8 x)
 {
@@ -30192,7 +30192,7 @@ long8 convert_long8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(ulong16 x)
 {
@@ -30201,7 +30201,7 @@ long16 convert_long16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(ulong16 x)
 {
@@ -30210,7 +30210,7 @@ long16 convert_long16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(ulong16 x)
 {
@@ -30219,7 +30219,7 @@ long16 convert_long16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(ulong16 x)
 {
@@ -30228,7 +30228,7 @@ long16 convert_long16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(ulong x)
 {
@@ -30237,7 +30237,7 @@ ulong convert_ulong_sat_rtz(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(ulong x)
 {
@@ -30246,7 +30246,7 @@ ulong convert_ulong_sat_rte(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(ulong x)
 {
@@ -30255,7 +30255,7 @@ ulong convert_ulong_sat_rtp(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(ulong x)
 {
@@ -30264,7 +30264,7 @@ ulong convert_ulong_sat_rtn(ulong x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(ulong2 x)
 {
@@ -30273,7 +30273,7 @@ ulong2 convert_ulong2_sat_rtz(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(ulong2 x)
 {
@@ -30282,7 +30282,7 @@ ulong2 convert_ulong2_sat_rte(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(ulong2 x)
 {
@@ -30291,7 +30291,7 @@ ulong2 convert_ulong2_sat_rtp(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(ulong2 x)
 {
@@ -30300,7 +30300,7 @@ ulong2 convert_ulong2_sat_rtn(ulong2 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(ulong3 x)
 {
@@ -30309,7 +30309,7 @@ ulong3 convert_ulong3_sat_rtz(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(ulong3 x)
 {
@@ -30318,7 +30318,7 @@ ulong3 convert_ulong3_sat_rte(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(ulong3 x)
 {
@@ -30327,7 +30327,7 @@ ulong3 convert_ulong3_sat_rtp(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(ulong3 x)
 {
@@ -30336,7 +30336,7 @@ ulong3 convert_ulong3_sat_rtn(ulong3 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(ulong4 x)
 {
@@ -30345,7 +30345,7 @@ ulong4 convert_ulong4_sat_rtz(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(ulong4 x)
 {
@@ -30354,7 +30354,7 @@ ulong4 convert_ulong4_sat_rte(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(ulong4 x)
 {
@@ -30363,7 +30363,7 @@ ulong4 convert_ulong4_sat_rtp(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(ulong4 x)
 {
@@ -30372,7 +30372,7 @@ ulong4 convert_ulong4_sat_rtn(ulong4 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(ulong8 x)
 {
@@ -30381,7 +30381,7 @@ ulong8 convert_ulong8_sat_rtz(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(ulong8 x)
 {
@@ -30390,7 +30390,7 @@ ulong8 convert_ulong8_sat_rte(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(ulong8 x)
 {
@@ -30399,7 +30399,7 @@ ulong8 convert_ulong8_sat_rtp(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(ulong8 x)
 {
@@ -30408,7 +30408,7 @@ ulong8 convert_ulong8_sat_rtn(ulong8 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(ulong16 x)
 {
@@ -30417,7 +30417,7 @@ ulong16 convert_ulong16_sat_rtz(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(ulong16 x)
 {
@@ -30426,7 +30426,7 @@ ulong16 convert_ulong16_sat_rte(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(ulong16 x)
 {
@@ -30435,7 +30435,7 @@ ulong16 convert_ulong16_sat_rtp(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(ulong16 x)
 {
@@ -30444,7 +30444,7 @@ ulong16 convert_ulong16_sat_rtn(ulong16 x)
 
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtz(half x)
 {
@@ -30452,7 +30452,7 @@ char convert_char_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtz(half x)
 {
@@ -30460,7 +30460,7 @@ char convert_char_sat_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rte(half x)
 {
@@ -30469,7 +30469,7 @@ char convert_char_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rte(half x)
 {
@@ -30478,7 +30478,7 @@ char convert_char_sat_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtp(half x)
 {
@@ -30487,7 +30487,7 @@ char convert_char_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtp(half x)
 {
@@ -30496,7 +30496,7 @@ char convert_char_sat_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtn(half x)
 {
@@ -30505,7 +30505,7 @@ char convert_char_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtn(half x)
 {
@@ -30514,7 +30514,7 @@ char convert_char_sat_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rtz(half2 x)
 {
@@ -30522,7 +30522,7 @@ char2 convert_char2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtz(half2 x)
 {
@@ -30530,7 +30530,7 @@ char2 convert_char2_sat_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rte(half2 x)
 {
@@ -30539,7 +30539,7 @@ char2 convert_char2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rte(half2 x)
 {
@@ -30548,7 +30548,7 @@ char2 convert_char2_sat_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rtp(half2 x)
 {
@@ -30557,7 +30557,7 @@ char2 convert_char2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtp(half2 x)
 {
@@ -30566,7 +30566,7 @@ char2 convert_char2_sat_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rtn(half2 x)
 {
@@ -30575,7 +30575,7 @@ char2 convert_char2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtn(half2 x)
 {
@@ -30584,7 +30584,7 @@ char2 convert_char2_sat_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rtz(half3 x)
 {
@@ -30592,7 +30592,7 @@ char3 convert_char3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtz(half3 x)
 {
@@ -30600,7 +30600,7 @@ char3 convert_char3_sat_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rte(half3 x)
 {
@@ -30609,7 +30609,7 @@ char3 convert_char3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rte(half3 x)
 {
@@ -30618,7 +30618,7 @@ char3 convert_char3_sat_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rtp(half3 x)
 {
@@ -30627,7 +30627,7 @@ char3 convert_char3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtp(half3 x)
 {
@@ -30636,7 +30636,7 @@ char3 convert_char3_sat_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rtn(half3 x)
 {
@@ -30645,7 +30645,7 @@ char3 convert_char3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtn(half3 x)
 {
@@ -30654,7 +30654,7 @@ char3 convert_char3_sat_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rtz(half4 x)
 {
@@ -30662,7 +30662,7 @@ char4 convert_char4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtz(half4 x)
 {
@@ -30670,7 +30670,7 @@ char4 convert_char4_sat_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rte(half4 x)
 {
@@ -30679,7 +30679,7 @@ char4 convert_char4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rte(half4 x)
 {
@@ -30688,7 +30688,7 @@ char4 convert_char4_sat_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rtp(half4 x)
 {
@@ -30697,7 +30697,7 @@ char4 convert_char4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtp(half4 x)
 {
@@ -30706,7 +30706,7 @@ char4 convert_char4_sat_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rtn(half4 x)
 {
@@ -30715,7 +30715,7 @@ char4 convert_char4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtn(half4 x)
 {
@@ -30724,7 +30724,7 @@ char4 convert_char4_sat_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rtz(half8 x)
 {
@@ -30732,7 +30732,7 @@ char8 convert_char8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtz(half8 x)
 {
@@ -30740,7 +30740,7 @@ char8 convert_char8_sat_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rte(half8 x)
 {
@@ -30749,7 +30749,7 @@ char8 convert_char8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rte(half8 x)
 {
@@ -30758,7 +30758,7 @@ char8 convert_char8_sat_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rtp(half8 x)
 {
@@ -30767,7 +30767,7 @@ char8 convert_char8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtp(half8 x)
 {
@@ -30776,7 +30776,7 @@ char8 convert_char8_sat_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rtn(half8 x)
 {
@@ -30785,7 +30785,7 @@ char8 convert_char8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtn(half8 x)
 {
@@ -30794,7 +30794,7 @@ char8 convert_char8_sat_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rtz(half16 x)
 {
@@ -30802,7 +30802,7 @@ char16 convert_char16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtz(half16 x)
 {
@@ -30810,7 +30810,7 @@ char16 convert_char16_sat_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rte(half16 x)
 {
@@ -30819,7 +30819,7 @@ char16 convert_char16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rte(half16 x)
 {
@@ -30828,7 +30828,7 @@ char16 convert_char16_sat_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rtp(half16 x)
 {
@@ -30837,7 +30837,7 @@ char16 convert_char16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtp(half16 x)
 {
@@ -30846,7 +30846,7 @@ char16 convert_char16_sat_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rtn(half16 x)
 {
@@ -30855,7 +30855,7 @@ char16 convert_char16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtn(half16 x)
 {
@@ -30864,7 +30864,7 @@ char16 convert_char16_sat_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtz(half x)
 {
@@ -30872,7 +30872,7 @@ uchar convert_uchar_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtz(half x)
 {
@@ -30880,7 +30880,7 @@ uchar convert_uchar_sat_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rte(half x)
 {
@@ -30889,7 +30889,7 @@ uchar convert_uchar_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rte(half x)
 {
@@ -30898,7 +30898,7 @@ uchar convert_uchar_sat_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtp(half x)
 {
@@ -30907,7 +30907,7 @@ uchar convert_uchar_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtp(half x)
 {
@@ -30916,7 +30916,7 @@ uchar convert_uchar_sat_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtn(half x)
 {
@@ -30925,7 +30925,7 @@ uchar convert_uchar_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtn(half x)
 {
@@ -30934,7 +30934,7 @@ uchar convert_uchar_sat_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rtz(half2 x)
 {
@@ -30942,7 +30942,7 @@ uchar2 convert_uchar2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtz(half2 x)
 {
@@ -30950,7 +30950,7 @@ uchar2 convert_uchar2_sat_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rte(half2 x)
 {
@@ -30959,7 +30959,7 @@ uchar2 convert_uchar2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rte(half2 x)
 {
@@ -30968,7 +30968,7 @@ uchar2 convert_uchar2_sat_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rtp(half2 x)
 {
@@ -30977,7 +30977,7 @@ uchar2 convert_uchar2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtp(half2 x)
 {
@@ -30986,7 +30986,7 @@ uchar2 convert_uchar2_sat_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rtn(half2 x)
 {
@@ -30995,7 +30995,7 @@ uchar2 convert_uchar2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtn(half2 x)
 {
@@ -31004,7 +31004,7 @@ uchar2 convert_uchar2_sat_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rtz(half3 x)
 {
@@ -31012,7 +31012,7 @@ uchar3 convert_uchar3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtz(half3 x)
 {
@@ -31020,7 +31020,7 @@ uchar3 convert_uchar3_sat_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rte(half3 x)
 {
@@ -31029,7 +31029,7 @@ uchar3 convert_uchar3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rte(half3 x)
 {
@@ -31038,7 +31038,7 @@ uchar3 convert_uchar3_sat_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rtp(half3 x)
 {
@@ -31047,7 +31047,7 @@ uchar3 convert_uchar3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtp(half3 x)
 {
@@ -31056,7 +31056,7 @@ uchar3 convert_uchar3_sat_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rtn(half3 x)
 {
@@ -31065,7 +31065,7 @@ uchar3 convert_uchar3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtn(half3 x)
 {
@@ -31074,7 +31074,7 @@ uchar3 convert_uchar3_sat_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rtz(half4 x)
 {
@@ -31082,7 +31082,7 @@ uchar4 convert_uchar4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtz(half4 x)
 {
@@ -31090,7 +31090,7 @@ uchar4 convert_uchar4_sat_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rte(half4 x)
 {
@@ -31099,7 +31099,7 @@ uchar4 convert_uchar4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rte(half4 x)
 {
@@ -31108,7 +31108,7 @@ uchar4 convert_uchar4_sat_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rtp(half4 x)
 {
@@ -31117,7 +31117,7 @@ uchar4 convert_uchar4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtp(half4 x)
 {
@@ -31126,7 +31126,7 @@ uchar4 convert_uchar4_sat_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rtn(half4 x)
 {
@@ -31135,7 +31135,7 @@ uchar4 convert_uchar4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtn(half4 x)
 {
@@ -31144,7 +31144,7 @@ uchar4 convert_uchar4_sat_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rtz(half8 x)
 {
@@ -31152,7 +31152,7 @@ uchar8 convert_uchar8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtz(half8 x)
 {
@@ -31160,7 +31160,7 @@ uchar8 convert_uchar8_sat_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rte(half8 x)
 {
@@ -31169,7 +31169,7 @@ uchar8 convert_uchar8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rte(half8 x)
 {
@@ -31178,7 +31178,7 @@ uchar8 convert_uchar8_sat_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rtp(half8 x)
 {
@@ -31187,7 +31187,7 @@ uchar8 convert_uchar8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtp(half8 x)
 {
@@ -31196,7 +31196,7 @@ uchar8 convert_uchar8_sat_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rtn(half8 x)
 {
@@ -31205,7 +31205,7 @@ uchar8 convert_uchar8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtn(half8 x)
 {
@@ -31214,7 +31214,7 @@ uchar8 convert_uchar8_sat_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rtz(half16 x)
 {
@@ -31222,7 +31222,7 @@ uchar16 convert_uchar16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtz(half16 x)
 {
@@ -31230,7 +31230,7 @@ uchar16 convert_uchar16_sat_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rte(half16 x)
 {
@@ -31239,7 +31239,7 @@ uchar16 convert_uchar16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rte(half16 x)
 {
@@ -31248,7 +31248,7 @@ uchar16 convert_uchar16_sat_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rtp(half16 x)
 {
@@ -31257,7 +31257,7 @@ uchar16 convert_uchar16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtp(half16 x)
 {
@@ -31266,7 +31266,7 @@ uchar16 convert_uchar16_sat_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rtn(half16 x)
 {
@@ -31275,7 +31275,7 @@ uchar16 convert_uchar16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtn(half16 x)
 {
@@ -31284,7 +31284,7 @@ uchar16 convert_uchar16_sat_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtz(half x)
 {
@@ -31292,7 +31292,7 @@ short convert_short_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtz(half x)
 {
@@ -31300,7 +31300,7 @@ short convert_short_sat_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rte(half x)
 {
@@ -31309,7 +31309,7 @@ short convert_short_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rte(half x)
 {
@@ -31318,7 +31318,7 @@ short convert_short_sat_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtp(half x)
 {
@@ -31327,7 +31327,7 @@ short convert_short_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtp(half x)
 {
@@ -31336,7 +31336,7 @@ short convert_short_sat_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtn(half x)
 {
@@ -31345,7 +31345,7 @@ short convert_short_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtn(half x)
 {
@@ -31354,7 +31354,7 @@ short convert_short_sat_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rtz(half2 x)
 {
@@ -31362,7 +31362,7 @@ short2 convert_short2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtz(half2 x)
 {
@@ -31370,7 +31370,7 @@ short2 convert_short2_sat_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rte(half2 x)
 {
@@ -31379,7 +31379,7 @@ short2 convert_short2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rte(half2 x)
 {
@@ -31388,7 +31388,7 @@ short2 convert_short2_sat_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rtp(half2 x)
 {
@@ -31397,7 +31397,7 @@ short2 convert_short2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtp(half2 x)
 {
@@ -31406,7 +31406,7 @@ short2 convert_short2_sat_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rtn(half2 x)
 {
@@ -31415,7 +31415,7 @@ short2 convert_short2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtn(half2 x)
 {
@@ -31424,7 +31424,7 @@ short2 convert_short2_sat_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rtz(half3 x)
 {
@@ -31432,7 +31432,7 @@ short3 convert_short3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtz(half3 x)
 {
@@ -31440,7 +31440,7 @@ short3 convert_short3_sat_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rte(half3 x)
 {
@@ -31449,7 +31449,7 @@ short3 convert_short3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rte(half3 x)
 {
@@ -31458,7 +31458,7 @@ short3 convert_short3_sat_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rtp(half3 x)
 {
@@ -31467,7 +31467,7 @@ short3 convert_short3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtp(half3 x)
 {
@@ -31476,7 +31476,7 @@ short3 convert_short3_sat_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rtn(half3 x)
 {
@@ -31485,7 +31485,7 @@ short3 convert_short3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtn(half3 x)
 {
@@ -31494,7 +31494,7 @@ short3 convert_short3_sat_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rtz(half4 x)
 {
@@ -31502,7 +31502,7 @@ short4 convert_short4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtz(half4 x)
 {
@@ -31510,7 +31510,7 @@ short4 convert_short4_sat_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rte(half4 x)
 {
@@ -31519,7 +31519,7 @@ short4 convert_short4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rte(half4 x)
 {
@@ -31528,7 +31528,7 @@ short4 convert_short4_sat_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rtp(half4 x)
 {
@@ -31537,7 +31537,7 @@ short4 convert_short4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtp(half4 x)
 {
@@ -31546,7 +31546,7 @@ short4 convert_short4_sat_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rtn(half4 x)
 {
@@ -31555,7 +31555,7 @@ short4 convert_short4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtn(half4 x)
 {
@@ -31564,7 +31564,7 @@ short4 convert_short4_sat_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rtz(half8 x)
 {
@@ -31572,7 +31572,7 @@ short8 convert_short8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtz(half8 x)
 {
@@ -31580,7 +31580,7 @@ short8 convert_short8_sat_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rte(half8 x)
 {
@@ -31589,7 +31589,7 @@ short8 convert_short8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rte(half8 x)
 {
@@ -31598,7 +31598,7 @@ short8 convert_short8_sat_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rtp(half8 x)
 {
@@ -31607,7 +31607,7 @@ short8 convert_short8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtp(half8 x)
 {
@@ -31616,7 +31616,7 @@ short8 convert_short8_sat_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rtn(half8 x)
 {
@@ -31625,7 +31625,7 @@ short8 convert_short8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtn(half8 x)
 {
@@ -31634,7 +31634,7 @@ short8 convert_short8_sat_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rtz(half16 x)
 {
@@ -31642,7 +31642,7 @@ short16 convert_short16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtz(half16 x)
 {
@@ -31650,7 +31650,7 @@ short16 convert_short16_sat_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rte(half16 x)
 {
@@ -31659,7 +31659,7 @@ short16 convert_short16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rte(half16 x)
 {
@@ -31668,7 +31668,7 @@ short16 convert_short16_sat_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rtp(half16 x)
 {
@@ -31677,7 +31677,7 @@ short16 convert_short16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtp(half16 x)
 {
@@ -31686,7 +31686,7 @@ short16 convert_short16_sat_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rtn(half16 x)
 {
@@ -31695,7 +31695,7 @@ short16 convert_short16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtn(half16 x)
 {
@@ -31704,7 +31704,7 @@ short16 convert_short16_sat_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtz(half x)
 {
@@ -31712,7 +31712,7 @@ ushort convert_ushort_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtz(half x)
 {
@@ -31720,7 +31720,7 @@ ushort convert_ushort_sat_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rte(half x)
 {
@@ -31729,7 +31729,7 @@ ushort convert_ushort_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rte(half x)
 {
@@ -31738,7 +31738,7 @@ ushort convert_ushort_sat_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtp(half x)
 {
@@ -31747,7 +31747,7 @@ ushort convert_ushort_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtp(half x)
 {
@@ -31756,7 +31756,7 @@ ushort convert_ushort_sat_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtn(half x)
 {
@@ -31765,7 +31765,7 @@ ushort convert_ushort_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtn(half x)
 {
@@ -31774,7 +31774,7 @@ ushort convert_ushort_sat_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rtz(half2 x)
 {
@@ -31782,7 +31782,7 @@ ushort2 convert_ushort2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtz(half2 x)
 {
@@ -31790,7 +31790,7 @@ ushort2 convert_ushort2_sat_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rte(half2 x)
 {
@@ -31799,7 +31799,7 @@ ushort2 convert_ushort2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rte(half2 x)
 {
@@ -31808,7 +31808,7 @@ ushort2 convert_ushort2_sat_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rtp(half2 x)
 {
@@ -31817,7 +31817,7 @@ ushort2 convert_ushort2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtp(half2 x)
 {
@@ -31826,7 +31826,7 @@ ushort2 convert_ushort2_sat_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rtn(half2 x)
 {
@@ -31835,7 +31835,7 @@ ushort2 convert_ushort2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtn(half2 x)
 {
@@ -31844,7 +31844,7 @@ ushort2 convert_ushort2_sat_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rtz(half3 x)
 {
@@ -31852,7 +31852,7 @@ ushort3 convert_ushort3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtz(half3 x)
 {
@@ -31860,7 +31860,7 @@ ushort3 convert_ushort3_sat_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rte(half3 x)
 {
@@ -31869,7 +31869,7 @@ ushort3 convert_ushort3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rte(half3 x)
 {
@@ -31878,7 +31878,7 @@ ushort3 convert_ushort3_sat_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rtp(half3 x)
 {
@@ -31887,7 +31887,7 @@ ushort3 convert_ushort3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtp(half3 x)
 {
@@ -31896,7 +31896,7 @@ ushort3 convert_ushort3_sat_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rtn(half3 x)
 {
@@ -31905,7 +31905,7 @@ ushort3 convert_ushort3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtn(half3 x)
 {
@@ -31914,7 +31914,7 @@ ushort3 convert_ushort3_sat_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rtz(half4 x)
 {
@@ -31922,7 +31922,7 @@ ushort4 convert_ushort4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtz(half4 x)
 {
@@ -31930,7 +31930,7 @@ ushort4 convert_ushort4_sat_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rte(half4 x)
 {
@@ -31939,7 +31939,7 @@ ushort4 convert_ushort4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rte(half4 x)
 {
@@ -31948,7 +31948,7 @@ ushort4 convert_ushort4_sat_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rtp(half4 x)
 {
@@ -31957,7 +31957,7 @@ ushort4 convert_ushort4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtp(half4 x)
 {
@@ -31966,7 +31966,7 @@ ushort4 convert_ushort4_sat_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rtn(half4 x)
 {
@@ -31975,7 +31975,7 @@ ushort4 convert_ushort4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtn(half4 x)
 {
@@ -31984,7 +31984,7 @@ ushort4 convert_ushort4_sat_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rtz(half8 x)
 {
@@ -31992,7 +31992,7 @@ ushort8 convert_ushort8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtz(half8 x)
 {
@@ -32000,7 +32000,7 @@ ushort8 convert_ushort8_sat_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rte(half8 x)
 {
@@ -32009,7 +32009,7 @@ ushort8 convert_ushort8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rte(half8 x)
 {
@@ -32018,7 +32018,7 @@ ushort8 convert_ushort8_sat_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rtp(half8 x)
 {
@@ -32027,7 +32027,7 @@ ushort8 convert_ushort8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtp(half8 x)
 {
@@ -32036,7 +32036,7 @@ ushort8 convert_ushort8_sat_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rtn(half8 x)
 {
@@ -32045,7 +32045,7 @@ ushort8 convert_ushort8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtn(half8 x)
 {
@@ -32054,7 +32054,7 @@ ushort8 convert_ushort8_sat_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rtz(half16 x)
 {
@@ -32062,7 +32062,7 @@ ushort16 convert_ushort16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtz(half16 x)
 {
@@ -32070,7 +32070,7 @@ ushort16 convert_ushort16_sat_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rte(half16 x)
 {
@@ -32079,7 +32079,7 @@ ushort16 convert_ushort16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rte(half16 x)
 {
@@ -32088,7 +32088,7 @@ ushort16 convert_ushort16_sat_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rtp(half16 x)
 {
@@ -32097,7 +32097,7 @@ ushort16 convert_ushort16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtp(half16 x)
 {
@@ -32106,7 +32106,7 @@ ushort16 convert_ushort16_sat_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rtn(half16 x)
 {
@@ -32115,7 +32115,7 @@ ushort16 convert_ushort16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtn(half16 x)
 {
@@ -32124,7 +32124,7 @@ ushort16 convert_ushort16_sat_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtz(half x)
 {
@@ -32132,7 +32132,7 @@ int convert_int_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtz(half x)
 {
@@ -32140,7 +32140,7 @@ int convert_int_sat_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rte(half x)
 {
@@ -32149,7 +32149,7 @@ int convert_int_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rte(half x)
 {
@@ -32158,7 +32158,7 @@ int convert_int_sat_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtp(half x)
 {
@@ -32167,7 +32167,7 @@ int convert_int_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtp(half x)
 {
@@ -32176,7 +32176,7 @@ int convert_int_sat_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtn(half x)
 {
@@ -32185,7 +32185,7 @@ int convert_int_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtn(half x)
 {
@@ -32194,7 +32194,7 @@ int convert_int_sat_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rtz(half2 x)
 {
@@ -32202,7 +32202,7 @@ int2 convert_int2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtz(half2 x)
 {
@@ -32210,7 +32210,7 @@ int2 convert_int2_sat_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rte(half2 x)
 {
@@ -32219,7 +32219,7 @@ int2 convert_int2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rte(half2 x)
 {
@@ -32228,7 +32228,7 @@ int2 convert_int2_sat_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rtp(half2 x)
 {
@@ -32237,7 +32237,7 @@ int2 convert_int2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtp(half2 x)
 {
@@ -32246,7 +32246,7 @@ int2 convert_int2_sat_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rtn(half2 x)
 {
@@ -32255,7 +32255,7 @@ int2 convert_int2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtn(half2 x)
 {
@@ -32264,7 +32264,7 @@ int2 convert_int2_sat_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rtz(half3 x)
 {
@@ -32272,7 +32272,7 @@ int3 convert_int3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtz(half3 x)
 {
@@ -32280,7 +32280,7 @@ int3 convert_int3_sat_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rte(half3 x)
 {
@@ -32289,7 +32289,7 @@ int3 convert_int3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rte(half3 x)
 {
@@ -32298,7 +32298,7 @@ int3 convert_int3_sat_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rtp(half3 x)
 {
@@ -32307,7 +32307,7 @@ int3 convert_int3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtp(half3 x)
 {
@@ -32316,7 +32316,7 @@ int3 convert_int3_sat_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rtn(half3 x)
 {
@@ -32325,7 +32325,7 @@ int3 convert_int3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtn(half3 x)
 {
@@ -32334,7 +32334,7 @@ int3 convert_int3_sat_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rtz(half4 x)
 {
@@ -32342,7 +32342,7 @@ int4 convert_int4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtz(half4 x)
 {
@@ -32350,7 +32350,7 @@ int4 convert_int4_sat_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rte(half4 x)
 {
@@ -32359,7 +32359,7 @@ int4 convert_int4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rte(half4 x)
 {
@@ -32368,7 +32368,7 @@ int4 convert_int4_sat_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rtp(half4 x)
 {
@@ -32377,7 +32377,7 @@ int4 convert_int4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtp(half4 x)
 {
@@ -32386,7 +32386,7 @@ int4 convert_int4_sat_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rtn(half4 x)
 {
@@ -32395,7 +32395,7 @@ int4 convert_int4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtn(half4 x)
 {
@@ -32404,7 +32404,7 @@ int4 convert_int4_sat_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rtz(half8 x)
 {
@@ -32412,7 +32412,7 @@ int8 convert_int8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtz(half8 x)
 {
@@ -32420,7 +32420,7 @@ int8 convert_int8_sat_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rte(half8 x)
 {
@@ -32429,7 +32429,7 @@ int8 convert_int8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rte(half8 x)
 {
@@ -32438,7 +32438,7 @@ int8 convert_int8_sat_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rtp(half8 x)
 {
@@ -32447,7 +32447,7 @@ int8 convert_int8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtp(half8 x)
 {
@@ -32456,7 +32456,7 @@ int8 convert_int8_sat_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rtn(half8 x)
 {
@@ -32465,7 +32465,7 @@ int8 convert_int8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtn(half8 x)
 {
@@ -32474,7 +32474,7 @@ int8 convert_int8_sat_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rtz(half16 x)
 {
@@ -32482,7 +32482,7 @@ int16 convert_int16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtz(half16 x)
 {
@@ -32490,7 +32490,7 @@ int16 convert_int16_sat_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rte(half16 x)
 {
@@ -32499,7 +32499,7 @@ int16 convert_int16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rte(half16 x)
 {
@@ -32508,7 +32508,7 @@ int16 convert_int16_sat_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rtp(half16 x)
 {
@@ -32517,7 +32517,7 @@ int16 convert_int16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtp(half16 x)
 {
@@ -32526,7 +32526,7 @@ int16 convert_int16_sat_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rtn(half16 x)
 {
@@ -32535,7 +32535,7 @@ int16 convert_int16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtn(half16 x)
 {
@@ -32544,7 +32544,7 @@ int16 convert_int16_sat_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtz(half x)
 {
@@ -32552,7 +32552,7 @@ uint convert_uint_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtz(half x)
 {
@@ -32560,7 +32560,7 @@ uint convert_uint_sat_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rte(half x)
 {
@@ -32569,7 +32569,7 @@ uint convert_uint_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rte(half x)
 {
@@ -32578,7 +32578,7 @@ uint convert_uint_sat_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtp(half x)
 {
@@ -32587,7 +32587,7 @@ uint convert_uint_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtp(half x)
 {
@@ -32596,7 +32596,7 @@ uint convert_uint_sat_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtn(half x)
 {
@@ -32605,7 +32605,7 @@ uint convert_uint_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtn(half x)
 {
@@ -32614,7 +32614,7 @@ uint convert_uint_sat_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rtz(half2 x)
 {
@@ -32622,7 +32622,7 @@ uint2 convert_uint2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtz(half2 x)
 {
@@ -32630,7 +32630,7 @@ uint2 convert_uint2_sat_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rte(half2 x)
 {
@@ -32639,7 +32639,7 @@ uint2 convert_uint2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rte(half2 x)
 {
@@ -32648,7 +32648,7 @@ uint2 convert_uint2_sat_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rtp(half2 x)
 {
@@ -32657,7 +32657,7 @@ uint2 convert_uint2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtp(half2 x)
 {
@@ -32666,7 +32666,7 @@ uint2 convert_uint2_sat_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rtn(half2 x)
 {
@@ -32675,7 +32675,7 @@ uint2 convert_uint2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtn(half2 x)
 {
@@ -32684,7 +32684,7 @@ uint2 convert_uint2_sat_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rtz(half3 x)
 {
@@ -32692,7 +32692,7 @@ uint3 convert_uint3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtz(half3 x)
 {
@@ -32700,7 +32700,7 @@ uint3 convert_uint3_sat_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rte(half3 x)
 {
@@ -32709,7 +32709,7 @@ uint3 convert_uint3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rte(half3 x)
 {
@@ -32718,7 +32718,7 @@ uint3 convert_uint3_sat_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rtp(half3 x)
 {
@@ -32727,7 +32727,7 @@ uint3 convert_uint3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtp(half3 x)
 {
@@ -32736,7 +32736,7 @@ uint3 convert_uint3_sat_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rtn(half3 x)
 {
@@ -32745,7 +32745,7 @@ uint3 convert_uint3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtn(half3 x)
 {
@@ -32754,7 +32754,7 @@ uint3 convert_uint3_sat_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rtz(half4 x)
 {
@@ -32762,7 +32762,7 @@ uint4 convert_uint4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtz(half4 x)
 {
@@ -32770,7 +32770,7 @@ uint4 convert_uint4_sat_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rte(half4 x)
 {
@@ -32779,7 +32779,7 @@ uint4 convert_uint4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rte(half4 x)
 {
@@ -32788,7 +32788,7 @@ uint4 convert_uint4_sat_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rtp(half4 x)
 {
@@ -32797,7 +32797,7 @@ uint4 convert_uint4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtp(half4 x)
 {
@@ -32806,7 +32806,7 @@ uint4 convert_uint4_sat_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rtn(half4 x)
 {
@@ -32815,7 +32815,7 @@ uint4 convert_uint4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtn(half4 x)
 {
@@ -32824,7 +32824,7 @@ uint4 convert_uint4_sat_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rtz(half8 x)
 {
@@ -32832,7 +32832,7 @@ uint8 convert_uint8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtz(half8 x)
 {
@@ -32840,7 +32840,7 @@ uint8 convert_uint8_sat_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rte(half8 x)
 {
@@ -32849,7 +32849,7 @@ uint8 convert_uint8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rte(half8 x)
 {
@@ -32858,7 +32858,7 @@ uint8 convert_uint8_sat_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rtp(half8 x)
 {
@@ -32867,7 +32867,7 @@ uint8 convert_uint8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtp(half8 x)
 {
@@ -32876,7 +32876,7 @@ uint8 convert_uint8_sat_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rtn(half8 x)
 {
@@ -32885,7 +32885,7 @@ uint8 convert_uint8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtn(half8 x)
 {
@@ -32894,7 +32894,7 @@ uint8 convert_uint8_sat_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rtz(half16 x)
 {
@@ -32902,7 +32902,7 @@ uint16 convert_uint16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtz(half16 x)
 {
@@ -32910,7 +32910,7 @@ uint16 convert_uint16_sat_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rte(half16 x)
 {
@@ -32919,7 +32919,7 @@ uint16 convert_uint16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rte(half16 x)
 {
@@ -32928,7 +32928,7 @@ uint16 convert_uint16_sat_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rtp(half16 x)
 {
@@ -32937,7 +32937,7 @@ uint16 convert_uint16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtp(half16 x)
 {
@@ -32946,7 +32946,7 @@ uint16 convert_uint16_sat_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rtn(half16 x)
 {
@@ -32955,7 +32955,7 @@ uint16 convert_uint16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtn(half16 x)
 {
@@ -32964,7 +32964,7 @@ uint16 convert_uint16_sat_rtn(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(half x)
 {
@@ -32972,7 +32972,7 @@ long convert_long_rtz(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(half x)
 {
@@ -32980,7 +32980,7 @@ long convert_long_sat_rtz(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(half x)
 {
@@ -32989,7 +32989,7 @@ long convert_long_rte(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(half x)
 {
@@ -32998,7 +32998,7 @@ long convert_long_sat_rte(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(half x)
 {
@@ -33007,7 +33007,7 @@ long convert_long_rtp(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(half x)
 {
@@ -33016,7 +33016,7 @@ long convert_long_sat_rtp(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(half x)
 {
@@ -33025,7 +33025,7 @@ long convert_long_rtn(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(half x)
 {
@@ -33034,7 +33034,7 @@ long convert_long_sat_rtn(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtz(half2 x)
 {
@@ -33042,7 +33042,7 @@ long2 convert_long2_rtz(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(half2 x)
 {
@@ -33050,7 +33050,7 @@ long2 convert_long2_sat_rtz(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rte(half2 x)
 {
@@ -33059,7 +33059,7 @@ long2 convert_long2_rte(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(half2 x)
 {
@@ -33068,7 +33068,7 @@ long2 convert_long2_sat_rte(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtp(half2 x)
 {
@@ -33077,7 +33077,7 @@ long2 convert_long2_rtp(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(half2 x)
 {
@@ -33086,7 +33086,7 @@ long2 convert_long2_sat_rtp(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtn(half2 x)
 {
@@ -33095,7 +33095,7 @@ long2 convert_long2_rtn(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(half2 x)
 {
@@ -33104,7 +33104,7 @@ long2 convert_long2_sat_rtn(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtz(half3 x)
 {
@@ -33112,7 +33112,7 @@ long3 convert_long3_rtz(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(half3 x)
 {
@@ -33120,7 +33120,7 @@ long3 convert_long3_sat_rtz(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rte(half3 x)
 {
@@ -33129,7 +33129,7 @@ long3 convert_long3_rte(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(half3 x)
 {
@@ -33138,7 +33138,7 @@ long3 convert_long3_sat_rte(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtp(half3 x)
 {
@@ -33147,7 +33147,7 @@ long3 convert_long3_rtp(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(half3 x)
 {
@@ -33156,7 +33156,7 @@ long3 convert_long3_sat_rtp(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtn(half3 x)
 {
@@ -33165,7 +33165,7 @@ long3 convert_long3_rtn(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(half3 x)
 {
@@ -33174,7 +33174,7 @@ long3 convert_long3_sat_rtn(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtz(half4 x)
 {
@@ -33182,7 +33182,7 @@ long4 convert_long4_rtz(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(half4 x)
 {
@@ -33190,7 +33190,7 @@ long4 convert_long4_sat_rtz(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rte(half4 x)
 {
@@ -33199,7 +33199,7 @@ long4 convert_long4_rte(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(half4 x)
 {
@@ -33208,7 +33208,7 @@ long4 convert_long4_sat_rte(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtp(half4 x)
 {
@@ -33217,7 +33217,7 @@ long4 convert_long4_rtp(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(half4 x)
 {
@@ -33226,7 +33226,7 @@ long4 convert_long4_sat_rtp(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtn(half4 x)
 {
@@ -33235,7 +33235,7 @@ long4 convert_long4_rtn(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(half4 x)
 {
@@ -33244,7 +33244,7 @@ long4 convert_long4_sat_rtn(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtz(half8 x)
 {
@@ -33252,7 +33252,7 @@ long8 convert_long8_rtz(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(half8 x)
 {
@@ -33260,7 +33260,7 @@ long8 convert_long8_sat_rtz(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rte(half8 x)
 {
@@ -33269,7 +33269,7 @@ long8 convert_long8_rte(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(half8 x)
 {
@@ -33278,7 +33278,7 @@ long8 convert_long8_sat_rte(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtp(half8 x)
 {
@@ -33287,7 +33287,7 @@ long8 convert_long8_rtp(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(half8 x)
 {
@@ -33296,7 +33296,7 @@ long8 convert_long8_sat_rtp(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtn(half8 x)
 {
@@ -33305,7 +33305,7 @@ long8 convert_long8_rtn(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(half8 x)
 {
@@ -33314,7 +33314,7 @@ long8 convert_long8_sat_rtn(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtz(half16 x)
 {
@@ -33322,7 +33322,7 @@ long16 convert_long16_rtz(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(half16 x)
 {
@@ -33330,7 +33330,7 @@ long16 convert_long16_sat_rtz(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rte(half16 x)
 {
@@ -33339,7 +33339,7 @@ long16 convert_long16_rte(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(half16 x)
 {
@@ -33348,7 +33348,7 @@ long16 convert_long16_sat_rte(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtp(half16 x)
 {
@@ -33357,7 +33357,7 @@ long16 convert_long16_rtp(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(half16 x)
 {
@@ -33366,7 +33366,7 @@ long16 convert_long16_sat_rtp(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtn(half16 x)
 {
@@ -33375,7 +33375,7 @@ long16 convert_long16_rtn(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(half16 x)
 {
@@ -33384,7 +33384,7 @@ long16 convert_long16_sat_rtn(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(half x)
 {
@@ -33392,7 +33392,7 @@ ulong convert_ulong_rtz(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(half x)
 {
@@ -33400,7 +33400,7 @@ ulong convert_ulong_sat_rtz(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(half x)
 {
@@ -33409,7 +33409,7 @@ ulong convert_ulong_rte(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(half x)
 {
@@ -33418,7 +33418,7 @@ ulong convert_ulong_sat_rte(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(half x)
 {
@@ -33427,7 +33427,7 @@ ulong convert_ulong_rtp(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(half x)
 {
@@ -33436,7 +33436,7 @@ ulong convert_ulong_sat_rtp(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(half x)
 {
@@ -33445,7 +33445,7 @@ ulong convert_ulong_rtn(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(half x)
 {
@@ -33454,7 +33454,7 @@ ulong convert_ulong_sat_rtn(half x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtz(half2 x)
 {
@@ -33462,7 +33462,7 @@ ulong2 convert_ulong2_rtz(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(half2 x)
 {
@@ -33470,7 +33470,7 @@ ulong2 convert_ulong2_sat_rtz(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rte(half2 x)
 {
@@ -33479,7 +33479,7 @@ ulong2 convert_ulong2_rte(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(half2 x)
 {
@@ -33488,7 +33488,7 @@ ulong2 convert_ulong2_sat_rte(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtp(half2 x)
 {
@@ -33497,7 +33497,7 @@ ulong2 convert_ulong2_rtp(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(half2 x)
 {
@@ -33506,7 +33506,7 @@ ulong2 convert_ulong2_sat_rtp(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtn(half2 x)
 {
@@ -33515,7 +33515,7 @@ ulong2 convert_ulong2_rtn(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(half2 x)
 {
@@ -33524,7 +33524,7 @@ ulong2 convert_ulong2_sat_rtn(half2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtz(half3 x)
 {
@@ -33532,7 +33532,7 @@ ulong3 convert_ulong3_rtz(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(half3 x)
 {
@@ -33540,7 +33540,7 @@ ulong3 convert_ulong3_sat_rtz(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rte(half3 x)
 {
@@ -33549,7 +33549,7 @@ ulong3 convert_ulong3_rte(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(half3 x)
 {
@@ -33558,7 +33558,7 @@ ulong3 convert_ulong3_sat_rte(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtp(half3 x)
 {
@@ -33567,7 +33567,7 @@ ulong3 convert_ulong3_rtp(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(half3 x)
 {
@@ -33576,7 +33576,7 @@ ulong3 convert_ulong3_sat_rtp(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtn(half3 x)
 {
@@ -33585,7 +33585,7 @@ ulong3 convert_ulong3_rtn(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(half3 x)
 {
@@ -33594,7 +33594,7 @@ ulong3 convert_ulong3_sat_rtn(half3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtz(half4 x)
 {
@@ -33602,7 +33602,7 @@ ulong4 convert_ulong4_rtz(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(half4 x)
 {
@@ -33610,7 +33610,7 @@ ulong4 convert_ulong4_sat_rtz(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rte(half4 x)
 {
@@ -33619,7 +33619,7 @@ ulong4 convert_ulong4_rte(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(half4 x)
 {
@@ -33628,7 +33628,7 @@ ulong4 convert_ulong4_sat_rte(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtp(half4 x)
 {
@@ -33637,7 +33637,7 @@ ulong4 convert_ulong4_rtp(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(half4 x)
 {
@@ -33646,7 +33646,7 @@ ulong4 convert_ulong4_sat_rtp(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtn(half4 x)
 {
@@ -33655,7 +33655,7 @@ ulong4 convert_ulong4_rtn(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(half4 x)
 {
@@ -33664,7 +33664,7 @@ ulong4 convert_ulong4_sat_rtn(half4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtz(half8 x)
 {
@@ -33672,7 +33672,7 @@ ulong8 convert_ulong8_rtz(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(half8 x)
 {
@@ -33680,7 +33680,7 @@ ulong8 convert_ulong8_sat_rtz(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rte(half8 x)
 {
@@ -33689,7 +33689,7 @@ ulong8 convert_ulong8_rte(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(half8 x)
 {
@@ -33698,7 +33698,7 @@ ulong8 convert_ulong8_sat_rte(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtp(half8 x)
 {
@@ -33707,7 +33707,7 @@ ulong8 convert_ulong8_rtp(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(half8 x)
 {
@@ -33716,7 +33716,7 @@ ulong8 convert_ulong8_sat_rtp(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtn(half8 x)
 {
@@ -33725,7 +33725,7 @@ ulong8 convert_ulong8_rtn(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(half8 x)
 {
@@ -33734,7 +33734,7 @@ ulong8 convert_ulong8_sat_rtn(half8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtz(half16 x)
 {
@@ -33742,7 +33742,7 @@ ulong16 convert_ulong16_rtz(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(half16 x)
 {
@@ -33750,7 +33750,7 @@ ulong16 convert_ulong16_sat_rtz(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rte(half16 x)
 {
@@ -33759,7 +33759,7 @@ ulong16 convert_ulong16_rte(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(half16 x)
 {
@@ -33768,7 +33768,7 @@ ulong16 convert_ulong16_sat_rte(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtp(half16 x)
 {
@@ -33777,7 +33777,7 @@ ulong16 convert_ulong16_rtp(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(half16 x)
 {
@@ -33786,7 +33786,7 @@ ulong16 convert_ulong16_sat_rtp(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtn(half16 x)
 {
@@ -33795,7 +33795,7 @@ ulong16 convert_ulong16_rtn(half16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(half16 x)
 {
@@ -35748,7 +35748,7 @@ uint16 convert_uint16_sat_rtn(float16 x)
   return convert_uint16_sat(x);
 }
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(float x)
 {
@@ -35756,7 +35756,7 @@ long convert_long_rtz(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(float x)
 {
@@ -35764,7 +35764,7 @@ long convert_long_sat_rtz(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(float x)
 {
@@ -35773,7 +35773,7 @@ long convert_long_rte(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(float x)
 {
@@ -35782,7 +35782,7 @@ long convert_long_sat_rte(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(float x)
 {
@@ -35791,7 +35791,7 @@ long convert_long_rtp(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(float x)
 {
@@ -35800,7 +35800,7 @@ long convert_long_sat_rtp(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(float x)
 {
@@ -35809,7 +35809,7 @@ long convert_long_rtn(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(float x)
 {
@@ -35818,7 +35818,7 @@ long convert_long_sat_rtn(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtz(float2 x)
 {
@@ -35826,7 +35826,7 @@ long2 convert_long2_rtz(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(float2 x)
 {
@@ -35834,7 +35834,7 @@ long2 convert_long2_sat_rtz(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rte(float2 x)
 {
@@ -35843,7 +35843,7 @@ long2 convert_long2_rte(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(float2 x)
 {
@@ -35852,7 +35852,7 @@ long2 convert_long2_sat_rte(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtp(float2 x)
 {
@@ -35861,7 +35861,7 @@ long2 convert_long2_rtp(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(float2 x)
 {
@@ -35870,7 +35870,7 @@ long2 convert_long2_sat_rtp(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtn(float2 x)
 {
@@ -35879,7 +35879,7 @@ long2 convert_long2_rtn(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(float2 x)
 {
@@ -35888,7 +35888,7 @@ long2 convert_long2_sat_rtn(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtz(float3 x)
 {
@@ -35896,7 +35896,7 @@ long3 convert_long3_rtz(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(float3 x)
 {
@@ -35904,7 +35904,7 @@ long3 convert_long3_sat_rtz(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rte(float3 x)
 {
@@ -35913,7 +35913,7 @@ long3 convert_long3_rte(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(float3 x)
 {
@@ -35922,7 +35922,7 @@ long3 convert_long3_sat_rte(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtp(float3 x)
 {
@@ -35931,7 +35931,7 @@ long3 convert_long3_rtp(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(float3 x)
 {
@@ -35940,7 +35940,7 @@ long3 convert_long3_sat_rtp(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtn(float3 x)
 {
@@ -35949,7 +35949,7 @@ long3 convert_long3_rtn(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(float3 x)
 {
@@ -35958,7 +35958,7 @@ long3 convert_long3_sat_rtn(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtz(float4 x)
 {
@@ -35966,7 +35966,7 @@ long4 convert_long4_rtz(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(float4 x)
 {
@@ -35974,7 +35974,7 @@ long4 convert_long4_sat_rtz(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rte(float4 x)
 {
@@ -35983,7 +35983,7 @@ long4 convert_long4_rte(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(float4 x)
 {
@@ -35992,7 +35992,7 @@ long4 convert_long4_sat_rte(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtp(float4 x)
 {
@@ -36001,7 +36001,7 @@ long4 convert_long4_rtp(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(float4 x)
 {
@@ -36010,7 +36010,7 @@ long4 convert_long4_sat_rtp(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtn(float4 x)
 {
@@ -36019,7 +36019,7 @@ long4 convert_long4_rtn(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(float4 x)
 {
@@ -36028,7 +36028,7 @@ long4 convert_long4_sat_rtn(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtz(float8 x)
 {
@@ -36036,7 +36036,7 @@ long8 convert_long8_rtz(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(float8 x)
 {
@@ -36044,7 +36044,7 @@ long8 convert_long8_sat_rtz(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rte(float8 x)
 {
@@ -36053,7 +36053,7 @@ long8 convert_long8_rte(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(float8 x)
 {
@@ -36062,7 +36062,7 @@ long8 convert_long8_sat_rte(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtp(float8 x)
 {
@@ -36071,7 +36071,7 @@ long8 convert_long8_rtp(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(float8 x)
 {
@@ -36080,7 +36080,7 @@ long8 convert_long8_sat_rtp(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtn(float8 x)
 {
@@ -36089,7 +36089,7 @@ long8 convert_long8_rtn(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(float8 x)
 {
@@ -36098,7 +36098,7 @@ long8 convert_long8_sat_rtn(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtz(float16 x)
 {
@@ -36106,7 +36106,7 @@ long16 convert_long16_rtz(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(float16 x)
 {
@@ -36114,7 +36114,7 @@ long16 convert_long16_sat_rtz(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rte(float16 x)
 {
@@ -36123,7 +36123,7 @@ long16 convert_long16_rte(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(float16 x)
 {
@@ -36132,7 +36132,7 @@ long16 convert_long16_sat_rte(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtp(float16 x)
 {
@@ -36141,7 +36141,7 @@ long16 convert_long16_rtp(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(float16 x)
 {
@@ -36150,7 +36150,7 @@ long16 convert_long16_sat_rtp(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtn(float16 x)
 {
@@ -36159,7 +36159,7 @@ long16 convert_long16_rtn(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(float16 x)
 {
@@ -36168,7 +36168,7 @@ long16 convert_long16_sat_rtn(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(float x)
 {
@@ -36176,7 +36176,7 @@ ulong convert_ulong_rtz(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(float x)
 {
@@ -36184,7 +36184,7 @@ ulong convert_ulong_sat_rtz(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(float x)
 {
@@ -36193,7 +36193,7 @@ ulong convert_ulong_rte(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(float x)
 {
@@ -36202,7 +36202,7 @@ ulong convert_ulong_sat_rte(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(float x)
 {
@@ -36211,7 +36211,7 @@ ulong convert_ulong_rtp(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(float x)
 {
@@ -36220,7 +36220,7 @@ ulong convert_ulong_sat_rtp(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(float x)
 {
@@ -36229,7 +36229,7 @@ ulong convert_ulong_rtn(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(float x)
 {
@@ -36238,7 +36238,7 @@ ulong convert_ulong_sat_rtn(float x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtz(float2 x)
 {
@@ -36246,7 +36246,7 @@ ulong2 convert_ulong2_rtz(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(float2 x)
 {
@@ -36254,7 +36254,7 @@ ulong2 convert_ulong2_sat_rtz(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rte(float2 x)
 {
@@ -36263,7 +36263,7 @@ ulong2 convert_ulong2_rte(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(float2 x)
 {
@@ -36272,7 +36272,7 @@ ulong2 convert_ulong2_sat_rte(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtp(float2 x)
 {
@@ -36281,7 +36281,7 @@ ulong2 convert_ulong2_rtp(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(float2 x)
 {
@@ -36290,7 +36290,7 @@ ulong2 convert_ulong2_sat_rtp(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtn(float2 x)
 {
@@ -36299,7 +36299,7 @@ ulong2 convert_ulong2_rtn(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(float2 x)
 {
@@ -36308,7 +36308,7 @@ ulong2 convert_ulong2_sat_rtn(float2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtz(float3 x)
 {
@@ -36316,7 +36316,7 @@ ulong3 convert_ulong3_rtz(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(float3 x)
 {
@@ -36324,7 +36324,7 @@ ulong3 convert_ulong3_sat_rtz(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rte(float3 x)
 {
@@ -36333,7 +36333,7 @@ ulong3 convert_ulong3_rte(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(float3 x)
 {
@@ -36342,7 +36342,7 @@ ulong3 convert_ulong3_sat_rte(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtp(float3 x)
 {
@@ -36351,7 +36351,7 @@ ulong3 convert_ulong3_rtp(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(float3 x)
 {
@@ -36360,7 +36360,7 @@ ulong3 convert_ulong3_sat_rtp(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtn(float3 x)
 {
@@ -36369,7 +36369,7 @@ ulong3 convert_ulong3_rtn(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(float3 x)
 {
@@ -36378,7 +36378,7 @@ ulong3 convert_ulong3_sat_rtn(float3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtz(float4 x)
 {
@@ -36386,7 +36386,7 @@ ulong4 convert_ulong4_rtz(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(float4 x)
 {
@@ -36394,7 +36394,7 @@ ulong4 convert_ulong4_sat_rtz(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rte(float4 x)
 {
@@ -36403,7 +36403,7 @@ ulong4 convert_ulong4_rte(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(float4 x)
 {
@@ -36412,7 +36412,7 @@ ulong4 convert_ulong4_sat_rte(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtp(float4 x)
 {
@@ -36421,7 +36421,7 @@ ulong4 convert_ulong4_rtp(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(float4 x)
 {
@@ -36430,7 +36430,7 @@ ulong4 convert_ulong4_sat_rtp(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtn(float4 x)
 {
@@ -36439,7 +36439,7 @@ ulong4 convert_ulong4_rtn(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(float4 x)
 {
@@ -36448,7 +36448,7 @@ ulong4 convert_ulong4_sat_rtn(float4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtz(float8 x)
 {
@@ -36456,7 +36456,7 @@ ulong8 convert_ulong8_rtz(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(float8 x)
 {
@@ -36464,7 +36464,7 @@ ulong8 convert_ulong8_sat_rtz(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rte(float8 x)
 {
@@ -36473,7 +36473,7 @@ ulong8 convert_ulong8_rte(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(float8 x)
 {
@@ -36482,7 +36482,7 @@ ulong8 convert_ulong8_sat_rte(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtp(float8 x)
 {
@@ -36491,7 +36491,7 @@ ulong8 convert_ulong8_rtp(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(float8 x)
 {
@@ -36500,7 +36500,7 @@ ulong8 convert_ulong8_sat_rtp(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtn(float8 x)
 {
@@ -36509,7 +36509,7 @@ ulong8 convert_ulong8_rtn(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(float8 x)
 {
@@ -36518,7 +36518,7 @@ ulong8 convert_ulong8_sat_rtn(float8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtz(float16 x)
 {
@@ -36526,7 +36526,7 @@ ulong16 convert_ulong16_rtz(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(float16 x)
 {
@@ -36534,7 +36534,7 @@ ulong16 convert_ulong16_sat_rtz(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rte(float16 x)
 {
@@ -36543,7 +36543,7 @@ ulong16 convert_ulong16_rte(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(float16 x)
 {
@@ -36552,7 +36552,7 @@ ulong16 convert_ulong16_sat_rte(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtp(float16 x)
 {
@@ -36561,7 +36561,7 @@ ulong16 convert_ulong16_rtp(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(float16 x)
 {
@@ -36570,7 +36570,7 @@ ulong16 convert_ulong16_sat_rtp(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtn(float16 x)
 {
@@ -36579,7 +36579,7 @@ ulong16 convert_ulong16_rtn(float16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(float16 x)
 {
@@ -36588,7 +36588,7 @@ ulong16 convert_ulong16_sat_rtn(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtz(double x)
 {
@@ -36596,7 +36596,7 @@ char convert_char_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtz(double x)
 {
@@ -36604,7 +36604,7 @@ char convert_char_sat_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rte(double x)
 {
@@ -36613,7 +36613,7 @@ char convert_char_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rte(double x)
 {
@@ -36622,7 +36622,7 @@ char convert_char_sat_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtp(double x)
 {
@@ -36631,7 +36631,7 @@ char convert_char_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtp(double x)
 {
@@ -36640,7 +36640,7 @@ char convert_char_sat_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtn(double x)
 {
@@ -36649,7 +36649,7 @@ char convert_char_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat_rtn(double x)
 {
@@ -36658,7 +36658,7 @@ char convert_char_sat_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rtz(double2 x)
 {
@@ -36666,7 +36666,7 @@ char2 convert_char2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtz(double2 x)
 {
@@ -36674,7 +36674,7 @@ char2 convert_char2_sat_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rte(double2 x)
 {
@@ -36683,7 +36683,7 @@ char2 convert_char2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rte(double2 x)
 {
@@ -36692,7 +36692,7 @@ char2 convert_char2_sat_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rtp(double2 x)
 {
@@ -36701,7 +36701,7 @@ char2 convert_char2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtp(double2 x)
 {
@@ -36710,7 +36710,7 @@ char2 convert_char2_sat_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_rtn(double2 x)
 {
@@ -36719,7 +36719,7 @@ char2 convert_char2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char2 convert_char2_sat_rtn(double2 x)
 {
@@ -36728,7 +36728,7 @@ char2 convert_char2_sat_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rtz(double3 x)
 {
@@ -36736,7 +36736,7 @@ char3 convert_char3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtz(double3 x)
 {
@@ -36744,7 +36744,7 @@ char3 convert_char3_sat_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rte(double3 x)
 {
@@ -36753,7 +36753,7 @@ char3 convert_char3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rte(double3 x)
 {
@@ -36762,7 +36762,7 @@ char3 convert_char3_sat_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rtp(double3 x)
 {
@@ -36771,7 +36771,7 @@ char3 convert_char3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtp(double3 x)
 {
@@ -36780,7 +36780,7 @@ char3 convert_char3_sat_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_rtn(double3 x)
 {
@@ -36789,7 +36789,7 @@ char3 convert_char3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char3 convert_char3_sat_rtn(double3 x)
 {
@@ -36798,7 +36798,7 @@ char3 convert_char3_sat_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rtz(double4 x)
 {
@@ -36806,7 +36806,7 @@ char4 convert_char4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtz(double4 x)
 {
@@ -36814,7 +36814,7 @@ char4 convert_char4_sat_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rte(double4 x)
 {
@@ -36823,7 +36823,7 @@ char4 convert_char4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rte(double4 x)
 {
@@ -36832,7 +36832,7 @@ char4 convert_char4_sat_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rtp(double4 x)
 {
@@ -36841,7 +36841,7 @@ char4 convert_char4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtp(double4 x)
 {
@@ -36850,7 +36850,7 @@ char4 convert_char4_sat_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_rtn(double4 x)
 {
@@ -36859,7 +36859,7 @@ char4 convert_char4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char4 convert_char4_sat_rtn(double4 x)
 {
@@ -36868,7 +36868,7 @@ char4 convert_char4_sat_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rtz(double8 x)
 {
@@ -36876,7 +36876,7 @@ char8 convert_char8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtz(double8 x)
 {
@@ -36884,7 +36884,7 @@ char8 convert_char8_sat_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rte(double8 x)
 {
@@ -36893,7 +36893,7 @@ char8 convert_char8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rte(double8 x)
 {
@@ -36902,7 +36902,7 @@ char8 convert_char8_sat_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rtp(double8 x)
 {
@@ -36911,7 +36911,7 @@ char8 convert_char8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtp(double8 x)
 {
@@ -36920,7 +36920,7 @@ char8 convert_char8_sat_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_rtn(double8 x)
 {
@@ -36929,7 +36929,7 @@ char8 convert_char8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char8 convert_char8_sat_rtn(double8 x)
 {
@@ -36938,7 +36938,7 @@ char8 convert_char8_sat_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rtz(double16 x)
 {
@@ -36946,7 +36946,7 @@ char16 convert_char16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtz(double16 x)
 {
@@ -36954,7 +36954,7 @@ char16 convert_char16_sat_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rte(double16 x)
 {
@@ -36963,7 +36963,7 @@ char16 convert_char16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rte(double16 x)
 {
@@ -36972,7 +36972,7 @@ char16 convert_char16_sat_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rtp(double16 x)
 {
@@ -36981,7 +36981,7 @@ char16 convert_char16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtp(double16 x)
 {
@@ -36990,7 +36990,7 @@ char16 convert_char16_sat_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_rtn(double16 x)
 {
@@ -36999,7 +36999,7 @@ char16 convert_char16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char16 convert_char16_sat_rtn(double16 x)
 {
@@ -37008,7 +37008,7 @@ char16 convert_char16_sat_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtz(double x)
 {
@@ -37016,7 +37016,7 @@ uchar convert_uchar_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtz(double x)
 {
@@ -37024,7 +37024,7 @@ uchar convert_uchar_sat_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rte(double x)
 {
@@ -37033,7 +37033,7 @@ uchar convert_uchar_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rte(double x)
 {
@@ -37042,7 +37042,7 @@ uchar convert_uchar_sat_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtp(double x)
 {
@@ -37051,7 +37051,7 @@ uchar convert_uchar_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtp(double x)
 {
@@ -37060,7 +37060,7 @@ uchar convert_uchar_sat_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_rtn(double x)
 {
@@ -37069,7 +37069,7 @@ uchar convert_uchar_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar convert_uchar_sat_rtn(double x)
 {
@@ -37078,7 +37078,7 @@ uchar convert_uchar_sat_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rtz(double2 x)
 {
@@ -37086,7 +37086,7 @@ uchar2 convert_uchar2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtz(double2 x)
 {
@@ -37094,7 +37094,7 @@ uchar2 convert_uchar2_sat_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rte(double2 x)
 {
@@ -37103,7 +37103,7 @@ uchar2 convert_uchar2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rte(double2 x)
 {
@@ -37112,7 +37112,7 @@ uchar2 convert_uchar2_sat_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rtp(double2 x)
 {
@@ -37121,7 +37121,7 @@ uchar2 convert_uchar2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtp(double2 x)
 {
@@ -37130,7 +37130,7 @@ uchar2 convert_uchar2_sat_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_rtn(double2 x)
 {
@@ -37139,7 +37139,7 @@ uchar2 convert_uchar2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar2 convert_uchar2_sat_rtn(double2 x)
 {
@@ -37148,7 +37148,7 @@ uchar2 convert_uchar2_sat_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rtz(double3 x)
 {
@@ -37156,7 +37156,7 @@ uchar3 convert_uchar3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtz(double3 x)
 {
@@ -37164,7 +37164,7 @@ uchar3 convert_uchar3_sat_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rte(double3 x)
 {
@@ -37173,7 +37173,7 @@ uchar3 convert_uchar3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rte(double3 x)
 {
@@ -37182,7 +37182,7 @@ uchar3 convert_uchar3_sat_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rtp(double3 x)
 {
@@ -37191,7 +37191,7 @@ uchar3 convert_uchar3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtp(double3 x)
 {
@@ -37200,7 +37200,7 @@ uchar3 convert_uchar3_sat_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_rtn(double3 x)
 {
@@ -37209,7 +37209,7 @@ uchar3 convert_uchar3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar3 convert_uchar3_sat_rtn(double3 x)
 {
@@ -37218,7 +37218,7 @@ uchar3 convert_uchar3_sat_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rtz(double4 x)
 {
@@ -37226,7 +37226,7 @@ uchar4 convert_uchar4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtz(double4 x)
 {
@@ -37234,7 +37234,7 @@ uchar4 convert_uchar4_sat_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rte(double4 x)
 {
@@ -37243,7 +37243,7 @@ uchar4 convert_uchar4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rte(double4 x)
 {
@@ -37252,7 +37252,7 @@ uchar4 convert_uchar4_sat_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rtp(double4 x)
 {
@@ -37261,7 +37261,7 @@ uchar4 convert_uchar4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtp(double4 x)
 {
@@ -37270,7 +37270,7 @@ uchar4 convert_uchar4_sat_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_rtn(double4 x)
 {
@@ -37279,7 +37279,7 @@ uchar4 convert_uchar4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar4 convert_uchar4_sat_rtn(double4 x)
 {
@@ -37288,7 +37288,7 @@ uchar4 convert_uchar4_sat_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rtz(double8 x)
 {
@@ -37296,7 +37296,7 @@ uchar8 convert_uchar8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtz(double8 x)
 {
@@ -37304,7 +37304,7 @@ uchar8 convert_uchar8_sat_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rte(double8 x)
 {
@@ -37313,7 +37313,7 @@ uchar8 convert_uchar8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rte(double8 x)
 {
@@ -37322,7 +37322,7 @@ uchar8 convert_uchar8_sat_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rtp(double8 x)
 {
@@ -37331,7 +37331,7 @@ uchar8 convert_uchar8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtp(double8 x)
 {
@@ -37340,7 +37340,7 @@ uchar8 convert_uchar8_sat_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_rtn(double8 x)
 {
@@ -37349,7 +37349,7 @@ uchar8 convert_uchar8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar8 convert_uchar8_sat_rtn(double8 x)
 {
@@ -37358,7 +37358,7 @@ uchar8 convert_uchar8_sat_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rtz(double16 x)
 {
@@ -37366,7 +37366,7 @@ uchar16 convert_uchar16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtz(double16 x)
 {
@@ -37374,7 +37374,7 @@ uchar16 convert_uchar16_sat_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rte(double16 x)
 {
@@ -37383,7 +37383,7 @@ uchar16 convert_uchar16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rte(double16 x)
 {
@@ -37392,7 +37392,7 @@ uchar16 convert_uchar16_sat_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rtp(double16 x)
 {
@@ -37401,7 +37401,7 @@ uchar16 convert_uchar16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtp(double16 x)
 {
@@ -37410,7 +37410,7 @@ uchar16 convert_uchar16_sat_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_rtn(double16 x)
 {
@@ -37419,7 +37419,7 @@ uchar16 convert_uchar16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uchar16 convert_uchar16_sat_rtn(double16 x)
 {
@@ -37428,7 +37428,7 @@ uchar16 convert_uchar16_sat_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtz(double x)
 {
@@ -37436,7 +37436,7 @@ short convert_short_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtz(double x)
 {
@@ -37444,7 +37444,7 @@ short convert_short_sat_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rte(double x)
 {
@@ -37453,7 +37453,7 @@ short convert_short_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rte(double x)
 {
@@ -37462,7 +37462,7 @@ short convert_short_sat_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtp(double x)
 {
@@ -37471,7 +37471,7 @@ short convert_short_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtp(double x)
 {
@@ -37480,7 +37480,7 @@ short convert_short_sat_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_rtn(double x)
 {
@@ -37489,7 +37489,7 @@ short convert_short_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short convert_short_sat_rtn(double x)
 {
@@ -37498,7 +37498,7 @@ short convert_short_sat_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rtz(double2 x)
 {
@@ -37506,7 +37506,7 @@ short2 convert_short2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtz(double2 x)
 {
@@ -37514,7 +37514,7 @@ short2 convert_short2_sat_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rte(double2 x)
 {
@@ -37523,7 +37523,7 @@ short2 convert_short2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rte(double2 x)
 {
@@ -37532,7 +37532,7 @@ short2 convert_short2_sat_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rtp(double2 x)
 {
@@ -37541,7 +37541,7 @@ short2 convert_short2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtp(double2 x)
 {
@@ -37550,7 +37550,7 @@ short2 convert_short2_sat_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_rtn(double2 x)
 {
@@ -37559,7 +37559,7 @@ short2 convert_short2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short2 convert_short2_sat_rtn(double2 x)
 {
@@ -37568,7 +37568,7 @@ short2 convert_short2_sat_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rtz(double3 x)
 {
@@ -37576,7 +37576,7 @@ short3 convert_short3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtz(double3 x)
 {
@@ -37584,7 +37584,7 @@ short3 convert_short3_sat_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rte(double3 x)
 {
@@ -37593,7 +37593,7 @@ short3 convert_short3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rte(double3 x)
 {
@@ -37602,7 +37602,7 @@ short3 convert_short3_sat_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rtp(double3 x)
 {
@@ -37611,7 +37611,7 @@ short3 convert_short3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtp(double3 x)
 {
@@ -37620,7 +37620,7 @@ short3 convert_short3_sat_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_rtn(double3 x)
 {
@@ -37629,7 +37629,7 @@ short3 convert_short3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short3 convert_short3_sat_rtn(double3 x)
 {
@@ -37638,7 +37638,7 @@ short3 convert_short3_sat_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rtz(double4 x)
 {
@@ -37646,7 +37646,7 @@ short4 convert_short4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtz(double4 x)
 {
@@ -37654,7 +37654,7 @@ short4 convert_short4_sat_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rte(double4 x)
 {
@@ -37663,7 +37663,7 @@ short4 convert_short4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rte(double4 x)
 {
@@ -37672,7 +37672,7 @@ short4 convert_short4_sat_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rtp(double4 x)
 {
@@ -37681,7 +37681,7 @@ short4 convert_short4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtp(double4 x)
 {
@@ -37690,7 +37690,7 @@ short4 convert_short4_sat_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_rtn(double4 x)
 {
@@ -37699,7 +37699,7 @@ short4 convert_short4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short4 convert_short4_sat_rtn(double4 x)
 {
@@ -37708,7 +37708,7 @@ short4 convert_short4_sat_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rtz(double8 x)
 {
@@ -37716,7 +37716,7 @@ short8 convert_short8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtz(double8 x)
 {
@@ -37724,7 +37724,7 @@ short8 convert_short8_sat_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rte(double8 x)
 {
@@ -37733,7 +37733,7 @@ short8 convert_short8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rte(double8 x)
 {
@@ -37742,7 +37742,7 @@ short8 convert_short8_sat_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rtp(double8 x)
 {
@@ -37751,7 +37751,7 @@ short8 convert_short8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtp(double8 x)
 {
@@ -37760,7 +37760,7 @@ short8 convert_short8_sat_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_rtn(double8 x)
 {
@@ -37769,7 +37769,7 @@ short8 convert_short8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short8 convert_short8_sat_rtn(double8 x)
 {
@@ -37778,7 +37778,7 @@ short8 convert_short8_sat_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rtz(double16 x)
 {
@@ -37786,7 +37786,7 @@ short16 convert_short16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtz(double16 x)
 {
@@ -37794,7 +37794,7 @@ short16 convert_short16_sat_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rte(double16 x)
 {
@@ -37803,7 +37803,7 @@ short16 convert_short16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rte(double16 x)
 {
@@ -37812,7 +37812,7 @@ short16 convert_short16_sat_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rtp(double16 x)
 {
@@ -37821,7 +37821,7 @@ short16 convert_short16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtp(double16 x)
 {
@@ -37830,7 +37830,7 @@ short16 convert_short16_sat_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_rtn(double16 x)
 {
@@ -37839,7 +37839,7 @@ short16 convert_short16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 short16 convert_short16_sat_rtn(double16 x)
 {
@@ -37848,7 +37848,7 @@ short16 convert_short16_sat_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtz(double x)
 {
@@ -37856,7 +37856,7 @@ ushort convert_ushort_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtz(double x)
 {
@@ -37864,7 +37864,7 @@ ushort convert_ushort_sat_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rte(double x)
 {
@@ -37873,7 +37873,7 @@ ushort convert_ushort_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rte(double x)
 {
@@ -37882,7 +37882,7 @@ ushort convert_ushort_sat_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtp(double x)
 {
@@ -37891,7 +37891,7 @@ ushort convert_ushort_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtp(double x)
 {
@@ -37900,7 +37900,7 @@ ushort convert_ushort_sat_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_rtn(double x)
 {
@@ -37909,7 +37909,7 @@ ushort convert_ushort_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort convert_ushort_sat_rtn(double x)
 {
@@ -37918,7 +37918,7 @@ ushort convert_ushort_sat_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rtz(double2 x)
 {
@@ -37926,7 +37926,7 @@ ushort2 convert_ushort2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtz(double2 x)
 {
@@ -37934,7 +37934,7 @@ ushort2 convert_ushort2_sat_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rte(double2 x)
 {
@@ -37943,7 +37943,7 @@ ushort2 convert_ushort2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rte(double2 x)
 {
@@ -37952,7 +37952,7 @@ ushort2 convert_ushort2_sat_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rtp(double2 x)
 {
@@ -37961,7 +37961,7 @@ ushort2 convert_ushort2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtp(double2 x)
 {
@@ -37970,7 +37970,7 @@ ushort2 convert_ushort2_sat_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_rtn(double2 x)
 {
@@ -37979,7 +37979,7 @@ ushort2 convert_ushort2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort2 convert_ushort2_sat_rtn(double2 x)
 {
@@ -37988,7 +37988,7 @@ ushort2 convert_ushort2_sat_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rtz(double3 x)
 {
@@ -37996,7 +37996,7 @@ ushort3 convert_ushort3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtz(double3 x)
 {
@@ -38004,7 +38004,7 @@ ushort3 convert_ushort3_sat_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rte(double3 x)
 {
@@ -38013,7 +38013,7 @@ ushort3 convert_ushort3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rte(double3 x)
 {
@@ -38022,7 +38022,7 @@ ushort3 convert_ushort3_sat_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rtp(double3 x)
 {
@@ -38031,7 +38031,7 @@ ushort3 convert_ushort3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtp(double3 x)
 {
@@ -38040,7 +38040,7 @@ ushort3 convert_ushort3_sat_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_rtn(double3 x)
 {
@@ -38049,7 +38049,7 @@ ushort3 convert_ushort3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort3 convert_ushort3_sat_rtn(double3 x)
 {
@@ -38058,7 +38058,7 @@ ushort3 convert_ushort3_sat_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rtz(double4 x)
 {
@@ -38066,7 +38066,7 @@ ushort4 convert_ushort4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtz(double4 x)
 {
@@ -38074,7 +38074,7 @@ ushort4 convert_ushort4_sat_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rte(double4 x)
 {
@@ -38083,7 +38083,7 @@ ushort4 convert_ushort4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rte(double4 x)
 {
@@ -38092,7 +38092,7 @@ ushort4 convert_ushort4_sat_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rtp(double4 x)
 {
@@ -38101,7 +38101,7 @@ ushort4 convert_ushort4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtp(double4 x)
 {
@@ -38110,7 +38110,7 @@ ushort4 convert_ushort4_sat_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_rtn(double4 x)
 {
@@ -38119,7 +38119,7 @@ ushort4 convert_ushort4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort4 convert_ushort4_sat_rtn(double4 x)
 {
@@ -38128,7 +38128,7 @@ ushort4 convert_ushort4_sat_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rtz(double8 x)
 {
@@ -38136,7 +38136,7 @@ ushort8 convert_ushort8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtz(double8 x)
 {
@@ -38144,7 +38144,7 @@ ushort8 convert_ushort8_sat_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rte(double8 x)
 {
@@ -38153,7 +38153,7 @@ ushort8 convert_ushort8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rte(double8 x)
 {
@@ -38162,7 +38162,7 @@ ushort8 convert_ushort8_sat_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rtp(double8 x)
 {
@@ -38171,7 +38171,7 @@ ushort8 convert_ushort8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtp(double8 x)
 {
@@ -38180,7 +38180,7 @@ ushort8 convert_ushort8_sat_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_rtn(double8 x)
 {
@@ -38189,7 +38189,7 @@ ushort8 convert_ushort8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort8 convert_ushort8_sat_rtn(double8 x)
 {
@@ -38198,7 +38198,7 @@ ushort8 convert_ushort8_sat_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rtz(double16 x)
 {
@@ -38206,7 +38206,7 @@ ushort16 convert_ushort16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtz(double16 x)
 {
@@ -38214,7 +38214,7 @@ ushort16 convert_ushort16_sat_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rte(double16 x)
 {
@@ -38223,7 +38223,7 @@ ushort16 convert_ushort16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rte(double16 x)
 {
@@ -38232,7 +38232,7 @@ ushort16 convert_ushort16_sat_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rtp(double16 x)
 {
@@ -38241,7 +38241,7 @@ ushort16 convert_ushort16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtp(double16 x)
 {
@@ -38250,7 +38250,7 @@ ushort16 convert_ushort16_sat_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_rtn(double16 x)
 {
@@ -38259,7 +38259,7 @@ ushort16 convert_ushort16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ushort16 convert_ushort16_sat_rtn(double16 x)
 {
@@ -38268,7 +38268,7 @@ ushort16 convert_ushort16_sat_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtz(double x)
 {
@@ -38276,7 +38276,7 @@ int convert_int_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtz(double x)
 {
@@ -38284,7 +38284,7 @@ int convert_int_sat_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rte(double x)
 {
@@ -38293,7 +38293,7 @@ int convert_int_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rte(double x)
 {
@@ -38302,7 +38302,7 @@ int convert_int_sat_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtp(double x)
 {
@@ -38311,7 +38311,7 @@ int convert_int_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtp(double x)
 {
@@ -38320,7 +38320,7 @@ int convert_int_sat_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_rtn(double x)
 {
@@ -38329,7 +38329,7 @@ int convert_int_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int convert_int_sat_rtn(double x)
 {
@@ -38338,7 +38338,7 @@ int convert_int_sat_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rtz(double2 x)
 {
@@ -38346,7 +38346,7 @@ int2 convert_int2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtz(double2 x)
 {
@@ -38354,7 +38354,7 @@ int2 convert_int2_sat_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rte(double2 x)
 {
@@ -38363,7 +38363,7 @@ int2 convert_int2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rte(double2 x)
 {
@@ -38372,7 +38372,7 @@ int2 convert_int2_sat_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rtp(double2 x)
 {
@@ -38381,7 +38381,7 @@ int2 convert_int2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtp(double2 x)
 {
@@ -38390,7 +38390,7 @@ int2 convert_int2_sat_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_rtn(double2 x)
 {
@@ -38399,7 +38399,7 @@ int2 convert_int2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int2 convert_int2_sat_rtn(double2 x)
 {
@@ -38408,7 +38408,7 @@ int2 convert_int2_sat_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rtz(double3 x)
 {
@@ -38416,7 +38416,7 @@ int3 convert_int3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtz(double3 x)
 {
@@ -38424,7 +38424,7 @@ int3 convert_int3_sat_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rte(double3 x)
 {
@@ -38433,7 +38433,7 @@ int3 convert_int3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rte(double3 x)
 {
@@ -38442,7 +38442,7 @@ int3 convert_int3_sat_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rtp(double3 x)
 {
@@ -38451,7 +38451,7 @@ int3 convert_int3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtp(double3 x)
 {
@@ -38460,7 +38460,7 @@ int3 convert_int3_sat_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_rtn(double3 x)
 {
@@ -38469,7 +38469,7 @@ int3 convert_int3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int3 convert_int3_sat_rtn(double3 x)
 {
@@ -38478,7 +38478,7 @@ int3 convert_int3_sat_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rtz(double4 x)
 {
@@ -38486,7 +38486,7 @@ int4 convert_int4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtz(double4 x)
 {
@@ -38494,7 +38494,7 @@ int4 convert_int4_sat_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rte(double4 x)
 {
@@ -38503,7 +38503,7 @@ int4 convert_int4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rte(double4 x)
 {
@@ -38512,7 +38512,7 @@ int4 convert_int4_sat_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rtp(double4 x)
 {
@@ -38521,7 +38521,7 @@ int4 convert_int4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtp(double4 x)
 {
@@ -38530,7 +38530,7 @@ int4 convert_int4_sat_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_rtn(double4 x)
 {
@@ -38539,7 +38539,7 @@ int4 convert_int4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int4 convert_int4_sat_rtn(double4 x)
 {
@@ -38548,7 +38548,7 @@ int4 convert_int4_sat_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rtz(double8 x)
 {
@@ -38556,7 +38556,7 @@ int8 convert_int8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtz(double8 x)
 {
@@ -38564,7 +38564,7 @@ int8 convert_int8_sat_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rte(double8 x)
 {
@@ -38573,7 +38573,7 @@ int8 convert_int8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rte(double8 x)
 {
@@ -38582,7 +38582,7 @@ int8 convert_int8_sat_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rtp(double8 x)
 {
@@ -38591,7 +38591,7 @@ int8 convert_int8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtp(double8 x)
 {
@@ -38600,7 +38600,7 @@ int8 convert_int8_sat_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_rtn(double8 x)
 {
@@ -38609,7 +38609,7 @@ int8 convert_int8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int8 convert_int8_sat_rtn(double8 x)
 {
@@ -38618,7 +38618,7 @@ int8 convert_int8_sat_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rtz(double16 x)
 {
@@ -38626,7 +38626,7 @@ int16 convert_int16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtz(double16 x)
 {
@@ -38634,7 +38634,7 @@ int16 convert_int16_sat_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rte(double16 x)
 {
@@ -38643,7 +38643,7 @@ int16 convert_int16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rte(double16 x)
 {
@@ -38652,7 +38652,7 @@ int16 convert_int16_sat_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rtp(double16 x)
 {
@@ -38661,7 +38661,7 @@ int16 convert_int16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtp(double16 x)
 {
@@ -38670,7 +38670,7 @@ int16 convert_int16_sat_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_rtn(double16 x)
 {
@@ -38679,7 +38679,7 @@ int16 convert_int16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 int16 convert_int16_sat_rtn(double16 x)
 {
@@ -38688,7 +38688,7 @@ int16 convert_int16_sat_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtz(double x)
 {
@@ -38696,7 +38696,7 @@ uint convert_uint_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtz(double x)
 {
@@ -38704,7 +38704,7 @@ uint convert_uint_sat_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rte(double x)
 {
@@ -38713,7 +38713,7 @@ uint convert_uint_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rte(double x)
 {
@@ -38722,7 +38722,7 @@ uint convert_uint_sat_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtp(double x)
 {
@@ -38731,7 +38731,7 @@ uint convert_uint_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtp(double x)
 {
@@ -38740,7 +38740,7 @@ uint convert_uint_sat_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_rtn(double x)
 {
@@ -38749,7 +38749,7 @@ uint convert_uint_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint convert_uint_sat_rtn(double x)
 {
@@ -38758,7 +38758,7 @@ uint convert_uint_sat_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rtz(double2 x)
 {
@@ -38766,7 +38766,7 @@ uint2 convert_uint2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtz(double2 x)
 {
@@ -38774,7 +38774,7 @@ uint2 convert_uint2_sat_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rte(double2 x)
 {
@@ -38783,7 +38783,7 @@ uint2 convert_uint2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rte(double2 x)
 {
@@ -38792,7 +38792,7 @@ uint2 convert_uint2_sat_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rtp(double2 x)
 {
@@ -38801,7 +38801,7 @@ uint2 convert_uint2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtp(double2 x)
 {
@@ -38810,7 +38810,7 @@ uint2 convert_uint2_sat_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_rtn(double2 x)
 {
@@ -38819,7 +38819,7 @@ uint2 convert_uint2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint2 convert_uint2_sat_rtn(double2 x)
 {
@@ -38828,7 +38828,7 @@ uint2 convert_uint2_sat_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rtz(double3 x)
 {
@@ -38836,7 +38836,7 @@ uint3 convert_uint3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtz(double3 x)
 {
@@ -38844,7 +38844,7 @@ uint3 convert_uint3_sat_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rte(double3 x)
 {
@@ -38853,7 +38853,7 @@ uint3 convert_uint3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rte(double3 x)
 {
@@ -38862,7 +38862,7 @@ uint3 convert_uint3_sat_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rtp(double3 x)
 {
@@ -38871,7 +38871,7 @@ uint3 convert_uint3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtp(double3 x)
 {
@@ -38880,7 +38880,7 @@ uint3 convert_uint3_sat_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_rtn(double3 x)
 {
@@ -38889,7 +38889,7 @@ uint3 convert_uint3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint3 convert_uint3_sat_rtn(double3 x)
 {
@@ -38898,7 +38898,7 @@ uint3 convert_uint3_sat_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rtz(double4 x)
 {
@@ -38906,7 +38906,7 @@ uint4 convert_uint4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtz(double4 x)
 {
@@ -38914,7 +38914,7 @@ uint4 convert_uint4_sat_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rte(double4 x)
 {
@@ -38923,7 +38923,7 @@ uint4 convert_uint4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rte(double4 x)
 {
@@ -38932,7 +38932,7 @@ uint4 convert_uint4_sat_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rtp(double4 x)
 {
@@ -38941,7 +38941,7 @@ uint4 convert_uint4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtp(double4 x)
 {
@@ -38950,7 +38950,7 @@ uint4 convert_uint4_sat_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_rtn(double4 x)
 {
@@ -38959,7 +38959,7 @@ uint4 convert_uint4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint4 convert_uint4_sat_rtn(double4 x)
 {
@@ -38968,7 +38968,7 @@ uint4 convert_uint4_sat_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rtz(double8 x)
 {
@@ -38976,7 +38976,7 @@ uint8 convert_uint8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtz(double8 x)
 {
@@ -38984,7 +38984,7 @@ uint8 convert_uint8_sat_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rte(double8 x)
 {
@@ -38993,7 +38993,7 @@ uint8 convert_uint8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rte(double8 x)
 {
@@ -39002,7 +39002,7 @@ uint8 convert_uint8_sat_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rtp(double8 x)
 {
@@ -39011,7 +39011,7 @@ uint8 convert_uint8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtp(double8 x)
 {
@@ -39020,7 +39020,7 @@ uint8 convert_uint8_sat_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_rtn(double8 x)
 {
@@ -39029,7 +39029,7 @@ uint8 convert_uint8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint8 convert_uint8_sat_rtn(double8 x)
 {
@@ -39038,7 +39038,7 @@ uint8 convert_uint8_sat_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rtz(double16 x)
 {
@@ -39046,7 +39046,7 @@ uint16 convert_uint16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtz(double16 x)
 {
@@ -39054,7 +39054,7 @@ uint16 convert_uint16_sat_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rte(double16 x)
 {
@@ -39063,7 +39063,7 @@ uint16 convert_uint16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rte(double16 x)
 {
@@ -39072,7 +39072,7 @@ uint16 convert_uint16_sat_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rtp(double16 x)
 {
@@ -39081,7 +39081,7 @@ uint16 convert_uint16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtp(double16 x)
 {
@@ -39090,7 +39090,7 @@ uint16 convert_uint16_sat_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_rtn(double16 x)
 {
@@ -39099,7 +39099,7 @@ uint16 convert_uint16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 uint16 convert_uint16_sat_rtn(double16 x)
 {
@@ -39948,7 +39948,7 @@ ulong16 convert_ulong16_sat_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(char x)
 {
@@ -39960,7 +39960,7 @@ half convert_half_rtz(char x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(char x)
 {
@@ -39968,7 +39968,7 @@ half convert_half_rte(char x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(char x)
 {
@@ -39978,7 +39978,7 @@ half convert_half_rtp(char x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(char x)
 {
@@ -39988,7 +39988,7 @@ half convert_half_rtn(char x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(char2 x)
 {
@@ -40000,7 +40000,7 @@ half2 convert_half2_rtz(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(char2 x)
 {
@@ -40008,7 +40008,7 @@ half2 convert_half2_rte(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(char2 x)
 {
@@ -40018,7 +40018,7 @@ half2 convert_half2_rtp(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(char2 x)
 {
@@ -40028,7 +40028,7 @@ half2 convert_half2_rtn(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(char3 x)
 {
@@ -40040,7 +40040,7 @@ half3 convert_half3_rtz(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(char3 x)
 {
@@ -40048,7 +40048,7 @@ half3 convert_half3_rte(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(char3 x)
 {
@@ -40058,7 +40058,7 @@ half3 convert_half3_rtp(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(char3 x)
 {
@@ -40068,7 +40068,7 @@ half3 convert_half3_rtn(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(char4 x)
 {
@@ -40080,7 +40080,7 @@ half4 convert_half4_rtz(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(char4 x)
 {
@@ -40088,7 +40088,7 @@ half4 convert_half4_rte(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(char4 x)
 {
@@ -40098,7 +40098,7 @@ half4 convert_half4_rtp(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(char4 x)
 {
@@ -40108,7 +40108,7 @@ half4 convert_half4_rtn(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(char8 x)
 {
@@ -40120,7 +40120,7 @@ half8 convert_half8_rtz(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(char8 x)
 {
@@ -40128,7 +40128,7 @@ half8 convert_half8_rte(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(char8 x)
 {
@@ -40138,7 +40138,7 @@ half8 convert_half8_rtp(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(char8 x)
 {
@@ -40148,7 +40148,7 @@ half8 convert_half8_rtn(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(char16 x)
 {
@@ -40160,7 +40160,7 @@ half16 convert_half16_rtz(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(char16 x)
 {
@@ -40168,7 +40168,7 @@ half16 convert_half16_rte(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(char16 x)
 {
@@ -40178,7 +40178,7 @@ half16 convert_half16_rtp(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(char16 x)
 {
@@ -40380,7 +40380,7 @@ float16 convert_float16_rtn(char16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(char x)
 {
@@ -40392,7 +40392,7 @@ double convert_double_rtz(char x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(char x)
 {
@@ -40400,7 +40400,7 @@ double convert_double_rte(char x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(char x)
 {
@@ -40410,7 +40410,7 @@ double convert_double_rtp(char x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(char x)
 {
@@ -40420,7 +40420,7 @@ double convert_double_rtn(char x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(char2 x)
 {
@@ -40432,7 +40432,7 @@ double2 convert_double2_rtz(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(char2 x)
 {
@@ -40440,7 +40440,7 @@ double2 convert_double2_rte(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(char2 x)
 {
@@ -40450,7 +40450,7 @@ double2 convert_double2_rtp(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(char2 x)
 {
@@ -40460,7 +40460,7 @@ double2 convert_double2_rtn(char2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(char3 x)
 {
@@ -40472,7 +40472,7 @@ double3 convert_double3_rtz(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(char3 x)
 {
@@ -40480,7 +40480,7 @@ double3 convert_double3_rte(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(char3 x)
 {
@@ -40490,7 +40490,7 @@ double3 convert_double3_rtp(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(char3 x)
 {
@@ -40500,7 +40500,7 @@ double3 convert_double3_rtn(char3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(char4 x)
 {
@@ -40512,7 +40512,7 @@ double4 convert_double4_rtz(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(char4 x)
 {
@@ -40520,7 +40520,7 @@ double4 convert_double4_rte(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(char4 x)
 {
@@ -40530,7 +40530,7 @@ double4 convert_double4_rtp(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(char4 x)
 {
@@ -40540,7 +40540,7 @@ double4 convert_double4_rtn(char4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(char8 x)
 {
@@ -40552,7 +40552,7 @@ double8 convert_double8_rtz(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(char8 x)
 {
@@ -40560,7 +40560,7 @@ double8 convert_double8_rte(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(char8 x)
 {
@@ -40570,7 +40570,7 @@ double8 convert_double8_rtp(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(char8 x)
 {
@@ -40580,7 +40580,7 @@ double8 convert_double8_rtn(char8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(char16 x)
 {
@@ -40592,7 +40592,7 @@ double16 convert_double16_rtz(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(char16 x)
 {
@@ -40600,7 +40600,7 @@ double16 convert_double16_rte(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(char16 x)
 {
@@ -40610,7 +40610,7 @@ double16 convert_double16_rtp(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(char16 x)
 {
@@ -40620,7 +40620,7 @@ double16 convert_double16_rtn(char16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(uchar x)
 {
@@ -40632,7 +40632,7 @@ half convert_half_rtz(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(uchar x)
 {
@@ -40640,7 +40640,7 @@ half convert_half_rte(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(uchar x)
 {
@@ -40650,7 +40650,7 @@ half convert_half_rtp(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(uchar x)
 {
@@ -40660,7 +40660,7 @@ half convert_half_rtn(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(uchar2 x)
 {
@@ -40672,7 +40672,7 @@ half2 convert_half2_rtz(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(uchar2 x)
 {
@@ -40680,7 +40680,7 @@ half2 convert_half2_rte(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(uchar2 x)
 {
@@ -40690,7 +40690,7 @@ half2 convert_half2_rtp(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(uchar2 x)
 {
@@ -40700,7 +40700,7 @@ half2 convert_half2_rtn(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(uchar3 x)
 {
@@ -40712,7 +40712,7 @@ half3 convert_half3_rtz(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(uchar3 x)
 {
@@ -40720,7 +40720,7 @@ half3 convert_half3_rte(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(uchar3 x)
 {
@@ -40730,7 +40730,7 @@ half3 convert_half3_rtp(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(uchar3 x)
 {
@@ -40740,7 +40740,7 @@ half3 convert_half3_rtn(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(uchar4 x)
 {
@@ -40752,7 +40752,7 @@ half4 convert_half4_rtz(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(uchar4 x)
 {
@@ -40760,7 +40760,7 @@ half4 convert_half4_rte(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(uchar4 x)
 {
@@ -40770,7 +40770,7 @@ half4 convert_half4_rtp(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(uchar4 x)
 {
@@ -40780,7 +40780,7 @@ half4 convert_half4_rtn(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(uchar8 x)
 {
@@ -40792,7 +40792,7 @@ half8 convert_half8_rtz(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(uchar8 x)
 {
@@ -40800,7 +40800,7 @@ half8 convert_half8_rte(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(uchar8 x)
 {
@@ -40810,7 +40810,7 @@ half8 convert_half8_rtp(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(uchar8 x)
 {
@@ -40820,7 +40820,7 @@ half8 convert_half8_rtn(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(uchar16 x)
 {
@@ -40832,7 +40832,7 @@ half16 convert_half16_rtz(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(uchar16 x)
 {
@@ -40840,7 +40840,7 @@ half16 convert_half16_rte(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(uchar16 x)
 {
@@ -40850,7 +40850,7 @@ half16 convert_half16_rtp(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(uchar16 x)
 {
@@ -41052,7 +41052,7 @@ float16 convert_float16_rtn(uchar16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(uchar x)
 {
@@ -41064,7 +41064,7 @@ double convert_double_rtz(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(uchar x)
 {
@@ -41072,7 +41072,7 @@ double convert_double_rte(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(uchar x)
 {
@@ -41082,7 +41082,7 @@ double convert_double_rtp(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(uchar x)
 {
@@ -41092,7 +41092,7 @@ double convert_double_rtn(uchar x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(uchar2 x)
 {
@@ -41104,7 +41104,7 @@ double2 convert_double2_rtz(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(uchar2 x)
 {
@@ -41112,7 +41112,7 @@ double2 convert_double2_rte(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(uchar2 x)
 {
@@ -41122,7 +41122,7 @@ double2 convert_double2_rtp(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(uchar2 x)
 {
@@ -41132,7 +41132,7 @@ double2 convert_double2_rtn(uchar2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(uchar3 x)
 {
@@ -41144,7 +41144,7 @@ double3 convert_double3_rtz(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(uchar3 x)
 {
@@ -41152,7 +41152,7 @@ double3 convert_double3_rte(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(uchar3 x)
 {
@@ -41162,7 +41162,7 @@ double3 convert_double3_rtp(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(uchar3 x)
 {
@@ -41172,7 +41172,7 @@ double3 convert_double3_rtn(uchar3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(uchar4 x)
 {
@@ -41184,7 +41184,7 @@ double4 convert_double4_rtz(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(uchar4 x)
 {
@@ -41192,7 +41192,7 @@ double4 convert_double4_rte(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(uchar4 x)
 {
@@ -41202,7 +41202,7 @@ double4 convert_double4_rtp(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(uchar4 x)
 {
@@ -41212,7 +41212,7 @@ double4 convert_double4_rtn(uchar4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(uchar8 x)
 {
@@ -41224,7 +41224,7 @@ double8 convert_double8_rtz(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(uchar8 x)
 {
@@ -41232,7 +41232,7 @@ double8 convert_double8_rte(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(uchar8 x)
 {
@@ -41242,7 +41242,7 @@ double8 convert_double8_rtp(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(uchar8 x)
 {
@@ -41252,7 +41252,7 @@ double8 convert_double8_rtn(uchar8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(uchar16 x)
 {
@@ -41264,7 +41264,7 @@ double16 convert_double16_rtz(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(uchar16 x)
 {
@@ -41272,7 +41272,7 @@ double16 convert_double16_rte(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(uchar16 x)
 {
@@ -41282,7 +41282,7 @@ double16 convert_double16_rtp(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(uchar16 x)
 {
@@ -41292,7 +41292,7 @@ double16 convert_double16_rtn(uchar16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(short x)
 {
@@ -41304,7 +41304,7 @@ half convert_half_rtz(short x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(short x)
 {
@@ -41312,7 +41312,7 @@ half convert_half_rte(short x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(short x)
 {
@@ -41322,7 +41322,7 @@ half convert_half_rtp(short x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(short x)
 {
@@ -41332,7 +41332,7 @@ half convert_half_rtn(short x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(short2 x)
 {
@@ -41344,7 +41344,7 @@ half2 convert_half2_rtz(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(short2 x)
 {
@@ -41352,7 +41352,7 @@ half2 convert_half2_rte(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(short2 x)
 {
@@ -41362,7 +41362,7 @@ half2 convert_half2_rtp(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(short2 x)
 {
@@ -41372,7 +41372,7 @@ half2 convert_half2_rtn(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(short3 x)
 {
@@ -41384,7 +41384,7 @@ half3 convert_half3_rtz(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(short3 x)
 {
@@ -41392,7 +41392,7 @@ half3 convert_half3_rte(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(short3 x)
 {
@@ -41402,7 +41402,7 @@ half3 convert_half3_rtp(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(short3 x)
 {
@@ -41412,7 +41412,7 @@ half3 convert_half3_rtn(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(short4 x)
 {
@@ -41424,7 +41424,7 @@ half4 convert_half4_rtz(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(short4 x)
 {
@@ -41432,7 +41432,7 @@ half4 convert_half4_rte(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(short4 x)
 {
@@ -41442,7 +41442,7 @@ half4 convert_half4_rtp(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(short4 x)
 {
@@ -41452,7 +41452,7 @@ half4 convert_half4_rtn(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(short8 x)
 {
@@ -41464,7 +41464,7 @@ half8 convert_half8_rtz(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(short8 x)
 {
@@ -41472,7 +41472,7 @@ half8 convert_half8_rte(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(short8 x)
 {
@@ -41482,7 +41482,7 @@ half8 convert_half8_rtp(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(short8 x)
 {
@@ -41492,7 +41492,7 @@ half8 convert_half8_rtn(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(short16 x)
 {
@@ -41504,7 +41504,7 @@ half16 convert_half16_rtz(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(short16 x)
 {
@@ -41512,7 +41512,7 @@ half16 convert_half16_rte(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(short16 x)
 {
@@ -41522,7 +41522,7 @@ half16 convert_half16_rtp(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(short16 x)
 {
@@ -41724,7 +41724,7 @@ float16 convert_float16_rtn(short16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(short x)
 {
@@ -41736,7 +41736,7 @@ double convert_double_rtz(short x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(short x)
 {
@@ -41744,7 +41744,7 @@ double convert_double_rte(short x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(short x)
 {
@@ -41754,7 +41754,7 @@ double convert_double_rtp(short x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(short x)
 {
@@ -41764,7 +41764,7 @@ double convert_double_rtn(short x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(short2 x)
 {
@@ -41776,7 +41776,7 @@ double2 convert_double2_rtz(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(short2 x)
 {
@@ -41784,7 +41784,7 @@ double2 convert_double2_rte(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(short2 x)
 {
@@ -41794,7 +41794,7 @@ double2 convert_double2_rtp(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(short2 x)
 {
@@ -41804,7 +41804,7 @@ double2 convert_double2_rtn(short2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(short3 x)
 {
@@ -41816,7 +41816,7 @@ double3 convert_double3_rtz(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(short3 x)
 {
@@ -41824,7 +41824,7 @@ double3 convert_double3_rte(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(short3 x)
 {
@@ -41834,7 +41834,7 @@ double3 convert_double3_rtp(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(short3 x)
 {
@@ -41844,7 +41844,7 @@ double3 convert_double3_rtn(short3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(short4 x)
 {
@@ -41856,7 +41856,7 @@ double4 convert_double4_rtz(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(short4 x)
 {
@@ -41864,7 +41864,7 @@ double4 convert_double4_rte(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(short4 x)
 {
@@ -41874,7 +41874,7 @@ double4 convert_double4_rtp(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(short4 x)
 {
@@ -41884,7 +41884,7 @@ double4 convert_double4_rtn(short4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(short8 x)
 {
@@ -41896,7 +41896,7 @@ double8 convert_double8_rtz(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(short8 x)
 {
@@ -41904,7 +41904,7 @@ double8 convert_double8_rte(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(short8 x)
 {
@@ -41914,7 +41914,7 @@ double8 convert_double8_rtp(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(short8 x)
 {
@@ -41924,7 +41924,7 @@ double8 convert_double8_rtn(short8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(short16 x)
 {
@@ -41936,7 +41936,7 @@ double16 convert_double16_rtz(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(short16 x)
 {
@@ -41944,7 +41944,7 @@ double16 convert_double16_rte(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(short16 x)
 {
@@ -41954,7 +41954,7 @@ double16 convert_double16_rtp(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(short16 x)
 {
@@ -41964,7 +41964,7 @@ double16 convert_double16_rtn(short16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(ushort x)
 {
@@ -41976,7 +41976,7 @@ half convert_half_rtz(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(ushort x)
 {
@@ -41984,7 +41984,7 @@ half convert_half_rte(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(ushort x)
 {
@@ -41994,7 +41994,7 @@ half convert_half_rtp(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(ushort x)
 {
@@ -42004,7 +42004,7 @@ half convert_half_rtn(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(ushort2 x)
 {
@@ -42016,7 +42016,7 @@ half2 convert_half2_rtz(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(ushort2 x)
 {
@@ -42024,7 +42024,7 @@ half2 convert_half2_rte(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(ushort2 x)
 {
@@ -42034,7 +42034,7 @@ half2 convert_half2_rtp(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(ushort2 x)
 {
@@ -42044,7 +42044,7 @@ half2 convert_half2_rtn(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(ushort3 x)
 {
@@ -42056,7 +42056,7 @@ half3 convert_half3_rtz(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(ushort3 x)
 {
@@ -42064,7 +42064,7 @@ half3 convert_half3_rte(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(ushort3 x)
 {
@@ -42074,7 +42074,7 @@ half3 convert_half3_rtp(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(ushort3 x)
 {
@@ -42084,7 +42084,7 @@ half3 convert_half3_rtn(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(ushort4 x)
 {
@@ -42096,7 +42096,7 @@ half4 convert_half4_rtz(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(ushort4 x)
 {
@@ -42104,7 +42104,7 @@ half4 convert_half4_rte(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(ushort4 x)
 {
@@ -42114,7 +42114,7 @@ half4 convert_half4_rtp(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(ushort4 x)
 {
@@ -42124,7 +42124,7 @@ half4 convert_half4_rtn(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(ushort8 x)
 {
@@ -42136,7 +42136,7 @@ half8 convert_half8_rtz(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(ushort8 x)
 {
@@ -42144,7 +42144,7 @@ half8 convert_half8_rte(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(ushort8 x)
 {
@@ -42154,7 +42154,7 @@ half8 convert_half8_rtp(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(ushort8 x)
 {
@@ -42164,7 +42164,7 @@ half8 convert_half8_rtn(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(ushort16 x)
 {
@@ -42176,7 +42176,7 @@ half16 convert_half16_rtz(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(ushort16 x)
 {
@@ -42184,7 +42184,7 @@ half16 convert_half16_rte(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(ushort16 x)
 {
@@ -42194,7 +42194,7 @@ half16 convert_half16_rtp(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(ushort16 x)
 {
@@ -42396,7 +42396,7 @@ float16 convert_float16_rtn(ushort16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(ushort x)
 {
@@ -42408,7 +42408,7 @@ double convert_double_rtz(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(ushort x)
 {
@@ -42416,7 +42416,7 @@ double convert_double_rte(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(ushort x)
 {
@@ -42426,7 +42426,7 @@ double convert_double_rtp(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(ushort x)
 {
@@ -42436,7 +42436,7 @@ double convert_double_rtn(ushort x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(ushort2 x)
 {
@@ -42448,7 +42448,7 @@ double2 convert_double2_rtz(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(ushort2 x)
 {
@@ -42456,7 +42456,7 @@ double2 convert_double2_rte(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(ushort2 x)
 {
@@ -42466,7 +42466,7 @@ double2 convert_double2_rtp(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(ushort2 x)
 {
@@ -42476,7 +42476,7 @@ double2 convert_double2_rtn(ushort2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(ushort3 x)
 {
@@ -42488,7 +42488,7 @@ double3 convert_double3_rtz(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(ushort3 x)
 {
@@ -42496,7 +42496,7 @@ double3 convert_double3_rte(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(ushort3 x)
 {
@@ -42506,7 +42506,7 @@ double3 convert_double3_rtp(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(ushort3 x)
 {
@@ -42516,7 +42516,7 @@ double3 convert_double3_rtn(ushort3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(ushort4 x)
 {
@@ -42528,7 +42528,7 @@ double4 convert_double4_rtz(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(ushort4 x)
 {
@@ -42536,7 +42536,7 @@ double4 convert_double4_rte(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(ushort4 x)
 {
@@ -42546,7 +42546,7 @@ double4 convert_double4_rtp(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(ushort4 x)
 {
@@ -42556,7 +42556,7 @@ double4 convert_double4_rtn(ushort4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(ushort8 x)
 {
@@ -42568,7 +42568,7 @@ double8 convert_double8_rtz(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(ushort8 x)
 {
@@ -42576,7 +42576,7 @@ double8 convert_double8_rte(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(ushort8 x)
 {
@@ -42586,7 +42586,7 @@ double8 convert_double8_rtp(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(ushort8 x)
 {
@@ -42596,7 +42596,7 @@ double8 convert_double8_rtn(ushort8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(ushort16 x)
 {
@@ -42608,7 +42608,7 @@ double16 convert_double16_rtz(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(ushort16 x)
 {
@@ -42616,7 +42616,7 @@ double16 convert_double16_rte(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(ushort16 x)
 {
@@ -42626,7 +42626,7 @@ double16 convert_double16_rtp(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(ushort16 x)
 {
@@ -42636,7 +42636,7 @@ double16 convert_double16_rtn(ushort16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(int x)
 {
@@ -42648,7 +42648,7 @@ half convert_half_rtz(int x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(int x)
 {
@@ -42656,7 +42656,7 @@ half convert_half_rte(int x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(int x)
 {
@@ -42666,7 +42666,7 @@ half convert_half_rtp(int x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(int x)
 {
@@ -42676,7 +42676,7 @@ half convert_half_rtn(int x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(int2 x)
 {
@@ -42688,7 +42688,7 @@ half2 convert_half2_rtz(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(int2 x)
 {
@@ -42696,7 +42696,7 @@ half2 convert_half2_rte(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(int2 x)
 {
@@ -42706,7 +42706,7 @@ half2 convert_half2_rtp(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(int2 x)
 {
@@ -42716,7 +42716,7 @@ half2 convert_half2_rtn(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(int3 x)
 {
@@ -42728,7 +42728,7 @@ half3 convert_half3_rtz(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(int3 x)
 {
@@ -42736,7 +42736,7 @@ half3 convert_half3_rte(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(int3 x)
 {
@@ -42746,7 +42746,7 @@ half3 convert_half3_rtp(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(int3 x)
 {
@@ -42756,7 +42756,7 @@ half3 convert_half3_rtn(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(int4 x)
 {
@@ -42768,7 +42768,7 @@ half4 convert_half4_rtz(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(int4 x)
 {
@@ -42776,7 +42776,7 @@ half4 convert_half4_rte(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(int4 x)
 {
@@ -42786,7 +42786,7 @@ half4 convert_half4_rtp(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(int4 x)
 {
@@ -42796,7 +42796,7 @@ half4 convert_half4_rtn(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(int8 x)
 {
@@ -42808,7 +42808,7 @@ half8 convert_half8_rtz(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(int8 x)
 {
@@ -42816,7 +42816,7 @@ half8 convert_half8_rte(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(int8 x)
 {
@@ -42826,7 +42826,7 @@ half8 convert_half8_rtp(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(int8 x)
 {
@@ -42836,7 +42836,7 @@ half8 convert_half8_rtn(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(int16 x)
 {
@@ -42848,7 +42848,7 @@ half16 convert_half16_rtz(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(int16 x)
 {
@@ -42856,7 +42856,7 @@ half16 convert_half16_rte(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(int16 x)
 {
@@ -42866,7 +42866,7 @@ half16 convert_half16_rtp(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(int16 x)
 {
@@ -43068,7 +43068,7 @@ float16 convert_float16_rtn(int16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(int x)
 {
@@ -43080,7 +43080,7 @@ double convert_double_rtz(int x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(int x)
 {
@@ -43088,7 +43088,7 @@ double convert_double_rte(int x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(int x)
 {
@@ -43098,7 +43098,7 @@ double convert_double_rtp(int x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(int x)
 {
@@ -43108,7 +43108,7 @@ double convert_double_rtn(int x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(int2 x)
 {
@@ -43120,7 +43120,7 @@ double2 convert_double2_rtz(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(int2 x)
 {
@@ -43128,7 +43128,7 @@ double2 convert_double2_rte(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(int2 x)
 {
@@ -43138,7 +43138,7 @@ double2 convert_double2_rtp(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(int2 x)
 {
@@ -43148,7 +43148,7 @@ double2 convert_double2_rtn(int2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(int3 x)
 {
@@ -43160,7 +43160,7 @@ double3 convert_double3_rtz(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(int3 x)
 {
@@ -43168,7 +43168,7 @@ double3 convert_double3_rte(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(int3 x)
 {
@@ -43178,7 +43178,7 @@ double3 convert_double3_rtp(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(int3 x)
 {
@@ -43188,7 +43188,7 @@ double3 convert_double3_rtn(int3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(int4 x)
 {
@@ -43200,7 +43200,7 @@ double4 convert_double4_rtz(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(int4 x)
 {
@@ -43208,7 +43208,7 @@ double4 convert_double4_rte(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(int4 x)
 {
@@ -43218,7 +43218,7 @@ double4 convert_double4_rtp(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(int4 x)
 {
@@ -43228,7 +43228,7 @@ double4 convert_double4_rtn(int4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(int8 x)
 {
@@ -43240,7 +43240,7 @@ double8 convert_double8_rtz(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(int8 x)
 {
@@ -43248,7 +43248,7 @@ double8 convert_double8_rte(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(int8 x)
 {
@@ -43258,7 +43258,7 @@ double8 convert_double8_rtp(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(int8 x)
 {
@@ -43268,7 +43268,7 @@ double8 convert_double8_rtn(int8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(int16 x)
 {
@@ -43280,7 +43280,7 @@ double16 convert_double16_rtz(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(int16 x)
 {
@@ -43288,7 +43288,7 @@ double16 convert_double16_rte(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(int16 x)
 {
@@ -43298,7 +43298,7 @@ double16 convert_double16_rtp(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(int16 x)
 {
@@ -43308,7 +43308,7 @@ double16 convert_double16_rtn(int16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(uint x)
 {
@@ -43320,7 +43320,7 @@ half convert_half_rtz(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(uint x)
 {
@@ -43328,7 +43328,7 @@ half convert_half_rte(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(uint x)
 {
@@ -43338,7 +43338,7 @@ half convert_half_rtp(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(uint x)
 {
@@ -43348,7 +43348,7 @@ half convert_half_rtn(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(uint2 x)
 {
@@ -43360,7 +43360,7 @@ half2 convert_half2_rtz(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(uint2 x)
 {
@@ -43368,7 +43368,7 @@ half2 convert_half2_rte(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(uint2 x)
 {
@@ -43378,7 +43378,7 @@ half2 convert_half2_rtp(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(uint2 x)
 {
@@ -43388,7 +43388,7 @@ half2 convert_half2_rtn(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(uint3 x)
 {
@@ -43400,7 +43400,7 @@ half3 convert_half3_rtz(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(uint3 x)
 {
@@ -43408,7 +43408,7 @@ half3 convert_half3_rte(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(uint3 x)
 {
@@ -43418,7 +43418,7 @@ half3 convert_half3_rtp(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(uint3 x)
 {
@@ -43428,7 +43428,7 @@ half3 convert_half3_rtn(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(uint4 x)
 {
@@ -43440,7 +43440,7 @@ half4 convert_half4_rtz(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(uint4 x)
 {
@@ -43448,7 +43448,7 @@ half4 convert_half4_rte(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(uint4 x)
 {
@@ -43458,7 +43458,7 @@ half4 convert_half4_rtp(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(uint4 x)
 {
@@ -43468,7 +43468,7 @@ half4 convert_half4_rtn(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(uint8 x)
 {
@@ -43480,7 +43480,7 @@ half8 convert_half8_rtz(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(uint8 x)
 {
@@ -43488,7 +43488,7 @@ half8 convert_half8_rte(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(uint8 x)
 {
@@ -43498,7 +43498,7 @@ half8 convert_half8_rtp(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(uint8 x)
 {
@@ -43508,7 +43508,7 @@ half8 convert_half8_rtn(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(uint16 x)
 {
@@ -43520,7 +43520,7 @@ half16 convert_half16_rtz(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(uint16 x)
 {
@@ -43528,7 +43528,7 @@ half16 convert_half16_rte(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(uint16 x)
 {
@@ -43538,7 +43538,7 @@ half16 convert_half16_rtp(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(uint16 x)
 {
@@ -43740,7 +43740,7 @@ float16 convert_float16_rtn(uint16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(uint x)
 {
@@ -43752,7 +43752,7 @@ double convert_double_rtz(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(uint x)
 {
@@ -43760,7 +43760,7 @@ double convert_double_rte(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(uint x)
 {
@@ -43770,7 +43770,7 @@ double convert_double_rtp(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(uint x)
 {
@@ -43780,7 +43780,7 @@ double convert_double_rtn(uint x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(uint2 x)
 {
@@ -43792,7 +43792,7 @@ double2 convert_double2_rtz(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(uint2 x)
 {
@@ -43800,7 +43800,7 @@ double2 convert_double2_rte(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(uint2 x)
 {
@@ -43810,7 +43810,7 @@ double2 convert_double2_rtp(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(uint2 x)
 {
@@ -43820,7 +43820,7 @@ double2 convert_double2_rtn(uint2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(uint3 x)
 {
@@ -43832,7 +43832,7 @@ double3 convert_double3_rtz(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(uint3 x)
 {
@@ -43840,7 +43840,7 @@ double3 convert_double3_rte(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(uint3 x)
 {
@@ -43850,7 +43850,7 @@ double3 convert_double3_rtp(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(uint3 x)
 {
@@ -43860,7 +43860,7 @@ double3 convert_double3_rtn(uint3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(uint4 x)
 {
@@ -43872,7 +43872,7 @@ double4 convert_double4_rtz(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(uint4 x)
 {
@@ -43880,7 +43880,7 @@ double4 convert_double4_rte(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(uint4 x)
 {
@@ -43890,7 +43890,7 @@ double4 convert_double4_rtp(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(uint4 x)
 {
@@ -43900,7 +43900,7 @@ double4 convert_double4_rtn(uint4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(uint8 x)
 {
@@ -43912,7 +43912,7 @@ double8 convert_double8_rtz(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(uint8 x)
 {
@@ -43920,7 +43920,7 @@ double8 convert_double8_rte(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(uint8 x)
 {
@@ -43930,7 +43930,7 @@ double8 convert_double8_rtp(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(uint8 x)
 {
@@ -43940,7 +43940,7 @@ double8 convert_double8_rtn(uint8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(uint16 x)
 {
@@ -43952,7 +43952,7 @@ double16 convert_double16_rtz(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(uint16 x)
 {
@@ -43960,7 +43960,7 @@ double16 convert_double16_rte(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(uint16 x)
 {
@@ -43970,7 +43970,7 @@ double16 convert_double16_rtp(uint16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(uint16 x)
 {
@@ -43980,7 +43980,7 @@ double16 convert_double16_rtn(uint16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(long x)
 {
@@ -43992,7 +43992,7 @@ half convert_half_rtz(long x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(long x)
 {
@@ -44000,7 +44000,7 @@ half convert_half_rte(long x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(long x)
 {
@@ -44010,7 +44010,7 @@ half convert_half_rtp(long x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(long x)
 {
@@ -44020,7 +44020,7 @@ half convert_half_rtn(long x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(long2 x)
 {
@@ -44032,7 +44032,7 @@ half2 convert_half2_rtz(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(long2 x)
 {
@@ -44040,7 +44040,7 @@ half2 convert_half2_rte(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(long2 x)
 {
@@ -44050,7 +44050,7 @@ half2 convert_half2_rtp(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(long2 x)
 {
@@ -44060,7 +44060,7 @@ half2 convert_half2_rtn(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(long3 x)
 {
@@ -44072,7 +44072,7 @@ half3 convert_half3_rtz(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(long3 x)
 {
@@ -44080,7 +44080,7 @@ half3 convert_half3_rte(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(long3 x)
 {
@@ -44090,7 +44090,7 @@ half3 convert_half3_rtp(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(long3 x)
 {
@@ -44100,7 +44100,7 @@ half3 convert_half3_rtn(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(long4 x)
 {
@@ -44112,7 +44112,7 @@ half4 convert_half4_rtz(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(long4 x)
 {
@@ -44120,7 +44120,7 @@ half4 convert_half4_rte(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(long4 x)
 {
@@ -44130,7 +44130,7 @@ half4 convert_half4_rtp(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(long4 x)
 {
@@ -44140,7 +44140,7 @@ half4 convert_half4_rtn(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(long8 x)
 {
@@ -44152,7 +44152,7 @@ half8 convert_half8_rtz(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(long8 x)
 {
@@ -44160,7 +44160,7 @@ half8 convert_half8_rte(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(long8 x)
 {
@@ -44170,7 +44170,7 @@ half8 convert_half8_rtp(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(long8 x)
 {
@@ -44180,7 +44180,7 @@ half8 convert_half8_rtn(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(long16 x)
 {
@@ -44192,7 +44192,7 @@ half16 convert_half16_rtz(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(long16 x)
 {
@@ -44200,7 +44200,7 @@ half16 convert_half16_rte(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(long16 x)
 {
@@ -44210,7 +44210,7 @@ half16 convert_half16_rtp(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(long16 x)
 {
@@ -44220,7 +44220,7 @@ half16 convert_half16_rtn(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(long x)
 {
@@ -44232,7 +44232,7 @@ float convert_float_rtz(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rte(long x)
 {
@@ -44240,7 +44240,7 @@ float convert_float_rte(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(long x)
 {
@@ -44250,7 +44250,7 @@ float convert_float_rtp(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(long x)
 {
@@ -44260,7 +44260,7 @@ float convert_float_rtn(long x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(long2 x)
 {
@@ -44272,7 +44272,7 @@ float2 convert_float2_rtz(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rte(long2 x)
 {
@@ -44280,7 +44280,7 @@ float2 convert_float2_rte(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(long2 x)
 {
@@ -44290,7 +44290,7 @@ float2 convert_float2_rtp(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(long2 x)
 {
@@ -44300,7 +44300,7 @@ float2 convert_float2_rtn(long2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(long3 x)
 {
@@ -44312,7 +44312,7 @@ float3 convert_float3_rtz(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rte(long3 x)
 {
@@ -44320,7 +44320,7 @@ float3 convert_float3_rte(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(long3 x)
 {
@@ -44330,7 +44330,7 @@ float3 convert_float3_rtp(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(long3 x)
 {
@@ -44340,7 +44340,7 @@ float3 convert_float3_rtn(long3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(long4 x)
 {
@@ -44352,7 +44352,7 @@ float4 convert_float4_rtz(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rte(long4 x)
 {
@@ -44360,7 +44360,7 @@ float4 convert_float4_rte(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(long4 x)
 {
@@ -44370,7 +44370,7 @@ float4 convert_float4_rtp(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(long4 x)
 {
@@ -44380,7 +44380,7 @@ float4 convert_float4_rtn(long4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(long8 x)
 {
@@ -44392,7 +44392,7 @@ float8 convert_float8_rtz(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rte(long8 x)
 {
@@ -44400,7 +44400,7 @@ float8 convert_float8_rte(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(long8 x)
 {
@@ -44410,7 +44410,7 @@ float8 convert_float8_rtp(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(long8 x)
 {
@@ -44420,7 +44420,7 @@ float8 convert_float8_rtn(long8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(long16 x)
 {
@@ -44432,7 +44432,7 @@ float16 convert_float16_rtz(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rte(long16 x)
 {
@@ -44440,7 +44440,7 @@ float16 convert_float16_rte(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(long16 x)
 {
@@ -44450,7 +44450,7 @@ float16 convert_float16_rtp(long16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(long16 x)
 {
@@ -44700,7 +44700,7 @@ double16 convert_double16_rtn(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(ulong x)
 {
@@ -44712,7 +44712,7 @@ half convert_half_rtz(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(ulong x)
 {
@@ -44720,7 +44720,7 @@ half convert_half_rte(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(ulong x)
 {
@@ -44730,7 +44730,7 @@ half convert_half_rtp(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(ulong x)
 {
@@ -44740,7 +44740,7 @@ half convert_half_rtn(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(ulong2 x)
 {
@@ -44752,7 +44752,7 @@ half2 convert_half2_rtz(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(ulong2 x)
 {
@@ -44760,7 +44760,7 @@ half2 convert_half2_rte(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(ulong2 x)
 {
@@ -44770,7 +44770,7 @@ half2 convert_half2_rtp(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(ulong2 x)
 {
@@ -44780,7 +44780,7 @@ half2 convert_half2_rtn(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(ulong3 x)
 {
@@ -44792,7 +44792,7 @@ half3 convert_half3_rtz(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(ulong3 x)
 {
@@ -44800,7 +44800,7 @@ half3 convert_half3_rte(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(ulong3 x)
 {
@@ -44810,7 +44810,7 @@ half3 convert_half3_rtp(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(ulong3 x)
 {
@@ -44820,7 +44820,7 @@ half3 convert_half3_rtn(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(ulong4 x)
 {
@@ -44832,7 +44832,7 @@ half4 convert_half4_rtz(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(ulong4 x)
 {
@@ -44840,7 +44840,7 @@ half4 convert_half4_rte(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(ulong4 x)
 {
@@ -44850,7 +44850,7 @@ half4 convert_half4_rtp(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(ulong4 x)
 {
@@ -44860,7 +44860,7 @@ half4 convert_half4_rtn(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(ulong8 x)
 {
@@ -44872,7 +44872,7 @@ half8 convert_half8_rtz(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(ulong8 x)
 {
@@ -44880,7 +44880,7 @@ half8 convert_half8_rte(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(ulong8 x)
 {
@@ -44890,7 +44890,7 @@ half8 convert_half8_rtp(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(ulong8 x)
 {
@@ -44900,7 +44900,7 @@ half8 convert_half8_rtn(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(ulong16 x)
 {
@@ -44912,7 +44912,7 @@ half16 convert_half16_rtz(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(ulong16 x)
 {
@@ -44920,7 +44920,7 @@ half16 convert_half16_rte(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(ulong16 x)
 {
@@ -44930,7 +44930,7 @@ half16 convert_half16_rtp(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(ulong16 x)
 {
@@ -44940,7 +44940,7 @@ half16 convert_half16_rtn(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(ulong x)
 {
@@ -44952,7 +44952,7 @@ float convert_float_rtz(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rte(ulong x)
 {
@@ -44960,7 +44960,7 @@ float convert_float_rte(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(ulong x)
 {
@@ -44970,7 +44970,7 @@ float convert_float_rtp(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(ulong x)
 {
@@ -44980,7 +44980,7 @@ float convert_float_rtn(ulong x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(ulong2 x)
 {
@@ -44992,7 +44992,7 @@ float2 convert_float2_rtz(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rte(ulong2 x)
 {
@@ -45000,7 +45000,7 @@ float2 convert_float2_rte(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(ulong2 x)
 {
@@ -45010,7 +45010,7 @@ float2 convert_float2_rtp(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(ulong2 x)
 {
@@ -45020,7 +45020,7 @@ float2 convert_float2_rtn(ulong2 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(ulong3 x)
 {
@@ -45032,7 +45032,7 @@ float3 convert_float3_rtz(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rte(ulong3 x)
 {
@@ -45040,7 +45040,7 @@ float3 convert_float3_rte(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(ulong3 x)
 {
@@ -45050,7 +45050,7 @@ float3 convert_float3_rtp(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(ulong3 x)
 {
@@ -45060,7 +45060,7 @@ float3 convert_float3_rtn(ulong3 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(ulong4 x)
 {
@@ -45072,7 +45072,7 @@ float4 convert_float4_rtz(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rte(ulong4 x)
 {
@@ -45080,7 +45080,7 @@ float4 convert_float4_rte(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(ulong4 x)
 {
@@ -45090,7 +45090,7 @@ float4 convert_float4_rtp(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(ulong4 x)
 {
@@ -45100,7 +45100,7 @@ float4 convert_float4_rtn(ulong4 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(ulong8 x)
 {
@@ -45112,7 +45112,7 @@ float8 convert_float8_rtz(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rte(ulong8 x)
 {
@@ -45120,7 +45120,7 @@ float8 convert_float8_rte(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(ulong8 x)
 {
@@ -45130,7 +45130,7 @@ float8 convert_float8_rtp(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(ulong8 x)
 {
@@ -45140,7 +45140,7 @@ float8 convert_float8_rtn(ulong8 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(ulong16 x)
 {
@@ -45152,7 +45152,7 @@ float16 convert_float16_rtz(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rte(ulong16 x)
 {
@@ -45160,7 +45160,7 @@ float16 convert_float16_rte(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(ulong16 x)
 {
@@ -45170,7 +45170,7 @@ float16 convert_float16_rtp(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(ulong16 x)
 {
@@ -45420,7 +45420,7 @@ double16 convert_double16_rtn(ulong16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(half x)
 {
@@ -45432,7 +45432,7 @@ half convert_half_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(half x)
 {
@@ -45440,7 +45440,7 @@ half convert_half_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(half x)
 {
@@ -45450,7 +45450,7 @@ half convert_half_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(half x)
 {
@@ -45460,7 +45460,7 @@ half convert_half_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(half2 x)
 {
@@ -45472,7 +45472,7 @@ half2 convert_half2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(half2 x)
 {
@@ -45480,7 +45480,7 @@ half2 convert_half2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(half2 x)
 {
@@ -45490,7 +45490,7 @@ half2 convert_half2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(half2 x)
 {
@@ -45500,7 +45500,7 @@ half2 convert_half2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(half3 x)
 {
@@ -45512,7 +45512,7 @@ half3 convert_half3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(half3 x)
 {
@@ -45520,7 +45520,7 @@ half3 convert_half3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(half3 x)
 {
@@ -45530,7 +45530,7 @@ half3 convert_half3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(half3 x)
 {
@@ -45540,7 +45540,7 @@ half3 convert_half3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(half4 x)
 {
@@ -45552,7 +45552,7 @@ half4 convert_half4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(half4 x)
 {
@@ -45560,7 +45560,7 @@ half4 convert_half4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(half4 x)
 {
@@ -45570,7 +45570,7 @@ half4 convert_half4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(half4 x)
 {
@@ -45580,7 +45580,7 @@ half4 convert_half4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(half8 x)
 {
@@ -45592,7 +45592,7 @@ half8 convert_half8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(half8 x)
 {
@@ -45600,7 +45600,7 @@ half8 convert_half8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(half8 x)
 {
@@ -45610,7 +45610,7 @@ half8 convert_half8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(half8 x)
 {
@@ -45620,7 +45620,7 @@ half8 convert_half8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(half16 x)
 {
@@ -45632,7 +45632,7 @@ half16 convert_half16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(half16 x)
 {
@@ -45640,7 +45640,7 @@ half16 convert_half16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(half16 x)
 {
@@ -45650,7 +45650,7 @@ half16 convert_half16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(half16 x)
 {
@@ -45660,7 +45660,7 @@ half16 convert_half16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(half x)
 {
@@ -45672,7 +45672,7 @@ float convert_float_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rte(half x)
 {
@@ -45680,7 +45680,7 @@ float convert_float_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(half x)
 {
@@ -45690,7 +45690,7 @@ float convert_float_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(half x)
 {
@@ -45700,7 +45700,7 @@ float convert_float_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(half2 x)
 {
@@ -45712,7 +45712,7 @@ float2 convert_float2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rte(half2 x)
 {
@@ -45720,7 +45720,7 @@ float2 convert_float2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(half2 x)
 {
@@ -45730,7 +45730,7 @@ float2 convert_float2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(half2 x)
 {
@@ -45740,7 +45740,7 @@ float2 convert_float2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(half3 x)
 {
@@ -45752,7 +45752,7 @@ float3 convert_float3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rte(half3 x)
 {
@@ -45760,7 +45760,7 @@ float3 convert_float3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(half3 x)
 {
@@ -45770,7 +45770,7 @@ float3 convert_float3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(half3 x)
 {
@@ -45780,7 +45780,7 @@ float3 convert_float3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(half4 x)
 {
@@ -45792,7 +45792,7 @@ float4 convert_float4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rte(half4 x)
 {
@@ -45800,7 +45800,7 @@ float4 convert_float4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(half4 x)
 {
@@ -45810,7 +45810,7 @@ float4 convert_float4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(half4 x)
 {
@@ -45820,7 +45820,7 @@ float4 convert_float4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(half8 x)
 {
@@ -45832,7 +45832,7 @@ float8 convert_float8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rte(half8 x)
 {
@@ -45840,7 +45840,7 @@ float8 convert_float8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(half8 x)
 {
@@ -45850,7 +45850,7 @@ float8 convert_float8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(half8 x)
 {
@@ -45860,7 +45860,7 @@ float8 convert_float8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(half16 x)
 {
@@ -45872,7 +45872,7 @@ float16 convert_float16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rte(half16 x)
 {
@@ -45880,7 +45880,7 @@ float16 convert_float16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(half16 x)
 {
@@ -45890,7 +45890,7 @@ float16 convert_float16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(half16 x)
 {
@@ -45900,7 +45900,7 @@ float16 convert_float16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(half x)
 {
@@ -45912,7 +45912,7 @@ double convert_double_rtz(half x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(half x)
 {
@@ -45920,7 +45920,7 @@ double convert_double_rte(half x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(half x)
 {
@@ -45930,7 +45930,7 @@ double convert_double_rtp(half x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(half x)
 {
@@ -45940,7 +45940,7 @@ double convert_double_rtn(half x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(half2 x)
 {
@@ -45952,7 +45952,7 @@ double2 convert_double2_rtz(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(half2 x)
 {
@@ -45960,7 +45960,7 @@ double2 convert_double2_rte(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(half2 x)
 {
@@ -45970,7 +45970,7 @@ double2 convert_double2_rtp(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(half2 x)
 {
@@ -45980,7 +45980,7 @@ double2 convert_double2_rtn(half2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(half3 x)
 {
@@ -45992,7 +45992,7 @@ double3 convert_double3_rtz(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(half3 x)
 {
@@ -46000,7 +46000,7 @@ double3 convert_double3_rte(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(half3 x)
 {
@@ -46010,7 +46010,7 @@ double3 convert_double3_rtp(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(half3 x)
 {
@@ -46020,7 +46020,7 @@ double3 convert_double3_rtn(half3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(half4 x)
 {
@@ -46032,7 +46032,7 @@ double4 convert_double4_rtz(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(half4 x)
 {
@@ -46040,7 +46040,7 @@ double4 convert_double4_rte(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(half4 x)
 {
@@ -46050,7 +46050,7 @@ double4 convert_double4_rtp(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(half4 x)
 {
@@ -46060,7 +46060,7 @@ double4 convert_double4_rtn(half4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(half8 x)
 {
@@ -46072,7 +46072,7 @@ double8 convert_double8_rtz(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(half8 x)
 {
@@ -46080,7 +46080,7 @@ double8 convert_double8_rte(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(half8 x)
 {
@@ -46090,7 +46090,7 @@ double8 convert_double8_rtp(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(half8 x)
 {
@@ -46100,7 +46100,7 @@ double8 convert_double8_rtn(half8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(half16 x)
 {
@@ -46112,7 +46112,7 @@ double16 convert_double16_rtz(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(half16 x)
 {
@@ -46120,7 +46120,7 @@ double16 convert_double16_rte(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(half16 x)
 {
@@ -46130,7 +46130,7 @@ double16 convert_double16_rtp(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(half16 x)
 {
@@ -46140,7 +46140,7 @@ double16 convert_double16_rtn(half16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(float x)
 {
@@ -46152,7 +46152,7 @@ half convert_half_rtz(float x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(float x)
 {
@@ -46160,7 +46160,7 @@ half convert_half_rte(float x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(float x)
 {
@@ -46170,7 +46170,7 @@ half convert_half_rtp(float x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(float x)
 {
@@ -46180,7 +46180,7 @@ half convert_half_rtn(float x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(float2 x)
 {
@@ -46192,7 +46192,7 @@ half2 convert_half2_rtz(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(float2 x)
 {
@@ -46200,7 +46200,7 @@ half2 convert_half2_rte(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(float2 x)
 {
@@ -46210,7 +46210,7 @@ half2 convert_half2_rtp(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(float2 x)
 {
@@ -46220,7 +46220,7 @@ half2 convert_half2_rtn(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(float3 x)
 {
@@ -46232,7 +46232,7 @@ half3 convert_half3_rtz(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(float3 x)
 {
@@ -46240,7 +46240,7 @@ half3 convert_half3_rte(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(float3 x)
 {
@@ -46250,7 +46250,7 @@ half3 convert_half3_rtp(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(float3 x)
 {
@@ -46260,7 +46260,7 @@ half3 convert_half3_rtn(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(float4 x)
 {
@@ -46272,7 +46272,7 @@ half4 convert_half4_rtz(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(float4 x)
 {
@@ -46280,7 +46280,7 @@ half4 convert_half4_rte(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(float4 x)
 {
@@ -46290,7 +46290,7 @@ half4 convert_half4_rtp(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(float4 x)
 {
@@ -46300,7 +46300,7 @@ half4 convert_half4_rtn(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(float8 x)
 {
@@ -46312,7 +46312,7 @@ half8 convert_half8_rtz(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(float8 x)
 {
@@ -46320,7 +46320,7 @@ half8 convert_half8_rte(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(float8 x)
 {
@@ -46330,7 +46330,7 @@ half8 convert_half8_rtp(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(float8 x)
 {
@@ -46340,7 +46340,7 @@ half8 convert_half8_rtn(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(float16 x)
 {
@@ -46352,7 +46352,7 @@ half16 convert_half16_rtz(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(float16 x)
 {
@@ -46360,7 +46360,7 @@ half16 convert_half16_rte(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(float16 x)
 {
@@ -46370,7 +46370,7 @@ half16 convert_half16_rtp(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp16
+#if defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(float16 x)
 {
@@ -46572,7 +46572,7 @@ float16 convert_float16_rtn(float16 x)
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(float x)
 {
@@ -46584,7 +46584,7 @@ double convert_double_rtz(float x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(float x)
 {
@@ -46592,7 +46592,7 @@ double convert_double_rte(float x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(float x)
 {
@@ -46602,7 +46602,7 @@ double convert_double_rtp(float x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(float x)
 {
@@ -46612,7 +46612,7 @@ double convert_double_rtn(float x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(float2 x)
 {
@@ -46624,7 +46624,7 @@ double2 convert_double2_rtz(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(float2 x)
 {
@@ -46632,7 +46632,7 @@ double2 convert_double2_rte(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(float2 x)
 {
@@ -46642,7 +46642,7 @@ double2 convert_double2_rtp(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(float2 x)
 {
@@ -46652,7 +46652,7 @@ double2 convert_double2_rtn(float2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(float3 x)
 {
@@ -46664,7 +46664,7 @@ double3 convert_double3_rtz(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(float3 x)
 {
@@ -46672,7 +46672,7 @@ double3 convert_double3_rte(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(float3 x)
 {
@@ -46682,7 +46682,7 @@ double3 convert_double3_rtp(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(float3 x)
 {
@@ -46692,7 +46692,7 @@ double3 convert_double3_rtn(float3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(float4 x)
 {
@@ -46704,7 +46704,7 @@ double4 convert_double4_rtz(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(float4 x)
 {
@@ -46712,7 +46712,7 @@ double4 convert_double4_rte(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(float4 x)
 {
@@ -46722,7 +46722,7 @@ double4 convert_double4_rtp(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(float4 x)
 {
@@ -46732,7 +46732,7 @@ double4 convert_double4_rtn(float4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(float8 x)
 {
@@ -46744,7 +46744,7 @@ double8 convert_double8_rtz(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(float8 x)
 {
@@ -46752,7 +46752,7 @@ double8 convert_double8_rte(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(float8 x)
 {
@@ -46762,7 +46762,7 @@ double8 convert_double8_rtp(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(float8 x)
 {
@@ -46772,7 +46772,7 @@ double8 convert_double8_rtn(float8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(float16 x)
 {
@@ -46784,7 +46784,7 @@ double16 convert_double16_rtz(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(float16 x)
 {
@@ -46792,7 +46792,7 @@ double16 convert_double16_rte(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(float16 x)
 {
@@ -46802,7 +46802,7 @@ double16 convert_double16_rtp(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(float16 x)
 {
@@ -46812,7 +46812,7 @@ double16 convert_double16_rtn(float16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(double x)
 {
@@ -46824,7 +46824,7 @@ half convert_half_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rte(double x)
 {
@@ -46832,7 +46832,7 @@ half convert_half_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(double x)
 {
@@ -46842,7 +46842,7 @@ half convert_half_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(double x)
 {
@@ -46852,7 +46852,7 @@ half convert_half_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(double2 x)
 {
@@ -46864,7 +46864,7 @@ half2 convert_half2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rte(double2 x)
 {
@@ -46872,7 +46872,7 @@ half2 convert_half2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(double2 x)
 {
@@ -46882,7 +46882,7 @@ half2 convert_half2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(double2 x)
 {
@@ -46892,7 +46892,7 @@ half2 convert_half2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(double3 x)
 {
@@ -46904,7 +46904,7 @@ half3 convert_half3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rte(double3 x)
 {
@@ -46912,7 +46912,7 @@ half3 convert_half3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(double3 x)
 {
@@ -46922,7 +46922,7 @@ half3 convert_half3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(double3 x)
 {
@@ -46932,7 +46932,7 @@ half3 convert_half3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(double4 x)
 {
@@ -46944,7 +46944,7 @@ half4 convert_half4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rte(double4 x)
 {
@@ -46952,7 +46952,7 @@ half4 convert_half4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(double4 x)
 {
@@ -46962,7 +46962,7 @@ half4 convert_half4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(double4 x)
 {
@@ -46972,7 +46972,7 @@ half4 convert_half4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(double8 x)
 {
@@ -46984,7 +46984,7 @@ half8 convert_half8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rte(double8 x)
 {
@@ -46992,7 +46992,7 @@ half8 convert_half8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(double8 x)
 {
@@ -47002,7 +47002,7 @@ half8 convert_half8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(double8 x)
 {
@@ -47012,7 +47012,7 @@ half8 convert_half8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(double16 x)
 {
@@ -47024,7 +47024,7 @@ half16 convert_half16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rte(double16 x)
 {
@@ -47032,7 +47032,7 @@ half16 convert_half16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(double16 x)
 {
@@ -47042,7 +47042,7 @@ half16 convert_half16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(double16 x)
 {
@@ -47052,7 +47052,7 @@ half16 convert_half16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(double x)
 {
@@ -47064,7 +47064,7 @@ float convert_float_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rte(double x)
 {
@@ -47072,7 +47072,7 @@ float convert_float_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(double x)
 {
@@ -47082,7 +47082,7 @@ float convert_float_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(double x)
 {
@@ -47092,7 +47092,7 @@ float convert_float_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(double2 x)
 {
@@ -47104,7 +47104,7 @@ float2 convert_float2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rte(double2 x)
 {
@@ -47112,7 +47112,7 @@ float2 convert_float2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(double2 x)
 {
@@ -47122,7 +47122,7 @@ float2 convert_float2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(double2 x)
 {
@@ -47132,7 +47132,7 @@ float2 convert_float2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(double3 x)
 {
@@ -47144,7 +47144,7 @@ float3 convert_float3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rte(double3 x)
 {
@@ -47152,7 +47152,7 @@ float3 convert_float3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(double3 x)
 {
@@ -47162,7 +47162,7 @@ float3 convert_float3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(double3 x)
 {
@@ -47172,7 +47172,7 @@ float3 convert_float3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(double4 x)
 {
@@ -47184,7 +47184,7 @@ float4 convert_float4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rte(double4 x)
 {
@@ -47192,7 +47192,7 @@ float4 convert_float4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(double4 x)
 {
@@ -47202,7 +47202,7 @@ float4 convert_float4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(double4 x)
 {
@@ -47212,7 +47212,7 @@ float4 convert_float4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(double8 x)
 {
@@ -47224,7 +47224,7 @@ float8 convert_float8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rte(double8 x)
 {
@@ -47232,7 +47232,7 @@ float8 convert_float8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(double8 x)
 {
@@ -47242,7 +47242,7 @@ float8 convert_float8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(double8 x)
 {
@@ -47252,7 +47252,7 @@ float8 convert_float8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(double16 x)
 {
@@ -47264,7 +47264,7 @@ float16 convert_float16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rte(double16 x)
 {
@@ -47272,7 +47272,7 @@ float16 convert_float16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(double16 x)
 {
@@ -47282,7 +47282,7 @@ float16 convert_float16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(double16 x)
 {
@@ -47292,7 +47292,7 @@ float16 convert_float16_rtn(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(double x)
 {
@@ -47304,7 +47304,7 @@ double convert_double_rtz(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(double x)
 {
@@ -47312,7 +47312,7 @@ double convert_double_rte(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(double x)
 {
@@ -47322,7 +47322,7 @@ double convert_double_rtp(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(double x)
 {
@@ -47332,7 +47332,7 @@ double convert_double_rtn(double x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(double2 x)
 {
@@ -47344,7 +47344,7 @@ double2 convert_double2_rtz(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(double2 x)
 {
@@ -47352,7 +47352,7 @@ double2 convert_double2_rte(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(double2 x)
 {
@@ -47362,7 +47362,7 @@ double2 convert_double2_rtp(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(double2 x)
 {
@@ -47372,7 +47372,7 @@ double2 convert_double2_rtn(double2 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(double3 x)
 {
@@ -47384,7 +47384,7 @@ double3 convert_double3_rtz(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(double3 x)
 {
@@ -47392,7 +47392,7 @@ double3 convert_double3_rte(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(double3 x)
 {
@@ -47402,7 +47402,7 @@ double3 convert_double3_rtp(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(double3 x)
 {
@@ -47412,7 +47412,7 @@ double3 convert_double3_rtn(double3 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(double4 x)
 {
@@ -47424,7 +47424,7 @@ double4 convert_double4_rtz(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(double4 x)
 {
@@ -47432,7 +47432,7 @@ double4 convert_double4_rte(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(double4 x)
 {
@@ -47442,7 +47442,7 @@ double4 convert_double4_rtp(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(double4 x)
 {
@@ -47452,7 +47452,7 @@ double4 convert_double4_rtn(double4 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(double8 x)
 {
@@ -47464,7 +47464,7 @@ double8 convert_double8_rtz(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(double8 x)
 {
@@ -47472,7 +47472,7 @@ double8 convert_double8_rte(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(double8 x)
 {
@@ -47482,7 +47482,7 @@ double8 convert_double8_rtp(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(double8 x)
 {
@@ -47492,7 +47492,7 @@ double8 convert_double8_rtn(double8 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(double16 x)
 {
@@ -47504,7 +47504,7 @@ double16 convert_double16_rtz(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(double16 x)
 {
@@ -47512,7 +47512,7 @@ double16 convert_double16_rte(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(double16 x)
 {
@@ -47522,7 +47522,7 @@ double16 convert_double16_rtp(double16 x)
 }
 #endif
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(double16 x)
 {
