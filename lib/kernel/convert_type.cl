@@ -39953,7 +39953,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(char x)
 {
   half r = convert_half(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   uchar abs_x = abs(x);
   uchar abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -39973,7 +39973,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(char x)
 {
   half r = convert_half(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -39983,7 +39983,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(char x)
 {
   half r = convert_half(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -39993,7 +39993,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(char2 x)
 {
   half2 r = convert_half2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   uchar2 abs_x = abs(x);
   uchar2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -40013,7 +40013,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(char2 x)
 {
   half2 r = convert_half2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -40023,7 +40023,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(char2 x)
 {
   half2 r = convert_half2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -40033,7 +40033,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(char3 x)
 {
   half3 r = convert_half3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   uchar3 abs_x = abs(x);
   uchar3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -40053,7 +40053,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(char3 x)
 {
   half3 r = convert_half3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -40063,7 +40063,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(char3 x)
 {
   half3 r = convert_half3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -40073,7 +40073,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(char4 x)
 {
   half4 r = convert_half4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   uchar4 abs_x = abs(x);
   uchar4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -40093,7 +40093,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(char4 x)
 {
   half4 r = convert_half4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -40103,7 +40103,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(char4 x)
 {
   half4 r = convert_half4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -40113,7 +40113,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(char8 x)
 {
   half8 r = convert_half8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   uchar8 abs_x = abs(x);
   uchar8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -40133,7 +40133,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(char8 x)
 {
   half8 r = convert_half8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -40143,7 +40143,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(char8 x)
 {
   half8 r = convert_half8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -40153,7 +40153,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(char16 x)
 {
   half16 r = convert_half16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   uchar16 abs_x = abs(x);
   uchar16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -40173,7 +40173,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(char16 x)
 {
   half16 r = convert_half16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -40183,7 +40183,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(char16 x)
 {
   half16 r = convert_half16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -40192,7 +40192,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(char x)
 {
   float r = convert_float(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   uchar abs_x = abs(x);
   uchar abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -40208,7 +40208,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(char x)
 {
   float r = convert_float(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -40216,7 +40216,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(char x)
 {
   float r = convert_float(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -40224,7 +40224,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(char2 x)
 {
   float2 r = convert_float2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   uchar2 abs_x = abs(x);
   uchar2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -40240,7 +40240,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(char2 x)
 {
   float2 r = convert_float2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -40248,7 +40248,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(char2 x)
 {
   float2 r = convert_float2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -40256,7 +40256,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(char3 x)
 {
   float3 r = convert_float3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   uchar3 abs_x = abs(x);
   uchar3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -40272,7 +40272,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(char3 x)
 {
   float3 r = convert_float3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -40280,7 +40280,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(char3 x)
 {
   float3 r = convert_float3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -40288,7 +40288,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(char4 x)
 {
   float4 r = convert_float4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   uchar4 abs_x = abs(x);
   uchar4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -40304,7 +40304,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(char4 x)
 {
   float4 r = convert_float4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -40312,7 +40312,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(char4 x)
 {
   float4 r = convert_float4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -40320,7 +40320,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(char8 x)
 {
   float8 r = convert_float8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   uchar8 abs_x = abs(x);
   uchar8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -40336,7 +40336,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(char8 x)
 {
   float8 r = convert_float8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -40344,7 +40344,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(char8 x)
 {
   float8 r = convert_float8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -40352,7 +40352,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(char16 x)
 {
   float16 r = convert_float16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   uchar16 abs_x = abs(x);
   uchar16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -40368,7 +40368,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(char16 x)
 {
   float16 r = convert_float16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -40376,7 +40376,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(char16 x)
 {
   float16 r = convert_float16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -40385,7 +40385,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(char x)
 {
   double r = convert_double(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   uchar abs_x = abs(x);
   uchar abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -40405,7 +40405,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(char x)
 {
   double r = convert_double(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -40415,7 +40415,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(char x)
 {
   double r = convert_double(x);
-  char y = convert_char(y);
+  char y = convert_char(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -40425,7 +40425,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(char2 x)
 {
   double2 r = convert_double2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   uchar2 abs_x = abs(x);
   uchar2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -40445,7 +40445,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(char2 x)
 {
   double2 r = convert_double2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -40455,7 +40455,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(char2 x)
 {
   double2 r = convert_double2(x);
-  char2 y = convert_char2(y);
+  char2 y = convert_char2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -40465,7 +40465,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(char3 x)
 {
   double3 r = convert_double3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   uchar3 abs_x = abs(x);
   uchar3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -40485,7 +40485,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(char3 x)
 {
   double3 r = convert_double3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -40495,7 +40495,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(char3 x)
 {
   double3 r = convert_double3(x);
-  char3 y = convert_char3(y);
+  char3 y = convert_char3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -40505,7 +40505,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(char4 x)
 {
   double4 r = convert_double4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   uchar4 abs_x = abs(x);
   uchar4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -40525,7 +40525,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(char4 x)
 {
   double4 r = convert_double4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -40535,7 +40535,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(char4 x)
 {
   double4 r = convert_double4(x);
-  char4 y = convert_char4(y);
+  char4 y = convert_char4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -40545,7 +40545,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(char8 x)
 {
   double8 r = convert_double8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   uchar8 abs_x = abs(x);
   uchar8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -40565,7 +40565,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(char8 x)
 {
   double8 r = convert_double8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -40575,7 +40575,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(char8 x)
 {
   double8 r = convert_double8(x);
-  char8 y = convert_char8(y);
+  char8 y = convert_char8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -40585,7 +40585,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(char16 x)
 {
   double16 r = convert_double16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   uchar16 abs_x = abs(x);
   uchar16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -40605,7 +40605,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(char16 x)
 {
   double16 r = convert_double16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -40615,7 +40615,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(char16 x)
 {
   double16 r = convert_double16(x);
-  char16 y = convert_char16(y);
+  char16 y = convert_char16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -40625,7 +40625,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(uchar x)
 {
   half r = convert_half(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   uchar abs_x = abs(x);
   uchar abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -40645,7 +40645,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(uchar x)
 {
   half r = convert_half(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -40655,7 +40655,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(uchar x)
 {
   half r = convert_half(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -40665,7 +40665,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(uchar2 x)
 {
   half2 r = convert_half2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   uchar2 abs_x = abs(x);
   uchar2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -40685,7 +40685,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(uchar2 x)
 {
   half2 r = convert_half2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -40695,7 +40695,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(uchar2 x)
 {
   half2 r = convert_half2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -40705,7 +40705,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(uchar3 x)
 {
   half3 r = convert_half3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   uchar3 abs_x = abs(x);
   uchar3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -40725,7 +40725,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(uchar3 x)
 {
   half3 r = convert_half3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -40735,7 +40735,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(uchar3 x)
 {
   half3 r = convert_half3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -40745,7 +40745,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(uchar4 x)
 {
   half4 r = convert_half4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   uchar4 abs_x = abs(x);
   uchar4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -40765,7 +40765,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(uchar4 x)
 {
   half4 r = convert_half4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -40775,7 +40775,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(uchar4 x)
 {
   half4 r = convert_half4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -40785,7 +40785,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(uchar8 x)
 {
   half8 r = convert_half8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   uchar8 abs_x = abs(x);
   uchar8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -40805,7 +40805,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(uchar8 x)
 {
   half8 r = convert_half8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -40815,7 +40815,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(uchar8 x)
 {
   half8 r = convert_half8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -40825,7 +40825,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(uchar16 x)
 {
   half16 r = convert_half16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   uchar16 abs_x = abs(x);
   uchar16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -40845,7 +40845,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(uchar16 x)
 {
   half16 r = convert_half16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -40855,7 +40855,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(uchar16 x)
 {
   half16 r = convert_half16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -40864,7 +40864,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(uchar x)
 {
   float r = convert_float(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   uchar abs_x = abs(x);
   uchar abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -40880,7 +40880,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(uchar x)
 {
   float r = convert_float(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -40888,7 +40888,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(uchar x)
 {
   float r = convert_float(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -40896,7 +40896,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(uchar2 x)
 {
   float2 r = convert_float2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   uchar2 abs_x = abs(x);
   uchar2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -40912,7 +40912,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(uchar2 x)
 {
   float2 r = convert_float2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -40920,7 +40920,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(uchar2 x)
 {
   float2 r = convert_float2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -40928,7 +40928,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(uchar3 x)
 {
   float3 r = convert_float3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   uchar3 abs_x = abs(x);
   uchar3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -40944,7 +40944,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(uchar3 x)
 {
   float3 r = convert_float3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -40952,7 +40952,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(uchar3 x)
 {
   float3 r = convert_float3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -40960,7 +40960,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(uchar4 x)
 {
   float4 r = convert_float4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   uchar4 abs_x = abs(x);
   uchar4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -40976,7 +40976,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(uchar4 x)
 {
   float4 r = convert_float4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -40984,7 +40984,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(uchar4 x)
 {
   float4 r = convert_float4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -40992,7 +40992,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(uchar8 x)
 {
   float8 r = convert_float8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   uchar8 abs_x = abs(x);
   uchar8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -41008,7 +41008,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(uchar8 x)
 {
   float8 r = convert_float8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -41016,7 +41016,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(uchar8 x)
 {
   float8 r = convert_float8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -41024,7 +41024,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(uchar16 x)
 {
   float16 r = convert_float16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   uchar16 abs_x = abs(x);
   uchar16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -41040,7 +41040,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(uchar16 x)
 {
   float16 r = convert_float16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -41048,7 +41048,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(uchar16 x)
 {
   float16 r = convert_float16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -41057,7 +41057,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(uchar x)
 {
   double r = convert_double(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   uchar abs_x = abs(x);
   uchar abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -41077,7 +41077,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(uchar x)
 {
   double r = convert_double(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -41087,7 +41087,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(uchar x)
 {
   double r = convert_double(x);
-  uchar y = convert_uchar(y);
+  uchar y = convert_uchar(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -41097,7 +41097,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(uchar2 x)
 {
   double2 r = convert_double2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   uchar2 abs_x = abs(x);
   uchar2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -41117,7 +41117,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(uchar2 x)
 {
   double2 r = convert_double2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -41127,7 +41127,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(uchar2 x)
 {
   double2 r = convert_double2(x);
-  uchar2 y = convert_uchar2(y);
+  uchar2 y = convert_uchar2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -41137,7 +41137,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(uchar3 x)
 {
   double3 r = convert_double3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   uchar3 abs_x = abs(x);
   uchar3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -41157,7 +41157,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(uchar3 x)
 {
   double3 r = convert_double3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -41167,7 +41167,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(uchar3 x)
 {
   double3 r = convert_double3(x);
-  uchar3 y = convert_uchar3(y);
+  uchar3 y = convert_uchar3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -41177,7 +41177,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(uchar4 x)
 {
   double4 r = convert_double4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   uchar4 abs_x = abs(x);
   uchar4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -41197,7 +41197,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(uchar4 x)
 {
   double4 r = convert_double4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -41207,7 +41207,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(uchar4 x)
 {
   double4 r = convert_double4(x);
-  uchar4 y = convert_uchar4(y);
+  uchar4 y = convert_uchar4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -41217,7 +41217,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(uchar8 x)
 {
   double8 r = convert_double8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   uchar8 abs_x = abs(x);
   uchar8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -41237,7 +41237,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(uchar8 x)
 {
   double8 r = convert_double8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -41247,7 +41247,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(uchar8 x)
 {
   double8 r = convert_double8(x);
-  uchar8 y = convert_uchar8(y);
+  uchar8 y = convert_uchar8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -41257,7 +41257,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(uchar16 x)
 {
   double16 r = convert_double16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   uchar16 abs_x = abs(x);
   uchar16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -41277,7 +41277,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(uchar16 x)
 {
   double16 r = convert_double16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -41287,7 +41287,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(uchar16 x)
 {
   double16 r = convert_double16(x);
-  uchar16 y = convert_uchar16(y);
+  uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -41297,7 +41297,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(short x)
 {
   half r = convert_half(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   ushort abs_x = abs(x);
   ushort abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -41317,7 +41317,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(short x)
 {
   half r = convert_half(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -41327,7 +41327,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(short x)
 {
   half r = convert_half(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -41337,7 +41337,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(short2 x)
 {
   half2 r = convert_half2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   ushort2 abs_x = abs(x);
   ushort2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -41357,7 +41357,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(short2 x)
 {
   half2 r = convert_half2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -41367,7 +41367,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(short2 x)
 {
   half2 r = convert_half2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -41377,7 +41377,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(short3 x)
 {
   half3 r = convert_half3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   ushort3 abs_x = abs(x);
   ushort3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -41397,7 +41397,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(short3 x)
 {
   half3 r = convert_half3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -41407,7 +41407,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(short3 x)
 {
   half3 r = convert_half3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -41417,7 +41417,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(short4 x)
 {
   half4 r = convert_half4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   ushort4 abs_x = abs(x);
   ushort4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -41437,7 +41437,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(short4 x)
 {
   half4 r = convert_half4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -41447,7 +41447,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(short4 x)
 {
   half4 r = convert_half4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -41457,7 +41457,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(short8 x)
 {
   half8 r = convert_half8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   ushort8 abs_x = abs(x);
   ushort8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -41477,7 +41477,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(short8 x)
 {
   half8 r = convert_half8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -41487,7 +41487,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(short8 x)
 {
   half8 r = convert_half8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -41497,7 +41497,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(short16 x)
 {
   half16 r = convert_half16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   ushort16 abs_x = abs(x);
   ushort16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -41517,7 +41517,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(short16 x)
 {
   half16 r = convert_half16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -41527,7 +41527,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(short16 x)
 {
   half16 r = convert_half16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -41536,7 +41536,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(short x)
 {
   float r = convert_float(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   ushort abs_x = abs(x);
   ushort abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -41552,7 +41552,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(short x)
 {
   float r = convert_float(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -41560,7 +41560,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(short x)
 {
   float r = convert_float(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -41568,7 +41568,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(short2 x)
 {
   float2 r = convert_float2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   ushort2 abs_x = abs(x);
   ushort2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -41584,7 +41584,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(short2 x)
 {
   float2 r = convert_float2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -41592,7 +41592,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(short2 x)
 {
   float2 r = convert_float2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -41600,7 +41600,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(short3 x)
 {
   float3 r = convert_float3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   ushort3 abs_x = abs(x);
   ushort3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -41616,7 +41616,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(short3 x)
 {
   float3 r = convert_float3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -41624,7 +41624,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(short3 x)
 {
   float3 r = convert_float3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -41632,7 +41632,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(short4 x)
 {
   float4 r = convert_float4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   ushort4 abs_x = abs(x);
   ushort4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -41648,7 +41648,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(short4 x)
 {
   float4 r = convert_float4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -41656,7 +41656,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(short4 x)
 {
   float4 r = convert_float4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -41664,7 +41664,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(short8 x)
 {
   float8 r = convert_float8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   ushort8 abs_x = abs(x);
   ushort8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -41680,7 +41680,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(short8 x)
 {
   float8 r = convert_float8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -41688,7 +41688,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(short8 x)
 {
   float8 r = convert_float8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -41696,7 +41696,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(short16 x)
 {
   float16 r = convert_float16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   ushort16 abs_x = abs(x);
   ushort16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -41712,7 +41712,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(short16 x)
 {
   float16 r = convert_float16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -41720,7 +41720,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(short16 x)
 {
   float16 r = convert_float16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -41729,7 +41729,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(short x)
 {
   double r = convert_double(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   ushort abs_x = abs(x);
   ushort abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -41749,7 +41749,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(short x)
 {
   double r = convert_double(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -41759,7 +41759,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(short x)
 {
   double r = convert_double(x);
-  short y = convert_short(y);
+  short y = convert_short(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -41769,7 +41769,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(short2 x)
 {
   double2 r = convert_double2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   ushort2 abs_x = abs(x);
   ushort2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -41789,7 +41789,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(short2 x)
 {
   double2 r = convert_double2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -41799,7 +41799,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(short2 x)
 {
   double2 r = convert_double2(x);
-  short2 y = convert_short2(y);
+  short2 y = convert_short2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -41809,7 +41809,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(short3 x)
 {
   double3 r = convert_double3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   ushort3 abs_x = abs(x);
   ushort3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -41829,7 +41829,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(short3 x)
 {
   double3 r = convert_double3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -41839,7 +41839,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(short3 x)
 {
   double3 r = convert_double3(x);
-  short3 y = convert_short3(y);
+  short3 y = convert_short3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -41849,7 +41849,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(short4 x)
 {
   double4 r = convert_double4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   ushort4 abs_x = abs(x);
   ushort4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -41869,7 +41869,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(short4 x)
 {
   double4 r = convert_double4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -41879,7 +41879,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(short4 x)
 {
   double4 r = convert_double4(x);
-  short4 y = convert_short4(y);
+  short4 y = convert_short4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -41889,7 +41889,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(short8 x)
 {
   double8 r = convert_double8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   ushort8 abs_x = abs(x);
   ushort8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -41909,7 +41909,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(short8 x)
 {
   double8 r = convert_double8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -41919,7 +41919,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(short8 x)
 {
   double8 r = convert_double8(x);
-  short8 y = convert_short8(y);
+  short8 y = convert_short8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -41929,7 +41929,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(short16 x)
 {
   double16 r = convert_double16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   ushort16 abs_x = abs(x);
   ushort16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -41949,7 +41949,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(short16 x)
 {
   double16 r = convert_double16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -41959,7 +41959,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(short16 x)
 {
   double16 r = convert_double16(x);
-  short16 y = convert_short16(y);
+  short16 y = convert_short16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -41969,7 +41969,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(ushort x)
 {
   half r = convert_half(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   ushort abs_x = abs(x);
   ushort abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -41989,7 +41989,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(ushort x)
 {
   half r = convert_half(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -41999,7 +41999,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(ushort x)
 {
   half r = convert_half(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -42009,7 +42009,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(ushort2 x)
 {
   half2 r = convert_half2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   ushort2 abs_x = abs(x);
   ushort2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -42029,7 +42029,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(ushort2 x)
 {
   half2 r = convert_half2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -42039,7 +42039,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(ushort2 x)
 {
   half2 r = convert_half2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -42049,7 +42049,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(ushort3 x)
 {
   half3 r = convert_half3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   ushort3 abs_x = abs(x);
   ushort3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -42069,7 +42069,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(ushort3 x)
 {
   half3 r = convert_half3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -42079,7 +42079,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(ushort3 x)
 {
   half3 r = convert_half3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -42089,7 +42089,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(ushort4 x)
 {
   half4 r = convert_half4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   ushort4 abs_x = abs(x);
   ushort4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -42109,7 +42109,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(ushort4 x)
 {
   half4 r = convert_half4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -42119,7 +42119,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(ushort4 x)
 {
   half4 r = convert_half4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -42129,7 +42129,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(ushort8 x)
 {
   half8 r = convert_half8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   ushort8 abs_x = abs(x);
   ushort8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -42149,7 +42149,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(ushort8 x)
 {
   half8 r = convert_half8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -42159,7 +42159,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(ushort8 x)
 {
   half8 r = convert_half8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -42169,7 +42169,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(ushort16 x)
 {
   half16 r = convert_half16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   ushort16 abs_x = abs(x);
   ushort16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -42189,7 +42189,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(ushort16 x)
 {
   half16 r = convert_half16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -42199,7 +42199,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(ushort16 x)
 {
   half16 r = convert_half16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -42208,7 +42208,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(ushort x)
 {
   float r = convert_float(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   ushort abs_x = abs(x);
   ushort abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -42224,7 +42224,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(ushort x)
 {
   float r = convert_float(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -42232,7 +42232,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(ushort x)
 {
   float r = convert_float(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -42240,7 +42240,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(ushort2 x)
 {
   float2 r = convert_float2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   ushort2 abs_x = abs(x);
   ushort2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -42256,7 +42256,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(ushort2 x)
 {
   float2 r = convert_float2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -42264,7 +42264,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(ushort2 x)
 {
   float2 r = convert_float2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -42272,7 +42272,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(ushort3 x)
 {
   float3 r = convert_float3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   ushort3 abs_x = abs(x);
   ushort3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -42288,7 +42288,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(ushort3 x)
 {
   float3 r = convert_float3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -42296,7 +42296,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(ushort3 x)
 {
   float3 r = convert_float3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -42304,7 +42304,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(ushort4 x)
 {
   float4 r = convert_float4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   ushort4 abs_x = abs(x);
   ushort4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -42320,7 +42320,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(ushort4 x)
 {
   float4 r = convert_float4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -42328,7 +42328,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(ushort4 x)
 {
   float4 r = convert_float4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -42336,7 +42336,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(ushort8 x)
 {
   float8 r = convert_float8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   ushort8 abs_x = abs(x);
   ushort8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -42352,7 +42352,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(ushort8 x)
 {
   float8 r = convert_float8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -42360,7 +42360,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(ushort8 x)
 {
   float8 r = convert_float8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -42368,7 +42368,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(ushort16 x)
 {
   float16 r = convert_float16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   ushort16 abs_x = abs(x);
   ushort16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -42384,7 +42384,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(ushort16 x)
 {
   float16 r = convert_float16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -42392,7 +42392,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(ushort16 x)
 {
   float16 r = convert_float16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -42401,7 +42401,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(ushort x)
 {
   double r = convert_double(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   ushort abs_x = abs(x);
   ushort abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -42421,7 +42421,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(ushort x)
 {
   double r = convert_double(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -42431,7 +42431,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(ushort x)
 {
   double r = convert_double(x);
-  ushort y = convert_ushort(y);
+  ushort y = convert_ushort(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -42441,7 +42441,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(ushort2 x)
 {
   double2 r = convert_double2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   ushort2 abs_x = abs(x);
   ushort2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -42461,7 +42461,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(ushort2 x)
 {
   double2 r = convert_double2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -42471,7 +42471,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(ushort2 x)
 {
   double2 r = convert_double2(x);
-  ushort2 y = convert_ushort2(y);
+  ushort2 y = convert_ushort2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -42481,7 +42481,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(ushort3 x)
 {
   double3 r = convert_double3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   ushort3 abs_x = abs(x);
   ushort3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -42501,7 +42501,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(ushort3 x)
 {
   double3 r = convert_double3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -42511,7 +42511,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(ushort3 x)
 {
   double3 r = convert_double3(x);
-  ushort3 y = convert_ushort3(y);
+  ushort3 y = convert_ushort3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -42521,7 +42521,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(ushort4 x)
 {
   double4 r = convert_double4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   ushort4 abs_x = abs(x);
   ushort4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -42541,7 +42541,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(ushort4 x)
 {
   double4 r = convert_double4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -42551,7 +42551,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(ushort4 x)
 {
   double4 r = convert_double4(x);
-  ushort4 y = convert_ushort4(y);
+  ushort4 y = convert_ushort4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -42561,7 +42561,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(ushort8 x)
 {
   double8 r = convert_double8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   ushort8 abs_x = abs(x);
   ushort8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -42581,7 +42581,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(ushort8 x)
 {
   double8 r = convert_double8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -42591,7 +42591,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(ushort8 x)
 {
   double8 r = convert_double8(x);
-  ushort8 y = convert_ushort8(y);
+  ushort8 y = convert_ushort8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -42601,7 +42601,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(ushort16 x)
 {
   double16 r = convert_double16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   ushort16 abs_x = abs(x);
   ushort16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -42621,7 +42621,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(ushort16 x)
 {
   double16 r = convert_double16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -42631,7 +42631,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(ushort16 x)
 {
   double16 r = convert_double16(x);
-  ushort16 y = convert_ushort16(y);
+  ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -42641,7 +42641,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(int x)
 {
   half r = convert_half(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   uint abs_x = abs(x);
   uint abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -42661,7 +42661,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(int x)
 {
   half r = convert_half(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -42671,7 +42671,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(int x)
 {
   half r = convert_half(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -42681,7 +42681,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(int2 x)
 {
   half2 r = convert_half2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   uint2 abs_x = abs(x);
   uint2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -42701,7 +42701,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(int2 x)
 {
   half2 r = convert_half2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -42711,7 +42711,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(int2 x)
 {
   half2 r = convert_half2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -42721,7 +42721,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(int3 x)
 {
   half3 r = convert_half3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   uint3 abs_x = abs(x);
   uint3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -42741,7 +42741,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(int3 x)
 {
   half3 r = convert_half3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -42751,7 +42751,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(int3 x)
 {
   half3 r = convert_half3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -42761,7 +42761,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(int4 x)
 {
   half4 r = convert_half4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   uint4 abs_x = abs(x);
   uint4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -42781,7 +42781,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(int4 x)
 {
   half4 r = convert_half4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -42791,7 +42791,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(int4 x)
 {
   half4 r = convert_half4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -42801,7 +42801,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(int8 x)
 {
   half8 r = convert_half8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   uint8 abs_x = abs(x);
   uint8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -42821,7 +42821,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(int8 x)
 {
   half8 r = convert_half8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -42831,7 +42831,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(int8 x)
 {
   half8 r = convert_half8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -42841,7 +42841,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(int16 x)
 {
   half16 r = convert_half16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   uint16 abs_x = abs(x);
   uint16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -42861,7 +42861,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(int16 x)
 {
   half16 r = convert_half16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -42871,7 +42871,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(int16 x)
 {
   half16 r = convert_half16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -42880,7 +42880,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(int x)
 {
   float r = convert_float(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   uint abs_x = abs(x);
   uint abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -42896,7 +42896,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(int x)
 {
   float r = convert_float(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -42904,7 +42904,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(int x)
 {
   float r = convert_float(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -42912,7 +42912,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(int2 x)
 {
   float2 r = convert_float2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   uint2 abs_x = abs(x);
   uint2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -42928,7 +42928,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(int2 x)
 {
   float2 r = convert_float2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -42936,7 +42936,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(int2 x)
 {
   float2 r = convert_float2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -42944,7 +42944,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(int3 x)
 {
   float3 r = convert_float3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   uint3 abs_x = abs(x);
   uint3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -42960,7 +42960,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(int3 x)
 {
   float3 r = convert_float3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -42968,7 +42968,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(int3 x)
 {
   float3 r = convert_float3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -42976,7 +42976,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(int4 x)
 {
   float4 r = convert_float4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   uint4 abs_x = abs(x);
   uint4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -42992,7 +42992,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(int4 x)
 {
   float4 r = convert_float4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -43000,7 +43000,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(int4 x)
 {
   float4 r = convert_float4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -43008,7 +43008,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(int8 x)
 {
   float8 r = convert_float8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   uint8 abs_x = abs(x);
   uint8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -43024,7 +43024,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(int8 x)
 {
   float8 r = convert_float8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -43032,7 +43032,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(int8 x)
 {
   float8 r = convert_float8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -43040,7 +43040,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(int16 x)
 {
   float16 r = convert_float16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   uint16 abs_x = abs(x);
   uint16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -43056,7 +43056,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(int16 x)
 {
   float16 r = convert_float16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -43064,7 +43064,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(int16 x)
 {
   float16 r = convert_float16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -43073,7 +43073,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(int x)
 {
   double r = convert_double(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   uint abs_x = abs(x);
   uint abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -43093,7 +43093,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(int x)
 {
   double r = convert_double(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -43103,7 +43103,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(int x)
 {
   double r = convert_double(x);
-  int y = convert_int(y);
+  int y = convert_int(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -43113,7 +43113,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(int2 x)
 {
   double2 r = convert_double2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   uint2 abs_x = abs(x);
   uint2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -43133,7 +43133,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(int2 x)
 {
   double2 r = convert_double2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -43143,7 +43143,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(int2 x)
 {
   double2 r = convert_double2(x);
-  int2 y = convert_int2(y);
+  int2 y = convert_int2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -43153,7 +43153,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(int3 x)
 {
   double3 r = convert_double3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   uint3 abs_x = abs(x);
   uint3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -43173,7 +43173,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(int3 x)
 {
   double3 r = convert_double3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -43183,7 +43183,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(int3 x)
 {
   double3 r = convert_double3(x);
-  int3 y = convert_int3(y);
+  int3 y = convert_int3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -43193,7 +43193,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(int4 x)
 {
   double4 r = convert_double4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   uint4 abs_x = abs(x);
   uint4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -43213,7 +43213,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(int4 x)
 {
   double4 r = convert_double4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -43223,7 +43223,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(int4 x)
 {
   double4 r = convert_double4(x);
-  int4 y = convert_int4(y);
+  int4 y = convert_int4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -43233,7 +43233,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(int8 x)
 {
   double8 r = convert_double8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   uint8 abs_x = abs(x);
   uint8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -43253,7 +43253,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(int8 x)
 {
   double8 r = convert_double8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -43263,7 +43263,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(int8 x)
 {
   double8 r = convert_double8(x);
-  int8 y = convert_int8(y);
+  int8 y = convert_int8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -43273,7 +43273,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(int16 x)
 {
   double16 r = convert_double16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   uint16 abs_x = abs(x);
   uint16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -43293,7 +43293,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(int16 x)
 {
   double16 r = convert_double16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -43303,7 +43303,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(int16 x)
 {
   double16 r = convert_double16(x);
-  int16 y = convert_int16(y);
+  int16 y = convert_int16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -43313,7 +43313,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(uint x)
 {
   half r = convert_half(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   uint abs_x = abs(x);
   uint abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -43333,7 +43333,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(uint x)
 {
   half r = convert_half(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -43343,7 +43343,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(uint x)
 {
   half r = convert_half(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -43353,7 +43353,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(uint2 x)
 {
   half2 r = convert_half2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   uint2 abs_x = abs(x);
   uint2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -43373,7 +43373,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(uint2 x)
 {
   half2 r = convert_half2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -43383,7 +43383,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(uint2 x)
 {
   half2 r = convert_half2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -43393,7 +43393,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(uint3 x)
 {
   half3 r = convert_half3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   uint3 abs_x = abs(x);
   uint3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -43413,7 +43413,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(uint3 x)
 {
   half3 r = convert_half3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -43423,7 +43423,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(uint3 x)
 {
   half3 r = convert_half3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -43433,7 +43433,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(uint4 x)
 {
   half4 r = convert_half4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   uint4 abs_x = abs(x);
   uint4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -43453,7 +43453,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(uint4 x)
 {
   half4 r = convert_half4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -43463,7 +43463,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(uint4 x)
 {
   half4 r = convert_half4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -43473,7 +43473,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(uint8 x)
 {
   half8 r = convert_half8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   uint8 abs_x = abs(x);
   uint8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -43493,7 +43493,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(uint8 x)
 {
   half8 r = convert_half8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -43503,7 +43503,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(uint8 x)
 {
   half8 r = convert_half8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -43513,7 +43513,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(uint16 x)
 {
   half16 r = convert_half16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   uint16 abs_x = abs(x);
   uint16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -43533,7 +43533,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(uint16 x)
 {
   half16 r = convert_half16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -43543,7 +43543,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(uint16 x)
 {
   half16 r = convert_half16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -43552,7 +43552,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(uint x)
 {
   float r = convert_float(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   uint abs_x = abs(x);
   uint abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -43568,7 +43568,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(uint x)
 {
   float r = convert_float(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -43576,7 +43576,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(uint x)
 {
   float r = convert_float(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -43584,7 +43584,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(uint2 x)
 {
   float2 r = convert_float2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   uint2 abs_x = abs(x);
   uint2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -43600,7 +43600,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(uint2 x)
 {
   float2 r = convert_float2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -43608,7 +43608,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(uint2 x)
 {
   float2 r = convert_float2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -43616,7 +43616,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(uint3 x)
 {
   float3 r = convert_float3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   uint3 abs_x = abs(x);
   uint3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -43632,7 +43632,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(uint3 x)
 {
   float3 r = convert_float3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -43640,7 +43640,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(uint3 x)
 {
   float3 r = convert_float3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -43648,7 +43648,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(uint4 x)
 {
   float4 r = convert_float4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   uint4 abs_x = abs(x);
   uint4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -43664,7 +43664,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(uint4 x)
 {
   float4 r = convert_float4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -43672,7 +43672,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(uint4 x)
 {
   float4 r = convert_float4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -43680,7 +43680,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(uint8 x)
 {
   float8 r = convert_float8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   uint8 abs_x = abs(x);
   uint8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -43696,7 +43696,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(uint8 x)
 {
   float8 r = convert_float8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -43704,7 +43704,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(uint8 x)
 {
   float8 r = convert_float8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -43712,7 +43712,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(uint16 x)
 {
   float16 r = convert_float16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   uint16 abs_x = abs(x);
   uint16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -43728,7 +43728,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(uint16 x)
 {
   float16 r = convert_float16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -43736,7 +43736,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(uint16 x)
 {
   float16 r = convert_float16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -43745,7 +43745,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(uint x)
 {
   double r = convert_double(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   uint abs_x = abs(x);
   uint abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -43765,7 +43765,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(uint x)
 {
   double r = convert_double(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -43775,7 +43775,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(uint x)
 {
   double r = convert_double(x);
-  uint y = convert_uint(y);
+  uint y = convert_uint(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -43785,7 +43785,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(uint2 x)
 {
   double2 r = convert_double2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   uint2 abs_x = abs(x);
   uint2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -43805,7 +43805,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(uint2 x)
 {
   double2 r = convert_double2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -43815,7 +43815,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(uint2 x)
 {
   double2 r = convert_double2(x);
-  uint2 y = convert_uint2(y);
+  uint2 y = convert_uint2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -43825,7 +43825,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(uint3 x)
 {
   double3 r = convert_double3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   uint3 abs_x = abs(x);
   uint3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -43845,7 +43845,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(uint3 x)
 {
   double3 r = convert_double3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -43855,7 +43855,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(uint3 x)
 {
   double3 r = convert_double3(x);
-  uint3 y = convert_uint3(y);
+  uint3 y = convert_uint3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -43865,7 +43865,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(uint4 x)
 {
   double4 r = convert_double4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   uint4 abs_x = abs(x);
   uint4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -43885,7 +43885,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(uint4 x)
 {
   double4 r = convert_double4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -43895,7 +43895,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(uint4 x)
 {
   double4 r = convert_double4(x);
-  uint4 y = convert_uint4(y);
+  uint4 y = convert_uint4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -43905,7 +43905,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(uint8 x)
 {
   double8 r = convert_double8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   uint8 abs_x = abs(x);
   uint8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -43925,7 +43925,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(uint8 x)
 {
   double8 r = convert_double8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -43935,7 +43935,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(uint8 x)
 {
   double8 r = convert_double8(x);
-  uint8 y = convert_uint8(y);
+  uint8 y = convert_uint8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -43945,7 +43945,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(uint16 x)
 {
   double16 r = convert_double16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   uint16 abs_x = abs(x);
   uint16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -43965,7 +43965,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(uint16 x)
 {
   double16 r = convert_double16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -43975,7 +43975,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(uint16 x)
 {
   double16 r = convert_double16(x);
-  uint16 y = convert_uint16(y);
+  uint16 y = convert_uint16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -43985,7 +43985,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(long x)
 {
   half r = convert_half(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -44005,7 +44005,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(long x)
 {
   half r = convert_half(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -44015,7 +44015,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(long x)
 {
   half r = convert_half(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -44025,7 +44025,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(long2 x)
 {
   half2 r = convert_half2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -44045,7 +44045,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(long2 x)
 {
   half2 r = convert_half2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -44055,7 +44055,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(long2 x)
 {
   half2 r = convert_half2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -44065,7 +44065,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(long3 x)
 {
   half3 r = convert_half3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -44085,7 +44085,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(long3 x)
 {
   half3 r = convert_half3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -44095,7 +44095,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(long3 x)
 {
   half3 r = convert_half3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -44105,7 +44105,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(long4 x)
 {
   half4 r = convert_half4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -44125,7 +44125,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(long4 x)
 {
   half4 r = convert_half4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -44135,7 +44135,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(long4 x)
 {
   half4 r = convert_half4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -44145,7 +44145,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(long8 x)
 {
   half8 r = convert_half8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -44165,7 +44165,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(long8 x)
 {
   half8 r = convert_half8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -44175,7 +44175,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(long8 x)
 {
   half8 r = convert_half8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -44185,7 +44185,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(long16 x)
 {
   half16 r = convert_half16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -44205,7 +44205,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(long16 x)
 {
   half16 r = convert_half16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -44215,7 +44215,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(long16 x)
 {
   half16 r = convert_half16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -44225,7 +44225,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(long x)
 {
   float r = convert_float(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -44245,7 +44245,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(long x)
 {
   float r = convert_float(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 #endif
@@ -44255,7 +44255,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(long x)
 {
   float r = convert_float(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -44265,7 +44265,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(long2 x)
 {
   float2 r = convert_float2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -44285,7 +44285,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(long2 x)
 {
   float2 r = convert_float2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -44295,7 +44295,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(long2 x)
 {
   float2 r = convert_float2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -44305,7 +44305,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(long3 x)
 {
   float3 r = convert_float3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -44325,7 +44325,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(long3 x)
 {
   float3 r = convert_float3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -44335,7 +44335,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(long3 x)
 {
   float3 r = convert_float3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -44345,7 +44345,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(long4 x)
 {
   float4 r = convert_float4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -44365,7 +44365,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(long4 x)
 {
   float4 r = convert_float4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -44375,7 +44375,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(long4 x)
 {
   float4 r = convert_float4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -44385,7 +44385,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(long8 x)
 {
   float8 r = convert_float8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -44405,7 +44405,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(long8 x)
 {
   float8 r = convert_float8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -44415,7 +44415,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(long8 x)
 {
   float8 r = convert_float8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -44425,7 +44425,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(long16 x)
 {
   float16 r = convert_float16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -44445,7 +44445,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(long16 x)
 {
   float16 r = convert_float16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -44455,7 +44455,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(long16 x)
 {
   float16 r = convert_float16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -44465,7 +44465,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(long x)
 {
   double r = convert_double(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -44485,7 +44485,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(long x)
 {
   double r = convert_double(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -44495,7 +44495,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(long x)
 {
   double r = convert_double(x);
-  long y = convert_long(y);
+  long y = convert_long(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -44505,7 +44505,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(long2 x)
 {
   double2 r = convert_double2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -44525,7 +44525,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(long2 x)
 {
   double2 r = convert_double2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -44535,7 +44535,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(long2 x)
 {
   double2 r = convert_double2(x);
-  long2 y = convert_long2(y);
+  long2 y = convert_long2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -44545,7 +44545,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(long3 x)
 {
   double3 r = convert_double3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -44565,7 +44565,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(long3 x)
 {
   double3 r = convert_double3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -44575,7 +44575,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(long3 x)
 {
   double3 r = convert_double3(x);
-  long3 y = convert_long3(y);
+  long3 y = convert_long3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -44585,7 +44585,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(long4 x)
 {
   double4 r = convert_double4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -44605,7 +44605,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(long4 x)
 {
   double4 r = convert_double4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -44615,7 +44615,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(long4 x)
 {
   double4 r = convert_double4(x);
-  long4 y = convert_long4(y);
+  long4 y = convert_long4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -44625,7 +44625,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(long8 x)
 {
   double8 r = convert_double8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -44645,7 +44645,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(long8 x)
 {
   double8 r = convert_double8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -44655,7 +44655,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(long8 x)
 {
   double8 r = convert_double8(x);
-  long8 y = convert_long8(y);
+  long8 y = convert_long8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -44665,7 +44665,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(long16 x)
 {
   double16 r = convert_double16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -44685,7 +44685,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(long16 x)
 {
   double16 r = convert_double16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -44695,7 +44695,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(long16 x)
 {
   double16 r = convert_double16(x);
-  long16 y = convert_long16(y);
+  long16 y = convert_long16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -44705,7 +44705,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(ulong x)
 {
   half r = convert_half(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -44725,7 +44725,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(ulong x)
 {
   half r = convert_half(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -44735,7 +44735,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(ulong x)
 {
   half r = convert_half(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -44745,7 +44745,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(ulong2 x)
 {
   half2 r = convert_half2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -44765,7 +44765,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(ulong2 x)
 {
   half2 r = convert_half2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -44775,7 +44775,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(ulong2 x)
 {
   half2 r = convert_half2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -44785,7 +44785,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(ulong3 x)
 {
   half3 r = convert_half3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -44805,7 +44805,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(ulong3 x)
 {
   half3 r = convert_half3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -44815,7 +44815,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(ulong3 x)
 {
   half3 r = convert_half3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -44825,7 +44825,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(ulong4 x)
 {
   half4 r = convert_half4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -44845,7 +44845,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(ulong4 x)
 {
   half4 r = convert_half4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -44855,7 +44855,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(ulong4 x)
 {
   half4 r = convert_half4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -44865,7 +44865,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(ulong8 x)
 {
   half8 r = convert_half8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -44885,7 +44885,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(ulong8 x)
 {
   half8 r = convert_half8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -44895,7 +44895,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(ulong8 x)
 {
   half8 r = convert_half8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -44905,7 +44905,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(ulong16 x)
 {
   half16 r = convert_half16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -44925,7 +44925,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(ulong16 x)
 {
   half16 r = convert_half16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -44935,7 +44935,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(ulong16 x)
 {
   half16 r = convert_half16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -44945,7 +44945,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(ulong x)
 {
   float r = convert_float(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -44965,7 +44965,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(ulong x)
 {
   float r = convert_float(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 #endif
@@ -44975,7 +44975,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(ulong x)
 {
   float r = convert_float(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -44985,7 +44985,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(ulong2 x)
 {
   float2 r = convert_float2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -45005,7 +45005,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(ulong2 x)
 {
   float2 r = convert_float2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -45015,7 +45015,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(ulong2 x)
 {
   float2 r = convert_float2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -45025,7 +45025,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(ulong3 x)
 {
   float3 r = convert_float3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -45045,7 +45045,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(ulong3 x)
 {
   float3 r = convert_float3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -45055,7 +45055,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(ulong3 x)
 {
   float3 r = convert_float3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -45065,7 +45065,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(ulong4 x)
 {
   float4 r = convert_float4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -45085,7 +45085,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(ulong4 x)
 {
   float4 r = convert_float4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -45095,7 +45095,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(ulong4 x)
 {
   float4 r = convert_float4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -45105,7 +45105,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(ulong8 x)
 {
   float8 r = convert_float8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -45125,7 +45125,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(ulong8 x)
 {
   float8 r = convert_float8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -45135,7 +45135,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(ulong8 x)
 {
   float8 r = convert_float8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -45145,7 +45145,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(ulong16 x)
 {
   float16 r = convert_float16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -45165,7 +45165,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(ulong16 x)
 {
   float16 r = convert_float16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -45175,7 +45175,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(ulong16 x)
 {
   float16 r = convert_float16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -45185,7 +45185,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(ulong x)
 {
   double r = convert_double(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -45205,7 +45205,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(ulong x)
 {
   double r = convert_double(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -45215,7 +45215,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(ulong x)
 {
   double r = convert_double(x);
-  ulong y = convert_ulong(y);
+  ulong y = convert_ulong(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -45225,7 +45225,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(ulong2 x)
 {
   double2 r = convert_double2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -45245,7 +45245,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(ulong2 x)
 {
   double2 r = convert_double2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -45255,7 +45255,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(ulong2 x)
 {
   double2 r = convert_double2(x);
-  ulong2 y = convert_ulong2(y);
+  ulong2 y = convert_ulong2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -45265,7 +45265,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(ulong3 x)
 {
   double3 r = convert_double3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -45285,7 +45285,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(ulong3 x)
 {
   double3 r = convert_double3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -45295,7 +45295,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(ulong3 x)
 {
   double3 r = convert_double3(x);
-  ulong3 y = convert_ulong3(y);
+  ulong3 y = convert_ulong3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -45305,7 +45305,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(ulong4 x)
 {
   double4 r = convert_double4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -45325,7 +45325,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(ulong4 x)
 {
   double4 r = convert_double4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -45335,7 +45335,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(ulong4 x)
 {
   double4 r = convert_double4(x);
-  ulong4 y = convert_ulong4(y);
+  ulong4 y = convert_ulong4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -45345,7 +45345,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(ulong8 x)
 {
   double8 r = convert_double8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -45365,7 +45365,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(ulong8 x)
 {
   double8 r = convert_double8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -45375,7 +45375,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(ulong8 x)
 {
   double8 r = convert_double8(x);
-  ulong8 y = convert_ulong8(y);
+  ulong8 y = convert_ulong8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -45385,7 +45385,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(ulong16 x)
 {
   double16 r = convert_double16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -45405,7 +45405,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(ulong16 x)
 {
   double16 r = convert_double16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -45415,7 +45415,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(ulong16 x)
 {
   double16 r = convert_double16(x);
-  ulong16 y = convert_ulong16(y);
+  ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -45425,7 +45425,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(half x)
 {
   half r = convert_half(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   half abs_x = fabs(x);
   half abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -45445,7 +45445,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(half x)
 {
   half r = convert_half(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -45455,7 +45455,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(half x)
 {
   half r = convert_half(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -45465,7 +45465,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(half2 x)
 {
   half2 r = convert_half2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   half2 abs_x = fabs(x);
   half2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -45485,7 +45485,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(half2 x)
 {
   half2 r = convert_half2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -45495,7 +45495,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(half2 x)
 {
   half2 r = convert_half2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -45505,7 +45505,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(half3 x)
 {
   half3 r = convert_half3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   half3 abs_x = fabs(x);
   half3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -45525,7 +45525,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(half3 x)
 {
   half3 r = convert_half3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -45535,7 +45535,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(half3 x)
 {
   half3 r = convert_half3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -45545,7 +45545,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(half4 x)
 {
   half4 r = convert_half4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   half4 abs_x = fabs(x);
   half4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -45565,7 +45565,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(half4 x)
 {
   half4 r = convert_half4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -45575,7 +45575,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(half4 x)
 {
   half4 r = convert_half4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -45585,7 +45585,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(half8 x)
 {
   half8 r = convert_half8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   half8 abs_x = fabs(x);
   half8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -45605,7 +45605,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(half8 x)
 {
   half8 r = convert_half8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -45615,7 +45615,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(half8 x)
 {
   half8 r = convert_half8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -45625,7 +45625,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(half16 x)
 {
   half16 r = convert_half16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   half16 abs_x = fabs(x);
   half16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -45645,7 +45645,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(half16 x)
 {
   half16 r = convert_half16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -45655,7 +45655,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(half16 x)
 {
   half16 r = convert_half16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -45665,7 +45665,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(half x)
 {
   float r = convert_float(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   half abs_x = fabs(x);
   half abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -45685,7 +45685,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(half x)
 {
   float r = convert_float(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 #endif
@@ -45695,7 +45695,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(half x)
 {
   float r = convert_float(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -45705,7 +45705,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(half2 x)
 {
   float2 r = convert_float2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   half2 abs_x = fabs(x);
   half2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -45725,7 +45725,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(half2 x)
 {
   float2 r = convert_float2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -45735,7 +45735,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(half2 x)
 {
   float2 r = convert_float2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -45745,7 +45745,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(half3 x)
 {
   float3 r = convert_float3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   half3 abs_x = fabs(x);
   half3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -45765,7 +45765,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(half3 x)
 {
   float3 r = convert_float3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -45775,7 +45775,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(half3 x)
 {
   float3 r = convert_float3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -45785,7 +45785,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(half4 x)
 {
   float4 r = convert_float4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   half4 abs_x = fabs(x);
   half4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -45805,7 +45805,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(half4 x)
 {
   float4 r = convert_float4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -45815,7 +45815,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(half4 x)
 {
   float4 r = convert_float4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -45825,7 +45825,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(half8 x)
 {
   float8 r = convert_float8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   half8 abs_x = fabs(x);
   half8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -45845,7 +45845,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(half8 x)
 {
   float8 r = convert_float8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -45855,7 +45855,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(half8 x)
 {
   float8 r = convert_float8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -45865,7 +45865,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(half16 x)
 {
   float16 r = convert_float16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   half16 abs_x = fabs(x);
   half16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -45885,7 +45885,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(half16 x)
 {
   float16 r = convert_float16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -45895,7 +45895,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(half16 x)
 {
   float16 r = convert_float16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -45905,7 +45905,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(half x)
 {
   double r = convert_double(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   half abs_x = fabs(x);
   half abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -45925,7 +45925,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(half x)
 {
   double r = convert_double(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -45935,7 +45935,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(half x)
 {
   double r = convert_double(x);
-  half y = convert_half(y);
+  half y = convert_half(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -45945,7 +45945,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(half2 x)
 {
   double2 r = convert_double2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   half2 abs_x = fabs(x);
   half2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -45965,7 +45965,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(half2 x)
 {
   double2 r = convert_double2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -45975,7 +45975,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(half2 x)
 {
   double2 r = convert_double2(x);
-  half2 y = convert_half2(y);
+  half2 y = convert_half2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -45985,7 +45985,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(half3 x)
 {
   double3 r = convert_double3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   half3 abs_x = fabs(x);
   half3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -46005,7 +46005,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(half3 x)
 {
   double3 r = convert_double3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -46015,7 +46015,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(half3 x)
 {
   double3 r = convert_double3(x);
-  half3 y = convert_half3(y);
+  half3 y = convert_half3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -46025,7 +46025,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(half4 x)
 {
   double4 r = convert_double4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   half4 abs_x = fabs(x);
   half4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -46045,7 +46045,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(half4 x)
 {
   double4 r = convert_double4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -46055,7 +46055,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(half4 x)
 {
   double4 r = convert_double4(x);
-  half4 y = convert_half4(y);
+  half4 y = convert_half4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -46065,7 +46065,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(half8 x)
 {
   double8 r = convert_double8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   half8 abs_x = fabs(x);
   half8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -46085,7 +46085,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(half8 x)
 {
   double8 r = convert_double8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -46095,7 +46095,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(half8 x)
 {
   double8 r = convert_double8(x);
-  half8 y = convert_half8(y);
+  half8 y = convert_half8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -46105,7 +46105,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(half16 x)
 {
   double16 r = convert_double16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   half16 abs_x = fabs(x);
   half16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -46125,7 +46125,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(half16 x)
 {
   double16 r = convert_double16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -46135,7 +46135,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(half16 x)
 {
   double16 r = convert_double16(x);
-  half16 y = convert_half16(y);
+  half16 y = convert_half16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -46145,7 +46145,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(float x)
 {
   half r = convert_half(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   float abs_x = fabs(x);
   float abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -46165,7 +46165,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(float x)
 {
   half r = convert_half(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -46175,7 +46175,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(float x)
 {
   half r = convert_half(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -46185,7 +46185,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(float2 x)
 {
   half2 r = convert_half2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   float2 abs_x = fabs(x);
   float2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -46205,7 +46205,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(float2 x)
 {
   half2 r = convert_half2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -46215,7 +46215,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(float2 x)
 {
   half2 r = convert_half2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -46225,7 +46225,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(float3 x)
 {
   half3 r = convert_half3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   float3 abs_x = fabs(x);
   float3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -46245,7 +46245,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(float3 x)
 {
   half3 r = convert_half3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -46255,7 +46255,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(float3 x)
 {
   half3 r = convert_half3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -46265,7 +46265,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(float4 x)
 {
   half4 r = convert_half4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   float4 abs_x = fabs(x);
   float4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -46285,7 +46285,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(float4 x)
 {
   half4 r = convert_half4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -46295,7 +46295,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(float4 x)
 {
   half4 r = convert_half4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -46305,7 +46305,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(float8 x)
 {
   half8 r = convert_half8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   float8 abs_x = fabs(x);
   float8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -46325,7 +46325,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(float8 x)
 {
   half8 r = convert_half8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -46335,7 +46335,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(float8 x)
 {
   half8 r = convert_half8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -46345,7 +46345,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(float16 x)
 {
   half16 r = convert_half16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   float16 abs_x = fabs(x);
   float16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -46365,7 +46365,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(float16 x)
 {
   half16 r = convert_half16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -46375,7 +46375,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(float16 x)
 {
   half16 r = convert_half16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -46384,7 +46384,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(float x)
 {
   float r = convert_float(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   float abs_x = fabs(x);
   float abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -46400,7 +46400,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(float x)
 {
   float r = convert_float(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 
@@ -46408,7 +46408,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(float x)
 {
   float r = convert_float(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 
@@ -46416,7 +46416,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(float2 x)
 {
   float2 r = convert_float2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   float2 abs_x = fabs(x);
   float2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -46432,7 +46432,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(float2 x)
 {
   float2 r = convert_float2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 
@@ -46440,7 +46440,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(float2 x)
 {
   float2 r = convert_float2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 
@@ -46448,7 +46448,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(float3 x)
 {
   float3 r = convert_float3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   float3 abs_x = fabs(x);
   float3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -46464,7 +46464,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(float3 x)
 {
   float3 r = convert_float3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 
@@ -46472,7 +46472,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(float3 x)
 {
   float3 r = convert_float3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 
@@ -46480,7 +46480,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(float4 x)
 {
   float4 r = convert_float4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   float4 abs_x = fabs(x);
   float4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -46496,7 +46496,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(float4 x)
 {
   float4 r = convert_float4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 
@@ -46504,7 +46504,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(float4 x)
 {
   float4 r = convert_float4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 
@@ -46512,7 +46512,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(float8 x)
 {
   float8 r = convert_float8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   float8 abs_x = fabs(x);
   float8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -46528,7 +46528,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(float8 x)
 {
   float8 r = convert_float8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 
@@ -46536,7 +46536,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(float8 x)
 {
   float8 r = convert_float8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 
@@ -46544,7 +46544,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(float16 x)
 {
   float16 r = convert_float16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   float16 abs_x = fabs(x);
   float16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -46560,7 +46560,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(float16 x)
 {
   float16 r = convert_float16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 
@@ -46568,7 +46568,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(float16 x)
 {
   float16 r = convert_float16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 
@@ -46577,7 +46577,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(float x)
 {
   double r = convert_double(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   float abs_x = fabs(x);
   float abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -46597,7 +46597,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(float x)
 {
   double r = convert_double(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -46607,7 +46607,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(float x)
 {
   double r = convert_double(x);
-  float y = convert_float(y);
+  float y = convert_float(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -46617,7 +46617,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(float2 x)
 {
   double2 r = convert_double2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   float2 abs_x = fabs(x);
   float2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -46637,7 +46637,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(float2 x)
 {
   double2 r = convert_double2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -46647,7 +46647,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(float2 x)
 {
   double2 r = convert_double2(x);
-  float2 y = convert_float2(y);
+  float2 y = convert_float2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -46657,7 +46657,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(float3 x)
 {
   double3 r = convert_double3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   float3 abs_x = fabs(x);
   float3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -46677,7 +46677,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(float3 x)
 {
   double3 r = convert_double3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -46687,7 +46687,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(float3 x)
 {
   double3 r = convert_double3(x);
-  float3 y = convert_float3(y);
+  float3 y = convert_float3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -46697,7 +46697,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(float4 x)
 {
   double4 r = convert_double4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   float4 abs_x = fabs(x);
   float4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -46717,7 +46717,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(float4 x)
 {
   double4 r = convert_double4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -46727,7 +46727,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(float4 x)
 {
   double4 r = convert_double4(x);
-  float4 y = convert_float4(y);
+  float4 y = convert_float4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -46737,7 +46737,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(float8 x)
 {
   double8 r = convert_double8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   float8 abs_x = fabs(x);
   float8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -46757,7 +46757,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(float8 x)
 {
   double8 r = convert_double8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -46767,7 +46767,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(float8 x)
 {
   double8 r = convert_double8(x);
-  float8 y = convert_float8(y);
+  float8 y = convert_float8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -46777,7 +46777,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(float16 x)
 {
   double16 r = convert_double16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   float16 abs_x = fabs(x);
   float16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -46797,7 +46797,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(float16 x)
 {
   double16 r = convert_double16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -46807,7 +46807,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(float16 x)
 {
   double16 r = convert_double16(x);
-  float16 y = convert_float16(y);
+  float16 y = convert_float16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
@@ -46817,7 +46817,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtz(double x)
 {
   half r = convert_half(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   double abs_x = fabs(x);
   double abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
@@ -46837,7 +46837,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtp(double x)
 {
   half r = convert_half(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
 }
 #endif
@@ -46847,7 +46847,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half convert_half_rtn(double x)
 {
   half r = convert_half(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -46857,7 +46857,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtz(double2 x)
 {
   half2 r = convert_half2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   double2 abs_x = fabs(x);
   double2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -46877,7 +46877,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtp(double2 x)
 {
   half2 r = convert_half2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -46887,7 +46887,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half2 convert_half2_rtn(double2 x)
 {
   half2 r = convert_half2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -46897,7 +46897,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtz(double3 x)
 {
   half3 r = convert_half3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   double3 abs_x = fabs(x);
   double3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -46917,7 +46917,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtp(double3 x)
 {
   half3 r = convert_half3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -46927,7 +46927,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half3 convert_half3_rtn(double3 x)
 {
   half3 r = convert_half3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -46937,7 +46937,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtz(double4 x)
 {
   half4 r = convert_half4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   double4 abs_x = fabs(x);
   double4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -46957,7 +46957,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtp(double4 x)
 {
   half4 r = convert_half4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -46967,7 +46967,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half4 convert_half4_rtn(double4 x)
 {
   half4 r = convert_half4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -46977,7 +46977,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtz(double8 x)
 {
   half8 r = convert_half8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   double8 abs_x = fabs(x);
   double8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -46997,7 +46997,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtp(double8 x)
 {
   half8 r = convert_half8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -47007,7 +47007,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half8 convert_half8_rtn(double8 x)
 {
   half8 r = convert_half8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -47017,7 +47017,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtz(double16 x)
 {
   half16 r = convert_half16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   double16 abs_x = fabs(x);
   double16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -47037,7 +47037,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtp(double16 x)
 {
   half16 r = convert_half16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -47047,7 +47047,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 half16 convert_half16_rtn(double16 x)
 {
   half16 r = convert_half16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -47057,7 +47057,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(double x)
 {
   float r = convert_float(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   double abs_x = fabs(x);
   double abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
@@ -47077,7 +47077,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtp(double x)
 {
   float r = convert_float(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
 }
 #endif
@@ -47087,7 +47087,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtn(double x)
 {
   float r = convert_float(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
 }
 #endif
@@ -47097,7 +47097,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtz(double2 x)
 {
   float2 r = convert_float2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   double2 abs_x = fabs(x);
   double2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
@@ -47117,7 +47117,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtp(double2 x)
 {
   float2 r = convert_float2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
 }
 #endif
@@ -47127,7 +47127,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float2 convert_float2_rtn(double2 x)
 {
   float2 r = convert_float2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
 }
 #endif
@@ -47137,7 +47137,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtz(double3 x)
 {
   float3 r = convert_float3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   double3 abs_x = fabs(x);
   double3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
@@ -47157,7 +47157,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtp(double3 x)
 {
   float3 r = convert_float3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
 }
 #endif
@@ -47167,7 +47167,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float3 convert_float3_rtn(double3 x)
 {
   float3 r = convert_float3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
 }
 #endif
@@ -47177,7 +47177,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtz(double4 x)
 {
   float4 r = convert_float4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   double4 abs_x = fabs(x);
   double4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
@@ -47197,7 +47197,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtp(double4 x)
 {
   float4 r = convert_float4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
 }
 #endif
@@ -47207,7 +47207,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float4 convert_float4_rtn(double4 x)
 {
   float4 r = convert_float4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
 }
 #endif
@@ -47217,7 +47217,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtz(double8 x)
 {
   float8 r = convert_float8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   double8 abs_x = fabs(x);
   double8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
@@ -47237,7 +47237,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtp(double8 x)
 {
   float8 r = convert_float8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
 }
 #endif
@@ -47247,7 +47247,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float8 convert_float8_rtn(double8 x)
 {
   float8 r = convert_float8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
 }
 #endif
@@ -47257,7 +47257,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtz(double16 x)
 {
   float16 r = convert_float16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   double16 abs_x = fabs(x);
   double16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
@@ -47277,7 +47277,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtp(double16 x)
 {
   float16 r = convert_float16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
 }
 #endif
@@ -47287,7 +47287,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float16 convert_float16_rtn(double16 x)
 {
   float16 r = convert_float16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
 }
 #endif
@@ -47297,7 +47297,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(double x)
 {
   double r = convert_double(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   double abs_x = fabs(x);
   double abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
@@ -47317,7 +47317,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(double x)
 {
   double r = convert_double(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
 }
 #endif
@@ -47327,7 +47327,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(double x)
 {
   double r = convert_double(x);
-  double y = convert_double(y);
+  double y = convert_double(r);
   return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
 }
 #endif
@@ -47337,7 +47337,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(double2 x)
 {
   double2 r = convert_double2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   double2 abs_x = fabs(x);
   double2 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
@@ -47357,7 +47357,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(double2 x)
 {
   double2 r = convert_double2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
 }
 #endif
@@ -47367,7 +47367,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(double2 x)
 {
   double2 r = convert_double2(x);
-  double2 y = convert_double2(y);
+  double2 y = convert_double2(r);
   return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
 }
 #endif
@@ -47377,7 +47377,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(double3 x)
 {
   double3 r = convert_double3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   double3 abs_x = fabs(x);
   double3 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
@@ -47397,7 +47397,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(double3 x)
 {
   double3 r = convert_double3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
 }
 #endif
@@ -47407,7 +47407,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(double3 x)
 {
   double3 r = convert_double3(x);
-  double3 y = convert_double3(y);
+  double3 y = convert_double3(r);
   return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
 }
 #endif
@@ -47417,7 +47417,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(double4 x)
 {
   double4 r = convert_double4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   double4 abs_x = fabs(x);
   double4 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
@@ -47437,7 +47437,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(double4 x)
 {
   double4 r = convert_double4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
 }
 #endif
@@ -47447,7 +47447,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(double4 x)
 {
   double4 r = convert_double4(x);
-  double4 y = convert_double4(y);
+  double4 y = convert_double4(r);
   return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
 }
 #endif
@@ -47457,7 +47457,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(double8 x)
 {
   double8 r = convert_double8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   double8 abs_x = fabs(x);
   double8 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
@@ -47477,7 +47477,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(double8 x)
 {
   double8 r = convert_double8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
 }
 #endif
@@ -47487,7 +47487,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(double8 x)
 {
   double8 r = convert_double8(x);
-  double8 y = convert_double8(y);
+  double8 y = convert_double8(r);
   return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
 }
 #endif
@@ -47497,7 +47497,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(double16 x)
 {
   double16 r = convert_double16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   double16 abs_x = fabs(x);
   double16 abs_y = fabs(y);
   return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
@@ -47517,7 +47517,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(double16 x)
 {
   double16 r = convert_double16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
 }
 #endif
@@ -47527,7 +47527,7 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(double16 x)
 {
   double16 r = convert_double16(x);
-  double16 y = convert_double16(y);
+  double16 y = convert_double16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
 }
 #endif
