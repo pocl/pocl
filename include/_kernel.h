@@ -358,6 +358,8 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE,     , FLOATSUFFIX)        \
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE, _sat, FLOATSUFFIX))       \
   _CL_DECLARE_CONVERT_TYPE(SRC, float , SIZE,     , FLOATSUFFIX)        \
+  __IF_FP16(                                                            \
+  _CL_DECLARE_CONVERT_TYPE(SRC, half, SIZE,     , FLOATSUFFIX))         \
   __IF_FP64(                                                            \
   _CL_DECLARE_CONVERT_TYPE(SRC, double, SIZE,     , FLOATSUFFIX))
 
@@ -372,6 +374,8 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   _CL_DECLARE_CONVERT_TYPE_DST(long  , SIZE, FLOATSUFFIX)   \
   _CL_DECLARE_CONVERT_TYPE_DST(ulong , SIZE, FLOATSUFFIX))  \
   _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, FLOATSUFFIX)   \
+  __IF_FP16(                                                \
+  _CL_DECLARE_CONVERT_TYPE_DST(half, SIZE, FLOATSUFFIX))    \
   __IF_FP64(                                                \
   _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, FLOATSUFFIX))
 
