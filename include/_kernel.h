@@ -536,6 +536,13 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  , float4  , float4  );         \
   float8   _CL_OVERLOADABLE NAME(float8  , float8  , float8  );         \
   float16  _CL_OVERLOADABLE NAME(float16 , float16 , float16 );         \
+  __IF_FP16(                                                            \
+  half   _CL_OVERLOADABLE NAME(half  , half  , half  );         \
+  half2  _CL_OVERLOADABLE NAME(half2 , half2 , half2 );         \
+  half3  _CL_OVERLOADABLE NAME(half3 , half3 , half3 );         \
+  half4  _CL_OVERLOADABLE NAME(half4 , half4 , half4 );         \
+  half8  _CL_OVERLOADABLE NAME(half8 , half8 , half8 );         \
+  half16 _CL_OVERLOADABLE NAME(half16, half16, half16);)        \
   __IF_FP64(                                                            \
   double   _CL_OVERLOADABLE NAME(double  , double  , double  );         \
   double2  _CL_OVERLOADABLE NAME(double2 , double2 , double2 );         \
@@ -561,12 +568,19 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  , float , float );     \
   float8   _CL_OVERLOADABLE NAME(float8  , float , float );     \
   float16  _CL_OVERLOADABLE NAME(float16 , float , float );     \
+  __IF_FP16(                                                    \
+  half2  _CL_OVERLOADABLE NAME(half2 , half, half);     \
+  half3  _CL_OVERLOADABLE NAME(half3 , half, half);     \
+  half4  _CL_OVERLOADABLE NAME(half4 , half, half);     \
+  half8  _CL_OVERLOADABLE NAME(half8 , half, half);     \
+  half16 _CL_OVERLOADABLE NAME(half16, half, half);)    \
   __IF_FP64(                                                    \
   double2  _CL_OVERLOADABLE NAME(double2 , double, double);     \
   double3  _CL_OVERLOADABLE NAME(double3 , double, double);     \
   double4  _CL_OVERLOADABLE NAME(double4 , double, double);     \
   double8  _CL_OVERLOADABLE NAME(double8 , double, double);     \
   double16 _CL_OVERLOADABLE NAME(double16, double, double);)
+
 #define _CL_DECLARE_FUNC_V_SSV(NAME)                            \
   float2   _CL_OVERLOADABLE NAME(float , float , float2  );     \
   float3   _CL_OVERLOADABLE NAME(float , float , float3  );     \

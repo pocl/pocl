@@ -421,6 +421,13 @@
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float4  , float , int4  )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float8  , float , int8  )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, float16 , float , int16 )    \
+  __IF_FP16(                                                    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half  , half, int  )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half2 , half, int2 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half3 , half, int3 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half4 , half, int4 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half8 , half, int8 )    \
+  IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half16, half, int16))   \
   __IF_FP64(                                                    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double  , double, long  )    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, double2 , double, long2 )    \
@@ -559,6 +566,12 @@
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float4  , float )    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float8  , float )    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, float16 , float )    \
+  __IF_FP16(                                            \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half2 , half)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half3 , half)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half4 , half)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half8 , half)    \
+  IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half16, half))   \
   __IF_FP64(                                            \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double2 , double)    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, double3 , double)    \
