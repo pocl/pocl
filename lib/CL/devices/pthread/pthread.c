@@ -153,6 +153,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->device_name = "pthread";
 
   /* implementation */
+  ops->probe = pocl_pthread_probe;
   ops->init_device_infos = pocl_pthread_init_device_infos;
   ops->uninit = pocl_pthread_uninit;
   ops->init = pocl_pthread_init;
@@ -166,6 +167,17 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->run = pocl_pthread_run;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
 
+}
+
+unsigned int
+pocl_pthread_probe(struct pocl_device_ops *ops)
+{
+  int env_count = pocl_device_get_env_count(ops->device_name);
+  /* Env was not specified, default behavior was to use 1 pthread device */
+  if(env_count < 0)
+    return 1;
+
+  return env_count;
 }
 
 void

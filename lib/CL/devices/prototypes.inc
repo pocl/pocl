@@ -27,6 +27,7 @@
   void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
   void pocl_##__DRV__##_init (cl_device_id device, const char* parameters); \
+  unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops); \
   void *pocl_##__DRV__##_malloc (void *data, cl_mem_flags flags,            \
                                  size_t size, void *host_ptr);              \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj); \

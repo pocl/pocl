@@ -39,8 +39,8 @@
 #endif
 
 /* the enabled devices */
-struct _cl_device_id* pocl_devices = NULL;
-int pocl_num_devices = 0;
+static struct _cl_device_id* pocl_devices = NULL;
+unsigned int pocl_num_devices = 0;
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
@@ -61,6 +61,75 @@ static init_device_ops pocl_devices_init_ops[] = {
 
 static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES] = {0};
 
+/**
+ * Get the number of specified devices from environnement
+ */
+int pocl_device_get_env_count(const char *dev_type)
+{
+  const char *dev_env = getenv(POCL_DEVICES_ENV);
+  char *ptr, *saveptr, *tofree, *token;
+  unsigned int dev_count = 0;
+  if (dev_env == NULL) 
+    {
+      return -1;
+    }
+  ptr = tofree = strdup(dev_env);
+  while ((token = strtok_r (ptr, " ", &saveptr)) != NULL)
+    {
+      if(strcmp(token, dev_type) == 0)
+        dev_count++;
+      ptr = NULL;
+    }
+  free (tofree);
+
+  return dev_count;
+}
+
+static unsigned int __total_dev_count = 0;
+
+unsigned int
+pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices)
+{
+  struct _cl_device_id *device;
+  unsigned int i, dev_added = 0;
+
+  for (i = 0; i < pocl_num_devices; ++i)
+    {
+      if ((pocl_devices[i].type & device_type) &&
+          (pocl_devices[i].available == CL_TRUE))
+        {
+            if (dev_added < num_devices)
+              {
+                devices[dev_added] = &pocl_devices[i];
+                ++dev_added;
+              }
+            else
+              {
+                break;
+              }
+        }
+    }
+  return dev_added;
+}
+
+unsigned int
+pocl_get_device_type_count(cl_device_type device_type)
+{
+  int count = 0;
+  unsigned int i;
+
+  for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
+    {
+      if ((pocl_devices[i].type & device_type) &&
+          (pocl_devices[i].available == CL_TRUE))
+        {
+           ++count;
+        }
+    }
+  return count;
+}
+
+
 static inline void
 pocl_device_common_init(struct _cl_device_id* dev)
 {
@@ -77,73 +146,56 @@ pocl_device_common_init(struct _cl_device_id* dev)
 void 
 pocl_init_devices()
 {
-  const char *device_list;
-  char *ptr, *tofree, *token, *saveptr;
-  int i, devcount;
+  int i, j, dev_index;
+  char env_name[1024];
+  unsigned int device_count[POCL_NUM_DEVICE_TYPES];
+
   if (pocl_num_devices > 0)
     return;
-  
-  if (getenv(POCL_DEVICES_ENV) != NULL) 
-    {
-      device_list = getenv(POCL_DEVICES_ENV);
-    }
-  else
-    {
-      device_list = "pthread";
-    }
-  
-  ptr = tofree = strdup(device_list);
-  while ((token = strtok_r (ptr, " ", &saveptr)) != NULL)
-    {
-      ++pocl_num_devices;
-      ptr = NULL;
-    }
-  free (tofree);
-  
+
+  /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
       pocl_devices_init_ops[i](&pocl_device_ops[i]);
       assert(pocl_device_ops[i].device_name != NULL);
+
+      /* Probe and add the result to the number of probbed devices */
+      device_count[i] = pocl_device_ops[i].probe(&pocl_device_ops[i]);
+      pocl_num_devices += device_count[i];
     }
 
-  pocl_devices = calloc (pocl_num_devices, sizeof *pocl_devices);
+  assert(pocl_num_devices > 0);
+  pocl_devices = calloc(pocl_num_devices, sizeof(struct _cl_device_id));
+  if (pocl_devices == NULL)
+    POCL_ABORT("Can not allocate memory for devices\n");
 
-  ptr = tofree = strdup(device_list);
-  devcount = 0;
-  while ((token = strtok_r (ptr, " ", &saveptr)) != NULL)
+  dev_index = 0;
+  /* Init infos for each probbed devices */
+  for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
-      char found = 0;
-      for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
+      assert(pocl_device_ops[i].init);
+      assert(pocl_device_ops[i].probe);
+      for (j = 0; j < device_count[i]; ++j)
         {
-          if (strcmp(pocl_device_ops[i].device_name, token) == 0)
-            {
-              /* Check if there are device-specific parameters set in the
-                 POCL_DEVICEn_PARAMETERS env. */
-              char env_name[1024];
-              
-              if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", devcount) < 0)
-                POCL_ABORT("Unable to generate the env string.");
-              pocl_devices[devcount].ops = &pocl_device_ops[i];
-              /* The default value for the global memory space identifier is
-                 the same as the device id. The device instance can then override 
-                 it to point to some other device's global memory id in case of
-                 a shared global memory. */
-              pocl_devices[devcount].global_mem_id = devcount;
-              assert(pocl_device_ops[i].init_device_infos);
-              pocl_device_ops[i].init_device_infos(&pocl_devices[devcount]);
-              pocl_device_common_init(&pocl_devices[devcount]);
-              assert(pocl_device_ops[i].init);
-              pocl_device_ops[i].init(&pocl_devices[devcount], getenv(env_name));
-              
-              pocl_devices[devcount].dev_id = devcount;
-              devcount++;
-              found = 1;
-              break;
-            }
+          pocl_devices[dev_index].ops = &pocl_device_ops[i];
+
+          /* The default value for the global memory space identifier is
+             the same as the device id. The device instance can then override 
+             it to point to some other device's global memory id in case of
+             a shared global memory. */
+          pocl_devices[dev_index].global_mem_id = dev_index;
+          
+          pocl_device_ops[i].init_device_infos(&pocl_devices[dev_index]);
+
+          pocl_device_common_init(&pocl_devices[dev_index]);
+          /* Check if there are device-specific parameters set in the
+             POCL_DEVICEn_PARAMETERS env. */
+          if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", dev_index) < 0)
+            POCL_ABORT("Unable to generate the env string.");
+
+          pocl_devices[dev_index].ops->init(&pocl_devices[dev_index], getenv(env_name));
+          
+          ++dev_index;
         }
-      if (!found) 
-          POCL_ABORT("device type not found\n");
-      ptr = NULL;
     }
-  free (tofree);
 }
