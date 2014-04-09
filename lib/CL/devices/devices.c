@@ -38,6 +38,8 @@
 #include "tce/ttasim/ttasim.h"
 #endif
 
+#define MAX_DEV_NAME_LEN 64
+
 /* the enabled devices */
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
@@ -143,11 +145,22 @@ pocl_device_common_init(struct _cl_device_id* dev)
     dev->long_name = dev->short_name;
 }
 
+static inline void
+str_toupper(char *out, const char *in)
+{
+  int i;
+
+  for (i = 0; in[i] != '\0'; i++)
+    out[i] = toupper(in[i]);
+  out[i] = '\0';
+}
+
 void 
 pocl_init_devices()
 {
   int i, j, dev_index;
   char env_name[1024];
+  char dev_name[MAX_DEV_NAME_LEN] = {0};
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
   if (pocl_num_devices > 0)
@@ -188,9 +201,11 @@ pocl_init_devices()
           pocl_device_ops[i].init_device_infos(&pocl_devices[dev_index]);
 
           pocl_device_common_init(&pocl_devices[dev_index]);
+
+          str_toupper(dev_name, pocl_device_ops[i].device_name);
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
-          if (snprintf (env_name, 1024, "POCL_DEVICE%d_PARAMETERS", dev_index) < 0)
+          if (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j) < 0)
             POCL_ABORT("Unable to generate the env string.");
 
           pocl_devices[dev_index].ops->init(&pocl_devices[dev_index], getenv(env_name));
