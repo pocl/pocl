@@ -403,7 +403,14 @@
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double3 , double, long3 )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double4 , double, long4 )     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double8 , double, long8 )     \
-  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16))
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16))    \
+  __IF_FP16(                                                    \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, half  , half, short  )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, half2 , half, short2 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, half3 , half, short3 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, half4 , half, short4 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, half8 , half, short8 )     \
+  IMPLEMENT_EXPR_V_VV(NAME, EXPR, half16, half, short16))
 
 #define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE, JTYPE)   \
   VTYPE __attribute__ ((overloadable))                          \
@@ -667,7 +674,13 @@
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, double3 , double)     \
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, double4 , double)     \
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, double8 , double)     \
-  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double16, double))
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, double16, double))    \
+  __IF_FP16(                                            \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, half2 , half)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, half3 , half)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, half4 , half)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, half8 , half)     \
+  IMPLEMENT_EXPR_V_VS(NAME, EXPR, half16, half))
 
 #define IMPLEMENT_EXPR_V_VJ(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
   VTYPE __attribute__ ((overloadable))                          \
