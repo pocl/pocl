@@ -507,31 +507,7 @@ AC_SUBST([OPENCL_CMAKE])
 AC_SUBST([OPENCL_EXTLIBS])
 
 ####################################################################
-#AC_LANG([C++])
-
-
-# Checks for libraries.
-#old_LDFLAGS="$LDFLAGS"
-#LDFLAGS="$LDFLAGS `$LLVM_CONFIG --ldflags`"
-#old_LIBS="$LIBS"
-#LIBS=
-#AC_SEARCH_LIBS([LLVMInitializeTransformUtils],
-#               [LLVM-3.0 LLVMTransformUtils],
-#	       , ,
-#               [`$LLVM_CONFIG --libs transformutils`])
-#AC_SUBST([LIBS_LLVMTRANSFORMUTILS], ["$LIBS"])
-#test "$ac_cv_search_LLVMInitializeTransformUtils" = "no" && \
-#  AC_MSG_FAILURE([Unable to link with LLVM libraries])
-#LIBS=
-#AC_SEARCH_LIBS([LLVMInitializeAnalysis],
-#               [LLVM-3.0 LLVMAnalysis],
-#	       , ,
-#               [`$LLVM_CONFIG --libs analysis`])
-#AC_SUBST([LIBS_LLVMANALYSIS], ["$LIBS"])
-#test "$ac_cv_search_LLVMInitializeAnalysis" = "no" && \
-#  AC_MSG_FAILURE([Unable to link with LLVM libraries])
-#LIBS="$old_LIBS"
-#LDFLAGS="$old_LDFLAGS"
+# OpenCL headers
 
 # Option to install OpenCL header files
 # By default, do not install them unless none are found in the system include directories
@@ -554,15 +530,23 @@ fi
 
 AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 
-# Checks for header files.
+# Check cl.hpp usability. It is broken on a few platforms.
+clhpp="no"
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([OpenCL/cl.hpp CL/cl.hpp], [clhpp="yes"; break])
+AC_LANG_POP([C++])
 
-# Checks for typedefs, structures, and compiler characteristics.
+if test x"$clhpp" == xyes
+then
+  AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
+  test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+  AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
+  AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
+else
+  AM_CONDITIONAL([HAVE_OPENCL_HPP], false)
+  AC_MSG_NOTICE([cl.hpp not available - a few tests will be skipped])
+fi
 
-# Checks for library functions.
-#AC_FUNC_MALLOC
-
-OCL_DRIVERS="basic pthreads"
-# look for the TCE library (needed for the ttasim device driver)
 
 # libtool dynamic library handling library
 old_LIBS="$LIBS"
@@ -600,9 +584,6 @@ then
 	CFLAGS="$CFLAGS -Wno-unused-result -Werror"
 fi
 
-AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
-
-test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
 
 PKG_CHECK_MODULES([GLEW], [glew], 
   [
