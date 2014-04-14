@@ -189,6 +189,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->device_name = "basic";
 
   ops->init_device_infos = pocl_basic_init_device_infos;
+  ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
   ops->init = pocl_basic_init;
   ops->malloc = pocl_basic_malloc;
@@ -283,6 +284,17 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->has_64bit_long = 1;
 }
 
+unsigned int
+pocl_basic_probe(struct pocl_device_ops *ops)
+{
+  int env_count = pocl_device_get_env_count(ops->device_name);
+
+  /* No env specified, so pthread will be used instead of basic */
+  if(env_count < 0)
+    return 0;
+
+  return env_count;
+}
 
 void
 pocl_basic_init (cl_device_id device, const char* parameters)
@@ -765,4 +777,3 @@ pocl_basic_compile_submitted_kernels (_cl_command_node *cmd)
     check_compiler_cache (cmd);
 
 }
-
