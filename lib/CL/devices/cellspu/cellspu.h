@@ -52,6 +52,7 @@ extern "C" {
 #endif
 
 GEN_PROTOTYPES (cellspu)
+GEN_PROTOTYPES (basic)
 
 #ifdef __cplusplus
 }

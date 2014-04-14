@@ -33,4 +33,4 @@ AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/
 all-local: host
 
 run: 
-	@POCL_DEVICES="ttasim" POCL_DEVICE0_PARAMETERS="$(top_srcdir)/tools/data/test_machine_fp16.adf" ./host
+	@POCL_DEVICES="ttasim" POCL_TTASIM0_PARAMETERS="$(top_srcdir)/tools/data/test_machine_fp16.adf" ./host

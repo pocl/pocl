@@ -40,7 +40,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
                         cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   int num_devices;
-  int i, j;
   int errcode;
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
@@ -69,12 +68,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
         goto ERROR_CLEAN_CONTEXT_AND_PROPERTIES;
     }
 
-  num_devices = 0;
-  for (i = 0; i < pocl_num_devices; ++i) {
-    if ((pocl_devices[i].type & device_type) &&
-        (pocl_devices[i].available == CL_TRUE))
-      ++num_devices;
-  }
+  num_devices = pocl_get_device_type_count(device_type);
 
   if (num_devices == 0)
     {
@@ -89,22 +83,14 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     }
 
   context->num_devices = num_devices;
-  context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
+  context->devices = (cl_device_id *) calloc(num_devices, sizeof(cl_device_id));
   if (context->devices == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;
         goto ERROR_CLEAN_CONTEXT_AND_PROPERTIES;
     }
-  
-  j = 0;
-  for (i = 0; i < pocl_num_devices; ++i) {
-    if ((pocl_devices[i].type & device_type) &&
-	(pocl_devices[i].available == CL_TRUE)) {
-      context->devices[j] = &pocl_devices[i];
-      POname(clRetainDevice)(&pocl_devices[i]);
-      ++j;
-    }
-  }   
+
+  pocl_get_devices(device_type, context->devices, num_devices);
 
   pocl_init_mem_manager ();
 

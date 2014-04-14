@@ -46,19 +46,11 @@ POname(clGetDeviceIDs)(cl_platform_id   platform,
   if (num_devices == NULL && devices == NULL)
     return CL_INVALID_VALUE;
 
-  for (i = 0; i < pocl_num_devices; ++i) {
-    if ((pocl_devices[i].type & device_type) &&
-        (pocl_devices[i].available == CL_TRUE))
-      {
-        if (devices != NULL && devices_added < num_entries) 
-          {
-            devices[devices_added] = &pocl_devices[i];
-            ++devices_added;
-          }
-        ++total_num;
-      }
-  }
-  
+  total_num = pocl_get_device_type_count(device_type);
+
+  if (devices != NULL)
+    devices_added = pocl_get_devices(device_type, devices, num_entries);
+ 
   if (num_devices != NULL)
     *num_devices = total_num;
   

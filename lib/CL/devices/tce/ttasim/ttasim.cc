@@ -70,6 +70,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
 {
   ops->device_name = "ttasim";
 
+  ops->probe = pocl_ttasim_probe;
   ops->init_device_infos = pocl_ttasim_init_device_infos;
   ops->uninit = pocl_ttasim_uninit;
   ops->init = pocl_ttasim_init;
@@ -134,6 +135,17 @@ pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
   dev->extensions = "";
   dev->llvm_target_triplet = "tce-tut-llvm";
   dev->has_64bit_long = 1;
+}
+
+unsigned int
+pocl_ttasim_probe(struct pocl_device_ops *ops)
+{
+  int env_count = pocl_device_get_env_count(ops->device_name);
+
+  if(env_count < 0)
+    return 0;
+
+  return env_count;
 }
 
 

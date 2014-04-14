@@ -6,10 +6,10 @@ below.
  If set, the pocl helper scripts, kernel library and headers are 
  searched first from the pocl build directory.
 
-* POCL_DEVICES and POCL_DEVICEn_PARAMETERS
+* POCL_DEVICES and POCL_x_PARAMETERS
 
  POCL_DEVICES is a space separated list of the device instances to be enabled.
- Currently supported device types are:
+ This environment variable is used for the following devices:
 
  *         basic        A minimalistic example device driver for executing
                         kernels on the host CPU. No multithreading.
@@ -21,17 +21,20 @@ below.
                         TCE's ttasim library. Enabled only if TCE libraries
                         installed.
 
- Device-specific parameters can be given with POCL_DEVICEn_PARAMETERS where
- n is the number of the device in the POCL_DEVICES list (starting from zero).
-
+ If POCL_DEVICES is not set, one pthread device will be used.
+ To specify parameters for drivers, the POCL_<drivername><instance>_PARAMETERS
+ environment variable can be specified (where drivername is in uppercase).
  Example:
 
-  export POCL_DEVICES="pthread ttasim"
-  export POCL_DEVICE1_PARAMETERS="/path/to/my/machine.adf"
+  export POCL_DEVICES="pthread ttasim ttasim"
+  export POCL_TTASIM0_PARAMETERS="/path/to/my/machine0.adf"
+  export POCL_TTASIM1_PARAMETERS="/path/to/my/machine1.adf"
 
- Creates two devices, one CPU device with pthread multithreading and a
- TTA device simulated with the ttasim. The ttasim device gets a path to
+ Creates three devices, one CPU device with pthread multithreading and two
+ TTA device simulated with the ttasim. The ttasim devices gets a path to
  the architecture description file of the tta to simulate as a parameter.
+ POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
+ and POCL_TTASIM1_PARAMETERS to the second one.
 
 * POCL_KERNEL_COMPILER_OPT_SWITCH
 
@@ -126,4 +129,3 @@ and run kernels.
               in more easily scalarizable private variables.
               However, the code bloat is increased with larger
               local sizes.
-
