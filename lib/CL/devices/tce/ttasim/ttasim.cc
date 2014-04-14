@@ -58,6 +58,7 @@
 #include <fstream>
 
 #include "tce_common.h"
+#include "devices.h"
 
 using namespace TTAMachine;
 
