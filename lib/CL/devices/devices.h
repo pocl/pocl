@@ -29,6 +29,10 @@
 
 #pragma GCC visibility push(hidden)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The number of available devices. */
 extern unsigned int pocl_num_devices;
 
@@ -69,5 +73,9 @@ int pocl_device_get_env_count(const char *dev_type);
 
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* POCL_DEVICES_H */
