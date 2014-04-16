@@ -12,6 +12,9 @@ OpenCL Runtime/Platform API support
 -----------------------------------
 - Implement clCreateKernelsInProgram()
 - OpenCL-C shuffle() and shuffle2() implementation added
+- Device probing modified to allow for device driver to detect device during
+  runtime. POCL_DEVICES still supported.
+- Checks in clSetKernelArgs for argument validity
 
 Misc
 ----
