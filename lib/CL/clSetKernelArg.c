@@ -47,6 +47,13 @@ POname(clSetKernelArg)(cl_kernel kernel,
   if (kernel->dyn_arguments == NULL)
     return CL_INVALID_KERNEL;
 
+  if (arg_size == 0 && kernel->arg_is_local[arg_index])
+    return CL_INVALID_ARG_SIZE;
+
+  if ((kernel->arg_is_pointer[arg_index] || kernel->arg_is_image[arg_index])
+        && (!kernel->arg_is_local[arg_index]) && (arg_size != sizeof(cl_mem)))
+    return CL_INVALID_ARG_SIZE;
+
   p = &(kernel->dyn_arguments[arg_index]);  
   
   if (arg_value != NULL && 
