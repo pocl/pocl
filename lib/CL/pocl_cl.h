@@ -195,6 +195,22 @@ struct pocl_argument {
   void *value;
 };
 
+/**
+ * Enumeration for kernel argument types
+ */
+typedef enum {
+  POCL_ARG_TYPE_NONE = 0,
+  POCL_ARG_TYPE_POINTER = 1,
+  POCL_ARG_TYPE_IMAGE = 2,
+  POCL_ARG_TYPE_SAMPLER = 3,
+} pocl_argument_type;
+
+struct pocl_argument_info {
+  pocl_argument_type type;
+  char is_local;
+  char is_set;
+};
+
 struct pocl_device_ops {
   char *device_name;
   void (*init_device_infos) (struct _cl_device_id*);
@@ -468,10 +484,7 @@ struct _cl_kernel {
   cl_program program;
   /* implementation */
   lt_dlhandle dlhandle;
-  cl_int *arg_is_pointer;
-  cl_int *arg_is_local;
-  cl_int *arg_is_image;
-  cl_int *arg_is_sampler;
+  struct pocl_argument_info *arg_info;
   cl_uint num_locals;
   int *reqd_wg_size;
   /* The kernel arguments that are set with clSetKernelArg().

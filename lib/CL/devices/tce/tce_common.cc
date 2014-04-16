@@ -453,7 +453,7 @@ pocl_tce_run
   for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
-      if (cmd->command.run.kernel->arg_is_local[i])
+      if (cmd->command.run.kernel->arg_info[i].is_local)
         {
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
           if (local_chunk == NULL)
@@ -466,7 +466,7 @@ pocl_tce_run
 #endif
           tempChunks.push_back(local_chunk);
         }
-      else if (cmd->command.run.kernel->arg_is_pointer[i])
+      else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
              that case we must pass the same NULL forward to the kernel.

@@ -370,7 +370,7 @@ pocl_cellspu_run
   for (i = 0; i < kernel->num_args; ++i)
     {
       al = &(kernel->dyn_arguments[i]);
-      if (kernel->arg_is_local[i])
+      if (kernel->arg_info[i].is_local)
         {
           chunk_info_t* local_chunk = cellspu_malloc_local (d, al->size);
           if (local_chunk == NULL)
@@ -379,7 +379,7 @@ pocl_cellspu_run
           dev_cmd.args[i] = local_chunk->start_address;
 
         }
-      else if (kernel->arg_is_pointer[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
              that case we must pass the same NULL forward to the kernel.
@@ -393,7 +393,7 @@ pocl_cellspu_run
                 (al->value))->device_ptrs[0]))->start_address;
 		//TODO: '0' above is the device number... don't hard-code!
         }
-      else if (kernel->arg_is_image[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           POCL_ABORT_UNIMPLEMENTED();
 //          dev_image2d_t di;      
@@ -410,7 +410,7 @@ pocl_cellspu_run
 //          *(void **)(arguments[i]) = devptr; 
 //          pocl_cellspu_write (data, &di, devptr, sizeof(dev_image2d_t));
         }
-      else if (kernel->arg_is_sampler[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           POCL_ABORT_UNIMPLEMENTED();
 //          dev_sampler_t ds;
@@ -478,7 +478,7 @@ pocl_cellspu_run
   // Clean-up ? 
   for (i = 0; i < kernel->num_args; ++i)
     {
-      if (kernel->arg_is_local[i])
+      if (kernel->arg_info[i].is_local)
         pocl_cellspu_free(data, 0, *(void **)(arguments[i]));
     }
   for (i = kernel->num_args;

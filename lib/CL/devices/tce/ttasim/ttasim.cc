@@ -268,7 +268,7 @@ public:
     for (int i = 0; i < run_cmd->kernel->num_args; ++i)
       {
         struct pocl_argument *al = &(run_cmd->arguments[i]);
-        if (run_cmd->kernel->arg_is_pointer[i])
+        if (run_cmd->kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
           {
             if (al->value == NULL) continue;
             unsigned start_addr = 
@@ -289,7 +289,7 @@ public:
             }
             out << std::endl << "}; " << std::endl << std::endl;
           } 
-        else if (!run_cmd->kernel->arg_is_local[i])
+        else if (!run_cmd->kernel->arg_info[i].is_local)
           {
             /* Scalars are stored to global buffers automatically. Dump them to buffers. */
             unsigned start_addr = BSWAP(dev_cmd.args[i]);
@@ -346,13 +346,13 @@ public:
         struct pocl_argument *al = &(run_cmd->arguments[a]);
         out << "\tkernel_command.args[" << std::dec << a << "] = ";
         
-        if (run_cmd->kernel->arg_is_local[a] || a >= run_cmd->kernel->num_args)
+        if (run_cmd->kernel->arg_info[a].is_local || a >= run_cmd->kernel->num_args)
           {
             /* Local buffers are managed by the host so the local
                addresses are already valid. */
             out << "(uint32_t)" << "0x" << std::hex << BSWAP(dev_cmd.args[a]);
           }
-        else if (run_cmd->kernel->arg_is_pointer[a] && dev_cmd.args[a] != 0)
+        else if (run_cmd->kernel->arg_info[a].type == POCL_ARG_TYPE_POINTER && dev_cmd.args[a] != 0)
           {
             unsigned start_addr = 
               ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;

@@ -660,12 +660,12 @@ workgroup_thread (void *p)
   for (i = 0; i < kernel->num_args; ++i)
     {
       al = &(ta->kernel_args[i]);
-      if (kernel->arg_is_local[i])
+      if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
         }
-      else if (kernel->arg_is_pointer[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
       {
         /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
            that case we must pass the same NULL forward to the kernel.
@@ -682,7 +682,7 @@ workgroup_thread (void *p)
               &((*(cl_mem *)(al->value))->device_ptrs[ta->device].mem_ptr);
           }
       }
-      else if (kernel->arg_is_image[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
           fill_dev_image_t(&di, al, ta->device);
@@ -691,7 +691,7 @@ workgroup_thread (void *p)
           *(void **)(arguments[i]) = devptr;       
           pocl_pthread_write (ta->data, &di, devptr, sizeof(dev_image_t));
         }
-      else if (kernel->arg_is_sampler[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
           
@@ -735,13 +735,13 @@ workgroup_thread (void *p)
 
   for (i = 0; i < kernel->num_args; ++i)
     {
-      if (kernel->arg_is_local[i] )
+      if (kernel->arg_info[i].is_local )
         {
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
           free (arguments[i]);
         }
-      else if (kernel->arg_is_sampler[i] || kernel->arg_is_image[i] || 
-               (kernel->arg_is_pointer[i] && *(void**)arguments[i] == NULL))
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE || 
+               (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
         {
           free (arguments[i]);
         }

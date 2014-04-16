@@ -460,12 +460,12 @@ pocl_basic_run
   for (i = 0; i < kernel->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
-      if (kernel->arg_is_local[i])
+      if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
         }
-      else if (kernel->arg_is_pointer[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
              that case we must pass the same NULL forward to the kernel.
@@ -479,7 +479,7 @@ pocl_basic_run
           else
             arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device].mem_ptr);
         }
-      else if (kernel->arg_is_image[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
           fill_dev_image_t (&di, al, device);
@@ -489,7 +489,7 @@ pocl_basic_run
           *(void **)(arguments[i]) = devptr; 
           pocl_basic_write (data, &di, devptr, sizeof(dev_image_t));
         }
-      else if (kernel->arg_is_sampler[i])
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
           
@@ -529,7 +529,7 @@ pocl_basic_run
     }
   for (i = 0; i < kernel->num_args; ++i)
     {
-      if (kernel->arg_is_local[i])
+      if (kernel->arg_info[i].is_local)
         pocl_basic_free(data, 0, *(void **)(arguments[i]));
     }
   for (i = kernel->num_args;

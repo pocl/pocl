@@ -80,7 +80,7 @@ POname(clGetKernelWorkGroupInfo)
       /* Count the host-allocated locals. */
       for (i = 0; i < kernel->num_args; ++i)
         {
-          if (!kernel->arg_is_local[i]) continue;
+          if (!kernel->arg_info[i].is_local) continue;
           local_size += kernel->dyn_arguments[i].size;
         }
       /* Count the automatic locals. */

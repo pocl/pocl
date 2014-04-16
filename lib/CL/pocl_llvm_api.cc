@@ -490,12 +490,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #endif
     }
 
-  // TODO: if the scripts are dumped, consider just having one list of 
-  // enumerations, declaring what sort the arguments are
-  kernel->arg_is_pointer = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
-  kernel->arg_is_local = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
-  kernel->arg_is_image = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
-  kernel->arg_is_sampler = (cl_int*)malloc( sizeof(cl_int)*kernel->num_args );
+  kernel->arg_info = (struct pocl_argument_info*) calloc(kernel->num_args, sizeof(struct pocl_argument_info));
 
   i = 0;
   for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
@@ -503,19 +498,17 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
        ii != ee ; ii++)
   {
     Type *t = ii->getType();
-  
-    kernel->arg_is_image[i] = false;
-    kernel->arg_is_sampler[i] = false;
- 
+    kernel->arg_info[i].type = POCL_ARG_TYPE_NONE;
+
     const PointerType *p = dyn_cast<PointerType>(t);
     if (p && !ii->hasByValAttr()) {
-      kernel->arg_is_pointer[i] = true;
+      kernel->arg_info[i].type = POCL_ARG_TYPE_POINTER;
       // index 0 is for function attributes, parameters start at 1.
       if (p->getAddressSpace() == POCL_ADDRESS_SPACE_GLOBAL ||
           p->getAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT ||
           pocl::is_image_type(*t) || pocl::is_sampler_type(*t))
         {
-          kernel->arg_is_local[i] = false;
+          kernel->arg_info[i].is_local = false;
         }
       else
         {
@@ -524,22 +517,19 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
               p->dump();
               assert(p->getAddressSpace() == POCL_ADDRESS_SPACE_LOCAL);
             }
-          kernel->arg_is_local[i] = true;
+          kernel->arg_info[i].is_local = true;
         }
     } else {
-      kernel->arg_is_pointer[i] = false;
-      kernel->arg_is_local[i] = false;
+      kernel->arg_info[i].is_local = false;
     }
 
     if (pocl::is_image_type(*t))
       {
-        kernel->arg_is_image[i] = true;
-        kernel->arg_is_pointer[i] = false;
+        kernel->arg_info[i].type = POCL_ARG_TYPE_IMAGE;
       } 
     else if (pocl::is_sampler_type(*t)) 
       {
-        kernel->arg_is_sampler[i] = true;
-        kernel->arg_is_pointer[i] = false;
+        kernel->arg_info[i].type = POCL_ARG_TYPE_SAMPLER;
       }
     i++;  
   }
@@ -1155,4 +1145,3 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
   }
   return i;
 }
-

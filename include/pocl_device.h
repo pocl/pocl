@@ -53,10 +53,6 @@ typedef struct {
     /* TODO: remove these if no (private) branch needs them
        anymore. Also from pocl_llvm_api.cc */
     unsigned short alocal_sizes[MAX_KERNEL_ARGS];
-    char arg_is_local[MAX_KERNEL_ARGS];
-    char arg_is_pointer[MAX_KERNEL_ARGS];
-    char arg_is_image[MAX_KERNEL_ARGS];
-    char arg_is_sampler[MAX_KERNEL_ARGS];
 #endif
     pocl_workgroup work_group_func;
 } __kernel_metadata;

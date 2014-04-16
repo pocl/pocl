@@ -27,6 +27,7 @@
 #include "pocl_util.h"
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelArg)(cl_kernel kernel,
@@ -47,17 +48,18 @@ POname(clSetKernelArg)(cl_kernel kernel,
   if (kernel->dyn_arguments == NULL)
     return CL_INVALID_KERNEL;
 
-  if (arg_size == 0 && kernel->arg_is_local[arg_index])
+  if (arg_size == 0 && kernel->arg_info[arg_index].is_local)
     return CL_INVALID_ARG_SIZE;
 
-  if ((kernel->arg_is_pointer[arg_index] || kernel->arg_is_image[arg_index])
-        && (!kernel->arg_is_local[arg_index]) && (arg_size != sizeof(cl_mem)))
+  if ((kernel->arg_info[arg_index].type == POCL_ARG_TYPE_POINTER || kernel->arg_info[arg_index].type == POCL_ARG_TYPE_IMAGE)
+        && (!kernel->arg_info[arg_index].is_local) && (arg_size != sizeof(cl_mem)))
     return CL_INVALID_ARG_SIZE;
 
-  p = &(kernel->dyn_arguments[arg_index]);  
+  p = &(kernel->dyn_arguments[arg_index]); 
+  kernel->arg_info[arg_index].is_set = false;
   
   if (arg_value != NULL && 
-      !(kernel->arg_is_pointer[arg_index] && 
+      !(kernel->arg_info[arg_index].type == POCL_ARG_TYPE_POINTER && 
         *(const int*)arg_value == 0))
     {
       pocl_aligned_free (p->value);
@@ -93,6 +95,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 #endif
 
   p->size = arg_size;
+  kernel->arg_info[arg_index].is_set = true;
 
   return CL_SUCCESS;
 }
