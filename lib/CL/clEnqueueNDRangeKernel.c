@@ -97,6 +97,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (global_x == 0 || global_y == 0 || global_z == 0)
     return CL_INVALID_GLOBAL_WORK_SIZE;
 
+  for (i = 0; i < kernel->num_args; i++)
+    {
+      if (!kernel->arg_info[i].is_set)
+        {
+          return CL_INVALID_KERNEL_ARGS;
+        }
+    }
+
   if (local_work_size != NULL) 
     {
       local_x = local_work_size[0];
@@ -291,7 +299,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
+    if (!kernel->arg_info[i].is_local && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && al->value != NULL)
       ++command_node->command.run.arg_buffer_count;
   }
   
@@ -302,7 +310,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-    if (!kernel->arg_is_local[i] && kernel->arg_is_pointer[i] && al->value != NULL)
+    if (!kernel->arg_info[i].is_local && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && al->value != NULL)
       {
         cl_mem buf;
 #if 0
