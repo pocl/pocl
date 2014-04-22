@@ -804,7 +804,7 @@ llc_host_cpu=$($LLC --version | grep 'Host CPU' | sed -e 's/^ *Host CPU: *//')
 test -n "$LLC_HOST_CPU" && llc_host_cpu=$LLC_HOST_CPU 
 test -z "$llc_host_cpu" && AC_MSG_ERROR([Cannot determine LLC host CPU])
 AC_MSG_RESULT($llc_host_cpu)
-#PPC has -march and -mcpu reversed, for clang
+#X86 has -march and -mcpu reversed, for clang
 CLANG_MARCH_FLAG=march
 
 case $host_os in
@@ -863,6 +863,7 @@ case $host_cpu in
          #probably not used, and kept here "just in case"
          llc_triple="armv7";;
     esac
+    CLANG_MARCH_FLAG=mcpu
 
     # Assume -lm should not be used. TODO: add an embedded math lib
     # for compiling kernels for ARM envs without usable math libs.
