@@ -85,7 +85,7 @@ optimized implementations for math builtins such as sqrt, sin, cos,
 etc. These are highly recommended as they can be inlined to the call
 site and lead to better optimized kernels. A copy of Vecmathlib is
 distributed with pocl for convenience in the directory
-`lib/kernel/vecmathlib`_.
+`lib/kernel/vecmathlib`.
 
 To use VML, you need to have a functional clang++ installed.
 Currently, VML is enabled only for x86_64.
