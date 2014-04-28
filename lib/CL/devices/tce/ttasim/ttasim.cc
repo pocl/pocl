@@ -508,7 +508,7 @@ pocl_ttasim_init (cl_device_id device, const char* parameters)
 {
   if (parameters == NULL)
     POCL_ABORT("The tta device requires the adf file as a device parameter.\n"
-               "Set it with POCL_DEVICEn_PARAMETERS=\"path/to/themachine.adf\".\n");
+               "Set it with POCL_TTASIMn_PARAMETERS=\"path/to/themachine.adf\".\n");
   
   new TTASimDevice(device, parameters); 
 }
