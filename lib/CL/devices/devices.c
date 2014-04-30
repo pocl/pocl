@@ -167,8 +167,11 @@ pocl_init_devices()
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
   POCL_LOCK(pocl_init_lock);
-  if (init_done)
-        return;
+  if (init_done) 
+    {
+      POCL_UNLOCK(pocl_init_lock);
+      return;
+    }
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
