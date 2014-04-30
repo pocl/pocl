@@ -155,19 +155,19 @@ str_toupper(char *out, const char *in)
   out[i] = '\0';
 }
 
-static unsigned int __init_done = 0;
-static pocl_lock_t __pocl_init_lock = POCL_LOCK_INITIALIZER;
-
 void 
 pocl_init_devices()
 {
+  static unsigned int init_done = 0;
+  static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+
   int i, j, dev_index;
   char env_name[1024];
   char dev_name[MAX_DEV_NAME_LEN] = {0};
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
-  POCL_LOCK(__pocl_init_lock);
-  if (__init_done)
+  POCL_LOCK(pocl_init_lock);
+  if (init_done)
         return;
 
   /* Init operations */
@@ -218,6 +218,6 @@ pocl_init_devices()
         }
     }
 
-  __init_done = 1;
-  POCL_UNLOCK(__pocl_init_lock);
+  init_done = 1;
+  POCL_UNLOCK(pocl_init_lock);
 }
