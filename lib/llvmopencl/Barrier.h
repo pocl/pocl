@@ -83,8 +83,7 @@ namespace pocl {
     }
 
 
-    static bool hasOnlyBarrier(const llvm::BasicBlock *bb) 
-    {
+    static bool hasOnlyBarrier(const llvm::BasicBlock *bb) {
       return endsWithBarrier(bb) && bb->size() == 2;
     }
 
@@ -98,12 +97,21 @@ namespace pocl {
       return false;
     }
 
-    // returns true in case the given basic block ends with a barrier,
-    // that is, contains only a branch instruction after a barrier call
-    static bool endsWithBarrier(const llvm::BasicBlock *bb) 
-    {
+    // Returns true in case the given basic block starts with a barrier,
+    // that is, contains a branch instruction after possible PHI nodes.
+    static bool startsWithBarrier(const llvm::BasicBlock *bb) {
+      const llvm::Instruction *i = bb->getFirstNonPHI();
+      if (i == NULL) 
+        return false;
+      return llvm::isa<Barrier>(i);
+    }
+
+    // Returns true in case the given basic block ends with a barrier,
+    // that is, contains only a branch instruction after a barrier call.
+    static bool endsWithBarrier(const llvm::BasicBlock *bb) {
       const llvm::TerminatorInst *t = bb->getTerminator();
-      if (t == NULL) return false;
+      if (t == NULL) 
+        return false;
       return bb->size() > 1 && t->getPrevNode() != NULL && 
           llvm::isa<Barrier>(t->getPrevNode());
     }

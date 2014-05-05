@@ -34,33 +34,16 @@ using namespace llvm;
 using namespace pocl;
 
 #ifndef NDEBUG
-static bool
-verify(const BasicBlock *B)
-{
+static bool verify(const BasicBlock *B) {
   assert((B->size() == 2) && "Barriers blocks should have no functionality!");
-  // const Instruction *barrier = B->getFirstNonPHI();
-  // assert(isa<Barrier>(barrier) && "Barriers blocks should have no functionality!");
-  // assert(B->getTerminator()->getPrevNode() == barrier &&
-  //        "Barriers blocks should have no functionality!");
-#if 1 // We want to allow barriers with more than one predecessors (?)
-      // (for loop header barriers).
-  assert(((B->getSinglePredecessor() != NULL) ||
-          (B == &(B->getParent()->front()))) &&
-         "Barrier blocks should have exactly one predecessor (except entry barrier)!");
-#endif
-#if 0  // We want to allow barriers with more than one successor (for latch barriers).
-  assert((B->getTerminator()->getNumSuccessors() <= 1) &&
-         "Barrier blocks should have one successor, or zero for exit barriers!");
-#endif
   assert(isa<Barrier>(B->front()));
 
   return true;
 }
 #endif
 
-bool
-BarrierBlock::classof(const BasicBlock *B)
-{
+bool BarrierBlock::classof(const BasicBlock *B) {
+
   if ((B->size() == 2) &&
       isa<Barrier> (&B->front())) {
     assert(verify(B));
