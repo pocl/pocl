@@ -1,7 +1,7 @@
-General information for pocl developers
+General Information for pocl Developers
 =======================================
 
-configuring
+Configuring
 -----------
 
 If you checked out a development version of pocl, the configuration
@@ -24,22 +24,7 @@ This will build pocl without optimization, which simplifies debugging.
 (This does not influence whether pocl will optimize the code that it
 generates from OpenCL source files.)
 
-The configure script will use special environment variables, if
-present or passed in the command line such as:
-
-==================== ===========
-Environment variable Description
-==================== ===========
-CLANG                Program to compile kernels to bytecode 
-CLFLAGS              Flags to be used when compiling CL sources 
-TARGET_CLANG_FLAGS   Parameters to for target compilation.  
-HOST_CLANG_FLAGS     Parameters to for host compilation.  
-==================== ===========
-
-All such special environment variables can be seen with the --help
-option of the configure script.
-
-test suite
+Test Suite
 ----------
 
 Before changes are committed to the mainline, all tests in the 'make
@@ -70,7 +55,7 @@ installed in the system).  There are now two options for such a loder:
 the open source ocl-icd loader and the Khronos supplied loader with a
 patch applied.
 
-ocl-icd
+Ocl-icd
 -------
 
 ocl-icd can be downloaded from
@@ -87,7 +72,27 @@ shell::
 Inside the 'ocl-vendors' directory there's a single .icd file which is
 generated to point to the pocl library in the build tree.
 
-khronos ICD loader
+Coding Style
+------------
+
+The code base of pocl consists most of pure C sources and C++ sources (mostly
+the kernel compiler).
+
+1) In the C sources, follow the GNU style.
+
+   http://www.gnu.org/prep/standards/html_node/Writing-C.html
+
+2) In the C++ sources (mostly the LLVM passes), follow the LLVM coding 
+   guidelines so it is easier to upstream general code to the LLVM project 
+   at any point.
+
+   http://llvm.org/docs/CodingStandards.html
+
+It's acknowledged that the pocl code base does fully not adhere to these 
+principles at the moment, but the aim is to gradually fix the style and any
+new code should adhere to these guidelines.
+
+Khronos ICD Loader
 ------------------
 
 The ICD loader supplied by Khronos can be used for pocl development by
@@ -112,7 +117,7 @@ Now it should use the Khronos loader for ICD dispatching and you (and
 the pocl build system) should be able to override the icd search path
 with OCL_ICD_VENDORS environment variable.
 
-Using pocl from the build tree
+Using pocl from the Build Tree
 ------------------------------
 
 If you want use the pocl from the build tree, you must export
@@ -137,7 +142,7 @@ And the second one with::
 
   $src/configure --disable-icd --enable-direct-linkage ...
 
-Target and host CPU architectures for 'basic' and 'pthread' devices
+Target and Host CPU Architectures for 'basic' and 'pthread' Devices
 -------------------------------------------------------------------
 
 By default, pocl build system compiles the kernel libraries for
@@ -154,7 +159,7 @@ tested.
 Cross-compilation where 'host' is a different architecture from 'target'
 has not been tested for 'basic' and 'pthread' devices. 
 
-Writing documentation
+Writing Documentation
 ---------------------
 
 The documentation is written using the `Sphinx documentation generator 
