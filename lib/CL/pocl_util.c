@@ -71,7 +71,13 @@ pocl_create_temp_dir()
   else 
     {
       path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
+
+#ifndef ANDROID
       strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+#else
+      strncpy (path_name, "/sdcard/pocl/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+#endif
+
       mkdtemp (path_name);  
     }
 

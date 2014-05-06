@@ -789,7 +789,8 @@ void check_compiler_cache (_cl_command_node *cmd)
 <<<<<<< HEAD
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
-                                        cmd->device);
+                                        cmd->device,
+                                        cmd->command.run.kernel->function_name);
   dlhandle = lt_dlopen (module_fn);     
 =======
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir, cmd->command.run.kernel->function_name);

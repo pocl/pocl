@@ -1092,7 +1092,7 @@ AC_COMPILE_IFELSE(
   [ANDROID_PRESENT=ok]],
   [AC_MSG_RESULT(no)])
 
-if test x"$ANDROID_PRESENT" == ok;
+if test "$ANDROID_PRESENT" == ok;
 then
 AC_DEFINE([ANDROID], [1], [Defined to 1 if compiling for Android])
 
@@ -1213,7 +1213,7 @@ AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
 
-if test x"$ANDROID_PRESENT" == ok;
+if test "$ANDROID_PRESENT" == ok;
 then
 AC_MSG_NOTICE([Setting float16 & double16 alignments manually in cross-compile mode])
 AC_DEFINE([ALIGNOF_FLOAT16], 64)
