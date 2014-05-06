@@ -32,7 +32,7 @@
 #include "utlist.h"
 #include "pocl_mem_management.h"
 
-#define TEMP_DIR_PATH_CHARS 16
+#define TEMP_DIR_PATH_CHARS 32
 
 struct list_item;
 
@@ -67,7 +67,13 @@ pocl_create_temp_dir()
   else 
     {
       path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
+
+#ifndef ANDROID
       strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+#else
+      strncpy (path_name, "/sdcard/pocl/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+#endif
+
       mkdtemp (path_name);  
     }
   return path_name;
@@ -149,10 +155,10 @@ pocl_aligned_malloc(size_t alignment, size_t size)
   void* result;
   int err;
   
-  err = posix_memalign(&result, alignment, size);
-  if (err)
+  result = memalign_alloc(alignment, size);
+  if (result == NULL)
     {
-      errno = err;
+      errno = -1;
       return NULL;
     }
 

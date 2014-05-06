@@ -59,19 +59,14 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   char objfile[POCL_FILENAME_LENGTH];
 
   char* module = malloc(min(POCL_FILENAME_LENGTH, 
-	   strlen(tmpdir) + strlen("/parallel.so") + 1)); 
+	   strlen(tmpdir) + strlen(function_name) + 5)); // strlen of / .so 4+1
   int error;
   cl_program program = kernel->program;
 
   error = snprintf 
     (module, POCL_FILENAME_LENGTH,
-     "%s/parallel.so", tmpdir);
+     "%s/%s.so", tmpdir, function_name);
   assert (error >= 0);
-  error = snprintf
-    (objfile, POCL_FILENAME_LENGTH,
-     "%s/parallel.so.o", tmpdir);
-  assert (error >= 0);
-
 
   if (access (module, F_OK) != 0)
     {
@@ -120,3 +115,18 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                               mem->image_channel_data_type, &(di->num_channels),
                               &(di->elem_size));
 }
+
+void* memalign_alloc(size_t align_width, size_t size)
+{
+  void *ptr;
+  int status;
+
+#ifndef ANDROID
+  status = posix_memalign(&ptr, align_width, size);
+  return ((status == 0)? ptr: NULL);
+#else
+  ptr = memalign(align_width, size);
+  return ptr;
+#endif
+}
+

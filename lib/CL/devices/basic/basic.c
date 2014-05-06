@@ -358,7 +358,8 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
+      b = memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
+      if(b != NULL)
         {
           memcpy (b, host_ptr, size);
           return b;
@@ -371,8 +372,8 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
     {
       return host_ptr;
     }
-
-  if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
+  b = memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
+  if(b != NULL)
     return b;
   
   return NULL;
@@ -392,9 +393,11 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
         {
           b = mem_obj->mem_host_ptr;
         }
-      else if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, 
-                               mem_obj->size) != 0)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      else {
+	        b = memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
+	        if (b == NULL)
+            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+	        }
 
       if (flags & CL_MEM_COPY_HOST_PTR)
         memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
@@ -783,10 +786,15 @@ void check_compiler_cache (_cl_command_node *cmd)
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->function_name);
+<<<<<<< HEAD
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
                                         cmd->device);
   dlhandle = lt_dlopen (module_fn);     
+=======
+  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir, cmd->command.run.kernel->function_name);
+  dlhandle = lt_dlopen (module_fn);
+>>>>>>> Initial commit of android port
   if (dlhandle == NULL)
     {
       printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 

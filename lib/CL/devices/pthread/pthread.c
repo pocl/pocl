@@ -66,7 +66,7 @@
 #endif
 
 #define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 128
+#define WORKGROUP_STRING_LENGTH 256
 
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */
@@ -315,11 +315,13 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
       assert (region_size >= size);
 
       void* space = NULL;
-      if ((posix_memalign (&space, alignment, region_size)) != 0)
+      space = memalign_alloc(alignment, region_size);
+      if(space == NULL)
         {
           /* Failed to allocate a large region. Fall back to allocating 
              the smallest possible region for the buffer. */
-          if ((posix_memalign (&space, alignment, size)) != 0) 
+	        space = memalign_alloc(alignment, size);
+          if (space == NULL) 
             {
               BA_UNLOCK (d->mem_regions->mem_regions_lock);
               return ENOMEM;
@@ -353,7 +355,8 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 static int
 allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
 {
-  return posix_memalign (memptr, alignment, size);
+  *memptr = memalign_alloc(alignment, size);
+  return (((*memptr) == NULL)? -1: 0);
 }
 
 #endif
