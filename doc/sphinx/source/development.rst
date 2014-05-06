@@ -1,5 +1,5 @@
-General Information for pocl Developers
-=======================================
+Information for Developers
+==========================
 
 Configuring
 -----------

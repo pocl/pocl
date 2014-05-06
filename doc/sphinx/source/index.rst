@@ -14,6 +14,7 @@ Contents:
    using
    faq
    development
+   releasing
    design
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
