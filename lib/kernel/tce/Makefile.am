@@ -25,7 +25,7 @@
 KERNEL_TARGET = tce-tut-llvm
 
 # Use TARGET flags:
-CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -target tce-tut-llvm  -isystem `tce-config --prefix`/tce-llvm/include
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -Xclang -menable-no-nans -emit-llvm -ffp-contract=off -target tce-tut-llvm  -isystem `tce-config --prefix`/tce-llvm/include
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
 
