@@ -241,12 +241,12 @@ TCEDevice::tceccCommandLine
   /* Compile in steps to save the program.bc for automated exploration 
      use case when producing the kernel capture scripts. */
   TCEString cmdLine;
-  cmdLine << "tcecc --vector-backend -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
+  cmdLine << "tcecc -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
     userProgramBuildOptions + " " + kernelObjSrc + " " + inputSrc + 
     " -k " + kernelMdSymbolName +
     " -g -O3 --emit-llvm -o " + programBcFile + " " + extraFlags + ";";
 
-  cmdLine << "tcecc $* --vector-backend -a " << machine_file << " " << programBcFile 
+  cmdLine << "tcecc $* -a " << machine_file << " " << programBcFile 
           << " -O3 -o " << outputTpef << + " " + extraFlags + "\n";
   return cmdLine;
 }
