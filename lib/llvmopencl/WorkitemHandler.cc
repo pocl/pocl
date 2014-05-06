@@ -2,7 +2,7 @@
 // in a work group.
 // 
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-//                         Pekka Jääskeläinen / TUT
+//               2012-2014 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "WorkitemHandler.h"
 #include "Kernel.h"
+#include "DebugHelpers.h"
 
 //#define DEBUG_REFERENCE_FIXING
 
@@ -59,19 +60,17 @@ AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
   cl::desc("Adds a work item identifier to each of the instruction in work items."));
 
 
-WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID)
-{
+WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID) {
 }
 
 bool
-WorkitemHandler::runOnFunction(Function &F)
-{
+WorkitemHandler::runOnFunction(Function &F) {
   return false;
 }
 
 void
-WorkitemHandler::Initialize(Kernel *K)
-{
+WorkitemHandler::Initialize(Kernel *K) {
+
   llvm::Module *M = K->getParent();
   
   LocalSizeX = LocalSize[0];
@@ -83,9 +82,12 @@ WorkitemHandler::Initialize(Kernel *K)
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
       if (KernelSizeInfo->getOperand(0) == K) {
-        LocalSizeX = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-        LocalSizeY = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-        LocalSizeZ = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+        LocalSizeX = (llvm::cast<ConstantInt>(
+          KernelSizeInfo->getOperand(1)))->getLimitedValue();
+        LocalSizeY = (llvm::cast<ConstantInt>(
+          KernelSizeInfo->getOperand(2)))->getLimitedValue();
+        LocalSizeZ = (llvm::cast<ConstantInt>(
+          KernelSizeInfo->getOperand(3)))->getLimitedValue();
       }
     }
   }
@@ -244,8 +246,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
                 ++copy_i;
               } while (true);
 
-              if (alternative != NULL)
-                {
+              if (alternative != NULL) {
 #ifdef DEBUG_REFERENCE_FIXING
                   std::cout << "### found the alternative:" << std::endl;
                   alternative->dump();
@@ -253,7 +254,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
                   changed |= true;
                 } else {
 #ifdef DEBUG_REFERENCE_FIXING
-                  std::cout << "### didn't fiund an alternative for" << std::endl;
+                  std::cout << "### didn't find an alternative for" << std::endl;
                   operand->dump();
                   std::cerr << "### BB:" << std::endl;
                   operand->getParent()->dump();
@@ -261,6 +262,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
                   ins->getParent()->dump();
 #endif
                   std::cerr << "Could not find a dominating alternative variable." << std::endl;
+                  dumpCFG(F, "broken.dot");
                   abort();
               }
             }
@@ -277,8 +279,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
  * of the replicated BB because it has only one entry.
  */
 void
-WorkitemHandler::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst) 
-{
+WorkitemHandler::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst) {
   while (PHINode *PN = dyn_cast<PHINode>(src->begin())) 
     PN->moveBefore(dst->getFirstNonPHI());
 }

@@ -56,9 +56,7 @@ namespace {
 
 char ImplicitLoopBarriers::ID = 0;
 
-void
-ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
-{
+void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
 #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
@@ -70,9 +68,7 @@ ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addPreserved<VariableUniformityAnalysis>();
 }
 
-bool
-ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
-{
+bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
@@ -86,9 +82,7 @@ ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
  * Note: it's not safe to do this in case the loop is not executed
  * by all work items. Therefore this is not enabled by default.
  */
-bool
-ImplicitLoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
-{
+bool ImplicitLoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM) {
 
   bool isBLoop = false;
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
@@ -122,8 +116,8 @@ ImplicitLoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
  * a) loop exit condition does not depend on the WI and 
  * b) all or none of the WIs always enter the loop
  */
-bool
-ImplicitLoopBarriers::AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM) {
+bool ImplicitLoopBarriers::AddInnerLoopBarrier(
+  llvm::Loop *L, llvm::LPPassManager &LPM) {
 
   /* Only add barriers to the innermost loops. */
 

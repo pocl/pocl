@@ -38,7 +38,8 @@
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.
   void dumpCFG(llvm::Function& F, std::string fname="", 
-               ParallelRegion::ParallelRegionVector* regions=NULL);
+               ParallelRegion::ParallelRegionVector* regions=NULL,
+               std::set<llvm::BasicBlock*> *highlights=NULL);
 
   // Split large basic blocks to smaller one so dot doesn't crash when
   // calling viewCFG on it. This should be fixed in LLVM upstream.

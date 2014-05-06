@@ -41,9 +41,7 @@ namespace {
 
 char IsolateRegions::ID = 0;
 
-void
-IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const
-{
+void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 /* Ensure Single-Entry Single-Exit Regions are isolated from the
@@ -87,9 +85,8 @@ IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const
 
    
 */
-bool
-IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) 
-{
+bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
+
   llvm::BasicBlock *exit = R->getExit();
   if (exit == NULL) return false;
 
@@ -103,22 +100,20 @@ IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&)
 
   bool changed = false;
 
-  if (Barrier::hasBarrier(exit) || isFunctionExit)
-    {
+  if (Barrier::hasBarrier(exit) || isFunctionExit) {
       addDummyBefore(R, exit);
       changed = true;
-    }
+  }
 
   llvm::BasicBlock *entry = R->getEntry();
   if (entry == NULL) return changed;
 
   bool isFunctionEntry = &entry->getParent()->getEntryBlock() == entry;
 
-  if (Barrier::hasBarrier(entry) || isFunctionEntry)
-    {
-      addDummyAfter(R, entry);
-      changed = true;
-    }
+  if (Barrier::hasBarrier(entry) || isFunctionEntry) {
+    addDummyAfter(R, entry);
+    changed = true;
+  }
 
   return changed;
 }
@@ -127,9 +122,8 @@ IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&)
 /**
  * Adds a dummy node after the given basic block.
  */
-void
-IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb)
-{
+void IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb) {
+
   std::vector< llvm::BasicBlock* > regionSuccs;
 
   for (llvm::succ_iterator i = succ_begin(bb), e = succ_end(bb);
@@ -153,8 +147,7 @@ IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb)
  * same region.
  */
 void
-IsolateRegions::addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb)
-{
+IsolateRegions::addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb) {
   std::vector< llvm::BasicBlock* > regionPreds;
 
   for (pred_iterator i = pred_begin(bb), e = pred_end(bb);
