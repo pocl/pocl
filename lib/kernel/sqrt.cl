@@ -24,6 +24,18 @@
 
 #include "templates.h"
 
+/* TODO:
+
+   Clang does not recognize __builtin_sqrt* in CGBuiltin.cpp (around line 1285)
+   to be a call to sqrt and cannot selectively convert it to the llvm.sqrt.*
+   intrinsics with looser math flags. Therefore we have to call it as a libcall
+   so it regonized it. For the double we still call the __builtin_sqrt() to
+   disambiguate from the sqrt() to avoid infinite recursion. Probably the
+   correct fix is to patch CGBuiltin.cpp to recognize also the call via
+   __builtin_sqrt*. */
+
+float sqrtf(float);
+
 float _CL_OVERLOADABLE sqrt(float a)
 {
   return sqrtf(a);
@@ -31,23 +43,23 @@ float _CL_OVERLOADABLE sqrt(float a)
 
 float2 _CL_OVERLOADABLE sqrt(float2 a)
 {
-  return (float2)(sqrt(a.x), sqrt(a.y));
+  return (float2)(sqrtf(a.x), sqrtf(a.y));
 }
 
 float3 _CL_OVERLOADABLE sqrt(float3 a)
 {
-  return (float3)(sqrt(a.x), sqrt(a.y), sqrt(a.z));
+  return (float3)(sqrtf(a.x), sqrtf(a.y), sqrtf(a.z));
 }
 
 float4 _CL_OVERLOADABLE sqrt(float4 a)
 {
-  return (float4)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w));
+  return (float4)(sqrtf(a.x), sqrtf(a.y), sqrtf(a.z), sqrtf(a.w));
 }
 
 float8 _CL_OVERLOADABLE sqrt(float8 a)
 {
-  return (float8)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),
-		  sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7));
+  return (float8)(sqrtf(a.x), sqrtf(a.y), sqrtf(a.z), sqrtf(a.w),
+		  sqrtf(a.s4), sqrtf(a.s5), sqrtf(a.s6), sqrtf(a.s7));
 }
 
 float16 _CL_OVERLOADABLE sqrt(float16 a)
@@ -58,6 +70,42 @@ float16 _CL_OVERLOADABLE sqrt(float16 a)
 		   sqrtf(a.sc), sqrtf(a.sd), sqrtf(a.se), sqrtf(a.sf));
 
 }
+
+__IF_FP64(\
+    double _CL_OVERLOADABLE sqrt(double a)      \
+    {                                           \
+        return __builtin_sqrt(a);               \
+    }                                           \
+                                                \
+    double2 _CL_OVERLOADABLE sqrt(double2 a)    \
+    {                                           \
+        return (double2)(sqrt(a.x), sqrt(a.y)); \
+    }                                           \
+                                                \
+    double3 _CL_OVERLOADABLE sqrt(double3 a)    \
+    {                                                       \
+        return (double3)(sqrt(a.x), sqrt(a.y), sqrt(a.z));  \
+    }                                                       \
+                                                            \
+    double4 _CL_OVERLOADABLE sqrt(double4 a)                \
+    {                                                                   \
+        return (double4)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w));   \
+    }                                                                   \
+                                                                        \
+    double8 _CL_OVERLOADABLE sqrt(double8 a)                            \
+    {                                                                   \
+        return (double8)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),    \
+                         sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7)); \
+    }                                                                   \
+                                                                        \
+    double16 _CL_OVERLOADABLE sqrt(double16 a)                          \
+    {                                                                   \
+        return (double16)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w), \
+                          sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7), \
+                          sqrt(a.s8), sqrt(a.s9), sqrt(a.sa), sqrt(a.sb), \
+                          sqrt(a.sc), sqrt(a.sd), sqrt(a.se), sqrt(a.sf)); \
+    }                                                                   \
+    )
 
 DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
 DEFINE_EXPR_F_F(native_sqrt, sqrt(a))
