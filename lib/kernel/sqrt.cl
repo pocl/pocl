@@ -24,7 +24,40 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(sqrt)
+float _CL_OVERLOADABLE sqrt(float a)
+{
+  return sqrtf(a);
+}
+
+float2 _CL_OVERLOADABLE sqrt(float2 a)
+{
+  return (float2)(sqrt(a.x), sqrt(a.y));
+}
+
+float3 _CL_OVERLOADABLE sqrt(float3 a)
+{
+  return (float3)(sqrt(a.x), sqrt(a.y), sqrt(a.z));
+}
+
+float4 _CL_OVERLOADABLE sqrt(float4 a)
+{
+  return (float4)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w));
+}
+
+float8 _CL_OVERLOADABLE sqrt(float8 a)
+{
+  return (float8)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),
+		  sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7));
+}
+
+float16 _CL_OVERLOADABLE sqrt(float16 a)
+{
+  return (float16)(sqrtf(a.x), sqrtf(a.y), sqrtf(a.z), sqrtf(a.w),
+		   sqrtf(a.s4), sqrtf(a.s5), sqrtf(a.s6), sqrtf(a.s7),
+		   sqrtf(a.s8), sqrtf(a.s9), sqrtf(a.sa), sqrtf(a.sb),
+		   sqrtf(a.sc), sqrtf(a.sd), sqrtf(a.se), sqrtf(a.sf));
+
+}
 
 DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
 DEFINE_EXPR_F_F(native_sqrt, sqrt(a))
