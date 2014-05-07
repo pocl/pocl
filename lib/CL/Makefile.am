@@ -175,3 +175,5 @@ libOpenCL_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
 libOpenCL_la_LDFLAGS = ${libpocl_la_LDFLAGS}
 libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
 endif
+
+CLEANFILES = libOpenCL.la
