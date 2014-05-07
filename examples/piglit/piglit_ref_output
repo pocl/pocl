@@ -1,312 +1,713 @@
-     pass :: Program/Execute/Builtin/builtin-long-clamp-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-uint-upsample-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-char-clz-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-rhadd-1.0.generated
-     pass :: API/clUnloadCompiler
-     pass :: API/clRetainProgram and clReleaseProgram
-     pass :: Program/Execute/Builtin/builtin-long-add_sat-1.0.generated
-     pass :: Program/Execute/Store/store-ulong8-global
-     pass :: Program/Execute/Store/store-short4-local
-     pass :: Program/Execute/Builtin/builtin-uint-abs_diff-1.0.generated
-     pass :: Program/Execute/scalar-load-long
-     pass :: Program/Execute/Store/store-float8-local
-     pass :: Program/Execute/scalar-comparison-ushort
-     pass :: Program/Execute/Builtin/builtin-ushort-clz-1.0.generated
-     pass :: Program/Execute/Store/store-uchar2-local
-     pass :: Program/Execute/Builtin/builtin-int-sub_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uchar-min-1.1.generated
-     pass :: API/clCreateContextFromType
-     pass :: Program/Execute/Store/store-uint16-global
-     pass :: Program/Execute/atomic_inc-local
-     pass :: Program/Execute/Store/store-ushort2-global
-     pass :: Program/Execute/Store/store-char2-local
-     pass :: Program/Execute/Store/store-ulong2-local
-     pass :: Program/Execute/Store/store-char-local
-     pass :: Program/Execute/Builtin/builtin-uint-mul_hi-1.0.generated
-     pass :: Program/Execute/Store/store-ulong4-global
-     pass :: Program/Build/Fail/invalid-version-declaration
-     pass :: Program/Execute/Store/store-ushort16-local
-     pass :: Program/Execute/Store/store-uint4-global
-     pass :: Program/Execute/Store/store-char-global
-     pass :: Program/Execute/get-num-groups
-     pass :: Program/Execute/Builtin/builtin-uint-mad24-1.0.generated
-     pass :: Program/Execute/Store/store-uchar16-global
-     pass :: Program/Build/version-declaration
-     pass :: Program/Execute/scalar-load-uint
-     pass :: Program/Execute/Builtin/builtin-uchar-rotate-1.0.generated
-     pass :: Program/Execute/Store/store-char8-global
-     pass :: API/clGetPlatformIDs
-     pass :: Program/Execute/Store/store-ushort2-local
-     pass :: Program/Execute/Builtin/builtin-uint-mad_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ushort-max-1.1.generated
-     pass :: Program/Execute/Store/store-int2-global
-     pass :: Program/Execute/Builtin/builtin-int-abs_diff-1.0.generated
-     pass :: Program/Execute/Store/store-char16-global
-     pass :: Program/Build/scalar-data-type-half
-     pass :: Program/Execute/Builtin/builtin-uint-max-1.1.generated
-     pass :: Program/Execute/Store/store-short8-local
-     pass :: Program/Execute/Builtin/builtin-char-add_sat-1.0.generated
-     pass :: API/clGetMemObjectInfo
-     pass :: Program/Execute/Builtin/builtin-long-abs_diff-1.0.generated
-     pass :: API/clRetainContext and clReleaseContext
-     pass :: Program/Execute/Builtin/builtin-uchar-hadd-1.0.generated
-     pass :: Program/Execute/Store/store-short4-global
-     pass :: Program/Execute/scalar-bitwise-int
-     pass :: Program/Execute/Store/store-long16-local
-     pass :: Program/Execute/Store/store-float4-global
-     pass :: Program/Execute/Builtin/builtin-uint-mad_sat-1.0.generated
-     pass :: Program/Execute/Store/store-short2-local
-     pass :: Program/Execute/Builtin/builtin-short-clamp-1.1.generated
-     pass :: Program/Execute/Store/store-long16-global
-     pass :: Program/Execute/v4i32-stack
-     pass :: Program/Build/Fail/warnings-as-errors
-     pass :: Program/Execute/Store/store-int16-local
-     pass :: Program/Execute/Builtin/builtin-char-rhadd-1.0.generated
-     pass :: Program/Execute/v3i32-stack
-     pass :: Program/Execute/Builtin/builtin-ushort-abs-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ushort-abs_diff-1.0.generated
-     pass :: API/clCreateCommandQueue
-     pass :: Program/Execute/Store/store-uint8-local
-     pass :: Program/Execute/Store/store-ulong2-global
-     pass :: Program/Execute/Builtin/builtin-char-sub_sat-1.0.generated
-     pass :: Program/Execute/scalar-load-float
-     pass :: Program/Execute/Store/store-short-local
-     pass :: Program/Execute/scalar-logical-int
-     pass :: Program/Execute/constant-load
-     pass :: Program/Execute/Store/store-float16-global
-     pass :: Program/Execute/Builtin/builtin-uchar-abs_diff-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-clamp-1.1.generated
-     pass :: Program/Execute/scalar-load-int
-     pass :: Program/Execute/Store/store-long4-local
-     pass :: Program/Execute/Builtin/builtin-char-rotate-1.0.generated
-     pass :: Program/Execute/Store/store-int8-local
-     pass :: Program/Execute/Builtin/builtin-short-upsample-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uint-rhadd-1.0.generated
-     pass :: Program/Execute/Store/store-ulong16-global
-     pass :: API/clGetCommandQueueInfo
-     pass :: Program/Execute/Store/store-uchar8-local
-     pass :: Program/Execute/scalar-load-ushort
-     pass :: Program/Execute/vector-arithmetic-float4
-     pass :: Program/Execute/vector-store-int4
-     pass :: Program/Execute/Builtin/builtin-long-mul_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-abs_diff-1.0.generated
-     pass :: Program/Execute/Store/store-ushort16-global
-     pass :: Program/Execute/Builtin/builtin-char-min-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-max-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-rotate-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-min-1.1.generated
-     pass :: Program/Execute/Store/store-ushort4-global
-     pass :: Program/Execute/scalar-comparison-char
-     pass :: Program/Execute/Builtin/builtin-int-mul24-1.0.generated
-     pass :: Program/Execute/scalar-arithmetic-uchar
-     pass :: Program/Execute/Store/store-ushort8-local
-     pass :: Program/Execute/scalar-load-short
-     pass :: Program/Execute/i32-stack-array
-     pass :: Program/Execute/Builtin/builtin-long-rhadd-1.0.generated
-     pass :: Program/Execute/Store/store-uchar4-local
-     pass :: Program/Execute/Builtin/builtin-char-upsample-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uchar-mad_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ushort-add_sat-1.0.generated
-     pass :: Program/Execute/Store/store-uint4-local
-     pass :: Program/Execute/Builtin/builtin-ulong-mul_hi-1.0.generated
-     pass :: Program/Execute/Store/store-ulong8-local
-     pass :: Program/Execute/switch-case
-     pass :: Program/Execute/Builtin/builtin-char-abs_diff-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ushort-mad_hi-1.0.generated
-     pass :: Program/Execute/Store/store-float-global
-     pass :: Program/Execute/Builtin/builtin-uchar-clamp-1.1.generated
-     pass :: Program/Execute/reference
-     pass :: Program/Execute/Store/store-ulong-global
-     pass :: API/clGetImageInfo
-     pass :: Program/Execute/Builtin/builtin-ushort-clamp-1.1.generated
-     pass :: Program/Execute/Store/store-ulong-local
-     pass :: Program/Execute/sizeof
-     pass :: Program/Execute/Builtin/builtin-ulong-mad_sat-1.0.generated
-     pass :: Program/Execute/Store/store-uchar4-global
-     pass :: Program/Execute/Builtin/builtin-short-max-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-short-mul_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-mad_hi-1.0.generated
-     pass :: Program/Execute/for-loop
-     pass :: Program/Execute/vstore-int
-     pass :: Program/Execute/Builtin/builtin-ushort-hadd-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-mad_sat-1.0.generated
-     pass :: Program/Execute/Store/store-int4-local
-     pass :: Program/Execute/Builtin/builtin-ulong-mad_hi-1.0.generated
-     pass :: Program/Execute/vload-int
-     pass :: Program/Execute/Builtin/builtin-int-max-1.1.generated
-     pass :: Program/Execute/int-definitions
-     pass :: Program/Execute/Store/store-long-global
-     pass :: Program/Execute/Builtin/builtin-ushort-sub_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uint-rotate-1.0.generated
-     pass :: Program/Execute/Store/store-uint2-local
-     pass :: Program/Execute/Store/store-uint2-global
-     pass :: Program/Execute/Builtin/builtin-ushort-rhadd-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-abs-1.0.generated
-     pass :: Program/Execute/scalar-comparison-uchar
-     pass :: Program/Execute/Builtin/builtin-ushort-upsample-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-clz-1.0.generated
-     pass :: API/clRetainKernel and clReleaseKernel
-     pass :: Program/Execute/scalar-comparison-uint
-     pass :: Program/Execute/Builtin/builtin-int-mad_hi-1.0.generated
-     pass :: Program/Execute/reserved-words
-     pass :: Program/Execute/Builtin/builtin-uchar-add_sat-1.0.generated
-     pass :: Program/Execute/Store/store-short8-global
-     pass :: Program/Execute/Builtin/builtin-long-clz-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uchar-mad_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-long-min-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-long-mad_sat-1.0.generated
-     pass :: Program/Build/define-GENTYPE
-     pass :: Program/Execute/Store/store-long-local
-     pass :: Program/Execute/gegl-fir-get-mean-component-1D-CL
-     pass :: Program/Execute/Builtin/builtin-ulong-clz-1.0.generated
-     pass :: Program/Execute/scalar-arithmetic-char
-     pass :: Program/Execute/scalar-load-ulong
-     pass :: Program/Execute/get-group-id
-     pass :: API/clGetDeviceIDs
-     pass :: Program/Execute/Builtin/builtin-uchar-upsample-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-mad_sat-1.0.generated
-     pass :: Program/Execute/Store/store-uchar8-global
-     pass :: Program/Execute/vload-constant-int
-     pass :: Program/Execute/Builtin/builtin-ushort-min-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-add_sat-1.0.generated
-     pass :: Program/Execute/Store/store-int2-local
-     pass :: Program/Execute/Store/store-long2-global
-     pass :: Program/Execute/Builtin/builtin-int-abs-1.0.generated
-     pass :: Program/Execute/Store/store-ushort-global
-     pass :: Program/Execute/scalar-arithmetic-float
-     pass :: API/clCreateContext
-     pass :: Program/Execute/Builtin/builtin-uint-abs-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ushort-rotate-1.0.generated
-     pass :: Program/Execute/Store/store-char8-local
-     pass :: Program/Execute/Builtin/builtin-long-rotate-1.0.generated
-     pass :: Program/Execute/v3i32-stack-array
-     pass :: Program/Build/math-intrinsics
-     pass :: Program/Execute/Builtin/builtin-short-rotate-1.0.generated
-     pass :: Program/Execute/scalar-comparison-int
-     pass :: Program/Execute/Builtin/builtin-long-sub_sat-1.0.generated
-     pass :: Program/Execute/Store/store-uchar16-local
-     pass :: Program/Execute/Builtin/builtin-char-max-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-uint-clz-1.0.generated
-     pass :: Program/Build/vector-data-types
-     pass :: API/clRetainEvent and clReleaseEvent
-     pass :: Program/Build/macro-definitions
-     pass :: Program/Execute/Store/store-long4-global
-     pass :: Program/Execute/Builtin/builtin-int-rotate-1.0.generated
-     pass :: Program/Execute/Store/store-int-local
-     pass :: API/clEnqueueReadBuffer and clEnqueueWriteBuffer
-     pass :: Program/Execute/Store/store-uint-global
-     pass :: Program/Execute/Builtin/builtin-ulong-hadd-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-char-mad_sat-1.0.generated
-     pass :: Program/Execute/scalar-arithmetic-ulong
-     pass :: Program/Execute/Store/store-float8-global
-     pass :: API/clCreateBuffer
-     pass :: Program/Execute/Builtin/builtin-int-mad24-1.0.generated
-     pass :: Program/Execute/bitselect
-     pass :: Program/Execute/scalar-comparison-ulong
-     pass :: Program/Execute/scalar-load-uchar
-     pass :: Program/Build/scalar-data-types
-     pass :: Program/Execute/gegl-gamma-2-2-to-linear
-     pass :: Program/Execute/scalar-comparison-short
-     pass :: Program/Execute/Builtin/builtin-int-add_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-add_sat-1.0.generated
-     pass :: Program/Execute/Store/store-float2-local
-     pass :: Program/Execute/Builtin/builtin-uchar-mul_hi-1.0.generated
-     pass :: Program/Build/include-directories
-     pass :: Program/Execute/Builtin/builtin-ushort-mad_sat-1.0.generated
-     pass :: Program/Execute/Store/store-short16-global
-     pass :: Program/Execute/Store/store-ulong4-local
-     pass :: Program/Execute/get-global-id
-     pass :: Program/Execute/vector-load-int4
-     pass :: Program/Execute/Builtin/builtin-short-sub_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-min-1.1.generated
-     pass :: Program/Execute/scalar-comparison-long
-     pass :: Program/Execute/Builtin/builtin-int-upsample-1.0.generated
-     pass :: Program/Execute/local-memory
-     pass :: API/clRetainComandQueue and clReleaseCommandQueue
-     pass :: Program/Execute/Store/store-char2-global
-     pass :: Program/Execute/Builtin/builtin-uint-hadd-1.0.generated
-     pass :: Program/Execute/Store/store-char4-global
-     pass :: Program/Execute/Store/store-long8-local
-     pass :: Program/Execute/Store/store-short16-local
-     pass :: Program/Execute/Store/store-uint16-local
-     pass :: Program/Execute/Builtin/builtin-short-clz-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uint-add_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-mul_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-char-clamp-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-long-max-1.1.generated
-     pass :: Program/Execute/Store/store-int16-global
-     pass :: Program/Execute/get-local-id
-     pass :: Program/Execute/Store/store-short-global
-     pass :: Program/Execute/Builtin/builtin-short-rhadd-1.0.generated
-     pass :: API/clGetContextInfo
-     pass :: Program/Build/other-data-types
-     pass :: Program/Execute/scalar-arithmetic-ushort
-     pass :: Program/Execute/Store/store-ushort8-global
-     pass :: Program/Execute/Store/store-float-local
-     pass :: Program/Execute/Builtin/builtin-ulong-abs_diff-1.0.generated
-     pass :: Program/Execute/Store/store-float2-global
-     pass :: Program/Execute/Store/store-float4-local
-     pass :: Program/Execute/Store/store-ushort-local
-     pass :: Program/Execute/Builtin/builtin-uint-clamp-1.1.generated
-     pass :: Program/Execute/Store/store-char16-local
-     pass :: Program/Execute/Store/store-int-global
-     pass :: Program/Execute/Builtin/builtin-uint-sub_sat-1.0.generated
-     pass :: Program/Execute/scalar-arithmetic-long
-     pass :: Program/Execute/Builtin/builtin-uchar-clz-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-min-1.1.generated
-     pass :: Program/Execute/scalar-arithmetic-short
-     pass :: Program/Execute/Builtin/builtin-long-mad_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-rhadd-1.0.generated
-     pass :: Program/Execute/Store/store-uchar-local
-     pass :: Program/Build/optimization-options
-     pass :: Program/Execute/Store/store-uchar2-global
-     pass :: Program/Execute/v2i32-stack
-     pass :: API/clCreateProgramWithSource
-     pass :: Program/Execute/Store/store-int8-global
-     pass :: Program/Execute/Builtin/builtin-uint-min-1.1.generated
-     pass :: Program/Execute/Store/store-uchar-global
-     pass :: Program/Execute/get-local-size
-     pass :: Program/Execute/scalar-arithmetic-int
-     pass :: Program/Execute/Builtin/builtin-long-hadd-1.0.generated
-     pass :: Program/Execute/multiple-stack-objects
-     pass :: Program/Build/macro-definitions-with-values
-     pass :: Program/Execute/Builtin/builtin-char-mul_hi-1.0.generated
-     pass :: API/clGetEventInfo
-     pass :: Program/Execute/gegl-rgb-gamma-u8-to-ragabaf
-     pass :: Program/Execute/Store/store-short2-global
-     pass :: Program/Execute/Builtin/builtin-uint-mul24-1.0.generated
-     pass :: Program/Execute/scalar-load-char
-     pass :: Program/Build/mixed-macro-definitions
-     pass :: Program/Execute/Builtin/builtin-uchar-abs-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-short-hadd-1.0.generated
-     pass :: Custom/Run simple kernel
-     pass :: Program/Execute/Store/store-ulong16-local
-     pass :: Program/Execute/get-global-size
-     pass :: Program/Bitcoin: phatk kernel
-     pass :: Program/Execute/Builtin/builtin-char-mad_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uchar-sub_sat-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ulong-sub_sat-1.0.generated
-     pass :: Program/Execute/Store/store-char4-local
-     pass :: Program/Execute/scalar-comparison-float
-     pass :: Program/Execute/sha256-Ch
-     pass :: Program/Execute/atomic_add-local
-     pass :: Program/Execute/Store/store-long8-global
-     pass :: Program/Execute/scalar-arithmetic-uint
-     pass :: Program/Execute/Store/store-uint8-global
-     pass :: API/clGetPlatformInfo
-     pass :: Program/Execute/Store/store-long2-local
-     pass :: Program/Execute/Builtin/builtin-ulong-abs-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-uchar-rhadd-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-char-abs-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-hadd-1.0.generated
-     pass :: API/clRetainMemObject and clReleaseMemObject
-     pass :: Program/Execute/Store/store-uint-local
-     pass :: Program/Execute/vload-local-int
-     pass :: Program/Execute/Store/store-float16-local
-     pass :: Program/Execute/Builtin/builtin-char-hadd-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-ushort-mul_hi-1.0.generated
-     pass :: Program/Execute/Builtin/builtin-int-clamp-1.1.generated
-     pass :: Program/Execute/Store/store-int4-global
-     pass :: Program/Execute/Builtin/builtin-uchar-max-1.1.generated
-     pass :: Program/Execute/Builtin/builtin-long-abs-1.0.generated
-     pass :: Program/Execute/Store/store-ushort4-local
+[001/358] crash: 1 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-upsample-1.0.generated
+[002/358] crash: 1, pass: 1 Running Test(s): crash :: Program/Execute/Builtin/builtin-char-clz-1.0.generated
+[002/358] crash: 1, pass: 1 Running Test(s): 002running :: Program/Execute/Builtin/builtin-ulong-rhadd-1.0.generated
+[003/358] crash: 2, pass: 1 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-rhadd-1.0.generated
+[003/358] crash: 2, pass: 1 Running Test(s): 003running :: API/clUnloadCompiler
+[004/358] crash: 2, pass: 2 Running Test(s):                                      pass :: API/clUnloadCompiler
+[004/358] crash: 2, pass: 2 Running Test(s): 004running :: API/clRetainProgram and clReleaseProgram
+[005/358] crash: 2, pass: 3 Running Test(s): pass :: API/clRetainProgram and clReleaseProgram
+[005/358] crash: 2, pass: 3 Running Test(s): 005running :: Program/Execute/Builtin/builtin-long-add_sat-1.0.generated
+[006/358] crash: 2, pass: 4 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-add_sat-1.0.generated
+[006/358] crash: 2, pass: 4 Running Test(s): 006running :: Program/Execute/comma
+[007/358] crash: 2, pass: 5 Running Test(s):                                      pass :: Program/Execute/comma
+[007/358] crash: 2, pass: 5 Running Test(s): 007running :: Program/Execute/Store/store-ulong8-global
+[008/358] crash: 2, pass: 6 Running Test(s): pass :: Program/Execute/Store/store-ulong8-global
+[008/358] crash: 2, pass: 6 Running Test(s): 008running :: Program/Build/scalar-operators
+[009/358] crash: 2, pass: 7 Running Test(s):            pass :: Program/Build/scalar-operators
+[009/358] crash: 2, pass: 7 Running Test(s): 009running :: Program/Execute/Store/store-short4-local
+[010/358] crash: 2, pass: 8 Running Test(s): pass :: Program/Execute/Store/store-short4-local
+[010/358] crash: 2, pass: 8 Running Test(s): 010running :: Program/Execute/Builtin/builtin-uint-abs_diff-1.0.generated
+[011/358] crash: 2, pass: 9 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-abs_diff-1.0.generated
+[011/358] crash: 2, pass: 9 Running Test(s): 011running :: Program/Execute/scalar-load-long
+[012/358] crash: 2, pass: 10 Running Test(s):                           pass :: Program/Execute/scalar-load-long
+[012/358] crash: 2, pass: 10 Running Test(s): 012running :: Program/Execute/Store/store-float8-local
+[013/358] crash: 2, pass: 11 Running Test(s): pass :: Program/Execute/Store/store-float8-local
+[013/358] crash: 2, pass: 11 Running Test(s): 013running :: Program/Execute/scalar-comparison-ushort
+[014/358] crash: 2, pass: 12 Running Test(s): pass :: Program/Execute/scalar-comparison-ushort
+[014/358] crash: 2, pass: 12 Running Test(s): 014running :: Program/Execute/Builtin/builtin-ushort-clz-1.0.generated
+[015/358] crash: 2, pass: 13 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-clz-1.0.generated
+[015/358] crash: 2, pass: 13 Running Test(s): 015running :: Program/Execute/Store/store-uchar2-local
+[016/358] crash: 2, pass: 14 Running Test(s):                 pass :: Program/Execute/Store/store-uchar2-local
+[016/358] crash: 2, pass: 14 Running Test(s): 016running :: Program/Execute/Builtin/builtin-int-sub_sat-1.0.generated
+[017/358] crash: 2, pass: 15 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-sub_sat-1.0.generated
+[017/358] crash: 2, pass: 15 Running Test(s): 017running :: Program/Execute/Builtin/builtin-uchar-min-1.1.generated
+[018/358] crash: 2, pass: 16 Running Test(s):   pass :: Program/Execute/Builtin/builtin-uchar-min-1.1.generated
+[018/358] crash: 2, pass: 16 Running Test(s): 018running :: API/clCreateContextFromType
+[019/358] crash: 2, pass: 17 Running Test(s):                             pass :: API/clCreateContextFromType
+[019/358] crash: 2, pass: 17 Running Test(s): 019running :: Program/Execute/Store/store-uint16-global
+[020/358] crash: 2, pass: 18 Running Test(s): pass :: Program/Execute/Store/store-uint16-global
+[020/358] crash: 2, pass: 18 Running Test(s): 020running :: Program/Execute/atomic_inc-local
+[021/358] crash: 2, pass: 19 Running Test(s):          pass :: Program/Execute/atomic_inc-local
+[021/358] crash: 2, pass: 19 Running Test(s): 021running :: Program/Execute/Store/store-ushort2-global
+[022/358] crash: 2, pass: 20 Running Test(s): pass :: Program/Execute/Store/store-ushort2-global
+[022/358] crash: 2, pass: 20 Running Test(s): 022running :: Program/Execute/Store/store-char2-local
+[023/358] crash: 2, pass: 21 Running Test(s):    pass :: Program/Execute/Store/store-char2-local
+[023/358] crash: 2, pass: 21 Running Test(s): 023running :: Program/Execute/Store/store-ulong2-local
+[024/358] crash: 2, pass: 22 Running Test(s): pass :: Program/Execute/Store/store-ulong2-local
+[024/358] crash: 2, pass: 22 Running Test(s): 024running :: Program/Execute/Store/store-char-local
+[025/358] crash: 2, pass: 23 Running Test(s):   pass :: Program/Execute/Store/store-char-local
+[025/358] crash: 2, pass: 23 Running Test(s): 025running :: Program/Execute/Builtin/builtin-uint-mul_hi-1.0.generated
+[026/358] crash: 2, pass: 24 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-mul_hi-1.0.generated
+[026/358] crash: 2, pass: 24 Running Test(s): 026running :: Program/Execute/Store/store-ulong4-global
+[027/358] crash: 2, pass: 25 Running Test(s):                 pass :: Program/Execute/Store/store-ulong4-global
+[027/358] crash: 2, pass: 25 Running Test(s): 027running :: Program/Build/Fail/invalid-version-declaration
+[028/358] crash: 2, pass: 26 Running Test(s): pass :: Program/Build/Fail/invalid-version-declaration
+[028/358] crash: 2, pass: 26 Running Test(s): 028running :: Custom/r600 create release buffer bug
+[029/358] crash: 2, pass: 27 Running Test(s):          pass :: Custom/r600 create release buffer bug
+[029/358] crash: 2, pass: 27 Running Test(s): 029running :: Program/Execute/Store/store-ushort16-local
+[030/358] crash: 2, pass: 28 Running Test(s): pass :: Program/Execute/Store/store-ushort16-local
+[030/358] crash: 2, pass: 28 Running Test(s): 030running :: Program/Execute/Store/store-long2-global
+[031/358] crash: 2, pass: 29 Running Test(s):   pass :: Program/Execute/Store/store-long2-global
+[031/358] crash: 2, pass: 29 Running Test(s): 031running :: Program/Execute/Store/store-char-global
+[032/358] crash: 2, pass: 30 Running Test(s):  pass :: Program/Execute/Store/store-char-global
+[032/358] crash: 2, pass: 30 Running Test(s): 032running :: Program/Execute/get-num-groups
+[033/358] crash: 2, pass: 31 Running Test(s):          pass :: Program/Execute/get-num-groups
+[033/358] crash: 2, pass: 31 Running Test(s): 033running :: API/clGetKernelInfo
+[034/358] crash: 2, pass: 32 Running Test(s):            fail :: API/clGetKernelInfo
+[034/358] crash: 2, pass: 32 Running Test(s): 034running :: Program/Execute/Builtin/builtin-uint-mad24-1.0.generated
+[035/358] crash: 2, fail: 1, pass: 32 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-mad24-1.0.generated
+[035/358] crash: 2, fail: 1, pass: 32 Running Test(s): 035running :: Program/Execute/Builtin/builtin-int-abs-1.0.generated
+[036/358] crash: 2, fail: 1, pass: 33 Running Test(s):    pass :: Program/Execute/Builtin/builtin-int-abs-1.0.generated
+[036/358] crash: 2, fail: 1, pass: 33 Running Test(s): 036running :: Program/Execute/Store/store-double-global
+[037/358] crash: 2, fail: 1, pass: 34 Running Test(s):             pass :: Program/Execute/Store/store-double-global
+[037/358] crash: 2, fail: 1, pass: 34 Running Test(s): 037running :: Program/Build/version-declaration
+[038/358] crash: 2, fail: 1, pass: 35 Running Test(s):         pass :: Program/Build/version-declaration
+[038/358] crash: 2, fail: 1, pass: 35 Running Test(s): 038running :: Program/Execute/scalar-load-uint
+[039/358] crash: 2, fail: 1, pass: 36 Running Test(s):  pass :: Program/Execute/scalar-load-uint
+[039/358] crash: 2, fail: 1, pass: 36 Running Test(s): 039running :: Program/Execute/Builtin/builtin-uchar-rotate-1.0.generated
+[040/358] crash: 2, fail: 1, pass: 37 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-rotate-1.0.generated
+[040/358] crash: 2, fail: 1, pass: 37 Running Test(s): 040running :: Program/Execute/Store/store-char8-global
+[041/358] crash: 2, fail: 1, pass: 38 Running Test(s):                   pass :: Program/Execute/Store/store-char8-global
+[041/358] crash: 2, fail: 1, pass: 38 Running Test(s): 041running :: API/clGetPlatformIDs
+[042/358] crash: 2, fail: 1, pass: 39 Running Test(s):                     pass :: API/clGetPlatformIDs
+[042/358] crash: 2, fail: 1, pass: 39 Running Test(s): 042running :: Program/Execute/Store/store-double8-global
+[043/358] crash: 2, fail: 1, pass: 40 Running Test(s): pass :: Program/Execute/Store/store-double8-global
+[043/358] crash: 2, fail: 1, pass: 40 Running Test(s): 043running :: Program/Execute/Store/store-ushort2-local
+[044/358] crash: 2, fail: 1, pass: 41 Running Test(s):  pass :: Program/Execute/Store/store-ushort2-local
+[044/358] crash: 2, fail: 1, pass: 41 Running Test(s): 044running :: Program/Execute/Builtin/builtin-uint-mad_hi-1.0.generated
+[045/358] crash: 2, fail: 1, pass: 42 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-mad_hi-1.0.generated
+[045/358] crash: 2, fail: 1, pass: 42 Running Test(s): 045running :: Program/Execute/Builtin/builtin-ushort-max-1.1.generated
+[046/358] crash: 2, fail: 1, pass: 43 Running Test(s):  pass :: Program/Execute/Builtin/builtin-ushort-max-1.1.generated
+[046/358] crash: 2, fail: 1, pass: 43 Running Test(s): 046running :: Program/Execute/Store/store-int2-global
+[047/358] crash: 2, fail: 1, pass: 44 Running Test(s):                  pass :: Program/Execute/Store/store-int2-global
+[047/358] crash: 2, fail: 1, pass: 44 Running Test(s): 047running :: Program/Execute/Builtin/builtin-int-abs_diff-1.0.generated
+[048/358] crash: 2, fail: 1, pass: 45 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-abs_diff-1.0.generated
+[048/358] crash: 2, fail: 1, pass: 45 Running Test(s): 048running :: Program/Execute/Store/store-char16-global
+[049/358] crash: 2, fail: 1, pass: 46 Running Test(s):                  pass :: Program/Execute/Store/store-char16-global
+[049/358] crash: 2, fail: 1, pass: 46 Running Test(s): 049running :: API/clGetProgramInfo
+[050/358] crash: 2, fail: 1, pass: 47 Running Test(s):                      fail :: API/clGetProgramInfo
+[050/358] crash: 2, fail: 1, pass: 47 Running Test(s): 050running :: Program/Build/scalar-data-type-half
+[051/358] crash: 2, fail: 2, pass: 47 Running Test(s): pass :: Program/Build/scalar-data-type-half
+[051/358] crash: 2, fail: 2, pass: 47 Running Test(s): 051running :: Program/Execute/Builtin/builtin-int-rhadd-1.0.generated
+[052/358] crash: 2, fail: 2, pass: 48 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-rhadd-1.0.generated
+[052/358] crash: 2, fail: 2, pass: 48 Running Test(s): 052running :: Program/Execute/Builtin/builtin-float-nextafter-1.0.generated
+[053/358] crash: 2, fail: 2, pass: 49 Running Test(s): pass :: Program/Execute/Builtin/builtin-float-nextafter-1.0.generated
+[053/358] crash: 2, fail: 2, pass: 49 Running Test(s): 053running :: Program/Execute/Store/store-short8-local
+[054/358] crash: 2, fail: 2, pass: 50 Running Test(s):                      pass :: Program/Execute/Store/store-short8-local
+[054/358] crash: 2, fail: 2, pass: 50 Running Test(s): 054running :: Program/Execute/Builtin/builtin-char-add_sat-1.0.generated
+[055/358] crash: 2, fail: 2, pass: 51 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-add_sat-1.0.generated
+[055/358] crash: 2, fail: 2, pass: 51 Running Test(s): 055running :: API/clGetMemObjectInfo
+[056/358] crash: 2, fail: 2, pass: 52 Running Test(s):                                     pass :: API/clGetMemObjectInfo
+[056/358] crash: 2, fail: 2, pass: 52 Running Test(s): 056running :: Program/Execute/Builtin/builtin-long-abs_diff-1.0.generated
+[057/358] crash: 2, fail: 2, pass: 53 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-abs_diff-1.0.generated
+[057/358] crash: 2, fail: 2, pass: 53 Running Test(s): 057running :: API/clRetainContext and clReleaseContext
+[058/358] crash: 2, fail: 2, pass: 54 Running Test(s):                    pass :: API/clRetainContext and clReleaseContext
+[058/358] crash: 2, fail: 2, pass: 54 Running Test(s): 058running :: Program/Execute/Builtin/builtin-uchar-hadd-1.0.generated
+[059/358] crash: 2, fail: 2, pass: 55 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-hadd-1.0.generated
+[059/358] crash: 2, fail: 2, pass: 55 Running Test(s): 059running :: Program/Execute/Store/store-short4-global
+[060/358] crash: 2, fail: 2, pass: 56 Running Test(s):                pass :: Program/Execute/Store/store-short4-global
+[060/358] crash: 2, fail: 2, pass: 56 Running Test(s): 060running :: Program/Execute/Builtin/builtin-short-clz-1.0.generated
+[061/358] crash: 2, fail: 2, pass: 57 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-clz-1.0.generated
+[061/358] crash: 2, fail: 2, pass: 57 Running Test(s): 061running :: Program/Execute/Store/store-double2-local
+[062/358] crash: 2, fail: 2, pass: 58 Running Test(s):               pass :: Program/Execute/Store/store-double2-local
+[062/358] crash: 2, fail: 2, pass: 58 Running Test(s): 062running :: Program/Execute/scalar-bitwise-int
+[063/358] crash: 2, fail: 2, pass: 59 Running Test(s):        pass :: Program/Execute/scalar-bitwise-int
+[063/358] crash: 2, fail: 2, pass: 59 Running Test(s): 063running :: Program/Execute/Store/store-long16-local
+[064/358] crash: 2, fail: 2, pass: 60 Running Test(s): pass :: Program/Execute/Store/store-long16-local
+[064/358] crash: 2, fail: 2, pass: 60 Running Test(s): 064running :: Program/Execute/Store/store-float4-global
+[065/358] crash: 2, fail: 2, pass: 61 Running Test(s): crash :: Program/Execute/Store/store-float4-global
+[065/358] crash: 2, fail: 2, pass: 61 Running Test(s): 065running :: Program/Execute/Builtin/builtin-uint-mad_sat-1.0.generated
+[066/358] crash: 3, fail: 2, pass: 61 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-mad_sat-1.0.generated
+[066/358] crash: 3, fail: 2, pass: 61 Running Test(s): 066running :: Program/Execute/Store/store-short2-local
+[067/358] crash: 3, fail: 2, pass: 62 Running Test(s):                   pass :: Program/Execute/Store/store-short2-local
+[067/358] crash: 3, fail: 2, pass: 62 Running Test(s): 067running :: Program/Execute/Builtin/builtin-short-clamp-1.1.generated
+[068/358] crash: 3, fail: 2, pass: 63 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-clamp-1.1.generated
+[068/358] crash: 3, fail: 2, pass: 63 Running Test(s): 068running :: Program/Execute/Store/store-long16-global
+[069/358] crash: 3, fail: 2, pass: 64 Running Test(s):                 pass :: Program/Execute/Store/store-long16-global
+[069/358] crash: 3, fail: 2, pass: 64 Running Test(s): 069running :: Custom/Buffer flags
+[070/358] crash: 3, fail: 2, pass: 65 Running Test(s):                       pass :: Custom/Buffer flags
+[070/358] crash: 3, fail: 2, pass: 65 Running Test(s): 070running :: Program/Execute/v4i32-stack
+[071/358] crash: 3, fail: 2, pass: 66 Running Test(s): pass :: Program/Execute/v4i32-stack
+[071/358] crash: 3, fail: 2, pass: 66 Running Test(s): 071running :: Program/Build/Fail/warnings-as-errors
+[072/358] crash: 3, fail: 2, pass: 67 Running Test(s): pass :: Program/Build/Fail/warnings-as-errors
+[072/358] crash: 3, fail: 2, pass: 67 Running Test(s): 072running :: Program/Execute/Store/store-int16-local
+[073/358] crash: 3, fail: 2, pass: 68 Running Test(s): pass :: Program/Execute/Store/store-int16-local
+[073/358] crash: 3, fail: 2, pass: 68 Running Test(s): 073running :: Program/Build/Fail/increment-float
+[074/358] crash: 3, fail: 2, pass: 69 Running Test(s):      pass :: Program/Build/Fail/increment-float
+[074/358] crash: 3, fail: 2, pass: 69 Running Test(s): 074running :: Program/Execute/Builtin/builtin-char-rhadd-1.0.generated
+[075/358] crash: 3, fail: 2, pass: 70 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-rhadd-1.0.generated
+[075/358] crash: 3, fail: 2, pass: 70 Running Test(s): 075running :: Program/Execute/v3i32-stack
+[076/358] crash: 3, fail: 2, pass: 71 Running Test(s):                              pass :: Program/Execute/v3i32-stack
+[076/358] crash: 3, fail: 2, pass: 71 Running Test(s): 076running :: Program/Execute/Builtin/builtin-ushort-abs-1.0.generated
+[077/358] crash: 3, fail: 2, pass: 72 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-abs-1.0.generated
+[077/358] crash: 3, fail: 2, pass: 72 Running Test(s): 077running :: Custom/Flush after enqueue kernel
+[078/358] crash: 3, fail: 2, pass: 73 Running Test(s):                        pass :: Custom/Flush after enqueue kernel
+[078/358] crash: 3, fail: 2, pass: 73 Running Test(s): 078running :: Program/Execute/Builtin/builtin-ushort-abs_diff-1.0.generated
+[079/358] crash: 3, fail: 2, pass: 74 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-abs_diff-1.0.generated
+[079/358] crash: 3, fail: 2, pass: 74 Running Test(s): 079running :: API/clCreateCommandQueue
+[080/358] crash: 3, fail: 2, pass: 75 Running Test(s):                                      pass :: API/clCreateCommandQueue
+[080/358] crash: 3, fail: 2, pass: 75 Running Test(s): 080running :: Program/Execute/Store/store-uint8-local
+[081/358] crash: 3, fail: 2, pass: 76 Running Test(s): pass :: Program/Execute/Store/store-uint8-local
+[081/358] crash: 3, fail: 2, pass: 76 Running Test(s): 081running :: Program/Execute/Builtin/builtin-ulong-rotate-1.0.generated
+[082/358] crash: 3, fail: 2, pass: 77 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-rotate-1.0.generated
+[082/358] crash: 3, fail: 2, pass: 77 Running Test(s): 082running :: Program/Execute/Builtin/builtin-char-sub_sat-1.0.generated
+[083/358] crash: 3, fail: 2, pass: 78 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-sub_sat-1.0.generated
+[083/358] crash: 3, fail: 2, pass: 78 Running Test(s): 083running :: Program/Execute/scalar-load-float
+[084/358] crash: 3, fail: 2, pass: 79 Running Test(s):                          pass :: Program/Execute/scalar-load-float
+[084/358] crash: 3, fail: 2, pass: 79 Running Test(s): 084running :: Program/Build/Fail/add-different-size-vector
+[085/358] crash: 3, fail: 2, pass: 80 Running Test(s): pass :: Program/Build/Fail/add-different-size-vector
+[085/358] crash: 3, fail: 2, pass: 80 Running Test(s): 085running :: Program/Execute/Store/store-short-local
+[086/358] crash: 3, fail: 2, pass: 81 Running Test(s):      pass :: Program/Execute/Store/store-short-local
+[086/358] crash: 3, fail: 2, pass: 81 Running Test(s): 086running :: Program/Execute/atomic_sub-local
+[087/358] crash: 3, fail: 2, pass: 82 Running Test(s):        pass :: Program/Execute/atomic_sub-local
+[087/358] crash: 3, fail: 2, pass: 82 Running Test(s): 087running :: Program/Execute/scalar-logical-int
+[088/358] crash: 3, fail: 2, pass: 83 Running Test(s): pass :: Program/Execute/scalar-logical-int
+[088/358] crash: 3, fail: 2, pass: 83 Running Test(s): 088running :: Program/Execute/sizeof
+[089/358] crash: 3, fail: 2, pass: 84 Running Test(s):             pass :: Program/Execute/sizeof
+[089/358] crash: 3, fail: 2, pass: 84 Running Test(s): 089running :: Program/Run kernel with max work item sizes
+[090/358] crash: 3, fail: 2, pass: 85 Running Test(s): pass :: Program/Run kernel with max work item sizes
+[090/358] crash: 3, fail: 2, pass: 85 Running Test(s): 090running :: Program/Execute/Store/store-float16-global
+[091/358] crash: 3, fail: 2, pass: 86 Running Test(s):  pass :: Program/Execute/Store/store-float16-global
+[091/358] crash: 3, fail: 2, pass: 86 Running Test(s): 091running :: Program/Execute/Builtin/builtin-uchar-abs_diff-1.0.generated
+[092/358] crash: 3, fail: 2, pass: 87 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-abs_diff-1.0.generated
+[092/358] crash: 3, fail: 2, pass: 87 Running Test(s): 092running :: Program/Execute/Store/store-double-local
+[093/358] crash: 3, fail: 2, pass: 88 Running Test(s):                     pass :: Program/Execute/Store/store-double-local
+[093/358] crash: 3, fail: 2, pass: 88 Running Test(s): 093running :: Program/Execute/Builtin/builtin-ulong-clamp-1.1.generated
+[094/358] crash: 3, fail: 2, pass: 89 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-clamp-1.1.generated
+[094/358] crash: 3, fail: 2, pass: 89 Running Test(s): 094running :: Program/Execute/scalar-load-int
+[095/358] crash: 3, fail: 2, pass: 90 Running Test(s):                           pass :: Program/Execute/scalar-load-int
+[095/358] crash: 3, fail: 2, pass: 90 Running Test(s): 095running :: Program/Execute/Store/store-uint2-local
+[096/358] crash: 3, fail: 2, pass: 91 Running Test(s): pass :: Program/Execute/Store/store-uint2-local
+[096/358] crash: 3, fail: 2, pass: 91 Running Test(s): 096running :: Program/Execute/Builtin/builtin-char-rotate-1.0.generated
+[097/358] crash: 3, fail: 2, pass: 92 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-rotate-1.0.generated
+[097/358] crash: 3, fail: 2, pass: 92 Running Test(s): 097running :: Program/Execute/Store/store-int8-local
+[098/358] crash: 3, fail: 2, pass: 93 Running Test(s):                    pass :: Program/Execute/Store/store-int8-local
+[098/358] crash: 3, fail: 2, pass: 93 Running Test(s): 098running :: Program/Execute/Builtin/builtin-short-upsample-1.0.generated
+[099/358] crash: 3, fail: 2, pass: 94 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-upsample-1.0.generated
+[099/358] crash: 3, fail: 2, pass: 94 Running Test(s): 099running :: Program/Execute/Builtin/builtin-uint-rhadd-1.0.generated
+[100/358] crash: 3, fail: 2, pass: 95 Running Test(s):     pass :: Program/Execute/Builtin/builtin-uint-rhadd-1.0.generated
+[100/358] crash: 3, fail: 2, pass: 95 Running Test(s): 100running :: Program/Execute/Store/store-ulong16-global
+[101/358] crash: 3, fail: 2, pass: 96 Running Test(s):               pass :: Program/Execute/Store/store-ulong16-global
+[101/358] crash: 3, fail: 2, pass: 96 Running Test(s): 101running :: API/clGetCommandQueueInfo
+[102/358] crash: 3, fail: 2, pass: 97 Running Test(s):                  pass :: API/clGetCommandQueueInfo
+[102/358] crash: 3, fail: 2, pass: 97 Running Test(s): 102running :: Program/Execute/Store/store-uchar8-local
+[103/358] crash: 3, fail: 2, pass: 98 Running Test(s): pass :: Program/Execute/Store/store-uchar8-local
+[103/358] crash: 3, fail: 2, pass: 98 Running Test(s): 103running :: API/clEnqueueCopyBuffer
+[104/358] crash: 3, fail: 2, pass: 99 Running Test(s):                  pass :: API/clEnqueueCopyBuffer
+[104/358] crash: 3, fail: 2, pass: 99 Running Test(s): 104running :: Program/Execute/scalar-logical-float
+[105/358] crash: 3, fail: 2, pass: 100 Running Test(s): pass :: Program/Execute/scalar-logical-float
+[105/358] crash: 3, fail: 2, pass: 100 Running Test(s): 105running :: Program/Execute/scalar-load-ushort
+[106/358] crash: 3, fail: 2, pass: 101 Running Test(s):   pass :: Program/Execute/scalar-load-ushort
+[106/358] crash: 3, fail: 2, pass: 101 Running Test(s): 106running :: Program/Execute/vector-arithmetic-float4
+[107/358] crash: 3, fail: 2, pass: 102 Running Test(s): pass :: Program/Execute/vector-arithmetic-float4
+[107/358] crash: 3, fail: 2, pass: 102 Running Test(s): 107running :: Program/Execute/vector-store-int4
+[108/358] crash: 3, fail: 2, pass: 103 Running Test(s):        pass :: Program/Execute/vector-store-int4
+[108/358] crash: 3, fail: 2, pass: 103 Running Test(s): 108running :: Program/Execute/Builtin/builtin-long-mul_hi-1.0.generated
+[109/358] crash: 3, fail: 2, pass: 104 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-mul_hi-1.0.generated
+[109/358] crash: 3, fail: 2, pass: 104 Running Test(s): 109running :: Program/Execute/Builtin/builtin-short-abs_diff-1.0.generated
+[110/358] crash: 3, fail: 2, pass: 105 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-abs_diff-1.0.generated
+[110/358] crash: 3, fail: 2, pass: 105 Running Test(s): 110running :: Program/Execute/Store/store-ushort16-global
+[111/358] crash: 3, fail: 2, pass: 106 Running Test(s):                  pass :: Program/Execute/Store/store-ushort16-global
+[111/358] crash: 3, fail: 2, pass: 106 Running Test(s): 111running :: Program/Execute/Builtin/builtin-char-min-1.1.generated
+[112/358] crash: 3, fail: 2, pass: 107 Running Test(s): crash :: Program/Execute/Builtin/builtin-char-min-1.1.generated
+[112/358] crash: 3, fail: 2, pass: 107 Running Test(s): 112running :: Program/Execute/Builtin/builtin-ulong-max-1.1.generated
+[113/358] crash: 4, fail: 2, pass: 107 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-max-1.1.generated
+[113/358] crash: 4, fail: 2, pass: 107 Running Test(s): 113running :: Program/Execute/Store/store-ulong2-global
+[114/358] crash: 4, fail: 2, pass: 108 Running Test(s):               pass :: Program/Execute/Store/store-ulong2-global
+[114/358] crash: 4, fail: 2, pass: 108 Running Test(s): 114running :: Program/Execute/Builtin/builtin-short-min-1.1.generated
+[115/358] crash: 4, fail: 2, pass: 109 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-min-1.1.generated
+[115/358] crash: 4, fail: 2, pass: 109 Running Test(s): 115running :: Program/Execute/Store/store-ushort4-global
+[116/358] crash: 4, fail: 2, pass: 110 Running Test(s):              crash :: Program/Execute/Store/store-ushort4-global
+[116/358] crash: 4, fail: 2, pass: 110 Running Test(s): 116running :: Program/Execute/scalar-comparison-char
+[117/358] crash: 5, fail: 2, pass: 110 Running Test(s):      pass :: Program/Execute/scalar-comparison-char
+[117/358] crash: 5, fail: 2, pass: 110 Running Test(s): 117running :: Program/Execute/Builtin/builtin-int-mul24-1.0.generated
+[118/358] crash: 5, fail: 2, pass: 111 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-mul24-1.0.generated
+[118/358] crash: 5, fail: 2, pass: 111 Running Test(s): 118running :: Program/Execute/Builtin/builtin-short-mul_hi-1.0.generated
+[119/358] crash: 5, fail: 2, pass: 112 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-mul_hi-1.0.generated
+[119/358] crash: 5, fail: 2, pass: 112 Running Test(s): 119running :: Program/Execute/Store/store-ushort8-local
+[120/358] crash: 5, fail: 2, pass: 113 Running Test(s):                  pass :: Program/Execute/Store/store-ushort8-local
+[120/358] crash: 5, fail: 2, pass: 113 Running Test(s): 120running :: Program/Execute/scalar-load-short
+[121/358] crash: 5, fail: 2, pass: 114 Running Test(s):         pass :: Program/Execute/scalar-load-short
+[121/358] crash: 5, fail: 2, pass: 114 Running Test(s): 121running :: Program/Execute/i32-stack-array
+[122/358] crash: 5, fail: 2, pass: 115 Running Test(s):   pass :: Program/Execute/i32-stack-array
+[122/358] crash: 5, fail: 2, pass: 115 Running Test(s): 122running :: Program/Execute/Builtin/builtin-long-rhadd-1.0.generated
+[123/358] crash: 5, fail: 2, pass: 116 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-rhadd-1.0.generated
+[123/358] crash: 5, fail: 2, pass: 116 Running Test(s): 123running :: Program/Execute/Store/store-uchar4-local
+[124/358] crash: 5, fail: 2, pass: 117 Running Test(s):                 pass :: Program/Execute/Store/store-uchar4-local
+[124/358] crash: 5, fail: 2, pass: 117 Running Test(s): 124running :: Program/Execute/Builtin/builtin-char-upsample-1.0.generated
+[125/358] crash: 5, fail: 2, pass: 118 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-upsample-1.0.generated
+[125/358] crash: 5, fail: 2, pass: 118 Running Test(s): 125running :: API/clGetDeviceInfo
+[126/358] crash: 5, fail: 2, pass: 119 Running Test(s):                                         pass :: API/clGetDeviceInfo
+[126/358] crash: 5, fail: 2, pass: 119 Running Test(s): 126running :: Program/Execute/Builtin/builtin-uchar-mad_hi-1.0.generated
+[127/358] crash: 5, fail: 2, pass: 120 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-mad_hi-1.0.generated
+[127/358] crash: 5, fail: 2, pass: 120 Running Test(s): 127running :: Program/Execute/v3i32-stack-array
+[128/358] crash: 5, fail: 2, pass: 121 Running Test(s):                          pass :: Program/Execute/v3i32-stack-array
+[128/358] crash: 5, fail: 2, pass: 121 Running Test(s): 128running :: API/clCreateKernel
+[129/358] crash: 5, fail: 2, pass: 122 Running Test(s):                crash :: API/clCreateKernel
+[129/358] crash: 5, fail: 2, pass: 122 Running Test(s): 129running :: Program/Execute/Store/store-uint4-local
+[130/358] crash: 6, fail: 2, pass: 122 Running Test(s): pass :: Program/Execute/Store/store-uint4-local
+[130/358] crash: 6, fail: 2, pass: 122 Running Test(s): 130running :: Program/Execute/Builtin/builtin-ulong-mul_hi-1.0.generated
+[131/358] crash: 6, fail: 2, pass: 123 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-mul_hi-1.0.generated
+[131/358] crash: 6, fail: 2, pass: 123 Running Test(s): 131running :: Program/Execute/Store/store-ulong8-local
+[132/358] crash: 6, fail: 2, pass: 124 Running Test(s):                   pass :: Program/Execute/Store/store-ulong8-local
+[132/358] crash: 6, fail: 2, pass: 124 Running Test(s): 132running :: Program/Execute/switch-case
+[133/358] crash: 6, fail: 2, pass: 125 Running Test(s):              pass :: Program/Execute/switch-case
+[133/358] crash: 6, fail: 2, pass: 125 Running Test(s): 133running :: Program/Execute/Builtin/builtin-char-abs_diff-1.0.generated
+[134/358] crash: 6, fail: 2, pass: 126 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-abs_diff-1.0.generated
+[134/358] crash: 6, fail: 2, pass: 126 Running Test(s): 134running :: Program/Execute/Builtin/builtin-ushort-mad_hi-1.0.generated
+[135/358] crash: 6, fail: 2, pass: 127 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-mad_hi-1.0.generated
+[135/358] crash: 6, fail: 2, pass: 127 Running Test(s): 135running :: Program/Execute/Store/store-float-global
+[136/358] crash: 6, fail: 2, pass: 128 Running Test(s):                    pass :: Program/Execute/Store/store-float-global
+[136/358] crash: 6, fail: 2, pass: 128 Running Test(s): 136running :: Program/Execute/Builtin/builtin-uchar-clamp-1.1.generated
+[137/358] crash: 6, fail: 2, pass: 129 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-clamp-1.1.generated
+[137/358] crash: 6, fail: 2, pass: 129 Running Test(s): 137running :: Program/Execute/reference
+[138/358] crash: 6, fail: 2, pass: 130 Running Test(s):                                 pass :: Program/Execute/reference
+[138/358] crash: 6, fail: 2, pass: 130 Running Test(s): 138running :: Program/Execute/Store/store-ulong-global
+[139/358] crash: 6, fail: 2, pass: 131 Running Test(s): pass :: Program/Execute/Store/store-ulong-global
+[139/358] crash: 6, fail: 2, pass: 131 Running Test(s): 139running :: API/clGetImageInfo
+[140/358] crash: 6, fail: 2, pass: 132 Running Test(s):                       pass :: API/clGetImageInfo
+[140/358] crash: 6, fail: 2, pass: 132 Running Test(s): 140running :: Program/Execute/Builtin/builtin-ushort-clamp-1.1.generated
+[141/358] crash: 6, fail: 2, pass: 133 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-clamp-1.1.generated
+[141/358] crash: 6, fail: 2, pass: 133 Running Test(s): 141running :: Program/Execute/Store/store-ulong-local
+[142/358] crash: 6, fail: 2, pass: 134 Running Test(s):                    pass :: Program/Execute/Store/store-ulong-local
+[142/358] crash: 6, fail: 2, pass: 134 Running Test(s): 142running :: Program/Execute/Store/store-float2-global
+[143/358] crash: 6, fail: 2, pass: 135 Running Test(s): pass :: Program/Execute/Store/store-float2-global
+[143/358] crash: 6, fail: 2, pass: 135 Running Test(s): 143running :: Program/Execute/constant-load
+[144/358] crash: 6, fail: 2, pass: 136 Running Test(s):             pass :: Program/Execute/constant-load
+[144/358] crash: 6, fail: 2, pass: 136 Running Test(s): 144running :: Program/Execute/Builtin/builtin-ulong-mad_sat-1.0.generated
+[145/358] crash: 6, fail: 2, pass: 137 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-mad_sat-1.0.generated
+[145/358] crash: 6, fail: 2, pass: 137 Running Test(s): 145running :: Program/Execute/Store/store-uchar4-global
+[146/358] crash: 6, fail: 2, pass: 138 Running Test(s):                   pass :: Program/Execute/Store/store-uchar4-global
+[146/358] crash: 6, fail: 2, pass: 138 Running Test(s): 146running :: Program/Execute/Builtin/builtin-short-max-1.1.generated
+[147/358] crash: 6, fail: 2, pass: 139 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-max-1.1.generated
+[147/358] crash: 6, fail: 2, pass: 139 Running Test(s): 147running :: Program/Execute/scalar-arithmetic-uchar
+[148/358] crash: 6, fail: 2, pass: 140 Running Test(s):                 pass :: Program/Execute/scalar-arithmetic-uchar
+[148/358] crash: 6, fail: 2, pass: 140 Running Test(s): 148running :: Program/Execute/Builtin/builtin-short-mad_hi-1.0.generated
+[149/358] crash: 6, fail: 2, pass: 141 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-mad_hi-1.0.generated
+[149/358] crash: 6, fail: 2, pass: 141 Running Test(s): 149running :: Program/Execute/for-loop
+[150/358] crash: 6, fail: 2, pass: 142 Running Test(s):                                   pass :: Program/Execute/for-loop
+[150/358] crash: 6, fail: 2, pass: 142 Running Test(s): 150running :: Program/Execute/vstore-int
+[151/358] crash: 6, fail: 2, pass: 143 Running Test(s): pass :: Program/Execute/vstore-int
+[151/358] crash: 6, fail: 2, pass: 143 Running Test(s): 151running :: Program/Execute/Builtin/builtin-ushort-hadd-1.0.generated
+[152/358] crash: 6, fail: 2, pass: 144 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-hadd-1.0.generated
+[152/358] crash: 6, fail: 2, pass: 144 Running Test(s): 152running :: Program/Execute/Builtin/builtin-short-mad_sat-1.0.generated
+[153/358] crash: 6, fail: 2, pass: 145 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-mad_sat-1.0.generated
+[153/358] crash: 6, fail: 2, pass: 145 Running Test(s): 153running :: Program/Execute/Store/store-int4-local
+[154/358] crash: 6, fail: 2, pass: 146 Running Test(s):                      pass :: Program/Execute/Store/store-int4-local
+[154/358] crash: 6, fail: 2, pass: 146 Running Test(s): 154running :: Program/Execute/Builtin/builtin-ulong-mad_hi-1.0.generated
+[155/358] crash: 6, fail: 2, pass: 147 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-mad_hi-1.0.generated
+[155/358] crash: 6, fail: 2, pass: 147 Running Test(s): 155running :: Program/Build/vector-operators
+[156/358] crash: 6, fail: 2, pass: 148 Running Test(s):                             pass :: Program/Build/vector-operators
+[156/358] crash: 6, fail: 2, pass: 148 Running Test(s): 156running :: Program/Execute/vload-int
+[157/358] crash: 6, fail: 2, pass: 149 Running Test(s):      pass :: Program/Execute/vload-int
+[157/358] crash: 6, fail: 2, pass: 149 Running Test(s): 157running :: Program/Execute/Builtin/builtin-int-max-1.1.generated
+[158/358] crash: 6, fail: 2, pass: 150 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-max-1.1.generated
+[158/358] crash: 6, fail: 2, pass: 150 Running Test(s): 158running :: Program/Execute/int-definitions
+[159/358] crash: 6, fail: 2, pass: 151 Running Test(s):                       pass :: Program/Execute/int-definitions
+[159/358] crash: 6, fail: 2, pass: 151 Running Test(s): 159running :: Program/Execute/get-work-dim
+[160/358] crash: 6, fail: 2, pass: 152 Running Test(s):    pass :: Program/Execute/get-work-dim
+[160/358] crash: 6, fail: 2, pass: 152 Running Test(s): 160running :: Program/Execute/Store/store-long-global
+[161/358] crash: 6, fail: 2, pass: 153 Running Test(s): pass :: Program/Execute/Store/store-long-global
+[161/358] crash: 6, fail: 2, pass: 153 Running Test(s): 161running :: Program/Execute/Store/store-double4-global
+[162/358] crash: 6, fail: 2, pass: 154 Running Test(s): pass :: Program/Execute/Store/store-double4-global
+[162/358] crash: 6, fail: 2, pass: 154 Running Test(s): 162running :: Program/Execute/Builtin/builtin-ushort-sub_sat-1.0.generated
+[163/358] crash: 6, fail: 2, pass: 155 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-sub_sat-1.0.generated
+[163/358] crash: 6, fail: 2, pass: 155 Running Test(s): 163running :: Program/Execute/Store/store-double2-global
+[164/358] crash: 6, fail: 2, pass: 156 Running Test(s):                   pass :: Program/Execute/Store/store-double2-global
+[164/358] crash: 6, fail: 2, pass: 156 Running Test(s): 164running :: Program/Execute/Builtin/builtin-uint-rotate-1.0.generated
+[165/358] crash: 6, fail: 2, pass: 157 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-rotate-1.0.generated
+[165/358] crash: 6, fail: 2, pass: 157 Running Test(s): 165running :: Program/Execute/Store/store-long4-local
+[166/358] crash: 6, fail: 2, pass: 158 Running Test(s):                   pass :: Program/Execute/Store/store-long4-local
+[166/358] crash: 6, fail: 2, pass: 158 Running Test(s): 166running :: Program/Execute/Store/store-uint2-global
+[167/358] crash: 6, fail: 2, pass: 159 Running Test(s): pass :: Program/Execute/Store/store-uint2-global
+[167/358] crash: 6, fail: 2, pass: 159 Running Test(s): 167running :: Program/Execute/Store/store-double8-local
+[168/358] crash: 6, fail: 2, pass: 160 Running Test(s): pass :: Program/Execute/Store/store-double8-local
+[168/358] crash: 6, fail: 2, pass: 160 Running Test(s): 168running :: Program/Execute/Builtin/builtin-ushort-rhadd-1.0.generated
+[169/358] crash: 6, fail: 2, pass: 161 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-rhadd-1.0.generated
+[169/358] crash: 6, fail: 2, pass: 161 Running Test(s): 169running :: Program/Execute/Builtin/builtin-uint-clz-1.0.generated
+[170/358] crash: 6, fail: 2, pass: 162 Running Test(s):     pass :: Program/Execute/Builtin/builtin-uint-clz-1.0.generated
+[170/358] crash: 6, fail: 2, pass: 162 Running Test(s): 170running :: Program/Execute/scalar-comparison-uchar
+[171/358] crash: 6, fail: 2, pass: 163 Running Test(s):                pass :: Program/Execute/scalar-comparison-uchar
+[171/358] crash: 6, fail: 2, pass: 163 Running Test(s): 171running :: Program/Execute/Builtin/builtin-ushort-upsample-1.0.generated
+[172/358] crash: 6, fail: 2, pass: 164 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-upsample-1.0.generated
+[172/358] crash: 6, fail: 2, pass: 164 Running Test(s): 172running :: Program/Execute/Builtin/builtin-int-clz-1.0.generated
+[173/358] crash: 6, fail: 2, pass: 165 Running Test(s):         pass :: Program/Execute/Builtin/builtin-int-clz-1.0.generated
+[173/358] crash: 6, fail: 2, pass: 165 Running Test(s): 173running :: API/clRetainKernel and clReleaseKernel
+[174/358] crash: 6, fail: 2, pass: 166 Running Test(s):                pass :: API/clRetainKernel and clReleaseKernel
+[174/358] crash: 6, fail: 2, pass: 166 Running Test(s): 174running :: Program/Execute/scalar-comparison-uint
+[175/358] crash: 6, fail: 2, pass: 167 Running Test(s): pass :: Program/Execute/scalar-comparison-uint
+[175/358] crash: 6, fail: 2, pass: 167 Running Test(s): 175running :: Program/Execute/Builtin/builtin-int-mad_hi-1.0.generated
+[176/358] crash: 6, fail: 2, pass: 168 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-mad_hi-1.0.generated
+[176/358] crash: 6, fail: 2, pass: 168 Running Test(s): 176running :: Program/Execute/reserved-words
+[177/358] crash: 6, fail: 2, pass: 169 Running Test(s):                           pass :: Program/Execute/reserved-words
+[177/358] crash: 6, fail: 2, pass: 169 Running Test(s): 177running :: Program/Execute/Builtin/builtin-uchar-add_sat-1.0.generated
+[178/358] crash: 6, fail: 2, pass: 170 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-add_sat-1.0.generated
+[178/358] crash: 6, fail: 2, pass: 170 Running Test(s): 178running :: Program/Execute/Store/store-short8-global
+[179/358] crash: 6, fail: 2, pass: 171 Running Test(s):                   pass :: Program/Execute/Store/store-short8-global
+[179/358] crash: 6, fail: 2, pass: 171 Running Test(s): 179running :: Program/Execute/Builtin/builtin-long-clz-1.0.generated
+[180/358] crash: 6, fail: 2, pass: 172 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-clz-1.0.generated
+[180/358] crash: 6, fail: 2, pass: 172 Running Test(s): 180running :: Program/Execute/Builtin/builtin-uchar-mad_sat-1.0.generated
+[181/358] crash: 6, fail: 2, pass: 173 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-mad_sat-1.0.generated
+[181/358] crash: 6, fail: 2, pass: 173 Running Test(s): 181running :: Program/Execute/vector-conversion
+[182/358] crash: 6, fail: 2, pass: 174 Running Test(s):                           crash :: Program/Execute/vector-conversion
+[182/358] crash: 6, fail: 2, pass: 174 Running Test(s): 182running :: Program/Execute/scalar-arithmetic-short
+[183/358] crash: 7, fail: 2, pass: 174 Running Test(s): pass :: Program/Execute/scalar-arithmetic-short
+[183/358] crash: 7, fail: 2, pass: 174 Running Test(s): 183running :: API/clGetKernelWorkGroupInfo
+[184/358] crash: 7, fail: 2, pass: 175 Running Test(s):            fail :: API/clGetKernelWorkGroupInfo
+[184/358] crash: 7, fail: 2, pass: 175 Running Test(s): 184running :: API/clEnqueueCopyBufferRect
+[185/358] crash: 7, fail: 3, pass: 175 Running Test(s):  pass :: API/clEnqueueCopyBufferRect
+[185/358] crash: 7, fail: 3, pass: 175 Running Test(s): 185running :: Program/Execute/Builtin/builtin-long-mad_sat-1.0.generated
+[186/358] crash: 7, fail: 3, pass: 176 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-mad_sat-1.0.generated
+[186/358] crash: 7, fail: 3, pass: 176 Running Test(s): 186running :: Program/Build/define-GENTYPE
+[187/358] crash: 7, fail: 3, pass: 177 Running Test(s):                               pass :: Program/Build/define-GENTYPE
+[187/358] crash: 7, fail: 3, pass: 177 Running Test(s): 187running :: Program/Execute/Store/store-long-local
+[188/358] crash: 7, fail: 3, pass: 178 Running Test(s): pass :: Program/Execute/Store/store-long-local
+[188/358] crash: 7, fail: 3, pass: 178 Running Test(s): 188running :: Program/Execute/gegl-fir-get-mean-component-1D-CL
+[189/358] crash: 7, fail: 3, pass: 179 Running Test(s): pass :: Program/Execute/gegl-fir-get-mean-component-1D-CL
+[189/358] crash: 7, fail: 3, pass: 179 Running Test(s): 189running :: Program/Execute/Builtin/builtin-ulong-clz-1.0.generated
+[190/358] crash: 7, fail: 3, pass: 180 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-clz-1.0.generated
+[190/358] crash: 7, fail: 3, pass: 180 Running Test(s): 190running :: Program/Execute/scalar-arithmetic-char
+[191/358] crash: 7, fail: 3, pass: 181 Running Test(s):                  pass :: Program/Execute/scalar-arithmetic-char
+[191/358] crash: 7, fail: 3, pass: 181 Running Test(s): 191running :: Program/Execute/scalar-load-ulong
+[192/358] crash: 7, fail: 3, pass: 182 Running Test(s):      pass :: Program/Execute/scalar-load-ulong
+[192/358] crash: 7, fail: 3, pass: 182 Running Test(s): 192running :: Program/Execute/get-group-id
+[193/358] crash: 7, fail: 3, pass: 183 Running Test(s):      pass :: Program/Execute/get-group-id
+[193/358] crash: 7, fail: 3, pass: 183 Running Test(s): 193running :: API/clGetDeviceIDs
+[194/358] crash: 7, fail: 3, pass: 184 Running Test(s):           pass :: API/clGetDeviceIDs
+[194/358] crash: 7, fail: 3, pass: 184 Running Test(s): 194running :: Program/Execute/Builtin/builtin-uchar-upsample-1.0.generated
+[195/358] crash: 7, fail: 3, pass: 185 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-upsample-1.0.generated
+[195/358] crash: 7, fail: 3, pass: 185 Running Test(s): 195running :: Program/Execute/Builtin/builtin-int-mad_sat-1.0.generated
+[196/358] crash: 7, fail: 3, pass: 186 Running Test(s):    pass :: Program/Execute/Builtin/builtin-int-mad_sat-1.0.generated
+[196/358] crash: 7, fail: 3, pass: 186 Running Test(s): 196running :: Program/Execute/Store/store-uchar8-global
+[197/358] crash: 7, fail: 3, pass: 187 Running Test(s):                 pass :: Program/Execute/Store/store-uchar8-global
+[197/358] crash: 7, fail: 3, pass: 187 Running Test(s): 197running :: Program/Execute/vload-constant-int
+[198/358] crash: 7, fail: 3, pass: 188 Running Test(s):        pass :: Program/Execute/vload-constant-int
+[198/358] crash: 7, fail: 3, pass: 188 Running Test(s): 198running :: API/clBuildProgram
+[199/358] crash: 7, fail: 3, pass: 189 Running Test(s):                 fail :: API/clBuildProgram
+[199/358] crash: 7, fail: 3, pass: 189 Running Test(s): 199running :: Program/Execute/Builtin/builtin-ushort-min-1.1.generated
+[200/358] crash: 7, fail: 4, pass: 189 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-min-1.1.generated
+[200/358] crash: 7, fail: 4, pass: 189 Running Test(s): 200running :: Program/Execute/Builtin/builtin-ulong-add_sat-1.0.generated
+[201/358] crash: 7, fail: 4, pass: 190 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-add_sat-1.0.generated
+[201/358] crash: 7, fail: 4, pass: 190 Running Test(s): 201running :: Program/Execute/Store/store-int2-local
+[202/358] crash: 7, fail: 4, pass: 191 Running Test(s):                      pass :: Program/Execute/Store/store-int2-local
+[202/358] crash: 7, fail: 4, pass: 191 Running Test(s): 202running :: Program/Execute/Store/store-uint4-global
+[203/358] crash: 7, fail: 4, pass: 192 Running Test(s): pass :: Program/Execute/Store/store-uint4-global
+[203/358] crash: 7, fail: 4, pass: 192 Running Test(s): 203running :: Program/Execute/Store/store-uchar16-global
+[204/358] crash: 7, fail: 4, pass: 193 Running Test(s): pass :: Program/Execute/Store/store-uchar16-global
+[204/358] crash: 7, fail: 4, pass: 193 Running Test(s): 204running :: Program/Execute/Store/store-ushort-global
+[205/358] crash: 7, fail: 4, pass: 194 Running Test(s):  pass :: Program/Execute/Store/store-ushort-global
+[205/358] crash: 7, fail: 4, pass: 194 Running Test(s): 205running :: Program/Execute/scalar-arithmetic-float
+[206/358] crash: 7, fail: 4, pass: 195 Running Test(s):   pass :: Program/Execute/scalar-arithmetic-float
+[206/358] crash: 7, fail: 4, pass: 195 Running Test(s): 206running :: API/clCreateContext
+[207/358] crash: 7, fail: 4, pass: 196 Running Test(s):                     pass :: API/clCreateContext
+[207/358] crash: 7, fail: 4, pass: 196 Running Test(s): 207running :: Program/Execute/Builtin/builtin-uint-abs-1.0.generated
+[208/358] crash: 7, fail: 4, pass: 197 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-abs-1.0.generated
+[208/358] crash: 7, fail: 4, pass: 197 Running Test(s): 208running :: Program/Execute/Builtin/builtin-ushort-rotate-1.0.generated
+[209/358] crash: 7, fail: 4, pass: 198 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-rotate-1.0.generated
+[209/358] crash: 7, fail: 4, pass: 198 Running Test(s): 209running :: Program/Build/disable-warnings
+[210/358] crash: 7, fail: 4, pass: 199 Running Test(s):                              pass :: Program/Build/disable-warnings
+[210/358] crash: 7, fail: 4, pass: 199 Running Test(s): 210running :: Program/Execute/Store/store-char8-local
+[211/358] crash: 7, fail: 4, pass: 200 Running Test(s): pass :: Program/Execute/Store/store-char8-local
+[211/358] crash: 7, fail: 4, pass: 200 Running Test(s): 211running :: Program/Execute/Builtin/builtin-long-rotate-1.0.generated
+[212/358] crash: 7, fail: 4, pass: 201 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-rotate-1.0.generated
+[212/358] crash: 7, fail: 4, pass: 201 Running Test(s): 212running :: Program/Execute/Store/store-double4-local
+[213/358] crash: 7, fail: 4, pass: 202 Running Test(s):                 pass :: Program/Execute/Store/store-double4-local
+[213/358] crash: 7, fail: 4, pass: 202 Running Test(s): 213running :: Program/Execute/Store/store-double16-local
+[214/358] crash: 7, fail: 4, pass: 203 Running Test(s): pass :: Program/Execute/Store/store-double16-local
+[214/358] crash: 7, fail: 4, pass: 203 Running Test(s): 214running :: Program/Execute/Builtin/builtin-ushort-add_sat-1.0.generated
+[215/358] crash: 7, fail: 4, pass: 204 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-add_sat-1.0.generated
+[215/358] crash: 7, fail: 4, pass: 204 Running Test(s): 215running :: Program/Build/math-intrinsics
+[216/358] crash: 7, fail: 4, pass: 205 Running Test(s):                                pass :: Program/Build/math-intrinsics
+[216/358] crash: 7, fail: 4, pass: 205 Running Test(s): 216running :: Program/Execute/Builtin/builtin-short-rotate-1.0.generated
+[217/358] crash: 7, fail: 4, pass: 206 Running Test(s): crash :: Program/Execute/Builtin/builtin-short-rotate-1.0.generated
+[217/358] crash: 7, fail: 4, pass: 206 Running Test(s): 217running :: Program/Execute/scalar-comparison-int
+[218/358] crash: 8, fail: 4, pass: 206 Running Test(s):                       pass :: Program/Execute/scalar-comparison-int
+[218/358] crash: 8, fail: 4, pass: 206 Running Test(s): 218running :: Program/Execute/Builtin/builtin-long-sub_sat-1.0.generated
+[219/358] crash: 8, fail: 4, pass: 207 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-sub_sat-1.0.generated
+[219/358] crash: 8, fail: 4, pass: 207 Running Test(s): 219running :: Program/Execute/Store/store-uchar16-local
+[220/358] crash: 8, fail: 4, pass: 208 Running Test(s):                  pass :: Program/Execute/Store/store-uchar16-local
+[220/358] crash: 8, fail: 4, pass: 208 Running Test(s): 220running :: Program/Execute/Store/store-double16-global
+[221/358] crash: 8, fail: 4, pass: 209 Running Test(s): pass :: Program/Execute/Store/store-double16-global
+[221/358] crash: 8, fail: 4, pass: 209 Running Test(s): 221running :: Program/Execute/Builtin/builtin-char-max-1.1.generated
+[222/358] crash: 8, fail: 4, pass: 210 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-max-1.1.generated
+[222/358] crash: 8, fail: 4, pass: 210 Running Test(s): 222running :: Program/Execute/Builtin/builtin-short-abs-1.0.generated
+[223/358] crash: 8, fail: 4, pass: 211 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-abs-1.0.generated
+[223/358] crash: 8, fail: 4, pass: 211 Running Test(s): 223running :: Program/Build/vector-data-types
+[224/358] crash: 8, fail: 4, pass: 212 Running Test(s):                         pass :: Program/Build/vector-data-types
+[224/358] crash: 8, fail: 4, pass: 212 Running Test(s): 224running :: API/clRetainEvent and clReleaseEvent
+[225/358] crash: 8, fail: 4, pass: 213 Running Test(s): pass :: API/clRetainEvent and clReleaseEvent
+[225/358] crash: 8, fail: 4, pass: 213 Running Test(s): 225running :: Program/Build/macro-definitions
+[226/358] crash: 8, fail: 4, pass: 214 Running Test(s):      pass :: Program/Build/macro-definitions
+[226/358] crash: 8, fail: 4, pass: 214 Running Test(s): 226running :: Program/Execute/Store/store-long4-global
+[227/358] crash: 8, fail: 4, pass: 215 Running Test(s): pass :: Program/Execute/Store/store-long4-global
+[227/358] crash: 8, fail: 4, pass: 215 Running Test(s): 227running :: Program/Execute/Builtin/builtin-int-rotate-1.0.generated
+[228/358] crash: 8, fail: 4, pass: 216 Running Test(s): crash :: Program/Execute/Builtin/builtin-int-rotate-1.0.generated
+[228/358] crash: 8, fail: 4, pass: 216 Running Test(s): 228running :: Program/Execute/Store/store-int-local
+[229/358] crash: 9, fail: 4, pass: 216 Running Test(s):                     pass :: Program/Execute/Store/store-int-local
+[229/358] crash: 9, fail: 4, pass: 216 Running Test(s): 229running :: API/clEnqueueReadBuffer and clEnqueueWriteBuffer
+[230/358] crash: 9, fail: 4, pass: 217 Running Test(s): pass :: API/clEnqueueReadBuffer and clEnqueueWriteBuffer
+[230/358] crash: 9, fail: 4, pass: 217 Running Test(s): 230running :: Program/Execute/Store/store-uint-global
+[231/358] crash: 9, fail: 4, pass: 218 Running Test(s):          pass :: Program/Execute/Store/store-uint-global
+[231/358] crash: 9, fail: 4, pass: 218 Running Test(s): 231running :: Program/Execute/Builtin/builtin-ulong-hadd-1.0.generated
+[232/358] crash: 9, fail: 4, pass: 219 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-hadd-1.0.generated
+[232/358] crash: 9, fail: 4, pass: 219 Running Test(s): 232running :: Program/Execute/Builtin/builtin-char-mad_sat-1.0.generated
+[233/358] crash: 9, fail: 4, pass: 220 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-mad_sat-1.0.generated
+[233/358] crash: 9, fail: 4, pass: 220 Running Test(s): 233running :: Program/Execute/scalar-arithmetic-ulong
+[234/358] crash: 9, fail: 4, pass: 221 Running Test(s):                    pass :: Program/Execute/scalar-arithmetic-ulong
+[234/358] crash: 9, fail: 4, pass: 221 Running Test(s): 234running :: Program/Execute/Store/store-float8-global
+[235/358] crash: 9, fail: 4, pass: 222 Running Test(s): pass :: Program/Execute/Store/store-float8-global
+[235/358] crash: 9, fail: 4, pass: 222 Running Test(s): 235running :: Program/Execute/get-global-id
+[236/358] crash: 9, fail: 4, pass: 223 Running Test(s):             pass :: Program/Execute/get-global-id
+[236/358] crash: 9, fail: 4, pass: 223 Running Test(s): 236running :: API/clSetKernelArg
+[237/358] crash: 9, fail: 4, pass: 224 Running Test(s):            fail :: API/clSetKernelArg
+[237/358] crash: 9, fail: 4, pass: 224 Running Test(s): 237running :: Program/Execute/Builtin/builtin-int-mad24-1.0.generated
+[238/358] crash: 9, fail: 5, pass: 224 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-mad24-1.0.generated
+[238/358] crash: 9, fail: 5, pass: 224 Running Test(s): 238running :: Program/Execute/bitselect
+[239/358] crash: 9, fail: 5, pass: 225 Running Test(s):                               pass :: Program/Execute/bitselect
+[239/358] crash: 9, fail: 5, pass: 225 Running Test(s): 239running :: Program/Execute/scalar-comparison-ulong
+[240/358] crash: 9, fail: 5, pass: 226 Running Test(s): pass :: Program/Execute/scalar-comparison-ulong
+[240/358] crash: 9, fail: 5, pass: 226 Running Test(s): 240running :: Program/Execute/sha256-Ch
+[241/358] crash: 9, fail: 5, pass: 227 Running Test(s):               pass :: Program/Execute/sha256-Ch
+[241/358] crash: 9, fail: 5, pass: 227 Running Test(s): 241running :: Program/Execute/scalar-load-uchar
+[242/358] crash: 9, fail: 5, pass: 228 Running Test(s): pass :: Program/Execute/scalar-load-uchar
+[242/358] crash: 9, fail: 5, pass: 228 Running Test(s): 242running :: Program/Build/scalar-data-types
+[243/358] crash: 9, fail: 5, pass: 229 Running Test(s):   pass :: Program/Build/scalar-data-types
+[243/358] crash: 9, fail: 5, pass: 229 Running Test(s): 243running :: Program/Execute/gegl-gamma-2-2-to-linear
+[244/358] crash: 9, fail: 5, pass: 230 Running Test(s): pass :: Program/Execute/gegl-gamma-2-2-to-linear
+[244/358] crash: 9, fail: 5, pass: 230 Running Test(s): 244running :: Program/Execute/scalar-comparison-short
+[245/358] crash: 9, fail: 5, pass: 231 Running Test(s):  pass :: Program/Execute/scalar-comparison-short
+[245/358] crash: 9, fail: 5, pass: 231 Running Test(s): 245running :: Program/Execute/Builtin/builtin-int-add_sat-1.0.generated
+[246/358] crash: 9, fail: 5, pass: 232 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-add_sat-1.0.generated
+[246/358] crash: 9, fail: 5, pass: 232 Running Test(s): 246running :: Program/Execute/Builtin/builtin-short-add_sat-1.0.generated
+[247/358] crash: 9, fail: 5, pass: 233 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-add_sat-1.0.generated
+[247/358] crash: 9, fail: 5, pass: 233 Running Test(s): 247running :: Program/Execute/Store/store-float2-local
+[248/358] crash: 9, fail: 5, pass: 234 Running Test(s):                    pass :: Program/Execute/Store/store-float2-local
+[248/358] crash: 9, fail: 5, pass: 234 Running Test(s): 248running :: Program/Execute/Builtin/builtin-uchar-mul_hi-1.0.generated
+[249/358] crash: 9, fail: 5, pass: 235 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-mul_hi-1.0.generated
+[249/358] crash: 9, fail: 5, pass: 235 Running Test(s): 249running :: Program/Build/include-directories
+[250/358] crash: 9, fail: 5, pass: 236 Running Test(s):                          pass :: Program/Build/include-directories
+[250/358] crash: 9, fail: 5, pass: 236 Running Test(s): 250running :: Program/Execute/Store/store-short16-global
+[251/358] crash: 9, fail: 5, pass: 237 Running Test(s): pass :: Program/Execute/Store/store-short16-global
+[251/358] crash: 9, fail: 5, pass: 237 Running Test(s): 251running :: Program/Execute/Store/store-ulong4-local
+[252/358] crash: 9, fail: 5, pass: 238 Running Test(s):   pass :: Program/Execute/Store/store-ulong4-local
+[252/358] crash: 9, fail: 5, pass: 238 Running Test(s): 252running :: API/clCreateKernelsInProgram
+[253/358] crash: 9, fail: 5, pass: 239 Running Test(s):             crash :: API/clCreateKernelsInProgram
+[253/358] crash: 9, fail: 5, pass: 239 Running Test(s): 253running :: API/clCreateBuffer
+[254/358] crash: 10, fail: 5, pass: 239 Running Test(s):           pass :: API/clCreateBuffer
+[254/358] crash: 10, fail: 5, pass: 239 Running Test(s): 254running :: Program/Execute/vector-load-int4
+[255/358] crash: 10, fail: 5, pass: 240 Running Test(s): pass :: Program/Execute/vector-load-int4
+[255/358] crash: 10, fail: 5, pass: 240 Running Test(s): 255running :: Program/Execute/Builtin/builtin-short-sub_sat-1.0.generated
+[256/358] crash: 10, fail: 5, pass: 241 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-sub_sat-1.0.generated
+[256/358] crash: 10, fail: 5, pass: 241 Running Test(s): 256running :: Program/Execute/Builtin/builtin-ulong-min-1.1.generated
+[257/358] crash: 10, fail: 5, pass: 242 Running Test(s):     pass :: Program/Execute/Builtin/builtin-ulong-min-1.1.generated
+[257/358] crash: 10, fail: 5, pass: 242 Running Test(s): 257running :: Program/Execute/scalar-comparison-long
+[258/358] crash: 10, fail: 5, pass: 243 Running Test(s):                  pass :: Program/Execute/scalar-comparison-long
+[258/358] crash: 10, fail: 5, pass: 243 Running Test(s): 258running :: Program/Execute/Builtin/builtin-int-upsample-1.0.generated
+[259/358] crash: 10, fail: 5, pass: 244 Running Test(s): pass :: Program/Execute/Builtin/builtin-int-upsample-1.0.generated
+[259/358] crash: 10, fail: 5, pass: 244 Running Test(s): 259running :: Program/Execute/local-memory
+[260/358] crash: 10, fail: 5, pass: 245 Running Test(s):                               pass :: Program/Execute/local-memory
+[260/358] crash: 10, fail: 5, pass: 245 Running Test(s): 260running :: Program/Execute/Builtin/builtin-float-isnan-1.0.generated
+[261/358] crash: 10, fail: 5, pass: 246 Running Test(s): fail :: Program/Execute/Builtin/builtin-float-isnan-1.0.generated
+[261/358] crash: 10, fail: 5, pass: 246 Running Test(s): 261running :: API/clRetainComandQueue and clReleaseCommandQueue
+[262/358] crash: 10, fail: 6, pass: 246 Running Test(s):         pass :: API/clRetainComandQueue and clReleaseCommandQueue
+[262/358] crash: 10, fail: 6, pass: 246 Running Test(s): 262running :: Program/Execute/Store/store-char2-global
+[263/358] crash: 10, fail: 6, pass: 247 Running Test(s):          pass :: Program/Execute/Store/store-char2-global
+[263/358] crash: 10, fail: 6, pass: 247 Running Test(s): 263running :: Program/Execute/Builtin/builtin-uint-hadd-1.0.generated
+[264/358] crash: 10, fail: 6, pass: 248 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-hadd-1.0.generated
+[264/358] crash: 10, fail: 6, pass: 248 Running Test(s): 264running :: Program/Execute/Store/store-char4-global
+[265/358] crash: 10, fail: 6, pass: 249 Running Test(s):                pass :: Program/Execute/Store/store-char4-global
+[265/358] crash: 10, fail: 6, pass: 249 Running Test(s): 265running :: Program/Execute/Store/store-long8-local
+[266/358] crash: 10, fail: 6, pass: 250 Running Test(s):  pass :: Program/Execute/Store/store-long8-local
+[266/358] crash: 10, fail: 6, pass: 250 Running Test(s): 266running :: Program/Execute/Store/store-short16-local
+[267/358] crash: 10, fail: 6, pass: 251 Running Test(s): pass :: Program/Execute/Store/store-short16-local
+[267/358] crash: 10, fail: 6, pass: 251 Running Test(s): 267running :: Program/Execute/Builtin/builtin-ushort-mad_sat-1.0.generated
+[268/358] crash: 10, fail: 6, pass: 252 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-mad_sat-1.0.generated
+[268/358] crash: 10, fail: 6, pass: 252 Running Test(s): 268running :: Program/Execute/Builtin/builtin-uint-add_sat-1.0.generated
+[269/358] crash: 10, fail: 6, pass: 253 Running Test(s):   pass :: Program/Execute/Builtin/builtin-uint-add_sat-1.0.generated
+[269/358] crash: 10, fail: 6, pass: 253 Running Test(s): 269running :: Program/Execute/Builtin/builtin-int-mul_hi-1.0.generated
+[270/358] crash: 10, fail: 6, pass: 254 Running Test(s):   pass :: Program/Execute/Builtin/builtin-int-mul_hi-1.0.generated
+[270/358] crash: 10, fail: 6, pass: 254 Running Test(s): 270running :: Program/Execute/Builtin/builtin-char-clamp-1.1.generated
+[271/358] crash: 10, fail: 6, pass: 255 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-clamp-1.1.generated
+[271/358] crash: 10, fail: 6, pass: 255 Running Test(s): 271running :: Program/Execute/Builtin/builtin-long-max-1.1.generated
+[272/358] crash: 10, fail: 6, pass: 256 Running Test(s):   pass :: Program/Execute/Builtin/builtin-long-max-1.1.generated
+[272/358] crash: 10, fail: 6, pass: 256 Running Test(s): 272running :: Program/Execute/Store/store-int16-global
+[273/358] crash: 10, fail: 6, pass: 257 Running Test(s):               crash :: Program/Execute/Store/store-int16-global
+[273/358] crash: 10, fail: 6, pass: 257 Running Test(s): 273running :: Program/Execute/get-local-id
+[274/358] crash: 11, fail: 6, pass: 257 Running Test(s):              pass :: Program/Execute/get-local-id
+[274/358] crash: 11, fail: 6, pass: 257 Running Test(s): 274running :: Program/Execute/Store/store-short-global
+[275/358] crash: 11, fail: 6, pass: 258 Running Test(s): pass :: Program/Execute/Store/store-short-global
+[275/358] crash: 11, fail: 6, pass: 258 Running Test(s): 275running :: Program/Execute/Builtin/builtin-short-rhadd-1.0.generated
+[276/358] crash: 11, fail: 6, pass: 259 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-rhadd-1.0.generated
+[276/358] crash: 11, fail: 6, pass: 259 Running Test(s): 276running :: API/clGetContextInfo
+[277/358] crash: 11, fail: 6, pass: 260 Running Test(s):                                      pass :: API/clGetContextInfo
+[277/358] crash: 11, fail: 6, pass: 260 Running Test(s): 277running :: Program/Build/other-data-types
+[278/358] crash: 11, fail: 6, pass: 261 Running Test(s): pass :: Program/Build/other-data-types
+[278/358] crash: 11, fail: 6, pass: 261 Running Test(s): 278running :: Program/Execute/scalar-arithmetic-ushort
+[279/358] crash: 11, fail: 6, pass: 262 Running Test(s): pass :: Program/Execute/scalar-arithmetic-ushort
+[279/358] crash: 11, fail: 6, pass: 262 Running Test(s): 279running :: Program/Execute/Store/store-ushort8-global
+[280/358] crash: 11, fail: 6, pass: 263 Running Test(s): pass :: Program/Execute/Store/store-ushort8-global
+[280/358] crash: 11, fail: 6, pass: 263 Running Test(s): 280running :: Program/Execute/Store/store-float-local
+[281/358] crash: 11, fail: 6, pass: 264 Running Test(s):    pass :: Program/Execute/Store/store-float-local
+[281/358] crash: 11, fail: 6, pass: 264 Running Test(s): 281running :: Program/Execute/Builtin/builtin-ulong-abs_diff-1.0.generated
+[282/358] crash: 11, fail: 6, pass: 265 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-abs_diff-1.0.generated
+[282/358] crash: 11, fail: 6, pass: 265 Running Test(s): 282running :: Program/Execute/Store/store-uint16-local
+[283/358] crash: 11, fail: 6, pass: 266 Running Test(s):                     pass :: Program/Execute/Store/store-uint16-local
+[283/358] crash: 11, fail: 6, pass: 266 Running Test(s): 283running :: Program/Execute/Store/store-float4-local
+[284/358] crash: 11, fail: 6, pass: 267 Running Test(s): pass :: Program/Execute/Store/store-float4-local
+[284/358] crash: 11, fail: 6, pass: 267 Running Test(s): 284running :: Program/Execute/Store/store-ushort-local
+[285/358] crash: 11, fail: 6, pass: 268 Running Test(s): pass :: Program/Execute/Store/store-ushort-local
+[285/358] crash: 11, fail: 6, pass: 268 Running Test(s): 285running :: Program/Execute/Builtin/builtin-uint-clamp-1.1.generated
+[286/358] crash: 11, fail: 6, pass: 269 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-clamp-1.1.generated
+[286/358] crash: 11, fail: 6, pass: 269 Running Test(s): 286running :: Program/Execute/Store/store-char16-local
+[287/358] crash: 11, fail: 6, pass: 270 Running Test(s):                 pass :: Program/Execute/Store/store-char16-local
+[287/358] crash: 11, fail: 6, pass: 270 Running Test(s): 287running :: Program/Execute/Store/store-int-global
+[288/358] crash: 11, fail: 6, pass: 271 Running Test(s):   pass :: Program/Execute/Store/store-int-global
+[288/358] crash: 11, fail: 6, pass: 271 Running Test(s): 288running :: Program/Execute/Builtin/builtin-uint-sub_sat-1.0.generated
+[289/358] crash: 11, fail: 6, pass: 272 Running Test(s): crash :: Program/Execute/Builtin/builtin-uint-sub_sat-1.0.generated
+[289/358] crash: 11, fail: 6, pass: 272 Running Test(s): 289running :: Program/Execute/pyrit-wpa-psk
+[290/358] crash: 12, fail: 6, pass: 272 Running Test(s):                               pass :: Program/Execute/pyrit-wpa-psk
+[290/358] crash: 12, fail: 6, pass: 272 Running Test(s): 290running :: Program/Execute/scalar-arithmetic-long
+[291/358] crash: 12, fail: 6, pass: 273 Running Test(s): pass :: Program/Execute/scalar-arithmetic-long
+[291/358] crash: 12, fail: 6, pass: 273 Running Test(s): 291running :: Program/Execute/Builtin/builtin-uchar-clz-1.0.generated
+[292/358] crash: 12, fail: 6, pass: 274 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-clz-1.0.generated
+[292/358] crash: 12, fail: 6, pass: 274 Running Test(s): 292running :: Program/Execute/Builtin/builtin-int-min-1.1.generated
+[293/358] crash: 12, fail: 6, pass: 275 Running Test(s):   pass :: Program/Execute/Builtin/builtin-int-min-1.1.generated
+[293/358] crash: 12, fail: 6, pass: 275 Running Test(s): 293running :: Program/Execute/Builtin/builtin-long-min-1.1.generated
+[294/358] crash: 12, fail: 6, pass: 276 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-min-1.1.generated
+[294/358] crash: 12, fail: 6, pass: 276 Running Test(s): 294running :: Program/Execute/Builtin/builtin-long-mad_hi-1.0.generated
+[295/358] crash: 12, fail: 6, pass: 277 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-mad_hi-1.0.generated
+[295/358] crash: 12, fail: 6, pass: 277 Running Test(s): 295running :: Program/Execute/Builtin/builtin-uint-max-1.1.generated
+[296/358] crash: 12, fail: 6, pass: 278 Running Test(s):    pass :: Program/Execute/Builtin/builtin-uint-max-1.1.generated
+[296/358] crash: 12, fail: 6, pass: 278 Running Test(s): 296running :: Program/Execute/Store/store-uchar-local
+[297/358] crash: 12, fail: 6, pass: 279 Running Test(s):                pass :: Program/Execute/Store/store-uchar-local
+[297/358] crash: 12, fail: 6, pass: 279 Running Test(s): 297running :: Program/Build/optimization-options
+[298/358] crash: 12, fail: 6, pass: 280 Running Test(s):      pass :: Program/Build/optimization-options
+[298/358] crash: 12, fail: 6, pass: 280 Running Test(s): 298running :: Program/Execute/Store/store-uchar2-global
+[299/358] crash: 12, fail: 6, pass: 281 Running Test(s): pass :: Program/Execute/Store/store-uchar2-global
+[299/358] crash: 12, fail: 6, pass: 281 Running Test(s): 299running :: Program/Execute/v2i32-stack
+[300/358] crash: 12, fail: 6, pass: 282 Running Test(s):               pass :: Program/Execute/v2i32-stack
+[300/358] crash: 12, fail: 6, pass: 282 Running Test(s): 300running :: API/clCreateProgramWithSource
+[301/358] crash: 12, fail: 6, pass: 283 Running Test(s): pass :: API/clCreateProgramWithSource
+[301/358] crash: 12, fail: 6, pass: 283 Running Test(s): 301running :: Program/Execute/Builtin/builtin-float-sign-1.0.generated
+[302/358] crash: 12, fail: 6, pass: 284 Running Test(s): fail :: Program/Execute/Builtin/builtin-float-sign-1.0.generated
+[302/358] crash: 12, fail: 6, pass: 284 Running Test(s): 302running :: Program/Execute/Store/store-int8-global
+[303/358] crash: 12, fail: 7, pass: 284 Running Test(s):                  pass :: Program/Execute/Store/store-int8-global
+[303/358] crash: 12, fail: 7, pass: 284 Running Test(s): 303running :: Program/Execute/Builtin/builtin-uint-min-1.1.generated
+[304/358] crash: 12, fail: 7, pass: 285 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-min-1.1.generated
+[304/358] crash: 12, fail: 7, pass: 285 Running Test(s): 304running :: API/clGetProgramBuildInfo
+[305/358] crash: 12, fail: 7, pass: 286 Running Test(s):                              fail :: API/clGetProgramBuildInfo
+[305/358] crash: 12, fail: 7, pass: 286 Running Test(s): 305running :: Program/Execute/atomic_dec-local
+[306/358] crash: 12, fail: 8, pass: 286 Running Test(s): pass :: Program/Execute/atomic_dec-local
+[306/358] crash: 12, fail: 8, pass: 286 Running Test(s): 306running :: Program/Execute/Store/store-uchar-global
+[307/358] crash: 12, fail: 8, pass: 287 Running Test(s): pass :: Program/Execute/Store/store-uchar-global
+[307/358] crash: 12, fail: 8, pass: 287 Running Test(s): 307running :: Program/Execute/get-local-size
+[308/358] crash: 12, fail: 8, pass: 288 Running Test(s):           pass :: Program/Execute/get-local-size
+[308/358] crash: 12, fail: 8, pass: 288 Running Test(s): 308running :: Program/Execute/scalar-arithmetic-int
+[309/358] crash: 12, fail: 8, pass: 289 Running Test(s): pass :: Program/Execute/scalar-arithmetic-int
+[309/358] crash: 12, fail: 8, pass: 289 Running Test(s): 309running :: Program/Execute/Builtin/builtin-long-hadd-1.0.generated
+[310/358] crash: 12, fail: 8, pass: 290 Running Test(s): pass :: Program/Execute/Builtin/builtin-long-hadd-1.0.generated
+[310/358] crash: 12, fail: 8, pass: 290 Running Test(s): 310running :: Program/Execute/multiple-stack-objects
+[311/358] crash: 12, fail: 8, pass: 291 Running Test(s):                  pass :: Program/Execute/multiple-stack-objects
+[311/358] crash: 12, fail: 8, pass: 291 Running Test(s): 311running :: Program/Build/macro-definitions-with-values
+[312/358] crash: 12, fail: 8, pass: 292 Running Test(s): pass :: Program/Build/macro-definitions-with-values
+[312/358] crash: 12, fail: 8, pass: 292 Running Test(s): 312running :: Program/Execute/Builtin/builtin-char-mul_hi-1.0.generated
+[313/358] crash: 12, fail: 8, pass: 293 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-mul_hi-1.0.generated
+[313/358] crash: 12, fail: 8, pass: 293 Running Test(s): 313running :: Program/Build/scalar-and-vector-operators
+[314/358] crash: 12, fail: 8, pass: 294 Running Test(s):                 pass :: Program/Build/scalar-and-vector-operators
+[314/358] crash: 12, fail: 8, pass: 294 Running Test(s): 314running :: Program/Execute/vector-arithmetic-int4
+[315/358] crash: 12, fail: 8, pass: 295 Running Test(s):    pass :: Program/Execute/vector-arithmetic-int4
+[315/358] crash: 12, fail: 8, pass: 295 Running Test(s): 315running :: API/clGetEventInfo
+[316/358] crash: 12, fail: 8, pass: 296 Running Test(s):                     pass :: API/clGetEventInfo
+[316/358] crash: 12, fail: 8, pass: 296 Running Test(s): 316running :: Program/Execute/gegl-rgb-gamma-u8-to-ragabaf
+[317/358] crash: 12, fail: 8, pass: 297 Running Test(s): pass :: Program/Execute/gegl-rgb-gamma-u8-to-ragabaf
+[317/358] crash: 12, fail: 8, pass: 297 Running Test(s): 317running :: Program/Execute/Store/store-short2-global
+[318/358] crash: 12, fail: 8, pass: 298 Running Test(s):    pass :: Program/Execute/Store/store-short2-global
+[318/358] crash: 12, fail: 8, pass: 298 Running Test(s): 318running :: Program/Execute/Builtin/builtin-uint-mul24-1.0.generated
+[319/358] crash: 12, fail: 8, pass: 299 Running Test(s): pass :: Program/Execute/Builtin/builtin-uint-mul24-1.0.generated
+[319/358] crash: 12, fail: 8, pass: 299 Running Test(s): 319running :: Program/Execute/scalar-load-char
+[320/358] crash: 12, fail: 8, pass: 300 Running Test(s):                         pass :: Program/Execute/scalar-load-char
+[320/358] crash: 12, fail: 8, pass: 300 Running Test(s): 320running :: Program/Build/mixed-macro-definitions
+[321/358] crash: 12, fail: 8, pass: 301 Running Test(s): pass :: Program/Build/mixed-macro-definitions
+[321/358] crash: 12, fail: 8, pass: 301 Running Test(s): 321running :: Program/Execute/Builtin/builtin-uchar-abs-1.0.generated
+[322/358] crash: 12, fail: 8, pass: 302 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-abs-1.0.generated
+[322/358] crash: 12, fail: 8, pass: 302 Running Test(s): 322running :: Program/Execute/Builtin/builtin-short-hadd-1.0.generated
+[323/358] crash: 12, fail: 8, pass: 303 Running Test(s): pass :: Program/Execute/Builtin/builtin-short-hadd-1.0.generated
+[323/358] crash: 12, fail: 8, pass: 303 Running Test(s): 323running :: Program/Execute/vload-private-int
+[324/358] crash: 12, fail: 8, pass: 304 Running Test(s):                        pass :: Program/Execute/vload-private-int
+[324/358] crash: 12, fail: 8, pass: 304 Running Test(s): 324running :: Custom/Run simple kernel
+[325/358] crash: 12, fail: 8, pass: 305 Running Test(s):          pass :: Custom/Run simple kernel
+[325/358] crash: 12, fail: 8, pass: 305 Running Test(s): 325running :: Program/Execute/Store/store-ulong16-local
+[326/358] crash: 12, fail: 8, pass: 306 Running Test(s): pass :: Program/Execute/Store/store-ulong16-local
+[326/358] crash: 12, fail: 8, pass: 306 Running Test(s): 326running :: Program/Execute/get-global-size
+[327/358] crash: 12, fail: 8, pass: 307 Running Test(s):           pass :: Program/Execute/get-global-size
+[327/358] crash: 12, fail: 8, pass: 307 Running Test(s): 327running :: Program/Bitcoin: phatk kernel
+[328/358] crash: 12, fail: 8, pass: 308 Running Test(s):   pass :: Program/Bitcoin: phatk kernel
+[328/358] crash: 12, fail: 8, pass: 308 Running Test(s): 328running :: Program/Execute/Builtin/builtin-char-mad_hi-1.0.generated
+[329/358] crash: 12, fail: 8, pass: 309 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-mad_hi-1.0.generated
+[329/358] crash: 12, fail: 8, pass: 309 Running Test(s): 329running :: Program/Execute/Builtin/builtin-uchar-sub_sat-1.0.generated
+[330/358] crash: 12, fail: 8, pass: 310 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-sub_sat-1.0.generated
+[330/358] crash: 12, fail: 8, pass: 310 Running Test(s): 330running :: Program/Execute/Builtin/builtin-ulong-sub_sat-1.0.generated
+[331/358] crash: 12, fail: 8, pass: 311 Running Test(s): crash :: Program/Execute/Builtin/builtin-ulong-sub_sat-1.0.generated
+[331/358] crash: 12, fail: 8, pass: 311 Running Test(s): 331running :: Program/Execute/Store/store-char4-local
+[332/358] crash: 13, fail: 8, pass: 311 Running Test(s):                      pass :: Program/Execute/Store/store-char4-local
+[332/358] crash: 13, fail: 8, pass: 311 Running Test(s): 332running :: Program/Execute/scalar-comparison-float
+[333/358] crash: 13, fail: 8, pass: 312 Running Test(s): pass :: Program/Execute/scalar-comparison-float
+[333/358] crash: 13, fail: 8, pass: 312 Running Test(s): 333running :: Program/Execute/global-memory
+[334/358] crash: 13, fail: 8, pass: 313 Running Test(s):           pass :: Program/Execute/global-memory
+[334/358] crash: 13, fail: 8, pass: 313 Running Test(s): 334running :: Program/Execute/atomic_add-local
+[335/358] crash: 13, fail: 8, pass: 314 Running Test(s): pass :: Program/Execute/atomic_add-local
+[335/358] crash: 13, fail: 8, pass: 314 Running Test(s): 335running :: Program/Execute/Store/store-long8-global
+[336/358] crash: 13, fail: 8, pass: 315 Running Test(s): pass :: Program/Execute/Store/store-long8-global
+[336/358] crash: 13, fail: 8, pass: 315 Running Test(s): 336running :: Program/Execute/scalar-arithmetic-uint
+[337/358] crash: 13, fail: 8, pass: 316 Running Test(s):   pass :: Program/Execute/scalar-arithmetic-uint
+[337/358] crash: 13, fail: 8, pass: 316 Running Test(s): 337running :: Program/Execute/Store/store-uint8-global
+[338/358] crash: 13, fail: 8, pass: 317 Running Test(s): pass :: Program/Execute/Store/store-uint8-global
+[338/358] crash: 13, fail: 8, pass: 317 Running Test(s): 338running :: API/clGetPlatformInfo
+[339/358] crash: 13, fail: 8, pass: 318 Running Test(s):                    pass :: API/clGetPlatformInfo
+[339/358] crash: 13, fail: 8, pass: 318 Running Test(s): 339running :: Program/Execute/Store/store-long2-local
+[340/358] crash: 13, fail: 8, pass: 319 Running Test(s): pass :: Program/Execute/Store/store-long2-local
+[340/358] crash: 13, fail: 8, pass: 319 Running Test(s): 340running :: Program/Execute/Builtin/builtin-ulong-abs-1.0.generated
+[341/358] crash: 13, fail: 8, pass: 320 Running Test(s): pass :: Program/Execute/Builtin/builtin-ulong-abs-1.0.generated
+[341/358] crash: 13, fail: 8, pass: 320 Running Test(s): 341running :: Program/Execute/Builtin/builtin-uchar-rhadd-1.0.generated
+[342/358] crash: 13, fail: 8, pass: 321 Running Test(s): pass :: Program/Execute/Builtin/builtin-uchar-rhadd-1.0.generated
+[342/358] crash: 13, fail: 8, pass: 321 Running Test(s): 342running :: Program/Execute/program-scope-arrays
+[343/358] crash: 13, fail: 8, pass: 322 Running Test(s):                      pass :: Program/Execute/program-scope-arrays
+[343/358] crash: 13, fail: 8, pass: 322 Running Test(s): 343running :: Program/Execute/Builtin/builtin-char-abs-1.0.generated
+[344/358] crash: 13, fail: 8, pass: 323 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-abs-1.0.generated
+[344/358] crash: 13, fail: 8, pass: 323 Running Test(s): 344running :: Program/Execute/Builtin/builtin-int-hadd-1.0.generated
+[345/358] crash: 13, fail: 8, pass: 324 Running Test(s): crash :: Program/Execute/Builtin/builtin-int-hadd-1.0.generated
+[345/358] crash: 13, fail: 8, pass: 324 Running Test(s): 345running :: API/clRetainMemObject and clReleaseMemObject
+[346/358] crash: 14, fail: 8, pass: 324 Running Test(s):            pass :: API/clRetainMemObject and clReleaseMemObject
+[346/358] crash: 14, fail: 8, pass: 324 Running Test(s): 346running :: Program/Execute/Store/store-uint-local
+[347/358] crash: 14, fail: 8, pass: 325 Running Test(s):       pass :: Program/Execute/Store/store-uint-local
+[347/358] crash: 14, fail: 8, pass: 325 Running Test(s): 347running :: Program/Execute/vload-local-int
+[348/358] crash: 14, fail: 8, pass: 326 Running Test(s):        pass :: Program/Execute/vload-local-int
+[348/358] crash: 14, fail: 8, pass: 326 Running Test(s): 348running :: Program/Execute/Store/store-float16-local
+[349/358] crash: 14, fail: 8, pass: 327 Running Test(s): pass :: Program/Execute/Store/store-float16-local
+[349/358] crash: 14, fail: 8, pass: 327 Running Test(s): 349running :: Program/Execute/Builtin/builtin-char-hadd-1.0.generated
+[350/358] crash: 14, fail: 8, pass: 328 Running Test(s): pass :: Program/Execute/Builtin/builtin-char-hadd-1.0.generated
+[350/358] crash: 14, fail: 8, pass: 328 Running Test(s): 350running :: Program/Execute/Builtin/builtin-ushort-mul_hi-1.0.generated
+[351/358] crash: 14, fail: 8, pass: 329 Running Test(s): pass :: Program/Execute/Builtin/builtin-ushort-mul_hi-1.0.generated
+[351/358] crash: 14, fail: 8, pass: 329 Running Test(s): 351running :: Program/Execute/Builtin/builtin-int-clamp-1.1.generated
+[352/358] crash: 14, fail: 8, pass: 330 Running Test(s):     pass :: Program/Execute/Builtin/builtin-int-clamp-1.1.generated
+[352/358] crash: 14, fail: 8, pass: 330 Running Test(s): 352running :: Program/Execute/Store/store-int4-global
+[353/358] crash: 14, fail: 8, pass: 331 Running Test(s):                 pass :: Program/Execute/Store/store-int4-global
+[353/358] crash: 14, fail: 8, pass: 331 Running Test(s): 353running :: Program/Execute/Builtin/builtin-uchar-max-1.1.generated
+[354/358] crash: 14, fail: 8, pass: 332 Running Test(s): crash :: Program/Execute/Builtin/builtin-uchar-max-1.1.generated
+[354/358] crash: 14, fail: 8, pass: 332 Running Test(s): 354running :: Program/Execute/program-tester-check-local-size-test-should-skip
+[355/358] crash: 15, fail: 8, pass: 332 Running Test(s): skip :: Program/Execute/program-tester-check-local-size-test-should-skip
+[355/358] crash: 15, fail: 8, pass: 332 Running Test(s): 355running :: Program/Execute/Builtin/builtin-long-abs-1.0.generated
+[356/358] crash: 15, fail: 8, pass: 332, skip: 1 Running Test(s):  crash :: Program/Execute/Builtin/builtin-long-abs-1.0.generated
+[356/358] crash: 15, fail: 8, pass: 332, skip: 1 Running Test(s): 356running :: Program/Execute/Store/store-ushort4-local
+[357/358] crash: 16, fail: 8, pass: 332, skip: 1 Running Test(s):               pass :: Program/Execute/Store/store-ushort4-local
+[357/358] crash: 16, fail: 8, pass: 332, skip: 1 Running Test(s): 357[358/358] crash: 16, fail: 8, pass: 333, skip: 1                                                                       
