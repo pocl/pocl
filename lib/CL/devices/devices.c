@@ -120,7 +120,7 @@ pocl_get_device_type_count(cl_device_type device_type)
   int count = 0;
   unsigned int i;
 
-  for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
+  for (i = 0; i < pocl_num_devices; ++i)
     {
       if ((pocl_devices[i].type & device_type) &&
           (pocl_devices[i].available == CL_TRUE))
@@ -180,6 +180,7 @@ pocl_init_devices()
       assert(pocl_device_ops[i].device_name != NULL);
 
       /* Probe and add the result to the number of probbed devices */
+      assert(pocl_device_ops[i].probe);
       device_count[i] = pocl_device_ops[i].probe(&pocl_device_ops[i]);
       pocl_num_devices += device_count[i];
     }
@@ -194,7 +195,6 @@ pocl_init_devices()
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
       assert(pocl_device_ops[i].init);
-      assert(pocl_device_ops[i].probe);
       for (j = 0; j < device_count[i]; ++j)
         {
           pocl_devices[dev_index].ops = &pocl_device_ops[i];
