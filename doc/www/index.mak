@@ -45,7 +45,7 @@ unimplemented OpenCL APIs. These will be added gradually as needed by new tested
 <p>The following OpenCL applications are known to work with pocl:</p>
 
 <ul>
-  <li><a href="http://viennacl.sourceforge.net/">ViennaCL</a> 1.3.1 examples</li>
+  <li><a href="http://viennacl.sourceforge.net/">ViennaCL</a> 1.5.1 examples</li>
   <li><a href="http://lava.cs.virginia.edu/Rodinia/download_links.htm">Rodinia</a> 2.0.1</li>
   <li><a href="http://impact.crhc.illinois.edu/parboil.aspx">Parboil</a> Benchmarks (most of them)</a>
   <li><a href="https://code.google.com/p/opencl-book-samples/">OpenCL Programming Guide</a> book samples (most of them)</a>
