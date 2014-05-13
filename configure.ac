@@ -846,7 +846,7 @@ case $host_cpu in
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=soft"
-         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ ";;
+         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared ";;
       armv7l*gnueabihf)
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
@@ -1082,6 +1082,7 @@ AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
 AM_CONDITIONAL([TCEMC_AVAILABLE], test ! -z $TCEMC_AVAILABLE)
 
 # Checking for android cross-compile
+ANDROID_PRESENT="";
 AC_MSG_CHECKING([for Android])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
@@ -1091,17 +1092,13 @@ AC_COMPILE_IFELSE(
   [ANDROID_PRESENT=ok]],
   [AC_MSG_RESULT(no)])
 
-if test -n $ANDROID_PRESENT
+if test x"$ANDROID_PRESENT" == ok;
 then
 AC_DEFINE([ANDROID], [1], [Defined to 1 if compiling for Android])
 
 AC_DEFINE([ANDROID_POCL_PREFIX],
                    ["/data/data/org.pocl.libs/files"],
                    [Directory  where pocl files are installed in android])
-
-AC_DEFINE([ANDROID_POCL_LLC],
-                   [ANDROID_POCL_PREFIX"/bin/llc"],
-                   [path where llc installed in android])
 
 fi
 
@@ -1216,7 +1213,7 @@ AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
 
-if test -n $ANDROID_PRESENT
+if test x"$ANDROID_PRESENT" == ok;
 then
 AC_MSG_NOTICE([Setting float16 & double16 alignments manually in cross-compile mode])
 AC_DEFINE([ALIGNOF_FLOAT16], 64)

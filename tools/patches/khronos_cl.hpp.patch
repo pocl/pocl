@@ -1,7 +1,11 @@
 --- include/CL/cl.hpp.in	2014-03-17 17:47:57.147223265 +0200
 +++ include/CL/cl.hpp	2014-03-17 17:55:52.620234165 +0200
-@@ -214,8 +214,6 @@
- #if defined(linux) || defined(__APPLE__) || defined(__MACOSX)
+@@ -211,11 +211,9 @@
+ #include <string>
+ #endif
+
+-#if defined(linux) || defined(__APPLE__) || defined(__MACOSX)
++#if defined(linux) || defined(__APPLE__) || defined(__MACOSX) || defined(__ANDROID__)
  #include <alloca.h>
  
 -#include <emmintrin.h>

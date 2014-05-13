@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "pocl_util.h"
 #include "pocl_cl.h"
@@ -57,7 +59,9 @@ remove_directory (const char *path_name)
 char*
 pocl_create_temp_dir() 
 {  
-  char *path_name; 
+  char *path_name;
+
+#ifndef ANDROID
   if (getenv(POCL_TEMPDIR_ENV) != NULL &&
       access (getenv(POCL_TEMPDIR_ENV), F_OK) == 0) 
     {
@@ -67,15 +71,74 @@ pocl_create_temp_dir()
   else 
     {
       path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
-
-#ifndef ANDROID
       strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
-#else
-      strncpy (path_name, "/sdcard/pocl/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
-#endif
-
       mkdtemp (path_name);  
     }
+
+#else
+/* ANDROID -
+   Its ideal to create tmp files in application cache directory
+   Applications are requested to lend some space from getCacheDir() for pocl to use
+   POCL_TEMP_DIR needs to be set with this directory name
+   pocl will try to delete all its footprints in this directory
+*/
+  char *pocl_android_app_cache_dir = getenv("POCL_TEMP_DIR");
+
+  // First as promised - cleanup
+  if(pocl_android_app_cache_dir && (access(pocl_android_app_cache_dir, W_OK) == 0))
+  {
+    DIR *dp;
+    struct dirent *ep;
+
+    dp = opendir(pocl_android_app_cache_dir);
+    if(dp)
+    {
+      while(ep = readdir(dp))
+      {
+        // tmp dir is of the form pocl-pid-XXXXXX
+        if(strncmp(ep->d_name, "pocl-", 5) == 0)
+        {
+          char pid_s[16];
+          sprintf(pid_s, "%d", getpid());
+          char *str1, *str2;
+          for(str1=(ep->d_name)+5, str2=pid_s; (*str1 != '-') && (*str2); str1++, str2++)
+          {                       // Comparing pids
+            if(*str1 != *str2)    // If you are not created by current process
+            {
+              char tmp_s[512];
+              sprintf(tmp_s, "%s/%s", pocl_android_app_cache_dir, ep->d_name);
+              remove_directory(tmp_s);
+            }
+          }
+        }
+      }
+      closedir(dp);
+    }
+  }
+
+
+  // Happy to use /tmp if its available
+  if(access("/tmp/", W_OK) == 0)
+  {
+    path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
+    strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+    mkdtemp (path_name);
+  }
+  else if(pocl_android_app_cache_dir && (access(pocl_android_app_cache_dir, W_OK) == 0))
+  {
+    path_name = (char*)malloc(512);
+    sprintf(path_name,"%s/pocl-%d-XXXXXX\0",
+              pocl_android_app_cache_dir, getpid());
+    mkdtemp (path_name);
+  }
+  else
+  {
+    path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
+    strncpy(path_name, "/sdcard/pocl/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+    mkdtemp(path_name);
+  }
+#endif
+
   return path_name;
 }
 
