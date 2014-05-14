@@ -27,6 +27,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #ifdef LLVM_3_1
 #include "llvm/Target/TargetData.h"
