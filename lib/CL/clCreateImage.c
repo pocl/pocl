@@ -82,7 +82,7 @@ CL_API_SUFFIX__VERSION_1_2
             image_desc->image_type, num_entries, supported_image_formats, NULL);
     
     if (errcode != CL_SUCCESS)
-      goto ERROR_CLEAN_DEV;
+      goto ERROR;
     
     for (i = 0; i < num_entries; i++)
       {
@@ -96,7 +96,7 @@ CL_API_SUFFIX__VERSION_1_2
       }
     
     errcode = CL_INVALID_VALUE;
-    goto ERROR_CLEAN_DEV;
+    goto ERROR;
 
 TYPE_SUPPORTED:
 
@@ -136,7 +136,7 @@ TYPE_SUPPORTED:
     mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
 
     if (mem == NULL)
-      goto ERROR_CLEAN_DEV;
+      goto ERROR;
           
     mem->type = image_desc->image_type;
     mem->is_image = CL_TRUE;
@@ -170,13 +170,6 @@ TYPE_SUPPORTED:
       *errcode_ret = CL_SUCCESS;
     
     return mem;
-    
- ERROR_CLEAN_DEV:
-    for (j = 0; j < i; ++j) 
-      {
-        device_id = context->devices[j];
-        device_id->ops->free(device_id->data, 0, mem->device_ptrs[j].mem_ptr);
-      }
     
  ERROR:
     if (errcode_ret) 
