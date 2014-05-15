@@ -95,7 +95,7 @@ CL_API_SUFFIX__VERSION_1_2
           }
       }
     
-    errcode = CL_INVALID_VALUE;
+    errcode = CL_IMAGE_FORMAT_NOT_SUPPORTED;
     goto ERROR;
 
 TYPE_SUPPORTED:
