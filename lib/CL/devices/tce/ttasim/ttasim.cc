@@ -75,7 +75,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->init_device_infos = pocl_ttasim_init_device_infos;
   ops->uninit = pocl_ttasim_uninit;
   ops->init = pocl_ttasim_init;
-  ops->malloc = pocl_tce_malloc;
   ops->alloc_mem_obj = pocl_tce_alloc_mem_obj;
   ops->create_sub_buffer = pocl_tce_create_sub_buffer;
   ops->free = pocl_tce_free;
