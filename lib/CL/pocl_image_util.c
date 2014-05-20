@@ -101,18 +101,15 @@ pocl_write_image(cl_mem               image,
   size_t dev_elem_size = sizeof(cl_float);
   int dev_channels = 4;
     
-  int host_elem_size;
-  int host_channels;
-  pocl_get_image_information (image->image_channel_order,
-                              image->image_channel_data_type, 
-                              &host_channels, &host_elem_size);
+  int host_elem_size = image->image_elem_size;
+  int host_channels = image->image_channels;
     
   size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
                             origin[2]};
   size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
                             region[2]};
     
-  size_t image_row_pitch = image->image_width*dev_elem_size*dev_channels;
+  size_t image_row_pitch = image->image_row_pitch;
   size_t image_slice_pitch = 0;
     
   if ((tuned_region[0]*tuned_region[1]*tuned_region[2] > 0) &&
@@ -150,15 +147,9 @@ pocl_read_image(cl_mem               image,
   int width = image->image_width;
   int height = image->image_height;
 
-  int host_channels, host_elem_size;
-      
-  pocl_get_image_information(image->image_channel_order,
-                             image->image_channel_data_type,
-                             &host_channels, &host_elem_size);
-
   /* dev imagetype = host imagetype, in current implementation */
-  int dev_elem_size = host_elem_size;
-  int dev_channels = host_channels;
+  int dev_elem_size = image->image_elem_size;
+  int dev_channels = image->image_channels;
 
   size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
                             origin[2]};
