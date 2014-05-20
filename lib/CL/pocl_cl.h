@@ -218,8 +218,6 @@ struct pocl_device_ops {
   void (*uninit) (cl_device_id device);
   unsigned int (*probe) (struct pocl_device_ops *ops);
   void (*init) (cl_device_id device, const char *parameters);
-  void *(*malloc) (void *data, cl_mem_flags flags,
-                   size_t size, void *host_ptr);
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (void *data, cl_mem_flags flags, void *ptr);

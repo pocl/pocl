@@ -157,7 +157,6 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->init_device_infos = pocl_pthread_init_device_infos;
   ops->uninit = pocl_pthread_uninit;
   ops->init = pocl_pthread_init;
-  ops->malloc = pocl_pthread_malloc;
   ops->alloc_mem_obj = pocl_pthread_alloc_mem_obj;
   ops->free = pocl_pthread_free;
   ops->read = pocl_pthread_read;
