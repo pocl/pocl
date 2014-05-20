@@ -575,6 +575,7 @@ then
 else
 	CFLAGS="$CXXFLAGS -O0 -g"
 	CXXFLAGS="$CXXFLAGS -O0 -g"
+	AC_DEFINE([POCL_DEBUG_BUILD], [], "Build pocl in debug mode")
 fi
 
 be_pedantic="no"

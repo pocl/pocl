@@ -294,4 +294,8 @@ void pocl_command_enqueue(cl_command_queue command_queue,
 {
   POCL_UPDATE_EVENT_QUEUED (&node->event, command_queue);
   LL_APPEND (command_queue->root, node);
+  #ifdef POCL_DEBUG_BUILD
+  if (pocl_is_option_set("POCL_IMPLICIT_FINISH"))
+    POclFinish (command_queue);
+  #endif
 }

@@ -36,6 +36,12 @@ below.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
+* POCL_IMPLICIT_FINISH
+
+ Add an implicit call to clFinish afer every clEnqueue* call. Useful mostly for
+ pocl internal development, and is enabled only if pocl is configured with
+ '--enable-debug'.
+
 * POCL_KERNEL_COMPILER_OPT_SWITCH
 
  Override the default "-O3" that is passed to the LLVM opt as a final
