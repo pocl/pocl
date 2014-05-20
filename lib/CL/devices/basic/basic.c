@@ -192,7 +192,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
   ops->init = pocl_basic_init;
-  ops->malloc = pocl_basic_malloc;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
   ops->read = pocl_basic_read;
