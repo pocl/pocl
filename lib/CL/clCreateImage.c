@@ -152,6 +152,8 @@ TYPE_SUPPORTED:
     mem->num_mip_levels = image_desc->num_mip_levels;
     mem->num_samples = image_desc->num_samples;
     mem->buffer = image_desc->buffer;
+    mem->image_channels = channels;
+    mem->image_elem_size = elem_size;
 
 #if 0
     printf("flags = %X\n",mem->flags); 
