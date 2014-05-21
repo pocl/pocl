@@ -38,13 +38,9 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   if (ptr == NULL)
     return CL_INVALID_VALUE;
 
-  pocl_get_image_information(image->image_channel_order,
-                             image->image_channel_data_type,
-                             &num_channels, &elem_size);
-
-  size_t tuned_origin[3] = {origin[0] * elem_size * num_channels, origin[1], 
+  size_t tuned_origin[3] = {origin[0] * image->image_elem_size * image->image_channels, origin[1], 
                             origin[2]};
-  size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
+  size_t tuned_region[3] = {region[0] * image->image_elem_size * image->image_channels, region[1], 
                             region[2]};
   status = pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_IMAGE, 
                                 event, num_events_in_wait_list, 
@@ -59,8 +55,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   cmd->command.rw_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id].mem_ptr;
   cmd->command.rw_image.host_ptr = (void*) ptr;
-  memcpy ((cmd->command.map_image.origin), tuned_origin, 3*sizeof (size_t));
-  memcpy ((cmd->command.map_image.region), tuned_region, 3*sizeof (size_t));
+  memcpy ((cmd->command.rw_image.origin), tuned_origin, 3*sizeof (size_t));
+  memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.rw_image.rowpitch = image->image_row_pitch;
   cmd->command.rw_image.slicepitch = image->image_slice_pitch;
   cmd->command.rw_image.buffer = image;
