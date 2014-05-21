@@ -44,8 +44,6 @@ POname(clEnqueueMapImage)(cl_command_queue   command_queue,
 CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode;
-  int elem_size;
-  int num_channels;
   int offset;
   void *map = NULL;
   cl_device_id device;
@@ -95,12 +93,8 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   /* TODO: more error checks */
-
-  pocl_get_image_information(image->image_channel_order, 
-                             image->image_channel_data_type, 
-                             &num_channels, &elem_size);
   
-  offset = num_channels * elem_size * origin[0];
+  offset = image->image_channels * image->image_elem_size * origin[0];
   
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
