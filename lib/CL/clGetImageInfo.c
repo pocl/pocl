@@ -24,8 +24,6 @@ CL_API_SUFFIX__VERSION_1_0
 {
   cl_image_format image_format = {image->image_channel_order, 
                                   image->image_channel_data_type};
-  cl_int elem_size;
-  cl_int num_channels;
   switch (param_name)
     {
     case CL_IMAGE_FORMAT:
