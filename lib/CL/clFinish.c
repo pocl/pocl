@@ -26,6 +26,7 @@
 #include "pocl_image_util.h"
 #include "utlist.h"
 #include "clEnqueueMapBuffer.h"
+#include "pocl_mem_management.h"
 
 static void exec_commands (_cl_command_node *node_list);
 

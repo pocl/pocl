@@ -28,6 +28,7 @@
 #include "install-paths.h"
 #include "common.h"
 #include "utlist.h"
+#include "devices.h"
 
 #include <assert.h>
 #include <string.h>
