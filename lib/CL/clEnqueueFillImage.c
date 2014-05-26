@@ -45,8 +45,6 @@ CL_API_SUFFIX__VERSION_1_2
   cl_image_format *supported_image_formats = NULL;
   int i;
   void *fill_pixel = NULL;
-  int num_image_channels;
-  int image_elem_size; 
   size_t tuned_origin[3];
 
   if (command_queue == NULL)
@@ -134,27 +132,22 @@ CL_API_SUFFIX__VERSION_1_2
       goto ERROR_CLEAN;
     }
 
-  pocl_get_image_information (image->image_channel_order, 
-                              image->image_channel_data_type, 
-                              &num_image_channels, 
-                              &image_elem_size);
-
   /* TODO: channel order, saturating data type conversion */
-  if (image_elem_size == 1)
+  if (image->image_elem_size == 1)
     {
       ((cl_char4*)fill_pixel)->x = ((cl_int4*)fill_color)->x;
       ((cl_char4*)fill_pixel)->y = ((cl_int4*)fill_color)->y;
       ((cl_char4*)fill_pixel)->z = ((cl_int4*)fill_color)->z;
       ((cl_char4*)fill_pixel)->w = ((cl_int4*)fill_color)->w;
     }
-  if (image_elem_size == 2)
+  if (image->image_elem_size == 2)
     {
       ((cl_short4*)fill_pixel)->x = ((cl_int4*)fill_color)->x;
       ((cl_short4*)fill_pixel)->y = ((cl_int4*)fill_color)->y;
       ((cl_short4*)fill_pixel)->z = ((cl_int4*)fill_color)->z;
       ((cl_short4*)fill_pixel)->w = ((cl_int4*)fill_color)->w;
     }
- if (image_elem_size == 4)
+ if (image->image_elem_size == 4)
     {
       memcpy (fill_pixel, fill_color, sizeof (cl_int4));      
     }
@@ -181,7 +174,7 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.rowpitch = image->image_row_pitch;
   cmd->command.fill_image.slicepitch = image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
-  cmd->command.fill_image.pixel_size = image_elem_size * num_image_channels;
+  cmd->command.fill_image.pixel_size = image->image_elem_size * image->image_channels;
   pocl_command_enqueue(command_queue, cmd);
   
   free (supported_image_formats);

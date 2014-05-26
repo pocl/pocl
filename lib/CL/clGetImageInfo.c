@@ -31,10 +31,7 @@ CL_API_SUFFIX__VERSION_1_0
     case CL_IMAGE_FORMAT:
       POCL_RETURN_IMAGE_INFO (cl_image_format, image_format);
     case CL_IMAGE_ELEMENT_SIZE:
-      pocl_get_image_information (image->image_channel_order, 
-                                  image->image_channel_data_type, 
-                                  &num_channels, &elem_size);
-      POCL_RETURN_IMAGE_INFO (size_t, num_channels * elem_size);
+      POCL_RETURN_IMAGE_INFO (size_t, image->image_channels * image->image_elem_size);
     case CL_IMAGE_ROW_PITCH:
       POCL_RETURN_IMAGE_INFO (size_t, image->image_row_pitch);
     case CL_IMAGE_SLICE_PITCH:

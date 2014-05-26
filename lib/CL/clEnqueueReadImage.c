@@ -41,8 +41,6 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0 
 {
   cl_int status;
-  int num_channels;
-  int elem_size;
   _cl_command_node *cmd;
 
   if (image == NULL)
@@ -58,13 +56,9 @@ CL_API_SUFFIX__VERSION_1_0
   if (command_queue->context != image->context)
     return CL_INVALID_CONTEXT;
 
-  pocl_get_image_information(image->image_channel_order,
-                             image->image_channel_data_type,
-                             &num_channels, &elem_size);
-
-  size_t tuned_origin[3] = {origin[0] * elem_size * num_channels, origin[1], 
+  size_t tuned_origin[3] = {origin[0] * image->image_elem_size * image->image_channels, origin[1], 
                             origin[2]};
-  size_t tuned_region[3] = {region[0] * elem_size * num_channels, region[1], 
+  size_t tuned_region[3] = {region[0] * image->image_elem_size * image->image_channels, region[1], 
                             region[2]};
   
   status = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE, 
