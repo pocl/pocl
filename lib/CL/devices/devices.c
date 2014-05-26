@@ -24,6 +24,7 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "devices.h"
 #include "common.h"
