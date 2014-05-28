@@ -211,12 +211,9 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
         BasicBlock *successor = t->getSuccessor(0);
 
         if (Barrier::hasOnlyBarrier(successor) && 
-            successor->getSinglePredecessor() == b &&
-            successor->getTerminator()->getNumSuccessors() == 1) {
-            b->getTerminator()->setSuccessor(
-              0, successor->getTerminator()->getSuccessor(0));
-            successor->replaceAllUsesWith(b);
-            successor->eraseFromParent();
+            successor->getSinglePredecessor() == b) {
+            b->replaceAllUsesWith(successor);
+            b->eraseFromParent();
             emptyRegionDeleted = true;
             changed = true;
             break;
