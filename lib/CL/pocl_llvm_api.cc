@@ -1190,7 +1190,13 @@ pocl_llvm_codegen( cl_kernel kernel,
     llvm::PassManager PM;
     llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
     PM.add(TLI);
+#if defined LLVM_3_2
+    PM.add(new TargetTransformInfo(target->getScalarTargetTransformInfo(),
+                                   target->getVectorTargetTransformInfo()));
+#else
     target->addAnalysisPasses(PM);
+#endif
+
     // TODO: this is how LLVM does it. We should record this in 'device'
     if (const DataLayout *TD = target->getDataLayout())
         PM.add(new DataLayout(*TD));
