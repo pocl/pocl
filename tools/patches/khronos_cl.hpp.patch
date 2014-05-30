@@ -1,6 +1,16 @@
 --- include/CL/cl.hpp.in	2014-03-17 17:47:57.147223265 +0200
 +++ include/CL/cl.hpp	2014-03-17 17:55:52.620234165 +0200
-@@ -211,11 +211,9 @@
+@@ -173,6 +173,9 @@
+ #include <OpenGL/OpenGL.h>
+ #include <OpenCL/opencl.h>
+ #include <libkern/OSAtomic.h>
++#elif defined(__ANDROID__)
++#include <GLES/gl.h>
++#include <CL/opencl.h>
+ #else
+ #include <GL/gl.h>
+ #include <CL/opencl.h>
+@@ -211,11 +214,9 @@
  #include <string>
  #endif
 
@@ -26,7 +36,7 @@
 +        __sync_synchronize();
 +#endif
 +    }
-+} // namespace detailssss
++} // namespace details
  
      
  /*! \brief class used to interface between C++ and
