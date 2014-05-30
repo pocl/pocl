@@ -1176,7 +1176,6 @@ pocl_llvm_codegen( cl_kernel kernel,
                    const char *infilename,
                    const char *outfilename)
 {
-    cl_program program = kernel->program;
     std::string error;
     SMDiagnostic Err;
 #if defined LLVM_3_2 or defined LLVM_3_3
