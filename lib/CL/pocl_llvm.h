@@ -73,8 +73,9 @@ int pocl_llvm_generate_workgroup_function
  const char* kernel_filename);
 
 /**
- * Refresh the on binary representation of the program, update the
- * data in the program object. 
+ * Update the program->binaries[] representation of the kernels
+ * from the program->llvm_irs[] representation.
+ * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.
  */
 void pocl_llvm_update_binaries (cl_program program);
 
@@ -89,6 +90,14 @@ void pocl_llvm_update_binaries (cl_program program);
  * 'max_num_krn')
  */
 int pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn);
+
+/** Compile the kernel in infile from LLVM bitcode to native object file for
+ * device, into outfile.
+ */
+int pocl_llvm_codegen ( cl_kernel kernel,
+                        cl_device_id device,
+                        const char *infile,
+                        const char *outfile);
 
 #ifdef __cplusplus
 }

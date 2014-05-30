@@ -34,6 +34,7 @@
 #include "devices.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_llvm.h"
 
 #define COMMAND_LENGTH 2048
 
@@ -47,7 +48,7 @@
  * @param return the generated binary filename.
  */
 const char*
-llvm_codegen (const char* tmpdir) {
+llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
   const char* pocl_verbose_ptr = 
     pocl_get_string_option("POCL_VERBOSE", (char*)NULL);
@@ -55,16 +56,22 @@ llvm_codegen (const char* tmpdir) {
 
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
-  char assembly[POCL_FILENAME_LENGTH];
+  char objfile[POCL_FILENAME_LENGTH];
 
   char* module = malloc(min(POCL_FILENAME_LENGTH, 
 	   strlen(tmpdir) + strlen("/parallel.so") + 1)); 
   int error;
+  cl_program program = kernel->program;
 
   error = snprintf 
     (module, POCL_FILENAME_LENGTH,
      "%s/parallel.so", tmpdir);
   assert (error >= 0);
+  error = snprintf
+    (objfile, POCL_FILENAME_LENGTH,
+     "%s/parallel.so.o", tmpdir);
+  assert (error >= 0);
+
 
   if (access (module, F_OK) != 0)
     {
@@ -72,37 +79,7 @@ llvm_codegen (const char* tmpdir) {
                         "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
-      error = snprintf (assembly, POCL_FILENAME_LENGTH,
-			"%s/parallel.s",
-			tmpdir);
-      assert (error >= 0);
-      
-      error = snprintf (command, COMMAND_LENGTH,
-			LLC " " HOST_LLC_FLAGS " -o %s %s",
-			assembly,
-			bytecode);
-      assert (error >= 0);
-      
-      if (pocl_verbose) {
-        fprintf(stderr, "[pocl] executing [%s]\n", command);
-        fflush(stderr);
-      }
-      error = system (command);
-      assert (error == 0);
-          
-      // For the pthread device, use device type is always the same as
-      // the host.
-      error = snprintf (command, COMMAND_LENGTH,
-			CLANG " " HOST_AS_FLAGS " -c -o %s.o %s ",
-			module,
-			assembly);
-      assert (error >= 0);
-      
-      if (pocl_verbose) {
-        fprintf(stderr, "[pocl] executing [%s]\n", command);
-        fflush(stderr);
-      }
-      error = system (command);
+      error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
       assert (error == 0);
 
       // clang is used as the linker driver in LINK_CMD

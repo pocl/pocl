@@ -750,7 +750,9 @@ void check_compiler_cache (_cl_command_node *cmd)
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->function_name);
-  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir);
+  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
+                                        cmd->command.run.kernel,
+                                        cmd->device);
   dlhandle = lt_dlopen (module_fn);     
   if (dlhandle == NULL)
     {

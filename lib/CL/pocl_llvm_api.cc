@@ -53,6 +53,8 @@
 #include "llvm/IRReader/IRReader.h"
 #endif
 
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/MutexGuard.h"
@@ -63,6 +65,7 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <sys/stat.h>
@@ -620,6 +623,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
 static llvm::TargetOptions GetTargetOptions() {
   llvm::TargetOptions Options;
+  Options.PositionIndependentExecutable = true;
   /* TODO: propagate these from clBuildProgram options. */
 #if 0
   Options.LessPreciseFPMADOption = EnableFPMAD;
@@ -640,7 +644,6 @@ static llvm::TargetOptions GetTargetOptions() {
   Options.StackAlignmentOverride = OverrideStackAlignment;
   Options.RealignStack = EnableRealignStack;
   Options.TrapFuncName = TrapFuncName;
-  Options.PositionIndependentExecutable = EnablePIE;
   Options.EnableSegmentedStacks = SegmentedStacks;
   Options.UseInitArray = UseInitArray;
   Options.SSPBufferSize = SSPBufferSize;
@@ -649,12 +652,12 @@ static llvm::TargetOptions GetTargetOptions() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine* GetTargetMachine
-(Triple TheTriple, 
- std::string MCPU,
+static TargetMachine* GetTargetMachine(cl_device_id device,
  const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
 
   std::string Error;
+  Triple TheTriple(device->llvm_target_triplet);
+  std::string MCPU =  device->llvm_cpu ? device->llvm_cpu : "";
   const Target *TheTarget = 
     TargetRegistry::lookupTarget("" /*MArch*/, TheTriple,
                                  Error);
@@ -674,7 +677,7 @@ static TargetMachine* GetTargetMachine
 
   return TheTarget->createTargetMachine(TheTriple.getTriple(),
                                         MCPU, FeaturesStr, GetTargetOptions(),
-                                        Reloc::Default, CodeModel::Default,
+                                        Reloc::PIC_, CodeModel::Default,
                                         CodeGenOpt::Aggressive);
 }
 
@@ -716,6 +719,8 @@ static PassManager& kernel_compiler_passes
       // Run the global LLVM pass initialization functions.
       InitializeAllTargets();
       InitializeAllTargetMCs();
+      InitializeAllAsmPrinters();
+      InitializeAllAsmParsers();
 
       // TODO: do this globally, and just once per program
       initializeCore(Registry);
@@ -738,8 +743,7 @@ static PassManager& kernel_compiler_passes
   PassManager *Passes = new PassManager();
 
   // Need to setup the target info for target specific passes. */
-  TargetMachine *Machine = 
-    GetTargetMachine(triple, device->llvm_cpu ? device->llvm_cpu : "");
+  TargetMachine *Machine = GetTargetMachine(device);
   // Add internal analysis passes from the target machine.
 #ifndef LLVM_3_2
   Machine->addAnalysisPasses(*Passes);
@@ -1066,7 +1070,6 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   assert (linked_bc != NULL);
 
   /* Now finally run the set of passes assembled above */
-
   // TODO pass these as parameters instead, this is not thread safe!
   pocl::LocalSize.clear();
   pocl::LocalSize.addValue(local_x);
@@ -1090,7 +1093,6 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   // If we delete here, it will crash.
   /* OPTIMIZE: store the fully linked work-group function llvm::Module 
      and pass it to code generation without writing to disk. */
-  delete linked_bc;
 #endif
 
   return 0;
@@ -1165,3 +1167,46 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
   }
   return i;
 }
+
+/* Run LLVM codegen on input file (parallel-optimized).
+ * output native object file. */
+int
+pocl_llvm_codegen( cl_kernel kernel,
+                   cl_device_id device,
+                   const char *infilename,
+                   const char *outfilename)
+{
+    cl_program program = kernel->program;
+    std::string error;
+    SMDiagnostic Err;
+#if defined LLVM_3_2 or defined LLVM_3_3
+    tool_output_file outfile(outfilename, error, 0);
+#else
+    tool_output_file outfile(outfilename, error, llvm::sys::fs::F_Binary);
+#endif
+    llvm::Triple triple(device->llvm_target_triplet);
+    llvm::TargetMachine *target = GetTargetMachine(device);
+    llvm::Module *input = ParseIRFile(infilename, Err, *globalContext);
+
+    llvm::PassManager PM;
+    llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
+    PM.add(TLI);
+    target->addAnalysisPasses(PM);
+    // TODO: this is how LLVM does it. We should record this in 'device'
+    if (const DataLayout *TD = target->getDataLayout())
+        PM.add(new DataLayout(*TD));
+    else
+        PM.add(new DataLayout(input));
+    // TODO: better error check
+    formatted_raw_ostream FOS(outfile.os());
+    llvm::MCContext *mcc;
+    if(target->addPassesToEmitMC(PM, mcc, FOS, llvm::TargetMachine::CGFT_ObjectFile))
+        return 1;
+
+    PM.run(*input);
+    outfile.keep();
+
+    return 0;
+}
+/* vim: set ts=4 expandtab: */
+
