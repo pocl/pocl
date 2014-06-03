@@ -37,6 +37,7 @@
 #include "llvm/Linker.h"
 #else
 #include "llvm/Linker/Linker.h"
+#include "llvm/PassAnalysisSupport.h"
 #endif
 
 #ifdef LLVM_3_2
@@ -1187,7 +1188,7 @@ pocl_llvm_codegen( cl_kernel kernel,
 #if defined LLVM_3_2 or defined LLVM_3_3
     tool_output_file outfile(outfilename, error, 0);
 #else
-    tool_output_file outfile(outfilename, error, llvm::sys::fs::F_Binary);
+    tool_output_file outfile(outfilename, error, F_Binary);
 #endif
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);
@@ -1203,11 +1204,15 @@ pocl_llvm_codegen( cl_kernel kernel,
     target->addAnalysisPasses(PM);
 #endif
 
-    // TODO: this is how LLVM does it. We should record this in 'device'
-    if (const DataLayout *TD = target->getDataLayout())
+    // TODO: get DataLayout from the 'device'
+#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
+    const DataLayout *TD;
+    TD = target->getDataLayout();
+    if (TD)
         PM.add(new DataLayout(*TD));
     else
         PM.add(new DataLayout(input));
+#endif
     // TODO: better error check
     formatted_raw_ostream FOS(outfile.os());
     llvm::MCContext *mcc;
