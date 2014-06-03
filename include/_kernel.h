@@ -909,7 +909,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define isordered      _cl_isordered
 #define isunordered    _cl_isunordered
 #define ldexp          _cl_ldexp
-#define ldexp          _cl_ldexp
 #define length         _cl_length
 #define lgamma         _cl_lgamma
 #define lgamma_r       _cl_lgamma_r
@@ -950,14 +949,12 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define popcount       _cl_popcount
 #define pow            _cl_pow
 #define pown           _cl_pown
-#define pown           _cl_pown
 #define powr           _cl_powr
 #define radians        _cl_radians
 #define remainder      _cl_remainder
 #define remquo         _cl_remquo
 #define rhadd          _cl_rhadd
 #define rint           _cl_rint
-#define rootn          _cl_rootn
 #define rootn          _cl_rootn
 #define rotate         _cl_rotate
 #define round          _cl_round
