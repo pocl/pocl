@@ -849,6 +849,7 @@ case $host_cpu in
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
       armv7l*gnueabi)
          llc_triple="armv7-unknown-linux-gnueabi"
+         AC_DEFINE([HOST_FLOAT_SOFT_ABI], [], ["basic and pthreads devices use soft-float ABI"])
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft"
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"

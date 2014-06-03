@@ -621,10 +621,16 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
 /* helpers copied from LLVM opt START */
 
+/* FIXME: these options should come from the cl_device, and
+ * cl_program's options. */
 static llvm::TargetOptions GetTargetOptions() {
   llvm::TargetOptions Options;
   Options.PositionIndependentExecutable = true;
-  /* TODO: propagate these from clBuildProgram options. */
+  #ifdef HOST_FLOAT_SOFT_ABI
+  Options.FloatABIType = FloatABI::Soft;
+  #else
+  Options.FloatABIType = FloatABI::Hard;
+  #endif
 #if 0
   Options.LessPreciseFPMADOption = EnableFPMAD;
   Options.NoFramePointerElim = DisableFPElim;
