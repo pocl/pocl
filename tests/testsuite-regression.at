@@ -111,9 +111,8 @@ AT_CLEANUP
 AT_SETUP([vector kernel arguments - lp:987905])
 AT_KEYWORDS([regression vectorarg])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&
-             grep -q "define LLVM_3_2" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | egrep -q 'x86_64'])
+#this test fails with an assert. If asserts are off, it succeeds
+AT_XFAIL_IF([grep LLVM_CXX_FLAGS $abs_top_builddir/config.log | grep -q -v DNDEBUG])
 AT_CHECK([$abs_top_builddir/tests/regression/test_vectors_as_args], 0)
 AT_CLEANUP
 
