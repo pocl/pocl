@@ -427,7 +427,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define FLT_EPSILON    0x1.0p-23f
 
 #define FP_ILOGB0   INT_MIN
-#define FP_ILOGBNAN INT_MAX
+#define FP_ILOGBNAN INT_MIN
 
 #define M_E_F        2.71828182845904523536028747135f
 #define M_LOG2E_F    1.44269504088896340735992468100f

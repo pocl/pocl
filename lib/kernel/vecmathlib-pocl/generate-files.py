@@ -4,6 +4,46 @@ import re, sys
 
 
 
+# This is always prepended to the generated function names.
+func_prefix = "_cl_"
+
+# Some of the functions need prefixes to avoid using the C standard
+# library ones.
+masked_functions = [
+    "acos",
+    "asin",
+    "atan",
+    "atan2",
+    "ceil",
+    "copysign",
+    "cos",
+    "exp",
+    "exp2",
+    "fabs",
+    "floor",
+    "fma",
+    "fmax",
+    "fmin",
+    "log",
+    "log2",
+    "pow",
+    "rint",
+    "round",
+    "sin",
+    "sqrt",
+    "tan",
+    "trunc",
+]
+
+# This is prepended to masked function names.
+mask_prefix = ""
+
+def prefixed(name):
+    if name in masked_functions: name = mask_prefix + name
+    return func_prefix + name
+
+
+
 # Types:
 SI = "SI"                       # int/long
 SK = "SK"                       # int (even for double)
@@ -89,9 +129,9 @@ directfuncs = [
     ("fmin"          , [VF, SF     ], VF, "fmin(x0,(vector_t)x1)"),
     ("fract"         , [VF, PVF    ], VF, "*x1=floor(x0), fmin(x0-floor(x0), sizeof(scalar_t)==sizeof(float) ? (scalar_t)POCL_FRACT_MIN_F : (scalar_t)POCL_FRACT_MIN)"),
     ("frexp"         , [VF, PVK    ], VF, "*x1=ilogb(x0), ldexp(x0,-ilogb(x0))"),
-    ("ilogb"         , [VF         ], VK, "convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t r=ilogb_(x0); select(r, (jvector_t)FP_ILOGB0, r==jmin); }))"),
-    ("ldexp"         , [VF, VK     ], VF, "({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); })"),
-    ("ldexp"         , [VF, SK     ], VF, "({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); })"),
+    ("ilogb"         , [VF         ], VK, "convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t "+prefixed("ilogb_")+"(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r="+prefixed("ilogb_")+"(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }))"),
+    ("ldexp"         , [VF, VK     ], VF, "({ __attribute__((__overloadable__)) vector_t "+prefixed("ldexp_")+"(vector_t,jvector_t); "+prefixed("ldexp_")+"(x0,convert_ivector_t(x1)); })"),
+    ("ldexp"         , [VF, SK     ], VF, "({ __attribute__((__overloadable__)) vector_t "+prefixed("ldexp_")+"(vector_t,kscalar_t); "+prefixed("ldexp_")+"(x0,(kscalar_t)x1); })"),
     ("logb"          , [VF         ], VF, "convert_vector_t(ilogb(x0))"),
     ("mad"           , [VF, VF, VF ], VF, "fma(x0,x1,x2)"),
     ("maxmag"        , [VF, VF     ], VF, "fabs(x0)>fabs(x1) ? x0 : fabs(x1)>fabs(x0) ? x1 : fmax(x0,x1)"),
@@ -177,46 +217,6 @@ directfuncs = [
 # Unchecked: 6.12.7 (vector data load and store functions)
 
 # Unchecked: 6.12.12 (miscellaneous vector functions)
-
-
-
-# This is always prepended to the generated function names.
-func_prefix = "_cl_"
-
-# Some of the functions need prefixes to avoid using the C standard
-# library ones.
-masked_functions = [
-    "acos",
-    "asin",
-    "atan",
-    "atan2",
-    "ceil",
-    "copysign",
-    "cos",
-    "exp",
-    "exp2",
-    "fabs",
-    "floor",
-    "fma",
-    "fmax",
-    "fmin",
-    "log",
-    "log2",
-    "pow",
-    "rint",
-    "round",
-    "sin",
-    "sqrt",
-    "tan",
-    "trunc",
-]
-
-# This is prepended to masked function names.
-mask_prefix = ""
-
-def prefixed(name):
-    if name in masked_functions: name = mask_prefix + name
-    return func_prefix + name
 
 
 

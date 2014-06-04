@@ -37,7 +37,7 @@ float _cl_ldexp(float x0, int x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -59,7 +59,7 @@ float2 _cl_ldexp(float2 x0, int2 x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -81,7 +81,7 @@ float3 _cl_ldexp(float3 x0, int3 x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -103,7 +103,7 @@ float4 _cl_ldexp(float4 x0, int4 x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -125,7 +125,7 @@ float8 _cl_ldexp(float8 x0, int8 x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -147,7 +147,7 @@ float16 _cl_ldexp(float16 x0, int16 x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -171,7 +171,7 @@ double _cl_ldexp(double x0, int x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -193,7 +193,7 @@ double2 _cl_ldexp(double2 x0, int2 x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -215,7 +215,7 @@ double3 _cl_ldexp(double3 x0, int3 x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -237,7 +237,7 @@ double4 _cl_ldexp(double4 x0, int4 x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -259,7 +259,7 @@ double8 _cl_ldexp(double8 x0, int8 x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -281,7 +281,7 @@ double16 _cl_ldexp(double16 x0, int16 x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,jvector_t); ldexp_(x0,convert_ivector_t(x1)); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,jvector_t); _cl_ldexp_(x0,convert_ivector_t(x1)); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -309,7 +309,7 @@ float2 _cl_ldexp(float2 x0, int x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -331,7 +331,7 @@ float3 _cl_ldexp(float3 x0, int x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -353,7 +353,7 @@ float4 _cl_ldexp(float4 x0, int x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -375,7 +375,7 @@ float8 _cl_ldexp(float8 x0, int x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -397,7 +397,7 @@ float16 _cl_ldexp(float16 x0, int x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -421,7 +421,7 @@ double2 _cl_ldexp(double2 x0, long x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -443,7 +443,7 @@ double3 _cl_ldexp(double3 x0, long x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -465,7 +465,7 @@ double4 _cl_ldexp(double4 x0, long x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -487,7 +487,7 @@ double8 _cl_ldexp(double8 x0, long x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -509,7 +509,7 @@ double16 _cl_ldexp(double16 x0, long x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return ({ __attribute__((__overloadable__)) vector_t ldexp_(vector_t,kscalar_t); ldexp_(x0,(kscalar_t)x1); });
+  return ({ __attribute__((__overloadable__)) vector_t _cl_ldexp_(vector_t,kscalar_t); _cl_ldexp_(x0,(kscalar_t)x1); });
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t

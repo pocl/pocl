@@ -234,7 +234,7 @@ OK
 AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel test_bitselect], 0, expout)
 AT_CLEANUP
 
-AT_SETUP([Kernel functions fabs signbit isfinite isinf isnan isnormal copysign])
+AT_SETUP([Kernel functions fabs signbit isfinite isinf isnan isnormal copysign ilogb ldexp])
 #Fails with what looks like rounding with vecmathlib on ppc32. ppc64 uninvestigated
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 

@@ -5,6 +5,8 @@
 // TESTING: isnan
 // TESTING: isnormal
 // TESTING: signbit
+// TESTING: ilogb
+// TESTING: ldexp
 
 #if __clang_major__ == 3 && __clang_minor__ < 4
 typedef const char* string;     /* for backward compatibility */
@@ -12,31 +14,34 @@ typedef const char* string;     /* for backward compatibility */
 typedef constant char* string;
 #endif
 
-#define IMPLEMENT_BODY_V(NAME, BODY, SIZE, VTYPE, STYPE, JTYPE, SJTYPE) \
+#define IMPLEMENT_BODY_V(NAME, BODY, SIZE,                              \
+                         VTYPE, STYPE, ITYPE, SITYPE, JTYPE, SJTYPE)    \
   void NAME##_##VTYPE()                                                 \
   {                                                                     \
     typedef VTYPE vtype;                                                \
     typedef STYPE stype;                                                \
+    typedef ITYPE itype;                                                \
+    typedef SITYPE sitype;                                              \
     typedef JTYPE jtype;                                                \
     typedef SJTYPE sjtype;                                              \
     string const typename = #VTYPE;                                     \
     const int vecsize = SIZE;                                           \
     BODY;                                                               \
   }
-#define DEFINE_BODY_V(NAME, EXPR)                                   \
-  IMPLEMENT_BODY_V(NAME, EXPR,  1, float   , float , int   , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  2, float2  , float , int2  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  3, float3  , float , int3  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  4, float4  , float , int4  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  8, float8  , float , int8  , int )  \
-  IMPLEMENT_BODY_V(NAME, EXPR, 16, float16 , float , int16 , int )  \
-  __IF_FP64(                                                        \
-  IMPLEMENT_BODY_V(NAME, EXPR,  1, double  , double, long  , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  2, double2 , double, long2 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  3, double3 , double, long3 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  4, double4 , double, long4 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR,  8, double8 , double, long8 , long)  \
-  IMPLEMENT_BODY_V(NAME, EXPR, 16, double16, double, long16, long))
+#define DEFINE_BODY_V(NAME, EXPR)                                       \
+  IMPLEMENT_BODY_V(NAME, EXPR,  1, float   , float , int  , int, int   , int ) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  2, float2  , float , int2 , int, int2  , int ) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  3, float3  , float , int3 , int, int3  , int ) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  4, float4  , float , int4 , int, int4  , int ) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  8, float8  , float , int8 , int, int8  , int ) \
+  IMPLEMENT_BODY_V(NAME, EXPR, 16, float16 , float , int16, int, int16 , int ) \
+  __IF_FP64(                                                            \
+  IMPLEMENT_BODY_V(NAME, EXPR,  1, double  , double, int  , int, long  , long) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  2, double2 , double, int2 , int, long2 , long) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  3, double3 , double, int3 , int, long3 , long) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  4, double4 , double, int4 , int, long4 , long) \
+  IMPLEMENT_BODY_V(NAME, EXPR,  8, double8 , double, int8 , int, long8 , long) \
+  IMPLEMENT_BODY_V(NAME, EXPR, 16, double16, double, int16, int, long16, long))
 
 #define CALL_FUNC_V(NAME)                       \
   NAME##_float   ();                            \
@@ -66,6 +71,7 @@ typedef constant char* string;
 #define count_bits(T)  (CHAR_BIT * sizeof(T))
 
 #define ISNAN(x) (isnan(x) || as_int((float)(x)) == as_int((float)NAN))
+#define ISEQ(x, y) (ISNAN(x) == ISNAN(y) && (ISNAN(x) || (x)==(y)))
 
 DEFINE_BODY_V
 (test_fabs,
@@ -140,6 +146,10 @@ DEFINE_BODY_V
            sjtype sj;
          } S;
          typedef union {
+           itype  v;
+           sitype s[16];
+         } Ivec;
+         typedef union {
            jtype  v;
            sjtype s[16];
          } Jvec;
@@ -160,78 +170,78 @@ DEFINE_BODY_V
            return;
          }
          /* signbit */
-         Jvec ires;
-         ires.v = signbit(val.v);
+         Jvec jres;
+         jres.v = signbit(val.v);
          equal = true;
          for (int n=0; n<vecsize; ++n) {
            equal = equal &&
              (ISNAN(val.s[n]) ||
-              ires.s[n] == (sign>0 ? 0 : vecsize==1 ? +1 : -1));
+              jres.s[n] == (sign>0 ? 0 : vecsize==1 ? +1 : -1));
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
              printf("FAIL: signbit type=%s val=%.17g res=%d good=%d\n",
-                    typename, val.s[n], (int)ires.s[n],
+                    typename, val.s[n], (int)jres.s[n],
                     (sign>0 ? 0 : vecsize==1 ? +1 : -1));
            }
            return;
          }
          /* isfinite */
-         ires.v = isfinite(val.v);
+         jres.v = isfinite(val.v);
          equal = true;
          for (int n=0; n<vecsize; ++n) {
            equal = equal &&
-             ires.s[n] == (isfinite(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+             jres.s[n] == (isfinite(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
              printf("FAIL: isfinite type=%s val=%.17g res=%d good=%d\n",
-                    typename, val.s[n], (int)ires.s[n],
+                    typename, val.s[n], (int)jres.s[n],
                     (isfinite(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
            }
            return;
          }
          /* isinf */
-         ires.v = isinf(val.v);
+         jres.v = isinf(val.v);
          equal = true;
          for (int n=0; n<vecsize; ++n) {
            equal = equal &&
-             ires.s[n] == (isinf(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+             jres.s[n] == (isinf(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
              printf("FAIL: isinf type=%s val=%.17g res=%d good=%d\n",
-                    typename, val.s[n], (int)ires.s[n],
+                    typename, val.s[n], (int)jres.s[n],
                     (isinf(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
            }
            return;
          }
          /* isnan */
-         ires.v = isnan(val.v);
+         jres.v = isnan(val.v);
          equal = true;
          for (int n=0; n<vecsize; ++n) {
            equal = equal &&
-             ires.s[n] == (isnan(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+             jres.s[n] == (isnan(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
              printf("FAIL: isnan type=%s val=%.17g res=%d good=%d\n",
-                    typename, val.s[n], (int)ires.s[n],
+                    typename, val.s[n], (int)jres.s[n],
                     (isnan(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
            }
            return;
          }
          /* isnormal */
-         ires.v = isnormal(val.v);
+         jres.v = isnormal(val.v);
          equal = true;
          for (int n=0; n<vecsize; ++n) {
            equal = equal &&
-             ires.s[n] == (isnormal(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
+             jres.s[n] == (isnormal(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0);
          }
          if (!equal) {
            for (int n=0; n<vecsize; ++n) {
              printf("FAIL: isnormal type=%s val=%.17g res=%d good=%d\n",
-                    typename, val.s[n], (int)ires.s[n],
+                    typename, val.s[n], (int)jres.s[n],
                     (isnormal(val.s[n]) ? (vecsize==1 ? +1 : -1) : 0));
            }
            return;
@@ -254,6 +264,56 @@ DEFINE_BODY_V
              }
              return;
            }
+         }
+         /* ilogb */
+         Ivec ires;
+         ires.v = ilogb(val.v);
+         Ivec igoodres;
+         equal = true;
+         for (int n=0; n<vecsize; ++n) {
+           if (ISNAN(val.s[n])) {
+             igoodres.s[n] = FP_ILOGBNAN;
+           } else if (val.s[n] == (stype)0) {
+             igoodres.s[n] = FP_ILOGB0;
+           } else if (isinf(val.s[n])) {
+             igoodres.s[n] = INT_MAX;
+           } else {
+             // We round down to "correct" for inaccuracies in log2
+             igoodres.s[n] = rint(floor(0.999999f*log2(fabs(val.s[n]))));
+           }
+           equal = equal && ires.s[n] == igoodres.s[n];
+         }
+         if (!equal) {
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: ilogb type=%s val=%.17g res=%d good=%d\n",
+                    typename, val.s[n], (int)ires.s[n], (int)igoodres.s[n]);
+           }
+           return;
+         }
+         /* ldexp */
+         Ivec ival2;
+         ival2.v = (itype)4;
+         res.v = ldexp(val.v, ival2.v);
+         Tvec goodres;
+         equal = true;
+         for (int n=0; n<vecsize; ++n) {
+           if (ISNAN(val.s[n])) {
+             goodres.s[n] = NAN;
+           } else if (val.s[n] == (stype)0) {
+             goodres.s[n] = val.s[n];
+           } else if (isinf(val.s[n])) {
+             goodres.s[n] = val.s[n];
+           } else {
+             goodres.s[n] = val.s[n] * pow(2.0, ival2.s[n]);
+           }
+           equal = equal && ISEQ(res.s[n], goodres.s[n]);
+         }
+         if (!equal) {
+           for (int n=0; n<vecsize; ++n) {
+             printf("FAIL: ldexp type=%s val=%.17g val2=%d res=%.17g good=%.17g\n",
+                    typename, val.s[n], (int)ival2.s[n], res.s[n], goodres.s[n]);
+           }
+           return;
          }
        }
      }
