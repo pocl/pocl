@@ -7,5 +7,5 @@ Name: Portable Computing Language
 Description: Portable Computing Language
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lpocl @LD_FLAGS_BIN@
-Cflags: -I${includedir} @PTHREAD_CFLAGS@
+Cflags: -I${includedir} -I${prefix}/share/pocl/include @PTHREAD_CFLAGS@
 
