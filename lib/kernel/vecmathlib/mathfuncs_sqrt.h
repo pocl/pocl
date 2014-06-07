@@ -72,6 +72,19 @@ namespace vecmathlib {
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_rsqrt(realvec_t x)
   {
+#if 0
+    // See <http://en.wikipedia.org/wiki/Fast_inverse_square_root>
+    realvec_t x_2 = RV(0.5) * x;
+    realvec_t r = x;
+    intvec_t i = as_int(r);
+    int_t magic = sizeof(real_t)==4 ? I(0x5f375a86) : I(0x5fe6eb50c7b537a9);
+    i = IV(magic) - (i >> I(1));
+    r = as_float(i);
+    r += r * (RV(0.5) - (x_2 * r * r));
+    r += r * (RV(0.5) - (x_2 * r * r));
+    r += r * (RV(0.5) - (x_2 * r * r));
+    return r;
+#else
     // Initial guess
     // VML_ASSERT(all(x > RV(0.0)));
     intvec_t ilogb_x = ilogb(x);
@@ -101,6 +114,7 @@ namespace vecmathlib {
     }
     
     return r;
+#endif
   }
   
   

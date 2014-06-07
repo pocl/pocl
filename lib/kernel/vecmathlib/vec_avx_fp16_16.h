@@ -350,6 +350,12 @@ namespace vecmathlib {
     {
       return (*this ^ x).convert_bool();
     }
+    // TODO: First compare sign; then if equal, compare sign of difference
+    // TODO: Also look for intrinsics
+    boolvec_t operator<(intvec const& x) const { __builtin_unreachable(); }
+    boolvec_t operator<=(intvec const& x) const { __builtin_unreachable(); }
+    boolvec_t operator>(intvec const& x) const { __builtin_unreachable(); }
+    boolvec_t operator>=(intvec const& x) const { __builtin_unreachable(); }
   };
   
   

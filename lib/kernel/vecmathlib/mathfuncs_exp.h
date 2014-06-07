@@ -14,6 +14,9 @@ namespace vecmathlib {
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_exp2(realvec_t x)
   {
+    // TODO: Check SLEEF 2.80 algorithm
+    // (in particular the improved-precision truncation)
+    
     // Rescale
     realvec_t x0 = x;
     

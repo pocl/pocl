@@ -14,16 +14,12 @@ namespace vecmathlib {
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_log2(realvec_t x)
   {
+    // Algorithm inspired by SLEEF 2.80
+    
     // Rescale
-    VML_ASSERT(all(x > RV(0.0)));
-    // intvec_t ilogb_x = ilogb(x);
-    // x = ldexp(x, -ilogb_x);
-    // sign bit is known to be zero
-    intvec_t ilogb_x = (lsr(as_int(x), I(FP::mantissa_bits)) -
-                        IV(FP::exponent_offset));
-    x = as_float((as_int(x) & IV(FP::mantissa_mask)) |
-                 IV(I(FP::exponent_offset) << I(FP::mantissa_bits)));
-    VML_ASSERT(all(x >= RV(1.0) && x < RV(2.0)));
+    intvec_t ilogb_x = ilogb(x * RV(M_SQRT2));
+    x = ldexp(x, -ilogb_x);
+    VML_ASSERT(all(x >= RV(M_SQRT1_2) && x <= RV(M_SQRT2)));
     
     realvec_t y = (x - RV(1.0)) / (x + RV(1.0));
     realvec_t y2 = y*y;
@@ -31,44 +27,29 @@ namespace vecmathlib {
     realvec_t r;
     switch (sizeof(real_t)) {
     case 4:
-#ifdef VML_HAVE_FP_CONTRACT
-      // float, error=5.98355642684398209498469870525e-9
-      r = RV(0.410981538282433293325329456838);
-      r = mad(r, y2, RV(0.402155483172044562892705980539));
-      r = mad(r, y2, RV(0.57755014627178237959721643293));
-      r = mad(r, y2, RV(0.96178780600659929206930296869));
-      r = mad(r, y2, RV(2.88539012786343587248965772685));
-#else
-      //flaot, error=2.25468184051947656525068987795e-7
-      r = RV(0.498866687070343238590910977481);
-      r = mad(r, y2, RV(0.57002741193682764193895550312));
-      r = mad(r, y2, RV(0.96200215034262628756932169194));
-      r = mad(r, y2, RV(2.88538850388042106595516956395));
-#endif
+      // float, error=7.09807175879142775648452461821e-8
+      r = RV(0.59723611417135718739797302426);
+      r = mad(r, y2, RV(0.961524413175528426101613434));
+      r = mad(r, y2, RV(2.88539097665498228703236701));
       break;
     case 8:
 #ifdef VML_HAVE_FP_CONTRACT
-      // double, error=9.45037202901655672811489051683e-17
-      r = RV(0.259935726478127940817401224248);
-      r = mad(r, y2, RV(0.140676370079882918464564658472));
-      r = mad(r, y2, RV(0.196513478841924000569879320851));
-      r = mad(r, y2, RV(0.221596471338300882039273355617));
-      r = mad(r, y2, RV(0.262327298560598641020007602127));
-      r = mad(r, y2, RV(0.320598261015170101859472461613));
-      r = mad(r, y2, RV(0.412198595799726905825871956187));
-      r = mad(r, y2, RV(0.57707801621733949207376840932));
-      r = mad(r, y2, RV(0.96179669392666302667713134701));
-      r = mad(r, y2, RV(2.88539008177792581277410991327));
+      // double, error=1.48294180185938512675770096324e-16
+      r = RV(0.243683403415639178527756320773);
+      r = mad(r, y2, RV(0.26136626803870009948502658));
+      r = mad(r, y2, RV(0.320619429891299265439389));
+      r = mad(r, y2, RV(0.4121983452028499242926));
+      r = mad(r, y2, RV(0.577078017761894161436));
+      r = mad(r, y2, RV(0.96179669392233355927));
+      r = mad(r, y2, RV(2.8853900817779295236));
 #else
-      // double, error=1.21820548287702216975532695788e-13
-      r = RV(0.293251364683280430617251942017);
-      r = mad(r, y2, RV(0.201364223624519571276587631354));
-      r = mad(r, y2, RV(0.264443947645547871780098560836));
-      r = mad(r, y2, RV(0.320475051320227723946459855458));
-      r = mad(r, y2, RV(0.412202612052105347480086431555));
-      r = mad(r, y2, RV(0.57707794741938820005328259256));
-      r = mad(r, y2, RV(0.96179669445173881282808321929));
-      r = mad(r, y2, RV(2.88539008177676567117601117274));
+      // double, error=2.1410114030383689267772704676e-14
+      r = RV(0.283751646449323373643963474845);
+      r = mad(r, y2, RV(0.31983138095551191299118812));
+      r = mad(r, y2, RV(0.412211603844146279666022));
+      r = mad(r, y2, RV(0.5770779098948940070516));
+      r = mad(r, y2, RV(0.961796694295973716912));
+      r = mad(r, y2, RV(2.885390081777562819196));
 #endif
       break;
     default:
@@ -102,6 +83,8 @@ namespace vecmathlib {
   inline
   realvec_t mathfuncs<realvec_t>::vml_log1p(realvec_t x)
   {
+    // TODO: Check SLEEF 2.80 algorithm
+    
     return log(RV(1.0) + x);
 #if 0
     // Goldberg, theorem 4

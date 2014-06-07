@@ -26,6 +26,8 @@ namespace vecmathlib {
     //    epsilon
     //    min_exponent
     //    max_exponent
+    //    infinity
+    //    quiet_NaN
   };
   
   
@@ -46,6 +48,8 @@ namespace vecmathlib {
     static real_t epsilon() { __builtin_unreachable(); }
     static int const min_exponent = -6;
     static int const max_exponent = 7;
+    static real_t infinity() { __builtin_unreachable(); }
+    static real_t quiet_NaN() { __builtin_unreachable(); }
     
     // Ensure the sizes match
     static_assert(sizeof(real_t) == sizeof(int_t), "int_t has wrong size");
@@ -112,6 +116,8 @@ namespace vecmathlib {
     static real_t epsilon() { __builtin_unreachable(); }
     static int const min_exponent = -14;
     static int const max_exponent = 15;
+    static real_t infinity() { __builtin_unreachable(); }
+    static real_t quiet_NaN() { __builtin_unreachable(); }
     
     // Ensure the sizes match
     static_assert(sizeof(real_t) == sizeof(int_t), "int_t has wrong size");
@@ -193,7 +199,8 @@ namespace vecmathlib {
     static uint_t const signbit_mask = uint_t(1) << (bits-1);
     static_assert((mantissa_mask & exponent_mask & signbit_mask) == uint_t(0),
                   "error in masks");
-    static_assert((mantissa_mask | exponent_mask | signbit_mask) == ~uint_t(0),
+    static_assert((mantissa_mask | exponent_mask | signbit_mask) ==
+                  uint_t(~uint_t(0)),
                   "error in masks");
     
     // Re-interpret bit patterns
@@ -254,7 +261,8 @@ namespace vecmathlib {
     static uint_t const signbit_mask = uint_t(1) << (bits-1);
     static_assert((mantissa_mask & exponent_mask & signbit_mask) == uint_t(0),
                   "error in masks");
-    static_assert((mantissa_mask | exponent_mask | signbit_mask) == ~uint_t(0),
+    static_assert((mantissa_mask | exponent_mask | signbit_mask) ==
+                  uint_t(~uint_t(0)),
                   "error in masks");
     
     // Re-interpret bit patterns

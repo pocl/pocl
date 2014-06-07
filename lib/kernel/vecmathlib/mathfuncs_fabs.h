@@ -76,6 +76,7 @@ namespace vecmathlib {
   template<typename realvec_t>
   typename realvec_t::intvec_t mathfuncs<realvec_t>::vml_ilogb(realvec_t x)
   {
+    // TODO: Check SLEEF 2.80 algorithm
     intvec_t e = lsr(as_int(x) & IV(FP::exponent_mask), FP::mantissa_bits);
     intvec_t r = e - IV(FP::exponent_offset);
     r = ifthen(convert_bool(e), r, IV(std::numeric_limits<int_t>::min()));
@@ -164,8 +165,28 @@ namespace vecmathlib {
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_ldexp(realvec_t x, intvec_t n)
   {
+    // TODO: Check SLEEF 2.80 algorithm
+#if 0
     realvec_t r = as_float(as_int(x) + (n << I(FP::mantissa_bits)));
     r = ifthen((as_int(x) & IV(FP::exponent_mask)) == IV(I(0)), x, r);
+    return r;
+#endif
+    realvec_t r = as_float(as_int(x) + (n << U(FP::mantissa_bits)));
+    int max_n = FP::max_exponent - FP::min_exponent;
+    boolvec_t underflow = n < IV(I(-max_n));
+    boolvec_t overflow = n > IV(I(max_n));
+    intvec_t old_exp =
+      lsr(as_int(x) & IV(FP::exponent_mask), FP::mantissa_bits);
+    intvec_t new_exp = old_exp + n;
+    // TODO: check bit patterns instead
+    underflow =
+      underflow || new_exp < IV(I(FP::min_exponent + FP::exponent_offset));
+    overflow =
+      overflow || new_exp > IV(I(FP::max_exponent + FP::exponent_offset));
+    r = ifthen(underflow, copysign(RV(R(0.0)), x), r);
+    r = ifthen(overflow, copysign(RV(FP::infinity()), x), r);
+    boolvec_t dont_change = x == RV(R(0.0)) || isinf(x) || isnan(x);
+    r = ifthen(dont_change, x, r);
     return r;
   }
   

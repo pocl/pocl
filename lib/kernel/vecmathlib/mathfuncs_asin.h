@@ -181,16 +181,22 @@ namespace vecmathlib {
   template<typename realvec_t>
   realvec_t mathfuncs<realvec_t>::vml_atan2(realvec_t y, realvec_t x)
   {
+    // Algorithm taken from SLEEF 2.80
+    
     realvec_t r = atan2k(fabs(y), x);
     
     r = mulsign(r, x);
     
     r = ifthen(isinf(x) || x == RV(0.0),
-               ifthen(isinf(x), RV(M_PI_2) - copysign(RV(M_PI_2), x), RV(M_PI_2)),
+               ifthen(isinf(x),
+                      RV(M_PI_2) - copysign(RV(M_PI_2), x),
+                      RV(M_PI_2)),
                r);
     
     r = ifthen(isinf(y),
-               ifthen(isinf(x), RV(M_PI_2) - copysign(RV(M_PI_4), x), RV(M_PI_2)),
+               ifthen(isinf(x),
+                      RV(M_PI_2) - copysign(RV(M_PI_4), x),
+                      RV(M_PI_2)),
                r);
     
     r = ifthen(y == RV(0.0),
