@@ -91,9 +91,9 @@ vmlfuncs = [
     ("fmin"     , [VF, VF    ], VF, [VF, VF    ], VF),
     ("fmod"     , [VF, VF    ], VF, [VF, VF    ], VF),
     ("hypot"    , [VF, VF    ], VF, [VF, VF    ], VF),
-    ("ilogb_"   , [VF        ], VJ, [VF        ], VI), # should return VK
-    ("ldexp_"   , [VF, VJ    ], VF, [VF, VI    ], VF), # should take VK
-    ("ldexp_"   , [VF, SK    ], VF, [VF, SI    ], VF), # should take VK
+    ("ilogb_"   , [VF        ], VI, [VF        ], VI), # should return VK
+    ("ldexp_"   , [VF, VI    ], VF, [VF, VI    ], VF), # should take VK
+    ("ldexp_"   , [VF, SI    ], VF, [VF, SI    ], VF), # should take SK
     ("log"      , [VF        ], VF, [VF        ], VF),
     ("log2"     , [VF        ], VF, [VF        ], VF),
     ("log10"    , [VF        ], VF, [VF        ], VF),
@@ -135,9 +135,6 @@ directfuncs = [
     ("cospi"         , [VF         ], VF, "cos((scalar_t)M_PI*x0)"),
     ("fmax"          , [VF, SF     ], VF, "fmax(x0,(vector_t)x1)"),
     ("fmin"          , [VF, SF     ], VF, "fmin(x0,(vector_t)x1)"),
-    ("ilogb"         , [VF         ], VK, "convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t "+prefixed("ilogb_")+"(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r="+prefixed("ilogb_")+"(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }))"),
-    ("ldexp"         , [VF, VK     ], VF, "({ __attribute__((__overloadable__)) vector_t "+prefixed("ldexp_")+"(vector_t,jvector_t); "+prefixed("ldexp_")+"(x0,convert_ivector_t(x1)); })"),
-    ("ldexp"         , [VF, SK     ], VF, "({ __attribute__((__overloadable__)) vector_t "+prefixed("ldexp_")+"(vector_t,kscalar_t); "+prefixed("ldexp_")+"(x0,(kscalar_t)x1); })"),
     ("fract"         , [VF, PVF    ], VF, """
     ({
       *x1=floor(x0);
@@ -153,6 +150,30 @@ directfuncs = [
       *x1 = ilogb(x0);
       ldexp(x0, -ilogb(x0));
     })
+"""),
+    ("ilogb"         , [VF         ], VK, """
+    ({
+      __attribute__((__overloadable__)) ivector_t """+prefixed("ilogb_")+"""(vector_t); 
+      ivector_t r = """+prefixed("ilogb_")+"""(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+"""),
+    ("ldexp"         , [VF, VK     ], VF, """
+    ({
+      __attribute__((__overloadable__)) vector_t """+prefixed("ldexp_")+"""(vector_t, ivector_t);
+      """+prefixed("ldexp_")+"""(x0, convert_ivector_t(x1));
+    })
+"""),
+    ("ldexp"         , [VF, SK     ], VF, """
+    ({
+    __attribute__((__overloadable__)) vector_t """+prefixed("ldexp_")+"""(vector_t, iscalar_t);
+    """+prefixed("ldexp_")+"""(x0, (iscalar_t)x1);
+    })
+"""),
     ("logb"          , [VF         ], VF, "convert_vector_t(ilogb(x0))"),
     ("mad"           , [VF, VF, VF ], VF, "fma(x0,x1,x2)"),
     ("maxmag"        , [VF, VF     ], VF, "fabs(x0)>fabs(x1) ? x0 : fabs(x1)>fabs(x0) ? x1 : fmax(x0,x1)"),
