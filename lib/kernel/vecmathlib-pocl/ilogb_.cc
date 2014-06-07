@@ -2,7 +2,7 @@
 
 #include "pocl-compat.h"
 
-// ilogb_: ['VF'] -> VJ
+// ilogb_: ['VF'] -> VI
 
 // ilogb_: VF=float
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
@@ -187,7 +187,7 @@ int16 _cl_ilogb_(float16 x0)
 // ilogb_: VF=double
 #if defined VECMATHLIB_HAVE_VEC_DOUBLE_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling vecmathlib
-int _cl_ilogb_(double x0)
+long _cl_ilogb_(double x0)
 {
   vecmathlib::realvec<double,1> y0 = bitcast<double,vecmathlib::realvec<double,1> >(x0);
   vecmathlib::realvec<double,1>::intvec_t r = vecmathlib::ilogb(y0);
@@ -195,7 +195,7 @@ int _cl_ilogb_(double x0)
 }
 #elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ilogb_ by calling libm
-int _cl_ilogb_(double x0)
+long _cl_ilogb_(double x0)
 {
   vecmathlib::realpseudovec<double,1> y0 = x0;
   vecmathlib::realpseudovec<double,1>::intvec_t r = ilogb(y0);
@@ -203,7 +203,7 @@ int _cl_ilogb_(double x0)
 }
 #else
 // Implement ilogb_ by calling builtin
-int _cl_ilogb_(double x0)
+long _cl_ilogb_(double x0)
 {
   vecmathlib::realbuiltinvec<double,1> y0 = x0;
   vecmathlib::realbuiltinvec<double,1>::intvec_t r = ilogb(y0);
@@ -231,7 +231,7 @@ long2 _cl_ilogb_(double2 x0)
 }
 #else
 // Implement ilogb_ by splitting into a smaller vector size
-int _cl_ilogb_(double);
+long _cl_ilogb_(double);
 long2 _cl_ilogb_(double2 x0)
 {
   pair_double y0 = bitcast<double2,pair_double>(x0);

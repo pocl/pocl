@@ -7,7 +7,7 @@
 // If double precision is not supported, then define
 // single-precision (dummy) values to avoid compiler warnings
 // for double precision values
-#ifndef khr_fp64
+#ifndef cl_khr_fp64
 #  undef M_PI
 #  define M_PI M_PI_F
 #  undef M_PI_2
@@ -18,7 +18,7 @@
 #  define LONG_MIN INT_MIN
 #  undef POCL_FRACT_MIN
 #  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif
+#endif // #ifndef cl_khr_fp64
 
 // frexp: ['VF', 'PVK'] -> VF
 
@@ -27,6 +27,8 @@
 __attribute__((__overloadable__))
 float _cl_frexp(float x0, global int* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -37,7 +39,12 @@ float _cl_frexp(float x0, global int* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -49,6 +56,8 @@ float _cl_frexp(float x0, global int* x1)
 __attribute__((__overloadable__))
 float _cl_frexp(float x0, local int* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -59,7 +68,12 @@ float _cl_frexp(float x0, local int* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -71,6 +85,8 @@ float _cl_frexp(float x0, local int* x1)
 __attribute__((__overloadable__))
 float _cl_frexp(float x0, private int* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -81,7 +97,12 @@ float _cl_frexp(float x0, private int* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -93,6 +114,8 @@ float _cl_frexp(float x0, private int* x1)
 __attribute__((__overloadable__))
 float2 _cl_frexp(float2 x0, global int2* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -103,7 +126,12 @@ float2 _cl_frexp(float2 x0, global int2* x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -115,6 +143,8 @@ float2 _cl_frexp(float2 x0, global int2* x1)
 __attribute__((__overloadable__))
 float2 _cl_frexp(float2 x0, local int2* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -125,7 +155,12 @@ float2 _cl_frexp(float2 x0, local int2* x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -137,6 +172,8 @@ float2 _cl_frexp(float2 x0, local int2* x1)
 __attribute__((__overloadable__))
 float2 _cl_frexp(float2 x0, private int2* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -147,7 +184,12 @@ float2 _cl_frexp(float2 x0, private int2* x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -159,6 +201,8 @@ float2 _cl_frexp(float2 x0, private int2* x1)
 __attribute__((__overloadable__))
 float3 _cl_frexp(float3 x0, global int3* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -169,7 +213,12 @@ float3 _cl_frexp(float3 x0, global int3* x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -181,6 +230,8 @@ float3 _cl_frexp(float3 x0, global int3* x1)
 __attribute__((__overloadable__))
 float3 _cl_frexp(float3 x0, local int3* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -191,7 +242,12 @@ float3 _cl_frexp(float3 x0, local int3* x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -203,6 +259,8 @@ float3 _cl_frexp(float3 x0, local int3* x1)
 __attribute__((__overloadable__))
 float3 _cl_frexp(float3 x0, private int3* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -213,7 +271,12 @@ float3 _cl_frexp(float3 x0, private int3* x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -225,6 +288,8 @@ float3 _cl_frexp(float3 x0, private int3* x1)
 __attribute__((__overloadable__))
 float4 _cl_frexp(float4 x0, global int4* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -235,7 +300,12 @@ float4 _cl_frexp(float4 x0, global int4* x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -247,6 +317,8 @@ float4 _cl_frexp(float4 x0, global int4* x1)
 __attribute__((__overloadable__))
 float4 _cl_frexp(float4 x0, local int4* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -257,7 +329,12 @@ float4 _cl_frexp(float4 x0, local int4* x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -269,6 +346,8 @@ float4 _cl_frexp(float4 x0, local int4* x1)
 __attribute__((__overloadable__))
 float4 _cl_frexp(float4 x0, private int4* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -279,7 +358,12 @@ float4 _cl_frexp(float4 x0, private int4* x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -291,6 +375,8 @@ float4 _cl_frexp(float4 x0, private int4* x1)
 __attribute__((__overloadable__))
 float8 _cl_frexp(float8 x0, global int8* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -301,7 +387,12 @@ float8 _cl_frexp(float8 x0, global int8* x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -313,6 +404,8 @@ float8 _cl_frexp(float8 x0, global int8* x1)
 __attribute__((__overloadable__))
 float8 _cl_frexp(float8 x0, local int8* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -323,7 +416,12 @@ float8 _cl_frexp(float8 x0, local int8* x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -335,6 +433,8 @@ float8 _cl_frexp(float8 x0, local int8* x1)
 __attribute__((__overloadable__))
 float8 _cl_frexp(float8 x0, private int8* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -345,7 +445,12 @@ float8 _cl_frexp(float8 x0, private int8* x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -357,6 +462,8 @@ float8 _cl_frexp(float8 x0, private int8* x1)
 __attribute__((__overloadable__))
 float16 _cl_frexp(float16 x0, global int16* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -367,7 +474,12 @@ float16 _cl_frexp(float16 x0, global int16* x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -379,6 +491,8 @@ float16 _cl_frexp(float16 x0, global int16* x1)
 __attribute__((__overloadable__))
 float16 _cl_frexp(float16 x0, local int16* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -389,7 +503,12 @@ float16 _cl_frexp(float16 x0, local int16* x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -401,6 +520,8 @@ float16 _cl_frexp(float16 x0, local int16* x1)
 __attribute__((__overloadable__))
 float16 _cl_frexp(float16 x0, private int16* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -411,7 +532,12 @@ float16 _cl_frexp(float16 x0, private int16* x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -425,6 +551,8 @@ float16 _cl_frexp(float16 x0, private int16* x1)
 __attribute__((__overloadable__))
 double _cl_frexp(double x0, global int* x1)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -435,7 +563,12 @@ double _cl_frexp(double x0, global int* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -447,6 +580,8 @@ double _cl_frexp(double x0, global int* x1)
 __attribute__((__overloadable__))
 double _cl_frexp(double x0, local int* x1)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -457,7 +592,12 @@ double _cl_frexp(double x0, local int* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -469,6 +609,8 @@ double _cl_frexp(double x0, local int* x1)
 __attribute__((__overloadable__))
 double _cl_frexp(double x0, private int* x1)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -479,7 +621,12 @@ double _cl_frexp(double x0, private int* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -491,7 +638,9 @@ double _cl_frexp(double x0, private int* x1)
 __attribute__((__overloadable__))
 double2 _cl_frexp(double2 x0, global int2* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -501,7 +650,12 @@ double2 _cl_frexp(double2 x0, global int2* x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -513,7 +667,9 @@ double2 _cl_frexp(double2 x0, global int2* x1)
 __attribute__((__overloadable__))
 double2 _cl_frexp(double2 x0, local int2* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -523,7 +679,12 @@ double2 _cl_frexp(double2 x0, local int2* x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -535,7 +696,9 @@ double2 _cl_frexp(double2 x0, local int2* x1)
 __attribute__((__overloadable__))
 double2 _cl_frexp(double2 x0, private int2* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -545,7 +708,12 @@ double2 _cl_frexp(double2 x0, private int2* x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -557,7 +725,9 @@ double2 _cl_frexp(double2 x0, private int2* x1)
 __attribute__((__overloadable__))
 double3 _cl_frexp(double3 x0, global int3* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -567,7 +737,12 @@ double3 _cl_frexp(double3 x0, global int3* x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -579,7 +754,9 @@ double3 _cl_frexp(double3 x0, global int3* x1)
 __attribute__((__overloadable__))
 double3 _cl_frexp(double3 x0, local int3* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -589,7 +766,12 @@ double3 _cl_frexp(double3 x0, local int3* x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -601,7 +783,9 @@ double3 _cl_frexp(double3 x0, local int3* x1)
 __attribute__((__overloadable__))
 double3 _cl_frexp(double3 x0, private int3* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -611,7 +795,12 @@ double3 _cl_frexp(double3 x0, private int3* x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -623,7 +812,9 @@ double3 _cl_frexp(double3 x0, private int3* x1)
 __attribute__((__overloadable__))
 double4 _cl_frexp(double4 x0, global int4* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -633,7 +824,12 @@ double4 _cl_frexp(double4 x0, global int4* x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -645,7 +841,9 @@ double4 _cl_frexp(double4 x0, global int4* x1)
 __attribute__((__overloadable__))
 double4 _cl_frexp(double4 x0, local int4* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -655,7 +853,12 @@ double4 _cl_frexp(double4 x0, local int4* x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -667,7 +870,9 @@ double4 _cl_frexp(double4 x0, local int4* x1)
 __attribute__((__overloadable__))
 double4 _cl_frexp(double4 x0, private int4* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -677,7 +882,12 @@ double4 _cl_frexp(double4 x0, private int4* x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -689,7 +899,9 @@ double4 _cl_frexp(double4 x0, private int4* x1)
 __attribute__((__overloadable__))
 double8 _cl_frexp(double8 x0, global int8* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -699,7 +911,12 @@ double8 _cl_frexp(double8 x0, global int8* x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -711,7 +928,9 @@ double8 _cl_frexp(double8 x0, global int8* x1)
 __attribute__((__overloadable__))
 double8 _cl_frexp(double8 x0, local int8* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -721,7 +940,12 @@ double8 _cl_frexp(double8 x0, local int8* x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -733,7 +957,9 @@ double8 _cl_frexp(double8 x0, local int8* x1)
 __attribute__((__overloadable__))
 double8 _cl_frexp(double8 x0, private int8* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -743,7 +969,12 @@ double8 _cl_frexp(double8 x0, private int8* x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -755,7 +986,9 @@ double8 _cl_frexp(double8 x0, private int8* x1)
 __attribute__((__overloadable__))
 double16 _cl_frexp(double16 x0, global int16* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -765,7 +998,12 @@ double16 _cl_frexp(double16 x0, global int16* x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -777,7 +1015,9 @@ double16 _cl_frexp(double16 x0, global int16* x1)
 __attribute__((__overloadable__))
 double16 _cl_frexp(double16 x0, local int16* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -787,7 +1027,12 @@ double16 _cl_frexp(double16 x0, local int16* x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -799,7 +1044,9 @@ double16 _cl_frexp(double16 x0, local int16* x1)
 __attribute__((__overloadable__))
 double16 _cl_frexp(double16 x0, private int16* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -809,7 +1056,12 @@ double16 _cl_frexp(double16 x0, private int16* x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return *x1=ilogb(x0), ldexp(x0,-ilogb(x0));
+  return 
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t

@@ -2,7 +2,7 @@
 
 #include "pocl-compat.h"
 
-// ldexp_: ['VF', 'VJ'] -> VF
+// ldexp_: ['VF', 'VI'] -> VF
 
 // ldexp_: VF=float
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
@@ -204,16 +204,16 @@ float16 _cl_ldexp_(float16 x0, int16 x1)
 // ldexp_: VF=double
 #if defined VECMATHLIB_HAVE_VEC_DOUBLE_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ldexp_ by calling vecmathlib
-double _cl_ldexp_(double x0, int x1)
+double _cl_ldexp_(double x0, long x1)
 {
   vecmathlib::realvec<double,1> y0 = bitcast<double,vecmathlib::realvec<double,1> >(x0);
-  vecmathlib::realvec<double,1>::intvec_t y1 = bitcast<int,vecmathlib::realvec<double,1>::intvec_t >(x1);
+  vecmathlib::realvec<double,1>::intvec_t y1 = bitcast<long,vecmathlib::realvec<double,1>::intvec_t >(x1);
   vecmathlib::realvec<double,1> r = vecmathlib::ldexp(y0, y1);
   return bitcast<vecmathlib::realvec<double,1>,double>((r));
 }
 #elif ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ldexp_ by calling libm
-double _cl_ldexp_(double x0, int x1)
+double _cl_ldexp_(double x0, long x1)
 {
   vecmathlib::realpseudovec<double,1> y0 = x0;
   vecmathlib::realpseudovec<double,1>::intvec_t y1 = x1;
@@ -222,7 +222,7 @@ double _cl_ldexp_(double x0, int x1)
 }
 #else
 // Implement ldexp_ by calling builtin
-double _cl_ldexp_(double x0, int x1)
+double _cl_ldexp_(double x0, long x1)
 {
   vecmathlib::realbuiltinvec<double,1> y0 = x0;
   vecmathlib::realbuiltinvec<double,1>::intvec_t y1 = x1;
@@ -253,11 +253,11 @@ double2 _cl_ldexp_(double2 x0, long2 x1)
 }
 #else
 // Implement ldexp_ by splitting into a smaller vector size
-double _cl_ldexp_(double, int);
+double _cl_ldexp_(double, long);
 double2 _cl_ldexp_(double2 x0, long2 x1)
 {
   pair_double y0 = bitcast<double2,pair_double>(x0);
-  pair_int y1 = bitcast<long2,pair_int>(x1);
+  pair_long y1 = bitcast<long2,pair_long>(x1);
   pair_double r;
   r.lo = _cl_ldexp_(y0.lo, y1.lo);
   r.hi = _cl_ldexp_(y0.hi, y1.hi);
@@ -400,7 +400,7 @@ double16 _cl_ldexp_(double16 x0, long16 x1)
 
 
 
-// ldexp_: ['VF', 'SK'] -> VF
+// ldexp_: ['VF', 'SI'] -> VF
 
 // ldexp_: VF=float2
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_2 && ! defined POCL_VECMATHLIB_BUILTIN
@@ -591,11 +591,11 @@ double2 _cl_ldexp_(double2 x0, long x1)
 }
 #else
 // Implement ldexp_ by splitting into a smaller vector size
-double _cl_ldexp_(double, int);
+double _cl_ldexp_(double, long);
 double2 _cl_ldexp_(double2 x0, long x1)
 {
   pair_double y0 = bitcast<double2,pair_double>(x0);
-  pair_int y1 = bitcast<long,pair_int>(x1);
+  pair_long y1 = bitcast<long,pair_long>(x1);
   pair_double r;
   r.lo = _cl_ldexp_(y0.lo, y1.lo);
   r.hi = _cl_ldexp_(y0.hi, y1.hi);

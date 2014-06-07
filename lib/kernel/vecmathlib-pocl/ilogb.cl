@@ -7,7 +7,7 @@
 // If double precision is not supported, then define
 // single-precision (dummy) values to avoid compiler warnings
 // for double precision values
-#ifndef khr_fp64
+#ifndef cl_khr_fp64
 #  undef M_PI
 #  define M_PI M_PI_F
 #  undef M_PI_2
@@ -18,7 +18,7 @@
 #  define LONG_MIN INT_MIN
 #  undef POCL_FRACT_MIN
 #  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif
+#endif // #ifndef cl_khr_fp64
 
 // ilogb: ['VF'] -> VK
 
@@ -27,6 +27,8 @@
 __attribute__((__overloadable__))
 int _cl_ilogb(float x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -37,7 +39,17 @@ int _cl_ilogb(float x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -49,6 +61,8 @@ int _cl_ilogb(float x0)
 __attribute__((__overloadable__))
 int2 _cl_ilogb(float2 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -59,7 +73,17 @@ int2 _cl_ilogb(float2 x0)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -71,6 +95,8 @@ int2 _cl_ilogb(float2 x0)
 __attribute__((__overloadable__))
 int3 _cl_ilogb(float3 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -81,7 +107,17 @@ int3 _cl_ilogb(float3 x0)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -93,6 +129,8 @@ int3 _cl_ilogb(float3 x0)
 __attribute__((__overloadable__))
 int4 _cl_ilogb(float4 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -103,7 +141,17 @@ int4 _cl_ilogb(float4 x0)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -115,6 +163,8 @@ int4 _cl_ilogb(float4 x0)
 __attribute__((__overloadable__))
 int8 _cl_ilogb(float8 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -125,7 +175,17 @@ int8 _cl_ilogb(float8 x0)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -137,6 +197,8 @@ int8 _cl_ilogb(float8 x0)
 __attribute__((__overloadable__))
 int16 _cl_ilogb(float16 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -147,7 +209,17 @@ int16 _cl_ilogb(float16 x0)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -161,6 +233,8 @@ int16 _cl_ilogb(float16 x0)
 __attribute__((__overloadable__))
 int _cl_ilogb(double x0)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -171,7 +245,17 @@ int _cl_ilogb(double x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -183,7 +267,9 @@ int _cl_ilogb(double x0)
 __attribute__((__overloadable__))
 int2 _cl_ilogb(double2 x0)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -193,7 +279,17 @@ int2 _cl_ilogb(double2 x0)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -205,7 +301,9 @@ int2 _cl_ilogb(double2 x0)
 __attribute__((__overloadable__))
 int3 _cl_ilogb(double3 x0)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -215,7 +313,17 @@ int3 _cl_ilogb(double3 x0)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -227,7 +335,9 @@ int3 _cl_ilogb(double3 x0)
 __attribute__((__overloadable__))
 int4 _cl_ilogb(double4 x0)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -237,7 +347,17 @@ int4 _cl_ilogb(double4 x0)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -249,7 +369,9 @@ int4 _cl_ilogb(double4 x0)
 __attribute__((__overloadable__))
 int8 _cl_ilogb(double8 x0)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -259,7 +381,17 @@ int8 _cl_ilogb(double8 x0)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -271,7 +403,9 @@ int8 _cl_ilogb(double8 x0)
 __attribute__((__overloadable__))
 int16 _cl_ilogb(double16 x0)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -281,7 +415,17 @@ int16 _cl_ilogb(double16 x0)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t _cl_ilogb_(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r=_cl_ilogb_(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }));
+  return 
+    ({
+      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
+      ivector_t r = _cl_ilogb_(x0); 
+      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
+      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      r = r==jmin ? (ivector_t)INT_MIN : r;
+      r = r==jmax ? (ivector_t)INT_MAX : r;
+      convert_kvector_t(r);
+    })
+;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t

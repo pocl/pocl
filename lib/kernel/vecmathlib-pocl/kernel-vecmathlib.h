@@ -876,7 +876,7 @@ __attribute__((__overloadable__)) double8 _cl_hypot(double8 x0, double8 x1);
 __attribute__((__overloadable__)) double16 _cl_hypot(double16 x0, double16 x1);
 __attribute__((__overloadable__)) double16 _cl_hypot(double16 x0, double16 x1);
 
-// ilogb_: ['VF'] -> VJ
+// ilogb_: ['VF'] -> VI
 #undef ilogb_
 #define ilogb_ _cl_ilogb_
 __attribute__((__overloadable__)) int _cl_ilogb_(float x0);
@@ -896,9 +896,9 @@ __attribute__((__overloadable__)) int8 _cl_ilogb_(float8 x0);
 __attribute__((__overloadable__)) int8 _cl_ilogb_(float8 x0);
 __attribute__((__overloadable__)) int16 _cl_ilogb_(float16 x0);
 __attribute__((__overloadable__)) int16 _cl_ilogb_(float16 x0);
-__attribute__((__overloadable__)) int _cl_ilogb_(double x0);
-__attribute__((__overloadable__)) int _cl_ilogb_(double x0);
-__attribute__((__overloadable__)) int _cl_ilogb_(double x0);
+__attribute__((__overloadable__)) long _cl_ilogb_(double x0);
+__attribute__((__overloadable__)) long _cl_ilogb_(double x0);
+__attribute__((__overloadable__)) long _cl_ilogb_(double x0);
 __attribute__((__overloadable__)) long2 _cl_ilogb_(double2 x0);
 __attribute__((__overloadable__)) long2 _cl_ilogb_(double2 x0);
 __attribute__((__overloadable__)) long2 _cl_ilogb_(double2 x0);
@@ -914,7 +914,7 @@ __attribute__((__overloadable__)) long8 _cl_ilogb_(double8 x0);
 __attribute__((__overloadable__)) long16 _cl_ilogb_(double16 x0);
 __attribute__((__overloadable__)) long16 _cl_ilogb_(double16 x0);
 
-// ldexp_: ['VF', 'VJ'] -> VF
+// ldexp_: ['VF', 'VI'] -> VF
 #undef ldexp_
 #define ldexp_ _cl_ldexp_
 __attribute__((__overloadable__)) float _cl_ldexp_(float x0, int x1);
@@ -934,9 +934,9 @@ __attribute__((__overloadable__)) float8 _cl_ldexp_(float8 x0, int8 x1);
 __attribute__((__overloadable__)) float8 _cl_ldexp_(float8 x0, int8 x1);
 __attribute__((__overloadable__)) float16 _cl_ldexp_(float16 x0, int16 x1);
 __attribute__((__overloadable__)) float16 _cl_ldexp_(float16 x0, int16 x1);
-__attribute__((__overloadable__)) double _cl_ldexp_(double x0, int x1);
-__attribute__((__overloadable__)) double _cl_ldexp_(double x0, int x1);
-__attribute__((__overloadable__)) double _cl_ldexp_(double x0, int x1);
+__attribute__((__overloadable__)) double _cl_ldexp_(double x0, long x1);
+__attribute__((__overloadable__)) double _cl_ldexp_(double x0, long x1);
+__attribute__((__overloadable__)) double _cl_ldexp_(double x0, long x1);
 __attribute__((__overloadable__)) double2 _cl_ldexp_(double2 x0, long2 x1);
 __attribute__((__overloadable__)) double2 _cl_ldexp_(double2 x0, long2 x1);
 __attribute__((__overloadable__)) double2 _cl_ldexp_(double2 x0, long2 x1);
@@ -952,7 +952,7 @@ __attribute__((__overloadable__)) double8 _cl_ldexp_(double8 x0, long8 x1);
 __attribute__((__overloadable__)) double16 _cl_ldexp_(double16 x0, long16 x1);
 __attribute__((__overloadable__)) double16 _cl_ldexp_(double16 x0, long16 x1);
 
-// ldexp_: ['VF', 'SK'] -> VF
+// ldexp_: ['VF', 'SI'] -> VF
 #undef ldexp_
 #define ldexp_ _cl_ldexp_
 __attribute__((__overloadable__)) float2 _cl_ldexp_(float2 x0, int x1);
@@ -1988,11 +1988,11 @@ __attribute__((__overloadable__)) float3 _cl_ldexp(float3 x0, int x1);
 __attribute__((__overloadable__)) float4 _cl_ldexp(float4 x0, int x1);
 __attribute__((__overloadable__)) float8 _cl_ldexp(float8 x0, int x1);
 __attribute__((__overloadable__)) float16 _cl_ldexp(float16 x0, int x1);
-__attribute__((__overloadable__)) double2 _cl_ldexp(double2 x0, long x1);
-__attribute__((__overloadable__)) double3 _cl_ldexp(double3 x0, long x1);
-__attribute__((__overloadable__)) double4 _cl_ldexp(double4 x0, long x1);
-__attribute__((__overloadable__)) double8 _cl_ldexp(double8 x0, long x1);
-__attribute__((__overloadable__)) double16 _cl_ldexp(double16 x0, long x1);
+__attribute__((__overloadable__)) double2 _cl_ldexp(double2 x0, int x1);
+__attribute__((__overloadable__)) double3 _cl_ldexp(double3 x0, int x1);
+__attribute__((__overloadable__)) double4 _cl_ldexp(double4 x0, int x1);
+__attribute__((__overloadable__)) double8 _cl_ldexp(double8 x0, int x1);
+__attribute__((__overloadable__)) double16 _cl_ldexp(double16 x0, int x1);
 
 // logb: ['VF'] -> VF
 #undef logb

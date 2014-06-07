@@ -7,7 +7,7 @@
 // If double precision is not supported, then define
 // single-precision (dummy) values to avoid compiler warnings
 // for double precision values
-#ifndef khr_fp64
+#ifndef cl_khr_fp64
 #  undef M_PI
 #  define M_PI M_PI_F
 #  undef M_PI_2
@@ -18,7 +18,7 @@
 #  define LONG_MIN INT_MIN
 #  undef POCL_FRACT_MIN
 #  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif
+#endif // #ifndef cl_khr_fp64
 
 // native_log: ['VF'] -> VF
 
@@ -27,6 +27,8 @@
 __attribute__((__overloadable__))
 float _cl_native_log(float x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -49,6 +51,8 @@ float _cl_native_log(float x0)
 __attribute__((__overloadable__))
 float2 _cl_native_log(float2 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -71,6 +75,8 @@ float2 _cl_native_log(float2 x0)
 __attribute__((__overloadable__))
 float3 _cl_native_log(float3 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -93,6 +99,8 @@ float3 _cl_native_log(float3 x0)
 __attribute__((__overloadable__))
 float4 _cl_native_log(float4 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -115,6 +123,8 @@ float4 _cl_native_log(float4 x0)
 __attribute__((__overloadable__))
 float8 _cl_native_log(float8 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -137,6 +147,8 @@ float8 _cl_native_log(float8 x0)
 __attribute__((__overloadable__))
 float16 _cl_native_log(float16 x0)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;

@@ -7,7 +7,7 @@
 // If double precision is not supported, then define
 // single-precision (dummy) values to avoid compiler warnings
 // for double precision values
-#ifndef khr_fp64
+#ifndef cl_khr_fp64
 #  undef M_PI
 #  define M_PI M_PI_F
 #  undef M_PI_2
@@ -18,7 +18,7 @@
 #  define LONG_MIN INT_MIN
 #  undef POCL_FRACT_MIN
 #  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif
+#endif // #ifndef cl_khr_fp64
 
 // clamp: ['VF', 'VF', 'VF'] -> VF
 
@@ -27,6 +27,8 @@
 __attribute__((__overloadable__))
 float _cl_clamp(float x0, float x1, float x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -49,6 +51,8 @@ float _cl_clamp(float x0, float x1, float x2)
 __attribute__((__overloadable__))
 float2 _cl_clamp(float2 x0, float2 x1, float2 x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -71,6 +75,8 @@ float2 _cl_clamp(float2 x0, float2 x1, float2 x2)
 __attribute__((__overloadable__))
 float3 _cl_clamp(float3 x0, float3 x1, float3 x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -93,6 +99,8 @@ float3 _cl_clamp(float3 x0, float3 x1, float3 x2)
 __attribute__((__overloadable__))
 float4 _cl_clamp(float4 x0, float4 x1, float4 x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -115,6 +123,8 @@ float4 _cl_clamp(float4 x0, float4 x1, float4 x2)
 __attribute__((__overloadable__))
 float8 _cl_clamp(float8 x0, float8 x1, float8 x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -137,6 +147,8 @@ float8 _cl_clamp(float8 x0, float8 x1, float8 x2)
 __attribute__((__overloadable__))
 float16 _cl_clamp(float16 x0, float16 x1, float16 x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -161,6 +173,8 @@ float16 _cl_clamp(float16 x0, float16 x1, float16 x2)
 __attribute__((__overloadable__))
 double _cl_clamp(double x0, double x1, double x2)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -183,7 +197,9 @@ double _cl_clamp(double x0, double x1, double x2)
 __attribute__((__overloadable__))
 double2 _cl_clamp(double2 x0, double2 x1, double2 x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -205,7 +221,9 @@ double2 _cl_clamp(double2 x0, double2 x1, double2 x2)
 __attribute__((__overloadable__))
 double3 _cl_clamp(double3 x0, double3 x1, double3 x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -227,7 +245,9 @@ double3 _cl_clamp(double3 x0, double3 x1, double3 x2)
 __attribute__((__overloadable__))
 double4 _cl_clamp(double4 x0, double4 x1, double4 x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -249,7 +269,9 @@ double4 _cl_clamp(double4 x0, double4 x1, double4 x2)
 __attribute__((__overloadable__))
 double8 _cl_clamp(double8 x0, double8 x1, double8 x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -271,7 +293,9 @@ double8 _cl_clamp(double8 x0, double8 x1, double8 x2)
 __attribute__((__overloadable__))
 double16 _cl_clamp(double16 x0, double16 x1, double16 x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -299,6 +323,8 @@ double16 _cl_clamp(double16 x0, double16 x1, double16 x2)
 __attribute__((__overloadable__))
 float2 _cl_clamp(float2 x0, float x1, float x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -321,6 +347,8 @@ float2 _cl_clamp(float2 x0, float x1, float x2)
 __attribute__((__overloadable__))
 float3 _cl_clamp(float3 x0, float x1, float x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -343,6 +371,8 @@ float3 _cl_clamp(float3 x0, float x1, float x2)
 __attribute__((__overloadable__))
 float4 _cl_clamp(float4 x0, float x1, float x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -365,6 +395,8 @@ float4 _cl_clamp(float4 x0, float x1, float x2)
 __attribute__((__overloadable__))
 float8 _cl_clamp(float8 x0, float x1, float x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -387,6 +419,8 @@ float8 _cl_clamp(float8 x0, float x1, float x2)
 __attribute__((__overloadable__))
 float16 _cl_clamp(float16 x0, float x1, float x2)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -411,7 +445,9 @@ float16 _cl_clamp(float16 x0, float x1, float x2)
 __attribute__((__overloadable__))
 double2 _cl_clamp(double2 x0, double x1, double x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -433,7 +469,9 @@ double2 _cl_clamp(double2 x0, double x1, double x2)
 __attribute__((__overloadable__))
 double3 _cl_clamp(double3 x0, double x1, double x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -455,7 +493,9 @@ double3 _cl_clamp(double3 x0, double x1, double x2)
 __attribute__((__overloadable__))
 double4 _cl_clamp(double4 x0, double x1, double x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -477,7 +517,9 @@ double4 _cl_clamp(double4 x0, double x1, double x2)
 __attribute__((__overloadable__))
 double8 _cl_clamp(double8 x0, double x1, double x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -499,7 +541,9 @@ double8 _cl_clamp(double8 x0, double x1, double x2)
 __attribute__((__overloadable__))
 double16 _cl_clamp(double16 x0, double x1, double x2)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;

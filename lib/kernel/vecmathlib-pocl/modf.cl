@@ -7,7 +7,7 @@
 // If double precision is not supported, then define
 // single-precision (dummy) values to avoid compiler warnings
 // for double precision values
-#ifndef khr_fp64
+#ifndef cl_khr_fp64
 #  undef M_PI
 #  define M_PI M_PI_F
 #  undef M_PI_2
@@ -18,7 +18,7 @@
 #  define LONG_MIN INT_MIN
 #  undef POCL_FRACT_MIN
 #  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif
+#endif // #ifndef cl_khr_fp64
 
 // modf: ['VF', 'PVF'] -> VF
 
@@ -27,6 +27,8 @@
 __attribute__((__overloadable__))
 float _cl_modf(float x0, global float* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -49,6 +51,8 @@ float _cl_modf(float x0, global float* x1)
 __attribute__((__overloadable__))
 float _cl_modf(float x0, local float* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -71,6 +75,8 @@ float _cl_modf(float x0, local float* x1)
 __attribute__((__overloadable__))
 float _cl_modf(float x0, private float* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int ivector_t;
@@ -93,6 +99,8 @@ float _cl_modf(float x0, private float* x1)
 __attribute__((__overloadable__))
 float2 _cl_modf(float2 x0, global float2* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -115,6 +123,8 @@ float2 _cl_modf(float2 x0, global float2* x1)
 __attribute__((__overloadable__))
 float2 _cl_modf(float2 x0, local float2* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -137,6 +147,8 @@ float2 _cl_modf(float2 x0, local float2* x1)
 __attribute__((__overloadable__))
 float2 _cl_modf(float2 x0, private float2* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int2 ivector_t;
@@ -159,6 +171,8 @@ float2 _cl_modf(float2 x0, private float2* x1)
 __attribute__((__overloadable__))
 float3 _cl_modf(float3 x0, global float3* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -181,6 +195,8 @@ float3 _cl_modf(float3 x0, global float3* x1)
 __attribute__((__overloadable__))
 float3 _cl_modf(float3 x0, local float3* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -203,6 +219,8 @@ float3 _cl_modf(float3 x0, local float3* x1)
 __attribute__((__overloadable__))
 float3 _cl_modf(float3 x0, private float3* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int3 ivector_t;
@@ -225,6 +243,8 @@ float3 _cl_modf(float3 x0, private float3* x1)
 __attribute__((__overloadable__))
 float4 _cl_modf(float4 x0, global float4* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -247,6 +267,8 @@ float4 _cl_modf(float4 x0, global float4* x1)
 __attribute__((__overloadable__))
 float4 _cl_modf(float4 x0, local float4* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -269,6 +291,8 @@ float4 _cl_modf(float4 x0, local float4* x1)
 __attribute__((__overloadable__))
 float4 _cl_modf(float4 x0, private float4* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int4 ivector_t;
@@ -291,6 +315,8 @@ float4 _cl_modf(float4 x0, private float4* x1)
 __attribute__((__overloadable__))
 float8 _cl_modf(float8 x0, global float8* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -313,6 +339,8 @@ float8 _cl_modf(float8 x0, global float8* x1)
 __attribute__((__overloadable__))
 float8 _cl_modf(float8 x0, local float8* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -335,6 +363,8 @@ float8 _cl_modf(float8 x0, local float8* x1)
 __attribute__((__overloadable__))
 float8 _cl_modf(float8 x0, private float8* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int8 ivector_t;
@@ -357,6 +387,8 @@ float8 _cl_modf(float8 x0, private float8* x1)
 __attribute__((__overloadable__))
 float16 _cl_modf(float16 x0, global float16* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -379,6 +411,8 @@ float16 _cl_modf(float16 x0, global float16* x1)
 __attribute__((__overloadable__))
 float16 _cl_modf(float16 x0, local float16* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -401,6 +435,8 @@ float16 _cl_modf(float16 x0, local float16* x1)
 __attribute__((__overloadable__))
 float16 _cl_modf(float16 x0, private float16* x1)
 {
+  typedef int iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef float scalar_t;
   typedef int16 ivector_t;
@@ -425,6 +461,8 @@ float16 _cl_modf(float16 x0, private float16* x1)
 __attribute__((__overloadable__))
 double _cl_modf(double x0, global double* x1)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -447,6 +485,8 @@ double _cl_modf(double x0, global double* x1)
 __attribute__((__overloadable__))
 double _cl_modf(double x0, local double* x1)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -469,6 +509,8 @@ double _cl_modf(double x0, local double* x1)
 __attribute__((__overloadable__))
 double _cl_modf(double x0, private double* x1)
 {
+  typedef long iscalar_t;
+  typedef int jscalar_t;
   typedef int kscalar_t;
   typedef double scalar_t;
   typedef long ivector_t;
@@ -491,7 +533,9 @@ double _cl_modf(double x0, private double* x1)
 __attribute__((__overloadable__))
 double2 _cl_modf(double2 x0, global double2* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -513,7 +557,9 @@ double2 _cl_modf(double2 x0, global double2* x1)
 __attribute__((__overloadable__))
 double2 _cl_modf(double2 x0, local double2* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -535,7 +581,9 @@ double2 _cl_modf(double2 x0, local double2* x1)
 __attribute__((__overloadable__))
 double2 _cl_modf(double2 x0, private double2* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long2 ivector_t;
   typedef long2 jvector_t;
@@ -557,7 +605,9 @@ double2 _cl_modf(double2 x0, private double2* x1)
 __attribute__((__overloadable__))
 double3 _cl_modf(double3 x0, global double3* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -579,7 +629,9 @@ double3 _cl_modf(double3 x0, global double3* x1)
 __attribute__((__overloadable__))
 double3 _cl_modf(double3 x0, local double3* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -601,7 +653,9 @@ double3 _cl_modf(double3 x0, local double3* x1)
 __attribute__((__overloadable__))
 double3 _cl_modf(double3 x0, private double3* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long3 ivector_t;
   typedef long3 jvector_t;
@@ -623,7 +677,9 @@ double3 _cl_modf(double3 x0, private double3* x1)
 __attribute__((__overloadable__))
 double4 _cl_modf(double4 x0, global double4* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -645,7 +701,9 @@ double4 _cl_modf(double4 x0, global double4* x1)
 __attribute__((__overloadable__))
 double4 _cl_modf(double4 x0, local double4* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -667,7 +725,9 @@ double4 _cl_modf(double4 x0, local double4* x1)
 __attribute__((__overloadable__))
 double4 _cl_modf(double4 x0, private double4* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long4 ivector_t;
   typedef long4 jvector_t;
@@ -689,7 +749,9 @@ double4 _cl_modf(double4 x0, private double4* x1)
 __attribute__((__overloadable__))
 double8 _cl_modf(double8 x0, global double8* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -711,7 +773,9 @@ double8 _cl_modf(double8 x0, global double8* x1)
 __attribute__((__overloadable__))
 double8 _cl_modf(double8 x0, local double8* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -733,7 +797,9 @@ double8 _cl_modf(double8 x0, local double8* x1)
 __attribute__((__overloadable__))
 double8 _cl_modf(double8 x0, private double8* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long8 ivector_t;
   typedef long8 jvector_t;
@@ -755,7 +821,9 @@ double8 _cl_modf(double8 x0, private double8* x1)
 __attribute__((__overloadable__))
 double16 _cl_modf(double16 x0, global double16* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -777,7 +845,9 @@ double16 _cl_modf(double16 x0, global double16* x1)
 __attribute__((__overloadable__))
 double16 _cl_modf(double16 x0, local double16* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
@@ -799,7 +869,9 @@ double16 _cl_modf(double16 x0, local double16* x1)
 __attribute__((__overloadable__))
 double16 _cl_modf(double16 x0, private double16* x1)
 {
-  typedef long kscalar_t;
+  typedef long iscalar_t;
+  typedef long jscalar_t;
+  typedef int kscalar_t;
   typedef double scalar_t;
   typedef long16 ivector_t;
   typedef long16 jvector_t;
