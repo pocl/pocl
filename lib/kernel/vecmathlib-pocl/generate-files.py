@@ -673,7 +673,7 @@ def output_directfunc(func):
         out("// If double precision is not supported, then define")
         out("// single-precision (dummy) values to avoid compiler warnings")
         out("// for double precision values")
-        out("#ifndef khr_fp64")
+        out("#ifndef cl_khr_fp64")
         out("#  undef M_PI")
         out("#  define M_PI M_PI_F")
         out("#  undef M_PI_2")
@@ -684,7 +684,7 @@ def output_directfunc(func):
         out("#  define LONG_MIN INT_MIN")
         out("#  undef POCL_FRACT_MIN")
         out("#  define POCL_FRACT_MIN POCL_FRACT_MIN_F")
-        out("#endif")
+        out("#endif // #ifndef cl_khr_fp64")
         out("")
     else:
         out("")
