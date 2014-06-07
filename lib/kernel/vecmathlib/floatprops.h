@@ -40,10 +40,10 @@ namespace vecmathlib {
     static char const* name() { return "fp8"; }
     
     // Definitions that might come from numeric_limits<> instead:
-    static int min() { __builtin_unreachable(); }
-    static int max() { __builtin_unreachable(); }
+    static real_t min() { __builtin_unreachable(); }
+    static real_t max() { __builtin_unreachable(); }
     static int const digits = 4;
-    static int epsilon() { __builtin_unreachable(); }
+    static real_t epsilon() { __builtin_unreachable(); }
     static int const min_exponent = -6;
     static int const max_exponent = 7;
     
@@ -106,10 +106,10 @@ namespace vecmathlib {
     static char const* name() { return "fp16"; }
     
     // Definitions that might come from numeric_limits<> instead:
-    static int min() { __builtin_unreachable(); }
-    static int max() { __builtin_unreachable(); }
+    static real_t min() { __builtin_unreachable(); }
+    static real_t max() { __builtin_unreachable(); }
     static int const digits = 11;
-    static int epsilon() { __builtin_unreachable(); }
+    static real_t epsilon() { __builtin_unreachable(); }
     static int const min_exponent = -14;
     static int const max_exponent = 15;
     

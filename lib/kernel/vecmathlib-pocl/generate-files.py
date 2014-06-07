@@ -122,16 +122,36 @@ directfuncs = [
     ("acospi"        , [VF         ], VF, "acos(x0)/(scalar_t)M_PI"),
     ("asinpi"        , [VF         ], VF, "asin(x0)/(scalar_t)M_PI"),
     ("atanpi"        , [VF         ], VF, "atan(x0)/(scalar_t)M_PI"),
-    ("atan2"         , [VF, VF     ], VF, "({ vector_t a=atan(x0/x1); x1>(scalar_t)0.0f ? a : x1<(scalar_t)0.0f ? a+copysign((scalar_t)M_PI,x0) : copysign((scalar_t)M_PI_2,x0); })"),
+    ("atan2"         , [VF, VF     ], VF, """
+    ({
+      vector_t a = atan(x0/x1);
+      x1 > (scalar_t)0 ? a :
+      x1 < (scalar_t)0 ? a + copysign((scalar_t)M_PI, x0) :
+      copysign((scalar_t)M_PI_2, x0);
+    })
+"""),
     ("atan2pi"       , [VF, VF     ], VF, "atan2(x0,x1)/(scalar_t)M_PI"),
     ("cospi"         , [VF         ], VF, "cos((scalar_t)M_PI*x0)"),
     ("fmax"          , [VF, SF     ], VF, "fmax(x0,(vector_t)x1)"),
     ("fmin"          , [VF, SF     ], VF, "fmin(x0,(vector_t)x1)"),
-    ("fract"         , [VF, PVF    ], VF, "*x1=floor(x0), fmin(x0-floor(x0), sizeof(scalar_t)==sizeof(float) ? (scalar_t)POCL_FRACT_MIN_F : (scalar_t)POCL_FRACT_MIN)"),
-    ("frexp"         , [VF, PVK    ], VF, "*x1=ilogb(x0), ldexp(x0,-ilogb(x0))"),
     ("ilogb"         , [VF         ], VK, "convert_kvector_t(({ __attribute__((__overloadable__)) jvector_t "+prefixed("ilogb_")+"(vector_t); jvector_t jmin=sizeof(jvector_t)==sizeof(int)?INT_MIN:LONG_MIN; jvector_t jmax=sizeof(jvector_t)==sizeof(int)?INT_MAX:LONG_MAX; jvector_t r="+prefixed("ilogb_")+"(x0); select(select(r, (jvector_t)INT_MIN, r==jmin), (jvector_t)INT_MAX, r==jmax); }))"),
     ("ldexp"         , [VF, VK     ], VF, "({ __attribute__((__overloadable__)) vector_t "+prefixed("ldexp_")+"(vector_t,jvector_t); "+prefixed("ldexp_")+"(x0,convert_ivector_t(x1)); })"),
     ("ldexp"         , [VF, SK     ], VF, "({ __attribute__((__overloadable__)) vector_t "+prefixed("ldexp_")+"(vector_t,kscalar_t); "+prefixed("ldexp_")+"(x0,(kscalar_t)x1); })"),
+    ("fract"         , [VF, PVF    ], VF, """
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        sizeof(scalar_t)==sizeof(float) ?
+        (scalar_t)POCL_FRACT_MIN_F :
+        (scalar_t)POCL_FRACT_MIN;
+      fmin(x0-floor(x0), fract_min);
+    })
+"""),
+    ("frexp"         , [VF, PVK    ], VF, """
+    ({
+      *x1 = ilogb(x0);
+      ldexp(x0, -ilogb(x0));
+    })
     ("logb"          , [VF         ], VF, "convert_vector_t(ilogb(x0))"),
     ("mad"           , [VF, VF, VF ], VF, "fma(x0,x1,x2)"),
     ("maxmag"        , [VF, VF     ], VF, "fabs(x0)>fabs(x1) ? x0 : fabs(x1)>fabs(x0) ? x1 : fmax(x0,x1)"),
@@ -140,8 +160,14 @@ directfuncs = [
     ("nan"           , [VU         ], VF, "(scalar_t)0.0f/(scalar_t)0.0f"),
     ("pown"          , [VF, VK     ], VF, "pow(x0,convert_vector_t(x1))"),
     ("powr"          , [VF, VF     ], VF, "pow(x0,x1)"),
-    ("remquo"        , [VF, VF, PVK], VF, "({ vector_t k=rint(x0/x1); *x2=(convert_kvector_t(k)&0x7f)*(1-2*convert_kvector_t(signbit(k))); x0-k*x1; })"),
-    ("rootn"         , [VF, VK     ], VF, "pow(x0,(scalar_t)1.0f/convert_vector_t(x1))"),
+    ("remquo"        , [VF, VF, PVK], VF, """
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+"""),
+    ("rootn"         , [VF, VK     ], VF, "pow(x0,(scalar_t)1/convert_vector_t(x1))"),
     ("sincos"        , [VF, PVF    ], VF, "*x1=cos(x0), sin(x0)"),
     ("sinpi"         , [VF         ], VF, "sin((scalar_t)M_PI*x0)"),
     ("tanpi"         , [VF         ], VF, "tan((scalar_t)M_PI*x0)"),
