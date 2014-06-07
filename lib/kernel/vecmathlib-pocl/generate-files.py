@@ -46,7 +46,8 @@ def prefixed(name):
 
 # Types:
 SI = "SI"                       # int/long
-SK = "SK"                       # int (even for double)
+SJ = "SJ"                       # int/long (except int for double1)
+SK = "SK"                       # int (even for doubleN)
 SF = "SF"                       # float/double
 VB = "VB"                       # boolN
 VI = "VI"                       # intN/longN
@@ -288,9 +289,13 @@ def mktype(tp, vectype):
         re.match("(global|local|private)?(float|double)([0-9]*)", vectype).
         groups())
     size = 1 if sizename=="" else int(sizename)
-    if tp==SK:
+    if tp==SI:
+        return "int" if basetype=="float" else "long"
+    if tp==SJ:
         if size==1: return "int"
         return "int" if basetype=="float" else "long"
+    if tp==SK:
+        return "int"
     if tp==SF:
         return basetype
     if tp==VI:
@@ -544,6 +549,8 @@ def output_directfunc_direct(func, vectype):
     out("__attribute__((__overloadable__))");
     out("%s %s(%s)" % (funcretstr, prefixed(name), funcargstr))
     out("{")
+    out("  typedef %s iscalar_t;" % mktype(SI, vectype))
+    out("  typedef %s jscalar_t;" % mktype(SJ, vectype))
     out("  typedef %s kscalar_t;" % mktype(SK, vectype))
     out("  typedef %s scalar_t;" % mktype(SF, vectype))
     out("  typedef %s ivector_t;" % mktype(VI, vectype))
