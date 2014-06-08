@@ -68,9 +68,6 @@ IMPLEMENT_SELECT_SCALAR(float , uint  )
 __IF_FP64(
 IMPLEMENT_SELECT_SCALAR(double, long  )
 IMPLEMENT_SELECT_SCALAR(double, ulong ))
-__IF_FP16(
-IMPLEMENT_SELECT_SCALAR(half , short )
-IMPLEMENT_SELECT_SCALAR(half , ushort))
 
 
 
@@ -103,9 +100,6 @@ IMPLEMENT_SELECT_VECTOR(float2 , uint2  , int2  )
 __IF_FP64(
 IMPLEMENT_SELECT_VECTOR(double2, long2  , long2 )
 IMPLEMENT_SELECT_VECTOR(double2, ulong2 , long2 ))
-__IF_FP16(
-IMPLEMENT_SELECT_VECTOR(half2, short2 , short2)
-IMPLEMENT_SELECT_VECTOR(half2, ushort2 , short2))
 
 IMPLEMENT_SELECT_VECTOR(char3  , char3  , char3 )
 IMPLEMENT_SELECT_VECTOR(char3  , uchar3 , char3 )
@@ -129,9 +123,6 @@ IMPLEMENT_SELECT_VECTOR(float3 , uint3  , int3  )
 __IF_FP64(
 IMPLEMENT_SELECT_VECTOR(double3, long3  , long3 )
 IMPLEMENT_SELECT_VECTOR(double3, ulong3 , long3 ))
-__IF_FP16(
-IMPLEMENT_SELECT_VECTOR(half3, short3 , short3)
-IMPLEMENT_SELECT_VECTOR(half3, ushort3 , short3))
 
 IMPLEMENT_SELECT_VECTOR(char4  , char4  , char4 )
 IMPLEMENT_SELECT_VECTOR(char4  , uchar4 , char4 )
@@ -155,9 +146,6 @@ IMPLEMENT_SELECT_VECTOR(float4 , uint4  , int4  )
 __IF_FP64(
 IMPLEMENT_SELECT_VECTOR(double4, long4  , long4 )
 IMPLEMENT_SELECT_VECTOR(double4, ulong4 , long4 ))
-__IF_FP16(
-IMPLEMENT_SELECT_VECTOR(half4, short4 , short4)
-IMPLEMENT_SELECT_VECTOR(half4, ushort4 , short4))
 
 IMPLEMENT_SELECT_VECTOR(char8  , char8  , char8 )
 IMPLEMENT_SELECT_VECTOR(char8  , uchar8 , char8 )
@@ -181,9 +169,6 @@ IMPLEMENT_SELECT_VECTOR(float8 , uint8  , int8  )
 __IF_FP64(
 IMPLEMENT_SELECT_VECTOR(double8, long8  , long8 )
 IMPLEMENT_SELECT_VECTOR(double8, ulong8 , long8 ))
-__IF_FP16(
-IMPLEMENT_SELECT_VECTOR(half8, short8 , short8)
-IMPLEMENT_SELECT_VECTOR(half8, ushort8 , short8))
 
 IMPLEMENT_SELECT_VECTOR(char16  , char16  , char16 )
 IMPLEMENT_SELECT_VECTOR(char16  , uchar16 , char16 )
@@ -207,6 +192,3 @@ IMPLEMENT_SELECT_VECTOR(float16 , uint16  , int16  )
 __IF_FP64(
 IMPLEMENT_SELECT_VECTOR(double16, long16  , long16 )
 IMPLEMENT_SELECT_VECTOR(double16, ulong16 , long16 ))
-__IF_FP16(
-IMPLEMENT_SELECT_VECTOR(half16, short16 , short16)
-IMPLEMENT_SELECT_VECTOR(half16, ushort16 , short16))

@@ -319,44 +319,6 @@ ulong3 convert_ulong3(char3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(char x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(char2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(char4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(char8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(char16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(char3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(char x)
 {
@@ -720,44 +682,6 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3(uchar3 x)
 {
   return (ulong3)(convert_ulong2(x.s01), convert_ulong(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(uchar x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(uchar2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(uchar4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(uchar8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(uchar16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(uchar3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
 }
 #endif
 
@@ -1127,44 +1051,6 @@ ulong3 convert_ulong3(short3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(short x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(short2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(short4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(short8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(short16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(short3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(short x)
 {
@@ -1528,44 +1414,6 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3(ushort3 x)
 {
   return (ulong3)(convert_ulong2(x.s01), convert_ulong(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(ushort x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(ushort2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(ushort4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(ushort8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(ushort16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(ushort3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
 }
 #endif
 
@@ -1935,44 +1783,6 @@ ulong3 convert_ulong3(int3 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(int x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(int2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(int4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(int8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(int16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(int3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(int x)
 {
@@ -2336,44 +2146,6 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3(uint3 x)
 {
   return (ulong3)(convert_ulong2(x.s01), convert_ulong(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(uint x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(uint2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(uint4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(uint8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(uint16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(uint3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
 }
 #endif
 
@@ -2755,44 +2527,6 @@ ulong3 convert_ulong3(long3 x)
 }
 #endif
 
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(long x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(long2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(long4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(long8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(long16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(long3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
-}
-#endif
-
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(long x)
@@ -2831,7 +2565,7 @@ float3 convert_float3(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(long x)
 {
@@ -3173,44 +2907,6 @@ ulong3 convert_ulong3(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(ulong x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(ulong2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(ulong4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(ulong8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(ulong16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(ulong3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
-}
-#endif
-
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float(ulong x)
@@ -3249,7 +2945,7 @@ float3 convert_float3(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double(ulong x)
 {
@@ -3282,424 +2978,6 @@ double16 convert_double16(ulong16 x)
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3(ulong3 x)
-{
-  return (double3)(convert_double2(x.s01), convert_double(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char(half x)
-{
-  return (char)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2(half2 x)
-{
-  return (char2)(convert_char(x.lo), convert_char(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4(half4 x)
-{
-  return (char4)(convert_char2(x.lo), convert_char2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8(half8 x)
-{
-  return (char8)(convert_char4(x.lo), convert_char4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16(half16 x)
-{
-  return (char16)(convert_char8(x.lo), convert_char8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3(half3 x)
-{
-  return (char3)(convert_char2(x.s01), convert_char(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar(half x)
-{
-  return (uchar)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2(half2 x)
-{
-  return (uchar2)(convert_uchar(x.lo), convert_uchar(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4(half4 x)
-{
-  return (uchar4)(convert_uchar2(x.lo), convert_uchar2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8(half8 x)
-{
-  return (uchar8)(convert_uchar4(x.lo), convert_uchar4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16(half16 x)
-{
-  return (uchar16)(convert_uchar8(x.lo), convert_uchar8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3(half3 x)
-{
-  return (uchar3)(convert_uchar2(x.s01), convert_uchar(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short(half x)
-{
-  return (short)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2(half2 x)
-{
-  return (short2)(convert_short(x.lo), convert_short(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4(half4 x)
-{
-  return (short4)(convert_short2(x.lo), convert_short2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8(half8 x)
-{
-  return (short8)(convert_short4(x.lo), convert_short4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16(half16 x)
-{
-  return (short16)(convert_short8(x.lo), convert_short8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3(half3 x)
-{
-  return (short3)(convert_short2(x.s01), convert_short(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort(half x)
-{
-  return (ushort)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2(half2 x)
-{
-  return (ushort2)(convert_ushort(x.lo), convert_ushort(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4(half4 x)
-{
-  return (ushort4)(convert_ushort2(x.lo), convert_ushort2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8(half8 x)
-{
-  return (ushort8)(convert_ushort4(x.lo), convert_ushort4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16(half16 x)
-{
-  return (ushort16)(convert_ushort8(x.lo), convert_ushort8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3(half3 x)
-{
-  return (ushort3)(convert_ushort2(x.s01), convert_ushort(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int(half x)
-{
-  return (int)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2(half2 x)
-{
-  return (int2)(convert_int(x.lo), convert_int(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4(half4 x)
-{
-  return (int4)(convert_int2(x.lo), convert_int2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8(half8 x)
-{
-  return (int8)(convert_int4(x.lo), convert_int4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16(half16 x)
-{
-  return (int16)(convert_int8(x.lo), convert_int8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3(half3 x)
-{
-  return (int3)(convert_int2(x.s01), convert_int(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint(half x)
-{
-  return (uint)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2(half2 x)
-{
-  return (uint2)(convert_uint(x.lo), convert_uint(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4(half4 x)
-{
-  return (uint4)(convert_uint2(x.lo), convert_uint2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8(half8 x)
-{
-  return (uint8)(convert_uint4(x.lo), convert_uint4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16(half16 x)
-{
-  return (uint16)(convert_uint8(x.lo), convert_uint8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3(half3 x)
-{
-  return (uint3)(convert_uint2(x.s01), convert_uint(x.s2));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long(half x)
-{
-  return (long)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2(half2 x)
-{
-  return (long2)(convert_long(x.lo), convert_long(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4(half4 x)
-{
-  return (long4)(convert_long2(x.lo), convert_long2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8(half8 x)
-{
-  return (long8)(convert_long4(x.lo), convert_long4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16(half16 x)
-{
-  return (long16)(convert_long8(x.lo), convert_long8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3(half3 x)
-{
-  return (long3)(convert_long2(x.s01), convert_long(x.s2));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong(half x)
-{
-  return (ulong)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2(half2 x)
-{
-  return (ulong2)(convert_ulong(x.lo), convert_ulong(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4(half4 x)
-{
-  return (ulong4)(convert_ulong2(x.lo), convert_ulong2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8(half8 x)
-{
-  return (ulong8)(convert_ulong4(x.lo), convert_ulong4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16(half16 x)
-{
-  return (ulong16)(convert_ulong8(x.lo), convert_ulong8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3(half3 x)
-{
-  return (ulong3)(convert_ulong2(x.s01), convert_ulong(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(half x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(half2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(half4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(half8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(half16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(half3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float convert_float(half x)
-{
-  return (float)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float2 convert_float2(half2 x)
-{
-  return (float2)(convert_float(x.lo), convert_float(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float4 convert_float4(half4 x)
-{
-  return (float4)(convert_float2(x.lo), convert_float2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float8 convert_float8(half8 x)
-{
-  return (float8)(convert_float4(x.lo), convert_float4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float16 convert_float16(half16 x)
-{
-  return (float16)(convert_float8(x.lo), convert_float8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float3 convert_float3(half3 x)
-{
-  return (float3)(convert_float2(x.s01), convert_float(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double convert_double(half x)
-{
-  return (double)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double2 convert_double2(half2 x)
-{
-  return (double2)(convert_double(x.lo), convert_double(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double4 convert_double4(half4 x)
-{
-  return (double4)(convert_double2(x.lo), convert_double2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double8 convert_double8(half8 x)
-{
-  return (double8)(convert_double4(x.lo), convert_double4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double16 convert_double16(half16 x)
-{
-  return (double16)(convert_double8(x.lo), convert_double8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double3 convert_double3(half3 x)
 {
   return (double3)(convert_double2(x.s01), convert_double(x.s2));
 }
@@ -3994,44 +3272,6 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3(float3 x)
 {
   return (ulong3)(convert_ulong2(x.s01), convert_ulong(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(float x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(float2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(float4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(float8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(float16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(float3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
 }
 #endif
 
@@ -4337,7 +3577,7 @@ uint3 convert_uint3(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long(double x)
 {
@@ -4375,7 +3615,7 @@ long3 convert_long3(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong(double x)
 {
@@ -4410,44 +3650,6 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3(double3 x)
 {
   return (ulong3)(convert_ulong2(x.s01), convert_ulong(x.s2));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half(double x)
-{
-  return (half)x;
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2(double2 x)
-{
-  return (half2)(convert_half(x.lo), convert_half(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4(double4 x)
-{
-  return (half4)(convert_half2(x.lo), convert_half2(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8(double8 x)
-{
-  return (half8)(convert_half4(x.lo), convert_half4(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16(double16 x)
-{
-  return (half16)(convert_half8(x.lo), convert_half8(x.hi));
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3(double3 x)
-{
-  return (half3)(convert_half2(x.s01), convert_half(x.s2));
 }
 #endif
 
@@ -16836,534 +16038,6 @@ ulong16 convert_ulong16_sat(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_sat(half x)
-{
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (half)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x > (half)CHAR_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_sat(half2 x)
-{
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (half2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x > (half2)CHAR_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_sat(half3 x)
-{
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (half3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x > (half3)CHAR_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_sat(half4 x)
-{
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (half4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x > (half4)CHAR_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_sat(half8 x)
-{
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (half8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x > (half8)CHAR_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_sat(half16 x)
-{
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (half16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x > (half16)CHAR_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_sat(half x)
-{
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (half)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x > (half)UCHAR_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_sat(half2 x)
-{
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (half2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x > (half2)UCHAR_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_sat(half3 x)
-{
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (half3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x > (half3)UCHAR_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_sat(half4 x)
-{
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (half4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x > (half4)UCHAR_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_sat(half8 x)
-{
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (half8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x > (half8)UCHAR_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_sat(half16 x)
-{
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (half16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x > (half16)UCHAR_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_sat(half x)
-{
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (half)SHRT_MIN));
-  y = select(y, (short)SHRT_MAX, convert_short(x > (half)SHRT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_sat(half2 x)
-{
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (half2)SHRT_MIN));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x > (half2)SHRT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_sat(half3 x)
-{
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (half3)SHRT_MIN));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x > (half3)SHRT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_sat(half4 x)
-{
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (half4)SHRT_MIN));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x > (half4)SHRT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_sat(half8 x)
-{
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (half8)SHRT_MIN));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x > (half8)SHRT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_sat(half16 x)
-{
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (half16)SHRT_MIN));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x > (half16)SHRT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_sat(half x)
-{
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (half)0)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x > (half)USHRT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_sat(half2 x)
-{
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (half2)0)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x > (half2)USHRT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_sat(half3 x)
-{
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (half3)0)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x > (half3)USHRT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_sat(half4 x)
-{
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (half4)0)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x > (half4)USHRT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_sat(half8 x)
-{
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (half8)0)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x > (half8)USHRT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_sat(half16 x)
-{
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (half16)0)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x > (half16)USHRT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_sat(half x)
-{
-  int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (half)INT_MIN));
-  y = select(y, (int)INT_MAX, convert_int(x > (half)INT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_sat(half2 x)
-{
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (half2)INT_MIN));
-  y = select(y, (int2)INT_MAX, convert_int2(x > (half2)INT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_sat(half3 x)
-{
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (half3)INT_MIN));
-  y = select(y, (int3)INT_MAX, convert_int3(x > (half3)INT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_sat(half4 x)
-{
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (half4)INT_MIN));
-  y = select(y, (int4)INT_MAX, convert_int4(x > (half4)INT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_sat(half8 x)
-{
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (half8)INT_MIN));
-  y = select(y, (int8)INT_MAX, convert_int8(x > (half8)INT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_sat(half16 x)
-{
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (half16)INT_MIN));
-  y = select(y, (int16)INT_MAX, convert_int16(x > (half16)INT_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_sat(half x)
-{
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (half)0)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x > (half)UINT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_sat(half2 x)
-{
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (half2)0)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x > (half2)UINT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_sat(half3 x)
-{
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (half3)0)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x > (half3)UINT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_sat(half4 x)
-{
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (half4)0)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x > (half4)UINT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_sat(half8 x)
-{
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (half8)0)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x > (half8)UINT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_sat(half16 x)
-{
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (half16)0)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x > (half16)UINT_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_sat(half x)
-{
-  long y = convert_long(x);
-  y = select(y, (long)LONG_MIN, convert_long(x < (half)LONG_MIN));
-  y = select(y, (long)LONG_MAX, convert_long(x > (half)LONG_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_sat(half2 x)
-{
-  long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MIN, convert_long2(x < (half2)LONG_MIN));
-  y = select(y, (long2)LONG_MAX, convert_long2(x > (half2)LONG_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_sat(half3 x)
-{
-  long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MIN, convert_long3(x < (half3)LONG_MIN));
-  y = select(y, (long3)LONG_MAX, convert_long3(x > (half3)LONG_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_sat(half4 x)
-{
-  long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MIN, convert_long4(x < (half4)LONG_MIN));
-  y = select(y, (long4)LONG_MAX, convert_long4(x > (half4)LONG_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_sat(half8 x)
-{
-  long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MIN, convert_long8(x < (half8)LONG_MIN));
-  y = select(y, (long8)LONG_MAX, convert_long8(x > (half8)LONG_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_sat(half16 x)
-{
-  long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MIN, convert_long16(x < (half16)LONG_MIN));
-  y = select(y, (long16)LONG_MAX, convert_long16(x > (half16)LONG_MAX));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_sat(half x)
-{
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (half)0)));
-  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x > (half)ULONG_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_sat(half2 x)
-{
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (half2)0)));
-  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x > (half2)ULONG_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_sat(half3 x)
-{
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (half3)0)));
-  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x > (half3)ULONG_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_sat(half4 x)
-{
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (half4)0)));
-  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x > (half4)ULONG_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_sat(half8 x)
-{
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (half8)0)));
-  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x > (half8)ULONG_MAX)));
-  return y;
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_sat(half16 x)
-{
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (half16)0)));
-  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x > (half16)ULONG_MAX)));
-  return y;
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_sat(float x)
 {
@@ -18216,7 +16890,7 @@ uint16 convert_uint16_sat(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat(double x)
 {
@@ -18227,7 +16901,7 @@ long convert_long_sat(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat(double2 x)
 {
@@ -18238,7 +16912,7 @@ long2 convert_long2_sat(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat(double3 x)
 {
@@ -18249,7 +16923,7 @@ long3 convert_long3_sat(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat(double4 x)
 {
@@ -18260,7 +16934,7 @@ long4 convert_long4_sat(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat(double8 x)
 {
@@ -18271,7 +16945,7 @@ long8 convert_long8_sat(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat(double16 x)
 {
@@ -18282,7 +16956,7 @@ long16 convert_long16_sat(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat(double x)
 {
@@ -18293,7 +16967,7 @@ ulong convert_ulong_sat(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat(double2 x)
 {
@@ -18304,7 +16978,7 @@ ulong2 convert_ulong2_sat(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat(double3 x)
 {
@@ -18315,7 +16989,7 @@ ulong3 convert_ulong3_sat(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat(double4 x)
 {
@@ -18326,7 +17000,7 @@ ulong4 convert_ulong4_sat(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat(double8 x)
 {
@@ -18337,7 +17011,7 @@ ulong8 convert_ulong8_sat(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat(double16 x)
 {
@@ -30444,3366 +29118,6 @@ ulong16 convert_ulong16_sat_rtn(ulong16 x)
 
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_rtz(half x)
-{
-  return convert_char(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_sat_rtz(half x)
-{
-  return convert_char_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_rte(half x)
-{
-  x = rint(x);
-  return convert_char(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_char_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_rtp(half x)
-{
-  x = ceil(x);
-  return convert_char(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_char_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_rtn(half x)
-{
-  x = floor(x);
-  return convert_char(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char convert_char_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_char_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_rtz(half2 x)
-{
-  return convert_char2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_sat_rtz(half2 x)
-{
-  return convert_char2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_char2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_char2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_char2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_char2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_char2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char2 convert_char2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_char2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_rtz(half3 x)
-{
-  return convert_char3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_sat_rtz(half3 x)
-{
-  return convert_char3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_char3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_char3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_char3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_char3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_char3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char3 convert_char3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_char3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_rtz(half4 x)
-{
-  return convert_char4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_sat_rtz(half4 x)
-{
-  return convert_char4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_char4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_char4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_char4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_char4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_char4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char4 convert_char4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_char4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_rtz(half8 x)
-{
-  return convert_char8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_sat_rtz(half8 x)
-{
-  return convert_char8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_char8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_char8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_char8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_char8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_char8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char8 convert_char8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_char8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_rtz(half16 x)
-{
-  return convert_char16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_sat_rtz(half16 x)
-{
-  return convert_char16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_char16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_char16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_char16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_char16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_char16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-char16 convert_char16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_char16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_rtz(half x)
-{
-  return convert_uchar(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_sat_rtz(half x)
-{
-  return convert_uchar_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_rte(half x)
-{
-  x = rint(x);
-  return convert_uchar(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_uchar_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_rtp(half x)
-{
-  x = ceil(x);
-  return convert_uchar(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_uchar_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_rtn(half x)
-{
-  x = floor(x);
-  return convert_uchar(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar convert_uchar_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_uchar_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_rtz(half2 x)
-{
-  return convert_uchar2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_sat_rtz(half2 x)
-{
-  return convert_uchar2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_uchar2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_uchar2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_uchar2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_uchar2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_uchar2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar2 convert_uchar2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_uchar2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_rtz(half3 x)
-{
-  return convert_uchar3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_sat_rtz(half3 x)
-{
-  return convert_uchar3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_uchar3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_uchar3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_uchar3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_uchar3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_uchar3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar3 convert_uchar3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_uchar3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_rtz(half4 x)
-{
-  return convert_uchar4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_sat_rtz(half4 x)
-{
-  return convert_uchar4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_uchar4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_uchar4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_uchar4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_uchar4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_uchar4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar4 convert_uchar4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_uchar4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_rtz(half8 x)
-{
-  return convert_uchar8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_sat_rtz(half8 x)
-{
-  return convert_uchar8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_uchar8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_uchar8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_uchar8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_uchar8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_uchar8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar8 convert_uchar8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_uchar8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_rtz(half16 x)
-{
-  return convert_uchar16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_sat_rtz(half16 x)
-{
-  return convert_uchar16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_uchar16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_uchar16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_uchar16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_uchar16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_uchar16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uchar16 convert_uchar16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_uchar16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_rtz(half x)
-{
-  return convert_short(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_sat_rtz(half x)
-{
-  return convert_short_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_rte(half x)
-{
-  x = rint(x);
-  return convert_short(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_short_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_rtp(half x)
-{
-  x = ceil(x);
-  return convert_short(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_short_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_rtn(half x)
-{
-  x = floor(x);
-  return convert_short(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short convert_short_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_short_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_rtz(half2 x)
-{
-  return convert_short2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_sat_rtz(half2 x)
-{
-  return convert_short2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_short2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_short2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_short2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_short2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_short2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short2 convert_short2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_short2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_rtz(half3 x)
-{
-  return convert_short3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_sat_rtz(half3 x)
-{
-  return convert_short3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_short3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_short3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_short3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_short3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_short3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short3 convert_short3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_short3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_rtz(half4 x)
-{
-  return convert_short4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_sat_rtz(half4 x)
-{
-  return convert_short4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_short4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_short4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_short4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_short4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_short4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short4 convert_short4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_short4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_rtz(half8 x)
-{
-  return convert_short8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_sat_rtz(half8 x)
-{
-  return convert_short8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_short8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_short8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_short8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_short8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_short8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short8 convert_short8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_short8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_rtz(half16 x)
-{
-  return convert_short16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_sat_rtz(half16 x)
-{
-  return convert_short16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_short16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_short16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_short16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_short16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_short16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-short16 convert_short16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_short16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_rtz(half x)
-{
-  return convert_ushort(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_sat_rtz(half x)
-{
-  return convert_ushort_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_rte(half x)
-{
-  x = rint(x);
-  return convert_ushort(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_ushort_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_rtp(half x)
-{
-  x = ceil(x);
-  return convert_ushort(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_ushort_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_rtn(half x)
-{
-  x = floor(x);
-  return convert_ushort(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort convert_ushort_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_ushort_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_rtz(half2 x)
-{
-  return convert_ushort2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_sat_rtz(half2 x)
-{
-  return convert_ushort2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_ushort2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_ushort2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_ushort2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_ushort2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_ushort2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort2 convert_ushort2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_ushort2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_rtz(half3 x)
-{
-  return convert_ushort3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_sat_rtz(half3 x)
-{
-  return convert_ushort3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_ushort3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_ushort3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_ushort3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_ushort3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_ushort3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort3 convert_ushort3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_ushort3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_rtz(half4 x)
-{
-  return convert_ushort4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_sat_rtz(half4 x)
-{
-  return convert_ushort4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_ushort4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_ushort4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_ushort4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_ushort4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_ushort4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort4 convert_ushort4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_ushort4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_rtz(half8 x)
-{
-  return convert_ushort8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_sat_rtz(half8 x)
-{
-  return convert_ushort8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_ushort8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_ushort8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_ushort8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_ushort8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_ushort8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort8 convert_ushort8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_ushort8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_rtz(half16 x)
-{
-  return convert_ushort16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_sat_rtz(half16 x)
-{
-  return convert_ushort16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_ushort16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_ushort16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_ushort16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_ushort16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_ushort16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ushort16 convert_ushort16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_ushort16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_rtz(half x)
-{
-  return convert_int(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_sat_rtz(half x)
-{
-  return convert_int_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_rte(half x)
-{
-  x = rint(x);
-  return convert_int(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_int_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_rtp(half x)
-{
-  x = ceil(x);
-  return convert_int(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_int_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_rtn(half x)
-{
-  x = floor(x);
-  return convert_int(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int convert_int_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_int_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_rtz(half2 x)
-{
-  return convert_int2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_sat_rtz(half2 x)
-{
-  return convert_int2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_int2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_int2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_int2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_int2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_int2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int2 convert_int2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_int2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_rtz(half3 x)
-{
-  return convert_int3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_sat_rtz(half3 x)
-{
-  return convert_int3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_int3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_int3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_int3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_int3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_int3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int3 convert_int3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_int3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_rtz(half4 x)
-{
-  return convert_int4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_sat_rtz(half4 x)
-{
-  return convert_int4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_int4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_int4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_int4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_int4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_int4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int4 convert_int4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_int4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_rtz(half8 x)
-{
-  return convert_int8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_sat_rtz(half8 x)
-{
-  return convert_int8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_int8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_int8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_int8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_int8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_int8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int8 convert_int8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_int8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_rtz(half16 x)
-{
-  return convert_int16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_sat_rtz(half16 x)
-{
-  return convert_int16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_int16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_int16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_int16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_int16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_int16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-int16 convert_int16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_int16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_rtz(half x)
-{
-  return convert_uint(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_sat_rtz(half x)
-{
-  return convert_uint_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_rte(half x)
-{
-  x = rint(x);
-  return convert_uint(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_uint_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_rtp(half x)
-{
-  x = ceil(x);
-  return convert_uint(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_uint_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_rtn(half x)
-{
-  x = floor(x);
-  return convert_uint(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint convert_uint_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_uint_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_rtz(half2 x)
-{
-  return convert_uint2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_sat_rtz(half2 x)
-{
-  return convert_uint2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_uint2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_uint2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_uint2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_uint2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_uint2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint2 convert_uint2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_uint2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_rtz(half3 x)
-{
-  return convert_uint3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_sat_rtz(half3 x)
-{
-  return convert_uint3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_uint3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_uint3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_uint3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_uint3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_uint3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint3 convert_uint3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_uint3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_rtz(half4 x)
-{
-  return convert_uint4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_sat_rtz(half4 x)
-{
-  return convert_uint4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_uint4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_uint4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_uint4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_uint4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_uint4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint4 convert_uint4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_uint4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_rtz(half8 x)
-{
-  return convert_uint8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_sat_rtz(half8 x)
-{
-  return convert_uint8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_uint8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_uint8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_uint8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_uint8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_uint8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint8 convert_uint8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_uint8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_rtz(half16 x)
-{
-  return convert_uint16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_sat_rtz(half16 x)
-{
-  return convert_uint16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_uint16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_uint16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_uint16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_uint16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_uint16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-uint16 convert_uint16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_uint16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_rtz(half x)
-{
-  return convert_long(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_sat_rtz(half x)
-{
-  return convert_long_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_rte(half x)
-{
-  x = rint(x);
-  return convert_long(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_long_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_rtp(half x)
-{
-  x = ceil(x);
-  return convert_long(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_long_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_rtn(half x)
-{
-  x = floor(x);
-  return convert_long(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long convert_long_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_long_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_rtz(half2 x)
-{
-  return convert_long2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_sat_rtz(half2 x)
-{
-  return convert_long2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_long2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_long2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_long2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_long2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_long2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long2 convert_long2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_long2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_rtz(half3 x)
-{
-  return convert_long3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_sat_rtz(half3 x)
-{
-  return convert_long3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_long3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_long3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_long3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_long3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_long3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long3 convert_long3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_long3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_rtz(half4 x)
-{
-  return convert_long4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_sat_rtz(half4 x)
-{
-  return convert_long4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_long4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_long4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_long4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_long4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_long4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long4 convert_long4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_long4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_rtz(half8 x)
-{
-  return convert_long8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_sat_rtz(half8 x)
-{
-  return convert_long8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_long8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_long8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_long8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_long8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_long8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long8 convert_long8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_long8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_rtz(half16 x)
-{
-  return convert_long16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_sat_rtz(half16 x)
-{
-  return convert_long16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_long16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_long16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_long16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_long16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_long16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-long16 convert_long16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_long16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_rtz(half x)
-{
-  return convert_ulong(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_sat_rtz(half x)
-{
-  return convert_ulong_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_rte(half x)
-{
-  x = rint(x);
-  return convert_ulong(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_sat_rte(half x)
-{
-  x = rint(x);
-  return convert_ulong_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_rtp(half x)
-{
-  x = ceil(x);
-  return convert_ulong(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_sat_rtp(half x)
-{
-  x = ceil(x);
-  return convert_ulong_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_rtn(half x)
-{
-  x = floor(x);
-  return convert_ulong(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong convert_ulong_sat_rtn(half x)
-{
-  x = floor(x);
-  return convert_ulong_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_rtz(half2 x)
-{
-  return convert_ulong2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_sat_rtz(half2 x)
-{
-  return convert_ulong2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_rte(half2 x)
-{
-  x = rint(x);
-  return convert_ulong2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_sat_rte(half2 x)
-{
-  x = rint(x);
-  return convert_ulong2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_ulong2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_sat_rtp(half2 x)
-{
-  x = ceil(x);
-  return convert_ulong2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_ulong2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong2 convert_ulong2_sat_rtn(half2 x)
-{
-  x = floor(x);
-  return convert_ulong2_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_rtz(half3 x)
-{
-  return convert_ulong3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_sat_rtz(half3 x)
-{
-  return convert_ulong3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_rte(half3 x)
-{
-  x = rint(x);
-  return convert_ulong3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_sat_rte(half3 x)
-{
-  x = rint(x);
-  return convert_ulong3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_ulong3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_sat_rtp(half3 x)
-{
-  x = ceil(x);
-  return convert_ulong3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_ulong3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong3 convert_ulong3_sat_rtn(half3 x)
-{
-  x = floor(x);
-  return convert_ulong3_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_rtz(half4 x)
-{
-  return convert_ulong4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_sat_rtz(half4 x)
-{
-  return convert_ulong4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_rte(half4 x)
-{
-  x = rint(x);
-  return convert_ulong4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_sat_rte(half4 x)
-{
-  x = rint(x);
-  return convert_ulong4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_ulong4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_sat_rtp(half4 x)
-{
-  x = ceil(x);
-  return convert_ulong4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_ulong4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong4 convert_ulong4_sat_rtn(half4 x)
-{
-  x = floor(x);
-  return convert_ulong4_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_rtz(half8 x)
-{
-  return convert_ulong8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_sat_rtz(half8 x)
-{
-  return convert_ulong8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_rte(half8 x)
-{
-  x = rint(x);
-  return convert_ulong8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_sat_rte(half8 x)
-{
-  x = rint(x);
-  return convert_ulong8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_ulong8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_sat_rtp(half8 x)
-{
-  x = ceil(x);
-  return convert_ulong8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_ulong8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong8 convert_ulong8_sat_rtn(half8 x)
-{
-  x = floor(x);
-  return convert_ulong8_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_rtz(half16 x)
-{
-  return convert_ulong16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_sat_rtz(half16 x)
-{
-  return convert_ulong16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_rte(half16 x)
-{
-  x = rint(x);
-  return convert_ulong16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_sat_rte(half16 x)
-{
-  x = rint(x);
-  return convert_ulong16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_ulong16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_sat_rtp(half16 x)
-{
-  x = ceil(x);
-  return convert_ulong16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_ulong16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-ulong16 convert_ulong16_sat_rtn(half16 x)
-{
-  x = floor(x);
-  return convert_ulong16_sat(x);
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 char convert_char_rtz(float x)
 {
@@ -39108,7 +34422,7 @@ uint16 convert_uint16_sat_rtn(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtz(double x)
 {
@@ -39116,7 +34430,7 @@ long convert_long_rtz(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtz(double x)
 {
@@ -39124,7 +34438,7 @@ long convert_long_sat_rtz(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rte(double x)
 {
@@ -39133,7 +34447,7 @@ long convert_long_rte(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rte(double x)
 {
@@ -39142,7 +34456,7 @@ long convert_long_sat_rte(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtp(double x)
 {
@@ -39151,7 +34465,7 @@ long convert_long_rtp(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtp(double x)
 {
@@ -39160,7 +34474,7 @@ long convert_long_sat_rtp(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_rtn(double x)
 {
@@ -39169,7 +34483,7 @@ long convert_long_rtn(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long convert_long_sat_rtn(double x)
 {
@@ -39178,7 +34492,7 @@ long convert_long_sat_rtn(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtz(double2 x)
 {
@@ -39186,7 +34500,7 @@ long2 convert_long2_rtz(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtz(double2 x)
 {
@@ -39194,7 +34508,7 @@ long2 convert_long2_sat_rtz(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rte(double2 x)
 {
@@ -39203,7 +34517,7 @@ long2 convert_long2_rte(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rte(double2 x)
 {
@@ -39212,7 +34526,7 @@ long2 convert_long2_sat_rte(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtp(double2 x)
 {
@@ -39221,7 +34535,7 @@ long2 convert_long2_rtp(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtp(double2 x)
 {
@@ -39230,7 +34544,7 @@ long2 convert_long2_sat_rtp(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_rtn(double2 x)
 {
@@ -39239,7 +34553,7 @@ long2 convert_long2_rtn(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long2 convert_long2_sat_rtn(double2 x)
 {
@@ -39248,7 +34562,7 @@ long2 convert_long2_sat_rtn(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtz(double3 x)
 {
@@ -39256,7 +34570,7 @@ long3 convert_long3_rtz(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtz(double3 x)
 {
@@ -39264,7 +34578,7 @@ long3 convert_long3_sat_rtz(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rte(double3 x)
 {
@@ -39273,7 +34587,7 @@ long3 convert_long3_rte(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rte(double3 x)
 {
@@ -39282,7 +34596,7 @@ long3 convert_long3_sat_rte(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtp(double3 x)
 {
@@ -39291,7 +34605,7 @@ long3 convert_long3_rtp(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtp(double3 x)
 {
@@ -39300,7 +34614,7 @@ long3 convert_long3_sat_rtp(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_rtn(double3 x)
 {
@@ -39309,7 +34623,7 @@ long3 convert_long3_rtn(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long3 convert_long3_sat_rtn(double3 x)
 {
@@ -39318,7 +34632,7 @@ long3 convert_long3_sat_rtn(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtz(double4 x)
 {
@@ -39326,7 +34640,7 @@ long4 convert_long4_rtz(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtz(double4 x)
 {
@@ -39334,7 +34648,7 @@ long4 convert_long4_sat_rtz(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rte(double4 x)
 {
@@ -39343,7 +34657,7 @@ long4 convert_long4_rte(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rte(double4 x)
 {
@@ -39352,7 +34666,7 @@ long4 convert_long4_sat_rte(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtp(double4 x)
 {
@@ -39361,7 +34675,7 @@ long4 convert_long4_rtp(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtp(double4 x)
 {
@@ -39370,7 +34684,7 @@ long4 convert_long4_sat_rtp(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_rtn(double4 x)
 {
@@ -39379,7 +34693,7 @@ long4 convert_long4_rtn(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long4 convert_long4_sat_rtn(double4 x)
 {
@@ -39388,7 +34702,7 @@ long4 convert_long4_sat_rtn(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtz(double8 x)
 {
@@ -39396,7 +34710,7 @@ long8 convert_long8_rtz(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtz(double8 x)
 {
@@ -39404,7 +34718,7 @@ long8 convert_long8_sat_rtz(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rte(double8 x)
 {
@@ -39413,7 +34727,7 @@ long8 convert_long8_rte(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rte(double8 x)
 {
@@ -39422,7 +34736,7 @@ long8 convert_long8_sat_rte(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtp(double8 x)
 {
@@ -39431,7 +34745,7 @@ long8 convert_long8_rtp(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtp(double8 x)
 {
@@ -39440,7 +34754,7 @@ long8 convert_long8_sat_rtp(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_rtn(double8 x)
 {
@@ -39449,7 +34763,7 @@ long8 convert_long8_rtn(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long8 convert_long8_sat_rtn(double8 x)
 {
@@ -39458,7 +34772,7 @@ long8 convert_long8_sat_rtn(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtz(double16 x)
 {
@@ -39466,7 +34780,7 @@ long16 convert_long16_rtz(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtz(double16 x)
 {
@@ -39474,7 +34788,7 @@ long16 convert_long16_sat_rtz(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rte(double16 x)
 {
@@ -39483,7 +34797,7 @@ long16 convert_long16_rte(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rte(double16 x)
 {
@@ -39492,7 +34806,7 @@ long16 convert_long16_sat_rte(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtp(double16 x)
 {
@@ -39501,7 +34815,7 @@ long16 convert_long16_rtp(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtp(double16 x)
 {
@@ -39510,7 +34824,7 @@ long16 convert_long16_sat_rtp(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_rtn(double16 x)
 {
@@ -39519,7 +34833,7 @@ long16 convert_long16_rtn(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 long16 convert_long16_sat_rtn(double16 x)
 {
@@ -39528,7 +34842,7 @@ long16 convert_long16_sat_rtn(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtz(double x)
 {
@@ -39536,7 +34850,7 @@ ulong convert_ulong_rtz(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtz(double x)
 {
@@ -39544,7 +34858,7 @@ ulong convert_ulong_sat_rtz(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rte(double x)
 {
@@ -39553,7 +34867,7 @@ ulong convert_ulong_rte(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rte(double x)
 {
@@ -39562,7 +34876,7 @@ ulong convert_ulong_sat_rte(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtp(double x)
 {
@@ -39571,7 +34885,7 @@ ulong convert_ulong_rtp(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtp(double x)
 {
@@ -39580,7 +34894,7 @@ ulong convert_ulong_sat_rtp(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_rtn(double x)
 {
@@ -39589,7 +34903,7 @@ ulong convert_ulong_rtn(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong convert_ulong_sat_rtn(double x)
 {
@@ -39598,7 +34912,7 @@ ulong convert_ulong_sat_rtn(double x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtz(double2 x)
 {
@@ -39606,7 +34920,7 @@ ulong2 convert_ulong2_rtz(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtz(double2 x)
 {
@@ -39614,7 +34928,7 @@ ulong2 convert_ulong2_sat_rtz(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rte(double2 x)
 {
@@ -39623,7 +34937,7 @@ ulong2 convert_ulong2_rte(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rte(double2 x)
 {
@@ -39632,7 +34946,7 @@ ulong2 convert_ulong2_sat_rte(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtp(double2 x)
 {
@@ -39641,7 +34955,7 @@ ulong2 convert_ulong2_rtp(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtp(double2 x)
 {
@@ -39650,7 +34964,7 @@ ulong2 convert_ulong2_sat_rtp(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_rtn(double2 x)
 {
@@ -39659,7 +34973,7 @@ ulong2 convert_ulong2_rtn(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong2 convert_ulong2_sat_rtn(double2 x)
 {
@@ -39668,7 +34982,7 @@ ulong2 convert_ulong2_sat_rtn(double2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtz(double3 x)
 {
@@ -39676,7 +34990,7 @@ ulong3 convert_ulong3_rtz(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtz(double3 x)
 {
@@ -39684,7 +34998,7 @@ ulong3 convert_ulong3_sat_rtz(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rte(double3 x)
 {
@@ -39693,7 +35007,7 @@ ulong3 convert_ulong3_rte(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rte(double3 x)
 {
@@ -39702,7 +35016,7 @@ ulong3 convert_ulong3_sat_rte(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtp(double3 x)
 {
@@ -39711,7 +35025,7 @@ ulong3 convert_ulong3_rtp(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtp(double3 x)
 {
@@ -39720,7 +35034,7 @@ ulong3 convert_ulong3_sat_rtp(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_rtn(double3 x)
 {
@@ -39729,7 +35043,7 @@ ulong3 convert_ulong3_rtn(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong3 convert_ulong3_sat_rtn(double3 x)
 {
@@ -39738,7 +35052,7 @@ ulong3 convert_ulong3_sat_rtn(double3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtz(double4 x)
 {
@@ -39746,7 +35060,7 @@ ulong4 convert_ulong4_rtz(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtz(double4 x)
 {
@@ -39754,7 +35068,7 @@ ulong4 convert_ulong4_sat_rtz(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rte(double4 x)
 {
@@ -39763,7 +35077,7 @@ ulong4 convert_ulong4_rte(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rte(double4 x)
 {
@@ -39772,7 +35086,7 @@ ulong4 convert_ulong4_sat_rte(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtp(double4 x)
 {
@@ -39781,7 +35095,7 @@ ulong4 convert_ulong4_rtp(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtp(double4 x)
 {
@@ -39790,7 +35104,7 @@ ulong4 convert_ulong4_sat_rtp(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_rtn(double4 x)
 {
@@ -39799,7 +35113,7 @@ ulong4 convert_ulong4_rtn(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong4 convert_ulong4_sat_rtn(double4 x)
 {
@@ -39808,7 +35122,7 @@ ulong4 convert_ulong4_sat_rtn(double4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtz(double8 x)
 {
@@ -39816,7 +35130,7 @@ ulong8 convert_ulong8_rtz(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtz(double8 x)
 {
@@ -39824,7 +35138,7 @@ ulong8 convert_ulong8_sat_rtz(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rte(double8 x)
 {
@@ -39833,7 +35147,7 @@ ulong8 convert_ulong8_rte(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rte(double8 x)
 {
@@ -39842,7 +35156,7 @@ ulong8 convert_ulong8_sat_rte(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtp(double8 x)
 {
@@ -39851,7 +35165,7 @@ ulong8 convert_ulong8_rtp(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtp(double8 x)
 {
@@ -39860,7 +35174,7 @@ ulong8 convert_ulong8_sat_rtp(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_rtn(double8 x)
 {
@@ -39869,7 +35183,7 @@ ulong8 convert_ulong8_rtn(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong8 convert_ulong8_sat_rtn(double8 x)
 {
@@ -39878,7 +35192,7 @@ ulong8 convert_ulong8_sat_rtn(double8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtz(double16 x)
 {
@@ -39886,7 +35200,7 @@ ulong16 convert_ulong16_rtz(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtz(double16 x)
 {
@@ -39894,7 +35208,7 @@ ulong16 convert_ulong16_sat_rtz(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rte(double16 x)
 {
@@ -39903,7 +35217,7 @@ ulong16 convert_ulong16_rte(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rte(double16 x)
 {
@@ -39912,7 +35226,7 @@ ulong16 convert_ulong16_sat_rte(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtp(double16 x)
 {
@@ -39921,7 +35235,7 @@ ulong16 convert_ulong16_rtp(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtp(double16 x)
 {
@@ -39930,7 +35244,7 @@ ulong16 convert_ulong16_sat_rtp(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_rtn(double16 x)
 {
@@ -39939,252 +35253,12 @@ ulong16 convert_ulong16_rtn(double16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 ulong16 convert_ulong16_sat_rtn(double16 x)
 {
   x = floor(x);
   return convert_ulong16_sat(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(char x)
-{
-  half r = convert_half(x);
-  char y = convert_char(r);
-  uchar abs_x = abs(x);
-  uchar abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(char x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(char x)
-{
-  half r = convert_half(x);
-  char y = convert_char(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(char x)
-{
-  half r = convert_half(x);
-  char y = convert_char(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(char2 x)
-{
-  half2 r = convert_half2(x);
-  char2 y = convert_char2(r);
-  uchar2 abs_x = abs(x);
-  uchar2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(char2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(char2 x)
-{
-  half2 r = convert_half2(x);
-  char2 y = convert_char2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(char2 x)
-{
-  half2 r = convert_half2(x);
-  char2 y = convert_char2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(char3 x)
-{
-  half3 r = convert_half3(x);
-  char3 y = convert_char3(r);
-  uchar3 abs_x = abs(x);
-  uchar3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(char3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(char3 x)
-{
-  half3 r = convert_half3(x);
-  char3 y = convert_char3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(char3 x)
-{
-  half3 r = convert_half3(x);
-  char3 y = convert_char3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(char4 x)
-{
-  half4 r = convert_half4(x);
-  char4 y = convert_char4(r);
-  uchar4 abs_x = abs(x);
-  uchar4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(char4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(char4 x)
-{
-  half4 r = convert_half4(x);
-  char4 y = convert_char4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(char4 x)
-{
-  half4 r = convert_half4(x);
-  char4 y = convert_char4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(char8 x)
-{
-  half8 r = convert_half8(x);
-  char8 y = convert_char8(r);
-  uchar8 abs_x = abs(x);
-  uchar8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(char8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(char8 x)
-{
-  half8 r = convert_half8(x);
-  char8 y = convert_char8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(char8 x)
-{
-  half8 r = convert_half8(x);
-  char8 y = convert_char8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(char16 x)
-{
-  half16 r = convert_half16(x);
-  char16 y = convert_char16(r);
-  uchar16 abs_x = abs(x);
-  uchar16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(char16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(char16 x)
-{
-  half16 r = convert_half16(x);
-  char16 y = convert_char16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(char16 x)
-{
-  half16 r = convert_half16(x);
-  char16 y = convert_char16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
 
@@ -40620,246 +35694,6 @@ double16 convert_double16_rtn(char16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(uchar x)
-{
-  half r = convert_half(x);
-  uchar y = convert_uchar(r);
-  uchar abs_x = abs(x);
-  uchar abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(uchar x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(uchar x)
-{
-  half r = convert_half(x);
-  uchar y = convert_uchar(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(uchar x)
-{
-  half r = convert_half(x);
-  uchar y = convert_uchar(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(uchar2 x)
-{
-  half2 r = convert_half2(x);
-  uchar2 y = convert_uchar2(r);
-  uchar2 abs_x = abs(x);
-  uchar2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(uchar2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(uchar2 x)
-{
-  half2 r = convert_half2(x);
-  uchar2 y = convert_uchar2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(uchar2 x)
-{
-  half2 r = convert_half2(x);
-  uchar2 y = convert_uchar2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(uchar3 x)
-{
-  half3 r = convert_half3(x);
-  uchar3 y = convert_uchar3(r);
-  uchar3 abs_x = abs(x);
-  uchar3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(uchar3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(uchar3 x)
-{
-  half3 r = convert_half3(x);
-  uchar3 y = convert_uchar3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(uchar3 x)
-{
-  half3 r = convert_half3(x);
-  uchar3 y = convert_uchar3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(uchar4 x)
-{
-  half4 r = convert_half4(x);
-  uchar4 y = convert_uchar4(r);
-  uchar4 abs_x = abs(x);
-  uchar4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(uchar4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(uchar4 x)
-{
-  half4 r = convert_half4(x);
-  uchar4 y = convert_uchar4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(uchar4 x)
-{
-  half4 r = convert_half4(x);
-  uchar4 y = convert_uchar4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(uchar8 x)
-{
-  half8 r = convert_half8(x);
-  uchar8 y = convert_uchar8(r);
-  uchar8 abs_x = abs(x);
-  uchar8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(uchar8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(uchar8 x)
-{
-  half8 r = convert_half8(x);
-  uchar8 y = convert_uchar8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(uchar8 x)
-{
-  half8 r = convert_half8(x);
-  uchar8 y = convert_uchar8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(uchar16 x)
-{
-  half16 r = convert_half16(x);
-  uchar16 y = convert_uchar16(r);
-  uchar16 abs_x = abs(x);
-  uchar16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(uchar16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(uchar16 x)
-{
-  half16 r = convert_half16(x);
-  uchar16 y = convert_uchar16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(uchar16 x)
-{
-  half16 r = convert_half16(x);
-  uchar16 y = convert_uchar16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(uchar x)
 {
@@ -41289,246 +36123,6 @@ double16 convert_double16_rtn(uchar16 x)
   double16 r = convert_double16(x);
   uchar16 y = convert_uchar16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(short x)
-{
-  half r = convert_half(x);
-  short y = convert_short(r);
-  ushort abs_x = abs(x);
-  ushort abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(short x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(short x)
-{
-  half r = convert_half(x);
-  short y = convert_short(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(short x)
-{
-  half r = convert_half(x);
-  short y = convert_short(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(short2 x)
-{
-  half2 r = convert_half2(x);
-  short2 y = convert_short2(r);
-  ushort2 abs_x = abs(x);
-  ushort2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(short2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(short2 x)
-{
-  half2 r = convert_half2(x);
-  short2 y = convert_short2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(short2 x)
-{
-  half2 r = convert_half2(x);
-  short2 y = convert_short2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(short3 x)
-{
-  half3 r = convert_half3(x);
-  short3 y = convert_short3(r);
-  ushort3 abs_x = abs(x);
-  ushort3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(short3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(short3 x)
-{
-  half3 r = convert_half3(x);
-  short3 y = convert_short3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(short3 x)
-{
-  half3 r = convert_half3(x);
-  short3 y = convert_short3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(short4 x)
-{
-  half4 r = convert_half4(x);
-  short4 y = convert_short4(r);
-  ushort4 abs_x = abs(x);
-  ushort4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(short4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(short4 x)
-{
-  half4 r = convert_half4(x);
-  short4 y = convert_short4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(short4 x)
-{
-  half4 r = convert_half4(x);
-  short4 y = convert_short4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(short8 x)
-{
-  half8 r = convert_half8(x);
-  short8 y = convert_short8(r);
-  ushort8 abs_x = abs(x);
-  ushort8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(short8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(short8 x)
-{
-  half8 r = convert_half8(x);
-  short8 y = convert_short8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(short8 x)
-{
-  half8 r = convert_half8(x);
-  short8 y = convert_short8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(short16 x)
-{
-  half16 r = convert_half16(x);
-  short16 y = convert_short16(r);
-  ushort16 abs_x = abs(x);
-  ushort16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(short16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(short16 x)
-{
-  half16 r = convert_half16(x);
-  short16 y = convert_short16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(short16 x)
-{
-  half16 r = convert_half16(x);
-  short16 y = convert_short16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
 
@@ -41964,246 +36558,6 @@ double16 convert_double16_rtn(short16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(ushort x)
-{
-  half r = convert_half(x);
-  ushort y = convert_ushort(r);
-  ushort abs_x = abs(x);
-  ushort abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(ushort x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(ushort x)
-{
-  half r = convert_half(x);
-  ushort y = convert_ushort(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(ushort x)
-{
-  half r = convert_half(x);
-  ushort y = convert_ushort(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(ushort2 x)
-{
-  half2 r = convert_half2(x);
-  ushort2 y = convert_ushort2(r);
-  ushort2 abs_x = abs(x);
-  ushort2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(ushort2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(ushort2 x)
-{
-  half2 r = convert_half2(x);
-  ushort2 y = convert_ushort2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(ushort2 x)
-{
-  half2 r = convert_half2(x);
-  ushort2 y = convert_ushort2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(ushort3 x)
-{
-  half3 r = convert_half3(x);
-  ushort3 y = convert_ushort3(r);
-  ushort3 abs_x = abs(x);
-  ushort3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(ushort3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(ushort3 x)
-{
-  half3 r = convert_half3(x);
-  ushort3 y = convert_ushort3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(ushort3 x)
-{
-  half3 r = convert_half3(x);
-  ushort3 y = convert_ushort3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(ushort4 x)
-{
-  half4 r = convert_half4(x);
-  ushort4 y = convert_ushort4(r);
-  ushort4 abs_x = abs(x);
-  ushort4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(ushort4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(ushort4 x)
-{
-  half4 r = convert_half4(x);
-  ushort4 y = convert_ushort4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(ushort4 x)
-{
-  half4 r = convert_half4(x);
-  ushort4 y = convert_ushort4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(ushort8 x)
-{
-  half8 r = convert_half8(x);
-  ushort8 y = convert_ushort8(r);
-  ushort8 abs_x = abs(x);
-  ushort8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(ushort8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(ushort8 x)
-{
-  half8 r = convert_half8(x);
-  ushort8 y = convert_ushort8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(ushort8 x)
-{
-  half8 r = convert_half8(x);
-  ushort8 y = convert_ushort8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(ushort16 x)
-{
-  half16 r = convert_half16(x);
-  ushort16 y = convert_ushort16(r);
-  ushort16 abs_x = abs(x);
-  ushort16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(ushort16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(ushort16 x)
-{
-  half16 r = convert_half16(x);
-  ushort16 y = convert_ushort16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(ushort16 x)
-{
-  half16 r = convert_half16(x);
-  ushort16 y = convert_ushort16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(ushort x)
 {
@@ -42633,246 +36987,6 @@ double16 convert_double16_rtn(ushort16 x)
   double16 r = convert_double16(x);
   ushort16 y = convert_ushort16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(int x)
-{
-  half r = convert_half(x);
-  int y = convert_int(r);
-  uint abs_x = abs(x);
-  uint abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(int x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(int x)
-{
-  half r = convert_half(x);
-  int y = convert_int(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(int x)
-{
-  half r = convert_half(x);
-  int y = convert_int(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(int2 x)
-{
-  half2 r = convert_half2(x);
-  int2 y = convert_int2(r);
-  uint2 abs_x = abs(x);
-  uint2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(int2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(int2 x)
-{
-  half2 r = convert_half2(x);
-  int2 y = convert_int2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(int2 x)
-{
-  half2 r = convert_half2(x);
-  int2 y = convert_int2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(int3 x)
-{
-  half3 r = convert_half3(x);
-  int3 y = convert_int3(r);
-  uint3 abs_x = abs(x);
-  uint3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(int3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(int3 x)
-{
-  half3 r = convert_half3(x);
-  int3 y = convert_int3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(int3 x)
-{
-  half3 r = convert_half3(x);
-  int3 y = convert_int3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(int4 x)
-{
-  half4 r = convert_half4(x);
-  int4 y = convert_int4(r);
-  uint4 abs_x = abs(x);
-  uint4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(int4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(int4 x)
-{
-  half4 r = convert_half4(x);
-  int4 y = convert_int4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(int4 x)
-{
-  half4 r = convert_half4(x);
-  int4 y = convert_int4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(int8 x)
-{
-  half8 r = convert_half8(x);
-  int8 y = convert_int8(r);
-  uint8 abs_x = abs(x);
-  uint8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(int8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(int8 x)
-{
-  half8 r = convert_half8(x);
-  int8 y = convert_int8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(int8 x)
-{
-  half8 r = convert_half8(x);
-  int8 y = convert_int8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(int16 x)
-{
-  half16 r = convert_half16(x);
-  int16 y = convert_int16(r);
-  uint16 abs_x = abs(x);
-  uint16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(int16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(int16 x)
-{
-  half16 r = convert_half16(x);
-  int16 y = convert_int16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(int16 x)
-{
-  half16 r = convert_half16(x);
-  int16 y = convert_int16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
 
@@ -43308,246 +37422,6 @@ double16 convert_double16_rtn(int16 x)
 }
 #endif
 
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(uint x)
-{
-  half r = convert_half(x);
-  uint y = convert_uint(r);
-  uint abs_x = abs(x);
-  uint abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(uint x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(uint x)
-{
-  half r = convert_half(x);
-  uint y = convert_uint(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(uint x)
-{
-  half r = convert_half(x);
-  uint y = convert_uint(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(uint2 x)
-{
-  half2 r = convert_half2(x);
-  uint2 y = convert_uint2(r);
-  uint2 abs_x = abs(x);
-  uint2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(uint2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(uint2 x)
-{
-  half2 r = convert_half2(x);
-  uint2 y = convert_uint2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(uint2 x)
-{
-  half2 r = convert_half2(x);
-  uint2 y = convert_uint2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(uint3 x)
-{
-  half3 r = convert_half3(x);
-  uint3 y = convert_uint3(r);
-  uint3 abs_x = abs(x);
-  uint3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(uint3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(uint3 x)
-{
-  half3 r = convert_half3(x);
-  uint3 y = convert_uint3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(uint3 x)
-{
-  half3 r = convert_half3(x);
-  uint3 y = convert_uint3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(uint4 x)
-{
-  half4 r = convert_half4(x);
-  uint4 y = convert_uint4(r);
-  uint4 abs_x = abs(x);
-  uint4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(uint4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(uint4 x)
-{
-  half4 r = convert_half4(x);
-  uint4 y = convert_uint4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(uint4 x)
-{
-  half4 r = convert_half4(x);
-  uint4 y = convert_uint4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(uint8 x)
-{
-  half8 r = convert_half8(x);
-  uint8 y = convert_uint8(r);
-  uint8 abs_x = abs(x);
-  uint8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(uint8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(uint8 x)
-{
-  half8 r = convert_half8(x);
-  uint8 y = convert_uint8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(uint8 x)
-{
-  half8 r = convert_half8(x);
-  uint8 y = convert_uint8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(uint16 x)
-{
-  half16 r = convert_half16(x);
-  uint16 y = convert_uint16(r);
-  uint16 abs_x = abs(x);
-  uint16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(uint16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(uint16 x)
-{
-  half16 r = convert_half16(x);
-  uint16 y = convert_uint16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(uint16 x)
-{
-  half16 r = convert_half16(x);
-  uint16 y = convert_uint16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
-}
-#endif
-
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(uint x)
 {
@@ -43980,246 +37854,6 @@ double16 convert_double16_rtn(uint16 x)
 }
 #endif
 
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(long x)
-{
-  half r = convert_half(x);
-  long y = convert_long(r);
-  ulong abs_x = abs(x);
-  ulong abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(long x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(long x)
-{
-  half r = convert_half(x);
-  long y = convert_long(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(long x)
-{
-  half r = convert_half(x);
-  long y = convert_long(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(long2 x)
-{
-  half2 r = convert_half2(x);
-  long2 y = convert_long2(r);
-  ulong2 abs_x = abs(x);
-  ulong2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(long2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(long2 x)
-{
-  half2 r = convert_half2(x);
-  long2 y = convert_long2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(long2 x)
-{
-  half2 r = convert_half2(x);
-  long2 y = convert_long2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(long3 x)
-{
-  half3 r = convert_half3(x);
-  long3 y = convert_long3(r);
-  ulong3 abs_x = abs(x);
-  ulong3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(long3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(long3 x)
-{
-  half3 r = convert_half3(x);
-  long3 y = convert_long3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(long3 x)
-{
-  half3 r = convert_half3(x);
-  long3 y = convert_long3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(long4 x)
-{
-  half4 r = convert_half4(x);
-  long4 y = convert_long4(r);
-  ulong4 abs_x = abs(x);
-  ulong4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(long4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(long4 x)
-{
-  half4 r = convert_half4(x);
-  long4 y = convert_long4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(long4 x)
-{
-  half4 r = convert_half4(x);
-  long4 y = convert_long4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(long8 x)
-{
-  half8 r = convert_half8(x);
-  long8 y = convert_long8(r);
-  ulong8 abs_x = abs(x);
-  ulong8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(long8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(long8 x)
-{
-  half8 r = convert_half8(x);
-  long8 y = convert_long8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(long8 x)
-{
-  half8 r = convert_half8(x);
-  long8 y = convert_long8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(long16 x)
-{
-  half16 r = convert_half16(x);
-  long16 y = convert_long16(r);
-  ulong16 abs_x = abs(x);
-  ulong16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(long16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(long16 x)
-{
-  half16 r = convert_half16(x);
-  long16 y = convert_long16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(long16 x)
-{
-  half16 r = convert_half16(x);
-  long16 y = convert_long16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
-}
-#endif
-
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 float convert_float_rtz(long x)
@@ -44460,7 +38094,7 @@ float16 convert_float16_rtn(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(long x)
 {
@@ -44472,7 +38106,7 @@ double convert_double_rtz(long x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(long x)
 {
@@ -44480,7 +38114,7 @@ double convert_double_rte(long x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(long x)
 {
@@ -44490,7 +38124,7 @@ double convert_double_rtp(long x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(long x)
 {
@@ -44500,7 +38134,7 @@ double convert_double_rtn(long x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(long2 x)
 {
@@ -44512,7 +38146,7 @@ double2 convert_double2_rtz(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(long2 x)
 {
@@ -44520,7 +38154,7 @@ double2 convert_double2_rte(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(long2 x)
 {
@@ -44530,7 +38164,7 @@ double2 convert_double2_rtp(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(long2 x)
 {
@@ -44540,7 +38174,7 @@ double2 convert_double2_rtn(long2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(long3 x)
 {
@@ -44552,7 +38186,7 @@ double3 convert_double3_rtz(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(long3 x)
 {
@@ -44560,7 +38194,7 @@ double3 convert_double3_rte(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(long3 x)
 {
@@ -44570,7 +38204,7 @@ double3 convert_double3_rtp(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(long3 x)
 {
@@ -44580,7 +38214,7 @@ double3 convert_double3_rtn(long3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(long4 x)
 {
@@ -44592,7 +38226,7 @@ double4 convert_double4_rtz(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(long4 x)
 {
@@ -44600,7 +38234,7 @@ double4 convert_double4_rte(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(long4 x)
 {
@@ -44610,7 +38244,7 @@ double4 convert_double4_rtp(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(long4 x)
 {
@@ -44620,7 +38254,7 @@ double4 convert_double4_rtn(long4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(long8 x)
 {
@@ -44632,7 +38266,7 @@ double8 convert_double8_rtz(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(long8 x)
 {
@@ -44640,7 +38274,7 @@ double8 convert_double8_rte(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(long8 x)
 {
@@ -44650,7 +38284,7 @@ double8 convert_double8_rtp(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(long8 x)
 {
@@ -44660,7 +38294,7 @@ double8 convert_double8_rtn(long8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(long16 x)
 {
@@ -44672,7 +38306,7 @@ double16 convert_double16_rtz(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(long16 x)
 {
@@ -44680,7 +38314,7 @@ double16 convert_double16_rte(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(long16 x)
 {
@@ -44690,253 +38324,13 @@ double16 convert_double16_rtp(long16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(long16 x)
 {
   double16 r = convert_double16(x);
   long16 y = convert_long16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(ulong x)
-{
-  half r = convert_half(x);
-  ulong y = convert_ulong(r);
-  ulong abs_x = abs(x);
-  ulong abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(ulong x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(ulong x)
-{
-  half r = convert_half(x);
-  ulong y = convert_ulong(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(ulong x)
-{
-  half r = convert_half(x);
-  ulong y = convert_ulong(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(ulong2 x)
-{
-  half2 r = convert_half2(x);
-  ulong2 y = convert_ulong2(r);
-  ulong2 abs_x = abs(x);
-  ulong2 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(ulong2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(ulong2 x)
-{
-  half2 r = convert_half2(x);
-  ulong2 y = convert_ulong2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(ulong2 x)
-{
-  half2 r = convert_half2(x);
-  ulong2 y = convert_ulong2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(ulong3 x)
-{
-  half3 r = convert_half3(x);
-  ulong3 y = convert_ulong3(r);
-  ulong3 abs_x = abs(x);
-  ulong3 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(ulong3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(ulong3 x)
-{
-  half3 r = convert_half3(x);
-  ulong3 y = convert_ulong3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(ulong3 x)
-{
-  half3 r = convert_half3(x);
-  ulong3 y = convert_ulong3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(ulong4 x)
-{
-  half4 r = convert_half4(x);
-  ulong4 y = convert_ulong4(r);
-  ulong4 abs_x = abs(x);
-  ulong4 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(ulong4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(ulong4 x)
-{
-  half4 r = convert_half4(x);
-  ulong4 y = convert_ulong4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(ulong4 x)
-{
-  half4 r = convert_half4(x);
-  ulong4 y = convert_ulong4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(ulong8 x)
-{
-  half8 r = convert_half8(x);
-  ulong8 y = convert_ulong8(r);
-  ulong8 abs_x = abs(x);
-  ulong8 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(ulong8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(ulong8 x)
-{
-  half8 r = convert_half8(x);
-  ulong8 y = convert_ulong8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(ulong8 x)
-{
-  half8 r = convert_half8(x);
-  ulong8 y = convert_ulong8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(ulong16 x)
-{
-  half16 r = convert_half16(x);
-  ulong16 y = convert_ulong16(r);
-  ulong16 abs_x = abs(x);
-  ulong16 abs_y = abs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(ulong16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(ulong16 x)
-{
-  half16 r = convert_half16(x);
-  ulong16 y = convert_ulong16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_int64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(ulong16 x)
-{
-  half16 r = convert_half16(x);
-  ulong16 y = convert_ulong16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
 
@@ -45180,7 +38574,7 @@ float16 convert_float16_rtn(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtz(ulong x)
 {
@@ -45192,7 +38586,7 @@ double convert_double_rtz(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rte(ulong x)
 {
@@ -45200,7 +38594,7 @@ double convert_double_rte(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtp(ulong x)
 {
@@ -45210,7 +38604,7 @@ double convert_double_rtp(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double convert_double_rtn(ulong x)
 {
@@ -45220,7 +38614,7 @@ double convert_double_rtn(ulong x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtz(ulong2 x)
 {
@@ -45232,7 +38626,7 @@ double2 convert_double2_rtz(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rte(ulong2 x)
 {
@@ -45240,7 +38634,7 @@ double2 convert_double2_rte(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtp(ulong2 x)
 {
@@ -45250,7 +38644,7 @@ double2 convert_double2_rtp(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double2 convert_double2_rtn(ulong2 x)
 {
@@ -45260,7 +38654,7 @@ double2 convert_double2_rtn(ulong2 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtz(ulong3 x)
 {
@@ -45272,7 +38666,7 @@ double3 convert_double3_rtz(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rte(ulong3 x)
 {
@@ -45280,7 +38674,7 @@ double3 convert_double3_rte(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtp(ulong3 x)
 {
@@ -45290,7 +38684,7 @@ double3 convert_double3_rtp(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double3 convert_double3_rtn(ulong3 x)
 {
@@ -45300,7 +38694,7 @@ double3 convert_double3_rtn(ulong3 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtz(ulong4 x)
 {
@@ -45312,7 +38706,7 @@ double4 convert_double4_rtz(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rte(ulong4 x)
 {
@@ -45320,7 +38714,7 @@ double4 convert_double4_rte(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtp(ulong4 x)
 {
@@ -45330,7 +38724,7 @@ double4 convert_double4_rtp(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double4 convert_double4_rtn(ulong4 x)
 {
@@ -45340,7 +38734,7 @@ double4 convert_double4_rtn(ulong4 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtz(ulong8 x)
 {
@@ -45352,7 +38746,7 @@ double8 convert_double8_rtz(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rte(ulong8 x)
 {
@@ -45360,7 +38754,7 @@ double8 convert_double8_rte(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtp(ulong8 x)
 {
@@ -45370,7 +38764,7 @@ double8 convert_double8_rtp(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double8 convert_double8_rtn(ulong8 x)
 {
@@ -45380,7 +38774,7 @@ double8 convert_double8_rtn(ulong8 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtz(ulong16 x)
 {
@@ -45392,7 +38786,7 @@ double16 convert_double16_rtz(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rte(ulong16 x)
 {
@@ -45400,7 +38794,7 @@ double16 convert_double16_rte(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtp(ulong16 x)
 {
@@ -45410,973 +38804,13 @@ double16 convert_double16_rtp(ulong16 x)
 }
 #endif
 
-#if defined(cl_khr_fp64) && defined(cl_khr_int64)
+#if defined(cl_khr_int64) && defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE
 double16 convert_double16_rtn(ulong16 x)
 {
   double16 r = convert_double16(x);
   ulong16 y = convert_ulong16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(half x)
-{
-  half r = convert_half(x);
-  half y = convert_half(r);
-  half abs_x = fabs(x);
-  half abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(half x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(half x)
-{
-  half r = convert_half(x);
-  half y = convert_half(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(half x)
-{
-  half r = convert_half(x);
-  half y = convert_half(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(half2 x)
-{
-  half2 r = convert_half2(x);
-  half2 y = convert_half2(r);
-  half2 abs_x = fabs(x);
-  half2 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(half2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(half2 x)
-{
-  half2 r = convert_half2(x);
-  half2 y = convert_half2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(half2 x)
-{
-  half2 r = convert_half2(x);
-  half2 y = convert_half2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(half3 x)
-{
-  half3 r = convert_half3(x);
-  half3 y = convert_half3(r);
-  half3 abs_x = fabs(x);
-  half3 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(half3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(half3 x)
-{
-  half3 r = convert_half3(x);
-  half3 y = convert_half3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(half3 x)
-{
-  half3 r = convert_half3(x);
-  half3 y = convert_half3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(half4 x)
-{
-  half4 r = convert_half4(x);
-  half4 y = convert_half4(r);
-  half4 abs_x = fabs(x);
-  half4 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(half4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(half4 x)
-{
-  half4 r = convert_half4(x);
-  half4 y = convert_half4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(half4 x)
-{
-  half4 r = convert_half4(x);
-  half4 y = convert_half4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(half8 x)
-{
-  half8 r = convert_half8(x);
-  half8 y = convert_half8(r);
-  half8 abs_x = fabs(x);
-  half8 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(half8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(half8 x)
-{
-  half8 r = convert_half8(x);
-  half8 y = convert_half8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(half8 x)
-{
-  half8 r = convert_half8(x);
-  half8 y = convert_half8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(half16 x)
-{
-  half16 r = convert_half16(x);
-  half16 y = convert_half16(r);
-  half16 abs_x = fabs(x);
-  half16 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(half16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(half16 x)
-{
-  half16 r = convert_half16(x);
-  half16 y = convert_half16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(half16 x)
-{
-  half16 r = convert_half16(x);
-  half16 y = convert_half16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float convert_float_rtz(half x)
-{
-  float r = convert_float(x);
-  half y = convert_half(r);
-  half abs_x = fabs(x);
-  half abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float convert_float_rte(half x)
-{
-  return convert_float(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float convert_float_rtp(half x)
-{
-  float r = convert_float(x);
-  half y = convert_half(r);
-  return select(r, nextafter(r, (float)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float convert_float_rtn(half x)
-{
-  float r = convert_float(x);
-  half y = convert_half(r);
-  return select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float2 convert_float2_rtz(half2 x)
-{
-  float2 r = convert_float2(x);
-  half2 y = convert_half2(r);
-  half2 abs_x = fabs(x);
-  half2 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float2 convert_float2_rte(half2 x)
-{
-  return convert_float2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float2 convert_float2_rtp(half2 x)
-{
-  float2 r = convert_float2(x);
-  half2 y = convert_half2(r);
-  return select(r, nextafter(r, (float2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float2 convert_float2_rtn(half2 x)
-{
-  float2 r = convert_float2(x);
-  half2 y = convert_half2(r);
-  return select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float3 convert_float3_rtz(half3 x)
-{
-  float3 r = convert_float3(x);
-  half3 y = convert_half3(r);
-  half3 abs_x = fabs(x);
-  half3 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float3 convert_float3_rte(half3 x)
-{
-  return convert_float3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float3 convert_float3_rtp(half3 x)
-{
-  float3 r = convert_float3(x);
-  half3 y = convert_half3(r);
-  return select(r, nextafter(r, (float3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float3 convert_float3_rtn(half3 x)
-{
-  float3 r = convert_float3(x);
-  half3 y = convert_half3(r);
-  return select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float4 convert_float4_rtz(half4 x)
-{
-  float4 r = convert_float4(x);
-  half4 y = convert_half4(r);
-  half4 abs_x = fabs(x);
-  half4 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float4 convert_float4_rte(half4 x)
-{
-  return convert_float4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float4 convert_float4_rtp(half4 x)
-{
-  float4 r = convert_float4(x);
-  half4 y = convert_half4(r);
-  return select(r, nextafter(r, (float4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float4 convert_float4_rtn(half4 x)
-{
-  float4 r = convert_float4(x);
-  half4 y = convert_half4(r);
-  return select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float8 convert_float8_rtz(half8 x)
-{
-  float8 r = convert_float8(x);
-  half8 y = convert_half8(r);
-  half8 abs_x = fabs(x);
-  half8 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float8 convert_float8_rte(half8 x)
-{
-  return convert_float8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float8 convert_float8_rtp(half8 x)
-{
-  float8 r = convert_float8(x);
-  half8 y = convert_half8(r);
-  return select(r, nextafter(r, (float8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float8 convert_float8_rtn(half8 x)
-{
-  float8 r = convert_float8(x);
-  half8 y = convert_half8(r);
-  return select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float16 convert_float16_rtz(half16 x)
-{
-  float16 r = convert_float16(x);
-  half16 y = convert_half16(r);
-  half16 abs_x = fabs(x);
-  half16 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float16 convert_float16_rte(half16 x)
-{
-  return convert_float16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float16 convert_float16_rtp(half16 x)
-{
-  float16 r = convert_float16(x);
-  half16 y = convert_half16(r);
-  return select(r, nextafter(r, (float16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-float16 convert_float16_rtn(half16 x)
-{
-  float16 r = convert_float16(x);
-  half16 y = convert_half16(r);
-  return select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double convert_double_rtz(half x)
-{
-  double r = convert_double(x);
-  half y = convert_half(r);
-  half abs_x = fabs(x);
-  half abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (double)-INFINITY), convert_long(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double convert_double_rte(half x)
-{
-  return convert_double(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double convert_double_rtp(half x)
-{
-  double r = convert_double(x);
-  half y = convert_half(r);
-  return select(r, nextafter(r, (double)INFINITY), convert_long(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double convert_double_rtn(half x)
-{
-  double r = convert_double(x);
-  half y = convert_half(r);
-  return select(r, nextafter(r, (double)-INFINITY), convert_long(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double2 convert_double2_rtz(half2 x)
-{
-  double2 r = convert_double2(x);
-  half2 y = convert_half2(r);
-  half2 abs_x = fabs(x);
-  half2 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (double2)-INFINITY), convert_long2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double2 convert_double2_rte(half2 x)
-{
-  return convert_double2(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double2 convert_double2_rtp(half2 x)
-{
-  double2 r = convert_double2(x);
-  half2 y = convert_half2(r);
-  return select(r, nextafter(r, (double2)INFINITY), convert_long2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double2 convert_double2_rtn(half2 x)
-{
-  double2 r = convert_double2(x);
-  half2 y = convert_half2(r);
-  return select(r, nextafter(r, (double2)-INFINITY), convert_long2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double3 convert_double3_rtz(half3 x)
-{
-  double3 r = convert_double3(x);
-  half3 y = convert_half3(r);
-  half3 abs_x = fabs(x);
-  half3 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (double3)-INFINITY), convert_long3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double3 convert_double3_rte(half3 x)
-{
-  return convert_double3(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double3 convert_double3_rtp(half3 x)
-{
-  double3 r = convert_double3(x);
-  half3 y = convert_half3(r);
-  return select(r, nextafter(r, (double3)INFINITY), convert_long3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double3 convert_double3_rtn(half3 x)
-{
-  double3 r = convert_double3(x);
-  half3 y = convert_half3(r);
-  return select(r, nextafter(r, (double3)-INFINITY), convert_long3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double4 convert_double4_rtz(half4 x)
-{
-  double4 r = convert_double4(x);
-  half4 y = convert_half4(r);
-  half4 abs_x = fabs(x);
-  half4 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (double4)-INFINITY), convert_long4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double4 convert_double4_rte(half4 x)
-{
-  return convert_double4(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double4 convert_double4_rtp(half4 x)
-{
-  double4 r = convert_double4(x);
-  half4 y = convert_half4(r);
-  return select(r, nextafter(r, (double4)INFINITY), convert_long4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double4 convert_double4_rtn(half4 x)
-{
-  double4 r = convert_double4(x);
-  half4 y = convert_half4(r);
-  return select(r, nextafter(r, (double4)-INFINITY), convert_long4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double8 convert_double8_rtz(half8 x)
-{
-  double8 r = convert_double8(x);
-  half8 y = convert_half8(r);
-  half8 abs_x = fabs(x);
-  half8 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (double8)-INFINITY), convert_long8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double8 convert_double8_rte(half8 x)
-{
-  return convert_double8(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double8 convert_double8_rtp(half8 x)
-{
-  double8 r = convert_double8(x);
-  half8 y = convert_half8(r);
-  return select(r, nextafter(r, (double8)INFINITY), convert_long8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double8 convert_double8_rtn(half8 x)
-{
-  double8 r = convert_double8(x);
-  half8 y = convert_half8(r);
-  return select(r, nextafter(r, (double8)-INFINITY), convert_long8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double16 convert_double16_rtz(half16 x)
-{
-  double16 r = convert_double16(x);
-  half16 y = convert_half16(r);
-  half16 abs_x = fabs(x);
-  half16 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (double16)-INFINITY), convert_long16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double16 convert_double16_rte(half16 x)
-{
-  return convert_double16(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double16 convert_double16_rtp(half16 x)
-{
-  double16 r = convert_double16(x);
-  half16 y = convert_half16(r);
-  return select(r, nextafter(r, (double16)INFINITY), convert_long16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-double16 convert_double16_rtn(half16 x)
-{
-  double16 r = convert_double16(x);
-  half16 y = convert_half16(r);
-  return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(float x)
-{
-  half r = convert_half(x);
-  float y = convert_float(r);
-  float abs_x = fabs(x);
-  float abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(float x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(float x)
-{
-  half r = convert_half(x);
-  float y = convert_float(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(float x)
-{
-  half r = convert_half(x);
-  float y = convert_float(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(float2 x)
-{
-  half2 r = convert_half2(x);
-  float2 y = convert_float2(r);
-  float2 abs_x = fabs(x);
-  float2 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(float2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(float2 x)
-{
-  half2 r = convert_half2(x);
-  float2 y = convert_float2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(float2 x)
-{
-  half2 r = convert_half2(x);
-  float2 y = convert_float2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(float3 x)
-{
-  half3 r = convert_half3(x);
-  float3 y = convert_float3(r);
-  float3 abs_x = fabs(x);
-  float3 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(float3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(float3 x)
-{
-  half3 r = convert_half3(x);
-  float3 y = convert_float3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(float3 x)
-{
-  half3 r = convert_half3(x);
-  float3 y = convert_float3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(float4 x)
-{
-  half4 r = convert_half4(x);
-  float4 y = convert_float4(r);
-  float4 abs_x = fabs(x);
-  float4 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(float4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(float4 x)
-{
-  half4 r = convert_half4(x);
-  float4 y = convert_float4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(float4 x)
-{
-  half4 r = convert_half4(x);
-  float4 y = convert_float4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(float8 x)
-{
-  half8 r = convert_half8(x);
-  float8 y = convert_float8(r);
-  float8 abs_x = fabs(x);
-  float8 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(float8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(float8 x)
-{
-  half8 r = convert_half8(x);
-  float8 y = convert_float8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(float8 x)
-{
-  half8 r = convert_half8(x);
-  float8 y = convert_float8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(float16 x)
-{
-  half16 r = convert_half16(x);
-  float16 y = convert_float16(r);
-  float16 abs_x = fabs(x);
-  float16 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(float16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(float16 x)
-{
-  half16 r = convert_half16(x);
-  float16 y = convert_float16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(float16 x)
-{
-  half16 r = convert_half16(x);
-  float16 y = convert_float16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
 
@@ -46809,246 +39243,6 @@ double16 convert_double16_rtn(float16 x)
   double16 r = convert_double16(x);
   float16 y = convert_float16(r);
   return select(r, nextafter(r, (double16)-INFINITY), convert_long16(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtz(double x)
-{
-  half r = convert_half(x);
-  double y = convert_double(r);
-  double abs_x = fabs(x);
-  double abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half)-INFINITY), convert_int(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rte(double x)
-{
-  return convert_half(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtp(double x)
-{
-  half r = convert_half(x);
-  double y = convert_double(r);
-  return select(r, nextafter(r, (half)INFINITY), convert_int(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half convert_half_rtn(double x)
-{
-  half r = convert_half(x);
-  double y = convert_double(r);
-  return select(r, nextafter(r, (half)-INFINITY), convert_int(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtz(double2 x)
-{
-  half2 r = convert_half2(x);
-  double2 y = convert_double2(r);
-  double2 abs_x = fabs(x);
-  double2 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half2)-INFINITY), convert_int2(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rte(double2 x)
-{
-  return convert_half2(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtp(double2 x)
-{
-  half2 r = convert_half2(x);
-  double2 y = convert_double2(r);
-  return select(r, nextafter(r, (half2)INFINITY), convert_int2(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half2 convert_half2_rtn(double2 x)
-{
-  half2 r = convert_half2(x);
-  double2 y = convert_double2(r);
-  return select(r, nextafter(r, (half2)-INFINITY), convert_int2(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtz(double3 x)
-{
-  half3 r = convert_half3(x);
-  double3 y = convert_double3(r);
-  double3 abs_x = fabs(x);
-  double3 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half3)-INFINITY), convert_int3(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rte(double3 x)
-{
-  return convert_half3(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtp(double3 x)
-{
-  half3 r = convert_half3(x);
-  double3 y = convert_double3(r);
-  return select(r, nextafter(r, (half3)INFINITY), convert_int3(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half3 convert_half3_rtn(double3 x)
-{
-  half3 r = convert_half3(x);
-  double3 y = convert_double3(r);
-  return select(r, nextafter(r, (half3)-INFINITY), convert_int3(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtz(double4 x)
-{
-  half4 r = convert_half4(x);
-  double4 y = convert_double4(r);
-  double4 abs_x = fabs(x);
-  double4 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half4)-INFINITY), convert_int4(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rte(double4 x)
-{
-  return convert_half4(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtp(double4 x)
-{
-  half4 r = convert_half4(x);
-  double4 y = convert_double4(r);
-  return select(r, nextafter(r, (half4)INFINITY), convert_int4(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half4 convert_half4_rtn(double4 x)
-{
-  half4 r = convert_half4(x);
-  double4 y = convert_double4(r);
-  return select(r, nextafter(r, (half4)-INFINITY), convert_int4(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtz(double8 x)
-{
-  half8 r = convert_half8(x);
-  double8 y = convert_double8(r);
-  double8 abs_x = fabs(x);
-  double8 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half8)-INFINITY), convert_int8(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rte(double8 x)
-{
-  return convert_half8(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtp(double8 x)
-{
-  half8 r = convert_half8(x);
-  double8 y = convert_double8(r);
-  return select(r, nextafter(r, (half8)INFINITY), convert_int8(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half8 convert_half8_rtn(double8 x)
-{
-  half8 r = convert_half8(x);
-  double8 y = convert_double8(r);
-  return select(r, nextafter(r, (half8)-INFINITY), convert_int8(y > x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtz(double16 x)
-{
-  half16 r = convert_half16(x);
-  double16 y = convert_double16(r);
-  double16 abs_x = fabs(x);
-  double16 abs_y = fabs(y);
-  return select(r, nextafter(r, sign(r) * (half16)-INFINITY), convert_int16(abs_y > abs_x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rte(double16 x)
-{
-  return convert_half16(x);
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtp(double16 x)
-{
-  half16 r = convert_half16(x);
-  double16 y = convert_double16(r);
-  return select(r, nextafter(r, (half16)INFINITY), convert_int16(y < x));
-}
-#endif
-
-#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
-_CL_ALWAYSINLINE _CL_OVERLOADABLE
-half16 convert_half16_rtn(double16 x)
-{
-  half16 r = convert_half16(x);
-  double16 y = convert_double16(r);
-  return select(r, nextafter(r, (half16)-INFINITY), convert_int16(y > x));
 }
 #endif
 
