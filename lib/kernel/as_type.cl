@@ -51,14 +51,12 @@ DEFINE_AS_TYPE_1(uchar)
   DEFINE_AS_TYPE(DST, char2)                    \
   DEFINE_AS_TYPE(DST, uchar2)                   \
   DEFINE_AS_TYPE(DST, short)                    \
-  DEFINE_AS_TYPE(DST, ushort)                   \
-  /*__IF_FP16(DEFINE_AS_TYPE(DST, half))*/
+  DEFINE_AS_TYPE(DST, ushort)
 
 DEFINE_AS_TYPE_2(char2)
 DEFINE_AS_TYPE_2(uchar2)
 DEFINE_AS_TYPE_2(short)
 DEFINE_AS_TYPE_2(ushort)
-/*__IF_FP16(DEFINE_AS_TYPE_2(half))*/
 
 /* 4 bytes */
 
@@ -69,8 +67,6 @@ DEFINE_AS_TYPE_2(ushort)
   DEFINE_AS_TYPE(DST, uchar3)                   \
   DEFINE_AS_TYPE(DST, short2)                   \
   DEFINE_AS_TYPE(DST, ushort2)                  \
-  __IF_FP16(                                    \
-  DEFINE_AS_TYPE(DST, half2))                   \
   DEFINE_AS_TYPE(DST, int)                      \
   DEFINE_AS_TYPE(DST, uint)                     \
   DEFINE_AS_TYPE(DST, float)
@@ -81,8 +77,6 @@ DEFINE_AS_TYPE_4(char3)
 DEFINE_AS_TYPE_4(uchar3)
 DEFINE_AS_TYPE_4(short2)
 DEFINE_AS_TYPE_4(ushort2)
-__IF_FP16(
-DEFINE_AS_TYPE_4(half2))
 DEFINE_AS_TYPE_4(int)
 DEFINE_AS_TYPE_4(uint)
 DEFINE_AS_TYPE_4(float)
@@ -94,12 +88,8 @@ DEFINE_AS_TYPE_4(float)
   DEFINE_AS_TYPE(DST, uchar8)                   \
   DEFINE_AS_TYPE(DST, short4)                   \
   DEFINE_AS_TYPE(DST, ushort4)                  \
-  __IF_FP16(                                    \
-  DEFINE_AS_TYPE(DST, half4))                   \
   DEFINE_AS_TYPE(DST, short3)                   \
   DEFINE_AS_TYPE(DST, ushort3)                  \
-  __IF_FP16(                                    \
-  DEFINE_AS_TYPE(DST, half3))                   \
   DEFINE_AS_TYPE(DST, int2)                     \
   DEFINE_AS_TYPE(DST, uint2)                    \
   __IF_INT64(                                   \
@@ -113,12 +103,8 @@ DEFINE_AS_TYPE_8(char8)
 DEFINE_AS_TYPE_8(uchar8)
 DEFINE_AS_TYPE_8(short4)
 DEFINE_AS_TYPE_8(ushort4)
-__IF_FP16(
-DEFINE_AS_TYPE_8(half4))
 DEFINE_AS_TYPE_8(short3)
 DEFINE_AS_TYPE_8(ushort3)
-__IF_FP16(
-DEFINE_AS_TYPE_8(half3))
 DEFINE_AS_TYPE_8(int2)
 DEFINE_AS_TYPE_8(uint2)
 __IF_INT64(
@@ -135,8 +121,6 @@ DEFINE_AS_TYPE_8(double))
   DEFINE_AS_TYPE(DST, uchar16)                  \
   DEFINE_AS_TYPE(DST, short8)                   \
   DEFINE_AS_TYPE(DST, ushort8)                  \
-  __IF_FP16(                                    \
-  DEFINE_AS_TYPE(DST, half8))                   \
   DEFINE_AS_TYPE(DST, int4)                     \
   DEFINE_AS_TYPE(DST, uint4)                    \
   DEFINE_AS_TYPE(DST, int3)                     \
@@ -153,8 +137,6 @@ DEFINE_AS_TYPE_16(char16)
 DEFINE_AS_TYPE_16(uchar16)
 DEFINE_AS_TYPE_16(short8)
 DEFINE_AS_TYPE_16(ushort8)
-__IF_FP16(
-DEFINE_AS_TYPE_16(half8))
 DEFINE_AS_TYPE_16(int4)
 DEFINE_AS_TYPE_16(uint4)
 DEFINE_AS_TYPE_16(int3)
@@ -172,8 +154,6 @@ DEFINE_AS_TYPE_16(double2))
 #define DEFINE_AS_TYPE_32(DST)                  \
   DEFINE_AS_TYPE(DST, short16)                  \
   DEFINE_AS_TYPE(DST, ushort16)                 \
-  __IF_FP16(                                    \
-  DEFINE_AS_TYPE(DST, half16))                  \
   DEFINE_AS_TYPE(DST, int8)                     \
   DEFINE_AS_TYPE(DST, uint8)                    \
   __IF_INT64(                                   \
@@ -187,8 +167,7 @@ DEFINE_AS_TYPE_16(double2))
   DEFINE_AS_TYPE(DST, double3))
 
 DEFINE_AS_TYPE_32(short16)
-__IF_FP16(
-DEFINE_AS_TYPE_32(half16))
+DEFINE_AS_TYPE_32(ushort16)
 DEFINE_AS_TYPE_32(int8)
 DEFINE_AS_TYPE_32(uint8)
 __IF_INT64(

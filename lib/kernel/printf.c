@@ -96,17 +96,11 @@ DEFINE_PRINT_INTS(long)
 
 // Helper routines to output floats
 
-// Defined in OpenCL
-float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
-
 // Note: To simplify implementation, we print double values with %lf,
 // although %f would suffice as well
 #define FLOAT_CONV_half   "h"
 #define FLOAT_CONV_float  ""
 #define FLOAT_CONV_double "l"
-#define FLOAT_GET_half(ptr)   vload_half(0, ptr)
-#define FLOAT_GET_float(ptr)  (*(ptr))
-#define FLOAT_GET_double(ptr) (*(ptr))
 
 #define DEFINE_PRINT_FLOATS(WIDTH)                                      \
   void _cl_print_floats_##WIDTH(flags_t flags, int field_width, int precision, \
@@ -129,7 +123,7 @@ float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
     for (int d=0; d<n; ++d) {                                           \
       DEBUG_PRINTF(("[printf:floats:d=%d]\n", d));                      \
       if (d != 0) printf(",");                                          \
-      printf(outfmt, FLOAT_GET_##WIDTH((const WIDTH*)vals+d));          \
+      printf(outfmt, ((const WIDTH*)vals)[d]);                          \
     }                                                                   \
     DEBUG_PRINTF(("[printf:floats:done]\n"));                           \
   }
