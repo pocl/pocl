@@ -173,6 +173,11 @@ _CL_STATIC_ASSERT(uintptr_t, sizeof(uintptr_t) == sizeof(void*));
 
 /* Conversion functions */
 
+/* The OpenCL standard says that as_type should be defined for half
+   types. However, it also specifies that one cannot declare variables
+   or have expressions of type half. In any way, LLVM cannot handle
+   this type, so we do not define as_type for half. */
+
 #define _CL_DECLARE_AS_TYPE(SRC, DST)           \
   DST _CL_OVERLOADABLE as_##DST(SRC a);
 
@@ -188,22 +193,25 @@ _CL_DECLARE_AS_TYPE_1(uchar)
   _CL_DECLARE_AS_TYPE(SRC, char2)               \
   _CL_DECLARE_AS_TYPE(SRC, uchar2)              \
   _CL_DECLARE_AS_TYPE(SRC, short)               \
-  _CL_DECLARE_AS_TYPE(SRC, ushort)
+  _CL_DECLARE_AS_TYPE(SRC, ushort)              \
+  /*__IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half))*/
 _CL_DECLARE_AS_TYPE_2(char2)
 _CL_DECLARE_AS_TYPE_2(uchar2)
 _CL_DECLARE_AS_TYPE_2(short)
 _CL_DECLARE_AS_TYPE_2(ushort)
+/*__IF_FP16(_CL_DECLARE_AS_TYPE_2(half))*/
 
 /* 4 bytes */
-#define _CL_DECLARE_AS_TYPE_4(SRC)              \
-  _CL_DECLARE_AS_TYPE(SRC, char4)               \
-  _CL_DECLARE_AS_TYPE(SRC, uchar4)              \
-  _CL_DECLARE_AS_TYPE(SRC, char3)               \
-  _CL_DECLARE_AS_TYPE(SRC, uchar3)              \
-  _CL_DECLARE_AS_TYPE(SRC, short2)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort2)             \
-  _CL_DECLARE_AS_TYPE(SRC, int)                 \
-  _CL_DECLARE_AS_TYPE(SRC, uint)                \
+#define _CL_DECLARE_AS_TYPE_4(SRC)                      \
+  _CL_DECLARE_AS_TYPE(SRC, char4)                       \
+  _CL_DECLARE_AS_TYPE(SRC, uchar4)                      \
+  _CL_DECLARE_AS_TYPE(SRC, char3)                       \
+  _CL_DECLARE_AS_TYPE(SRC, uchar3)                      \
+  _CL_DECLARE_AS_TYPE(SRC, short2)                      \
+  _CL_DECLARE_AS_TYPE(SRC, ushort2)                     \
+  __IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half2))            \
+  _CL_DECLARE_AS_TYPE(SRC, int)                         \
+  _CL_DECLARE_AS_TYPE(SRC, uint)                        \
   _CL_DECLARE_AS_TYPE(SRC, float)
 _CL_DECLARE_AS_TYPE_4(char4)
 _CL_DECLARE_AS_TYPE_4(uchar4)
@@ -211,30 +219,35 @@ _CL_DECLARE_AS_TYPE_4(char3)
 _CL_DECLARE_AS_TYPE_4(uchar3)
 _CL_DECLARE_AS_TYPE_4(short2)
 _CL_DECLARE_AS_TYPE_4(ushort2)
+__IF_FP16(_CL_DECLARE_AS_TYPE_4(half2))
 _CL_DECLARE_AS_TYPE_4(int)
 _CL_DECLARE_AS_TYPE_4(uint)
 _CL_DECLARE_AS_TYPE_4(float)
 
 /* 8 bytes */
-#define _CL_DECLARE_AS_TYPE_8(SRC)              \
-  _CL_DECLARE_AS_TYPE(SRC, char8)               \
-  _CL_DECLARE_AS_TYPE(SRC, uchar8)              \
-  _CL_DECLARE_AS_TYPE(SRC, short4)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort4)             \
-  _CL_DECLARE_AS_TYPE(SRC, short3)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort3)             \
-  _CL_DECLARE_AS_TYPE(SRC, int2)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint2)               \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long))    \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong))   \
-  _CL_DECLARE_AS_TYPE(SRC, float2)              \
+#define _CL_DECLARE_AS_TYPE_8(SRC)                      \
+  _CL_DECLARE_AS_TYPE(SRC, char8)                       \
+  _CL_DECLARE_AS_TYPE(SRC, uchar8)                      \
+  _CL_DECLARE_AS_TYPE(SRC, short4)                      \
+  _CL_DECLARE_AS_TYPE(SRC, ushort4)                     \
+  __IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half4))            \
+  _CL_DECLARE_AS_TYPE(SRC, short3)                      \
+  _CL_DECLARE_AS_TYPE(SRC, ushort3)                     \
+  __IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half3))            \
+  _CL_DECLARE_AS_TYPE(SRC, int2)                        \
+  _CL_DECLARE_AS_TYPE(SRC, uint2)                       \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long))            \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong))           \
+  _CL_DECLARE_AS_TYPE(SRC, float2)                      \
   __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double))
 _CL_DECLARE_AS_TYPE_8(char8)
 _CL_DECLARE_AS_TYPE_8(uchar8)
 _CL_DECLARE_AS_TYPE_8(short4)
 _CL_DECLARE_AS_TYPE_8(ushort4)
+__IF_FP16(_CL_DECLARE_AS_TYPE_8(half4))
 _CL_DECLARE_AS_TYPE_8(short3)
 _CL_DECLARE_AS_TYPE_8(ushort3)
+__IF_FP16(_CL_DECLARE_AS_TYPE_8(half3))
 _CL_DECLARE_AS_TYPE_8(int2)
 _CL_DECLARE_AS_TYPE_8(uint2)
 __IF_INT64(_CL_DECLARE_AS_TYPE_8(long))
@@ -243,24 +256,26 @@ _CL_DECLARE_AS_TYPE_8(float2)
 __IF_FP64(_CL_DECLARE_AS_TYPE_8(double))
 
 /* 16 bytes */
-#define _CL_DECLARE_AS_TYPE_16(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, char16)              \
-  _CL_DECLARE_AS_TYPE(SRC, uchar16)             \
-  _CL_DECLARE_AS_TYPE(SRC, short8)              \
-  _CL_DECLARE_AS_TYPE(SRC, ushort8)             \
-  _CL_DECLARE_AS_TYPE(SRC, int4)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint4)               \
-  _CL_DECLARE_AS_TYPE(SRC, int3)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint3)               \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long2))   \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong2))  \
-  _CL_DECLARE_AS_TYPE(SRC, float4)              \
-  _CL_DECLARE_AS_TYPE(SRC, float3)              \
+#define _CL_DECLARE_AS_TYPE_16(SRC)                     \
+  _CL_DECLARE_AS_TYPE(SRC, char16)                      \
+  _CL_DECLARE_AS_TYPE(SRC, uchar16)                     \
+  _CL_DECLARE_AS_TYPE(SRC, short8)                      \
+  _CL_DECLARE_AS_TYPE(SRC, ushort8)                     \
+  __IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half8))            \
+  _CL_DECLARE_AS_TYPE(SRC, int4)                        \
+  _CL_DECLARE_AS_TYPE(SRC, uint4)                       \
+  _CL_DECLARE_AS_TYPE(SRC, int3)                        \
+  _CL_DECLARE_AS_TYPE(SRC, uint3)                       \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long2))           \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong2))          \
+  _CL_DECLARE_AS_TYPE(SRC, float4)                      \
+  _CL_DECLARE_AS_TYPE(SRC, float3)                      \
   __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double2))
 _CL_DECLARE_AS_TYPE_16(char16)
 _CL_DECLARE_AS_TYPE_16(uchar16)
 _CL_DECLARE_AS_TYPE_16(short8)
 _CL_DECLARE_AS_TYPE_16(ushort8)
+__IF_FP16(_CL_DECLARE_AS_TYPE_16(half8))
 _CL_DECLARE_AS_TYPE_16(int4)
 _CL_DECLARE_AS_TYPE_16(uint4)
 _CL_DECLARE_AS_TYPE_16(int3)
@@ -272,20 +287,22 @@ _CL_DECLARE_AS_TYPE_16(float3)
 __IF_FP64(_CL_DECLARE_AS_TYPE_16(double2))
 
 /* 32 bytes */
-#define _CL_DECLARE_AS_TYPE_32(SRC)             \
-  _CL_DECLARE_AS_TYPE(SRC, short16)             \
-  _CL_DECLARE_AS_TYPE(SRC, ushort16)            \
-  _CL_DECLARE_AS_TYPE(SRC, int8)                \
-  _CL_DECLARE_AS_TYPE(SRC, uint8)               \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long4))   \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong4))  \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long3))   \
-  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong3))  \
-  _CL_DECLARE_AS_TYPE(SRC, float8)              \
-  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double4))  \
+#define _CL_DECLARE_AS_TYPE_32(SRC)                     \
+  _CL_DECLARE_AS_TYPE(SRC, short16)                     \
+  _CL_DECLARE_AS_TYPE(SRC, ushort16)                    \
+  __IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half16))           \
+  _CL_DECLARE_AS_TYPE(SRC, int8)                        \
+  _CL_DECLARE_AS_TYPE(SRC, uint8)                       \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long4))           \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong4))          \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, long3))           \
+  __IF_INT64(_CL_DECLARE_AS_TYPE(SRC, ulong3))          \
+  _CL_DECLARE_AS_TYPE(SRC, float8)                      \
+  __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double4))          \
   __IF_FP64(_CL_DECLARE_AS_TYPE(SRC, double3))
 _CL_DECLARE_AS_TYPE_32(short16)
 _CL_DECLARE_AS_TYPE_32(ushort16)
+__IF_FP16(_CL_DECLARE_AS_TYPE_32(half16))
 _CL_DECLARE_AS_TYPE_32(int8)
 _CL_DECLARE_AS_TYPE_32(uint8)
 __IF_INT64(_CL_DECLARE_AS_TYPE_32(long4))
@@ -358,8 +375,6 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE,     , FLOATSUFFIX)        \
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE, _sat, FLOATSUFFIX))       \
   _CL_DECLARE_CONVERT_TYPE(SRC, float , SIZE,     , FLOATSUFFIX)        \
-  __IF_FP16(                                                            \
-  _CL_DECLARE_CONVERT_TYPE(SRC, half, SIZE,     , FLOATSUFFIX))         \
   __IF_FP64(                                                            \
   _CL_DECLARE_CONVERT_TYPE(SRC, double, SIZE,     , FLOATSUFFIX))
 
@@ -374,8 +389,6 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   _CL_DECLARE_CONVERT_TYPE_DST(long  , SIZE, FLOATSUFFIX)   \
   _CL_DECLARE_CONVERT_TYPE_DST(ulong , SIZE, FLOATSUFFIX))  \
   _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, FLOATSUFFIX)   \
-  __IF_FP16(                                                \
-  _CL_DECLARE_CONVERT_TYPE_DST(half, SIZE, FLOATSUFFIX))    \
   __IF_FP64(                                                \
   _CL_DECLARE_CONVERT_TYPE_DST(double, SIZE, FLOATSUFFIX))
 
@@ -493,13 +506,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  );     \
   float8   _CL_OVERLOADABLE NAME(float8  );     \
   float16  _CL_OVERLOADABLE NAME(float16 );     \
-  __IF_FP16(                                    \
-  half     _CL_OVERLOADABLE NAME(half  );       \
-  half2    _CL_OVERLOADABLE NAME(half2 );       \
-  half3    _CL_OVERLOADABLE NAME(half3 );       \
-  half4    _CL_OVERLOADABLE NAME(half4 );       \
-  half8    _CL_OVERLOADABLE NAME(half8 );       \
-  half16   _CL_OVERLOADABLE NAME(half16);)      \
   __IF_FP64(                                    \
   double   _CL_OVERLOADABLE NAME(double  );     \
   double2  _CL_OVERLOADABLE NAME(double2 );     \
@@ -509,13 +515,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double16 _CL_OVERLOADABLE NAME(double16);)
 
 #define _CL_DECLARE_FUNC_V_VV(NAME)                     \
-  __IF_FP16(                                            \
-  half     _CL_OVERLOADABLE NAME(half    , half    );   \
-  half2    _CL_OVERLOADABLE NAME(half2   , half2   );   \
-  half3    _CL_OVERLOADABLE NAME(half3   , half3   );   \
-  half4    _CL_OVERLOADABLE NAME(half4   , half4   );   \
-  half8    _CL_OVERLOADABLE NAME(half8   , half8   );   \
-  half16   _CL_OVERLOADABLE NAME(half16  , half16  );)  \
   float    _CL_OVERLOADABLE NAME(float   , float   );   \
   float2   _CL_OVERLOADABLE NAME(float2  , float2  );   \
   float3   _CL_OVERLOADABLE NAME(float3  , float3  );   \
@@ -536,13 +535,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  , float4  , float4  );         \
   float8   _CL_OVERLOADABLE NAME(float8  , float8  , float8  );         \
   float16  _CL_OVERLOADABLE NAME(float16 , float16 , float16 );         \
-  __IF_FP16(                                                            \
-  half   _CL_OVERLOADABLE NAME(half  , half  , half  );         \
-  half2  _CL_OVERLOADABLE NAME(half2 , half2 , half2 );         \
-  half3  _CL_OVERLOADABLE NAME(half3 , half3 , half3 );         \
-  half4  _CL_OVERLOADABLE NAME(half4 , half4 , half4 );         \
-  half8  _CL_OVERLOADABLE NAME(half8 , half8 , half8 );         \
-  half16 _CL_OVERLOADABLE NAME(half16, half16, half16);)        \
   __IF_FP64(                                                            \
   double   _CL_OVERLOADABLE NAME(double  , double  , double  );         \
   double2  _CL_OVERLOADABLE NAME(double2 , double2 , double2 );         \
@@ -568,12 +560,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  , float , float );     \
   float8   _CL_OVERLOADABLE NAME(float8  , float , float );     \
   float16  _CL_OVERLOADABLE NAME(float16 , float , float );     \
-  __IF_FP16(                                                    \
-  half2  _CL_OVERLOADABLE NAME(half2 , half, half);     \
-  half3  _CL_OVERLOADABLE NAME(half3 , half, half);     \
-  half4  _CL_OVERLOADABLE NAME(half4 , half, half);     \
-  half8  _CL_OVERLOADABLE NAME(half8 , half, half);     \
-  half16 _CL_OVERLOADABLE NAME(half16, half, half);)    \
   __IF_FP64(                                                    \
   double2  _CL_OVERLOADABLE NAME(double2 , double, double);     \
   double3  _CL_OVERLOADABLE NAME(double3 , double, double);     \
@@ -594,13 +580,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double, double, double8 );     \
   double16 _CL_OVERLOADABLE NAME(double, double, double16);)
 #define _CL_DECLARE_FUNC_V_VVJ(NAME)                                    \
-  __IF_FP16(                                                            \
-  /*half     _CL_OVERLOADABLE NAME(half    , half    , short  );*/      \
-  half2    _CL_OVERLOADABLE NAME(half2   , half2   , short2 );          \
-  half3    _CL_OVERLOADABLE NAME(half3   , half3   , short3 );          \
-  half4    _CL_OVERLOADABLE NAME(half4   , half4   , short4 );          \
-  half8    _CL_OVERLOADABLE NAME(half8   , half8   , short8 );          \
-  half16   _CL_OVERLOADABLE NAME(half16  , half16  , short16);)         \
   float    _CL_OVERLOADABLE NAME(float   , float   , int    );          \
   float2   _CL_OVERLOADABLE NAME(float2  , float2  , int2   );          \
   float3   _CL_OVERLOADABLE NAME(float3  , float3  , int3   );          \
@@ -615,13 +594,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double8 , long8  );          \
   double16 _CL_OVERLOADABLE NAME(double16, double16, long16 );)
 #define _CL_DECLARE_FUNC_V_VVU(NAME)                                    \
-  __IF_FP16(                                                            \
-  /*half     _CL_OVERLOADABLE NAME(half    , half    , ushort  );*/     \
-  half2    _CL_OVERLOADABLE NAME(half2   , half2   , ushort2 );         \
-  half3    _CL_OVERLOADABLE NAME(half3   , half3   , ushort3 );         \
-  half4    _CL_OVERLOADABLE NAME(half4   , half4   , ushort4 );         \
-  half8    _CL_OVERLOADABLE NAME(half8   , half8   , ushort8 );         \
-  half16   _CL_OVERLOADABLE NAME(half16  , half16  , ushort16);)        \
   float    _CL_OVERLOADABLE NAME(float   , float   , uint    );         \
   float2   _CL_OVERLOADABLE NAME(float2  , float2  , uint2   );         \
   float3   _CL_OVERLOADABLE NAME(float3  , float3  , uint3   );         \
@@ -1304,13 +1276,6 @@ _CL_DECLARE_FUNC_F_F(native_tan)
   uint4    _CL_OVERLOADABLE NAME(uint4   , uint4   , int4    );         \
   uint8    _CL_OVERLOADABLE NAME(uint8   , uint8   , int8    );         \
   uint16   _CL_OVERLOADABLE NAME(uint16  , uint16  , int16   );         \
-  __IF_FP16(                                                            \
-  half     _CL_OVERLOADABLE NAME(half    , half    , int     );         \
-  half2    _CL_OVERLOADABLE NAME(half2   , half2   , int2    );         \
-  half3    _CL_OVERLOADABLE NAME(half3   , half3   , int3    );         \
-  half4    _CL_OVERLOADABLE NAME(half4   , half4   , int4    );         \
-  half8    _CL_OVERLOADABLE NAME(half8   , half8   , int8    );         \
-  half16   _CL_OVERLOADABLE NAME(half16  , half16  , int16   );)        \
   __IF_INT64(                                                           \
   long     _CL_OVERLOADABLE NAME(long    , long    , long    );         \
   long2    _CL_OVERLOADABLE NAME(long2   , long2   , long2   );         \
@@ -1924,19 +1889,20 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
   _CL_DECLARE_SHUFFLE_M(ELTYPE, MTYPE, 8)                             \
   _CL_DECLARE_SHUFFLE_M(ELTYPE, MTYPE, 16)
 
-_CL_DECLARE_SHUFFLE_MN(char , uchar )
+_CL_DECLARE_SHUFFLE_MN(char  , uchar )
 _CL_DECLARE_SHUFFLE_MN(uchar , uchar )
-_CL_DECLARE_SHUFFLE_MN(short , ushort )
-_CL_DECLARE_SHUFFLE_MN(ushort , ushort )
-_CL_DECLARE_SHUFFLE_MN(int , uint )
-_CL_DECLARE_SHUFFLE_MN(uint , uint )
-_CL_DECLARE_SHUFFLE_MN(float , uint )
+_CL_DECLARE_SHUFFLE_MN(short , ushort)
+_CL_DECLARE_SHUFFLE_MN(ushort, ushort)
 __IF_FP16(
-_CL_DECLARE_SHUFFLE_MN(half , ushort ))
+_CL_DECLARE_SHUFFLE_MN(half  , ushort))
+_CL_DECLARE_SHUFFLE_MN(int   , uint  )
+_CL_DECLARE_SHUFFLE_MN(uint  , uint  )
+_CL_DECLARE_SHUFFLE_MN(float , uint  )
+__IF_INT64(
+_CL_DECLARE_SHUFFLE_MN(long  , ulong )
+_CL_DECLARE_SHUFFLE_MN(ulong , ulong ))
 __IF_FP64(
-_CL_DECLARE_SHUFFLE_MN(long , ulong )
-_CL_DECLARE_SHUFFLE_MN(ulong , ulong )
-_CL_DECLARE_SHUFFLE_MN(double , ulong ))
+_CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
 
 #if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 4)
