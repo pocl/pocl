@@ -40,7 +40,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
   for( idx=0; idx<num_kern_found; idx++) {
   
     cl_int error_ret; 
-    kernels[idx] = POclCreateKernel(program, knames[idx], &error_ret);
+    kernels[idx] = clCreateKernel(program, knames[idx], &error_ret);
 
     /* Check for errors, clean up & bail.
      * If we happened to pass a invalid kernel name after all
