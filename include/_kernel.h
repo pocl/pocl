@@ -470,7 +470,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define MAXFLOAT  FLT_MAX
 #define HUGE_VALF __builtin_huge_valf()
 #define INFINITY  __builtin_inff()
-#define NAN       __builtin_nanf()
+#define NAN       (0.0f/0.0f)
 
 #define FLT_DIG        6
 #define FLT_MANT_DIG   24
