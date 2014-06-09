@@ -1,24 +1,29 @@
 // Note: This file has been automatically generated. Do not modify.
 
 // Needed for fract()
+#define POCL_FRACT_MIN_H 0x1.ffcp-1h
 #define POCL_FRACT_MIN   0x1.fffffffffffffp-1
 #define POCL_FRACT_MIN_F 0x1.fffffep-1f
 
-// If double precision is not supported, then define
-// single-precision (dummy) values to avoid compiler warnings
-// for double precision values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#  undef M_PI_2
-#  define M_PI_2 M_PI_2_F
-#  undef LONG_MAX
-#  define LONG_MAX INT_MAX
-#  undef LONG_MIN
-#  define LONG_MIN INT_MIN
-#  undef POCL_FRACT_MIN
-#  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif // #ifndef cl_khr_fp64
+// Choose a constant with a particular precision
+#ifdef cl_khr_fp16
+#  define IF_HALF(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#ifdef cl_khr_fp64
+#  define IF_DOUBLE(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
+        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
+
+
 
 // half_exp: ['VF'] -> VF
 

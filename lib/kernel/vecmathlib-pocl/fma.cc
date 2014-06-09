@@ -4,6 +4,222 @@
 
 // fma: ['VF', 'VF', 'VF'] -> VF
 
+#ifdef cl_khr_fp16
+
+// fma: VF=half
+#if defined VECMATHLIB_HAVE_VEC_HALF_1 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling vecmathlib
+half _cl_fma(half x0, half x1, half x2)
+{
+  vecmathlib::realvec<half,1> y0 = bitcast<half,vecmathlib::realvec<half,1> >(x0);
+  vecmathlib::realvec<half,1> y1 = bitcast<half,vecmathlib::realvec<half,1> >(x1);
+  vecmathlib::realvec<half,1> y2 = bitcast<half,vecmathlib::realvec<half,1> >(x2);
+  vecmathlib::realvec<half,1> r = vecmathlib::fma(y0, y1, y2);
+  return bitcast<vecmathlib::realvec<half,1>,half>((r));
+}
+#elif ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling libm
+half _cl_fma(half x0, half x1, half x2)
+{
+  vecmathlib::realpseudovec<half,1> y0 = x0;
+  vecmathlib::realpseudovec<half,1> y1 = x1;
+  vecmathlib::realpseudovec<half,1> y2 = x2;
+  vecmathlib::realpseudovec<half,1> r = fma(y0, y1, y2);
+  return (r)[0];
+}
+#else
+// Implement fma by calling builtin
+half _cl_fma(half x0, half x1, half x2)
+{
+  vecmathlib::realbuiltinvec<half,1> y0 = x0;
+  vecmathlib::realbuiltinvec<half,1> y1 = x1;
+  vecmathlib::realbuiltinvec<half,1> y2 = x2;
+  vecmathlib::realbuiltinvec<half,1> r = fma(y0, y1, y2);
+  return (r)[0];
+}
+#endif
+
+// fma: VF=half2
+#if defined VECMATHLIB_HAVE_VEC_HALF_2 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling vecmathlib
+half2 _cl_fma(half2 x0, half2 x1, half2 x2)
+{
+  vecmathlib::realvec<half,2> y0 = bitcast<half2,vecmathlib::realvec<half,2> >(x0);
+  vecmathlib::realvec<half,2> y1 = bitcast<half2,vecmathlib::realvec<half,2> >(x1);
+  vecmathlib::realvec<half,2> y2 = bitcast<half2,vecmathlib::realvec<half,2> >(x2);
+  vecmathlib::realvec<half,2> r = vecmathlib::fma(y0, y1, y2);
+  return bitcast<vecmathlib::realvec<half,2>,half2>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement fma by using a larger vector size
+half4 _cl_fma(half4, half4, half4);
+half2 _cl_fma(half2 x0, half2 x1, half2 x2)
+{
+  half4 y0 = bitcast<half2,half4>(x0);
+  half4 y1 = bitcast<half2,half4>(x1);
+  half4 y2 = bitcast<half2,half4>(x2);
+  half4 r = _cl_fma(y0, y1, y2);
+  return bitcast<half4,half2>(r);
+}
+#else
+// Implement fma by splitting into a smaller vector size
+half _cl_fma(half, half, half);
+half2 _cl_fma(half2 x0, half2 x1, half2 x2)
+{
+  pair_half y0 = bitcast<half2,pair_half>(x0);
+  pair_half y1 = bitcast<half2,pair_half>(x1);
+  pair_half y2 = bitcast<half2,pair_half>(x2);
+  pair_half r;
+  r.lo = _cl_fma(y0.lo, y1.lo, y2.lo);
+  r.hi = _cl_fma(y0.hi, y1.hi, y2.hi);
+  pocl_static_assert(sizeof(pair_half) == sizeof(half2));
+  return bitcast<pair_half,half2>(r);
+}
+#endif
+
+// fma: VF=half3
+#if defined VECMATHLIB_HAVE_VEC_HALF_3 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling vecmathlib
+half3 _cl_fma(half3 x0, half3 x1, half3 x2)
+{
+  vecmathlib::realvec<half,3> y0 = bitcast<half3,vecmathlib::realvec<half,3> >(x0);
+  vecmathlib::realvec<half,3> y1 = bitcast<half3,vecmathlib::realvec<half,3> >(x1);
+  vecmathlib::realvec<half,3> y2 = bitcast<half3,vecmathlib::realvec<half,3> >(x2);
+  vecmathlib::realvec<half,3> r = vecmathlib::fma(y0, y1, y2);
+  return bitcast<vecmathlib::realvec<half,3>,half3>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement fma by using a larger vector size
+half4 _cl_fma(half4, half4, half4);
+half3 _cl_fma(half3 x0, half3 x1, half3 x2)
+{
+  half4 y0 = bitcast<half3,half4>(x0);
+  half4 y1 = bitcast<half3,half4>(x1);
+  half4 y2 = bitcast<half3,half4>(x2);
+  half4 r = _cl_fma(y0, y1, y2);
+  return bitcast<half4,half3>(r);
+}
+#else
+// Implement fma by splitting into a smaller vector size
+half2 _cl_fma(half2, half2, half2);
+half3 _cl_fma(half3 x0, half3 x1, half3 x2)
+{
+  pair_half2 y0 = bitcast<half3,pair_half2>(x0);
+  pair_half2 y1 = bitcast<half3,pair_half2>(x1);
+  pair_half2 y2 = bitcast<half3,pair_half2>(x2);
+  pair_half2 r;
+  r.lo = _cl_fma(y0.lo, y1.lo, y2.lo);
+  r.hi = _cl_fma(y0.hi, y1.hi, y2.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half3));
+  return bitcast<pair_half2,half3>(r);
+}
+#endif
+
+// fma: VF=half4
+#if defined VECMATHLIB_HAVE_VEC_HALF_4 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling vecmathlib
+half4 _cl_fma(half4 x0, half4 x1, half4 x2)
+{
+  vecmathlib::realvec<half,4> y0 = bitcast<half4,vecmathlib::realvec<half,4> >(x0);
+  vecmathlib::realvec<half,4> y1 = bitcast<half4,vecmathlib::realvec<half,4> >(x1);
+  vecmathlib::realvec<half,4> y2 = bitcast<half4,vecmathlib::realvec<half,4> >(x2);
+  vecmathlib::realvec<half,4> r = vecmathlib::fma(y0, y1, y2);
+  return bitcast<vecmathlib::realvec<half,4>,half4>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement fma by using a larger vector size
+half8 _cl_fma(half8, half8, half8);
+half4 _cl_fma(half4 x0, half4 x1, half4 x2)
+{
+  half8 y0 = bitcast<half4,half8>(x0);
+  half8 y1 = bitcast<half4,half8>(x1);
+  half8 y2 = bitcast<half4,half8>(x2);
+  half8 r = _cl_fma(y0, y1, y2);
+  return bitcast<half8,half4>(r);
+}
+#else
+// Implement fma by splitting into a smaller vector size
+half2 _cl_fma(half2, half2, half2);
+half4 _cl_fma(half4 x0, half4 x1, half4 x2)
+{
+  pair_half2 y0 = bitcast<half4,pair_half2>(x0);
+  pair_half2 y1 = bitcast<half4,pair_half2>(x1);
+  pair_half2 y2 = bitcast<half4,pair_half2>(x2);
+  pair_half2 r;
+  r.lo = _cl_fma(y0.lo, y1.lo, y2.lo);
+  r.hi = _cl_fma(y0.hi, y1.hi, y2.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half4));
+  return bitcast<pair_half2,half4>(r);
+}
+#endif
+
+// fma: VF=half8
+#if defined VECMATHLIB_HAVE_VEC_HALF_8 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling vecmathlib
+half8 _cl_fma(half8 x0, half8 x1, half8 x2)
+{
+  vecmathlib::realvec<half,8> y0 = bitcast<half8,vecmathlib::realvec<half,8> >(x0);
+  vecmathlib::realvec<half,8> y1 = bitcast<half8,vecmathlib::realvec<half,8> >(x1);
+  vecmathlib::realvec<half,8> y2 = bitcast<half8,vecmathlib::realvec<half,8> >(x2);
+  vecmathlib::realvec<half,8> r = vecmathlib::fma(y0, y1, y2);
+  return bitcast<vecmathlib::realvec<half,8>,half8>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement fma by using a larger vector size
+half16 _cl_fma(half16, half16, half16);
+half8 _cl_fma(half8 x0, half8 x1, half8 x2)
+{
+  half16 y0 = bitcast<half8,half16>(x0);
+  half16 y1 = bitcast<half8,half16>(x1);
+  half16 y2 = bitcast<half8,half16>(x2);
+  half16 r = _cl_fma(y0, y1, y2);
+  return bitcast<half16,half8>(r);
+}
+#else
+// Implement fma by splitting into a smaller vector size
+half4 _cl_fma(half4, half4, half4);
+half8 _cl_fma(half8 x0, half8 x1, half8 x2)
+{
+  pair_half4 y0 = bitcast<half8,pair_half4>(x0);
+  pair_half4 y1 = bitcast<half8,pair_half4>(x1);
+  pair_half4 y2 = bitcast<half8,pair_half4>(x2);
+  pair_half4 r;
+  r.lo = _cl_fma(y0.lo, y1.lo, y2.lo);
+  r.hi = _cl_fma(y0.hi, y1.hi, y2.hi);
+  pocl_static_assert(sizeof(pair_half4) == sizeof(half8));
+  return bitcast<pair_half4,half8>(r);
+}
+#endif
+
+// fma: VF=half16
+#if defined VECMATHLIB_HAVE_VEC_HALF_16 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement fma by calling vecmathlib
+half16 _cl_fma(half16 x0, half16 x1, half16 x2)
+{
+  vecmathlib::realvec<half,16> y0 = bitcast<half16,vecmathlib::realvec<half,16> >(x0);
+  vecmathlib::realvec<half,16> y1 = bitcast<half16,vecmathlib::realvec<half,16> >(x1);
+  vecmathlib::realvec<half,16> y2 = bitcast<half16,vecmathlib::realvec<half,16> >(x2);
+  vecmathlib::realvec<half,16> r = vecmathlib::fma(y0, y1, y2);
+  return bitcast<vecmathlib::realvec<half,16>,half16>((r));
+}
+#else
+// Implement fma by splitting into a smaller vector size
+half8 _cl_fma(half8, half8, half8);
+half16 _cl_fma(half16 x0, half16 x1, half16 x2)
+{
+  pair_half8 y0 = bitcast<half16,pair_half8>(x0);
+  pair_half8 y1 = bitcast<half16,pair_half8>(x1);
+  pair_half8 y2 = bitcast<half16,pair_half8>(x2);
+  pair_half8 r;
+  r.lo = _cl_fma(y0.lo, y1.lo, y2.lo);
+  r.hi = _cl_fma(y0.hi, y1.hi, y2.hi);
+  pocl_static_assert(sizeof(pair_half8) == sizeof(half16));
+  return bitcast<pair_half8,half16>(r);
+}
+#endif
+
+#endif // #ifdef cl_khr_fp16
+
 // fma: VF=float
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement fma by calling vecmathlib

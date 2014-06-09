@@ -1,26 +1,593 @@
 // Note: This file has been automatically generated. Do not modify.
 
 // Needed for fract()
+#define POCL_FRACT_MIN_H 0x1.ffcp-1h
 #define POCL_FRACT_MIN   0x1.fffffffffffffp-1
 #define POCL_FRACT_MIN_F 0x1.fffffep-1f
 
-// If double precision is not supported, then define
-// single-precision (dummy) values to avoid compiler warnings
-// for double precision values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#  undef M_PI_2
-#  define M_PI_2 M_PI_2_F
-#  undef LONG_MAX
-#  define LONG_MAX INT_MAX
-#  undef LONG_MIN
-#  define LONG_MIN INT_MIN
-#  undef POCL_FRACT_MIN
-#  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif // #ifndef cl_khr_fp64
+// Choose a constant with a particular precision
+#ifdef cl_khr_fp16
+#  define IF_HALF(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#ifdef cl_khr_fp64
+#  define IF_DOUBLE(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
+        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
+
+
 
 // fract: ['VF', 'PVF'] -> VF
+
+#ifdef cl_khr_fp16
+
+// fract: VF=globalhalf
+// Implement fract directly
+__attribute__((__overloadable__))
+half _cl_fract(half x0, global half* x1)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=localhalf
+// Implement fract directly
+__attribute__((__overloadable__))
+half _cl_fract(half x0, local half* x1)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=privatehalf
+// Implement fract directly
+__attribute__((__overloadable__))
+half _cl_fract(half x0, private half* x1)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=globalhalf2
+// Implement fract directly
+__attribute__((__overloadable__))
+half2 _cl_fract(half2 x0, global half2* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=localhalf2
+// Implement fract directly
+__attribute__((__overloadable__))
+half2 _cl_fract(half2 x0, local half2* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=privatehalf2
+// Implement fract directly
+__attribute__((__overloadable__))
+half2 _cl_fract(half2 x0, private half2* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=globalhalf3
+// Implement fract directly
+__attribute__((__overloadable__))
+half3 _cl_fract(half3 x0, global half3* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=localhalf3
+// Implement fract directly
+__attribute__((__overloadable__))
+half3 _cl_fract(half3 x0, local half3* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=privatehalf3
+// Implement fract directly
+__attribute__((__overloadable__))
+half3 _cl_fract(half3 x0, private half3* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=globalhalf4
+// Implement fract directly
+__attribute__((__overloadable__))
+half4 _cl_fract(half4 x0, global half4* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=localhalf4
+// Implement fract directly
+__attribute__((__overloadable__))
+half4 _cl_fract(half4 x0, local half4* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=privatehalf4
+// Implement fract directly
+__attribute__((__overloadable__))
+half4 _cl_fract(half4 x0, private half4* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=globalhalf8
+// Implement fract directly
+__attribute__((__overloadable__))
+half8 _cl_fract(half8 x0, global half8* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=localhalf8
+// Implement fract directly
+__attribute__((__overloadable__))
+half8 _cl_fract(half8 x0, local half8* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=privatehalf8
+// Implement fract directly
+__attribute__((__overloadable__))
+half8 _cl_fract(half8 x0, private half8* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=globalhalf16
+// Implement fract directly
+__attribute__((__overloadable__))
+half16 _cl_fract(half16 x0, global half16* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=localhalf16
+// Implement fract directly
+__attribute__((__overloadable__))
+half16 _cl_fract(half16 x0, local half16* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// fract: VF=privatehalf16
+// Implement fract directly
+__attribute__((__overloadable__))
+half16 _cl_fract(half16 x0, private half16* x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return 
+    ({
+      *x1=floor(x0);
+      scalar_t fract_min =
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
+      fmin(x0-floor(x0), fract_min);
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+#endif // #ifdef cl_khr_fp16
 
 // fract: VF=globalfloat
 // Implement fract directly
@@ -43,9 +610,7 @@ float _cl_fract(float x0, global float* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -76,9 +641,7 @@ float _cl_fract(float x0, local float* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -109,9 +672,7 @@ float _cl_fract(float x0, private float* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -142,9 +703,7 @@ float2 _cl_fract(float2 x0, global float2* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -175,9 +734,7 @@ float2 _cl_fract(float2 x0, local float2* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -208,9 +765,7 @@ float2 _cl_fract(float2 x0, private float2* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -241,9 +796,7 @@ float3 _cl_fract(float3 x0, global float3* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -274,9 +827,7 @@ float3 _cl_fract(float3 x0, local float3* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -307,9 +858,7 @@ float3 _cl_fract(float3 x0, private float3* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -340,9 +889,7 @@ float4 _cl_fract(float4 x0, global float4* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -373,9 +920,7 @@ float4 _cl_fract(float4 x0, local float4* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -406,9 +951,7 @@ float4 _cl_fract(float4 x0, private float4* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -439,9 +982,7 @@ float8 _cl_fract(float8 x0, global float8* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -472,9 +1013,7 @@ float8 _cl_fract(float8 x0, local float8* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -505,9 +1044,7 @@ float8 _cl_fract(float8 x0, private float8* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -538,9 +1075,7 @@ float16 _cl_fract(float16 x0, global float16* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -571,9 +1106,7 @@ float16 _cl_fract(float16 x0, local float16* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -604,9 +1137,7 @@ float16 _cl_fract(float16 x0, private float16* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -639,9 +1170,7 @@ double _cl_fract(double x0, global double* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -672,9 +1201,7 @@ double _cl_fract(double x0, local double* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -705,9 +1232,7 @@ double _cl_fract(double x0, private double* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -738,9 +1263,7 @@ double2 _cl_fract(double2 x0, global double2* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -771,9 +1294,7 @@ double2 _cl_fract(double2 x0, local double2* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -804,9 +1325,7 @@ double2 _cl_fract(double2 x0, private double2* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -837,9 +1356,7 @@ double3 _cl_fract(double3 x0, global double3* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -870,9 +1387,7 @@ double3 _cl_fract(double3 x0, local double3* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -903,9 +1418,7 @@ double3 _cl_fract(double3 x0, private double3* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -936,9 +1449,7 @@ double4 _cl_fract(double4 x0, global double4* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -969,9 +1480,7 @@ double4 _cl_fract(double4 x0, local double4* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1002,9 +1511,7 @@ double4 _cl_fract(double4 x0, private double4* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1035,9 +1542,7 @@ double8 _cl_fract(double8 x0, global double8* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1068,9 +1573,7 @@ double8 _cl_fract(double8 x0, local double8* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1101,9 +1604,7 @@ double8 _cl_fract(double8 x0, private double8* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1134,9 +1635,7 @@ double16 _cl_fract(double16 x0, global double16* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1167,9 +1666,7 @@ double16 _cl_fract(double16 x0, local double16* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;
@@ -1200,9 +1697,7 @@ double16 _cl_fract(double16 x0, private double16* x1)
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 ;

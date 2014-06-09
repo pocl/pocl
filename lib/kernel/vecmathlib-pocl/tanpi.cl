@@ -1,26 +1,179 @@
 // Note: This file has been automatically generated. Do not modify.
 
 // Needed for fract()
+#define POCL_FRACT_MIN_H 0x1.ffcp-1h
 #define POCL_FRACT_MIN   0x1.fffffffffffffp-1
 #define POCL_FRACT_MIN_F 0x1.fffffep-1f
 
-// If double precision is not supported, then define
-// single-precision (dummy) values to avoid compiler warnings
-// for double precision values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#  undef M_PI_2
-#  define M_PI_2 M_PI_2_F
-#  undef LONG_MAX
-#  define LONG_MAX INT_MAX
-#  undef LONG_MIN
-#  define LONG_MIN INT_MIN
-#  undef POCL_FRACT_MIN
-#  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif // #ifndef cl_khr_fp64
+// Choose a constant with a particular precision
+#ifdef cl_khr_fp16
+#  define IF_HALF(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#ifdef cl_khr_fp64
+#  define IF_DOUBLE(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
+        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
+
+
 
 // tanpi: ['VF'] -> VF
+
+#ifdef cl_khr_fp16
+
+// tanpi: VF=half
+// Implement tanpi directly
+__attribute__((__overloadable__))
+half _cl_tanpi(half x0)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// tanpi: VF=half2
+// Implement tanpi directly
+__attribute__((__overloadable__))
+half2 _cl_tanpi(half2 x0)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// tanpi: VF=half3
+// Implement tanpi directly
+__attribute__((__overloadable__))
+half3 _cl_tanpi(half3 x0)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// tanpi: VF=half4
+// Implement tanpi directly
+__attribute__((__overloadable__))
+half4 _cl_tanpi(half4 x0)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// tanpi: VF=half8
+// Implement tanpi directly
+__attribute__((__overloadable__))
+half8 _cl_tanpi(half8 x0)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// tanpi: VF=half16
+// Implement tanpi directly
+__attribute__((__overloadable__))
+half16 _cl_tanpi(half16 x0)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+#endif // #ifdef cl_khr_fp16
 
 // tanpi: VF=float
 // Implement tanpi directly
@@ -39,7 +192,7 @@ float _cl_tanpi(float x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -63,7 +216,7 @@ float2 _cl_tanpi(float2 x0)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -87,7 +240,7 @@ float3 _cl_tanpi(float3 x0)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -111,7 +264,7 @@ float4 _cl_tanpi(float4 x0)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -135,7 +288,7 @@ float8 _cl_tanpi(float8 x0)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -159,7 +312,7 @@ float16 _cl_tanpi(float16 x0)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -185,7 +338,7 @@ double _cl_tanpi(double x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -209,7 +362,7 @@ double2 _cl_tanpi(double2 x0)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -233,7 +386,7 @@ double3 _cl_tanpi(double3 x0)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -257,7 +410,7 @@ double4 _cl_tanpi(double4 x0)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -281,7 +434,7 @@ double8 _cl_tanpi(double8 x0)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
@@ -305,7 +458,7 @@ double16 _cl_tanpi(double16 x0)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
-  return tan((scalar_t)M_PI*x0);
+  return tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t

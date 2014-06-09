@@ -29,7 +29,7 @@
     return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
 #define DEFINE_BUILTIN_V_V(NAME)                        \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half __attribute__ ((overloadable))                   \
   NAME(half a)                                          \
   {                                                     \
@@ -69,7 +69,7 @@
     return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
   }
 #define DEFINE_BUILTIN_V_VV(NAME)                       \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half __attribute__ ((overloadable))                   \
   NAME(half a, half b)                                  \
   {                                                     \
@@ -109,7 +109,7 @@
     return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
   }
 #define DEFINE_BUILTIN_V_VVV(NAME)                      \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half __attribute__ ((overloadable))                   \
   NAME(half a, half b, half c)                          \
   {                                                     \
@@ -149,7 +149,7 @@
     return (VTYPE)(NAME(a.LO), NAME(a.HI));                     \
   }
 #define DEFINE_BUILTIN_V_U(NAME)                                \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   half __attribute__ ((overloadable))                           \
   NAME(ushort a)                                                \
   {                                                             \
@@ -189,7 +189,7 @@
     return (JTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));         \
   }
 #define DEFINE_BUILTIN_J_VV(NAME)                               \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   int __attribute__ ((overloadable))                            \
   NAME(half a, half b)                                          \
   {                                                             \
@@ -234,7 +234,7 @@
        cshi ? -NAME(a.HI, b.HI) : NAME(a.HI, b.HI));                    \
   }
 #define DEFINE_BUILTIN_L_VV(NAME)                                       \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   int __attribute__ ((overloadable))                                    \
   NAME(half a, half b)                                                  \
   {                                                                     \
@@ -274,7 +274,7 @@
     return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));         \
   }
 #define DEFINE_BUILTIN_V_VJ(NAME)                               \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   half __attribute__ ((overloadable))                           \
   NAME(half a, int b)                                           \
   {                                                             \
@@ -314,7 +314,7 @@
     return (VTYPE)(NAME(a.LO, b), NAME(a.HI, b));               \
   }
 #define DEFINE_BUILTIN_V_VI(NAME)                       \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   IMPLEMENT_BUILTIN_V_VI(NAME, half2   , int, lo, hi)   \
   IMPLEMENT_BUILTIN_V_VI(NAME, half3   , int, lo, s2)   \
   IMPLEMENT_BUILTIN_V_VI(NAME, half4   , int, lo, hi)   \
@@ -339,7 +339,7 @@
     return (JTYPE)(NAME(a.LO), NAME(a.HI));                     \
   }
 #define DEFINE_BUILTIN_J_V(NAME)                                \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   int __attribute__ ((overloadable))                            \
   NAME(half a)                                                  \
   {                                                             \
@@ -379,7 +379,7 @@
     return (JTYPE)(NAME(a.LO), NAME(a.HI));                     \
   }
 #define DEFINE_BUILTIN_K_V(NAME)                        \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   int __attribute__ ((overloadable))                    \
   NAME(half a)                                          \
   {                                                     \
@@ -424,7 +424,7 @@
        cshi ? -NAME(a.HI) : NAME(a.HI));                                \
   }
 #define DEFINE_BUILTIN_L_V(NAME)                                        \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   int __attribute__ ((overloadable))                                    \
   NAME(half a)                                                          \
   {                                                                     \
@@ -470,7 +470,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_V(NAME, EXPR)                                     \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_V(NAME, EXPR, half    , half  , short  , short)      \
   IMPLEMENT_EXPR_V_V(NAME, EXPR, half2   , half  , short2 , short)      \
   IMPLEMENT_EXPR_V_V(NAME, EXPR, half3   , half  , short3 , short)      \
@@ -502,7 +502,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_VV(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, half    , half  , short  , short)     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, half3   , half  , short3 , short)     \
@@ -534,7 +534,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_VVV(NAME, EXPR)                                   \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half    , half  , short  , short)    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half2   , half  , short2 , short)    \
   IMPLEMENT_EXPR_V_VVV(NAME, EXPR, half3   , half  , short3 , short)    \
@@ -566,7 +566,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_S_V(NAME, EXPR)                                     \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_S_V(NAME, EXPR, half    , half  , short  , short)      \
   IMPLEMENT_EXPR_S_V(NAME, EXPR, half2   , half  , short2 , short)      \
   IMPLEMENT_EXPR_S_V(NAME, EXPR, half3   , half  , short3 , short)      \
@@ -598,7 +598,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_S_VV(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, half    , half  , short  , short)     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_S_VV(NAME, EXPR, half3   , half  , short3 , short)     \
@@ -630,7 +630,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_J_V(NAME, EXPR)                                     \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, half    , half  , short  , short)      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, half2   , half  , short2 , short)      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, half3   , half  , short3 , short)      \
@@ -662,7 +662,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_J_VV(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, half    , half  , short  , short)     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, half3   , half  , short3 , short)     \
@@ -695,7 +695,7 @@
   }
 // All V_VVV cases are excluded
 #define DEFINE_EXPR_V_VVS(NAME, EXPR)                                   \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VVS(NAME, EXPR, half2   , half  , short2 , short)    \
   IMPLEMENT_EXPR_V_VVS(NAME, EXPR, half3   , half  , short3 , short)    \
   IMPLEMENT_EXPR_V_VVS(NAME, EXPR, half4   , half  , short4 , short)    \
@@ -725,7 +725,7 @@
   }
 // All V_VVV cases are excluded
 #define DEFINE_EXPR_V_VSS(NAME, EXPR)                                   \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half2   , half  , short2 , short)    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half3   , half  , short3 , short)    \
   IMPLEMENT_EXPR_V_VSS(NAME, EXPR, half4   , half  , short4 , short)    \
@@ -755,7 +755,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_SSV(NAME, EXPR)                                   \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_SSV(NAME, EXPR, half2   , half  , short2 , short)    \
   IMPLEMENT_EXPR_V_SSV(NAME, EXPR, half3   , half  , short3 , short)    \
   IMPLEMENT_EXPR_V_SSV(NAME, EXPR, half4   , half  , short4 , short)    \
@@ -784,7 +784,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_VVJ(NAME, EXPR)                                   \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, half    , half  , short  , short)    \
   IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, half2   , half  , short2 , short)    \
   IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, half3   , half  , short3 , short)    \
@@ -816,7 +816,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_U(NAME, EXPR)                                     \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_U(NAME, EXPR, half    , half  , ushort  , ushort)    \
   IMPLEMENT_EXPR_V_U(NAME, EXPR, half2   , half  , ushort2 , ushort)    \
   IMPLEMENT_EXPR_V_U(NAME, EXPR, half3   , half  , ushort3 , ushort)    \
@@ -849,7 +849,7 @@
   }
 // All V_VV cases are excluded
 #define DEFINE_EXPR_V_VS(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, half3   , half  , short3 , short)     \
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, half4   , half  , short4 , short)     \
@@ -878,7 +878,7 @@
     return EXPR;                                                        \
   }
 #define DEFINE_EXPR_V_VJ(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half3   , half  , short3 , short)     \
   IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half4   , half  , short4 , short)     \
@@ -910,7 +910,7 @@
   }
 // All V_VS cases are excluded
 #define DEFINE_EXPR_V_VI(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_VI(NAME, EXPR, half2   , half  , int2 , int)         \
   IMPLEMENT_EXPR_V_VI(NAME, EXPR, half3   , half  , int3 , int)         \
   IMPLEMENT_EXPR_V_VI(NAME, EXPR, half4   , half  , int4 , int)         \
@@ -951,7 +951,7 @@
     return EXPR;                                        \
   }
 #define DEFINE_EXPR_V_VPV(NAME, EXPR)                   \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   IMPLEMENT_EXPR_V_VPV(NAME, EXPR, half    , half  )    \
   IMPLEMENT_EXPR_V_VPV(NAME, EXPR, half2   , half  )    \
   IMPLEMENT_EXPR_V_VPV(NAME, EXPR, half3   , half  )    \
@@ -984,7 +984,7 @@
   }
 // All V_VV cases are excluded
 #define DEFINE_EXPR_V_SV(NAME, EXPR)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   IMPLEMENT_EXPR_V_SV(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_V_SV(NAME, EXPR, half3   , half  , short3 , short)     \
   IMPLEMENT_EXPR_V_SV(NAME, EXPR, half4   , half  , short4 , short)     \

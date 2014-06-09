@@ -1,26 +1,575 @@
 // Note: This file has been automatically generated. Do not modify.
 
 // Needed for fract()
+#define POCL_FRACT_MIN_H 0x1.ffcp-1h
 #define POCL_FRACT_MIN   0x1.fffffffffffffp-1
 #define POCL_FRACT_MIN_F 0x1.fffffep-1f
 
-// If double precision is not supported, then define
-// single-precision (dummy) values to avoid compiler warnings
-// for double precision values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#  undef M_PI_2
-#  define M_PI_2 M_PI_2_F
-#  undef LONG_MAX
-#  define LONG_MAX INT_MAX
-#  undef LONG_MIN
-#  define LONG_MIN INT_MIN
-#  undef POCL_FRACT_MIN
-#  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif // #ifndef cl_khr_fp64
+// Choose a constant with a particular precision
+#ifdef cl_khr_fp16
+#  define IF_HALF(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#ifdef cl_khr_fp64
+#  define IF_DOUBLE(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
+        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
+
+
 
 // remquo: ['VF', 'VF', 'PVK'] -> VF
+
+#ifdef cl_khr_fp16
+
+// remquo: VF=globalhalf
+// Implement remquo directly
+__attribute__((__overloadable__))
+half _cl_remquo(half x0, half x1, global int* x2)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=localhalf
+// Implement remquo directly
+__attribute__((__overloadable__))
+half _cl_remquo(half x0, half x1, local int* x2)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=privatehalf
+// Implement remquo directly
+__attribute__((__overloadable__))
+half _cl_remquo(half x0, half x1, private int* x2)
+{
+  typedef short iscalar_t;
+  typedef int jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short ivector_t;
+  typedef int jvector_t;
+  typedef int kvector_t;
+  typedef half vector_t;
+#define convert_ivector_t convert_short
+#define convert_jvector_t convert_int
+#define convert_kvector_t convert_int
+#define convert_vector_t convert_half
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=globalhalf2
+// Implement remquo directly
+__attribute__((__overloadable__))
+half2 _cl_remquo(half2 x0, half2 x1, global int2* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=localhalf2
+// Implement remquo directly
+__attribute__((__overloadable__))
+half2 _cl_remquo(half2 x0, half2 x1, local int2* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=privatehalf2
+// Implement remquo directly
+__attribute__((__overloadable__))
+half2 _cl_remquo(half2 x0, half2 x1, private int2* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=globalhalf3
+// Implement remquo directly
+__attribute__((__overloadable__))
+half3 _cl_remquo(half3 x0, half3 x1, global int3* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=localhalf3
+// Implement remquo directly
+__attribute__((__overloadable__))
+half3 _cl_remquo(half3 x0, half3 x1, local int3* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=privatehalf3
+// Implement remquo directly
+__attribute__((__overloadable__))
+half3 _cl_remquo(half3 x0, half3 x1, private int3* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=globalhalf4
+// Implement remquo directly
+__attribute__((__overloadable__))
+half4 _cl_remquo(half4 x0, half4 x1, global int4* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=localhalf4
+// Implement remquo directly
+__attribute__((__overloadable__))
+half4 _cl_remquo(half4 x0, half4 x1, local int4* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=privatehalf4
+// Implement remquo directly
+__attribute__((__overloadable__))
+half4 _cl_remquo(half4 x0, half4 x1, private int4* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=globalhalf8
+// Implement remquo directly
+__attribute__((__overloadable__))
+half8 _cl_remquo(half8 x0, half8 x1, global int8* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=localhalf8
+// Implement remquo directly
+__attribute__((__overloadable__))
+half8 _cl_remquo(half8 x0, half8 x1, local int8* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=privatehalf8
+// Implement remquo directly
+__attribute__((__overloadable__))
+half8 _cl_remquo(half8 x0, half8 x1, private int8* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=globalhalf16
+// Implement remquo directly
+__attribute__((__overloadable__))
+half16 _cl_remquo(half16 x0, half16 x1, global int16* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=localhalf16
+// Implement remquo directly
+__attribute__((__overloadable__))
+half16 _cl_remquo(half16 x0, half16 x1, local int16* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+// remquo: VF=privatehalf16
+// Implement remquo directly
+__attribute__((__overloadable__))
+half16 _cl_remquo(half16 x0, half16 x1, private int16* x2)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+  return 
+    ({
+      vector_t k = rint(x0/x1);
+      *x2 = (convert_kvector_t(k) & 0x7f) * (1-2*convert_kvector_t(signbit(k)));
+      x0-k*x1;
+    })
+;
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+}
+
+#endif // #ifdef cl_khr_fp16
 
 // remquo: VF=globalfloat
 // Implement remquo directly

@@ -29,26 +29,15 @@
 # convert_<destTypen><_sat><_roundingMode>(<sourceTypen>)
 
 types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong',
-         # 'half',
-         'float', 'double']
+         'half', 'float', 'double']
 int_types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong']
 unsigned_types = ['uchar', 'ushort', 'uint', 'ulong']
 float_types = ['float', 'double']
 int64_types = ['long', 'ulong']
-float16_types = []              # ['half']
+float16_types = ['half']
 float64_types = ['double']
 vector_sizes = ['', '2', '3', '4', '8', '16']
 half_sizes = [('2',''), ('4','2'), ('8','4'), ('16','8')]
-
-# Type conversions involving "half" are excluced. The specification
-# isn't clear on whether vector types halfN are excluded as well, but
-# we exclude them anyway: (a) It doesn't make sense to prevent scalar
-# conversions if one can just call a vector conversion instead, and
-# (b) we implement vector conversions in term of scalar conversion,
-# and LLVM doesn't support scalar conversions anyway.
-def is_excluded(type, size):
-  # return type in float16_types and size == ''
-  return type in float16_types
 
 saturation = ['','_sat']
 rounding_modes = ['_rtz','_rte','_rtp','_rtn']
@@ -194,8 +183,7 @@ def generate_default_conversion(src, dst, mode):
   close_conditional = conditional_guard(src, dst)
 
   # scalar conversions
-  if not is_excluded(src, '') and not is_excluded(dst, ''):
-    print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
 {DST} convert_{DST}{M}({SRC} x)
 {{
   return ({DST})x;
@@ -204,8 +192,7 @@ def generate_default_conversion(src, dst, mode):
 
   # vector conversions, done through decomposition to components
   for size, half_size in half_sizes:
-    if not is_excluded(src, size) and not is_excluded(dst, size):
-      print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+    print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
 {DST}{N} convert_{DST}{N}{M}({SRC}{N} x)
 {{
   return ({DST}{N})(convert_{DST}{H}(x.lo), convert_{DST}{H}(x.hi));
@@ -213,8 +200,7 @@ def generate_default_conversion(src, dst, mode):
 """.format(SRC=src, DST=dst, N=size, H=half_size, M=mode))
 
   # 3-component vector conversions
-  if not is_excluded(src, 3) and not is_excluded(dst, 3):
-    print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
 {DST}3 convert_{DST}3{M}({SRC}3 x)
 {{
   return ({DST}3)(convert_{DST}2(x.s01), convert_{DST}(x.s2));
@@ -246,9 +232,6 @@ for src in int_types:
 #
 
 def generate_saturated_conversion(src, dst, size):
-  if is_excluded(src, size) or is_excluded(dst, size):
-    return
-
   # Header
   print()
   close_conditional = conditional_guard(src, dst)
@@ -320,9 +303,6 @@ for src in types:
 
 
 def generate_saturated_conversion_with_rounding(src, dst, size, mode):
-  if is_excluded(src, size) or is_excluded(dst, size):
-    return
-
   # Header
   print()
   close_conditional = conditional_guard(src, dst)
@@ -361,9 +341,6 @@ for src in int_types:
 #
 
 def generate_float_conversion(src, dst, size, mode, sat):
-  if is_excluded(src, size) or is_excluded(dst, size):
-    return
-
   # Header
   print()
   close_conditional = conditional_guard(src, dst)

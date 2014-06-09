@@ -49,8 +49,8 @@ _CL_IMPLEMENT_SHUFFLE_MN(char  , uchar )
 _CL_IMPLEMENT_SHUFFLE_MN(uchar , uchar )
 _CL_IMPLEMENT_SHUFFLE_MN(short , ushort)
 _CL_IMPLEMENT_SHUFFLE_MN(ushort, ushort)
-// __IF_FP16(
-// _CL_IMPLEMENT_SHUFFLE_MN(half  , ushort))
+__IF_FP16(
+_CL_IMPLEMENT_SHUFFLE_MN(half  , ushort))
 _CL_IMPLEMENT_SHUFFLE_MN(int   , uint  )
 _CL_IMPLEMENT_SHUFFLE_MN(uint  , uint  )
 _CL_IMPLEMENT_SHUFFLE_MN(float , uint  )
@@ -61,6 +61,8 @@ __IF_FP64(
 _CL_IMPLEMENT_SHUFFLE_MN(double, ulong ))
 
 
+
+#if 0
 
 // Implement half shuffles via reinterpreting as short
 #define _CL_IMPLEMENT_SHUFFLE_HALF(N, M)                                \
@@ -92,3 +94,5 @@ _CL_IMPLEMENT_SHUFFLE_MN(double, ulong ))
 
 __IF_FP16(
 _CL_IMPLEMENT_SHUFFLE_HALF_MN)
+
+#endif

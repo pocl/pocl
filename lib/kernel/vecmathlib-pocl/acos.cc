@@ -4,6 +4,188 @@
 
 // acos: ['VF'] -> VF
 
+#ifdef cl_khr_fp16
+
+// acos: VF=half
+#if defined VECMATHLIB_HAVE_VEC_HALF_1 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling vecmathlib
+half _cl_acos(half x0)
+{
+  vecmathlib::realvec<half,1> y0 = bitcast<half,vecmathlib::realvec<half,1> >(x0);
+  vecmathlib::realvec<half,1> r = vecmathlib::acos(y0);
+  return bitcast<vecmathlib::realvec<half,1>,half>((r));
+}
+#elif ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling libm
+half _cl_acos(half x0)
+{
+  vecmathlib::realpseudovec<half,1> y0 = x0;
+  vecmathlib::realpseudovec<half,1> r = acos(y0);
+  return (r)[0];
+}
+#else
+// Implement acos by calling builtin
+half _cl_acos(half x0)
+{
+  vecmathlib::realbuiltinvec<half,1> y0 = x0;
+  vecmathlib::realbuiltinvec<half,1> r = acos(y0);
+  return (r)[0];
+}
+#endif
+
+// acos: VF=half2
+#if defined VECMATHLIB_HAVE_VEC_HALF_2 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling vecmathlib
+half2 _cl_acos(half2 x0)
+{
+  vecmathlib::realvec<half,2> y0 = bitcast<half2,vecmathlib::realvec<half,2> >(x0);
+  vecmathlib::realvec<half,2> r = vecmathlib::acos(y0);
+  return bitcast<vecmathlib::realvec<half,2>,half2>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement acos by using a larger vector size
+half4 _cl_acos(half4);
+half2 _cl_acos(half2 x0)
+{
+  half4 y0 = bitcast<half2,half4>(x0);
+  half4 r = _cl_acos(y0);
+  return bitcast<half4,half2>(r);
+}
+#else
+// Implement acos by splitting into a smaller vector size
+half _cl_acos(half);
+half2 _cl_acos(half2 x0)
+{
+  pair_half y0 = bitcast<half2,pair_half>(x0);
+  pair_half r;
+  r.lo = _cl_acos(y0.lo);
+  r.hi = _cl_acos(y0.hi);
+  pocl_static_assert(sizeof(pair_half) == sizeof(half2));
+  return bitcast<pair_half,half2>(r);
+}
+#endif
+
+// acos: VF=half3
+#if defined VECMATHLIB_HAVE_VEC_HALF_3 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling vecmathlib
+half3 _cl_acos(half3 x0)
+{
+  vecmathlib::realvec<half,3> y0 = bitcast<half3,vecmathlib::realvec<half,3> >(x0);
+  vecmathlib::realvec<half,3> r = vecmathlib::acos(y0);
+  return bitcast<vecmathlib::realvec<half,3>,half3>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement acos by using a larger vector size
+half4 _cl_acos(half4);
+half3 _cl_acos(half3 x0)
+{
+  half4 y0 = bitcast<half3,half4>(x0);
+  half4 r = _cl_acos(y0);
+  return bitcast<half4,half3>(r);
+}
+#else
+// Implement acos by splitting into a smaller vector size
+half2 _cl_acos(half2);
+half3 _cl_acos(half3 x0)
+{
+  pair_half2 y0 = bitcast<half3,pair_half2>(x0);
+  pair_half2 r;
+  r.lo = _cl_acos(y0.lo);
+  r.hi = _cl_acos(y0.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half3));
+  return bitcast<pair_half2,half3>(r);
+}
+#endif
+
+// acos: VF=half4
+#if defined VECMATHLIB_HAVE_VEC_HALF_4 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling vecmathlib
+half4 _cl_acos(half4 x0)
+{
+  vecmathlib::realvec<half,4> y0 = bitcast<half4,vecmathlib::realvec<half,4> >(x0);
+  vecmathlib::realvec<half,4> r = vecmathlib::acos(y0);
+  return bitcast<vecmathlib::realvec<half,4>,half4>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement acos by using a larger vector size
+half8 _cl_acos(half8);
+half4 _cl_acos(half4 x0)
+{
+  half8 y0 = bitcast<half4,half8>(x0);
+  half8 r = _cl_acos(y0);
+  return bitcast<half8,half4>(r);
+}
+#else
+// Implement acos by splitting into a smaller vector size
+half2 _cl_acos(half2);
+half4 _cl_acos(half4 x0)
+{
+  pair_half2 y0 = bitcast<half4,pair_half2>(x0);
+  pair_half2 r;
+  r.lo = _cl_acos(y0.lo);
+  r.hi = _cl_acos(y0.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half4));
+  return bitcast<pair_half2,half4>(r);
+}
+#endif
+
+// acos: VF=half8
+#if defined VECMATHLIB_HAVE_VEC_HALF_8 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling vecmathlib
+half8 _cl_acos(half8 x0)
+{
+  vecmathlib::realvec<half,8> y0 = bitcast<half8,vecmathlib::realvec<half,8> >(x0);
+  vecmathlib::realvec<half,8> r = vecmathlib::acos(y0);
+  return bitcast<vecmathlib::realvec<half,8>,half8>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement acos by using a larger vector size
+half16 _cl_acos(half16);
+half8 _cl_acos(half8 x0)
+{
+  half16 y0 = bitcast<half8,half16>(x0);
+  half16 r = _cl_acos(y0);
+  return bitcast<half16,half8>(r);
+}
+#else
+// Implement acos by splitting into a smaller vector size
+half4 _cl_acos(half4);
+half8 _cl_acos(half8 x0)
+{
+  pair_half4 y0 = bitcast<half8,pair_half4>(x0);
+  pair_half4 r;
+  r.lo = _cl_acos(y0.lo);
+  r.hi = _cl_acos(y0.hi);
+  pocl_static_assert(sizeof(pair_half4) == sizeof(half8));
+  return bitcast<pair_half4,half8>(r);
+}
+#endif
+
+// acos: VF=half16
+#if defined VECMATHLIB_HAVE_VEC_HALF_16 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement acos by calling vecmathlib
+half16 _cl_acos(half16 x0)
+{
+  vecmathlib::realvec<half,16> y0 = bitcast<half16,vecmathlib::realvec<half,16> >(x0);
+  vecmathlib::realvec<half,16> r = vecmathlib::acos(y0);
+  return bitcast<vecmathlib::realvec<half,16>,half16>((r));
+}
+#else
+// Implement acos by splitting into a smaller vector size
+half8 _cl_acos(half8);
+half16 _cl_acos(half16 x0)
+{
+  pair_half8 y0 = bitcast<half16,pair_half8>(x0);
+  pair_half8 r;
+  r.lo = _cl_acos(y0.lo);
+  r.hi = _cl_acos(y0.hi);
+  pocl_static_assert(sizeof(pair_half8) == sizeof(half16));
+  return bitcast<pair_half8,half16>(r);
+}
+#endif
+
+#endif // #ifdef cl_khr_fp16
+
 // acos: VF=float
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement acos by calling vecmathlib

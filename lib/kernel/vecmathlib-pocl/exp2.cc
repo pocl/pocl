@@ -4,6 +4,188 @@
 
 // exp2: ['VF'] -> VF
 
+#ifdef cl_khr_fp16
+
+// exp2: VF=half
+#if defined VECMATHLIB_HAVE_VEC_HALF_1 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling vecmathlib
+half _cl_exp2(half x0)
+{
+  vecmathlib::realvec<half,1> y0 = bitcast<half,vecmathlib::realvec<half,1> >(x0);
+  vecmathlib::realvec<half,1> r = vecmathlib::exp2(y0);
+  return bitcast<vecmathlib::realvec<half,1>,half>((r));
+}
+#elif ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling libm
+half _cl_exp2(half x0)
+{
+  vecmathlib::realpseudovec<half,1> y0 = x0;
+  vecmathlib::realpseudovec<half,1> r = exp2(y0);
+  return (r)[0];
+}
+#else
+// Implement exp2 by calling builtin
+half _cl_exp2(half x0)
+{
+  vecmathlib::realbuiltinvec<half,1> y0 = x0;
+  vecmathlib::realbuiltinvec<half,1> r = exp2(y0);
+  return (r)[0];
+}
+#endif
+
+// exp2: VF=half2
+#if defined VECMATHLIB_HAVE_VEC_HALF_2 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling vecmathlib
+half2 _cl_exp2(half2 x0)
+{
+  vecmathlib::realvec<half,2> y0 = bitcast<half2,vecmathlib::realvec<half,2> >(x0);
+  vecmathlib::realvec<half,2> r = vecmathlib::exp2(y0);
+  return bitcast<vecmathlib::realvec<half,2>,half2>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement exp2 by using a larger vector size
+half4 _cl_exp2(half4);
+half2 _cl_exp2(half2 x0)
+{
+  half4 y0 = bitcast<half2,half4>(x0);
+  half4 r = _cl_exp2(y0);
+  return bitcast<half4,half2>(r);
+}
+#else
+// Implement exp2 by splitting into a smaller vector size
+half _cl_exp2(half);
+half2 _cl_exp2(half2 x0)
+{
+  pair_half y0 = bitcast<half2,pair_half>(x0);
+  pair_half r;
+  r.lo = _cl_exp2(y0.lo);
+  r.hi = _cl_exp2(y0.hi);
+  pocl_static_assert(sizeof(pair_half) == sizeof(half2));
+  return bitcast<pair_half,half2>(r);
+}
+#endif
+
+// exp2: VF=half3
+#if defined VECMATHLIB_HAVE_VEC_HALF_3 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling vecmathlib
+half3 _cl_exp2(half3 x0)
+{
+  vecmathlib::realvec<half,3> y0 = bitcast<half3,vecmathlib::realvec<half,3> >(x0);
+  vecmathlib::realvec<half,3> r = vecmathlib::exp2(y0);
+  return bitcast<vecmathlib::realvec<half,3>,half3>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement exp2 by using a larger vector size
+half4 _cl_exp2(half4);
+half3 _cl_exp2(half3 x0)
+{
+  half4 y0 = bitcast<half3,half4>(x0);
+  half4 r = _cl_exp2(y0);
+  return bitcast<half4,half3>(r);
+}
+#else
+// Implement exp2 by splitting into a smaller vector size
+half2 _cl_exp2(half2);
+half3 _cl_exp2(half3 x0)
+{
+  pair_half2 y0 = bitcast<half3,pair_half2>(x0);
+  pair_half2 r;
+  r.lo = _cl_exp2(y0.lo);
+  r.hi = _cl_exp2(y0.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half3));
+  return bitcast<pair_half2,half3>(r);
+}
+#endif
+
+// exp2: VF=half4
+#if defined VECMATHLIB_HAVE_VEC_HALF_4 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling vecmathlib
+half4 _cl_exp2(half4 x0)
+{
+  vecmathlib::realvec<half,4> y0 = bitcast<half4,vecmathlib::realvec<half,4> >(x0);
+  vecmathlib::realvec<half,4> r = vecmathlib::exp2(y0);
+  return bitcast<vecmathlib::realvec<half,4>,half4>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement exp2 by using a larger vector size
+half8 _cl_exp2(half8);
+half4 _cl_exp2(half4 x0)
+{
+  half8 y0 = bitcast<half4,half8>(x0);
+  half8 r = _cl_exp2(y0);
+  return bitcast<half8,half4>(r);
+}
+#else
+// Implement exp2 by splitting into a smaller vector size
+half2 _cl_exp2(half2);
+half4 _cl_exp2(half4 x0)
+{
+  pair_half2 y0 = bitcast<half4,pair_half2>(x0);
+  pair_half2 r;
+  r.lo = _cl_exp2(y0.lo);
+  r.hi = _cl_exp2(y0.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half4));
+  return bitcast<pair_half2,half4>(r);
+}
+#endif
+
+// exp2: VF=half8
+#if defined VECMATHLIB_HAVE_VEC_HALF_8 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling vecmathlib
+half8 _cl_exp2(half8 x0)
+{
+  vecmathlib::realvec<half,8> y0 = bitcast<half8,vecmathlib::realvec<half,8> >(x0);
+  vecmathlib::realvec<half,8> r = vecmathlib::exp2(y0);
+  return bitcast<vecmathlib::realvec<half,8>,half8>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement exp2 by using a larger vector size
+half16 _cl_exp2(half16);
+half8 _cl_exp2(half8 x0)
+{
+  half16 y0 = bitcast<half8,half16>(x0);
+  half16 r = _cl_exp2(y0);
+  return bitcast<half16,half8>(r);
+}
+#else
+// Implement exp2 by splitting into a smaller vector size
+half4 _cl_exp2(half4);
+half8 _cl_exp2(half8 x0)
+{
+  pair_half4 y0 = bitcast<half8,pair_half4>(x0);
+  pair_half4 r;
+  r.lo = _cl_exp2(y0.lo);
+  r.hi = _cl_exp2(y0.hi);
+  pocl_static_assert(sizeof(pair_half4) == sizeof(half8));
+  return bitcast<pair_half4,half8>(r);
+}
+#endif
+
+// exp2: VF=half16
+#if defined VECMATHLIB_HAVE_VEC_HALF_16 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement exp2 by calling vecmathlib
+half16 _cl_exp2(half16 x0)
+{
+  vecmathlib::realvec<half,16> y0 = bitcast<half16,vecmathlib::realvec<half,16> >(x0);
+  vecmathlib::realvec<half,16> r = vecmathlib::exp2(y0);
+  return bitcast<vecmathlib::realvec<half,16>,half16>((r));
+}
+#else
+// Implement exp2 by splitting into a smaller vector size
+half8 _cl_exp2(half8);
+half16 _cl_exp2(half16 x0)
+{
+  pair_half8 y0 = bitcast<half16,pair_half8>(x0);
+  pair_half8 r;
+  r.lo = _cl_exp2(y0.lo);
+  r.hi = _cl_exp2(y0.hi);
+  pocl_static_assert(sizeof(pair_half8) == sizeof(half16));
+  return bitcast<pair_half8,half16>(r);
+}
+#endif
+
+#endif // #ifdef cl_khr_fp16
+
 // exp2: VF=float
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement exp2 by calling vecmathlib

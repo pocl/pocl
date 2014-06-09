@@ -52,13 +52,13 @@ DEFINE_AS_TYPE_1(uchar)
   DEFINE_AS_TYPE(DST, uchar2)                   \
   DEFINE_AS_TYPE(DST, short)                    \
   DEFINE_AS_TYPE(DST, ushort)                   \
-  __IF_FP16_API(DEFINE_AS_TYPE(DST, half))
+  __IF_FP16(DEFINE_AS_TYPE(DST, half))
 
 DEFINE_AS_TYPE_2(char2)
 DEFINE_AS_TYPE_2(uchar2)
 DEFINE_AS_TYPE_2(short)
 DEFINE_AS_TYPE_2(ushort)
-__IF_FP16_API(DEFINE_AS_TYPE_2(half))
+__IF_FP16(DEFINE_AS_TYPE_2(half))
 
 /* 4 bytes */
 

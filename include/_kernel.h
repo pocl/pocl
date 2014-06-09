@@ -49,7 +49,7 @@
 #  pragma OPENCL EXTENSION cl_khr_fp64: enable
 #endif
 
-/* Define some feature macros to help write generic code */
+/* Define some feature test macros to help write generic code */
 #ifdef cl_khr_int64
 #  define __IF_INT64(x) x
 #else
@@ -57,10 +57,8 @@
 #endif
 #ifdef cl_khr_fp16
 #  define __IF_FP16(x) x
-#  define __IF_FP16_API(x) x
 #else
 #  define __IF_FP16(x)
-#  define __IF_FP16_API(x)
 #endif
 #ifdef cl_khr_fp64
 #  define __IF_FP64(x) x
@@ -175,11 +173,6 @@ _CL_STATIC_ASSERT(uintptr_t, sizeof(uintptr_t) == sizeof(void*));
 
 /* Conversion functions */
 
-/* The OpenCL standard says that as_type should be defined for half
-   types. However, it also specifies that one cannot declare variables
-   or have expressions of type half. In any way, LLVM cannot handle
-   this type, so we do not define as_type for half. */
-
 #define _CL_DECLARE_AS_TYPE(SRC, DST)           \
   DST _CL_OVERLOADABLE as_##DST(SRC a);
 
@@ -196,12 +189,12 @@ _CL_DECLARE_AS_TYPE_1(uchar)
   _CL_DECLARE_AS_TYPE(SRC, uchar2)              \
   _CL_DECLARE_AS_TYPE(SRC, short)               \
   _CL_DECLARE_AS_TYPE(SRC, ushort)              \
-  __IF_FP16_API(_CL_DECLARE_AS_TYPE(SRC, half))
+  __IF_FP16(_CL_DECLARE_AS_TYPE(SRC, half))
 _CL_DECLARE_AS_TYPE_2(char2)
 _CL_DECLARE_AS_TYPE_2(uchar2)
 _CL_DECLARE_AS_TYPE_2(short)
 _CL_DECLARE_AS_TYPE_2(ushort)
-__IF_FP16_API(_CL_DECLARE_AS_TYPE_2(half))
+__IF_FP16(_CL_DECLARE_AS_TYPE_2(half))
 
 /* 4 bytes */
 #define _CL_DECLARE_AS_TYPE_4(SRC)                      \
@@ -376,7 +369,7 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   _CL_DECLARE_CONVERT_TYPE(SRC, long  , SIZE, _sat, FLOATSUFFIX)        \
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE,     , FLOATSUFFIX)        \
   _CL_DECLARE_CONVERT_TYPE(SRC, ulong , SIZE, _sat, FLOATSUFFIX))       \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   _CL_DECLARE_CONVERT_TYPE(SRC, half  , SIZE,     , FLOATSUFFIX))       \
   _CL_DECLARE_CONVERT_TYPE(SRC, float , SIZE,     , FLOATSUFFIX)        \
   __IF_FP64(                                                            \
@@ -392,7 +385,7 @@ __IF_FP64(_CL_DECLARE_AS_TYPE_128(double16))
   __IF_INT64(                                               \
   _CL_DECLARE_CONVERT_TYPE_DST(long  , SIZE, FLOATSUFFIX)   \
   _CL_DECLARE_CONVERT_TYPE_DST(ulong , SIZE, FLOATSUFFIX))  \
-  __IF_FP16_API(                                            \
+  __IF_FP16(                                                \
   _CL_DECLARE_CONVERT_TYPE_DST(half  , SIZE, FLOATSUFFIX))  \
   _CL_DECLARE_CONVERT_TYPE_DST(float , SIZE, FLOATSUFFIX)   \
   __IF_FP64(                                                \
@@ -429,10 +422,55 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 
 /* Math Constants */
 
+/* half */
+
+#ifdef cl_khr_fp16
+#define HALF_DIG         3
+#define HALF_MANT_DIG    11
+#define HALF_MAX_10_EXP  +4
+#define HALF_MAX_EXP     +16
+#define HALF_MIN_10_EXP  -4
+#define HALF_MIN_EXP     -13
+#define HALF_RADIX       2
+#define HALF_MAX         0x1.ffcp15h
+#define HALF_MIN         0x1.0p-14h
+#define HALF_EPSILON     0x1.0p-10h
+
+// #define M_E_H        2.71828182845904523536028747135h
+// #define M_LOG2E_H    1.44269504088896340735992468100h
+// #define M_LOG10E_H   0.434294481903251827651128918917h
+// #define M_LN2_H      0.693147180559945309417232121458h
+// #define M_LN10_H     2.30258509299404568401799145468h
+// #define M_PI_H       3.14159265358979323846264338328h
+// #define M_PI_2_H     1.57079632679489661923132169164h
+// #define M_PI_4_H     0.785398163397448309615660845820h
+// #define M_1_PI_H     0.318309886183790671537767526745h
+// #define M_2_PI_H     0.636619772367581343075535053490h
+// #define M_2_SQRTPI_H 1.12837916709551257389615890312h
+// #define M_SQRT2_H    1.41421356237309504880168872421h
+// #define M_SQRT1_2_H  0.707106781186547524400844362105h
+
+#define M_E_H        ((half)2.71828182845904523536028747135f)
+#define M_LOG2E_H    ((half)1.44269504088896340735992468100f)
+#define M_LOG10E_H   ((half)0.434294481903251827651128918917f)
+#define M_LN2_H      ((half)0.693147180559945309417232121458f)
+#define M_LN10_H     ((half)2.30258509299404568401799145468f)
+#define M_PI_H       ((half)3.14159265358979323846264338328f)
+#define M_PI_2_H     ((half)1.57079632679489661923132169164f)
+#define M_PI_4_H     ((half)0.785398163397448309615660845820f)
+#define M_1_PI_H     ((half)0.318309886183790671537767526745f)
+#define M_2_PI_H     ((half)0.636619772367581343075535053490f)
+#define M_2_SQRTPI_H ((half)1.12837916709551257389615890312f)
+#define M_SQRT2_H    ((half)1.41421356237309504880168872421f)
+#define M_SQRT1_2_H  ((half)0.707106781186547524400844362105f)
+#endif
+
+/* float */
+
 #define MAXFLOAT  FLT_MAX
 #define HUGE_VALF __builtin_huge_valf()
-#define INFINITY  (1.0f / 0.0f)
-#define NAN       (0.0f / 0.0f)
+#define INFINITY  __builtin_inff()
+#define NAN       __builtin_nanf()
 
 #define FLT_DIG        6
 #define FLT_MANT_DIG   24
@@ -461,6 +499,8 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define M_2_SQRTPI_F 1.12837916709551257389615890312f
 #define M_SQRT2_F    1.41421356237309504880168872421f
 #define M_SQRT1_2_F  0.707106781186547524400844362105f
+
+/* double */
 
 #ifdef cl_khr_fp64
 #define HUGE_VAL __builtin_huge_val()
@@ -506,7 +546,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
  */
 
 #define _CL_DECLARE_FUNC_V_V(NAME)              \
-  __IF_FP16_API(                                \
+  __IF_FP16(                                    \
   half     _CL_OVERLOADABLE NAME(half    );     \
   half2    _CL_OVERLOADABLE NAME(half2   );     \
   half3    _CL_OVERLOADABLE NAME(half3   );     \
@@ -528,7 +568,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double16 _CL_OVERLOADABLE NAME(double16);)
 
 #define _CL_DECLARE_FUNC_V_VV(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half     _CL_OVERLOADABLE NAME(half    , half    );   \
   half2    _CL_OVERLOADABLE NAME(half2   , half2   );   \
   half3    _CL_OVERLOADABLE NAME(half3   , half3   );   \
@@ -549,7 +589,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double8 );   \
   double16 _CL_OVERLOADABLE NAME(double16, double16);)
 #define _CL_DECLARE_FUNC_V_VVV(NAME)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   half     _CL_OVERLOADABLE NAME(half    , half    , half  );           \
   half2    _CL_OVERLOADABLE NAME(half2   , half2   , half2 );           \
   half3    _CL_OVERLOADABLE NAME(half3   , half3   , half3 );           \
@@ -570,7 +610,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double8 , double8 );         \
   double16 _CL_OVERLOADABLE NAME(double16, double16, double16);)
 #define _CL_DECLARE_FUNC_V_VVS(NAME)                            \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   half2    _CL_OVERLOADABLE NAME(half2   , half2   , half  );   \
   half3    _CL_OVERLOADABLE NAME(half3   , half3   , half  );   \
   half4    _CL_OVERLOADABLE NAME(half4   , half4   , half  );   \
@@ -588,7 +628,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double8 , double);   \
   double16 _CL_OVERLOADABLE NAME(double16, double16, double);)
 #define _CL_DECLARE_FUNC_V_VSS(NAME)                            \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   half2    _CL_OVERLOADABLE NAME(half2   , half  , half  );     \
   half3    _CL_OVERLOADABLE NAME(half3   , half  , half  );     \
   half4    _CL_OVERLOADABLE NAME(half4   , half  , half  );     \
@@ -607,7 +647,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double16 _CL_OVERLOADABLE NAME(double16, double, double);)
 
 #define _CL_DECLARE_FUNC_V_SSV(NAME)                            \
-  __IF_FP16_API(                                                \
+  __IF_FP16(                                                    \
   half2    _CL_OVERLOADABLE NAME(half  , half  , half2   );     \
   half3    _CL_OVERLOADABLE NAME(half  , half  , half3   );     \
   half4    _CL_OVERLOADABLE NAME(half  , half  , half4   );     \
@@ -625,7 +665,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double, double, double8 );     \
   double16 _CL_OVERLOADABLE NAME(double, double, double16);)
 #define _CL_DECLARE_FUNC_V_VVJ(NAME)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   half     _CL_OVERLOADABLE NAME(half    , half    , short  );          \
   half2    _CL_OVERLOADABLE NAME(half2   , half2   , short2 );          \
   half3    _CL_OVERLOADABLE NAME(half3   , half3   , short3 );          \
@@ -646,7 +686,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double8 , long8  );          \
   double16 _CL_OVERLOADABLE NAME(double16, double16, long16 );)
 #define _CL_DECLARE_FUNC_V_VVU(NAME)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   half     _CL_OVERLOADABLE NAME(half    , half    , ushort  );         \
   half2    _CL_OVERLOADABLE NAME(half2   , half2   , ushort2 );         \
   half3    _CL_OVERLOADABLE NAME(half3   , half3   , ushort3 );         \
@@ -667,7 +707,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double8 , ulong8  );         \
   double16 _CL_OVERLOADABLE NAME(double16, double16, ulong16 );)
 #define _CL_DECLARE_FUNC_V_U(NAME)              \
-  __IF_FP16_API(                                \
+  __IF_FP16(                                    \
   half     _CL_OVERLOADABLE NAME(ushort  );     \
   half2    _CL_OVERLOADABLE NAME(ushort2 );     \
   half3    _CL_OVERLOADABLE NAME(ushort3 );     \
@@ -688,7 +728,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(ulong8  );     \
   double16 _CL_OVERLOADABLE NAME(ulong16 );)
 #define _CL_DECLARE_FUNC_V_VS(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half2    _CL_OVERLOADABLE NAME(half2   , half  );     \
   half3    _CL_OVERLOADABLE NAME(half3   , half  );     \
   half4    _CL_OVERLOADABLE NAME(half4   , half  );     \
@@ -706,7 +746,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , double);     \
   double16 _CL_OVERLOADABLE NAME(double16, double);)
 #define _CL_DECLARE_FUNC_V_VJ(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half     _CL_OVERLOADABLE NAME(half    , int  );      \
   half2    _CL_OVERLOADABLE NAME(half2   , int2 );      \
   half3    _CL_OVERLOADABLE NAME(half3   , int3 );      \
@@ -727,7 +767,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , int8 );      \
   double16 _CL_OVERLOADABLE NAME(double16, int16);)
 #define _CL_DECLARE_FUNC_J_VV(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   int     _CL_OVERLOADABLE NAME(half    , half    );    \
   short2  _CL_OVERLOADABLE NAME(half2   , half2   );    \
   short3  _CL_OVERLOADABLE NAME(half3   , half3   );    \
@@ -748,7 +788,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   long8   _CL_OVERLOADABLE NAME(double8 , double8 );    \
   long16  _CL_OVERLOADABLE NAME(double16, double16);)
 #define _CL_DECLARE_FUNC_V_VI(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half2    _CL_OVERLOADABLE NAME(half2   , int);        \
   half3    _CL_OVERLOADABLE NAME(half3   , int);        \
   half4    _CL_OVERLOADABLE NAME(half4   , int);        \
@@ -766,7 +806,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , int);        \
   double16 _CL_OVERLOADABLE NAME(double16, int);)
 #define _CL_DECLARE_FUNC_V_VPV(NAME)                                    \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   half     _CL_OVERLOADABLE NAME(half    , __global  half    *);        \
   half2    _CL_OVERLOADABLE NAME(half2   , __global  half2   *);        \
   half3    _CL_OVERLOADABLE NAME(half3   , __global  half3   *);        \
@@ -786,7 +826,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double4  _CL_OVERLOADABLE NAME(double4 , __global  double4 *);        \
   double8  _CL_OVERLOADABLE NAME(double8 , __global  double8 *);        \
   double16 _CL_OVERLOADABLE NAME(double16, __global  double16*);)       \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   half     _CL_OVERLOADABLE NAME(half    , __local   half    *);        \
   half2    _CL_OVERLOADABLE NAME(half2   , __local   half2   *);        \
   half3    _CL_OVERLOADABLE NAME(half3   , __local   half3   *);        \
@@ -806,7 +846,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double4  _CL_OVERLOADABLE NAME(double4 , __local   double4 *);        \
   double8  _CL_OVERLOADABLE NAME(double8 , __local   double8 *);        \
   double16 _CL_OVERLOADABLE NAME(double16, __local   double16*);)       \
-  __IF_FP16_API(                                                        \
+  __IF_FP16(                                                            \
   half     _CL_OVERLOADABLE NAME(half    , __private half    *);        \
   half2    _CL_OVERLOADABLE NAME(half2   , __private half2   *);        \
   half3    _CL_OVERLOADABLE NAME(half3   , __private half3   *);        \
@@ -827,7 +867,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double8 , __private double8 *);        \
   double16 _CL_OVERLOADABLE NAME(double16, __private double16*);)
 #define _CL_DECLARE_FUNC_V_SV(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half2    _CL_OVERLOADABLE NAME(half  , half2   );     \
   half3    _CL_OVERLOADABLE NAME(half  , half3   );     \
   half4    _CL_OVERLOADABLE NAME(half  , half4   );     \
@@ -845,7 +885,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double8  _CL_OVERLOADABLE NAME(double, double8 );     \
   double16 _CL_OVERLOADABLE NAME(double, double16);)
 #define _CL_DECLARE_FUNC_J_V(NAME)              \
-  __IF_FP16_API(                                \
+  __IF_FP16(                                    \
   int     _CL_OVERLOADABLE NAME(half    );      \
   short2  _CL_OVERLOADABLE NAME(half2   );      \
   short3  _CL_OVERLOADABLE NAME(half3   );      \
@@ -866,7 +906,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   long8   _CL_OVERLOADABLE NAME(double8 );      \
   long16  _CL_OVERLOADABLE NAME(double16);)
 #define _CL_DECLARE_FUNC_K_V(NAME)              \
-  __IF_FP16_API(                                \
+  __IF_FP16(                                    \
   int   _CL_OVERLOADABLE NAME(half    );        \
   int2  _CL_OVERLOADABLE NAME(half2   );        \
   int3  _CL_OVERLOADABLE NAME(half3   );        \
@@ -887,7 +927,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   int8  _CL_OVERLOADABLE NAME(double8 );        \
   int16 _CL_OVERLOADABLE NAME(double16);)
 #define _CL_DECLARE_FUNC_S_V(NAME)              \
-  __IF_FP16_API(                                \
+  __IF_FP16(                                    \
   half   _CL_OVERLOADABLE NAME(half    );       \
   half   _CL_OVERLOADABLE NAME(half2   );       \
   half   _CL_OVERLOADABLE NAME(half3   );       \
@@ -908,7 +948,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   double _CL_OVERLOADABLE NAME(double8 );       \
   double _CL_OVERLOADABLE NAME(double16);)
 #define _CL_DECLARE_FUNC_S_VV(NAME)                     \
-  __IF_FP16_API(                                        \
+  __IF_FP16(                                            \
   half   _CL_OVERLOADABLE NAME(half    , half    );     \
   half   _CL_OVERLOADABLE NAME(half2   , half2   );     \
   half   _CL_OVERLOADABLE NAME(half3   , half3   );     \
@@ -1763,7 +1803,7 @@ _CL_DECLARE_FUNC_V_V(sign)
 
 /* Geometric Functions */
 
-__IF_FP16_API(
+__IF_FP16(    
 half4 _CL_OVERLOADABLE cross(half4, half4);
 half3 _CL_OVERLOADABLE cross(half3, half3);)
 float4 _CL_OVERLOADABLE cross(float4, float4);
@@ -1825,7 +1865,7 @@ _CL_DECLARE_VLOAD(uint  , __global)
 __IF_INT64(
 _CL_DECLARE_VLOAD(long  , __global)
 _CL_DECLARE_VLOAD(ulong , __global))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VLOAD(half  , __global))
 _CL_DECLARE_VLOAD(float , __global)
 __IF_FP64(
@@ -1840,7 +1880,7 @@ _CL_DECLARE_VLOAD(uint  , __local)
 __IF_INT64(
 _CL_DECLARE_VLOAD(long  , __local)
 _CL_DECLARE_VLOAD(ulong , __local))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VLOAD(half  , __local))
 _CL_DECLARE_VLOAD(float , __local)
 __IF_FP64(
@@ -1855,7 +1895,7 @@ _CL_DECLARE_VLOAD(uint  , __constant)
 __IF_INT64(
 _CL_DECLARE_VLOAD(long  , __constant)
 _CL_DECLARE_VLOAD(ulong , __constant))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VLOAD(half  , __constant))
 _CL_DECLARE_VLOAD(float , __constant)
 __IF_FP64(
@@ -1870,7 +1910,7 @@ _CL_DECLARE_VLOAD(uint  , __private)
 __IF_INT64(
 _CL_DECLARE_VLOAD(long  , __private)
 _CL_DECLARE_VLOAD(ulong , __private))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VLOAD(half  , __private))
 _CL_DECLARE_VLOAD(float , __private)
 __IF_FP64(
@@ -1892,7 +1932,7 @@ _CL_DECLARE_VSTORE(uint  , __global)
 __IF_INT64(
 _CL_DECLARE_VSTORE(long  , __global)
 _CL_DECLARE_VSTORE(ulong , __global))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VSTORE(half  , __global))
 _CL_DECLARE_VSTORE(float , __global)
 __IF_FP64(
@@ -1907,7 +1947,7 @@ _CL_DECLARE_VSTORE(uint  , __local)
 __IF_INT64(
 _CL_DECLARE_VSTORE(long  , __local)
 _CL_DECLARE_VSTORE(ulong , __local))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VSTORE(half  , __local))
 _CL_DECLARE_VSTORE(float , __local)
 __IF_FP64(
@@ -1922,7 +1962,7 @@ _CL_DECLARE_VSTORE(uint  , __private)
 __IF_INT64(
 _CL_DECLARE_VSTORE(long  , __private)
 _CL_DECLARE_VSTORE(ulong , __private))
-__IF_FP16_API(
+__IF_FP16(    
 _CL_DECLARE_VSTORE(half  , __private))
 _CL_DECLARE_VSTORE(float , __private)
 __IF_FP64(
@@ -1995,10 +2035,15 @@ _CL_DECLARE_VSTORE_HALF(__private , _rtn)
   _CL_OVERLOADABLE TYPE atomic_and    (volatile MOD TYPE *p, TYPE val); \
   _CL_OVERLOADABLE TYPE atomic_or     (volatile MOD TYPE *p, TYPE val); \
   _CL_OVERLOADABLE TYPE atomic_xor    (volatile MOD TYPE *p, TYPE val);
-_CL_DECLARE_ATOMICS(__global, int )
-_CL_DECLARE_ATOMICS(__global, uint)
-_CL_DECLARE_ATOMICS(__local , int )
-_CL_DECLARE_ATOMICS(__local , uint)
+_CL_DECLARE_ATOMICS(__global, int  )
+_CL_DECLARE_ATOMICS(__global, uint )
+_CL_DECLARE_ATOMICS(__local , int  )
+_CL_DECLARE_ATOMICS(__local , uint )
+
+_CL_DECLARE_ATOMICS(__global, long )
+_CL_DECLARE_ATOMICS(__global, ulong)
+_CL_DECLARE_ATOMICS(__local , long )
+_CL_DECLARE_ATOMICS(__local , ulong)
 
 _CL_OVERLOADABLE float atomic_xchg(volatile __global float *p, float val);
 _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
