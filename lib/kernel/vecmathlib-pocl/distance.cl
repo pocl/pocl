@@ -1,3 +1,29 @@
+#ifdef cl_khr_fp16
+__attribute__((__overloadable__))
+half distance(half p0, half p1)
+{
+  return length(p0-p1);
+}
+
+__attribute__((__overloadable__))
+half distance(half2 p0, half2 p1)
+{
+  return length(p0-p1);
+}
+
+__attribute__((__overloadable__))
+half distance(half3 p0, half3 p1)
+{
+  return length(p0-p1);
+}
+
+__attribute__((__overloadable__))
+half distance(half4 p0, half4 p1)
+{
+  return length(p0-p1);
+}
+#endif
+
 __attribute__((__overloadable__))
 float distance(float p0, float p1)
 {
