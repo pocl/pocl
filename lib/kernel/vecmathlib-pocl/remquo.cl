@@ -39,6 +39,9 @@ float _cl_remquo(float x0, float x1, global int* x2)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -50,6 +53,9 @@ float _cl_remquo(float x0, float x1, global int* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localfloat
@@ -69,6 +75,9 @@ float _cl_remquo(float x0, float x1, local int* x2)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -80,6 +89,9 @@ float _cl_remquo(float x0, float x1, local int* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatefloat
@@ -99,6 +111,9 @@ float _cl_remquo(float x0, float x1, private int* x2)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -110,6 +125,9 @@ float _cl_remquo(float x0, float x1, private int* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globalfloat2
@@ -129,6 +147,9 @@ float2 _cl_remquo(float2 x0, float2 x1, global int2* x2)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -140,6 +161,9 @@ float2 _cl_remquo(float2 x0, float2 x1, global int2* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localfloat2
@@ -159,6 +183,9 @@ float2 _cl_remquo(float2 x0, float2 x1, local int2* x2)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -170,6 +197,9 @@ float2 _cl_remquo(float2 x0, float2 x1, local int2* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatefloat2
@@ -189,6 +219,9 @@ float2 _cl_remquo(float2 x0, float2 x1, private int2* x2)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -200,6 +233,9 @@ float2 _cl_remquo(float2 x0, float2 x1, private int2* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globalfloat3
@@ -219,6 +255,9 @@ float3 _cl_remquo(float3 x0, float3 x1, global int3* x2)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -230,6 +269,9 @@ float3 _cl_remquo(float3 x0, float3 x1, global int3* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localfloat3
@@ -249,6 +291,9 @@ float3 _cl_remquo(float3 x0, float3 x1, local int3* x2)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -260,6 +305,9 @@ float3 _cl_remquo(float3 x0, float3 x1, local int3* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatefloat3
@@ -279,6 +327,9 @@ float3 _cl_remquo(float3 x0, float3 x1, private int3* x2)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -290,6 +341,9 @@ float3 _cl_remquo(float3 x0, float3 x1, private int3* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globalfloat4
@@ -309,6 +363,9 @@ float4 _cl_remquo(float4 x0, float4 x1, global int4* x2)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -320,6 +377,9 @@ float4 _cl_remquo(float4 x0, float4 x1, global int4* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localfloat4
@@ -339,6 +399,9 @@ float4 _cl_remquo(float4 x0, float4 x1, local int4* x2)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -350,6 +413,9 @@ float4 _cl_remquo(float4 x0, float4 x1, local int4* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatefloat4
@@ -369,6 +435,9 @@ float4 _cl_remquo(float4 x0, float4 x1, private int4* x2)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -380,6 +449,9 @@ float4 _cl_remquo(float4 x0, float4 x1, private int4* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globalfloat8
@@ -399,6 +471,9 @@ float8 _cl_remquo(float8 x0, float8 x1, global int8* x2)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -410,6 +485,9 @@ float8 _cl_remquo(float8 x0, float8 x1, global int8* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localfloat8
@@ -429,6 +507,9 @@ float8 _cl_remquo(float8 x0, float8 x1, local int8* x2)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -440,6 +521,9 @@ float8 _cl_remquo(float8 x0, float8 x1, local int8* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatefloat8
@@ -459,6 +543,9 @@ float8 _cl_remquo(float8 x0, float8 x1, private int8* x2)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -470,6 +557,9 @@ float8 _cl_remquo(float8 x0, float8 x1, private int8* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globalfloat16
@@ -489,6 +579,9 @@ float16 _cl_remquo(float16 x0, float16 x1, global int16* x2)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -500,6 +593,9 @@ float16 _cl_remquo(float16 x0, float16 x1, global int16* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localfloat16
@@ -519,6 +615,9 @@ float16 _cl_remquo(float16 x0, float16 x1, local int16* x2)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -530,6 +629,9 @@ float16 _cl_remquo(float16 x0, float16 x1, local int16* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatefloat16
@@ -549,6 +651,9 @@ float16 _cl_remquo(float16 x0, float16 x1, private int16* x2)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -560,6 +665,9 @@ float16 _cl_remquo(float16 x0, float16 x1, private int16* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #ifdef cl_khr_fp64
@@ -581,6 +689,9 @@ double _cl_remquo(double x0, double x1, global int* x2)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -592,6 +703,9 @@ double _cl_remquo(double x0, double x1, global int* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localdouble
@@ -611,6 +725,9 @@ double _cl_remquo(double x0, double x1, local int* x2)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -622,6 +739,9 @@ double _cl_remquo(double x0, double x1, local int* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatedouble
@@ -641,6 +761,9 @@ double _cl_remquo(double x0, double x1, private int* x2)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -652,6 +775,9 @@ double _cl_remquo(double x0, double x1, private int* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globaldouble2
@@ -671,6 +797,9 @@ double2 _cl_remquo(double2 x0, double2 x1, global int2* x2)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -682,6 +811,9 @@ double2 _cl_remquo(double2 x0, double2 x1, global int2* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localdouble2
@@ -701,6 +833,9 @@ double2 _cl_remquo(double2 x0, double2 x1, local int2* x2)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -712,6 +847,9 @@ double2 _cl_remquo(double2 x0, double2 x1, local int2* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatedouble2
@@ -731,6 +869,9 @@ double2 _cl_remquo(double2 x0, double2 x1, private int2* x2)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -742,6 +883,9 @@ double2 _cl_remquo(double2 x0, double2 x1, private int2* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globaldouble3
@@ -761,6 +905,9 @@ double3 _cl_remquo(double3 x0, double3 x1, global int3* x2)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -772,6 +919,9 @@ double3 _cl_remquo(double3 x0, double3 x1, global int3* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localdouble3
@@ -791,6 +941,9 @@ double3 _cl_remquo(double3 x0, double3 x1, local int3* x2)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -802,6 +955,9 @@ double3 _cl_remquo(double3 x0, double3 x1, local int3* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatedouble3
@@ -821,6 +977,9 @@ double3 _cl_remquo(double3 x0, double3 x1, private int3* x2)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -832,6 +991,9 @@ double3 _cl_remquo(double3 x0, double3 x1, private int3* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globaldouble4
@@ -851,6 +1013,9 @@ double4 _cl_remquo(double4 x0, double4 x1, global int4* x2)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -862,6 +1027,9 @@ double4 _cl_remquo(double4 x0, double4 x1, global int4* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localdouble4
@@ -881,6 +1049,9 @@ double4 _cl_remquo(double4 x0, double4 x1, local int4* x2)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -892,6 +1063,9 @@ double4 _cl_remquo(double4 x0, double4 x1, local int4* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatedouble4
@@ -911,6 +1085,9 @@ double4 _cl_remquo(double4 x0, double4 x1, private int4* x2)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -922,6 +1099,9 @@ double4 _cl_remquo(double4 x0, double4 x1, private int4* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globaldouble8
@@ -941,6 +1121,9 @@ double8 _cl_remquo(double8 x0, double8 x1, global int8* x2)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -952,6 +1135,9 @@ double8 _cl_remquo(double8 x0, double8 x1, global int8* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localdouble8
@@ -971,6 +1157,9 @@ double8 _cl_remquo(double8 x0, double8 x1, local int8* x2)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -982,6 +1171,9 @@ double8 _cl_remquo(double8 x0, double8 x1, local int8* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatedouble8
@@ -1001,6 +1193,9 @@ double8 _cl_remquo(double8 x0, double8 x1, private int8* x2)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -1012,6 +1207,9 @@ double8 _cl_remquo(double8 x0, double8 x1, private int8* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=globaldouble16
@@ -1031,6 +1229,9 @@ double16 _cl_remquo(double16 x0, double16 x1, global int16* x2)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -1042,6 +1243,9 @@ double16 _cl_remquo(double16 x0, double16 x1, global int16* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=localdouble16
@@ -1061,6 +1265,9 @@ double16 _cl_remquo(double16 x0, double16 x1, local int16* x2)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -1072,6 +1279,9 @@ double16 _cl_remquo(double16 x0, double16 x1, local int16* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // remquo: VF=privatedouble16
@@ -1091,6 +1301,9 @@ double16 _cl_remquo(double16 x0, double16 x1, private int16* x2)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
       vector_t k = rint(x0/x1);
@@ -1102,6 +1315,9 @@ double16 _cl_remquo(double16 x0, double16 x1, private int16* x2)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #endif // #ifdef cl_khr_fp64

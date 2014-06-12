@@ -39,11 +39,17 @@ float _cl_native_cos(float x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return cos(x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // native_cos: VF=float2
@@ -63,11 +69,17 @@ float2 _cl_native_cos(float2 x0)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return cos(x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // native_cos: VF=float3
@@ -87,11 +99,17 @@ float3 _cl_native_cos(float3 x0)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return cos(x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // native_cos: VF=float4
@@ -111,11 +129,17 @@ float4 _cl_native_cos(float4 x0)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return cos(x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // native_cos: VF=float8
@@ -135,11 +159,17 @@ float8 _cl_native_cos(float8 x0)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return cos(x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // native_cos: VF=float16
@@ -159,9 +189,15 @@ float16 _cl_native_cos(float16 x0)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return cos(x0);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }

@@ -39,6 +39,9 @@ float _cl_fract(float x0, global float* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
       *x1=floor(x0);
@@ -53,6 +56,9 @@ float _cl_fract(float x0, global float* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localfloat
@@ -72,6 +78,9 @@ float _cl_fract(float x0, local float* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
       *x1=floor(x0);
@@ -86,6 +95,9 @@ float _cl_fract(float x0, local float* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatefloat
@@ -105,6 +117,9 @@ float _cl_fract(float x0, private float* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
       *x1=floor(x0);
@@ -119,6 +134,9 @@ float _cl_fract(float x0, private float* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globalfloat2
@@ -138,6 +156,9 @@ float2 _cl_fract(float2 x0, global float2* x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
       *x1=floor(x0);
@@ -152,6 +173,9 @@ float2 _cl_fract(float2 x0, global float2* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localfloat2
@@ -171,6 +195,9 @@ float2 _cl_fract(float2 x0, local float2* x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
       *x1=floor(x0);
@@ -185,6 +212,9 @@ float2 _cl_fract(float2 x0, local float2* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatefloat2
@@ -204,6 +234,9 @@ float2 _cl_fract(float2 x0, private float2* x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
       *x1=floor(x0);
@@ -218,6 +251,9 @@ float2 _cl_fract(float2 x0, private float2* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globalfloat3
@@ -237,6 +273,9 @@ float3 _cl_fract(float3 x0, global float3* x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
       *x1=floor(x0);
@@ -251,6 +290,9 @@ float3 _cl_fract(float3 x0, global float3* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localfloat3
@@ -270,6 +312,9 @@ float3 _cl_fract(float3 x0, local float3* x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
       *x1=floor(x0);
@@ -284,6 +329,9 @@ float3 _cl_fract(float3 x0, local float3* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatefloat3
@@ -303,6 +351,9 @@ float3 _cl_fract(float3 x0, private float3* x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
       *x1=floor(x0);
@@ -317,6 +368,9 @@ float3 _cl_fract(float3 x0, private float3* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globalfloat4
@@ -336,6 +390,9 @@ float4 _cl_fract(float4 x0, global float4* x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
       *x1=floor(x0);
@@ -350,6 +407,9 @@ float4 _cl_fract(float4 x0, global float4* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localfloat4
@@ -369,6 +429,9 @@ float4 _cl_fract(float4 x0, local float4* x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
       *x1=floor(x0);
@@ -383,6 +446,9 @@ float4 _cl_fract(float4 x0, local float4* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatefloat4
@@ -402,6 +468,9 @@ float4 _cl_fract(float4 x0, private float4* x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
       *x1=floor(x0);
@@ -416,6 +485,9 @@ float4 _cl_fract(float4 x0, private float4* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globalfloat8
@@ -435,6 +507,9 @@ float8 _cl_fract(float8 x0, global float8* x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
       *x1=floor(x0);
@@ -449,6 +524,9 @@ float8 _cl_fract(float8 x0, global float8* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localfloat8
@@ -468,6 +546,9 @@ float8 _cl_fract(float8 x0, local float8* x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
       *x1=floor(x0);
@@ -482,6 +563,9 @@ float8 _cl_fract(float8 x0, local float8* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatefloat8
@@ -501,6 +585,9 @@ float8 _cl_fract(float8 x0, private float8* x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
       *x1=floor(x0);
@@ -515,6 +602,9 @@ float8 _cl_fract(float8 x0, private float8* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globalfloat16
@@ -534,6 +624,9 @@ float16 _cl_fract(float16 x0, global float16* x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
       *x1=floor(x0);
@@ -548,6 +641,9 @@ float16 _cl_fract(float16 x0, global float16* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localfloat16
@@ -567,6 +663,9 @@ float16 _cl_fract(float16 x0, local float16* x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
       *x1=floor(x0);
@@ -581,6 +680,9 @@ float16 _cl_fract(float16 x0, local float16* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatefloat16
@@ -600,6 +702,9 @@ float16 _cl_fract(float16 x0, private float16* x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
       *x1=floor(x0);
@@ -614,6 +719,9 @@ float16 _cl_fract(float16 x0, private float16* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #ifdef cl_khr_fp64
@@ -635,6 +743,9 @@ double _cl_fract(double x0, global double* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
       *x1=floor(x0);
@@ -649,6 +760,9 @@ double _cl_fract(double x0, global double* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localdouble
@@ -668,6 +782,9 @@ double _cl_fract(double x0, local double* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
       *x1=floor(x0);
@@ -682,6 +799,9 @@ double _cl_fract(double x0, local double* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatedouble
@@ -701,6 +821,9 @@ double _cl_fract(double x0, private double* x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
       *x1=floor(x0);
@@ -715,6 +838,9 @@ double _cl_fract(double x0, private double* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globaldouble2
@@ -734,6 +860,9 @@ double2 _cl_fract(double2 x0, global double2* x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
       *x1=floor(x0);
@@ -748,6 +877,9 @@ double2 _cl_fract(double2 x0, global double2* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localdouble2
@@ -767,6 +899,9 @@ double2 _cl_fract(double2 x0, local double2* x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
       *x1=floor(x0);
@@ -781,6 +916,9 @@ double2 _cl_fract(double2 x0, local double2* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatedouble2
@@ -800,6 +938,9 @@ double2 _cl_fract(double2 x0, private double2* x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
       *x1=floor(x0);
@@ -814,6 +955,9 @@ double2 _cl_fract(double2 x0, private double2* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globaldouble3
@@ -833,6 +977,9 @@ double3 _cl_fract(double3 x0, global double3* x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
       *x1=floor(x0);
@@ -847,6 +994,9 @@ double3 _cl_fract(double3 x0, global double3* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localdouble3
@@ -866,6 +1016,9 @@ double3 _cl_fract(double3 x0, local double3* x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
       *x1=floor(x0);
@@ -880,6 +1033,9 @@ double3 _cl_fract(double3 x0, local double3* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatedouble3
@@ -899,6 +1055,9 @@ double3 _cl_fract(double3 x0, private double3* x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
       *x1=floor(x0);
@@ -913,6 +1072,9 @@ double3 _cl_fract(double3 x0, private double3* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globaldouble4
@@ -932,6 +1094,9 @@ double4 _cl_fract(double4 x0, global double4* x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
       *x1=floor(x0);
@@ -946,6 +1111,9 @@ double4 _cl_fract(double4 x0, global double4* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localdouble4
@@ -965,6 +1133,9 @@ double4 _cl_fract(double4 x0, local double4* x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
       *x1=floor(x0);
@@ -979,6 +1150,9 @@ double4 _cl_fract(double4 x0, local double4* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatedouble4
@@ -998,6 +1172,9 @@ double4 _cl_fract(double4 x0, private double4* x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
       *x1=floor(x0);
@@ -1012,6 +1189,9 @@ double4 _cl_fract(double4 x0, private double4* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globaldouble8
@@ -1031,6 +1211,9 @@ double8 _cl_fract(double8 x0, global double8* x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
       *x1=floor(x0);
@@ -1045,6 +1228,9 @@ double8 _cl_fract(double8 x0, global double8* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localdouble8
@@ -1064,6 +1250,9 @@ double8 _cl_fract(double8 x0, local double8* x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
       *x1=floor(x0);
@@ -1078,6 +1267,9 @@ double8 _cl_fract(double8 x0, local double8* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatedouble8
@@ -1097,6 +1289,9 @@ double8 _cl_fract(double8 x0, private double8* x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
       *x1=floor(x0);
@@ -1111,6 +1306,9 @@ double8 _cl_fract(double8 x0, private double8* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=globaldouble16
@@ -1130,6 +1328,9 @@ double16 _cl_fract(double16 x0, global double16* x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
       *x1=floor(x0);
@@ -1144,6 +1345,9 @@ double16 _cl_fract(double16 x0, global double16* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=localdouble16
@@ -1163,6 +1367,9 @@ double16 _cl_fract(double16 x0, local double16* x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
       *x1=floor(x0);
@@ -1177,6 +1384,9 @@ double16 _cl_fract(double16 x0, local double16* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // fract: VF=privatedouble16
@@ -1196,6 +1406,9 @@ double16 _cl_fract(double16 x0, private double16* x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
       *x1=floor(x0);
@@ -1210,6 +1423,9 @@ double16 _cl_fract(double16 x0, private double16* x1)
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #endif // #ifdef cl_khr_fp64

@@ -39,11 +39,17 @@ float _cl_radians(float x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=float2
@@ -63,11 +69,17 @@ float2 _cl_radians(float2 x0)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=float3
@@ -87,11 +99,17 @@ float3 _cl_radians(float3 x0)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=float4
@@ -111,11 +129,17 @@ float4 _cl_radians(float4 x0)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=float8
@@ -135,11 +159,17 @@ float8 _cl_radians(float8 x0)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=float16
@@ -159,11 +189,17 @@ float16 _cl_radians(float16 x0)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #ifdef cl_khr_fp64
@@ -185,11 +221,17 @@ double _cl_radians(double x0)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=double2
@@ -209,11 +251,17 @@ double2 _cl_radians(double2 x0)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=double3
@@ -233,11 +281,17 @@ double3 _cl_radians(double3 x0)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=double4
@@ -257,11 +311,17 @@ double4 _cl_radians(double4 x0)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=double8
@@ -281,11 +341,17 @@ double8 _cl_radians(double8 x0)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // radians: VF=double16
@@ -305,11 +371,17 @@ double16 _cl_radians(double16 x0)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return (scalar_t)(M_PI/180)*x0;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #endif // #ifdef cl_khr_fp64

@@ -39,11 +39,17 @@ int _cl_isequal(float x0, float x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=float2
@@ -63,11 +69,17 @@ int2 _cl_isequal(float2 x0, float2 x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=float3
@@ -87,11 +99,17 @@ int3 _cl_isequal(float3 x0, float3 x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=float4
@@ -111,11 +129,17 @@ int4 _cl_isequal(float4 x0, float4 x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=float8
@@ -135,11 +159,17 @@ int8 _cl_isequal(float8 x0, float8 x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=float16
@@ -159,11 +189,17 @@ int16 _cl_isequal(float16 x0, float16 x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #ifdef cl_khr_fp64
@@ -185,11 +221,17 @@ int _cl_isequal(double x0, double x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=double2
@@ -209,11 +251,17 @@ long2 _cl_isequal(double2 x0, double2 x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=double3
@@ -233,11 +281,17 @@ long3 _cl_isequal(double3 x0, double3 x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=double4
@@ -257,11 +311,17 @@ long4 _cl_isequal(double4 x0, double4 x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=double8
@@ -281,11 +341,17 @@ long8 _cl_isequal(double8 x0, double8 x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // isequal: VF=double16
@@ -305,11 +371,17 @@ long16 _cl_isequal(double16 x0, double16 x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return x0==x1;
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #endif // #ifdef cl_khr_fp64

@@ -153,8 +153,8 @@ directfuncs = [
 """),
     ("ilogb"         , [VF         ], VK, """
     ({
-      __attribute__((__overloadable__)) ivector_t """+prefixed("ilogb_")+"""(vector_t); 
-      ivector_t r = """+prefixed("ilogb_")+"""(x0); 
+      ivector_t ilogb_(vector_t);
+      ivector_t r = ilogb_(x0);
       iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
       iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
       r = r==jmin ? (ivector_t)INT_MIN : r;
@@ -164,14 +164,14 @@ directfuncs = [
 """),
     ("ldexp"         , [VF, VK     ], VF, """
     ({
-      __attribute__((__overloadable__)) vector_t """+prefixed("ldexp_")+"""(vector_t, ivector_t);
-      """+prefixed("ldexp_")+"""(x0, convert_ivector_t(x1));
+      vector_t ldexp_vector_(vector_t, ivector_t);
+      ldexp_vector_(x0, convert_ivector_t(x1));
     })
 """),
     ("ldexp"         , [VF, SK     ], VF, """
     ({
-    __attribute__((__overloadable__)) vector_t """+prefixed("ldexp_")+"""(vector_t, iscalar_t);
-    """+prefixed("ldexp_")+"""(x0, (iscalar_t)x1);
+      vector_t ldexp_scalar_(vector_t, iscalar_t);
+      ldexp_scalar_(x0, (iscalar_t)x1);
     })
 """),
     ("logb"          , [VF         ], VF, "convert_vector_t(ilogb(x0))"),
@@ -359,12 +359,18 @@ def output_vmlfunc_vml(func, vectype):
     vmltype = "vecmathlib::realvec<%s,%d>" % (basetype, size)
     vmlinttype = "%s::intvec_t" % vmltype
     vmlbooltype = "%s::boolvec_t" % vmltype
+    name1 = name[:-1] if name.endswith("_") else name
+    externstr = 'extern "C" ' if name.endswith("_") else ''
+    functypestr = "_".join(map(lambda arg: mktype(arg, vectype), args))
     funcargstr = ", ".join(map(lambda (n, arg):
                                    "%s x%d" % (mktype(arg, vectype), n),
                                zip(range(0, 100), args)))
     funcretstr = mktype(ret, vectype)
-    decl("%s %s(%s)" % (funcretstr, prefixed(name), funcargstr))
-    out("%s %s(%s)" % (funcretstr, prefixed(name), funcargstr))
+    funcnamestr = name1+"_"+functypestr if name.endswith("_") else name1
+    decl("%s%s %s(%s)" %
+         (externstr, funcretstr, prefixed(funcnamestr), funcargstr))
+    out("%s%s %s(%s)" %
+        (externstr, funcretstr, prefixed(funcnamestr), funcargstr))
     out("{")
     for (n, arg, vmlarg) in zip(range(0, 100), args, vmlargs):
         out("  %s y%d = bitcast<%s,%s >(x%d);" %
@@ -373,7 +379,6 @@ def output_vmlfunc_vml(func, vectype):
     callargstr = ", ".join(map(lambda (n, arg): "y%d" % n,
                                zip(range(0, 100), args)))
     callretstr = mkvmltype(vmlret, vmltype)
-    name1 = name[:-1] if name.endswith("_") else name
     out("  %s r = vecmathlib::%s(%s);" % (callretstr, name1, callargstr))
     # We may need to convert from the VML type to the OpenCL type
     # before bitcasting. This may be a real conversion, e.g. bool to
@@ -426,12 +431,18 @@ def output_vmlfunc_special(specialtype, func, vectype):
     size = 1 if size=="" else int(size)
     othertype = "vecmathlib::real%svec<%s,%d>" % (specialtype, basetype, size)
     otherinttype = "%s::intvec_t" % othertype
+    name1 = name[:-1] if name.endswith("_") else name
+    externstr = 'extern "C" ' if name.endswith("_") else ''
+    functypestr = "_".join(map(lambda arg: mktype(arg, vectype), args))
     funcargstr = ", ".join(map(lambda (n, arg):
                                    "%s x%d" % (mktype(arg, vectype), n),
                                zip(range(0, 100), args)))
     funcretstr = mktype(ret, vectype)
-    decl("%s %s(%s)" % (funcretstr, prefixed(name), funcargstr))
-    out("%s %s(%s)" % (funcretstr, prefixed(name), funcargstr))
+    funcnamestr = name1+"_"+functypestr if name.endswith("_") else name1
+    decl("%s%s %s(%s)" %
+         (externstr, funcretstr, prefixed(funcnamestr), funcargstr))
+    out("%s%s %s(%s)" %
+        (externstr, funcretstr, prefixed(funcnamestr), funcargstr))
     out("{")
     for (n, arg) in zip(range(0, 100), args):
         out("  %s y%d = x%d;" % (mkvmltype(arg, othertype), n, n))
@@ -439,7 +450,6 @@ def output_vmlfunc_special(specialtype, func, vectype):
                                zip(range(0, 100), args)))
     # callretstr = othertype if ret==VF else otherinttype
     callretstr = mkvmltype(vmlret, othertype)
-    name1 = name[:-1] if name.endswith("_") else name
     out("  %s r = %s(%s);" % (callretstr, name1, callargstr))
     # We may need to convert from the VML type to the OpenCL type
     # before bitcasting. This may be a real conversion, e.g. bool to
@@ -483,15 +493,23 @@ def output_vmlfunc_upcast(func, vectype):
     size2 = 4 if size==3 else size*2 # next power of 2
     size2 = "" if size2==1 else str(size2)
     if size==1: raise "can't upcast scalars"
+    name1 = name[:-1] if name.endswith("_") else name
+    externstr = 'extern "C" ' if name.endswith("_") else ''
     othertype = "%s%s" % (basetype, size2)
-    declargstr = ", ".join(map(lambda (n, arg): "%s" % mktype(arg, othertype),
-                               zip(range(0, 100), args)))
-    out("%s %s(%s);" % (mktype(ret, othertype), prefixed(name), declargstr))
+    decltypestr = "_".join(map(lambda arg: mktype(arg, othertype), args))
+    declargstr = ", ".join(map(lambda arg: mktype(arg, othertype), args))
+    declnamestr = name1+"_"+decltypestr if name.endswith("_") else name1
+    out("%s%s %s(%s);" %
+        (externstr, mktype(ret, othertype), prefixed(declnamestr), declargstr))
+    functypestr = "_".join(map(lambda arg: mktype(arg, vectype), args))
     funcargstr = ", ".join(map(lambda (n, arg):
-                                   "%s x%d" % (mktype(arg, vectype), n),
+                               "%s x%d" % (mktype(arg, vectype), n),
                                zip(range(0, 100), args)))
-    decl("%s %s(%s)" % (mktype(ret, vectype), prefixed(name), funcargstr))
-    out("%s %s(%s)" % (mktype(ret, vectype), prefixed(name), funcargstr))
+    funcnamestr = name1+"_"+functypestr if name.endswith("_") else name1
+    decl("%s%s %s(%s)" %
+         (externstr, mktype(ret, vectype), prefixed(funcnamestr), funcargstr))
+    out("%s%s %s(%s)" %
+        (externstr, mktype(ret, vectype), prefixed(funcnamestr), funcargstr))
     out("{")
     for (n, arg) in zip(range(0, 100), args):
         out("  %s y%d = bitcast<%s,%s>(x%d);" %
@@ -500,7 +518,7 @@ def output_vmlfunc_upcast(func, vectype):
     callargstr = ", ".join(map(lambda (n, arg): "y%d" % n,
                                zip(range(0, 100), args)))
     out("  %s r = %s(%s);" %
-        (mktype(ret, othertype), prefixed(name), callargstr))
+        (mktype(ret, othertype), prefixed(declnamestr), callargstr))
     out("  return bitcast<%s,%s>(r);" %
         (mktype(ret, othertype), mktype(ret, vectype)))
     out("}")
@@ -512,15 +530,23 @@ def output_vmlfunc_split(func, vectype):
     size = 1 if size=="" else int(size)
     size2 = (size+1) / 2        # divide by 2, rounding up
     size2 = "" if size2==1 else str(size2)
+    name1 = name[:-1] if name.endswith("_") else name
+    externstr = 'extern "C" ' if name.endswith("_") else ''
     othertype = "%s%s" % (basetype, size2)
-    declargstr = ", ".join(map(lambda (n, arg): "%s" % mktype(arg, othertype),
-                               zip(range(0, 100), args)))
-    out("%s %s(%s);" % (mktype(ret, othertype), prefixed(name), declargstr))
+    decltypestr = "_".join(map(lambda arg: mktype(arg, othertype), args))
+    declargstr = ", ".join(map(lambda arg: mktype(arg, othertype), args))
+    declnamestr = name1+"_"+decltypestr if name.endswith("_") else name1
+    out("%s%s %s(%s);" %
+        (externstr, mktype(ret, othertype), prefixed(declnamestr), declargstr))
+    functypestr = "_".join(map(lambda arg: mktype(arg, vectype), args))
     funcargstr = ", ".join(map(lambda (n, arg):
                                    "%s x%d" % (mktype(arg, vectype), n),
                                zip(range(0, 100), args)))
-    decl("%s %s(%s)" % (mktype(ret, vectype), prefixed(name), funcargstr))
-    out("%s %s(%s)" % (mktype(ret, vectype), prefixed(name), funcargstr))
+    funcnamestr = name1+"_"+functypestr if name.endswith("_") else name1
+    decl("%s%s %s(%s)" %
+         (externstr, mktype(ret, vectype), prefixed(funcnamestr), funcargstr))
+    out("%s%s %s(%s)" %
+        (externstr, mktype(ret, vectype), prefixed(funcnamestr), funcargstr))
     out("{")
     if ret in (SF, SK):
         split_ret = SF
@@ -546,7 +572,8 @@ def output_vmlfunc_split(func, vectype):
     for suffix in ("lo", "hi"):
         callargstr = ", ".join(map(lambda (n, arg): "y%d.%s" % (n, suffix),
                                    zip(range(0, 100), args)))
-        out("  r.%s = %s%s(%s);" % (suffix, conv, prefixed(name), callargstr))
+        out("  r.%s = %s%s(%s);" %
+            (suffix, conv, prefixed(declnamestr), callargstr))
     out("  pocl_static_assert(sizeof(pair_%s) == sizeof(%s));" %
         (mktype(split_ret, othertype), mktype(ret, vectype)))
     out("  return bitcast<pair_%s,%s>(r);" %
@@ -582,11 +609,20 @@ def output_directfunc_direct(func, vectype):
     out("#define convert_jvector_t convert_%s" % mktype(VJ, vectype))
     out("#define convert_kvector_t convert_%s" % mktype(VK, vectype))
     out("#define convert_vector_t convert_%s" % mktype(VF, vectype))
+    out("#define ilogb_ %s" %
+        prefixed("ilogb_%s" % mktype(VF, vectype)))
+    out("#define ldexp_scalar_ %s" %
+        prefixed("ldexp_%s_%s" % (mktype(VF, vectype), mktype(SI, vectype))))
+    out("#define ldexp_vector_ %s" %
+        prefixed("ldexp_%s_%s" % (mktype(VF, vectype), mktype(VI, vectype))))
     out("  return %s;" % impl)
     out("#undef convert_ivector_t")
     out("#undef convert_jvector_t")
     out("#undef convert_kvector_t")
     out("#undef convert_vector_t")
+    out("#undef ilogb_")
+    out("#undef ldexp_scalar_")
+    out("#undef ldexp_vector_")
     out("}")
 
 
