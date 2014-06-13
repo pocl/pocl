@@ -23,7 +23,6 @@
 */
 
 #include "pocl_cl.h"
-#include "install-paths.h"
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>

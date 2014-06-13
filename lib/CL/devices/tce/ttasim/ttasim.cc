@@ -22,7 +22,6 @@
 */
 
 #include "ttasim.h"
-#include "install-paths.h"
 #include "bufalloc.h"
 #include "pocl_device.h"
 #include "pocl_util.h"

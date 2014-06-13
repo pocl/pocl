@@ -27,7 +27,6 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "utlist.h"
-#include "install-paths.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>

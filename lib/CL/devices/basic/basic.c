@@ -25,7 +25,6 @@
 #include "basic.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
-#include "install-paths.h"
 #include "common.h"
 #include "utlist.h"
 #include "devices.h"

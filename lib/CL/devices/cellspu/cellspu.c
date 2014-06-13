@@ -22,7 +22,7 @@
 */
 
 #include "cellspu.h"
-#include "install-paths.h"
+#include "config.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>

@@ -23,7 +23,6 @@
 */
 
 #include "pocl-pthread.h"
-#include "install-paths.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
