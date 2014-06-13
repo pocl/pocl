@@ -742,6 +742,11 @@ if(UNIX)
 
 endif()
 
+#############################################################
+
+include_directories("fix-includes" "include")
+
+add_subdirectory("include")
 
 ##########################################################
 
