@@ -33,7 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <../dev_image.h>
+#include <dev_image.h>
 #include <sys/time.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
