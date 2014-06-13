@@ -748,6 +748,8 @@ include_directories("fix-includes" "include")
 
 add_subdirectory("include")
 
+add_subdirectory("lib")
+
 ##########################################################
 
 MESSAGE(STATUS " ")
