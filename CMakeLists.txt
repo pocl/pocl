@@ -753,6 +753,20 @@ add_subdirectory("include")
 
 add_subdirectory("lib")
 
+# these are set in lib/cmakelists.txt
+message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
+message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
+
+get_target_property(LIBPOCL_LOCATION "pocl" LOCATION)
+message(STATUS "LOCATION of libpocl: ${LIBPOCL_LOCATION}")
+# requires libpocl location
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
+file(WRITE "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" "${LIBPOCL_LOCATION}")
+
+# for tests / examples
+set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
+message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
+
 ##########################################################
 
 MESSAGE(STATUS " ")

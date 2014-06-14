@@ -61,5 +61,5 @@ set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
 
 add_subdirectory("kernel")
 
-#add_subdirectory("poclu")
+add_subdirectory("poclu")
 
