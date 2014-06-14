@@ -4,7 +4,7 @@ separate_arguments(HOST_LLC_FLAGS)
 
 add_subdirectory("llvmopencl")
 
-#add_subdirectory("CL")
+add_subdirectory("CL")
 
 #############################################################
 
