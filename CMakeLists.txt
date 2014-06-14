@@ -767,6 +767,9 @@ file(WRITE "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" "${LIBPOCL_LOCATION}
 set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
+# DONE - just pocl-standalone script
+add_subdirectory("scripts")
+
 ##########################################################
 
 MESSAGE(STATUS " ")
