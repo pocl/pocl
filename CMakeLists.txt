@@ -771,6 +771,9 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 add_subdirectory("scripts")
 
 # TODO In progress
+add_subdirectory("tests")
+
+# TODO In progress
 set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;piglit;Rodinia;VexCL;ViennaCL")
 add_subdirectory("examples")
 
@@ -825,7 +828,7 @@ MESSAGE(STATUS "LLC: ${LLC}")
 MESSAGE(STATUS "LLVM_AS: ${LLVM_AS}")
 MESSAGE(STATUS "LLVM_LINK: ${LLVM_LINK}")
 MESSAGE(STATUS "LLVM_LLI: ${LLVM_LLI}")
-MESSAGE(STATUS "WITH_LLVM_CONFIG: ${WITH_LLVM_CONFIG}")
+MESSAGE(STATUS "WITH_LLVM_CONFIG (User preferred llvm-config): ${WITH_LLVM_CONFIG}")
 
 
 MESSAGE(STATUS " ")
