@@ -59,7 +59,7 @@ set(OPENCL_EXTLIBS "${OPENCL_EXTLIBS}" PARENT_SCOPE)
 set(OPENCL_CMAKE_OPTIONS "${OPENCL_CMAKE_OPTIONS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
 
-#add_subdirectory("kernel")
+add_subdirectory("kernel")
 
 #add_subdirectory("poclu")
 
