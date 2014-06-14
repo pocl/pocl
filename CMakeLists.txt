@@ -770,6 +770,10 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 # DONE - just pocl-standalone script
 add_subdirectory("scripts")
 
+# TODO In progress
+set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;piglit;Rodinia;VexCL;ViennaCL")
+add_subdirectory("examples")
+
 ##########################################################
 
 MESSAGE(STATUS " ")
@@ -808,6 +812,8 @@ MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
+MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
+MESSAGE(STATUS "Enabled testsuites: ${ENABLED_TESTSUITES}")
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Programs:")
