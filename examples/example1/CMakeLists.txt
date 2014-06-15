@@ -18,7 +18,6 @@ set_tests_properties( "spec_tests/example1_dot_product"
   PROPERTIES
     COST 40.0
     PASS_REGULAR_EXPRESSION "OK\n"
-    ENVIRONMENT "POCL_BUILDING=1"
     PROCESSORS 1
     LABELS "OpenCL_Spec"
     DEPENDS "pocl_version_check")
