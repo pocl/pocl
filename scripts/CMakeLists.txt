@@ -4,7 +4,7 @@ if(UNIX)
   get_target_property(LLVMOPENCL_LOCATION "llvmopencl" LOCATION)
   set(KERNEL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
   set(ADD_INCLUDE "-I${CMAKE_BINARY_DIR}")
-  set(FULL_TARGET_DIR "${CMAKE_BINARY_DIR}/lib/kernel")
+  set(FULL_TARGET_DIR "${CMAKE_BINARY_DIR}/lib/kernel/\${target_dir}")
   configure_file("pocl-standalone.in.cmake" "pocl-standalone" ESCAPE_QUOTES @ONLY)
 
   # install script

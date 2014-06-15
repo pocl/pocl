@@ -27,4 +27,5 @@ add_subdirectory("example1-spir32")
 add_subdirectory("example1-spir64")
 add_subdirectory("example2")
 add_subdirectory("example2a")
+add_subdirectory("standalone")
 
