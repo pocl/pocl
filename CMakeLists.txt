@@ -55,6 +55,8 @@ endif()
 
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
+# required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ######################################################################################
 # AC_CONFIG_TESTDIR([tests])
