@@ -10,7 +10,7 @@ set_tests_properties("pocl_version_check"
 add_subdirectory("kernel")
 add_subdirectory("regression")
 add_subdirectory("runtime")
-# add_subdirectory("workgroup")
+add_subdirectory("workgroup")
 if(ENABLE_TCE)
   #add_subdirectory("tce")
 endif()
