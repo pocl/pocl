@@ -28,4 +28,6 @@ add_subdirectory("example1-spir64")
 add_subdirectory("example2")
 add_subdirectory("example2a")
 add_subdirectory("standalone")
+add_subdirectory("scalarwave")
+add_subdirectory("trig")
 
