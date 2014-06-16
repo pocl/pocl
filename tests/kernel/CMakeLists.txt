@@ -42,10 +42,10 @@ set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
-# TODO check if this works
 set_tests_properties("kernel/test_bitselect"
   PROPERTIES
     ENVIRONMENT "POCL_VECTORIZE_WORK_GROUPS=0")
+
 
 add_test("kernel/test_min_max" "kernel" "test_min_max")
 
@@ -67,6 +67,25 @@ set_tests_properties("kernel/test_min_max" "kernel/test_fmin_fmax_fma"
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
+
+if(LLVM_3_2 AND POWERPC)
+  set_tests_properties("kernel/test_short16"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
+if(LLVM_3_2 OR (LLVM_3_3 AND POWERPC))
+  set_tests_properties("kernel/test_rotate"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
+if(POWERPC)
+  set_tests_properties("kernel/test_as_type" "kernel/test_fmin_fmax_fma"
+  "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
+  "kernel/test_convert_type_8" "kernel/test_convert_type_16" "kernel/test_bitselect"
+  "kernel/test_fabs" "test_hadd"
+  PROPERTIES WILL_FAIL 1)
+endif()
+
 
 ######################################################################
 
@@ -124,7 +143,85 @@ set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
+set_tests_properties("kernel/test_shuffle_half"
+  PROPERTIES WILL_FAIL 1)
+
+
 ######################################################################
 
 
+add_test("kernel/test_printf" "kernel" "test_printf")
 
+set_tests_properties("kernel/test_printf"
+  PROPERTIES
+    COST 2.0
+    PASS_REGULAR_EXPRESSION "Running test test_printf...
+1
+2
+3
+4
+5
+         6
+0000000007
+0000000008
+9,9,9,9
+1[.]0
+2[.]000000
+3[.]000000
+4
+5
+  6[.]000000
+7[.]0000000000
+8[.]0000000000
+9[.]000000,9[.]000000,9[.]000000,9[.]000000
+[|]a[|]   b[|]c   [|]
+[|]aa[|]  bb[|]cc  [|]dddddddddd[|]
+[|]0x1[|] 0x2[|]0x3 [|]
+OK"
+    PROCESSORS 1
+    DEPENDS "pocl_version_check")
+
+if(I386 OR (LLVM_VERSION VERSION_LESS "3.4"))
+  set_tests_properties("kernel/test_printf"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
+######################################################################
+
+add_test("kernel/test_sizeof_uint" "kernel" "test_sizeof")
+
+set_tests_properties("kernel/test_sizeof_uint"
+  PROPERTIES
+    COST 2.0
+    PASS_REGULAR_EXPRESSION "Running test test_sizeof[.]*
+sizeof[(]uint[)] == 4
+sizeof[(]uint2[)] == 8
+sizeof[(]uint3[)] == 16
+sizeof[(]uint4[)] == 16
+sizeof[(]uint8[)] == 32
+sizeof[(]uint16[)] == 64
+OK"
+    PROCESSORS 1
+    DEPENDS "pocl_version_check")
+
+######################################################################
+
+add_test("kernel/test_block" "kernel" "test_block")
+
+
+set_tests_properties("kernel/test_block"
+  PROPERTIES
+    COST 2.0
+    PASS_REGULAR_EXPRESSION "Running test test_block[.]*
+op[(]1[)]=2[.]000000
+op[(]1[)]=2[.]000000
+op[(]1[)]=1[.]000000
+op[(]1[)]=2[.]000000
+OK"
+    PROCESSORS 1
+    DEPENDS "pocl_version_check")
+
+if(LLVM_3_4)
+  set_tests_properties("kernel/test_block"
+    PROPERTIES WILL_FAIL 1)
+endif()
