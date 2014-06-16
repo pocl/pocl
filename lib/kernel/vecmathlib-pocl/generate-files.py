@@ -151,17 +151,10 @@ directfuncs = [
 """),
     ("ilogb"         , [VF         ], VK, """
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t """+prefixed("ilogb_")+"""(vector_t); 
-      ivector_t r = """+prefixed("ilogb_")+"""(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);

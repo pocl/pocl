@@ -51,17 +51,10 @@ int _cl_ilogb(half x0)
 #define ldexp_vector_ _cl_ldexp_half_short
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -98,17 +91,10 @@ int2 _cl_ilogb(half2 x0)
 #define ldexp_vector_ _cl_ldexp_half2_short2
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -145,17 +131,10 @@ int3 _cl_ilogb(half3 x0)
 #define ldexp_vector_ _cl_ldexp_half3_short3
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -192,17 +171,10 @@ int4 _cl_ilogb(half4 x0)
 #define ldexp_vector_ _cl_ldexp_half4_short4
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -239,17 +211,10 @@ int8 _cl_ilogb(half8 x0)
 #define ldexp_vector_ _cl_ldexp_half8_short8
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -286,17 +251,10 @@ int16 _cl_ilogb(half16 x0)
 #define ldexp_vector_ _cl_ldexp_half16_short16
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -335,17 +293,10 @@ int _cl_ilogb(float x0)
 #define ldexp_vector_ _cl_ldexp_float_int
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -382,17 +333,10 @@ int2 _cl_ilogb(float2 x0)
 #define ldexp_vector_ _cl_ldexp_float2_int2
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -429,17 +373,10 @@ int3 _cl_ilogb(float3 x0)
 #define ldexp_vector_ _cl_ldexp_float3_int3
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -476,17 +413,10 @@ int4 _cl_ilogb(float4 x0)
 #define ldexp_vector_ _cl_ldexp_float4_int4
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -523,17 +453,10 @@ int8 _cl_ilogb(float8 x0)
 #define ldexp_vector_ _cl_ldexp_float8_int8
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -570,17 +493,10 @@ int16 _cl_ilogb(float16 x0)
 #define ldexp_vector_ _cl_ldexp_float16_int16
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -619,17 +535,10 @@ int _cl_ilogb(double x0)
 #define ldexp_vector_ _cl_ldexp_double_long
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -666,17 +575,10 @@ int2 _cl_ilogb(double2 x0)
 #define ldexp_vector_ _cl_ldexp_double2_long2
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -713,17 +615,10 @@ int3 _cl_ilogb(double3 x0)
 #define ldexp_vector_ _cl_ldexp_double3_long3
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -760,17 +655,10 @@ int4 _cl_ilogb(double4 x0)
 #define ldexp_vector_ _cl_ldexp_double4_long4
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -807,17 +695,10 @@ int8 _cl_ilogb(double8 x0)
 #define ldexp_vector_ _cl_ldexp_double8_long8
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -854,17 +735,10 @@ int16 _cl_ilogb(double16 x0)
 #define ldexp_vector_ _cl_ldexp_double16_long16
   return 
     ({
-<<<<<<< HEAD
-      __attribute__((__overloadable__)) ivector_t _cl_ilogb_(vector_t); 
-      ivector_t r = _cl_ilogb_(x0); 
-      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
-      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
-=======
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
->>>>>>> master
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
