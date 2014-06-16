@@ -46,11 +46,17 @@ half _cl_atan2pi(half x0, half x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_half
+#define ilogb_ _cl_ilogb_half
+#define ldexp_scalar_ _cl_ldexp_half_short
+#define ldexp_vector_ _cl_ldexp_half_short
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=half2
@@ -70,11 +76,17 @@ half2 _cl_atan2pi(half2 x0, half2 x1)
 #define convert_jvector_t convert_short2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_half2
+#define ilogb_ _cl_ilogb_half2
+#define ldexp_scalar_ _cl_ldexp_half2_short
+#define ldexp_vector_ _cl_ldexp_half2_short2
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=half3
@@ -94,11 +106,17 @@ half3 _cl_atan2pi(half3 x0, half3 x1)
 #define convert_jvector_t convert_short3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_half3
+#define ilogb_ _cl_ilogb_half3
+#define ldexp_scalar_ _cl_ldexp_half3_short
+#define ldexp_vector_ _cl_ldexp_half3_short3
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=half4
@@ -118,11 +136,17 @@ half4 _cl_atan2pi(half4 x0, half4 x1)
 #define convert_jvector_t convert_short4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_half4
+#define ilogb_ _cl_ilogb_half4
+#define ldexp_scalar_ _cl_ldexp_half4_short
+#define ldexp_vector_ _cl_ldexp_half4_short4
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=half8
@@ -142,11 +166,17 @@ half8 _cl_atan2pi(half8 x0, half8 x1)
 #define convert_jvector_t convert_short8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_half8
+#define ilogb_ _cl_ilogb_half8
+#define ldexp_scalar_ _cl_ldexp_half8_short
+#define ldexp_vector_ _cl_ldexp_half8_short8
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=half16
@@ -166,11 +196,17 @@ half16 _cl_atan2pi(half16 x0, half16 x1)
 #define convert_jvector_t convert_short16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_half16
+#define ilogb_ _cl_ilogb_half16
+#define ldexp_scalar_ _cl_ldexp_half16_short
+#define ldexp_vector_ _cl_ldexp_half16_short16
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #endif // #ifdef cl_khr_fp16
@@ -192,11 +228,17 @@ float _cl_atan2pi(float x0, float x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_float
+#define ilogb_ _cl_ilogb_float
+#define ldexp_scalar_ _cl_ldexp_float_int
+#define ldexp_vector_ _cl_ldexp_float_int
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=float2
@@ -216,11 +258,17 @@ float2 _cl_atan2pi(float2 x0, float2 x1)
 #define convert_jvector_t convert_int2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_float2
+#define ilogb_ _cl_ilogb_float2
+#define ldexp_scalar_ _cl_ldexp_float2_int
+#define ldexp_vector_ _cl_ldexp_float2_int2
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=float3
@@ -240,11 +288,17 @@ float3 _cl_atan2pi(float3 x0, float3 x1)
 #define convert_jvector_t convert_int3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_float3
+#define ilogb_ _cl_ilogb_float3
+#define ldexp_scalar_ _cl_ldexp_float3_int
+#define ldexp_vector_ _cl_ldexp_float3_int3
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=float4
@@ -264,11 +318,17 @@ float4 _cl_atan2pi(float4 x0, float4 x1)
 #define convert_jvector_t convert_int4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_float4
+#define ilogb_ _cl_ilogb_float4
+#define ldexp_scalar_ _cl_ldexp_float4_int
+#define ldexp_vector_ _cl_ldexp_float4_int4
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=float8
@@ -288,11 +348,17 @@ float8 _cl_atan2pi(float8 x0, float8 x1)
 #define convert_jvector_t convert_int8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_float8
+#define ilogb_ _cl_ilogb_float8
+#define ldexp_scalar_ _cl_ldexp_float8_int
+#define ldexp_vector_ _cl_ldexp_float8_int8
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=float16
@@ -312,11 +378,17 @@ float16 _cl_atan2pi(float16 x0, float16 x1)
 #define convert_jvector_t convert_int16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_float16
+#define ilogb_ _cl_ilogb_float16
+#define ldexp_scalar_ _cl_ldexp_float16_int
+#define ldexp_vector_ _cl_ldexp_float16_int16
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #ifdef cl_khr_fp64
@@ -338,11 +410,17 @@ double _cl_atan2pi(double x0, double x1)
 #define convert_jvector_t convert_int
 #define convert_kvector_t convert_int
 #define convert_vector_t convert_double
+#define ilogb_ _cl_ilogb_double
+#define ldexp_scalar_ _cl_ldexp_double_long
+#define ldexp_vector_ _cl_ldexp_double_long
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=double2
@@ -362,11 +440,17 @@ double2 _cl_atan2pi(double2 x0, double2 x1)
 #define convert_jvector_t convert_long2
 #define convert_kvector_t convert_int2
 #define convert_vector_t convert_double2
+#define ilogb_ _cl_ilogb_double2
+#define ldexp_scalar_ _cl_ldexp_double2_long
+#define ldexp_vector_ _cl_ldexp_double2_long2
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=double3
@@ -386,11 +470,17 @@ double3 _cl_atan2pi(double3 x0, double3 x1)
 #define convert_jvector_t convert_long3
 #define convert_kvector_t convert_int3
 #define convert_vector_t convert_double3
+#define ilogb_ _cl_ilogb_double3
+#define ldexp_scalar_ _cl_ldexp_double3_long
+#define ldexp_vector_ _cl_ldexp_double3_long3
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=double4
@@ -410,11 +500,17 @@ double4 _cl_atan2pi(double4 x0, double4 x1)
 #define convert_jvector_t convert_long4
 #define convert_kvector_t convert_int4
 #define convert_vector_t convert_double4
+#define ilogb_ _cl_ilogb_double4
+#define ldexp_scalar_ _cl_ldexp_double4_long
+#define ldexp_vector_ _cl_ldexp_double4_long4
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=double8
@@ -434,11 +530,17 @@ double8 _cl_atan2pi(double8 x0, double8 x1)
 #define convert_jvector_t convert_long8
 #define convert_kvector_t convert_int8
 #define convert_vector_t convert_double8
+#define ilogb_ _cl_ilogb_double8
+#define ldexp_scalar_ _cl_ldexp_double8_long
+#define ldexp_vector_ _cl_ldexp_double8_long8
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 // atan2pi: VF=double16
@@ -458,11 +560,17 @@ double16 _cl_atan2pi(double16 x0, double16 x1)
 #define convert_jvector_t convert_long16
 #define convert_kvector_t convert_int16
 #define convert_vector_t convert_double16
+#define ilogb_ _cl_ilogb_double16
+#define ldexp_scalar_ _cl_ldexp_double16_long
+#define ldexp_vector_ _cl_ldexp_double16_long16
   return atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI);
 #undef convert_ivector_t
 #undef convert_jvector_t
 #undef convert_kvector_t
 #undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
 }
 
 #endif // #ifdef cl_khr_fp64

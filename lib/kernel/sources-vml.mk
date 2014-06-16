@@ -235,4 +235,43 @@ LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
 	tanpi.cl					\
 	trunc.cc)
 
+LKERNEL_HDRS_EXTRA = $(addprefix @top_srcdir@/lib/kernel/vecmathlib/, \
+	vec_test.h		\
+	mathfuncs.h		\
+	mathfuncs_fabs.h	\
+	vec_avx_fp8_32.h	\
+	mathfuncs_sinh.h	\
+	mathfuncs_log.h		\
+	mathfuncs_asin.h	\
+	vec_pseudo.h		\
+	mathfuncs_convert.h	\
+	vec_sse_float1.h	\
+	vec_sse_double2.h	\
+	vec_altivec_float4.h	\
+	mathfuncs_int.h		\
+	mathfuncs_sqrt.h	\
+	mathfuncs_exp.h		\
+	floatbuiltins.h		\
+	mathfuncs_sin.h		\
+	vecmathlib.h		\
+	vec_avx_double4.h	\
+	vec_avx_float8.h	\
+	mathfuncs_asinh.h	\
+	vec_qpx_double4.h	\
+	vec_mic_double8.h	\
+	vec_neon_float2.h	\
+	floatprops.h		\
+	vec_neon_float4.h	\
+	vec_avx_fp16_16.h	\
+	vec_builtin.h		\
+	vec_base.h		\
+	vec_sse_double1.h	\
+	mathfuncs_base.h	\
+	floattypes.h		\
+	vec_mask.h		\
+	vec_vsx_double2.h	\
+	mathfuncs_pow.h		\
+	mathfuncs_rcp.h		\
+	vec_sse_float4.h)
+
 endif

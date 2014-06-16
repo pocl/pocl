@@ -79,7 +79,7 @@ main(void)
         int arg = 0;
         // Set kernel args
         kernel.setArg(0, sizeof(int), &arg);
-        kernel.setArg(1, 2*sizeof(int), &outBuffer);
+        kernel.setArg(1, outBuffer);
 
         // Queue the first launch cmd.
         queue.enqueueNDRangeKernel(

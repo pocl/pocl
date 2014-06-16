@@ -30,7 +30,6 @@ Now under summary/pocl there should be index.html etc. which
 can be used to browse the test results and logs.
 
 If you do something affecting piglit test results (fix something to make a 
-test pass) then you should update the reference file that is compared
-against by  running:
-
-  ./piglit-run.py -v tests/all_cl.tests results/all 2>&1 | grep "pass" > ../piglit_ref_output
+test pass) then you should make new reference file by 
+running:
+./piglit-run.py -v tests/all_cl.tests results/all 2>&1 | grep "pass ::" > ../piglit_ref_output

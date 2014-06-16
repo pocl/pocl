@@ -100,8 +100,8 @@ main(void)
         cl::Kernel kernel(program, "test_kernel");
 
         // Set kernel args
-        kernel.setArg(0, 2*sizeof(int), &inBuffer);
-        kernel.setArg(1, 2*sizeof(int), &outBuffer);
+        kernel.setArg(0, inBuffer);
+        kernel.setArg(1, outBuffer);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);

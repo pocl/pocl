@@ -446,7 +446,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
 
 #ifdef DEBUG_POCL_LLVM_API        
-  printf("### fetching kernel metadata for kernel %s program %x input llvm::Module %x\n",
+  printf("### fetching kernel metadata for kernel %s program %p input llvm::Module %p\n",
          kernel_name, program, input);
 #endif
 
@@ -1035,8 +1035,8 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   llvm::MutexGuard lockHolder(kernelCompilerLock);
 
 #ifdef DEBUG_POCL_LLVM_API        
-  printf("### calling the kernel compiler for kernel %s local_x %u "
-         "local_y %u local_z %u parallel_filename: %s\n",
+  printf("### calling the kernel compiler for kernel %s local_x %zu "
+         "local_y %zu local_z %zu parallel_filename: %s\n",
          kernel->name, local_x, local_y, local_z, parallel_filename);
 #endif
 
@@ -1112,7 +1112,7 @@ void pocl_llvm_update_binaries (cl_program program) {
   // Dump the LLVM IR Modules to memory buffers. 
   assert (program->llvm_irs != NULL);
 #ifdef DEBUG_POCL_LLVM_API        
-  printf("### refreshing the binaries of the program %x\n", program);
+  printf("### refreshing the binaries of the program %p\n", program);
 #endif
 
    for (size_t i = 0; i < program->num_devices; ++i)
@@ -1148,7 +1148,7 @@ void pocl_llvm_update_binaries (cl_program program) {
       fclose (binary_file);
 
 #ifdef DEBUG_POCL_LLVM_API        
-      printf("### binary for device %d was of size %u\n", i, program->binary_sizes[i]);
+      printf("### binary for device %zi was of size %zu\n", i, program->binary_sizes[i]);
 #endif
 
     }

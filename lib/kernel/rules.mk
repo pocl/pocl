@@ -36,12 +36,6 @@ nodist_pkgdata_DATA=${KERNEL_BC}
 
 all: ${KERNEL_BC}
 
-# These may be necessary for powerpc64. If so: why? Is this maybe only
-# system-specific? Can this be enabled for all architectures?
-# RANLIB = @LLVM_RANLIB@
-# AR = @LLVM_AR@
-
-
 # The standard list of kernel sources can be modified with
 # LKERNEL_SRCS_EXCLUDE, which removes files from the standard list,
 # and LKERNEL_SRCS_EXTRA, which adds extra files to the source list.
@@ -50,8 +44,6 @@ LKERNEL_SRCS =								\
 	${LKERNEL_SRCS_EXTRA}
 
 OBJ = $(LKERNEL_SRCS:%=%.bc)
-
-
 
 vpath %.c  @top_srcdir@/lib/kernel
 vpath %.cc @top_srcdir@/lib/kernel
@@ -76,13 +68,13 @@ _kernel.h.pch: @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include
 
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
-%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h ${abs_top_srcdir}/include/_kernel_c.h
+%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h ${abs_top_srcdir}/include/_kernel_c.h ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
 	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $< 
-%.cc.bc: %.cc ${abs_top_srcdir}/include/pocl_features.h
+%.cc.bc: %.cc ${abs_top_srcdir}/include/pocl_features.h ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
 	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
-%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h
+%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
 	@CLANG@ ${CLANG_FLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll
