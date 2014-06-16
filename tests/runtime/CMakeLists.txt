@@ -32,7 +32,9 @@ add_test("runtime/clGetEventInfo" "test_clGetEventInfo")
 
 add_test("runtime/clCreateProgramWithBinary" "test_clCreateProgramWithBinary")
 
-add_test("runtime/clBuildProgram" "test_clBuildProgram")
+add_test(NAME "runtime/clBuildProgram"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+         COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_clBuildProgram")
 
 add_test("runtime/clFinish" "test_clFinish")
 
@@ -71,6 +73,3 @@ set_tests_properties("runtime/clFinish"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "ABABC")
 
-set_tests_properties("runtime/clBuildProgram"
-  PROPERTIES
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
