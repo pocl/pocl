@@ -137,3 +137,24 @@ set_tests_properties(
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check")
+
+###################################################################
+
+if(POWERPC)
+  set_tests_properties("\"regression/for-loop with a variable iteration count (loops)\""
+    PROPERTIES  WILL_FAIL 1)
+  if(LLVM_3_2)
+    set_tests_properties("\"regression/vector kernel arguments\""
+      PROPERTIES  WILL_FAIL 1)
+  endif()
+endif()
+
+if(X86_64)
+  set_tests_properties("\"regression/vector kernel arguments\""
+    PROPERTIES  WILL_FAIL 1)
+endif()
+
+# TODO infinite loop test: AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
+
+set_tests_properties("\"regression/struct kernel arguments\""
+  PROPERTIES  WILL_FAIL 1)
