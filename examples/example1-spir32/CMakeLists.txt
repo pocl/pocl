@@ -18,8 +18,16 @@ add_test("spec_tests/example1_dot_product_spir32" "example1-spir32")
 set_tests_properties( "spec_tests/example1_dot_product_spir32"
   PROPERTIES
     COST 3.0
-    PASS_REGULAR_EXPRESSION "OK\n"
+    PASS_REGULAR_EXPRESSION "[(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] [.] [(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] = 0[.]000000
+[(]1[.]000000, 1[.]000000, 1[.]000000, 1[.]000000[)] [.] [(]1[.]000000, 1[.]000000, 1[.]000000, 1[.]000000[)] = 4[.]000000
+[(]2[.]000000, 2[.]000000, 2[.]000000, 2[.]000000[)] [.] [(]2[.]000000, 2[.]000000, 2[.]000000, 2[.]000000[)] = 16[.]000000
+[(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] [.] [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] = 36[.]000000
+OK"
     PROCESSORS 1
     LABELS "OpenCL_Spec"
     DEPENDS "pocl_version_check")
 
+if(NOT (POWERPC OR ARMV7))
+  set_tests_properties("spec_tests/example1_dot_product_spir32"
+    PROPERTIES WILL_FAIL 1)
+endif()
