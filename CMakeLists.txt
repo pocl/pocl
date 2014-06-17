@@ -163,7 +163,7 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
+    set(DEFAULT_HOST_LD_FLAGS "-Wl,-dylib -lm")
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
   endif()
