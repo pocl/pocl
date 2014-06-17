@@ -266,8 +266,10 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
   if(OCL_ICD_FOUND)
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ocl-icd availability")
+    set(DEFAULT_DIRECT_LINKAGE 0 CACHE INTERNAL "direct linkage")
   else()
-    set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ocl-icd availability")
+    set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "ocl-icd availability")
+    set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
   endif()
 
 endif()
@@ -282,7 +284,11 @@ setup_cached_var(ENABLE_ICD "Using ocl-icd"
 
 # Option to allow to link a OpenCL program directly against libpocl
 # instead of going through an ICD Loader
-option(DIRECT_LINKAGE "Allow OpenCL programs to be linked directly against the pocl library instead of using a ICD Loader (OpenCL library)" OFF)
+if(NOT DEFINED DIRECT_LINKAGE)
+  set(DIRECT_LINKAGE ${DEFAULT_DIRECT_LINKAGE} CACHE BOOL "Allow OpenCL programs to be linked directly against the pocl library instead of using a ICD Loader (OpenCL library), defaults to !ENABLE_ICD")
+endif()
+
+message(STATUS "Direct linkage: ${DEFAULT_DIRECT_LINKAGE}")
 
 if(NOT DIRECT_LINKAGE)
   if(ENABLE_ICD)
@@ -812,6 +818,7 @@ MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
 MESSAGE(STATUS "CL_DISABLE_LONG (Disable cl_khr_int64): ${CL_DISABLE_LONG}")
+MESSAGE(STATUS "DIRECT_LINKAGE: ${DIRECT_LINKAGE}")
 MESSAGE(STATUS "ENABLE_DOCS: ${ENABLE_DOCS}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_SPU (Cell SPU enabled): ${ENABLE_SPU}")
