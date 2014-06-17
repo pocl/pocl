@@ -321,11 +321,12 @@ endmacro()
 
 if(CLANGXX)
 
+  message(STATUS "Checking if clang++ works (required by vecmathlib)")
+
   setup_cache_var_name(CLANGXX_WORKS "${LLVM_HOST_TARGET}-${CLANGXX}-${LLVM_CLANGXX_VERSION}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
     set(CLANGXX_WORKS 1)
-    message(STATUS "Checking if clang++ works (required by vecmathlib)")
     custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" COMPILE_RESULT)
     if(COMPILE_RESULT)
       set(CLANGXX_WORKS 0)
@@ -352,12 +353,13 @@ endif()
 if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
   message(STATUS "Checking if LLVM is built with assertions")
-
-  custom_try_compile_clangxx("#include <llvm/Support/Debug.h>" "llvm::DebugFlag=true;" COMPILE_RESULT "-UNDEBUG")
-  if(NOT COMPILE_RESULT)
+  separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
+  custom_try_compile_clangxx("#include <llvm/Support/Debug.h>" "llvm::DebugFlag=true;" COMPILE_RESULT ${_FLAGS} "-UNDEBUG")
+  if(COMPILE_RESULT)
     message(STATUS "no assertions... adding -DNDEBUG")
     set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
   endif()
+  unset(_FLAGS)
 
 endif()
 
