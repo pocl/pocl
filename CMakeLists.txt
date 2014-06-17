@@ -106,9 +106,9 @@ macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQU
     message(STATUS "${DOCS_REQUESTED_DISABLING_FEATURE}")
   endif()
   if(${VARNAME})
-    message(STATUS "${DESCRIPTION} ${_CACHED}: enabled")
+    message(STATUS "${DESCRIPTION} ${_CACHED}: 1")
   else()
-    message(STATUS "${DESCRIPTION} ${_CACHED}: disabled")
+    message(STATUS "${DESCRIPTION} ${_CACHED}: 0")
   endif()
 endmacro()
 
