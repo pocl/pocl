@@ -37,10 +37,17 @@ add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
 #pkglib_LTLIBRARIES = llvmopencl.la
 add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
 
+# TODO cmake should handle this, i might me missing something …
+if(APPLE)
+  set(ADD_LD_FLAGS "-Wl,-undefined -Wl,dynamic_lookup ")
+else()
+  set(ADD_LD_FLAGS "-Wl,-export-dynamic")
+endif()
+
 # TODO ENABLE_EXPORTS -> Wl,export_dynamic
 # http://www.cmake.org/cmake/help/v2.8.12/cmake.html#prop_tgt:ENABLE_EXPORTS
 # http://www.cmake.org/pipermail/cmake/2011-November/047708.html
-set_target_properties("llvmopencl" PROPERTIES LINK_FLAGS "${LLVM_LDFLAGS} -Wl,-export-dynamic")
+set_target_properties("llvmopencl" PROPERTIES LINK_FLAGS "${LLVM_LDFLAGS} ${ADD_LD_FLAGS}")
 set_target_properties("llvmpasses" "llvmopencl" PROPERTIES SOVERSION "${KERNEL_COMPILER_LIB_VERSION}" VERSION "${KERNEL_COMPILER_LIB_VERSION}" POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS "llvmopencl"
