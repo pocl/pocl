@@ -278,7 +278,7 @@ option(DIRECT_LINKAGE "Allow OpenCL programs to be linked directly against the p
 
 if(NOT DIRECT_LINKAGE)
   if(ENABLE_ICD)
-    message(STATUS "Disabling direct linkage as requested, using ocl-icd")
+    message(STATUS "Disabling direct linkage, using ocl-icd")
   else()
     message(FATAL_ERROR "at least one of ICD or direct-linkage must be enabled !")
   endif()
@@ -347,7 +347,7 @@ else()
       message(WARNING "Disabling OPENCL_HPP, a few tests will be skipped")
     endif()
   else()
-    message(STATUS "cl.hpp not found, a few test will be skipped")
+    message(STATUS "cl.hpp not found, tests will use pocl's own cl.hpp")
   endif()
   # TODO should this be enabled even if openGL is not found ?
   set(HAVE_OPENCL_HPP ${_OPENCL_HPP} CACHE INTERNAL "Opencl.hpp found & usable")
