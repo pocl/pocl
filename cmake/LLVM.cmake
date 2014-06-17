@@ -170,10 +170,10 @@ endmacro()
 macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
   # this is wrong
   #separate_arguments(FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
-  custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} ${FLAGS}  "-c" ${ARGN})
+  custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
 endmacro()
 
-# clang try-compilere-run macro, running via native executable
+# clang try-compile-run macro, running via native executable
 macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR)
   set(OUTF "${CMAKE_BINARY_DIR}/try_run${CMAKE_EXECUTABLE_SUFFIX}")
   if(EXISTS "${OUTF}")
@@ -199,7 +199,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR)
   endif()
 endmacro()
 
-# clang try-compilere-run macro, run via lli, the llvm interpreter
+# clang try-compile-run macro, run via lli, the llvm interpreter
 macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
