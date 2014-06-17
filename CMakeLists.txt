@@ -229,6 +229,14 @@ find_library(LTDL_LIB "ltdl")
 find_file(LTDL_H "ltdl.h")
 if(LTDL_LIB AND LTDL_H)
   message(STATUS "ltdl found")
+
+  get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
+  string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
+  # include the directory of ltdl.h, if its not in the default system include dirs
+  if(LTPOSITION LESS "0")
+    include_directories("${LTDL_H_INCLUDE_DIR}")
+  endif()
+
 else()
   message(FATAL_ERROR "Could not find LTDL library!")
 endif()
