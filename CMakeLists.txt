@@ -722,34 +722,13 @@ include_directories("${CMAKE_BINARY_DIR}")
 
 ##########################################################
 
-# determine library suffix (POCL_LIB_SUFFIX) to use for pocl.icd
-
-if(ENABLE_ICD)
-
-  if(UNIX)
-
-    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-      set(POCL_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}.${LIB_BUILD_VERSION}")
-    elseif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-      set(POCL_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}.${LIB_API_VERSION}")
-    else()
-      # TODO apple (Darwin)
-      message(WARNING "Unknown UNIX variant (${CMAKE_SYSTEM_NAME})!")
-      # fallback..
-      set(POCL_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    endif()
-
-  else()
-    # TODO: other platforms
-    # ...
-  endif()
-
-endif()
-
-configure_file("${CMAKE_SOURCE_DIR}/pocl.icd.in.cmake" "${CMAKE_BINARY_DIR}/pocl.icd" @ONLY)
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>" CONDITION 1)
 install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
          DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}")
 
+# write icd file for pocl testing
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
 
 ##########################################################
 
@@ -772,12 +751,6 @@ add_subdirectory("lib")
 # these are set in lib/cmakelists.txt
 message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
-
-get_target_property(LIBPOCL_LOCATION "pocl" LOCATION)
-message(STATUS "LOCATION of libpocl: ${LIBPOCL_LOCATION}")
-# requires libpocl location
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
-file(WRITE "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" "${LIBPOCL_LOCATION}")
 
 # for tests / examples
 set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")

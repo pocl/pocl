@@ -46,8 +46,8 @@ else()
   #~ -D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include \
   #~ -D OPENCL_INCLUDE_DIR:PATH=${abs_top_srcdir}/include
   #~ '
-  set(OPENCL_CMAKE_OPTIONS "-D OPENCL_LIBRARIES:FILEPATH='${LIBPOCL_LOCATION}'
-                            -D OPENCL_LIBRARY:FILEPATH='${LIBPOCL_LOCATION}'
+  set(OPENCL_CMAKE_OPTIONS "-D OPENCL_LIBRARIES:FILEPATH='$<TARGET_FILE:pocl>'
+                            -D OPENCL_LIBRARY:FILEPATH='$<TARGET_FILE:pocl>'
                             -D CMAKE_EXE_LINKER_FLAGS:STRING='${CMAKE_THREAD_LIBS_INIT}'
                             -D OPENCL_INCLUDE_DIRS:PATH='${CMAKE_SOURCE_DIR}/include'
                             -D OPENCL_INCLUDE_DIR:PATH='${CMAKE_SOURCE_DIR}/include' ")
