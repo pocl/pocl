@@ -49,7 +49,7 @@ endif()
 # http://www.cmake.org/pipermail/cmake/2011-November/047708.html
 set_target_properties("llvmopencl" PROPERTIES LINK_FLAGS "${LLVM_LDFLAGS} ${ADD_LD_FLAGS}")
 if(NOT APPLE)
-  set_target_properties("llvmpasses" "llvmopencl" PROPERTIES SOVERSION "${KERNEL_COMPILER_LIB_VERSION}" VERSION "$KERNEL_COMPILER_LIB_VERSION}" POSITION_INDEPENDENT_CODE ON)
+  set_target_properties("llvmopencl" PROPERTIES SOVERSION "${KERNEL_COMPILER_LIB_VERSION}" VERSION "${KERNEL_COMPILER_LIB_VERSION}")
 endif()
 
 install(TARGETS "llvmopencl"
