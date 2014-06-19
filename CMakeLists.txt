@@ -256,27 +256,43 @@ endif()
 if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
   PKG_CHECK_MODULES(OCL_ICD ocl-icd>=1.3)
-  if(NOT OCL_ICD_FOUND)
-    # TODO maybe some other ways to find ocl-icd
-    find_library(OCL_ICD_FOUND OpenCL)
-    # TODO:
-    # INCLUDE (CheckLibraryExists)
-    # CHECK_LIBRARY_EXISTS(library function location variable
-  endif()
 
   if(OCL_ICD_FOUND)
-    set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ocl-icd availability")
+
+    set(HAVE_OCL_ICD 1)
+    set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
     set(DEFAULT_DIRECT_LINKAGE 0 CACHE INTERNAL "direct linkage")
+    set(DEFAULT_TESTS_USE_ICD 1 CACHE INTERNAL "tests use ICD")
+
   else()
-    set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "ocl-icd availability")
-    set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
+
+    set(HAVE_OCL_ICD 0)
+    # fallback to other ICD loaders
+    message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
+    find_library(LIBOPENCL OpenCL)
+
+    if(LIBOPENCL)
+      # no ocl-icd, but libopencl
+      message(STATUS "libOpenCL (unknown ICD loader) found")
+      set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
+      # tests can't use the icl loader - must use direct linkage
+      set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
+      set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "tests use ICD")
+    else()
+      message(STATUS "No ICD loader of any kind found")
+      # no ocl-icd, no libopencl
+      set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "no ICL loader found availability")
+      set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
+      set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "tests use ICD")
+    endif()
+
   endif()
 
 endif()
 
-setup_cached_var(ENABLE_ICD "Using ocl-icd"
-  "Requested build with icd, but ocl-icd not found! some examples will not work.."
-  "ocl-icd found, but requested build without icd")
+setup_cached_var(ENABLE_ICD "Using an ICD loader"
+  "Requested build with icd, but ICD loader not found! some examples will not work.."
+  "ICD loader found, but requested build without it")
 
 
 ######################################################################################
@@ -288,13 +304,13 @@ if(NOT DEFINED DIRECT_LINKAGE)
   set(DIRECT_LINKAGE ${DEFAULT_DIRECT_LINKAGE} CACHE BOOL "Allow OpenCL programs to be linked directly against the pocl library instead of using a ICD Loader (OpenCL library), defaults to !ENABLE_ICD")
 endif()
 
-message(STATUS "Direct linkage: ${DEFAULT_DIRECT_LINKAGE}")
+message(STATUS "Direct linkage: ${DIRECT_LINKAGE}")
 
 if(NOT DIRECT_LINKAGE)
   if(ENABLE_ICD)
-    message(STATUS "Disabling direct linkage, using ocl-icd")
+    message(STATUS "Disabling direct linkage, using ICD loader instead")
   else()
-    message(FATAL_ERROR "at least one of ICD or direct-linkage must be enabled !")
+    message(FATAL_ERROR "Either ICD or direct-linkage must be enabled !")
   endif()
 endif()
 
@@ -302,22 +318,18 @@ endif()
 ######################################################################################
 # DONE
 
-if(DEFINED TESTS_USE_ICD)
-
-  if(TESTS_USE_ICD AND (NOT ENABLE_ICD))
-    message(FATAL_ERROR "Cannot use ICD for tests when not building it")
-  endif()
-  if((NOT TESTS_USE_ICD) AND ENABLE_ICD)
-    message(FATAL_ERROR "Cannot avoid ICD for tests when direct-linkage is disabled")
-  endif()
-
-else() # undefined -> auto
-
-  set(TESTS_USE_ICD ${ENABLE_ICD})
-
+if(NOT DEFINED TESTS_USE_ICD)
+  set(TESTS_USE_ICD ${DEFAULT_TESTS_USE_ICD} CACHE BOOL "Tests use the ICD loader")
 endif()
 
 message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
+
+if(TESTS_USE_ICD AND (NOT ENABLE_ICD))
+  message(FATAL_ERROR "Cannot use ICD for tests when its not available")
+endif()
+if((NOT TESTS_USE_ICD) AND (NOT DIRECT_LINKAGE))
+  message(FATAL_ERROR "Tests set to link directly, but direct-linkage is disabled")
+endif()
 
 
 ######################################################################################
@@ -714,7 +726,6 @@ set(BUILD_ICD ${ENABLE_ICD})
 set(BUILD_SPU ${ENABLE_SPU})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
-set(HAVE_OCL_ICD ${ENABLE_ICD})
 
 configure_file("config.h.in.cmake" "config.h" ESCAPE_QUOTES)
 include_directories("${CMAKE_BINARY_DIR}")
