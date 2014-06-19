@@ -66,7 +66,7 @@ enable_testing()
 
 find_package(PkgConfig MODULE REQUIRED)
 
-PKG_CHECK_MODULES(HWLOC REQUIRED hwloc>=1.0)
+pkg_check_modules(HWLOC REQUIRED hwloc>=1.0)
 if(NOT HWLOC_FOUND)
   message(FATAL_ERROR "hwloc package is required!")
 endif()
@@ -255,7 +255,7 @@ endif()
 
 if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
-  PKG_CHECK_MODULES(OCL_ICD ocl-icd>=1.3)
+  pkg_check_modules(OCL_ICD ocl-icd>=1.3)
 
   if(OCL_ICD_FOUND)
 
@@ -363,7 +363,7 @@ else()
   set(_OPENCL_HPP 0)
   if(OPENCL_HPP)
     # test opengl availability first
-    FIND_PACKAGE(OpenGL MODULE)
+    find_package(OpenGL MODULE)
     if(OPENGL_FOUND)
       set(_OPENCL_HPP 1)
       message(STATUS "OpenCL.hpp found, OpenGL too, enabling OPENCL_HPP")
@@ -390,7 +390,7 @@ endif()
 ######################################################################################
 # DONE
 
-PKG_CHECK_MODULES(GLEW glew)
+pkg_check_modules(GLEW glew)
 if(NOT GLEW_FOUND)
   message(WARNING "libGLEW not found. A few tests will not work")
 else()
@@ -575,7 +575,7 @@ endif()
 if(NOT DEFINED DEFAULT_ENABLE_SPU)
   set(_SPU 0)
   if(LLVM_VERSION MATCHES "3.2")
-    PKG_CHECK_MODULES(LIBSPE "libspe2>=2.2.80")
+    pkg_check_modules(LIBSPE "libspe2>=2.2.80")
     if(LIBSPE_FOUND)
       set(_SPU 1)
     endif()
