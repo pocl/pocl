@@ -211,7 +211,8 @@ else()
     message(STATUS "Using ${LLVM_SHARED_LIB_FILE}")
   else()
     set(POCL_LLVM_LIBS ${LLVM_LIBS})
-    message(STATUS "${LLVM_SHARED_LIB_FILE} not found. LLVM is built with cmake.")
+    message(STATUS "LLVM-${LLVM_VERSION} shared library not found (Probably because LLVM is built with cmake).
+    Linking libpocl to LLVM_LIBS")
   endif()
 endif()
 
