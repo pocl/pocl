@@ -24,6 +24,7 @@
 #include "pocl_util.h"
 
 #include "config.h"
+#include "install-paths.h"
 #include "pocl_runtime_config.h"
 
 #include <unistd.h>
@@ -209,9 +210,9 @@ TCEDevice::tceccCommandLine
     }
   else 
     {
-      deviceMainSrc = TCEString(POCL_INSTALL_PRIVATE_HEADER_DIR) + "/" + mainC;
+      deviceMainSrc = TCEString(PKGDATADIR) + "/" + mainC;
       assert(access(deviceMainSrc.c_str(), R_OK) == 0);
-      poclIncludePathSwitch = " -I " POCL_INSTALL_PRIVATE_HEADER_DIR;
+      poclIncludePathSwitch = " -I " PKGDATADIR "/include";
     }
 
   TCEString extraFlags = extraParams;

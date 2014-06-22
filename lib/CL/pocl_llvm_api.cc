@@ -81,6 +81,7 @@
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm.h"
 #include "pocl_runtime_config.h"
+#include "install-paths.h"
 #include "LLVMUtils.h"
 
 using namespace clang;
@@ -312,8 +313,8 @@ int pocl_llvm_build_program(cl_program program,
     }
   else
     {
-      kernelh = POCL_INSTALL_PRIVATE_HEADER_DIR;
-      kernelh += "/_kernel.h";
+      kernelh = PKGDATADIR;
+      kernelh += "/include/_kernel.h";
     }
   po.Includes.push_back(kernelh);
 
@@ -1008,7 +1009,7 @@ kernel_library
     }
   else
     {
-      kernellib = POCL_INSTALL_PRIVATE_DATADIR;
+      kernellib = PKGDATADIR;
       kernellib += "/kernel-";
       kernellib += device->llvm_target_triplet;
       kernellib += ".bc";

@@ -65,7 +65,7 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_PLATFORM_INFO_STR("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
-      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2 pocl " POCL_VERSION);
+      POCL_RETURN_PLATFORM_INFO_STR("OpenCL 1.2 pocl " PACKAGE_VERSION);
 
     case CL_PLATFORM_NAME:
       POCL_RETURN_PLATFORM_INFO_STR("Portable Computing Language");

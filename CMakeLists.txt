@@ -735,11 +735,14 @@ set(BUILD_ICD ${ENABLE_ICD})
 set(BUILD_SPU ${ENABLE_SPU})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
-set(_CL_DISABLE_LONG CL_DISABLE_LONG)
+set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
+set(PACKAGE_VERSION "${POCL_VERSION}")
 
 configure_file("config.h.in.cmake" "config.h" ESCAPE_QUOTES)
 include_directories("${CMAKE_BINARY_DIR}")
 
+# autotools compat
+file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
 
 ##########################################################
 

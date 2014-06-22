@@ -137,7 +137,7 @@ static inline void
 pocl_device_common_init(struct _cl_device_id* dev)
 {
   POCL_INIT_OBJECT(dev);
-  dev->driver_version = POCL_VERSION;
+  dev->driver_version = PACKAGE_VERSION;
   if(dev->version == NULL)
     dev->version = "OpenCL 1.2 pocl";
 
