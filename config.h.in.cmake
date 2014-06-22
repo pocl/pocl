@@ -143,4 +143,4 @@
 #cmakedefine WORDS_BIGENDIAN
 
 /* Disable cl_khr_int64 when a clang bug is present */
-#cmakedefine _CL_DISABLE_LONG @CL_DISABLE_LONG@
+#cmakedefine _CL_DISABLE_LONG

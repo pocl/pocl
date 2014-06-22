@@ -735,6 +735,7 @@ set(BUILD_ICD ${ENABLE_ICD})
 set(BUILD_SPU ${ENABLE_SPU})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
+set(_CL_DISABLE_LONG CL_DISABLE_LONG)
 
 configure_file("config.h.in.cmake" "config.h" ESCAPE_QUOTES)
 include_directories("${CMAKE_BINARY_DIR}")
