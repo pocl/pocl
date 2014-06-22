@@ -261,6 +261,8 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
   if(OCL_ICD_FOUND)
 
     set(HAVE_OCL_ICD 1)
+    set(OPENCL_FOUND 1)
+    set(OPENCL_LIBRARIES "-lOpenCL") # duh, why doesnt ocl-icd set this in .pc file ??
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
     set(DEFAULT_DIRECT_LINKAGE 0 CACHE INTERNAL "direct linkage")
     set(DEFAULT_TESTS_USE_ICD 1 CACHE INTERNAL "tests use ICD")
@@ -270,9 +272,17 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
     set(HAVE_OCL_ICD 0)
     # fallback to other ICD loaders
     message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
-    find_library(LIBOPENCL OpenCL)
+    pkg_check_modules(OPENCL OpenCL>=1.2)
+    if(NOT OPENCL_FOUND)
+      find_library(OPENCL_LIBRARIES OpenCL)
+      # version check the found library
+      if(OPENCL_LIBRARIES)
+        set(CMAKE_REQUIRED_LIBRARIES "${OPENCL_LIBRARIES}")
+        CheckFunctionExists("clEnqueueFillImage" OPENCL_FOUND)
+      endif()
+    endif()
 
-    if(LIBOPENCL)
+    if(OPENCL_FOUND)
       # no ocl-icd, but libopencl
       message(STATUS "libOpenCL (unknown ICD loader) found")
       set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
@@ -280,7 +290,7 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
       set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
       set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "tests use ICD")
     else()
-      message(STATUS "No ICD loader of any kind found")
+      message(STATUS "No ICD loader of any kind found (or its OpenCL version is <1.2)")
       # no ocl-icd, no libopencl
       set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "no ICL loader found availability")
       set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")

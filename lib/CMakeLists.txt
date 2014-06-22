@@ -17,11 +17,10 @@ set(OPENCL_CFLAGS "") #'$(PTHREAD_CFLAGS)'
 
 if(TESTS_USE_ICD)
 
-  PKG_CHECK_MODULES(OPENCL OpenCL>=1.2)
   if(OPENCL_FOUND)
     set(OPENCL_LIBS ${OPENCL_LIBRARIES})
   else()
-    message(WARNING "Tests-with-icd requested, but cannot find OpenCL library via pkg-config")
+    message(WARNING "Tests-use-ICD requested, but cannot find an OpenCL library; adding -lOpenCL to LDFLAGS")
     set(OPENCL_LIBS "-lOpenCL")
   endif()
 
