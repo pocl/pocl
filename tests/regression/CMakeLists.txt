@@ -1,8 +1,3 @@
-if(HAVE_OPENCL_HPP)
-  message(STATUS "Regression tests using system cl.hpp")
-else()
-  message(STATUS "Regression tests using pocl's cl.hpp")
-endif()
 
 set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_for_with_var_iteration_count test_id_dependent_computation
