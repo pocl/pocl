@@ -240,10 +240,10 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
      ensure that there is no more than a single space between
      identifiers. */
 
-#if SIZEOF_DOUBLE == 8
-#define DOUBLE_EXT "cl_khr_fp64 "
-#else
+#if _CL_DISABLE_LONG
 #define DOUBLE_EXT 
+#else
+#define DOUBLE_EXT "cl_khr_fp64 "
 #endif
 
 #if SIZEOF___FP16 == 2

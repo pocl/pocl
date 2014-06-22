@@ -109,15 +109,6 @@
 
 /* these are *host* values */
 
-/* The size of `double', as computed by sizeof. */
-#cmakedefine SIZEOF_DOUBLE  @SIZEOF_DOUBLE@
-
-/* The size of `long', as computed by sizeof. */
-#cmakedefine SIZEOF_LONG  @SIZEOF_LONG@
-
-/* The size of `void *', as computed by sizeof. */
-#cmakedefine SIZEOF_VOID_P  @SIZEOF_VOID_P@
-
 /* The size of `__fp16', as computed by sizeof. */
 #cmakedefine SIZEOF___FP16  @SIZEOF___FP16@
 
