@@ -11,15 +11,7 @@
 #include <cstring>
 
 #define pocl_static_assert(b) typedef char _static_assert[(b)?+1:-1]
-
-// If double precision is not supported, then define single-precision
-// (dummy) values to avoid compiler warnings for double precision
-// values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#endif
-
+ 
 
 
 // Define vector types
