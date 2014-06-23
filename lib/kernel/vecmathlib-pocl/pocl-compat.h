@@ -23,6 +23,7 @@ typedef int int4  __attribute__((__ext_vector_type__( 4)));
 typedef int int8  __attribute__((__ext_vector_type__( 8)));
 typedef int int16 __attribute__((__ext_vector_type__(16)));
 
+#undef uint
 #define uint vml_std::uint32_t
 typedef uint uint2  __attribute__((__ext_vector_type__( 2)));
 typedef uint uint3  __attribute__((__ext_vector_type__( 3)));
@@ -39,6 +40,8 @@ typedef long long4  __attribute__((__ext_vector_type__( 4)));
 typedef long long8  __attribute__((__ext_vector_type__( 8)));
 typedef long long16 __attribute__((__ext_vector_type__(16)));
 
+#undef ulong
+#define ulong cl_ulong
 typedef vml_std::uint64_t ulong;
 typedef ulong ulong2  __attribute__((__ext_vector_type__( 2)));
 typedef ulong ulong3  __attribute__((__ext_vector_type__( 3)));
