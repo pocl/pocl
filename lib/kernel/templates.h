@@ -631,7 +631,7 @@
   }
 #define DEFINE_EXPR_J_V(NAME, EXPR)                                     \
   __IF_FP16(                                                            \
-  IMPLEMENT_EXPR_J_V(NAME, EXPR, half    , half  , short  , short)      \
+  IMPLEMENT_EXPR_J_V(NAME, EXPR, half    , half  , int    , int  )      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, half2   , half  , short2 , short)      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, half3   , half  , short3 , short)      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, half4   , half  , short4 , short)      \
@@ -644,7 +644,7 @@
   IMPLEMENT_EXPR_J_V(NAME, EXPR, float8  , float , int8   , int  )      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, float16 , float , int16  , int  )      \
   __IF_FP64(                                                            \
-  IMPLEMENT_EXPR_J_V(NAME, EXPR, double  , double, long   , long )      \
+  IMPLEMENT_EXPR_J_V(NAME, EXPR, double  , double, int    , int  )      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, double2 , double, long2  , long )      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, double3 , double, long3  , long )      \
   IMPLEMENT_EXPR_J_V(NAME, EXPR, double4 , double, long4  , long )      \
@@ -663,7 +663,7 @@
   }
 #define DEFINE_EXPR_J_VV(NAME, EXPR)                                    \
   __IF_FP16(                                                            \
-  IMPLEMENT_EXPR_J_VV(NAME, EXPR, half    , half  , short  , short)     \
+  IMPLEMENT_EXPR_J_VV(NAME, EXPR, half    , half  , int    , int  )     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, half2   , half  , short2 , short)     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, half3   , half  , short3 , short)     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, half4   , half  , short4 , short)     \
@@ -676,7 +676,7 @@
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, float8  , float , int8   , int  )     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, float16 , float , int16  , int  )     \
   __IF_FP64(                                                            \
-  IMPLEMENT_EXPR_J_VV(NAME, EXPR, double  , double, long   , long )     \
+  IMPLEMENT_EXPR_J_VV(NAME, EXPR, double  , double, int    , int  )     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, double2 , double, long2  , long )     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, double3 , double, long3  , long )     \
   IMPLEMENT_EXPR_J_VV(NAME, EXPR, double4 , double, long4  , long )     \
@@ -1728,4 +1728,3 @@
     if (get_local_id(0) == 0 &&                 \
         get_local_id(1) == 0 &&                 \
         get_local_id(2) == 0)
-
