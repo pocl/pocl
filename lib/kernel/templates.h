@@ -22,6 +22,26 @@
    THE SOFTWARE.
 */
 
+// Choose a constant with a particular precision
+#ifdef cl_khr_fp16
+#  define IF_HALF(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#ifdef cl_khr_fp64
+#  define IF_DOUBLE(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
+        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
+
+
+
 #define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a)                                         \

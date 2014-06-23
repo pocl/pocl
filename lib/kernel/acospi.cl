@@ -24,8 +24,4 @@
 
 #include "templates.h"
 
-#ifdef cl_khr_fp64
-DEFINE_EXPR_V_V(acospi, acos(a)/(stype)M_PI)
-#else
-DEFINE_EXPR_V_V(acospi, acos(a)/M_PI_F)
-#endif
+DEFINE_EXPR_V_V(acospi, acos(a)/TYPED_CONST(stype, M_PI_H, M_PI_F, M_PI))
