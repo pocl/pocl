@@ -53,7 +53,8 @@
   half __attribute__ ((overloadable))                   \
   NAME(half a)                                          \
   {                                                     \
-    return __builtin_##NAME(a);                         \
+    /* use float builtin */                             \
+    return __builtin_##NAME##f(a);                      \
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, half2   , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, half3   , lo, s2)         \
@@ -93,7 +94,8 @@
   half __attribute__ ((overloadable))                   \
   NAME(half a, half b)                                  \
   {                                                     \
-    return __builtin_##NAME(a, b);                      \
+    /* use float builtin */                             \
+    return __builtin_##NAME##f(a, b);                   \
   }                                                     \
   IMPLEMENT_BUILTIN_V_VV(NAME, half2   , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half3   , lo, s2)        \
@@ -133,7 +135,8 @@
   half __attribute__ ((overloadable))                   \
   NAME(half a, half b, half c)                          \
   {                                                     \
-    return __builtin_##NAME(a, b, c);                   \
+    /* use float builtin */                             \
+    return __builtin_##NAME##f(a, b, c);                \
   }                                                     \
   IMPLEMENT_BUILTIN_V_VVV(NAME, half2   , lo, hi)       \
   IMPLEMENT_BUILTIN_V_VVV(NAME, half3   , lo, s2)       \
@@ -173,7 +176,8 @@
   half __attribute__ ((overloadable))                           \
   NAME(ushort a)                                                \
   {                                                             \
-    return __builtin_##NAME(a);                                 \
+    /* use float builtin */                                     \
+    return __builtin_##NAME##f(a);                              \
   }                                                             \
   IMPLEMENT_BUILTIN_V_U(NAME, half2   , ushort2 , lo, hi)       \
   IMPLEMENT_BUILTIN_V_U(NAME, half3   , ushort3 , lo, s2)       \
@@ -213,7 +217,8 @@
   int __attribute__ ((overloadable))                            \
   NAME(half a, half b)                                          \
   {                                                             \
-    return __builtin_##NAME(a, b);                              \
+    /* use float builtin */                                     \
+    return __builtin_##NAME##f(a, b);                           \
   }                                                             \
   IMPLEMENT_BUILTIN_J_VV(NAME, half2 , short2 , lo, hi)         \
   IMPLEMENT_BUILTIN_J_VV(NAME, half3 , short3 , lo, s2)         \
@@ -258,7 +263,8 @@
   int __attribute__ ((overloadable))                                    \
   NAME(half a, half b)                                                  \
   {                                                                     \
-    return __builtin_##NAME(a, b);                                      \
+    /* use float builtin */                                             \
+    return __builtin_##NAME##f(a, b);                                   \
   }                                                                     \
   IMPLEMENT_BUILTIN_L_VV(NAME, half2 , half, short2 , lo, hi)           \
   IMPLEMENT_BUILTIN_L_VV(NAME, half3 , half, short3 , lo, s2)           \
@@ -298,7 +304,8 @@
   half __attribute__ ((overloadable))                           \
   NAME(half a, int b)                                           \
   {                                                             \
-    return __builtin_##NAME(a, b);                              \
+    /* use float builtin */                                     \
+    return __builtin_##NAME##f(a, b);                           \
   }                                                             \
   IMPLEMENT_BUILTIN_V_VJ(NAME, half2 , int2 , lo, hi)           \
   IMPLEMENT_BUILTIN_V_VJ(NAME, half3 , int3 , lo, s2)           \
@@ -363,7 +370,8 @@
   int __attribute__ ((overloadable))                            \
   NAME(half a)                                                  \
   {                                                             \
-    return __builtin_##NAME(a);                                 \
+    /* use float builtin */                                     \
+    return __builtin_##NAME##f(a);                              \
   }                                                             \
   IMPLEMENT_BUILTIN_J_V(NAME, short2 , half2 , lo, hi)          \
   IMPLEMENT_BUILTIN_J_V(NAME, short3 , half3 , lo, s2)          \
@@ -403,7 +411,8 @@
   int __attribute__ ((overloadable))                    \
   NAME(half a)                                          \
   {                                                     \
-    return __builtin_##NAME(a);                         \
+    /* use float builtin */                             \
+    return __builtin_##NAME##f(a);                      \
   }                                                     \
   IMPLEMENT_BUILTIN_K_V(NAME, int2 , half2 , lo, hi)    \
   IMPLEMENT_BUILTIN_K_V(NAME, int3 , half3 , lo, s2)    \
@@ -448,7 +457,8 @@
   int __attribute__ ((overloadable))                                    \
   NAME(half a)                                                          \
   {                                                                     \
-    return __builtin_##NAME(a);                                         \
+    /* use float builtin */                                             \
+    return __builtin_##NAME##f(a);                                      \
   }                                                                     \
   IMPLEMENT_BUILTIN_L_V(NAME, short2 , half2 , half, lo, hi)            \
   IMPLEMENT_BUILTIN_L_V(NAME, short3 , half3 , half, lo, s2)            \
@@ -888,6 +898,11 @@
   IMPLEMENT_EXPR_V_VS(NAME, EXPR, double16, double, long16 , long ))
 
 #define IMPLEMENT_EXPR_V_VJ(NAME, EXPR, VTYPE, STYPE, JTYPE, SJTYPE)    \
+  VTYPE __attribute__ ((overloadable))                                  \
+  NAME##_convert_vtype(JTYPE a, STYPE dummy)                            \
+  {                                                                     \
+    return convert_##VTYPE(a);                                          \
+  }                                                                     \
   VTYPE __attribute__ ((overloadable))                                  \
   NAME(VTYPE a, JTYPE b)                                                \
   {                                                                     \
