@@ -41,7 +41,7 @@ DEFINE_EXPR_V_U(nan,
                   // i.e. that the nan is quiet
                   nancode &= nan_mant_mask;
                   // ensure the nancode is not zero
-                  nancode = nancode ? nancode : 1;
+                  nancode = nancode ? nancode : (sutype)1;
                   // create the exponent
                   sutype nan_exp =
                     TYPED_CONST(sutype,
