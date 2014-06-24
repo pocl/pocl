@@ -899,54 +899,54 @@
   }
 #define DEFINE_EXPR_V_VJ(NAME, EXPR)                                    \
   __IF_FP16(                                                            \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half2   , half  , short2 , short)     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half3   , half  , short3 , short)     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half4   , half  , short4 , short)     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half8   , half  , short8 , short)     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half16  , half  , short16, short))    \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float   , float , int    , int  )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float2  , float , int2   , int  )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float3  , float , int3   , int  )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float4  , float , int4   , int  )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float8  , float , int8   , int  )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float16 , float , int16  , int  )     \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half    , half  , int  , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half2   , half  , int2 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half3   , half  , int3 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half4   , half  , int4 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half8   , half  , int8 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, half16  , half  , int16, int))        \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float   , float , int  , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float2  , float , int2 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float3  , float , int3 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float4  , float , int4 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float8  , float , int8 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, float16 , float , int16, int)         \
   __IF_FP64(                                                            \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double  , double, long   , long )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double2 , double, long2  , long )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double3 , double, long3  , long )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double4 , double, long4  , long )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double8 , double, long8  , long )     \
-  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double16, double, long16 , long ))
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double  , double, int  , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double2 , double, int2 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double3 , double, int3 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double4 , double, int4 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double8 , double, int8 , int)         \
+  IMPLEMENT_EXPR_V_VJ(NAME, EXPR, double16, double, int16, int))
 
-#define IMPLEMENT_EXPR_V_VI(NAME, EXPR, VTYPE, STYPE, ITYPE, SITYPE)    \
-  VTYPE __attribute__ ((overloadable))                                  \
-  NAME(VTYPE a, ITYPE b)                                                \
-  {                                                                     \
-    typedef VTYPE vtype;                                                \
-    typedef STYPE stype;                                                \
-    typedef ITYPE itype;                                                \
-    typedef SITYPE sitype;                                              \
-    return EXPR;                                                        \
+#define IMPLEMENT_EXPR_V_VI(NAME, EXPR, VTYPE, STYPE, ITYPE)    \
+  VTYPE __attribute__ ((overloadable))                          \
+  NAME(VTYPE a, ITYPE b)                                        \
+  {                                                             \
+    typedef VTYPE vtype;                                        \
+    typedef STYPE stype;                                        \
+    typedef ITYPE itype;                                        \
+    return EXPR;                                                \
   }
 // All V_VS cases are excluded
-#define DEFINE_EXPR_V_VI(NAME, EXPR)                                    \
-  __IF_FP16(                                                            \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half2   , half  , int2 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half3   , half  , int3 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half4   , half  , int4 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half8   , half  , int8 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half16  , half  , int16, int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float2  , float , int2 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float3  , float , int3 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float4  , float , int4 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float8  , float , int8 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float16 , float , int16, int)         \
-  __IF_FP64(                                                            \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double2 , double, int2 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double3 , double, int3 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double4 , double, int4 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double8 , double, int8 , int)         \
-  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double16, double, int16, int))
+#define DEFINE_EXPR_V_VI(NAME, EXPR)                            \
+  __IF_FP16(                                                    \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half2   , half  , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half3   , half  , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half4   , half  , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half8   , half  , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, half16  , half  , int))       \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float2  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float3  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float4  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float8  , float , int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, float16 , float , int)        \
+  __IF_FP64(                                                    \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double2 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double3 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double4 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double8 , double, int)        \
+  IMPLEMENT_EXPR_V_VI(NAME, EXPR, double16, double, int))
 
 #define IMPLEMENT_EXPR_V_VPV(NAME, EXPR, VTYPE, STYPE)  \
   VTYPE __attribute__ ((overloadable))                  \
