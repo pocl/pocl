@@ -24,37 +24,32 @@
 
 #include "templates.h"
 
-#define FLT_MANT_MASK ((1U  << (uint) FLT_MANT_DIG) - 1U )
-#define DBL_MANT_MASK ((1UL << (ulong)DBL_MANT_DIG) - 1UL)
-
 /* Fall-back implementation which ignores the nancode */
-// DEFINE_EXPR_V_U(nan, (vtype)(0.0/0.0))
+// DEFINE_EXPR_V_U(nan, (vtype)NAN)
 
-/* LLVM's __builtin_nan expects a char* argument, so we need to roll
-   our own. Note this assume IEEE bit layout. */
-// #define __builtin_nanf(nancode)                                         \
-//   ((~FLT_MANT_MASK & as_uint(NANF)) | (FLT_MANT_MASK & nancode))
-// #define __builtin_nan(nancode)                                          \
-//   ((~DBL_MANT_MASK & as_ulong(NAN)) | (DBL_MANT_MASK & nancode))
-
-// DEFINE_BUILTIN_V_U(nan)
-
-/* This is faster than the above because it is vectorised */
-#ifdef cl_khr_fp64
 DEFINE_EXPR_V_U(nan,
                 ({
-                  utype nanbits =
-                    sizeof(stype)==4 /* float  */ ? ((utype)(~FLT_MANT_MASK & as_uint ((float) NAN)) | ((utype)FLT_MANT_MASK & a)) :
-                    sizeof(stype)==8 /* double */ ? ((utype)(~DBL_MANT_MASK & as_ulong((double)NAN)) | ((utype)DBL_MANT_MASK & a)) :
-                    (utype)0;
-                  *(vtype*)&nanbits;
+                  utype nancode = a;
+                  // number of bits in the mantissa
+                  sutype mant_dig =
+                    TYPED_CONST(sutype,
+                                HALF_MANT_DIG, FLT_MANT_DIG, DBL_MANT_DIG) - 1;
+                  // mask for the mantissa
+                  sutype nan_mant_mask = (1 << mant_dig) - 1;
+                  // mask out bits that can't be stored in the mantissa
+                  // this also ensures the sign bit is zero,
+                  // i.e. that the nan is quiet
+                  nancode &= nan_mant_mask;
+                  // ensure the nancode is not zero
+                  nancode = nancode ? nancode : 1;
+                  // create the exponent
+                  sutype nan_exp =
+                    TYPED_CONST(sutype,
+                                HALF_MAX_EXP - HALF_MIN_EXP,
+                                FLT_MAX_EXP - FLT_MIN_EXP,
+                                DBL_MAX_EXP - DBL_MIN_EXP) + 2;
+                  nan_exp <<= mant_dig;
+                  // combine exponent and nancode
+                  utype val = nan_exp | nancode;
+                  *(vtype*)&val;
                 }))
-#else
-DEFINE_EXPR_V_U(nan,
-                ({
-                  utype nanbits =
-                    sizeof(stype)==4 /* float  */ ? ((utype)(~FLT_MANT_MASK & as_uint ((float) NAN)) | ((utype)FLT_MANT_MASK & a)) :
-                    (utype)0;
-                  *(vtype*)&nanbits;
-                }))
-#endif
