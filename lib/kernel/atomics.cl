@@ -53,6 +53,7 @@
 #  undef MIN
 #  undef MAX
 
+#ifdef cl_khr_int64
 #  define T long
 #  define MIN(a,b) (__builtin_trap(), 0L)
 #  define MAX(a,b) (__builtin_trap(), 0L)
@@ -68,6 +69,7 @@
 #  undef T
 #  undef MIN
 #  undef MAX
+#endif
 
 
 
