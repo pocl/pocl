@@ -27,5 +27,5 @@
 DEFINE_EXPR_V_V(sign,
                 ({
                   isnan(a) ? (stype)0 :
-                    copysign(a == (stype)0 ? (stype)0 : (stype)1, a);
+                    copysign(a == (stype)0 ? (vtype)0 : (vtype)1, a);
                 }))
