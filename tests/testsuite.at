@@ -203,8 +203,7 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions fmin, fmax, fma])
 AT_KEYWORDS([fmin_fmax_fma])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc &&
-             grep "USE_LLVM_API 1" $abs_top_builddir/config.h ])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc ])
 AT_DATA([expout],
 [Running test test_fmin_fmax_fma...
 OK
