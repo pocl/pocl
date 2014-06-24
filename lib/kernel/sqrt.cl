@@ -36,6 +36,46 @@
 
 float sqrtf(float);
 
+
+
+#ifdef cl_khr_fp16
+half _CL_OVERLOADABLE sqrt(half a)
+{
+  return sqrtf(a);
+}
+
+half2 _CL_OVERLOADABLE sqrt(half2 a)
+{
+  return (half2)(sqrt(a.x), sqrt(a.y));
+}
+
+half3 _CL_OVERLOADABLE sqrt(half3 a)
+{
+  return (half3)(sqrt(a.x), sqrt(a.y), sqrt(a.z));
+}
+
+half4 _CL_OVERLOADABLE sqrt(half4 a)
+{
+  return (half4)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w));
+}
+
+half8 _CL_OVERLOADABLE sqrt(half8 a)
+{
+  return (half8)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),
+                 sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7));
+}
+
+half16 _CL_OVERLOADABLE sqrt(half16 a)
+{
+  return (half16)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),
+                  sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7),
+                  sqrt(a.s8), sqrt(a.s9), sqrt(a.sa), sqrt(a.sb),
+                  sqrt(a.sc), sqrt(a.sd), sqrt(a.se), sqrt(a.sf));
+}
+#endif
+
+
+
 float _CL_OVERLOADABLE sqrt(float a)
 {
   return sqrtf(a);
@@ -71,41 +111,43 @@ float16 _CL_OVERLOADABLE sqrt(float16 a)
 
 }
 
-__IF_FP64(\
-    double _CL_OVERLOADABLE sqrt(double a)      \
-    {                                           \
-        return __builtin_sqrt(a);               \
-    }                                           \
-                                                \
-    double2 _CL_OVERLOADABLE sqrt(double2 a)    \
-    {                                           \
-        return (double2)(sqrt(a.x), sqrt(a.y)); \
-    }                                           \
-                                                \
-    double3 _CL_OVERLOADABLE sqrt(double3 a)    \
-    {                                                       \
-        return (double3)(sqrt(a.x), sqrt(a.y), sqrt(a.z));  \
-    }                                                       \
-                                                            \
-    double4 _CL_OVERLOADABLE sqrt(double4 a)                \
-    {                                                                   \
-        return (double4)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w));   \
-    }                                                                   \
-                                                                        \
-    double8 _CL_OVERLOADABLE sqrt(double8 a)                            \
-    {                                                                   \
-        return (double8)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),    \
-                         sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7)); \
-    }                                                                   \
-                                                                        \
-    double16 _CL_OVERLOADABLE sqrt(double16 a)                          \
-    {                                                                   \
-        return (double16)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w), \
-                          sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7), \
-                          sqrt(a.s8), sqrt(a.s9), sqrt(a.sa), sqrt(a.sb), \
-                          sqrt(a.sc), sqrt(a.sd), sqrt(a.se), sqrt(a.sf)); \
-    }                                                                   \
-    )
+
+
+#ifdef cl_khr_fp64
+double _CL_OVERLOADABLE sqrt(double a)
+{
+  return __builtin_sqrt(a);
+}
+
+double2 _CL_OVERLOADABLE sqrt(double2 a)
+{
+  return (double2)(sqrt(a.x), sqrt(a.y));
+}
+
+double3 _CL_OVERLOADABLE sqrt(double3 a)
+{
+  return (double3)(sqrt(a.x), sqrt(a.y), sqrt(a.z));
+}
+
+double4 _CL_OVERLOADABLE sqrt(double4 a)
+{
+  return (double4)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w));
+}
+
+double8 _CL_OVERLOADABLE sqrt(double8 a)
+{
+  return (double8)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),
+                   sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7));
+}
+
+double16 _CL_OVERLOADABLE sqrt(double16 a)
+{
+  return (double16)(sqrt(a.x), sqrt(a.y), sqrt(a.z), sqrt(a.w),
+                    sqrt(a.s4), sqrt(a.s5), sqrt(a.s6), sqrt(a.s7),
+                    sqrt(a.s8), sqrt(a.s9), sqrt(a.sa), sqrt(a.sb),
+                    sqrt(a.sc), sqrt(a.sd), sqrt(a.se), sqrt(a.sf));
+}
+#endif
 
 DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
 DEFINE_EXPR_F_F(native_sqrt, sqrt(a))
