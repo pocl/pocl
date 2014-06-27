@@ -209,6 +209,11 @@ struct pocl_argument_info {
   pocl_argument_type type;
   char is_local;
   char is_set;
+  cl_kernel_arg_address_qualifier address_qualifier;
+  cl_kernel_arg_access_qualifier access_qualifier;
+  char* type_name;
+  cl_kernel_arg_type_qualifier type_qualifier;
+  char* name;
 };
 
 struct pocl_device_ops {
