@@ -22,7 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = include lib scripts examples tests
+SUBDIRS = include lib
+
+if !ANDROID
+SUBDIRS += scripts examples tests
+endif
 
 ACLOCAL_AMFLAGS = -I m4
 
