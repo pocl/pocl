@@ -392,6 +392,8 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
     }
   }
 
+  int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
+
   assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
 
   unsigned e = kernel_metadata->getNumOperands();
@@ -413,15 +415,28 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
         uint64_t val = m->getLimitedValue(UINT_MAX);
         //std::cout << "with value: " << val << std::endl;
-        switch(val) {
-          case POCL_ADDRESS_SPACE_PRIVATE:
-            kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
-          case POCL_ADDRESS_SPACE_GLOBAL:
-            kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
-          case POCL_ADDRESS_SPACE_LOCAL:
-            kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
-          case POCL_ADDRESS_SPACE_CONSTANT:
-            kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+        if(bitcode_is_spir) {
+          switch(val) {
+            case 0:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+            case 1:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+            case 3:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+            case 2:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+          }
+        } else {
+          switch(val) {
+            case POCL_ADDRESS_SPACE_PRIVATE:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+            case POCL_ADDRESS_SPACE_GLOBAL:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+            case POCL_ADDRESS_SPACE_LOCAL:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+            case POCL_ADDRESS_SPACE_CONSTANT:
+              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+          }
         }
       }
       else if (isa<MDString>(meta_arg_value)) {
@@ -441,6 +456,11 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
           else
             std::cout << "UNKNOWN kernel_arg_access_qual value: " << val << std::endl;
         } else if (meta_name == "kernel_arg_type") {
+          if (!bitcode_is_spir) {
+            kernel->arg_info[j-1].type_name = new char[val.size() + 1];
+            std::strcpy(kernel->arg_info[j-1].type_name, val.c_str());
+          }
+        } else if (meta_name == "kernel_arg_base_type") {
           kernel->arg_info[j-1].type_name = new char[val.size() + 1];
           std::strcpy(kernel->arg_info[j-1].type_name, val.c_str());
         } else if (meta_name == "kernel_arg_type_qual") {
@@ -603,6 +623,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     }
 
   kernel->arg_info = (struct pocl_argument_info*) calloc(kernel->num_args, sizeof(struct pocl_argument_info));
+  memset(kernel->arg_info, 0, sizeof(struct pocl_argument_info)*kernel->num_args);
 
   i = 0;
   for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
