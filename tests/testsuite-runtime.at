@@ -59,5 +59,10 @@ AT_CLEANUP
 AT_SETUP([clCreateKernel])
 AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateKernel] , 0, [OK
+AT_CLEANUP
+
+AT_SETUP([clGetKernelArgInfo])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetKernelArgInfo], 0, [OK
 ])
 AT_CLEANUP

@@ -25,7 +25,9 @@
 noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
 	test_clCreateProgramWithBinary test_clGetSupportedImageFormats \
 	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram \
-	test_clCreateKernelsInProgram test_clCreateKernel test_version
+	test_clCreateKernelsInProgram test_clCreateKernel test_version \
+	test_clGetKernelArgInfo
+
 EXTRA_DIST= \
 	test_kernel_src_in_pwd.h \
 	test_clCreateKernelsInProgram.cl \
