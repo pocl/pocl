@@ -414,6 +414,8 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
         uint64_t val = m->getLimitedValue(UINT_MAX);
         //std::cout << "with value: " << val << std::endl;
         switch(val) {
+          case POCL_ADDRESS_SPACE_PRIVATE:
+            kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
           case POCL_ADDRESS_SPACE_GLOBAL:
             kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
           case POCL_ADDRESS_SPACE_LOCAL:
