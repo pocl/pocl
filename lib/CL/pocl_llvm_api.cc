@@ -394,8 +394,8 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
 
   assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
 
-  // 5 types of metadata for opencl kernels
-  for (unsigned i = 1; i != 6; ++i) {
+  unsigned e = kernel_metadata->getNumOperands();
+  for (unsigned i = 1; i != e; ++i) {
     llvm::MDNode *meta_node = llvm::cast<MDNode>(kernel_metadata->getOperand(i));
 
     // argument num
