@@ -409,6 +409,7 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
 
     for (unsigned j = 1; j != arg_num; ++j) {
       llvm::Value *meta_arg_value = meta_node->getOperand(j);
+      struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
 
       if (isa<ConstantInt>(meta_arg_value) && meta_name=="kernel_arg_addr_space") {
         //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
@@ -418,24 +419,24 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
         if(bitcode_is_spir) {
           switch(val) {
             case 0:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
             case 1:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
             case 3:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
             case 2:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
           }
         } else {
           switch(val) {
             case POCL_ADDRESS_SPACE_PRIVATE:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
             case POCL_ADDRESS_SPACE_GLOBAL:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
             case POCL_ADDRESS_SPACE_LOCAL:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
             case POCL_ADDRESS_SPACE_CONSTANT:
-              kernel->arg_info[j-1].address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
           }
         }
       }
@@ -446,34 +447,34 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
         //std::cout << "with value: " << val << std::endl;
         if (meta_name == "kernel_arg_access_qual") {
           if (val == "read_write")
-            kernel->arg_info[j-1].access_qualifier = CL_KERNEL_ARG_ACCESS_READ_WRITE;
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_WRITE;
           else if (val == "read_only")
-            kernel->arg_info[j-1].access_qualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
           else if (val == "write_only")
-            kernel->arg_info[j-1].access_qualifier = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
           else if (val == "none")
-            kernel->arg_info[j-1].access_qualifier = CL_KERNEL_ARG_ACCESS_NONE;
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_NONE;
           else
             std::cout << "UNKNOWN kernel_arg_access_qual value: " << val << std::endl;
         } else if (meta_name == "kernel_arg_type") {
           if (!bitcode_is_spir) {
-            kernel->arg_info[j-1].type_name = new char[val.size() + 1];
-            std::strcpy(kernel->arg_info[j-1].type_name, val.c_str());
+            current_arg->type_name = new char[val.size() + 1];
+            std::strcpy(current_arg->type_name, val.c_str());
           }
         } else if (meta_name == "kernel_arg_base_type") {
-          kernel->arg_info[j-1].type_name = new char[val.size() + 1];
-          std::strcpy(kernel->arg_info[j-1].type_name, val.c_str());
+          current_arg->type_name = new char[val.size() + 1];
+          std::strcpy(current_arg->type_name, val.c_str());
         } else if (meta_name == "kernel_arg_type_qual") {
-          kernel->arg_info[j-1].type_qualifier = 0;
+          current_arg->type_qualifier = 0;
           if (val.find("const") != std::string::npos)
-            kernel->arg_info[j-1].type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
+            current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
           if (val.find("restrict") != std::string::npos)
-            kernel->arg_info[j-1].type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
+            current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
           if (val.find("volatile") != std::string::npos)
-            kernel->arg_info[j-1].type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
+            current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
         } else if (meta_name == "kernel_arg_name") {
-          kernel->arg_info[j-1].name = new char[val.size() + 1];
-          std::strcpy(kernel->arg_info[j-1].name, val.c_str());
+          current_arg->name = new char[val.size() + 1];
+          std::strcpy(current_arg->name, val.c_str());
         } else
           std::cout << "UNKNOWN opencl metadata name: " << meta_name << std::endl;
       }
