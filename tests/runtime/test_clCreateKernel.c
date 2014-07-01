@@ -1,10 +1,10 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <CL/opencl.h>
 #include "poclu.h"
 #include "config.h"
+#include "pocl_tests.h"
 
 
 int main(int argc, char **argv)
@@ -19,22 +19,24 @@ int main(int argc, char **argv)
   cl_kernel kernel;
 
   poclu_get_any_device(&ctx, &did, &queue);
-  assert( ctx );
-  assert( did );
-  assert( queue );
+  TEST_ASSERT(ctx);
+  TEST_ASSERT(did);
+  TEST_ASSERT(queue);
 
   krn_src = poclu_read_file(SRCDIR "/tests/runtime/test_clCreateKernelsInProgram.cl");
-  assert(krn_src);
+  TEST_ASSERT(krn_src);
 
   program = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-  assert(err == CL_SUCCESS);
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
 
   kernel = clCreateKernel(program, NULL, &err);
-  assert(err == CL_INVALID_VALUE);
+  TEST_ASSERT(err == CL_INVALID_VALUE);
 
   kernel = clCreateKernel(program, "nonexistent_kernel", &err);
-  assert(err == CL_INVALID_KERNEL_NAME);
+  TEST_ASSERT(err == CL_INVALID_KERNEL_NAME);
 
   printf("OK\n");
 

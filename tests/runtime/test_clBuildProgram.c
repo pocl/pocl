@@ -26,7 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <CL/cl.h>
-#include <assert.h>
+#include <poclu.h>
+#include "pocl_tests.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -51,44 +52,43 @@ main(void){
   cl_uint i;
   cl_program program = NULL;
   cl_program program_with_binary = NULL;
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);	
-  if (err != CL_SUCCESS && !nplatforms)
-    return EXIT_FAILURE;
-  
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-		       devices, &num_devices);  
-  if (err != CL_SUCCESS)
+  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
+  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
+  if (!nplatforms)
     return EXIT_FAILURE;
 
+  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
+		       devices, &num_devices);  
+  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
+
   cl_context context = clCreateContext(NULL, num_devices, devices, NULL, NULL, &err);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clCreateContext");
 
   size_t kernel_size = strlen(kernel);
   char* kernel_buffer = kernel;
 
   program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer, 
                                      &kernel_size, &err);
-  assert((err == CL_SUCCESS) && "clCreateProgramWithSource for the kernel with #include failed");
+  //clCreateProgramWithSource for the kernel with #include failed
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram
-    (program, num_devices, devices, 
-     "-D__FUNC__=helper_func -I./test_data", 
-     NULL, NULL);
-  assert((err == CL_SUCCESS) && "clBuildProgram failed");
+  err = clBuildProgram(program, num_devices, devices, 
+     "-D__FUNC__=helper_func -I./test_data", NULL, NULL);
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
 
   err = clReleaseProgram(program);
-  assert((err == CL_SUCCESS) && "clReleaseProgram failed");
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
 
   kernel_size = strlen(invalid_kernel);
   kernel_buffer = invalid_kernel;
 
   program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
 				      &kernel_size, &err);
-  assert((err == CL_SUCCESS) && "clCreateProgramWithSource for invalid kernel failed");
+  //clCreateProgramWithSource for invalid kernel failed
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
-  assert((err == CL_BUILD_PROGRAM_FAILURE) && "Compilation of invalid kernels did not fail with CL_BUILD_PROGRAM_FAILURE");
+  TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
 
   return EXIT_SUCCESS;
 }
