@@ -360,6 +360,8 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
   *mod = action->takeModule();
+  if (*mod == NULL)
+    return CL_BUILD_PROGRAM_FAILURE;
 
   if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
     write_temporary_file(*mod, binary_file_name);
