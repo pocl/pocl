@@ -379,7 +379,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                                   const char* kernel_name,
                                   const char* device_tmpdir, 
                                   char* descriptor_filename,
-                                  int */*errcode*/)
+                                  int * errcode)
 {
 
   int i;
@@ -454,6 +454,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   llvm::Function *kernel_function = input->getFunction(kernel_name);
   assert(kernel_function && "TODO: make better check here");
+  if (!kernel_function) {
+    *errcode = CL_INVALID_KERNEL_NAME;
+    return 1;
+  }
 
   DataLayout *TD = 0;
   #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
