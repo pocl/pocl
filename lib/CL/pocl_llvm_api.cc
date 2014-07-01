@@ -453,7 +453,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #endif
 
   llvm::Function *kernel_function = input->getFunction(kernel_name);
-  assert(kernel_function && "TODO: make better check here");
   if (!kernel_function) {
     *errcode = CL_INVALID_KERNEL_NAME;
     return 1;
