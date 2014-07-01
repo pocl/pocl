@@ -25,6 +25,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "poclu.h"
+#include "pocl_tests.h"
 
 char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
@@ -43,54 +45,6 @@ char kernelSourceCode[] =
 "    out[i] = in[i] * native_sin(j*c[i%50]);\n"
 "}\n";
 
-#define PRINT_ERR(err) { printf(err "  in %s on line %i\n", func_name, line); return 1; }
-
-int check_cl_error(cl_int var, int line, const char* func_name) {
-  switch(var) {
-    case CL_SUCCESS:
-      return 0;
-
-    case CL_BUILD_PROGRAM_FAILURE:
-      PRINT_ERR("CL_BUILD_PROGRAM_FAILURE")
-    case CL_COMPILER_NOT_AVAILABLE:
-      PRINT_ERR("CL_COMPILER_NOT_AVAILABLE")
-    case CL_INVALID_ARG_INDEX:
-      PRINT_ERR("CL_INVALID_ARG_INDEX")
-    case CL_INVALID_BINARY:
-      PRINT_ERR("CL_INVALID_BINARY")
-    case CL_INVALID_BUILD_OPTIONS:
-      PRINT_ERR("CL_INVALID_BUILD_OPTIONS")
-    case CL_INVALID_DEVICE:
-      PRINT_ERR("CL_INVALID_DEVICE")
-    case CL_INVALID_KERNEL:
-      PRINT_ERR("CL_INVALID_KERNEL")
-    case CL_INVALID_KERNEL_DEFINITION:
-      PRINT_ERR("CL_INVALID_KERNEL_DEFINITION")
-    case CL_INVALID_KERNEL_NAME:
-      PRINT_ERR("CL_INVALID_KERNEL_NAME")
-    case CL_INVALID_OPERATION:
-      PRINT_ERR("CL_INVALID_OPERATION")
-    case CL_INVALID_PROGRAM:
-      PRINT_ERR("CL_INVALID_PROGRAM")
-    case CL_INVALID_PROGRAM_EXECUTABLE:
-      PRINT_ERR("CL_INVALID_PROGRAM_EXECUTABLE")
-    case CL_INVALID_VALUE:
-      PRINT_ERR("CL_INVALID_VALUE")
-
-    case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
-      PRINT_ERR("CL_KERNEL_ARG_INFO_NOT_AVAILABLE")
-    case CL_OUT_OF_RESOURCES:
-      PRINT_ERR("CL_OUT_OF_RESOURCES")
-    case CL_OUT_OF_HOST_MEMORY:
-      PRINT_ERR("CL_OUT_OF_HOST_MEMORY")
-
-    default:
-      printf("Unknown OpenCL error %i in %s on line %i\n", var, func_name, line);
-      return 1;
-  }
-}
-
-#define CHECK_OPENCL_ERROR(func_name) if(check_cl_error(err, __LINE__, func_name)) return EXIT_FAILURE;
 
 #define BUF_LEN 2000
 
@@ -115,21 +69,20 @@ int main()
   unsigned i;
 
   err = clGetPlatformIDs(1, platforms, &nplatforms);
-  CHECK_OPENCL_ERROR("clGetPlatformIDs")
-  if (!nplatforms)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
+  TEST_ASSERT(nplatforms > 0);
 
   err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1,
                        devices, &num_devices);
-  CHECK_OPENCL_ERROR("clGetDeviceIDs")
+  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
 
   cl_context context = clCreateContext(NULL, num_devices, devices, NULL,
                                        NULL, &err);
-  CHECK_OPENCL_ERROR("clCreateContext")
+  CHECK_OPENCL_ERROR_IN("clCreateContext");
 
   err = clGetContextInfo(context, CL_CONTEXT_DEVICES,
                          sizeof(cl_device_id), devices, NULL);
-  CHECK_OPENCL_ERROR("clGetContextInfo")
+  CHECK_OPENCL_ERROR_IN("clGetContextInfo");
 
   size_t kernel_size = strlen (kernelSourceCode);
   char* kernel_buffer = kernelSourceCode;
@@ -137,46 +90,46 @@ int main()
   program = clCreateProgramWithSource (context, 1,
                                        (const char**)&kernel_buffer,
                                        &kernel_size, &err);
-  CHECK_OPENCL_ERROR("clCreateProgramWithSource")
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
   err = clBuildProgram (program, num_devices, devices, NULL, NULL, NULL);
-  CHECK_OPENCL_ERROR("clBuildProgram")
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
 
   test_kernel = clCreateKernel (program, "test_kernel", &err);
-  CHECK_OPENCL_ERROR("clCreateKernel")
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
 
   test_kernel2 = clCreateKernel (program, "test_kernel2", &err);
-  CHECK_OPENCL_ERROR("clCreateKernel")
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
 
   /* ADDR SPACE QUALIFIER tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.address, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_CONSTANT) && "arg of test_kernel is not CONSTANT addr space");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_CONSTANT) && "arg of test_kernel is not CONSTANT addr space");
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.address, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_GLOBAL) && "arg of test_kernel is not GLOBAL addr space");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_GLOBAL) && "arg of test_kernel is not GLOBAL addr space");
 
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.address, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_GLOBAL) && "arg of test_kernel is not GLOBAL addr space");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_GLOBAL) && "arg of test_kernel is not GLOBAL addr space");
 
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.address, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_PRIVATE) && "arg of test_kernel is not PRIVATE addr space");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_PRIVATE) && "arg of test_kernel is not PRIVATE addr space");
 
 
   err = clGetKernelArgInfo(test_kernel, 4, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.address, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_LOCAL) && "arg of test_kernel is not LOCAL addr space");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_ADDRESS_LOCAL) && "arg of test_kernel is not LOCAL addr space");
 
   /* ACCESS QUALIFIER tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
@@ -184,8 +137,8 @@ int main()
   for (i = 0; i<5; ++i) {
     err = clGetKernelArgInfo(test_kernel, i, CL_KERNEL_ARG_ACCESS_QUALIFIER,
                               BUF_LEN, &kernel_arg.access, &retsize);
-    CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-    assert((kernel_arg.access==CL_KERNEL_ARG_ACCESS_NONE) && "arg of test_kernel is not NONE access");
+    CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+    TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_NONE) && "arg of test_kernel is not NONE access");
   }
 
   /* TYPE NAME tests */
@@ -193,106 +146,104 @@ int main()
 
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==6) && " arg type name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "char*", 6)==0) && " arg type name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==6) && " arg type name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "char*", 6)==0) && " arg type name of test_kernel doesnt compare");
 
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==7) && " arg type name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "float*", 7)==0) && " arg type name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==7) && " arg type name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "float*", 7)==0) && " arg type name of test_kernel doesnt compare");
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==6) && " arg type name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "float", 6)==0) && " arg type name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==6) && " arg type name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "float", 6)==0) && " arg type name of test_kernel doesnt compare");
 
   err = clGetKernelArgInfo(test_kernel, 4, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==5) && " arg type name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "int*", 5)==0) && " arg type name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==5) && " arg type name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "int*", 5)==0) && " arg type name of test_kernel doesnt compare");
 
   /* TYPE QUALIFIER tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
 
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_TYPE_VOLATILE) && "type qualifier of arg of test_kernel is not VOLATILE");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_VOLATILE) && "type qualifier of arg of test_kernel is not VOLATILE");
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_TYPE_NONE) && "type qualifier of arg of test_kernel is not NONE");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_NONE) && "type qualifier of arg of test_kernel is not NONE");
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
 
   /* NAME tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
 
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==4) && " arg name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "msg", 4)==0) && " arg name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "msg", 4)==0) && " arg name of test_kernel doesnt compare");
 
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==3) && " arg name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "in", 3)==0) && " arg name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==3) && " arg name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "in", 3)==0) && " arg name of test_kernel doesnt compare");
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==4) && " arg name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "out", 4)==0) && " arg name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "out", 4)==0) && " arg name of test_kernel doesnt compare");
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==2) && " arg name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "j", 2)==0) && " arg name of test_kernel doesnt compare");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==2) && " arg name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "j", 2)==0) && " arg name of test_kernel doesnt compare");
 
   /* ACCESS QUALIFIER tests for test_kernel2 */
   // const float4 vec1, __read_only image2d_t in, write_only image2d_t out
   err = clGetKernelArgInfo(test_kernel2, 0, CL_KERNEL_ARG_ACCESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.access, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.access==CL_KERNEL_ARG_ACCESS_NONE) && "arg of test_kernel2 is not NONE access");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_NONE) && "arg of test_kernel2 is not NONE access");
 
   err = clGetKernelArgInfo(test_kernel2, 1, CL_KERNEL_ARG_ACCESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.access, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.access==CL_KERNEL_ARG_ACCESS_READ_ONLY) && "arg of test_kernel2 is not NONE access");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_READ_ONLY) && "arg of test_kernel2 is not NONE access");
 
   err = clGetKernelArgInfo(test_kernel2, 2, CL_KERNEL_ARG_ACCESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.access, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((kernel_arg.access==CL_KERNEL_ARG_ACCESS_WRITE_ONLY) && "arg of test_kernel2 is not NONE access");
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_WRITE_ONLY) && "arg of test_kernel2 is not NONE access");
 
   /* check typedef-ed arg type name */
 
   err = clGetKernelArgInfo(test_kernel2, 0, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR("clGetKernelArgInfo")
-  assert((retsize==12) && " arg type name size of test_kernel doesnt fit");
-  assert((strncmp(kernel_arg.string, "tasty_float", 12)==0) && " arg type name of test_kernel2 doesnt compare");
-
-
+  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+  TEST_ASSERT((retsize==12) && " arg type name size of test_kernel doesnt fit");
+  TEST_ASSERT((strncmp(kernel_arg.string, "tasty_float", 12)==0) && " arg type name of test_kernel2 doesnt compare");
 
   printf("OK\n");
   return EXIT_SUCCESS;
