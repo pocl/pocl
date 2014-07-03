@@ -76,7 +76,11 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
     case CL_KERNEL_ARG_TYPE_QUALIFIER:
       POCL_RETURN_KERNEL_INFO(cl_kernel_arg_type_qualifier, arg->type_qualifier);
     case CL_KERNEL_ARG_NAME:
-      POCL_RETURN_KERNEL_INFO_STR(arg->name);
+      if (arg->name) {
+        POCL_RETURN_KERNEL_INFO_STR(arg->name);
+      } else {
+        return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
+      }
   }
   return CL_INVALID_VALUE;
 }
