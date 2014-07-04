@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   krn_src = poclu_read_file(SRCDIR "/tests/runtime/test_clCreateKernelsInProgram.cl");
   TEST_ASSERT(krn_src);
 
-  program = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, NULL);
+  program = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
