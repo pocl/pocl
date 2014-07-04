@@ -198,7 +198,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
            ++ii) {
         llvm::Instruction *instr = ii;
 
-#if !(defined(LLVM_3_2) || defined(LLVM_3_3))
+#if !( defined(LLVM_3_2) || defined(LLVM_3_3) || defined LLVM_3_4 )
         if (isa<AddrSpaceCastInst>(instr)) {
           // Convert (now illegal) addresspacecasts to bitcasts.
 

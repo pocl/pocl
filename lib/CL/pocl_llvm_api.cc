@@ -87,14 +87,12 @@
 using namespace clang;
 using namespace llvm;
 
-#if defined LLVM_3_2 || defined LLVM_3_3
-#include "llvm/Support/raw_ostream.h"
-#define F_Binary llvm::raw_fd_ostream::F_Binary
-#elif defined LLVM_3_4
-using llvm::sys::fs::F_Binary;
+#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
+  #include "llvm/Support/raw_ostream.h"
+  #define F_Binary llvm::raw_fd_ostream::F_Binary
 #else
-// a binary file is "not a text file"
-#define F_Binary llvm::sys::fs::F_None
+  // a binary file is "not a text file"
+  #define F_Binary llvm::sys::fs::F_None
 #endif
 
 
