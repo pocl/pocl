@@ -68,19 +68,25 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
   struct pocl_argument_info *arg = &kernel->arg_info[arg_indx];
   switch (param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER:
+      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER))
+        return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_KERNEL_INFO(cl_kernel_arg_address_qualifier, arg->address_qualifier);
     case CL_KERNEL_ARG_ACCESS_QUALIFIER:
+      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER))
+        return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_KERNEL_INFO(cl_kernel_arg_access_qualifier, arg->access_qualifier);
     case CL_KERNEL_ARG_TYPE_NAME:
+      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_TYPE_NAME))
+        return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_KERNEL_INFO_STR(arg->type_name);
     case CL_KERNEL_ARG_TYPE_QUALIFIER:
+      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER))
+        return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_KERNEL_INFO(cl_kernel_arg_type_qualifier, arg->type_qualifier);
     case CL_KERNEL_ARG_NAME:
-      if (arg->name) {
-        POCL_RETURN_KERNEL_INFO_STR(arg->name);
-      } else {
+      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_NAME))
         return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
-      }
+      POCL_RETURN_KERNEL_INFO_STR(arg->name);
   }
   return CL_INVALID_VALUE;
 }

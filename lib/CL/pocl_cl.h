@@ -190,6 +190,13 @@ typedef pthread_mutex_t pocl_lock_t;
 
 #include "pocl_intfn.h"
 
+/* fields for cl_kernel -> has_arg_metadata */
+#define POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER  1
+#define POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER   2
+#define POCL_HAS_KERNEL_ARG_TYPE_NAME          4
+#define POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER     8
+#define POCL_HAS_KERNEL_ARG_NAME               16
+
 struct pocl_argument {
   size_t size;
   void *value;
@@ -490,6 +497,7 @@ struct _cl_kernel {
   /* implementation */
   lt_dlhandle dlhandle;
   struct pocl_argument_info *arg_info;
+  cl_bitfield has_arg_metadata;
   cl_uint num_locals;
   int *reqd_wg_size;
   /* The kernel arguments that are set with clSetKernelArg().
