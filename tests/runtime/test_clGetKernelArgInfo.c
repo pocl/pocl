@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include "poclu.h"
 #include "pocl_tests.h"
+#include "config.h"
 
 char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
@@ -45,19 +46,15 @@ char kernelSourceCode[] =
 "    out[i] = in[i] * native_sin(j*c[i%50]);\n"
 "}\n";
 
-
 #define BUF_LEN 2000
 
-int main()
-{
-  size_t global_work_size[1] = { 1 }, local_work_size[1]= { 1 };
+#define SPIR_FILE(NUM, SUFFIX) SPIR_FILE_2(NUM) SUFFIX
+#define SPIR_FILE_2(NUM) SRCDIR "/tests/runtime/clGetKernelArgInfo.spir" #NUM
+
+int test_program(cl_program program, int is_spir) {
+
   cl_int err;
   size_t retsize;
-  cl_platform_id platforms[1];
-  cl_uint nplatforms;
-  cl_device_id devices[1]; // + 1 for duplicate test
-  cl_uint num_devices;
-  cl_program program = NULL;
   cl_kernel test_kernel = NULL;
   cl_kernel test_kernel2 = NULL;
   union {
@@ -67,33 +64,6 @@ int main()
     char string[BUF_LEN];
   } kernel_arg;
   unsigned i;
-
-  err = clGetPlatformIDs(1, platforms, &nplatforms);
-  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
-  TEST_ASSERT(nplatforms > 0);
-
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1,
-                       devices, &num_devices);
-  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
-
-  cl_context context = clCreateContext(NULL, num_devices, devices, NULL,
-                                       NULL, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateContext");
-
-  err = clGetContextInfo(context, CL_CONTEXT_DEVICES,
-                         sizeof(cl_device_id), devices, NULL);
-  CHECK_OPENCL_ERROR_IN("clGetContextInfo");
-
-  size_t kernel_size = strlen (kernelSourceCode);
-  char* kernel_buffer = kernelSourceCode;
-
-  program = clCreateProgramWithSource (context, 1,
-                                       (const char**)&kernel_buffer,
-                                       &kernel_size, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
-
-  err = clBuildProgram (program, num_devices, devices, NULL, NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("clBuildProgram");
 
   test_kernel = clCreateKernel (program, "test_kernel", &err);
   CHECK_OPENCL_ERROR_IN("clCreateKernel");
@@ -197,28 +167,43 @@ int main()
 
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "msg", 4)==0) && " arg name of test_kernel doesnt compare");
-
+  if (is_spir && (err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE)) {
+    printf("arg name not available (this is normal for SPIR)\n");
+  } else {
+    CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+    TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
+    TEST_ASSERT((strncmp(kernel_arg.string, "msg", 4)==0) && " arg name of test_kernel doesnt compare");
+  }
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==3) && " arg name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "in", 3)==0) && " arg name of test_kernel doesnt compare");
+  if (is_spir && (err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE)) {
+    printf("arg name not available (this is normal for SPIR)\n");
+  } else {
+    CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+    TEST_ASSERT((retsize==3) && " arg name size of test_kernel doesnt fit");
+    TEST_ASSERT((strncmp(kernel_arg.string, "in", 3)==0) && " arg name of test_kernel doesnt compare");
+  }
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "out", 4)==0) && " arg name of test_kernel doesnt compare");
+  if (is_spir && (err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE)) {
+    printf("arg name not available (this is normal for SPIR)\n");
+  } else {
+    CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+    TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
+    TEST_ASSERT((strncmp(kernel_arg.string, "out", 4)==0) && " arg name of test_kernel doesnt compare");
+  }
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
-  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==2) && " arg name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "j", 2)==0) && " arg name of test_kernel doesnt compare");
+  if (is_spir && (err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE)) {
+    printf("arg name not available (this is normal for SPIR)\n");
+  } else {
+    CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+    TEST_ASSERT((retsize==2) && " arg name size of test_kernel doesnt fit");
+    TEST_ASSERT((strncmp(kernel_arg.string, "j", 2)==0) && " arg name of test_kernel doesnt compare");
+  }
 
   /* ACCESS QUALIFIER tests for test_kernel2 */
   // const float4 vec1, __read_only image2d_t in, write_only image2d_t out
@@ -230,12 +215,12 @@ int main()
   err = clGetKernelArgInfo(test_kernel2, 1, CL_KERNEL_ARG_ACCESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.access, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_READ_ONLY) && "arg of test_kernel2 is not NONE access");
+  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_READ_ONLY) && "arg of test_kernel2 is not READ_ONLY access");
 
   err = clGetKernelArgInfo(test_kernel2, 2, CL_KERNEL_ARG_ACCESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.access, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_WRITE_ONLY) && "arg of test_kernel2 is not NONE access");
+  TEST_ASSERT((kernel_arg.access==CL_KERNEL_ARG_ACCESS_WRITE_ONLY) && "arg of test_kernel2 is not WRITE_ONLY access");
 
   /* check typedef-ed arg type name */
 
@@ -245,7 +230,145 @@ int main()
   TEST_ASSERT((retsize==12) && " arg type name size of test_kernel doesnt fit");
   TEST_ASSERT((strncmp(kernel_arg.string, "tasty_float", 12)==0) && " arg type name of test_kernel2 doesnt compare");
 
-  printf("OK\n");
+  err = clReleaseKernel(test_kernel);
+  CHECK_OPENCL_ERROR_IN("clReleaseKernel");
+  err = clReleaseKernel(test_kernel2);
+  CHECK_OPENCL_ERROR_IN("clReleaseKernel");
+  return EXIT_SUCCESS;
+
+}
+
+int test_program_nometa(cl_program program) {
+
+  cl_int err;
+  size_t retsize;
+  cl_kernel test_kernel = NULL;
+  union {
+    cl_kernel_arg_address_qualifier address;
+    cl_kernel_arg_access_qualifier access;
+    cl_kernel_arg_type_qualifier type;
+    char string[BUF_LEN];
+  } kernel_arg;
+
+  test_kernel = clCreateKernel (program, "test_kernel", &err);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+
+  /* ADDR SPACE QUALIFIER tests */
+  // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
+  err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
+                            BUF_LEN, &kernel_arg.address, &retsize);
+  TEST_ASSERT(err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
+
+  err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_ACCESS_QUALIFIER,
+                            BUF_LEN, &kernel_arg.access, &retsize);
+  TEST_ASSERT(err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
+
+  err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_TYPE_NAME,
+                            BUF_LEN, &kernel_arg.string, &retsize);
+  TEST_ASSERT(err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
+
+  err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_NAME,
+                            BUF_LEN, &kernel_arg.string, &retsize);
+  TEST_ASSERT(err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
+
+  return EXIT_SUCCESS;
+}
+
+int spir_program(const char * filename, cl_context ctx, cl_device_id did, cl_program* program) {
+  cl_int err;
+  size_t program_size;
+  char* program_buffer;
+  FILE *spir_bitcode;
+
+  printf("opening File: %s\n", filename);
+  spir_bitcode = fopen(filename, "r");
+  TEST_ASSERT(spir_bitcode && "couldn't find spir bitcode file for this test");
+
+  fseek (spir_bitcode, 0, SEEK_END);
+  program_size = ftell (spir_bitcode);
+  fseek (spir_bitcode, 0, SEEK_SET);
+  TEST_ASSERT(program_size > 2000);
+  printf("program size: %zi\n", program_size);
+
+  program_buffer = (char *) malloc (program_size +1 );
+  TEST_ASSERT(program_buffer);
+
+  TEST_ASSERT(fread(program_buffer, program_size, 1, spir_bitcode) == 1);
+
+  TEST_ASSERT(fclose(spir_bitcode) == 0);
+
+
+  *program = clCreateProgramWithBinary (ctx, 1, &did, &program_size,
+                                       (const unsigned char**)&program_buffer,
+                                        NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
+  TEST_ASSERT(program);
+
+  err = clBuildProgram (*program, 1, &did, NULL, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
+
+  return EXIT_SUCCESS;
+}
+
+int main()
+{
+  cl_int err;
+
+  cl_context ctx;
+  cl_device_id did;
+  cl_command_queue queue;
+
+  size_t program_size;
+  char* program_buffer;
+
+  cl_program program = NULL;
+
+
+  poclu_get_any_device(&ctx, &did, &queue);
+  TEST_ASSERT(ctx);
+  TEST_ASSERT(did);
+  TEST_ASSERT(queue);
+
+  /* regular non-SPIR program */
+
+  program_size = strlen (kernelSourceCode);
+  program_buffer = kernelSourceCode;
+
+  program = clCreateProgramWithSource (ctx, 1,
+                                       (const char**)&program_buffer,
+                                       &program_size, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
+  TEST_ASSERT(program);
+
+  err = clBuildProgram (program, 1, &did, NULL, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
+
+  printf("\nNON-SPIR\n");
+  if (test_program(program, 0) != EXIT_SUCCESS) return EXIT_FAILURE;
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+
+  /* SPIR program */
+
+  printf("\nSPIR with metadata\n");
+  if(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_meta"), ctx, did, &program) != EXIT_SUCCESS) return EXIT_FAILURE;
+
+  if (test_program(program, 1) != EXIT_SUCCESS) return EXIT_FAILURE;
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+
+  printf("\nSPIR WITHOUT metadata\n");
+  if(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_nometa"), ctx, did, &program) != EXIT_SUCCESS) return EXIT_FAILURE;
+
+  if (test_program_nometa(program) != EXIT_SUCCESS) return EXIT_FAILURE;
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+
+  printf("\nOK\n");
   return EXIT_SUCCESS;
 
 }
