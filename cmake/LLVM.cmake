@@ -63,6 +63,13 @@ run_llvm_config(LLVM_LIBS --libs)
 run_llvm_config(LLVM_LIBFILES --libfiles)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
+# Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
+# `clang --target=arm-unknown-linux-gnueabihf ...` it will produce armv6 code,
+# even if one's running armv7;
+# Here we replace the "arm" string with whatever's in CMAKE_HOST_SYSTEM_PROCESSOR
+# which should be "armv6l" on rasp pi, or "armv7l" on my cubieboard, hopefully its
+# more reasonable and reliable than llvm's own host flags
+string(REPLACE "arm-" "${CMAKE_HOST_SYSTEM_PROCESSOR}-" LLVM_HOST_TARGET "${LLVM_HOST_TARGET}")
 
 # required for sources..
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")

@@ -169,6 +169,7 @@ if(UNIX)
   endif()
   # TODO win..
 endif()
+
 ######################################################################################
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
@@ -451,6 +452,20 @@ set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -mtriple=${LLC_TRIPLE}")
 if(NOT LLC_HOST_CPU MATCHES "unknown")
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU}")
   set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -mcpu=${LLC_HOST_CPU}")
+endif()
+
+if(LLC_TRIPLE MATCHES "^arm")
+  if(LLC_TRIPLE MATCHES "gnueabihf")
+    # hardfloat
+    set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -float-abi=hard")
+    set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfloat-abi=hard")
+    set(DEFAULT_HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} -mfloat-abi=hard")
+  else()
+    # softfloat
+    set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -float-abi=soft")
+    set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfloat-abi=soft")
+    set(DEFAULT_HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} -mfloat-abi=soft")
+  endif()
 endif()
 
 if(CL_DISABLE_LONG)
