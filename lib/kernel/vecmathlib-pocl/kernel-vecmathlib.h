@@ -5,6 +5,23 @@
 // acos: ['VF'] -> VF
 #undef acos
 #define acos _cl_acos
+__attribute__((__overloadable__)) half _cl_acos(half x0);
+__attribute__((__overloadable__)) half _cl_acos(half x0);
+__attribute__((__overloadable__)) half _cl_acos(half x0);
+__attribute__((__overloadable__)) half2 _cl_acos(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_acos(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_acos(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_acos(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_acos(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_acos(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_acos(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_acos(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_acos(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_acos(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_acos(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_acos(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_acos(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_acos(half16 x0);
 __attribute__((__overloadable__)) float _cl_acos(float x0);
 __attribute__((__overloadable__)) float _cl_acos(float x0);
 __attribute__((__overloadable__)) float _cl_acos(float x0);
@@ -43,6 +60,23 @@ __attribute__((__overloadable__)) double16 _cl_acos(double16 x0);
 // acosh: ['VF'] -> VF
 #undef acosh
 #define acosh _cl_acosh
+__attribute__((__overloadable__)) half _cl_acosh(half x0);
+__attribute__((__overloadable__)) half _cl_acosh(half x0);
+__attribute__((__overloadable__)) half _cl_acosh(half x0);
+__attribute__((__overloadable__)) half2 _cl_acosh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_acosh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_acosh(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_acosh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_acosh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_acosh(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_acosh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_acosh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_acosh(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_acosh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_acosh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_acosh(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_acosh(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_acosh(half16 x0);
 __attribute__((__overloadable__)) float _cl_acosh(float x0);
 __attribute__((__overloadable__)) float _cl_acosh(float x0);
 __attribute__((__overloadable__)) float _cl_acosh(float x0);
@@ -81,6 +115,23 @@ __attribute__((__overloadable__)) double16 _cl_acosh(double16 x0);
 // asin: ['VF'] -> VF
 #undef asin
 #define asin _cl_asin
+__attribute__((__overloadable__)) half _cl_asin(half x0);
+__attribute__((__overloadable__)) half _cl_asin(half x0);
+__attribute__((__overloadable__)) half _cl_asin(half x0);
+__attribute__((__overloadable__)) half2 _cl_asin(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_asin(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_asin(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_asin(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_asin(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_asin(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_asin(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_asin(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_asin(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_asin(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_asin(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_asin(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_asin(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_asin(half16 x0);
 __attribute__((__overloadable__)) float _cl_asin(float x0);
 __attribute__((__overloadable__)) float _cl_asin(float x0);
 __attribute__((__overloadable__)) float _cl_asin(float x0);
@@ -119,6 +170,23 @@ __attribute__((__overloadable__)) double16 _cl_asin(double16 x0);
 // asinh: ['VF'] -> VF
 #undef asinh
 #define asinh _cl_asinh
+__attribute__((__overloadable__)) half _cl_asinh(half x0);
+__attribute__((__overloadable__)) half _cl_asinh(half x0);
+__attribute__((__overloadable__)) half _cl_asinh(half x0);
+__attribute__((__overloadable__)) half2 _cl_asinh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_asinh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_asinh(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_asinh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_asinh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_asinh(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_asinh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_asinh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_asinh(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_asinh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_asinh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_asinh(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_asinh(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_asinh(half16 x0);
 __attribute__((__overloadable__)) float _cl_asinh(float x0);
 __attribute__((__overloadable__)) float _cl_asinh(float x0);
 __attribute__((__overloadable__)) float _cl_asinh(float x0);
@@ -157,6 +225,23 @@ __attribute__((__overloadable__)) double16 _cl_asinh(double16 x0);
 // atan: ['VF'] -> VF
 #undef atan
 #define atan _cl_atan
+__attribute__((__overloadable__)) half _cl_atan(half x0);
+__attribute__((__overloadable__)) half _cl_atan(half x0);
+__attribute__((__overloadable__)) half _cl_atan(half x0);
+__attribute__((__overloadable__)) half2 _cl_atan(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_atan(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_atan(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_atan(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_atan(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_atan(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_atan(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_atan(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_atan(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_atan(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_atan(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_atan(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_atan(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_atan(half16 x0);
 __attribute__((__overloadable__)) float _cl_atan(float x0);
 __attribute__((__overloadable__)) float _cl_atan(float x0);
 __attribute__((__overloadable__)) float _cl_atan(float x0);
@@ -195,6 +280,23 @@ __attribute__((__overloadable__)) double16 _cl_atan(double16 x0);
 // atanh: ['VF'] -> VF
 #undef atanh
 #define atanh _cl_atanh
+__attribute__((__overloadable__)) half _cl_atanh(half x0);
+__attribute__((__overloadable__)) half _cl_atanh(half x0);
+__attribute__((__overloadable__)) half _cl_atanh(half x0);
+__attribute__((__overloadable__)) half2 _cl_atanh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_atanh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_atanh(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_atanh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_atanh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_atanh(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_atanh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_atanh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_atanh(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_atanh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_atanh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_atanh(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_atanh(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_atanh(half16 x0);
 __attribute__((__overloadable__)) float _cl_atanh(float x0);
 __attribute__((__overloadable__)) float _cl_atanh(float x0);
 __attribute__((__overloadable__)) float _cl_atanh(float x0);
@@ -233,6 +335,23 @@ __attribute__((__overloadable__)) double16 _cl_atanh(double16 x0);
 // cbrt: ['VF'] -> VF
 #undef cbrt
 #define cbrt _cl_cbrt
+__attribute__((__overloadable__)) half _cl_cbrt(half x0);
+__attribute__((__overloadable__)) half _cl_cbrt(half x0);
+__attribute__((__overloadable__)) half _cl_cbrt(half x0);
+__attribute__((__overloadable__)) half2 _cl_cbrt(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_cbrt(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_cbrt(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_cbrt(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_cbrt(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_cbrt(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_cbrt(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_cbrt(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_cbrt(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_cbrt(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_cbrt(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_cbrt(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_cbrt(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_cbrt(half16 x0);
 __attribute__((__overloadable__)) float _cl_cbrt(float x0);
 __attribute__((__overloadable__)) float _cl_cbrt(float x0);
 __attribute__((__overloadable__)) float _cl_cbrt(float x0);
@@ -271,6 +390,23 @@ __attribute__((__overloadable__)) double16 _cl_cbrt(double16 x0);
 // ceil: ['VF'] -> VF
 #undef ceil
 #define ceil _cl_ceil
+__attribute__((__overloadable__)) half _cl_ceil(half x0);
+__attribute__((__overloadable__)) half _cl_ceil(half x0);
+__attribute__((__overloadable__)) half _cl_ceil(half x0);
+__attribute__((__overloadable__)) half2 _cl_ceil(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_ceil(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_ceil(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_ceil(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_ceil(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_ceil(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_ceil(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_ceil(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_ceil(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_ceil(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_ceil(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_ceil(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_ceil(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_ceil(half16 x0);
 __attribute__((__overloadable__)) float _cl_ceil(float x0);
 __attribute__((__overloadable__)) float _cl_ceil(float x0);
 __attribute__((__overloadable__)) float _cl_ceil(float x0);
@@ -309,6 +445,23 @@ __attribute__((__overloadable__)) double16 _cl_ceil(double16 x0);
 // copysign: ['VF', 'VF'] -> VF
 #undef copysign
 #define copysign _cl_copysign
+__attribute__((__overloadable__)) half _cl_copysign(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_copysign(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_copysign(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_copysign(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_copysign(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_copysign(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_copysign(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_copysign(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_copysign(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_copysign(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_copysign(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_copysign(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_copysign(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_copysign(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_copysign(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_copysign(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_copysign(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_copysign(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_copysign(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_copysign(float x0, float x1);
@@ -347,6 +500,23 @@ __attribute__((__overloadable__)) double16 _cl_copysign(double16 x0, double16 x1
 // cos: ['VF'] -> VF
 #undef cos
 #define cos _cl_cos
+__attribute__((__overloadable__)) half _cl_cos(half x0);
+__attribute__((__overloadable__)) half _cl_cos(half x0);
+__attribute__((__overloadable__)) half _cl_cos(half x0);
+__attribute__((__overloadable__)) half2 _cl_cos(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_cos(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_cos(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_cos(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_cos(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_cos(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_cos(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_cos(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_cos(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_cos(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_cos(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_cos(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_cos(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_cos(half16 x0);
 __attribute__((__overloadable__)) float _cl_cos(float x0);
 __attribute__((__overloadable__)) float _cl_cos(float x0);
 __attribute__((__overloadable__)) float _cl_cos(float x0);
@@ -385,6 +555,23 @@ __attribute__((__overloadable__)) double16 _cl_cos(double16 x0);
 // cosh: ['VF'] -> VF
 #undef cosh
 #define cosh _cl_cosh
+__attribute__((__overloadable__)) half _cl_cosh(half x0);
+__attribute__((__overloadable__)) half _cl_cosh(half x0);
+__attribute__((__overloadable__)) half _cl_cosh(half x0);
+__attribute__((__overloadable__)) half2 _cl_cosh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_cosh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_cosh(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_cosh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_cosh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_cosh(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_cosh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_cosh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_cosh(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_cosh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_cosh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_cosh(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_cosh(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_cosh(half16 x0);
 __attribute__((__overloadable__)) float _cl_cosh(float x0);
 __attribute__((__overloadable__)) float _cl_cosh(float x0);
 __attribute__((__overloadable__)) float _cl_cosh(float x0);
@@ -423,6 +610,23 @@ __attribute__((__overloadable__)) double16 _cl_cosh(double16 x0);
 // exp: ['VF'] -> VF
 #undef exp
 #define exp _cl_exp
+__attribute__((__overloadable__)) half _cl_exp(half x0);
+__attribute__((__overloadable__)) half _cl_exp(half x0);
+__attribute__((__overloadable__)) half _cl_exp(half x0);
+__attribute__((__overloadable__)) half2 _cl_exp(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_exp(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_exp(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_exp(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_exp(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_exp(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_exp(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_exp(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_exp(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_exp(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_exp(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_exp(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_exp(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_exp(half16 x0);
 __attribute__((__overloadable__)) float _cl_exp(float x0);
 __attribute__((__overloadable__)) float _cl_exp(float x0);
 __attribute__((__overloadable__)) float _cl_exp(float x0);
@@ -461,6 +665,23 @@ __attribute__((__overloadable__)) double16 _cl_exp(double16 x0);
 // exp2: ['VF'] -> VF
 #undef exp2
 #define exp2 _cl_exp2
+__attribute__((__overloadable__)) half _cl_exp2(half x0);
+__attribute__((__overloadable__)) half _cl_exp2(half x0);
+__attribute__((__overloadable__)) half _cl_exp2(half x0);
+__attribute__((__overloadable__)) half2 _cl_exp2(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_exp2(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_exp2(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_exp2(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_exp2(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_exp2(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_exp2(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_exp2(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_exp2(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_exp2(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_exp2(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_exp2(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_exp2(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_exp2(half16 x0);
 __attribute__((__overloadable__)) float _cl_exp2(float x0);
 __attribute__((__overloadable__)) float _cl_exp2(float x0);
 __attribute__((__overloadable__)) float _cl_exp2(float x0);
@@ -499,6 +720,23 @@ __attribute__((__overloadable__)) double16 _cl_exp2(double16 x0);
 // exp10: ['VF'] -> VF
 #undef exp10
 #define exp10 _cl_exp10
+__attribute__((__overloadable__)) half _cl_exp10(half x0);
+__attribute__((__overloadable__)) half _cl_exp10(half x0);
+__attribute__((__overloadable__)) half _cl_exp10(half x0);
+__attribute__((__overloadable__)) half2 _cl_exp10(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_exp10(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_exp10(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_exp10(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_exp10(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_exp10(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_exp10(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_exp10(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_exp10(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_exp10(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_exp10(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_exp10(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_exp10(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_exp10(half16 x0);
 __attribute__((__overloadable__)) float _cl_exp10(float x0);
 __attribute__((__overloadable__)) float _cl_exp10(float x0);
 __attribute__((__overloadable__)) float _cl_exp10(float x0);
@@ -537,6 +775,23 @@ __attribute__((__overloadable__)) double16 _cl_exp10(double16 x0);
 // expm1: ['VF'] -> VF
 #undef expm1
 #define expm1 _cl_expm1
+__attribute__((__overloadable__)) half _cl_expm1(half x0);
+__attribute__((__overloadable__)) half _cl_expm1(half x0);
+__attribute__((__overloadable__)) half _cl_expm1(half x0);
+__attribute__((__overloadable__)) half2 _cl_expm1(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_expm1(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_expm1(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_expm1(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_expm1(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_expm1(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_expm1(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_expm1(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_expm1(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_expm1(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_expm1(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_expm1(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_expm1(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_expm1(half16 x0);
 __attribute__((__overloadable__)) float _cl_expm1(float x0);
 __attribute__((__overloadable__)) float _cl_expm1(float x0);
 __attribute__((__overloadable__)) float _cl_expm1(float x0);
@@ -575,6 +830,23 @@ __attribute__((__overloadable__)) double16 _cl_expm1(double16 x0);
 // fabs: ['VF'] -> VF
 #undef fabs
 #define fabs _cl_fabs
+__attribute__((__overloadable__)) half _cl_fabs(half x0);
+__attribute__((__overloadable__)) half _cl_fabs(half x0);
+__attribute__((__overloadable__)) half _cl_fabs(half x0);
+__attribute__((__overloadable__)) half2 _cl_fabs(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_fabs(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_fabs(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_fabs(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_fabs(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_fabs(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_fabs(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_fabs(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_fabs(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_fabs(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_fabs(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_fabs(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_fabs(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_fabs(half16 x0);
 __attribute__((__overloadable__)) float _cl_fabs(float x0);
 __attribute__((__overloadable__)) float _cl_fabs(float x0);
 __attribute__((__overloadable__)) float _cl_fabs(float x0);
@@ -613,6 +885,23 @@ __attribute__((__overloadable__)) double16 _cl_fabs(double16 x0);
 // fdim: ['VF', 'VF'] -> VF
 #undef fdim
 #define fdim _cl_fdim
+__attribute__((__overloadable__)) half _cl_fdim(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fdim(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fdim(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_fdim(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fdim(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fdim(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_fdim(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fdim(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fdim(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_fdim(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fdim(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fdim(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_fdim(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fdim(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fdim(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_fdim(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_fdim(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_fdim(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fdim(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fdim(float x0, float x1);
@@ -651,6 +940,23 @@ __attribute__((__overloadable__)) double16 _cl_fdim(double16 x0, double16 x1);
 // floor: ['VF'] -> VF
 #undef floor
 #define floor _cl_floor
+__attribute__((__overloadable__)) half _cl_floor(half x0);
+__attribute__((__overloadable__)) half _cl_floor(half x0);
+__attribute__((__overloadable__)) half _cl_floor(half x0);
+__attribute__((__overloadable__)) half2 _cl_floor(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_floor(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_floor(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_floor(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_floor(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_floor(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_floor(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_floor(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_floor(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_floor(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_floor(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_floor(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_floor(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_floor(half16 x0);
 __attribute__((__overloadable__)) float _cl_floor(float x0);
 __attribute__((__overloadable__)) float _cl_floor(float x0);
 __attribute__((__overloadable__)) float _cl_floor(float x0);
@@ -689,6 +995,23 @@ __attribute__((__overloadable__)) double16 _cl_floor(double16 x0);
 // fma: ['VF', 'VF', 'VF'] -> VF
 #undef fma
 #define fma _cl_fma
+__attribute__((__overloadable__)) half _cl_fma(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half _cl_fma(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half _cl_fma(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half2 _cl_fma(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half2 _cl_fma(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half2 _cl_fma(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half3 _cl_fma(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half3 _cl_fma(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half3 _cl_fma(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half4 _cl_fma(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half4 _cl_fma(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half4 _cl_fma(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half8 _cl_fma(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half8 _cl_fma(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half8 _cl_fma(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half16 _cl_fma(half16 x0, half16 x1, half16 x2);
+__attribute__((__overloadable__)) half16 _cl_fma(half16 x0, half16 x1, half16 x2);
 __attribute__((__overloadable__)) float _cl_fma(float x0, float x1, float x2);
 __attribute__((__overloadable__)) float _cl_fma(float x0, float x1, float x2);
 __attribute__((__overloadable__)) float _cl_fma(float x0, float x1, float x2);
@@ -727,6 +1050,23 @@ __attribute__((__overloadable__)) double16 _cl_fma(double16 x0, double16 x1, dou
 // fmax: ['VF', 'VF'] -> VF
 #undef fmax
 #define fmax _cl_fmax
+__attribute__((__overloadable__)) half _cl_fmax(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fmax(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fmax(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_fmax(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fmax(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fmax(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_fmax(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fmax(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fmax(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_fmax(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fmax(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fmax(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_fmax(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fmax(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fmax(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_fmax(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_fmax(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_fmax(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fmax(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fmax(float x0, float x1);
@@ -765,6 +1105,23 @@ __attribute__((__overloadable__)) double16 _cl_fmax(double16 x0, double16 x1);
 // fmin: ['VF', 'VF'] -> VF
 #undef fmin
 #define fmin _cl_fmin
+__attribute__((__overloadable__)) half _cl_fmin(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fmin(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fmin(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_fmin(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fmin(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fmin(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_fmin(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fmin(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fmin(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_fmin(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fmin(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fmin(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_fmin(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fmin(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fmin(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_fmin(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_fmin(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_fmin(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fmin(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fmin(float x0, float x1);
@@ -803,6 +1160,23 @@ __attribute__((__overloadable__)) double16 _cl_fmin(double16 x0, double16 x1);
 // fmod: ['VF', 'VF'] -> VF
 #undef fmod
 #define fmod _cl_fmod
+__attribute__((__overloadable__)) half _cl_fmod(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fmod(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_fmod(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_fmod(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fmod(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_fmod(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_fmod(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fmod(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_fmod(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_fmod(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fmod(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_fmod(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_fmod(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fmod(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_fmod(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_fmod(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_fmod(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_fmod(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fmod(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_fmod(float x0, float x1);
@@ -841,6 +1215,23 @@ __attribute__((__overloadable__)) double16 _cl_fmod(double16 x0, double16 x1);
 // hypot: ['VF', 'VF'] -> VF
 #undef hypot
 #define hypot _cl_hypot
+__attribute__((__overloadable__)) half _cl_hypot(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_hypot(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_hypot(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_hypot(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_hypot(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_hypot(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_hypot(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_hypot(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_hypot(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_hypot(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_hypot(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_hypot(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_hypot(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_hypot(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_hypot(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_hypot(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_hypot(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_hypot(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_hypot(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_hypot(float x0, float x1);
@@ -879,6 +1270,23 @@ __attribute__((__overloadable__)) double16 _cl_hypot(double16 x0, double16 x1);
 // ilogb_: ['VF'] -> VI
 #undef ilogb_
 #define ilogb_ _cl_ilogb_
+__attribute__((__overloadable__)) extern "C" short _cl_ilogb_half(half x0);
+__attribute__((__overloadable__)) extern "C" short _cl_ilogb_half(half x0);
+__attribute__((__overloadable__)) extern "C" short _cl_ilogb_half(half x0);
+__attribute__((__overloadable__)) extern "C" short2 _cl_ilogb_half2(half2 x0);
+__attribute__((__overloadable__)) extern "C" short2 _cl_ilogb_half2(half2 x0);
+__attribute__((__overloadable__)) extern "C" short2 _cl_ilogb_half2(half2 x0);
+__attribute__((__overloadable__)) extern "C" short3 _cl_ilogb_half3(half3 x0);
+__attribute__((__overloadable__)) extern "C" short3 _cl_ilogb_half3(half3 x0);
+__attribute__((__overloadable__)) extern "C" short3 _cl_ilogb_half3(half3 x0);
+__attribute__((__overloadable__)) extern "C" short4 _cl_ilogb_half4(half4 x0);
+__attribute__((__overloadable__)) extern "C" short4 _cl_ilogb_half4(half4 x0);
+__attribute__((__overloadable__)) extern "C" short4 _cl_ilogb_half4(half4 x0);
+__attribute__((__overloadable__)) extern "C" short8 _cl_ilogb_half8(half8 x0);
+__attribute__((__overloadable__)) extern "C" short8 _cl_ilogb_half8(half8 x0);
+__attribute__((__overloadable__)) extern "C" short8 _cl_ilogb_half8(half8 x0);
+__attribute__((__overloadable__)) extern "C" short16 _cl_ilogb_half16(half16 x0);
+__attribute__((__overloadable__)) extern "C" short16 _cl_ilogb_half16(half16 x0);
 __attribute__((__overloadable__)) extern "C" int _cl_ilogb_float(float x0);
 __attribute__((__overloadable__)) extern "C" int _cl_ilogb_float(float x0);
 __attribute__((__overloadable__)) extern "C" int _cl_ilogb_float(float x0);
@@ -917,6 +1325,23 @@ __attribute__((__overloadable__)) extern "C" long16 _cl_ilogb_double16(double16 
 // ldexp_: ['VF', 'VI'] -> VF
 #undef ldexp_
 #define ldexp_ _cl_ldexp_
+__attribute__((__overloadable__)) extern "C" half _cl_ldexp_half_short(half x0, short x1);
+__attribute__((__overloadable__)) extern "C" half _cl_ldexp_half_short(half x0, short x1);
+__attribute__((__overloadable__)) extern "C" half _cl_ldexp_half_short(half x0, short x1);
+__attribute__((__overloadable__)) extern "C" half2 _cl_ldexp_half2_short2(half2 x0, short2 x1);
+__attribute__((__overloadable__)) extern "C" half2 _cl_ldexp_half2_short2(half2 x0, short2 x1);
+__attribute__((__overloadable__)) extern "C" half2 _cl_ldexp_half2_short2(half2 x0, short2 x1);
+__attribute__((__overloadable__)) extern "C" half3 _cl_ldexp_half3_short3(half3 x0, short3 x1);
+__attribute__((__overloadable__)) extern "C" half3 _cl_ldexp_half3_short3(half3 x0, short3 x1);
+__attribute__((__overloadable__)) extern "C" half3 _cl_ldexp_half3_short3(half3 x0, short3 x1);
+__attribute__((__overloadable__)) extern "C" half4 _cl_ldexp_half4_short4(half4 x0, short4 x1);
+__attribute__((__overloadable__)) extern "C" half4 _cl_ldexp_half4_short4(half4 x0, short4 x1);
+__attribute__((__overloadable__)) extern "C" half4 _cl_ldexp_half4_short4(half4 x0, short4 x1);
+__attribute__((__overloadable__)) extern "C" half8 _cl_ldexp_half8_short8(half8 x0, short8 x1);
+__attribute__((__overloadable__)) extern "C" half8 _cl_ldexp_half8_short8(half8 x0, short8 x1);
+__attribute__((__overloadable__)) extern "C" half8 _cl_ldexp_half8_short8(half8 x0, short8 x1);
+__attribute__((__overloadable__)) extern "C" half16 _cl_ldexp_half16_short16(half16 x0, short16 x1);
+__attribute__((__overloadable__)) extern "C" half16 _cl_ldexp_half16_short16(half16 x0, short16 x1);
 __attribute__((__overloadable__)) extern "C" float _cl_ldexp_float_int(float x0, int x1);
 __attribute__((__overloadable__)) extern "C" float _cl_ldexp_float_int(float x0, int x1);
 __attribute__((__overloadable__)) extern "C" float _cl_ldexp_float_int(float x0, int x1);
@@ -955,6 +1380,20 @@ __attribute__((__overloadable__)) extern "C" double16 _cl_ldexp_double16_long16(
 // ldexp_: ['VF', 'SI'] -> VF
 #undef ldexp_
 #define ldexp_ _cl_ldexp_
+__attribute__((__overloadable__)) extern "C" half2 _cl_ldexp_half2_short(half2 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half2 _cl_ldexp_half2_short(half2 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half2 _cl_ldexp_half2_short(half2 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half3 _cl_ldexp_half3_short(half3 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half3 _cl_ldexp_half3_short(half3 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half3 _cl_ldexp_half3_short(half3 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half4 _cl_ldexp_half4_short(half4 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half4 _cl_ldexp_half4_short(half4 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half4 _cl_ldexp_half4_short(half4 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half8 _cl_ldexp_half8_short(half8 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half8 _cl_ldexp_half8_short(half8 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half8 _cl_ldexp_half8_short(half8 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half16 _cl_ldexp_half16_short(half16 x0, short x1);
+__attribute__((__overloadable__)) extern "C" half16 _cl_ldexp_half16_short(half16 x0, short x1);
 __attribute__((__overloadable__)) extern "C" float2 _cl_ldexp_float2_int(float2 x0, int x1);
 __attribute__((__overloadable__)) extern "C" float2 _cl_ldexp_float2_int(float2 x0, int x1);
 __attribute__((__overloadable__)) extern "C" float2 _cl_ldexp_float2_int(float2 x0, int x1);
@@ -987,6 +1426,23 @@ __attribute__((__overloadable__)) extern "C" double16 _cl_ldexp_double16_long(do
 // log: ['VF'] -> VF
 #undef log
 #define log _cl_log
+__attribute__((__overloadable__)) half _cl_log(half x0);
+__attribute__((__overloadable__)) half _cl_log(half x0);
+__attribute__((__overloadable__)) half _cl_log(half x0);
+__attribute__((__overloadable__)) half2 _cl_log(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_log(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_log(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_log(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_log(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_log(half16 x0);
 __attribute__((__overloadable__)) float _cl_log(float x0);
 __attribute__((__overloadable__)) float _cl_log(float x0);
 __attribute__((__overloadable__)) float _cl_log(float x0);
@@ -1025,6 +1481,23 @@ __attribute__((__overloadable__)) double16 _cl_log(double16 x0);
 // log2: ['VF'] -> VF
 #undef log2
 #define log2 _cl_log2
+__attribute__((__overloadable__)) half _cl_log2(half x0);
+__attribute__((__overloadable__)) half _cl_log2(half x0);
+__attribute__((__overloadable__)) half _cl_log2(half x0);
+__attribute__((__overloadable__)) half2 _cl_log2(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log2(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log2(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_log2(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log2(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log2(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_log2(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log2(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log2(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_log2(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log2(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log2(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_log2(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_log2(half16 x0);
 __attribute__((__overloadable__)) float _cl_log2(float x0);
 __attribute__((__overloadable__)) float _cl_log2(float x0);
 __attribute__((__overloadable__)) float _cl_log2(float x0);
@@ -1063,6 +1536,23 @@ __attribute__((__overloadable__)) double16 _cl_log2(double16 x0);
 // log10: ['VF'] -> VF
 #undef log10
 #define log10 _cl_log10
+__attribute__((__overloadable__)) half _cl_log10(half x0);
+__attribute__((__overloadable__)) half _cl_log10(half x0);
+__attribute__((__overloadable__)) half _cl_log10(half x0);
+__attribute__((__overloadable__)) half2 _cl_log10(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log10(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log10(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_log10(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log10(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log10(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_log10(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log10(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log10(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_log10(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log10(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log10(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_log10(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_log10(half16 x0);
 __attribute__((__overloadable__)) float _cl_log10(float x0);
 __attribute__((__overloadable__)) float _cl_log10(float x0);
 __attribute__((__overloadable__)) float _cl_log10(float x0);
@@ -1101,6 +1591,23 @@ __attribute__((__overloadable__)) double16 _cl_log10(double16 x0);
 // log1p: ['VF'] -> VF
 #undef log1p
 #define log1p _cl_log1p
+__attribute__((__overloadable__)) half _cl_log1p(half x0);
+__attribute__((__overloadable__)) half _cl_log1p(half x0);
+__attribute__((__overloadable__)) half _cl_log1p(half x0);
+__attribute__((__overloadable__)) half2 _cl_log1p(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log1p(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_log1p(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_log1p(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log1p(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_log1p(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_log1p(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log1p(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_log1p(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_log1p(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log1p(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_log1p(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_log1p(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_log1p(half16 x0);
 __attribute__((__overloadable__)) float _cl_log1p(float x0);
 __attribute__((__overloadable__)) float _cl_log1p(float x0);
 __attribute__((__overloadable__)) float _cl_log1p(float x0);
@@ -1139,6 +1646,23 @@ __attribute__((__overloadable__)) double16 _cl_log1p(double16 x0);
 // pow: ['VF', 'VF'] -> VF
 #undef pow
 #define pow _cl_pow
+__attribute__((__overloadable__)) half _cl_pow(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_pow(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_pow(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_pow(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_pow(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_pow(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_pow(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_pow(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_pow(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_pow(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_pow(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_pow(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_pow(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_pow(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_pow(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_pow(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_pow(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_pow(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_pow(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_pow(float x0, float x1);
@@ -1177,6 +1701,23 @@ __attribute__((__overloadable__)) double16 _cl_pow(double16 x0, double16 x1);
 // remainder: ['VF', 'VF'] -> VF
 #undef remainder
 #define remainder _cl_remainder
+__attribute__((__overloadable__)) half _cl_remainder(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_remainder(half x0, half x1);
+__attribute__((__overloadable__)) half _cl_remainder(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_remainder(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_remainder(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half2 _cl_remainder(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_remainder(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_remainder(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half3 _cl_remainder(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_remainder(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_remainder(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half4 _cl_remainder(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_remainder(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_remainder(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half8 _cl_remainder(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_remainder(half16 x0, half16 x1);
+__attribute__((__overloadable__)) half16 _cl_remainder(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_remainder(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_remainder(float x0, float x1);
 __attribute__((__overloadable__)) float _cl_remainder(float x0, float x1);
@@ -1215,6 +1756,23 @@ __attribute__((__overloadable__)) double16 _cl_remainder(double16 x0, double16 x
 // rint: ['VF'] -> VF
 #undef rint
 #define rint _cl_rint
+__attribute__((__overloadable__)) half _cl_rint(half x0);
+__attribute__((__overloadable__)) half _cl_rint(half x0);
+__attribute__((__overloadable__)) half _cl_rint(half x0);
+__attribute__((__overloadable__)) half2 _cl_rint(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_rint(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_rint(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_rint(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_rint(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_rint(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_rint(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_rint(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_rint(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_rint(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_rint(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_rint(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_rint(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_rint(half16 x0);
 __attribute__((__overloadable__)) float _cl_rint(float x0);
 __attribute__((__overloadable__)) float _cl_rint(float x0);
 __attribute__((__overloadable__)) float _cl_rint(float x0);
@@ -1253,6 +1811,23 @@ __attribute__((__overloadable__)) double16 _cl_rint(double16 x0);
 // round: ['VF'] -> VF
 #undef round
 #define round _cl_round
+__attribute__((__overloadable__)) half _cl_round(half x0);
+__attribute__((__overloadable__)) half _cl_round(half x0);
+__attribute__((__overloadable__)) half _cl_round(half x0);
+__attribute__((__overloadable__)) half2 _cl_round(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_round(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_round(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_round(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_round(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_round(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_round(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_round(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_round(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_round(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_round(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_round(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_round(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_round(half16 x0);
 __attribute__((__overloadable__)) float _cl_round(float x0);
 __attribute__((__overloadable__)) float _cl_round(float x0);
 __attribute__((__overloadable__)) float _cl_round(float x0);
@@ -1291,6 +1866,23 @@ __attribute__((__overloadable__)) double16 _cl_round(double16 x0);
 // rsqrt: ['VF'] -> VF
 #undef rsqrt
 #define rsqrt _cl_rsqrt
+__attribute__((__overloadable__)) half _cl_rsqrt(half x0);
+__attribute__((__overloadable__)) half _cl_rsqrt(half x0);
+__attribute__((__overloadable__)) half _cl_rsqrt(half x0);
+__attribute__((__overloadable__)) half2 _cl_rsqrt(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_rsqrt(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_rsqrt(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_rsqrt(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_rsqrt(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_rsqrt(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_rsqrt(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_rsqrt(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_rsqrt(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_rsqrt(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_rsqrt(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_rsqrt(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_rsqrt(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_rsqrt(half16 x0);
 __attribute__((__overloadable__)) float _cl_rsqrt(float x0);
 __attribute__((__overloadable__)) float _cl_rsqrt(float x0);
 __attribute__((__overloadable__)) float _cl_rsqrt(float x0);
@@ -1329,6 +1921,23 @@ __attribute__((__overloadable__)) double16 _cl_rsqrt(double16 x0);
 // sin: ['VF'] -> VF
 #undef sin
 #define sin _cl_sin
+__attribute__((__overloadable__)) half _cl_sin(half x0);
+__attribute__((__overloadable__)) half _cl_sin(half x0);
+__attribute__((__overloadable__)) half _cl_sin(half x0);
+__attribute__((__overloadable__)) half2 _cl_sin(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_sin(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_sin(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_sin(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_sin(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_sin(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_sin(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_sin(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_sin(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_sin(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_sin(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_sin(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_sin(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_sin(half16 x0);
 __attribute__((__overloadable__)) float _cl_sin(float x0);
 __attribute__((__overloadable__)) float _cl_sin(float x0);
 __attribute__((__overloadable__)) float _cl_sin(float x0);
@@ -1367,6 +1976,23 @@ __attribute__((__overloadable__)) double16 _cl_sin(double16 x0);
 // sinh: ['VF'] -> VF
 #undef sinh
 #define sinh _cl_sinh
+__attribute__((__overloadable__)) half _cl_sinh(half x0);
+__attribute__((__overloadable__)) half _cl_sinh(half x0);
+__attribute__((__overloadable__)) half _cl_sinh(half x0);
+__attribute__((__overloadable__)) half2 _cl_sinh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_sinh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_sinh(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_sinh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_sinh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_sinh(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_sinh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_sinh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_sinh(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_sinh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_sinh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_sinh(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_sinh(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_sinh(half16 x0);
 __attribute__((__overloadable__)) float _cl_sinh(float x0);
 __attribute__((__overloadable__)) float _cl_sinh(float x0);
 __attribute__((__overloadable__)) float _cl_sinh(float x0);
@@ -1405,6 +2031,23 @@ __attribute__((__overloadable__)) double16 _cl_sinh(double16 x0);
 // sqrt: ['VF'] -> VF
 #undef sqrt
 #define sqrt _cl_sqrt
+__attribute__((__overloadable__)) half _cl_sqrt(half x0);
+__attribute__((__overloadable__)) half _cl_sqrt(half x0);
+__attribute__((__overloadable__)) half _cl_sqrt(half x0);
+__attribute__((__overloadable__)) half2 _cl_sqrt(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_sqrt(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_sqrt(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_sqrt(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_sqrt(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_sqrt(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_sqrt(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_sqrt(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_sqrt(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_sqrt(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_sqrt(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_sqrt(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_sqrt(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_sqrt(half16 x0);
 __attribute__((__overloadable__)) float _cl_sqrt(float x0);
 __attribute__((__overloadable__)) float _cl_sqrt(float x0);
 __attribute__((__overloadable__)) float _cl_sqrt(float x0);
@@ -1443,6 +2086,23 @@ __attribute__((__overloadable__)) double16 _cl_sqrt(double16 x0);
 // tan: ['VF'] -> VF
 #undef tan
 #define tan _cl_tan
+__attribute__((__overloadable__)) half _cl_tan(half x0);
+__attribute__((__overloadable__)) half _cl_tan(half x0);
+__attribute__((__overloadable__)) half _cl_tan(half x0);
+__attribute__((__overloadable__)) half2 _cl_tan(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_tan(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_tan(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_tan(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_tan(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_tan(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_tan(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_tan(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_tan(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_tan(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_tan(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_tan(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_tan(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_tan(half16 x0);
 __attribute__((__overloadable__)) float _cl_tan(float x0);
 __attribute__((__overloadable__)) float _cl_tan(float x0);
 __attribute__((__overloadable__)) float _cl_tan(float x0);
@@ -1481,6 +2141,23 @@ __attribute__((__overloadable__)) double16 _cl_tan(double16 x0);
 // tanh: ['VF'] -> VF
 #undef tanh
 #define tanh _cl_tanh
+__attribute__((__overloadable__)) half _cl_tanh(half x0);
+__attribute__((__overloadable__)) half _cl_tanh(half x0);
+__attribute__((__overloadable__)) half _cl_tanh(half x0);
+__attribute__((__overloadable__)) half2 _cl_tanh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_tanh(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_tanh(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_tanh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_tanh(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_tanh(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_tanh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_tanh(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_tanh(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_tanh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_tanh(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_tanh(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_tanh(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_tanh(half16 x0);
 __attribute__((__overloadable__)) float _cl_tanh(float x0);
 __attribute__((__overloadable__)) float _cl_tanh(float x0);
 __attribute__((__overloadable__)) float _cl_tanh(float x0);
@@ -1519,6 +2196,23 @@ __attribute__((__overloadable__)) double16 _cl_tanh(double16 x0);
 // trunc: ['VF'] -> VF
 #undef trunc
 #define trunc _cl_trunc
+__attribute__((__overloadable__)) half _cl_trunc(half x0);
+__attribute__((__overloadable__)) half _cl_trunc(half x0);
+__attribute__((__overloadable__)) half _cl_trunc(half x0);
+__attribute__((__overloadable__)) half2 _cl_trunc(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_trunc(half2 x0);
+__attribute__((__overloadable__)) half2 _cl_trunc(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_trunc(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_trunc(half3 x0);
+__attribute__((__overloadable__)) half3 _cl_trunc(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_trunc(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_trunc(half4 x0);
+__attribute__((__overloadable__)) half4 _cl_trunc(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_trunc(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_trunc(half8 x0);
+__attribute__((__overloadable__)) half8 _cl_trunc(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_trunc(half16 x0);
+__attribute__((__overloadable__)) half16 _cl_trunc(half16 x0);
 __attribute__((__overloadable__)) float _cl_trunc(float x0);
 __attribute__((__overloadable__)) float _cl_trunc(float x0);
 __attribute__((__overloadable__)) float _cl_trunc(float x0);
@@ -1557,6 +2251,23 @@ __attribute__((__overloadable__)) double16 _cl_trunc(double16 x0);
 // isfinite: ['VF'] -> VJ
 #undef isfinite
 #define isfinite _cl_isfinite
+__attribute__((__overloadable__)) int _cl_isfinite(half x0);
+__attribute__((__overloadable__)) int _cl_isfinite(half x0);
+__attribute__((__overloadable__)) int _cl_isfinite(half x0);
+__attribute__((__overloadable__)) short2 _cl_isfinite(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isfinite(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isfinite(half2 x0);
+__attribute__((__overloadable__)) short3 _cl_isfinite(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isfinite(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isfinite(half3 x0);
+__attribute__((__overloadable__)) short4 _cl_isfinite(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isfinite(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isfinite(half4 x0);
+__attribute__((__overloadable__)) short8 _cl_isfinite(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isfinite(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isfinite(half8 x0);
+__attribute__((__overloadable__)) short16 _cl_isfinite(half16 x0);
+__attribute__((__overloadable__)) short16 _cl_isfinite(half16 x0);
 __attribute__((__overloadable__)) int _cl_isfinite(float x0);
 __attribute__((__overloadable__)) int _cl_isfinite(float x0);
 __attribute__((__overloadable__)) int _cl_isfinite(float x0);
@@ -1595,6 +2306,23 @@ __attribute__((__overloadable__)) long16 _cl_isfinite(double16 x0);
 // isinf: ['VF'] -> VJ
 #undef isinf
 #define isinf _cl_isinf
+__attribute__((__overloadable__)) int _cl_isinf(half x0);
+__attribute__((__overloadable__)) int _cl_isinf(half x0);
+__attribute__((__overloadable__)) int _cl_isinf(half x0);
+__attribute__((__overloadable__)) short2 _cl_isinf(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isinf(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isinf(half2 x0);
+__attribute__((__overloadable__)) short3 _cl_isinf(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isinf(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isinf(half3 x0);
+__attribute__((__overloadable__)) short4 _cl_isinf(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isinf(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isinf(half4 x0);
+__attribute__((__overloadable__)) short8 _cl_isinf(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isinf(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isinf(half8 x0);
+__attribute__((__overloadable__)) short16 _cl_isinf(half16 x0);
+__attribute__((__overloadable__)) short16 _cl_isinf(half16 x0);
 __attribute__((__overloadable__)) int _cl_isinf(float x0);
 __attribute__((__overloadable__)) int _cl_isinf(float x0);
 __attribute__((__overloadable__)) int _cl_isinf(float x0);
@@ -1633,6 +2361,23 @@ __attribute__((__overloadable__)) long16 _cl_isinf(double16 x0);
 // isnan: ['VF'] -> VJ
 #undef isnan
 #define isnan _cl_isnan
+__attribute__((__overloadable__)) int _cl_isnan(half x0);
+__attribute__((__overloadable__)) int _cl_isnan(half x0);
+__attribute__((__overloadable__)) int _cl_isnan(half x0);
+__attribute__((__overloadable__)) short2 _cl_isnan(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isnan(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isnan(half2 x0);
+__attribute__((__overloadable__)) short3 _cl_isnan(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isnan(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isnan(half3 x0);
+__attribute__((__overloadable__)) short4 _cl_isnan(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isnan(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isnan(half4 x0);
+__attribute__((__overloadable__)) short8 _cl_isnan(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isnan(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isnan(half8 x0);
+__attribute__((__overloadable__)) short16 _cl_isnan(half16 x0);
+__attribute__((__overloadable__)) short16 _cl_isnan(half16 x0);
 __attribute__((__overloadable__)) int _cl_isnan(float x0);
 __attribute__((__overloadable__)) int _cl_isnan(float x0);
 __attribute__((__overloadable__)) int _cl_isnan(float x0);
@@ -1671,6 +2416,23 @@ __attribute__((__overloadable__)) long16 _cl_isnan(double16 x0);
 // isnormal: ['VF'] -> VJ
 #undef isnormal
 #define isnormal _cl_isnormal
+__attribute__((__overloadable__)) int _cl_isnormal(half x0);
+__attribute__((__overloadable__)) int _cl_isnormal(half x0);
+__attribute__((__overloadable__)) int _cl_isnormal(half x0);
+__attribute__((__overloadable__)) short2 _cl_isnormal(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isnormal(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_isnormal(half2 x0);
+__attribute__((__overloadable__)) short3 _cl_isnormal(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isnormal(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_isnormal(half3 x0);
+__attribute__((__overloadable__)) short4 _cl_isnormal(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isnormal(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_isnormal(half4 x0);
+__attribute__((__overloadable__)) short8 _cl_isnormal(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isnormal(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_isnormal(half8 x0);
+__attribute__((__overloadable__)) short16 _cl_isnormal(half16 x0);
+__attribute__((__overloadable__)) short16 _cl_isnormal(half16 x0);
 __attribute__((__overloadable__)) int _cl_isnormal(float x0);
 __attribute__((__overloadable__)) int _cl_isnormal(float x0);
 __attribute__((__overloadable__)) int _cl_isnormal(float x0);
@@ -1709,6 +2471,23 @@ __attribute__((__overloadable__)) long16 _cl_isnormal(double16 x0);
 // signbit: ['VF'] -> VJ
 #undef signbit
 #define signbit _cl_signbit
+__attribute__((__overloadable__)) int _cl_signbit(half x0);
+__attribute__((__overloadable__)) int _cl_signbit(half x0);
+__attribute__((__overloadable__)) int _cl_signbit(half x0);
+__attribute__((__overloadable__)) short2 _cl_signbit(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_signbit(half2 x0);
+__attribute__((__overloadable__)) short2 _cl_signbit(half2 x0);
+__attribute__((__overloadable__)) short3 _cl_signbit(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_signbit(half3 x0);
+__attribute__((__overloadable__)) short3 _cl_signbit(half3 x0);
+__attribute__((__overloadable__)) short4 _cl_signbit(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_signbit(half4 x0);
+__attribute__((__overloadable__)) short4 _cl_signbit(half4 x0);
+__attribute__((__overloadable__)) short8 _cl_signbit(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_signbit(half8 x0);
+__attribute__((__overloadable__)) short8 _cl_signbit(half8 x0);
+__attribute__((__overloadable__)) short16 _cl_signbit(half16 x0);
+__attribute__((__overloadable__)) short16 _cl_signbit(half16 x0);
 __attribute__((__overloadable__)) int _cl_signbit(float x0);
 __attribute__((__overloadable__)) int _cl_signbit(float x0);
 __attribute__((__overloadable__)) int _cl_signbit(float x0);
@@ -1747,6 +2526,12 @@ __attribute__((__overloadable__)) long16 _cl_signbit(double16 x0);
 // acospi: ['VF'] -> VF
 #undef acospi
 #define acospi _cl_acospi
+__attribute__((__overloadable__)) half _cl_acospi(half x0);
+__attribute__((__overloadable__)) half2 _cl_acospi(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_acospi(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_acospi(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_acospi(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_acospi(half16 x0);
 __attribute__((__overloadable__)) float _cl_acospi(float x0);
 __attribute__((__overloadable__)) float2 _cl_acospi(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_acospi(float3 x0);
@@ -1763,6 +2548,12 @@ __attribute__((__overloadable__)) double16 _cl_acospi(double16 x0);
 // asinpi: ['VF'] -> VF
 #undef asinpi
 #define asinpi _cl_asinpi
+__attribute__((__overloadable__)) half _cl_asinpi(half x0);
+__attribute__((__overloadable__)) half2 _cl_asinpi(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_asinpi(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_asinpi(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_asinpi(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_asinpi(half16 x0);
 __attribute__((__overloadable__)) float _cl_asinpi(float x0);
 __attribute__((__overloadable__)) float2 _cl_asinpi(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_asinpi(float3 x0);
@@ -1779,6 +2570,12 @@ __attribute__((__overloadable__)) double16 _cl_asinpi(double16 x0);
 // atanpi: ['VF'] -> VF
 #undef atanpi
 #define atanpi _cl_atanpi
+__attribute__((__overloadable__)) half _cl_atanpi(half x0);
+__attribute__((__overloadable__)) half2 _cl_atanpi(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_atanpi(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_atanpi(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_atanpi(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_atanpi(half16 x0);
 __attribute__((__overloadable__)) float _cl_atanpi(float x0);
 __attribute__((__overloadable__)) float2 _cl_atanpi(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_atanpi(float3 x0);
@@ -1795,6 +2592,12 @@ __attribute__((__overloadable__)) double16 _cl_atanpi(double16 x0);
 // atan2: ['VF', 'VF'] -> VF
 #undef atan2
 #define atan2 _cl_atan2
+__attribute__((__overloadable__)) half _cl_atan2(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_atan2(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_atan2(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_atan2(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_atan2(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_atan2(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_atan2(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_atan2(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_atan2(float3 x0, float3 x1);
@@ -1811,6 +2614,12 @@ __attribute__((__overloadable__)) double16 _cl_atan2(double16 x0, double16 x1);
 // atan2pi: ['VF', 'VF'] -> VF
 #undef atan2pi
 #define atan2pi _cl_atan2pi
+__attribute__((__overloadable__)) half _cl_atan2pi(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_atan2pi(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_atan2pi(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_atan2pi(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_atan2pi(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_atan2pi(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_atan2pi(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_atan2pi(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_atan2pi(float3 x0, float3 x1);
@@ -1827,6 +2636,12 @@ __attribute__((__overloadable__)) double16 _cl_atan2pi(double16 x0, double16 x1)
 // cospi: ['VF'] -> VF
 #undef cospi
 #define cospi _cl_cospi
+__attribute__((__overloadable__)) half _cl_cospi(half x0);
+__attribute__((__overloadable__)) half2 _cl_cospi(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_cospi(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_cospi(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_cospi(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_cospi(half16 x0);
 __attribute__((__overloadable__)) float _cl_cospi(float x0);
 __attribute__((__overloadable__)) float2 _cl_cospi(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_cospi(float3 x0);
@@ -1843,6 +2658,11 @@ __attribute__((__overloadable__)) double16 _cl_cospi(double16 x0);
 // fmax: ['VF', 'SF'] -> VF
 #undef fmax
 #define fmax _cl_fmax
+__attribute__((__overloadable__)) half2 _cl_fmax(half2 x0, half x1);
+__attribute__((__overloadable__)) half3 _cl_fmax(half3 x0, half x1);
+__attribute__((__overloadable__)) half4 _cl_fmax(half4 x0, half x1);
+__attribute__((__overloadable__)) half8 _cl_fmax(half8 x0, half x1);
+__attribute__((__overloadable__)) half16 _cl_fmax(half16 x0, half x1);
 __attribute__((__overloadable__)) float2 _cl_fmax(float2 x0, float x1);
 __attribute__((__overloadable__)) float3 _cl_fmax(float3 x0, float x1);
 __attribute__((__overloadable__)) float4 _cl_fmax(float4 x0, float x1);
@@ -1857,6 +2677,11 @@ __attribute__((__overloadable__)) double16 _cl_fmax(double16 x0, double x1);
 // fmin: ['VF', 'SF'] -> VF
 #undef fmin
 #define fmin _cl_fmin
+__attribute__((__overloadable__)) half2 _cl_fmin(half2 x0, half x1);
+__attribute__((__overloadable__)) half3 _cl_fmin(half3 x0, half x1);
+__attribute__((__overloadable__)) half4 _cl_fmin(half4 x0, half x1);
+__attribute__((__overloadable__)) half8 _cl_fmin(half8 x0, half x1);
+__attribute__((__overloadable__)) half16 _cl_fmin(half16 x0, half x1);
 __attribute__((__overloadable__)) float2 _cl_fmin(float2 x0, float x1);
 __attribute__((__overloadable__)) float3 _cl_fmin(float3 x0, float x1);
 __attribute__((__overloadable__)) float4 _cl_fmin(float4 x0, float x1);
@@ -1871,6 +2696,24 @@ __attribute__((__overloadable__)) double16 _cl_fmin(double16 x0, double x1);
 // fract: ['VF', 'PVF'] -> VF
 #undef fract
 #define fract _cl_fract
+__attribute__((__overloadable__)) half _cl_fract(half x0, global half* x1);
+__attribute__((__overloadable__)) half _cl_fract(half x0, local half* x1);
+__attribute__((__overloadable__)) half _cl_fract(half x0, private half* x1);
+__attribute__((__overloadable__)) half2 _cl_fract(half2 x0, global half2* x1);
+__attribute__((__overloadable__)) half2 _cl_fract(half2 x0, local half2* x1);
+__attribute__((__overloadable__)) half2 _cl_fract(half2 x0, private half2* x1);
+__attribute__((__overloadable__)) half3 _cl_fract(half3 x0, global half3* x1);
+__attribute__((__overloadable__)) half3 _cl_fract(half3 x0, local half3* x1);
+__attribute__((__overloadable__)) half3 _cl_fract(half3 x0, private half3* x1);
+__attribute__((__overloadable__)) half4 _cl_fract(half4 x0, global half4* x1);
+__attribute__((__overloadable__)) half4 _cl_fract(half4 x0, local half4* x1);
+__attribute__((__overloadable__)) half4 _cl_fract(half4 x0, private half4* x1);
+__attribute__((__overloadable__)) half8 _cl_fract(half8 x0, global half8* x1);
+__attribute__((__overloadable__)) half8 _cl_fract(half8 x0, local half8* x1);
+__attribute__((__overloadable__)) half8 _cl_fract(half8 x0, private half8* x1);
+__attribute__((__overloadable__)) half16 _cl_fract(half16 x0, global half16* x1);
+__attribute__((__overloadable__)) half16 _cl_fract(half16 x0, local half16* x1);
+__attribute__((__overloadable__)) half16 _cl_fract(half16 x0, private half16* x1);
 __attribute__((__overloadable__)) float _cl_fract(float x0, global float* x1);
 __attribute__((__overloadable__)) float _cl_fract(float x0, local float* x1);
 __attribute__((__overloadable__)) float _cl_fract(float x0, private float* x1);
@@ -1911,6 +2754,24 @@ __attribute__((__overloadable__)) double16 _cl_fract(double16 x0, private double
 // frexp: ['VF', 'PVK'] -> VF
 #undef frexp
 #define frexp _cl_frexp
+__attribute__((__overloadable__)) half _cl_frexp(half x0, global int* x1);
+__attribute__((__overloadable__)) half _cl_frexp(half x0, local int* x1);
+__attribute__((__overloadable__)) half _cl_frexp(half x0, private int* x1);
+__attribute__((__overloadable__)) half2 _cl_frexp(half2 x0, global int2* x1);
+__attribute__((__overloadable__)) half2 _cl_frexp(half2 x0, local int2* x1);
+__attribute__((__overloadable__)) half2 _cl_frexp(half2 x0, private int2* x1);
+__attribute__((__overloadable__)) half3 _cl_frexp(half3 x0, global int3* x1);
+__attribute__((__overloadable__)) half3 _cl_frexp(half3 x0, local int3* x1);
+__attribute__((__overloadable__)) half3 _cl_frexp(half3 x0, private int3* x1);
+__attribute__((__overloadable__)) half4 _cl_frexp(half4 x0, global int4* x1);
+__attribute__((__overloadable__)) half4 _cl_frexp(half4 x0, local int4* x1);
+__attribute__((__overloadable__)) half4 _cl_frexp(half4 x0, private int4* x1);
+__attribute__((__overloadable__)) half8 _cl_frexp(half8 x0, global int8* x1);
+__attribute__((__overloadable__)) half8 _cl_frexp(half8 x0, local int8* x1);
+__attribute__((__overloadable__)) half8 _cl_frexp(half8 x0, private int8* x1);
+__attribute__((__overloadable__)) half16 _cl_frexp(half16 x0, global int16* x1);
+__attribute__((__overloadable__)) half16 _cl_frexp(half16 x0, local int16* x1);
+__attribute__((__overloadable__)) half16 _cl_frexp(half16 x0, private int16* x1);
 __attribute__((__overloadable__)) float _cl_frexp(float x0, global int* x1);
 __attribute__((__overloadable__)) float _cl_frexp(float x0, local int* x1);
 __attribute__((__overloadable__)) float _cl_frexp(float x0, private int* x1);
@@ -1951,6 +2812,12 @@ __attribute__((__overloadable__)) double16 _cl_frexp(double16 x0, private int16*
 // ilogb: ['VF'] -> VK
 #undef ilogb
 #define ilogb _cl_ilogb
+__attribute__((__overloadable__)) int _cl_ilogb(half x0);
+__attribute__((__overloadable__)) int2 _cl_ilogb(half2 x0);
+__attribute__((__overloadable__)) int3 _cl_ilogb(half3 x0);
+__attribute__((__overloadable__)) int4 _cl_ilogb(half4 x0);
+__attribute__((__overloadable__)) int8 _cl_ilogb(half8 x0);
+__attribute__((__overloadable__)) int16 _cl_ilogb(half16 x0);
 __attribute__((__overloadable__)) int _cl_ilogb(float x0);
 __attribute__((__overloadable__)) int2 _cl_ilogb(float2 x0);
 __attribute__((__overloadable__)) int3 _cl_ilogb(float3 x0);
@@ -1967,6 +2834,12 @@ __attribute__((__overloadable__)) int16 _cl_ilogb(double16 x0);
 // ldexp: ['VF', 'VK'] -> VF
 #undef ldexp
 #define ldexp _cl_ldexp
+__attribute__((__overloadable__)) half _cl_ldexp(half x0, int x1);
+__attribute__((__overloadable__)) half2 _cl_ldexp(half2 x0, int2 x1);
+__attribute__((__overloadable__)) half3 _cl_ldexp(half3 x0, int3 x1);
+__attribute__((__overloadable__)) half4 _cl_ldexp(half4 x0, int4 x1);
+__attribute__((__overloadable__)) half8 _cl_ldexp(half8 x0, int8 x1);
+__attribute__((__overloadable__)) half16 _cl_ldexp(half16 x0, int16 x1);
 __attribute__((__overloadable__)) float _cl_ldexp(float x0, int x1);
 __attribute__((__overloadable__)) float2 _cl_ldexp(float2 x0, int2 x1);
 __attribute__((__overloadable__)) float3 _cl_ldexp(float3 x0, int3 x1);
@@ -1983,6 +2856,11 @@ __attribute__((__overloadable__)) double16 _cl_ldexp(double16 x0, int16 x1);
 // ldexp: ['VF', 'SK'] -> VF
 #undef ldexp
 #define ldexp _cl_ldexp
+__attribute__((__overloadable__)) half2 _cl_ldexp(half2 x0, int x1);
+__attribute__((__overloadable__)) half3 _cl_ldexp(half3 x0, int x1);
+__attribute__((__overloadable__)) half4 _cl_ldexp(half4 x0, int x1);
+__attribute__((__overloadable__)) half8 _cl_ldexp(half8 x0, int x1);
+__attribute__((__overloadable__)) half16 _cl_ldexp(half16 x0, int x1);
 __attribute__((__overloadable__)) float2 _cl_ldexp(float2 x0, int x1);
 __attribute__((__overloadable__)) float3 _cl_ldexp(float3 x0, int x1);
 __attribute__((__overloadable__)) float4 _cl_ldexp(float4 x0, int x1);
@@ -1997,6 +2875,12 @@ __attribute__((__overloadable__)) double16 _cl_ldexp(double16 x0, int x1);
 // logb: ['VF'] -> VF
 #undef logb
 #define logb _cl_logb
+__attribute__((__overloadable__)) half _cl_logb(half x0);
+__attribute__((__overloadable__)) half2 _cl_logb(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_logb(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_logb(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_logb(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_logb(half16 x0);
 __attribute__((__overloadable__)) float _cl_logb(float x0);
 __attribute__((__overloadable__)) float2 _cl_logb(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_logb(float3 x0);
@@ -2013,6 +2897,12 @@ __attribute__((__overloadable__)) double16 _cl_logb(double16 x0);
 // mad: ['VF', 'VF', 'VF'] -> VF
 #undef mad
 #define mad _cl_mad
+__attribute__((__overloadable__)) half _cl_mad(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half2 _cl_mad(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half3 _cl_mad(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half4 _cl_mad(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half8 _cl_mad(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half16 _cl_mad(half16 x0, half16 x1, half16 x2);
 __attribute__((__overloadable__)) float _cl_mad(float x0, float x1, float x2);
 __attribute__((__overloadable__)) float2 _cl_mad(float2 x0, float2 x1, float2 x2);
 __attribute__((__overloadable__)) float3 _cl_mad(float3 x0, float3 x1, float3 x2);
@@ -2029,6 +2919,12 @@ __attribute__((__overloadable__)) double16 _cl_mad(double16 x0, double16 x1, dou
 // maxmag: ['VF', 'VF'] -> VF
 #undef maxmag
 #define maxmag _cl_maxmag
+__attribute__((__overloadable__)) half _cl_maxmag(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_maxmag(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_maxmag(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_maxmag(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_maxmag(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_maxmag(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_maxmag(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_maxmag(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_maxmag(float3 x0, float3 x1);
@@ -2045,6 +2941,12 @@ __attribute__((__overloadable__)) double16 _cl_maxmag(double16 x0, double16 x1);
 // minmag: ['VF', 'VF'] -> VF
 #undef minmag
 #define minmag _cl_minmag
+__attribute__((__overloadable__)) half _cl_minmag(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_minmag(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_minmag(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_minmag(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_minmag(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_minmag(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_minmag(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_minmag(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_minmag(float3 x0, float3 x1);
@@ -2061,6 +2963,24 @@ __attribute__((__overloadable__)) double16 _cl_minmag(double16 x0, double16 x1);
 // modf: ['VF', 'PVF'] -> VF
 #undef modf
 #define modf _cl_modf
+__attribute__((__overloadable__)) half _cl_modf(half x0, global half* x1);
+__attribute__((__overloadable__)) half _cl_modf(half x0, local half* x1);
+__attribute__((__overloadable__)) half _cl_modf(half x0, private half* x1);
+__attribute__((__overloadable__)) half2 _cl_modf(half2 x0, global half2* x1);
+__attribute__((__overloadable__)) half2 _cl_modf(half2 x0, local half2* x1);
+__attribute__((__overloadable__)) half2 _cl_modf(half2 x0, private half2* x1);
+__attribute__((__overloadable__)) half3 _cl_modf(half3 x0, global half3* x1);
+__attribute__((__overloadable__)) half3 _cl_modf(half3 x0, local half3* x1);
+__attribute__((__overloadable__)) half3 _cl_modf(half3 x0, private half3* x1);
+__attribute__((__overloadable__)) half4 _cl_modf(half4 x0, global half4* x1);
+__attribute__((__overloadable__)) half4 _cl_modf(half4 x0, local half4* x1);
+__attribute__((__overloadable__)) half4 _cl_modf(half4 x0, private half4* x1);
+__attribute__((__overloadable__)) half8 _cl_modf(half8 x0, global half8* x1);
+__attribute__((__overloadable__)) half8 _cl_modf(half8 x0, local half8* x1);
+__attribute__((__overloadable__)) half8 _cl_modf(half8 x0, private half8* x1);
+__attribute__((__overloadable__)) half16 _cl_modf(half16 x0, global half16* x1);
+__attribute__((__overloadable__)) half16 _cl_modf(half16 x0, local half16* x1);
+__attribute__((__overloadable__)) half16 _cl_modf(half16 x0, private half16* x1);
 __attribute__((__overloadable__)) float _cl_modf(float x0, global float* x1);
 __attribute__((__overloadable__)) float _cl_modf(float x0, local float* x1);
 __attribute__((__overloadable__)) float _cl_modf(float x0, private float* x1);
@@ -2101,6 +3021,12 @@ __attribute__((__overloadable__)) double16 _cl_modf(double16 x0, private double1
 // nan: ['VU'] -> VF
 #undef nan
 #define nan _cl_nan
+__attribute__((__overloadable__)) half _cl_nan(ushort x0);
+__attribute__((__overloadable__)) half2 _cl_nan(ushort2 x0);
+__attribute__((__overloadable__)) half3 _cl_nan(ushort3 x0);
+__attribute__((__overloadable__)) half4 _cl_nan(ushort4 x0);
+__attribute__((__overloadable__)) half8 _cl_nan(ushort8 x0);
+__attribute__((__overloadable__)) half16 _cl_nan(ushort16 x0);
 __attribute__((__overloadable__)) float _cl_nan(uint x0);
 __attribute__((__overloadable__)) float2 _cl_nan(uint2 x0);
 __attribute__((__overloadable__)) float3 _cl_nan(uint3 x0);
@@ -2117,6 +3043,12 @@ __attribute__((__overloadable__)) double16 _cl_nan(ulong16 x0);
 // pown: ['VF', 'VK'] -> VF
 #undef pown
 #define pown _cl_pown
+__attribute__((__overloadable__)) half _cl_pown(half x0, int x1);
+__attribute__((__overloadable__)) half2 _cl_pown(half2 x0, int2 x1);
+__attribute__((__overloadable__)) half3 _cl_pown(half3 x0, int3 x1);
+__attribute__((__overloadable__)) half4 _cl_pown(half4 x0, int4 x1);
+__attribute__((__overloadable__)) half8 _cl_pown(half8 x0, int8 x1);
+__attribute__((__overloadable__)) half16 _cl_pown(half16 x0, int16 x1);
 __attribute__((__overloadable__)) float _cl_pown(float x0, int x1);
 __attribute__((__overloadable__)) float2 _cl_pown(float2 x0, int2 x1);
 __attribute__((__overloadable__)) float3 _cl_pown(float3 x0, int3 x1);
@@ -2133,6 +3065,12 @@ __attribute__((__overloadable__)) double16 _cl_pown(double16 x0, int16 x1);
 // powr: ['VF', 'VF'] -> VF
 #undef powr
 #define powr _cl_powr
+__attribute__((__overloadable__)) half _cl_powr(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_powr(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_powr(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_powr(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_powr(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_powr(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_powr(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_powr(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_powr(float3 x0, float3 x1);
@@ -2149,6 +3087,24 @@ __attribute__((__overloadable__)) double16 _cl_powr(double16 x0, double16 x1);
 // remquo: ['VF', 'VF', 'PVK'] -> VF
 #undef remquo
 #define remquo _cl_remquo
+__attribute__((__overloadable__)) half _cl_remquo(half x0, half x1, global int* x2);
+__attribute__((__overloadable__)) half _cl_remquo(half x0, half x1, local int* x2);
+__attribute__((__overloadable__)) half _cl_remquo(half x0, half x1, private int* x2);
+__attribute__((__overloadable__)) half2 _cl_remquo(half2 x0, half2 x1, global int2* x2);
+__attribute__((__overloadable__)) half2 _cl_remquo(half2 x0, half2 x1, local int2* x2);
+__attribute__((__overloadable__)) half2 _cl_remquo(half2 x0, half2 x1, private int2* x2);
+__attribute__((__overloadable__)) half3 _cl_remquo(half3 x0, half3 x1, global int3* x2);
+__attribute__((__overloadable__)) half3 _cl_remquo(half3 x0, half3 x1, local int3* x2);
+__attribute__((__overloadable__)) half3 _cl_remquo(half3 x0, half3 x1, private int3* x2);
+__attribute__((__overloadable__)) half4 _cl_remquo(half4 x0, half4 x1, global int4* x2);
+__attribute__((__overloadable__)) half4 _cl_remquo(half4 x0, half4 x1, local int4* x2);
+__attribute__((__overloadable__)) half4 _cl_remquo(half4 x0, half4 x1, private int4* x2);
+__attribute__((__overloadable__)) half8 _cl_remquo(half8 x0, half8 x1, global int8* x2);
+__attribute__((__overloadable__)) half8 _cl_remquo(half8 x0, half8 x1, local int8* x2);
+__attribute__((__overloadable__)) half8 _cl_remquo(half8 x0, half8 x1, private int8* x2);
+__attribute__((__overloadable__)) half16 _cl_remquo(half16 x0, half16 x1, global int16* x2);
+__attribute__((__overloadable__)) half16 _cl_remquo(half16 x0, half16 x1, local int16* x2);
+__attribute__((__overloadable__)) half16 _cl_remquo(half16 x0, half16 x1, private int16* x2);
 __attribute__((__overloadable__)) float _cl_remquo(float x0, float x1, global int* x2);
 __attribute__((__overloadable__)) float _cl_remquo(float x0, float x1, local int* x2);
 __attribute__((__overloadable__)) float _cl_remquo(float x0, float x1, private int* x2);
@@ -2189,6 +3145,12 @@ __attribute__((__overloadable__)) double16 _cl_remquo(double16 x0, double16 x1, 
 // rootn: ['VF', 'VK'] -> VF
 #undef rootn
 #define rootn _cl_rootn
+__attribute__((__overloadable__)) half _cl_rootn(half x0, int x1);
+__attribute__((__overloadable__)) half2 _cl_rootn(half2 x0, int2 x1);
+__attribute__((__overloadable__)) half3 _cl_rootn(half3 x0, int3 x1);
+__attribute__((__overloadable__)) half4 _cl_rootn(half4 x0, int4 x1);
+__attribute__((__overloadable__)) half8 _cl_rootn(half8 x0, int8 x1);
+__attribute__((__overloadable__)) half16 _cl_rootn(half16 x0, int16 x1);
 __attribute__((__overloadable__)) float _cl_rootn(float x0, int x1);
 __attribute__((__overloadable__)) float2 _cl_rootn(float2 x0, int2 x1);
 __attribute__((__overloadable__)) float3 _cl_rootn(float3 x0, int3 x1);
@@ -2205,6 +3167,24 @@ __attribute__((__overloadable__)) double16 _cl_rootn(double16 x0, int16 x1);
 // sincos: ['VF', 'PVF'] -> VF
 #undef sincos
 #define sincos _cl_sincos
+__attribute__((__overloadable__)) half _cl_sincos(half x0, global half* x1);
+__attribute__((__overloadable__)) half _cl_sincos(half x0, local half* x1);
+__attribute__((__overloadable__)) half _cl_sincos(half x0, private half* x1);
+__attribute__((__overloadable__)) half2 _cl_sincos(half2 x0, global half2* x1);
+__attribute__((__overloadable__)) half2 _cl_sincos(half2 x0, local half2* x1);
+__attribute__((__overloadable__)) half2 _cl_sincos(half2 x0, private half2* x1);
+__attribute__((__overloadable__)) half3 _cl_sincos(half3 x0, global half3* x1);
+__attribute__((__overloadable__)) half3 _cl_sincos(half3 x0, local half3* x1);
+__attribute__((__overloadable__)) half3 _cl_sincos(half3 x0, private half3* x1);
+__attribute__((__overloadable__)) half4 _cl_sincos(half4 x0, global half4* x1);
+__attribute__((__overloadable__)) half4 _cl_sincos(half4 x0, local half4* x1);
+__attribute__((__overloadable__)) half4 _cl_sincos(half4 x0, private half4* x1);
+__attribute__((__overloadable__)) half8 _cl_sincos(half8 x0, global half8* x1);
+__attribute__((__overloadable__)) half8 _cl_sincos(half8 x0, local half8* x1);
+__attribute__((__overloadable__)) half8 _cl_sincos(half8 x0, private half8* x1);
+__attribute__((__overloadable__)) half16 _cl_sincos(half16 x0, global half16* x1);
+__attribute__((__overloadable__)) half16 _cl_sincos(half16 x0, local half16* x1);
+__attribute__((__overloadable__)) half16 _cl_sincos(half16 x0, private half16* x1);
 __attribute__((__overloadable__)) float _cl_sincos(float x0, global float* x1);
 __attribute__((__overloadable__)) float _cl_sincos(float x0, local float* x1);
 __attribute__((__overloadable__)) float _cl_sincos(float x0, private float* x1);
@@ -2245,6 +3225,12 @@ __attribute__((__overloadable__)) double16 _cl_sincos(double16 x0, private doubl
 // sinpi: ['VF'] -> VF
 #undef sinpi
 #define sinpi _cl_sinpi
+__attribute__((__overloadable__)) half _cl_sinpi(half x0);
+__attribute__((__overloadable__)) half2 _cl_sinpi(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_sinpi(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_sinpi(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_sinpi(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_sinpi(half16 x0);
 __attribute__((__overloadable__)) float _cl_sinpi(float x0);
 __attribute__((__overloadable__)) float2 _cl_sinpi(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_sinpi(float3 x0);
@@ -2261,6 +3247,12 @@ __attribute__((__overloadable__)) double16 _cl_sinpi(double16 x0);
 // tanpi: ['VF'] -> VF
 #undef tanpi
 #define tanpi _cl_tanpi
+__attribute__((__overloadable__)) half _cl_tanpi(half x0);
+__attribute__((__overloadable__)) half2 _cl_tanpi(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_tanpi(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_tanpi(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_tanpi(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_tanpi(half16 x0);
 __attribute__((__overloadable__)) float _cl_tanpi(float x0);
 __attribute__((__overloadable__)) float2 _cl_tanpi(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_tanpi(float3 x0);
@@ -2557,6 +3549,12 @@ __attribute__((__overloadable__)) float16 _cl_native_tan(float16 x0);
 // clamp: ['VF', 'VF', 'VF'] -> VF
 #undef clamp
 #define clamp _cl_clamp
+__attribute__((__overloadable__)) half _cl_clamp(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half2 _cl_clamp(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half3 _cl_clamp(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half4 _cl_clamp(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half8 _cl_clamp(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half16 _cl_clamp(half16 x0, half16 x1, half16 x2);
 __attribute__((__overloadable__)) float _cl_clamp(float x0, float x1, float x2);
 __attribute__((__overloadable__)) float2 _cl_clamp(float2 x0, float2 x1, float2 x2);
 __attribute__((__overloadable__)) float3 _cl_clamp(float3 x0, float3 x1, float3 x2);
@@ -2573,6 +3571,11 @@ __attribute__((__overloadable__)) double16 _cl_clamp(double16 x0, double16 x1, d
 // clamp: ['VF', 'SF', 'SF'] -> VF
 #undef clamp
 #define clamp _cl_clamp
+__attribute__((__overloadable__)) half2 _cl_clamp(half2 x0, half x1, half x2);
+__attribute__((__overloadable__)) half3 _cl_clamp(half3 x0, half x1, half x2);
+__attribute__((__overloadable__)) half4 _cl_clamp(half4 x0, half x1, half x2);
+__attribute__((__overloadable__)) half8 _cl_clamp(half8 x0, half x1, half x2);
+__attribute__((__overloadable__)) half16 _cl_clamp(half16 x0, half x1, half x2);
 __attribute__((__overloadable__)) float2 _cl_clamp(float2 x0, float x1, float x2);
 __attribute__((__overloadable__)) float3 _cl_clamp(float3 x0, float x1, float x2);
 __attribute__((__overloadable__)) float4 _cl_clamp(float4 x0, float x1, float x2);
@@ -2587,6 +3590,12 @@ __attribute__((__overloadable__)) double16 _cl_clamp(double16 x0, double x1, dou
 // degrees: ['VF'] -> VF
 #undef degrees
 #define degrees _cl_degrees
+__attribute__((__overloadable__)) half _cl_degrees(half x0);
+__attribute__((__overloadable__)) half2 _cl_degrees(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_degrees(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_degrees(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_degrees(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_degrees(half16 x0);
 __attribute__((__overloadable__)) float _cl_degrees(float x0);
 __attribute__((__overloadable__)) float2 _cl_degrees(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_degrees(float3 x0);
@@ -2603,6 +3612,12 @@ __attribute__((__overloadable__)) double16 _cl_degrees(double16 x0);
 // max: ['VF', 'VF'] -> VF
 #undef max
 #define max _cl_max
+__attribute__((__overloadable__)) half _cl_max(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_max(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_max(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_max(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_max(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_max(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_max(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_max(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_max(float3 x0, float3 x1);
@@ -2619,6 +3634,11 @@ __attribute__((__overloadable__)) double16 _cl_max(double16 x0, double16 x1);
 // max: ['VF', 'SF'] -> VF
 #undef max
 #define max _cl_max
+__attribute__((__overloadable__)) half2 _cl_max(half2 x0, half x1);
+__attribute__((__overloadable__)) half3 _cl_max(half3 x0, half x1);
+__attribute__((__overloadable__)) half4 _cl_max(half4 x0, half x1);
+__attribute__((__overloadable__)) half8 _cl_max(half8 x0, half x1);
+__attribute__((__overloadable__)) half16 _cl_max(half16 x0, half x1);
 __attribute__((__overloadable__)) float2 _cl_max(float2 x0, float x1);
 __attribute__((__overloadable__)) float3 _cl_max(float3 x0, float x1);
 __attribute__((__overloadable__)) float4 _cl_max(float4 x0, float x1);
@@ -2633,6 +3653,12 @@ __attribute__((__overloadable__)) double16 _cl_max(double16 x0, double x1);
 // min: ['VF', 'VF'] -> VF
 #undef min
 #define min _cl_min
+__attribute__((__overloadable__)) half _cl_min(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_min(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_min(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_min(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_min(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_min(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_min(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_min(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_min(float3 x0, float3 x1);
@@ -2649,6 +3675,11 @@ __attribute__((__overloadable__)) double16 _cl_min(double16 x0, double16 x1);
 // min: ['VF', 'SF'] -> VF
 #undef min
 #define min _cl_min
+__attribute__((__overloadable__)) half2 _cl_min(half2 x0, half x1);
+__attribute__((__overloadable__)) half3 _cl_min(half3 x0, half x1);
+__attribute__((__overloadable__)) half4 _cl_min(half4 x0, half x1);
+__attribute__((__overloadable__)) half8 _cl_min(half8 x0, half x1);
+__attribute__((__overloadable__)) half16 _cl_min(half16 x0, half x1);
 __attribute__((__overloadable__)) float2 _cl_min(float2 x0, float x1);
 __attribute__((__overloadable__)) float3 _cl_min(float3 x0, float x1);
 __attribute__((__overloadable__)) float4 _cl_min(float4 x0, float x1);
@@ -2663,6 +3694,12 @@ __attribute__((__overloadable__)) double16 _cl_min(double16 x0, double x1);
 // mix: ['VF', 'VF', 'VF'] -> VF
 #undef mix
 #define mix _cl_mix
+__attribute__((__overloadable__)) half _cl_mix(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half2 _cl_mix(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half3 _cl_mix(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half4 _cl_mix(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half8 _cl_mix(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half16 _cl_mix(half16 x0, half16 x1, half16 x2);
 __attribute__((__overloadable__)) float _cl_mix(float x0, float x1, float x2);
 __attribute__((__overloadable__)) float2 _cl_mix(float2 x0, float2 x1, float2 x2);
 __attribute__((__overloadable__)) float3 _cl_mix(float3 x0, float3 x1, float3 x2);
@@ -2679,6 +3716,11 @@ __attribute__((__overloadable__)) double16 _cl_mix(double16 x0, double16 x1, dou
 // mix: ['VF', 'VF', 'SF'] -> VF
 #undef mix
 #define mix _cl_mix
+__attribute__((__overloadable__)) half2 _cl_mix(half2 x0, half2 x1, half x2);
+__attribute__((__overloadable__)) half3 _cl_mix(half3 x0, half3 x1, half x2);
+__attribute__((__overloadable__)) half4 _cl_mix(half4 x0, half4 x1, half x2);
+__attribute__((__overloadable__)) half8 _cl_mix(half8 x0, half8 x1, half x2);
+__attribute__((__overloadable__)) half16 _cl_mix(half16 x0, half16 x1, half x2);
 __attribute__((__overloadable__)) float2 _cl_mix(float2 x0, float2 x1, float x2);
 __attribute__((__overloadable__)) float3 _cl_mix(float3 x0, float3 x1, float x2);
 __attribute__((__overloadable__)) float4 _cl_mix(float4 x0, float4 x1, float x2);
@@ -2693,6 +3735,12 @@ __attribute__((__overloadable__)) double16 _cl_mix(double16 x0, double16 x1, dou
 // radians: ['VF'] -> VF
 #undef radians
 #define radians _cl_radians
+__attribute__((__overloadable__)) half _cl_radians(half x0);
+__attribute__((__overloadable__)) half2 _cl_radians(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_radians(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_radians(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_radians(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_radians(half16 x0);
 __attribute__((__overloadable__)) float _cl_radians(float x0);
 __attribute__((__overloadable__)) float2 _cl_radians(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_radians(float3 x0);
@@ -2709,6 +3757,12 @@ __attribute__((__overloadable__)) double16 _cl_radians(double16 x0);
 // step: ['VF', 'VF'] -> VF
 #undef step
 #define step _cl_step
+__attribute__((__overloadable__)) half _cl_step(half x0, half x1);
+__attribute__((__overloadable__)) half2 _cl_step(half2 x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_step(half3 x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_step(half4 x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_step(half8 x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_step(half16 x0, half16 x1);
 __attribute__((__overloadable__)) float _cl_step(float x0, float x1);
 __attribute__((__overloadable__)) float2 _cl_step(float2 x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_step(float3 x0, float3 x1);
@@ -2725,6 +3779,11 @@ __attribute__((__overloadable__)) double16 _cl_step(double16 x0, double16 x1);
 // step: ['SF', 'VF'] -> VF
 #undef step
 #define step _cl_step
+__attribute__((__overloadable__)) half2 _cl_step(half x0, half2 x1);
+__attribute__((__overloadable__)) half3 _cl_step(half x0, half3 x1);
+__attribute__((__overloadable__)) half4 _cl_step(half x0, half4 x1);
+__attribute__((__overloadable__)) half8 _cl_step(half x0, half8 x1);
+__attribute__((__overloadable__)) half16 _cl_step(half x0, half16 x1);
 __attribute__((__overloadable__)) float2 _cl_step(float x0, float2 x1);
 __attribute__((__overloadable__)) float3 _cl_step(float x0, float3 x1);
 __attribute__((__overloadable__)) float4 _cl_step(float x0, float4 x1);
@@ -2739,6 +3798,12 @@ __attribute__((__overloadable__)) double16 _cl_step(double x0, double16 x1);
 // smoothstep: ['VF', 'VF', 'VF'] -> VF
 #undef smoothstep
 #define smoothstep _cl_smoothstep
+__attribute__((__overloadable__)) half _cl_smoothstep(half x0, half x1, half x2);
+__attribute__((__overloadable__)) half2 _cl_smoothstep(half2 x0, half2 x1, half2 x2);
+__attribute__((__overloadable__)) half3 _cl_smoothstep(half3 x0, half3 x1, half3 x2);
+__attribute__((__overloadable__)) half4 _cl_smoothstep(half4 x0, half4 x1, half4 x2);
+__attribute__((__overloadable__)) half8 _cl_smoothstep(half8 x0, half8 x1, half8 x2);
+__attribute__((__overloadable__)) half16 _cl_smoothstep(half16 x0, half16 x1, half16 x2);
 __attribute__((__overloadable__)) float _cl_smoothstep(float x0, float x1, float x2);
 __attribute__((__overloadable__)) float2 _cl_smoothstep(float2 x0, float2 x1, float2 x2);
 __attribute__((__overloadable__)) float3 _cl_smoothstep(float3 x0, float3 x1, float3 x2);
@@ -2755,6 +3820,11 @@ __attribute__((__overloadable__)) double16 _cl_smoothstep(double16 x0, double16 
 // smoothstep: ['SF', 'SF', 'VF'] -> VF
 #undef smoothstep
 #define smoothstep _cl_smoothstep
+__attribute__((__overloadable__)) half2 _cl_smoothstep(half x0, half x1, half2 x2);
+__attribute__((__overloadable__)) half3 _cl_smoothstep(half x0, half x1, half3 x2);
+__attribute__((__overloadable__)) half4 _cl_smoothstep(half x0, half x1, half4 x2);
+__attribute__((__overloadable__)) half8 _cl_smoothstep(half x0, half x1, half8 x2);
+__attribute__((__overloadable__)) half16 _cl_smoothstep(half x0, half x1, half16 x2);
 __attribute__((__overloadable__)) float2 _cl_smoothstep(float x0, float x1, float2 x2);
 __attribute__((__overloadable__)) float3 _cl_smoothstep(float x0, float x1, float3 x2);
 __attribute__((__overloadable__)) float4 _cl_smoothstep(float x0, float x1, float4 x2);
@@ -2769,6 +3839,12 @@ __attribute__((__overloadable__)) double16 _cl_smoothstep(double x0, double x1, 
 // sign: ['VF'] -> VF
 #undef sign
 #define sign _cl_sign
+__attribute__((__overloadable__)) half _cl_sign(half x0);
+__attribute__((__overloadable__)) half2 _cl_sign(half2 x0);
+__attribute__((__overloadable__)) half3 _cl_sign(half3 x0);
+__attribute__((__overloadable__)) half4 _cl_sign(half4 x0);
+__attribute__((__overloadable__)) half8 _cl_sign(half8 x0);
+__attribute__((__overloadable__)) half16 _cl_sign(half16 x0);
 __attribute__((__overloadable__)) float _cl_sign(float x0);
 __attribute__((__overloadable__)) float2 _cl_sign(float2 x0);
 __attribute__((__overloadable__)) float3 _cl_sign(float3 x0);
@@ -2785,6 +3861,12 @@ __attribute__((__overloadable__)) double16 _cl_sign(double16 x0);
 // isequal: ['VF', 'VF'] -> VJ
 #undef isequal
 #define isequal _cl_isequal
+__attribute__((__overloadable__)) int _cl_isequal(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isequal(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isequal(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isequal(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isequal(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isequal(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isequal(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isequal(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isequal(float3 x0, float3 x1);
@@ -2801,6 +3883,12 @@ __attribute__((__overloadable__)) long16 _cl_isequal(double16 x0, double16 x1);
 // isnotequal: ['VF', 'VF'] -> VJ
 #undef isnotequal
 #define isnotequal _cl_isnotequal
+__attribute__((__overloadable__)) int _cl_isnotequal(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isnotequal(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isnotequal(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isnotequal(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isnotequal(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isnotequal(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isnotequal(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isnotequal(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isnotequal(float3 x0, float3 x1);
@@ -2817,6 +3905,12 @@ __attribute__((__overloadable__)) long16 _cl_isnotequal(double16 x0, double16 x1
 // isgreater: ['VF', 'VF'] -> VJ
 #undef isgreater
 #define isgreater _cl_isgreater
+__attribute__((__overloadable__)) int _cl_isgreater(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isgreater(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isgreater(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isgreater(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isgreater(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isgreater(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isgreater(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isgreater(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isgreater(float3 x0, float3 x1);
@@ -2833,6 +3927,12 @@ __attribute__((__overloadable__)) long16 _cl_isgreater(double16 x0, double16 x1)
 // isgreaterequal: ['VF', 'VF'] -> VJ
 #undef isgreaterequal
 #define isgreaterequal _cl_isgreaterequal
+__attribute__((__overloadable__)) int _cl_isgreaterequal(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isgreaterequal(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isgreaterequal(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isgreaterequal(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isgreaterequal(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isgreaterequal(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isgreaterequal(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isgreaterequal(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isgreaterequal(float3 x0, float3 x1);
@@ -2849,6 +3949,12 @@ __attribute__((__overloadable__)) long16 _cl_isgreaterequal(double16 x0, double1
 // isless: ['VF', 'VF'] -> VJ
 #undef isless
 #define isless _cl_isless
+__attribute__((__overloadable__)) int _cl_isless(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isless(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isless(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isless(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isless(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isless(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isless(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isless(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isless(float3 x0, float3 x1);
@@ -2865,6 +3971,12 @@ __attribute__((__overloadable__)) long16 _cl_isless(double16 x0, double16 x1);
 // islessequal: ['VF', 'VF'] -> VJ
 #undef islessequal
 #define islessequal _cl_islessequal
+__attribute__((__overloadable__)) int _cl_islessequal(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_islessequal(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_islessequal(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_islessequal(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_islessequal(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_islessequal(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_islessequal(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_islessequal(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_islessequal(float3 x0, float3 x1);
@@ -2881,6 +3993,12 @@ __attribute__((__overloadable__)) long16 _cl_islessequal(double16 x0, double16 x
 // islessgreater: ['VF', 'VF'] -> VJ
 #undef islessgreater
 #define islessgreater _cl_islessgreater
+__attribute__((__overloadable__)) int _cl_islessgreater(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_islessgreater(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_islessgreater(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_islessgreater(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_islessgreater(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_islessgreater(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_islessgreater(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_islessgreater(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_islessgreater(float3 x0, float3 x1);
@@ -2897,6 +4015,12 @@ __attribute__((__overloadable__)) long16 _cl_islessgreater(double16 x0, double16
 // isordered: ['VF', 'VF'] -> VJ
 #undef isordered
 #define isordered _cl_isordered
+__attribute__((__overloadable__)) int _cl_isordered(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isordered(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isordered(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isordered(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isordered(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isordered(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isordered(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isordered(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isordered(float3 x0, float3 x1);
@@ -2913,6 +4037,12 @@ __attribute__((__overloadable__)) long16 _cl_isordered(double16 x0, double16 x1)
 // isunordered: ['VF', 'VF'] -> VJ
 #undef isunordered
 #define isunordered _cl_isunordered
+__attribute__((__overloadable__)) int _cl_isunordered(half x0, half x1);
+__attribute__((__overloadable__)) short2 _cl_isunordered(half2 x0, half2 x1);
+__attribute__((__overloadable__)) short3 _cl_isunordered(half3 x0, half3 x1);
+__attribute__((__overloadable__)) short4 _cl_isunordered(half4 x0, half4 x1);
+__attribute__((__overloadable__)) short8 _cl_isunordered(half8 x0, half8 x1);
+__attribute__((__overloadable__)) short16 _cl_isunordered(half16 x0, half16 x1);
 __attribute__((__overloadable__)) int _cl_isunordered(float x0, float x1);
 __attribute__((__overloadable__)) int2 _cl_isunordered(float2 x0, float2 x1);
 __attribute__((__overloadable__)) int3 _cl_isunordered(float3 x0, float3 x1);

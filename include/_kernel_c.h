@@ -125,9 +125,9 @@ typedef float float8  __attribute__((__ext_vector_type__(8)));
 typedef float float16 __attribute__((__ext_vector_type__(16)));
 
 #ifdef cl_khr_fp64
-# ifndef __CBUILD__
-#  pragma OPENCL EXTENSION cl_khr_fp64 : enable
-# endif
+#  ifndef __CBUILD__
+#    pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#  endif
 typedef double double2  __attribute__((__ext_vector_type__(2)));
 typedef double double3  __attribute__((__ext_vector_type__(3)));
 typedef double double4  __attribute__((__ext_vector_type__(4)));

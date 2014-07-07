@@ -5,8 +5,10 @@
 // only in 3.3, and even that does not handle half vectors well
 // for targets without native support. 
 
-#if (__clang_major__ == 3) && (__clang_minor__ > 2)
-#define cl_khr_fp16
+#if (__clang_major__ == 3) && (__clang_minor__ > 2) && !defined(_CL_DISABLE_HALF)
+#  define cl_khr_fp16
+#else
+#  undef cl_khr_fp16
 #endif
 
 // Is long supported in OpenCL C?

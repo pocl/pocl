@@ -24,20 +24,9 @@
 
 #include "templates.h"
 
-float __builtin_maxmagf(float x, float y)
-{
-  if (fabs(x) > fabs(y)) return x;
-  if (fabs(y) > fabs(x)) return y;
-  return fmax(x, y);
-}
-
-#ifdef cl_khr_int64
-double __builtin_maxmag(double x, double y)
-{
-  if (fabs(x) > fabs(y)) return x;
-  if (fabs(y) > fabs(x)) return y;
-  return fmax(x, y);
-}
-#endif
-
-DEFINE_BUILTIN_V_VV(maxmag)
+DEFINE_EXPR_V_VV(maxmag,
+                 ({
+                   fabs(a) > fabs(b) ? a :
+                   fabs(b) > fabs(a) ? b :
+                   fmax(a, b);
+                 }))

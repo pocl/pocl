@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <CL/cl.h>
+#include "poclu.h"
+#include "pocl_tests.h"
 
 #define MAX_DEVICES   2
 
@@ -25,7 +26,7 @@ main(void)
   if (err != CL_SUCCESS)
 	return EXIT_FAILURE;
 
-  assert(ndevices >= 2);
+  TEST_ASSERT(ndevices >= 2);
 
   cl_context context = clCreateContext (NULL, ndevices, devices, NULL, NULL, 
                                         &err);

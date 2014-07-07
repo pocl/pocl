@@ -28,11 +28,11 @@
 #
 # convert_<destTypen><_sat><_roundingMode>(<sourceTypen>)
 
-types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'half', 'float', 
-         'double']
+types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong',
+         'half', 'float', 'double']
 int_types = ['char', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong']
 unsigned_types = ['uchar', 'ushort', 'uint', 'ulong']
-float_types = ['half', 'float', 'double']
+float_types = ['float', 'double']
 int64_types = ['long', 'ulong']
 float16_types = ['half']
 float64_types = ['double']
@@ -96,25 +96,25 @@ def conditional_guard(src, dst):
   float16_count = 0
 
   if src in int64_types:    
-    int64_count = int64_count +1
+    int64_count += 1
   elif src in float64_types:
-    float64_count = float64_count + 1
+    float64_count += 1
   elif src in float16_types:
     float16_count += 1
 
   if dst in int64_types:
-    int64_count = int64_count +1
+    int64_count += 1
   elif dst in float64_types:
-    float64_count = float64_count + 1
+    float64_count += 1
   elif dst in float16_types:
     float16_count += 1
 
   if int64_count > 0 or float64_count > 0 or float16_count > 0:
     defines = []
-    if float64_count > 0:
-      defines.append("defined(cl_khr_fp64)")
     if int64_count > 0:
       defines.append("defined(cl_khr_int64)")
+    if float64_count > 0:
+      defines.append("defined(cl_khr_fp64)")
     if float16_count > 0:
       defines.append("defined(cl_khr_fp16)")
     print("#if " + " && ".join(defines))
@@ -212,8 +212,8 @@ def generate_default_conversion(src, dst, mode):
 
 
 for src in types:
-  for dst in types:
-    generate_default_conversion(src, dst, '')
+    for dst in types:
+      generate_default_conversion(src, dst, '')
 
 for src in int_types:
   for dst in int_types:
@@ -298,7 +298,8 @@ def generate_saturated_conversion(src, dst, size):
 for src in types:
   for dst in int_types:
     for size in vector_sizes:
-      generate_saturated_conversion(src, dst, size)
+      if size != '' or (src not in float16_types and dst not in float16_types):
+        generate_saturated_conversion(src, dst, size)
 
 
 def generate_saturated_conversion_with_rounding(src, dst, size, mode):

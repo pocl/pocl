@@ -24,7 +24,7 @@ AT_CLEANUP
 #test_clBuildProgram tests include paths so it must be executed in the directory
 AT_SETUP([clBuildProgram])
 AT_KEYWORDS([runtime])
-AT_CHECK([cd $abs_top_srcdir/tests/runtime/; $abs_top_builddir/tests/runtime/test_clBuildProgram])
+AT_CHECK([cd $abs_top_srcdir/tests/runtime/; $abs_top_builddir/tests/runtime/test_clBuildProgram], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([clFinish])
@@ -49,10 +49,15 @@ AT_CHECK([POCL_DEVICES="pthread pthread" $abs_top_builddir/tests/runtime/test_cl
 AT_CLEANUP
 
 AT_SETUP([clCreateKernelsInProgram])
-AT_XFAIL_IF([grep "undef USE_LLVM_API" $abs_top_builddir/config.h])
 AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateKernelsInProgram] , 0,
 [Hello
 World
+])
+AT_CLEANUP
+
+AT_SETUP([clCreateKernel])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateKernel] , 0, [OK
 ])
 AT_CLEANUP

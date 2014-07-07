@@ -36,6 +36,7 @@ template <typename D, typename M>
 class testcase {
 public:
 	unsigned n, m;
+	unsigned nsize, msize;
 	D *in1;
 	D *in2;
 	D *out;
@@ -44,13 +45,15 @@ public:
 	const char *d_type;
 
 	testcase( unsigned n_, unsigned m_, const char* ocl_label) :
-		n(n_), m(m_), d_type(ocl_label)
+		n(n_), m(m_),
+                nsize(n==3?4:n), msize(m==3?4:m),
+                d_type(ocl_label)
 	{
-		in1=new D[m_];
-		in2=new D[m_];
-		out=new D[n_];
-		mask1=new M[n_];
-		mask2=new M[n_];
+		in1=new D[m];
+		in2=new D[m];
+		out=new D[n];
+		mask1=new M[n];
+		mask2=new M[n];
 
 		for(unsigned i=0; i<m; i++)
 		{
@@ -59,8 +62,13 @@ public:
 		}
 		for(unsigned i=0; i<n; i++)
 		{
-			mask1[i]=rand()%m;
-			mask2[i]=rand()%(2*m);
+			// test overflow, but don't access undefined elements
+			do {
+				mask1[i]=rand()%(10*msize);
+			} while (mask1[i] % msize >= m);
+			do {
+				mask2[i]=rand()%(20*msize);
+			} while (mask2[i] % msize >= m);
 		}
 	}
 
@@ -87,7 +95,8 @@ public:
 		bool error=false;
 		for(unsigned i=0; i<n; i++)
 		{
-			error |= out[i] != in1[mask1[i]];
+			unsigned m = mask1[i] % msize;
+			error |= out[i] != in1[m];
 		}
 		return !error;
 	}
@@ -99,10 +108,11 @@ public:
 		bool error=false;
 		for(unsigned i=0; i<n; i++)
 		{
-			if( mask2[i]<m )
-				error |= out[i] != in1[mask2[i]];
+			unsigned m = mask2[i] % (2*msize);
+			if( m < msize )
+				error |= out[i] != in1[m];
 			else
-				error |= out[i] != in2[mask2[i]-m];
+				error |= out[i] != in2[m-msize];
 		}
 		return !error;
 	}
@@ -213,7 +223,7 @@ bool runtest( int n, int m, const char* ocl_type){
 		std::cout << "Error in shuffle " << ocl_type << " " << m;
 		std::cout << " => " << ocl_type << " " << n << " :";
 		tc.print_out();
-		std::cout << " = suffle( ";
+		std::cout << " = shuffle( ";
 		tc.print_in1();
 		std::cout << ", ";
 		tc.print_mask1();
@@ -236,7 +246,7 @@ bool runtest( int n, int m, const char* ocl_type){
 		std::cout << "Error in shuffle2 " << ocl_type << " " << m;
 		std::cout << " => " << ocl_type << " " << n << " :";
 		tc.print_out();
-		std::cout << " = suffle2( ";
+		std::cout << " = shuffle2( ";
 		tc.print_in1();
 		std::cout << ", ";
 		tc.print_in2();
@@ -326,4 +336,3 @@ int main( int argc, char *argv[])
 		std::cout << "OK" << std::endl;
 	return num_errors;
 }
-

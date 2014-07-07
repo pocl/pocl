@@ -91,6 +91,11 @@ poclu_cl_half_to_float(cl_half value);
 char *
 poclu_read_file(char* filemane);
 
+/* In case cl_err != CL_SUCCESS, prints out the error + function : line to stderr,
+ * and returns 1, otherwise returns 0
+ */
+int check_cl_error(cl_int cl_err, int line, const char* func_name);
+
 #ifdef __cplusplus
 }
 #endif

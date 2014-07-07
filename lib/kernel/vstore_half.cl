@@ -47,6 +47,7 @@ ushort _cl_float2half(float data)
 #else
 
 #define HALF_MAXPLUS 0x1.ffdp15f /* "one more" than HALF_MAX */
+#undef HALF_MIN
 #define HALF_MIN     0x1.0p-14f
 #define HALF_ZERO    ((short)0x0000) /* zero */
 #define HALF_INF     ((short)0x4000) /* infinity */

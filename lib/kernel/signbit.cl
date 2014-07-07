@@ -29,6 +29,7 @@
 
 
 
+#define IMPLEMENT_SIGNBIT_BUILTIN_HALF   __builtin_signbitf(a) /* use float */
 #define IMPLEMENT_SIGNBIT_BUILTIN_FLOAT  __builtin_signbitf(a)
 #define IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE __builtin_signbit(a)
 #define IMPLEMENT_SIGNBIT_DIRECT                \
@@ -47,6 +48,15 @@
   }
 
 
+
+#ifdef cl_khr_fp16
+IMPLEMENT_DIRECT(signbit, half  , half, int    , IMPLEMENT_SIGNBIT_BUILTIN_HALF)
+IMPLEMENT_DIRECT(signbit, half2 , half, short2 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, half3 , half, short3 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, half4 , half, short4 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, half8 , half, short8 , IMPLEMENT_SIGNBIT_DIRECT)
+IMPLEMENT_DIRECT(signbit, half16, half, short16, IMPLEMENT_SIGNBIT_DIRECT)
+#endif
 
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)

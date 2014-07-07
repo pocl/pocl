@@ -1,3 +1,29 @@
+#ifdef cl_khr_fp16
+__attribute__((__overloadable__))
+half dot(half p0, half p1)
+{
+  return p0*p1;
+}
+
+__attribute__((__overloadable__))
+half dot(half2 p0, half2 p1)
+{
+  return p0.x*p1.x + p0.y*p1.y;
+}
+
+__attribute__((__overloadable__))
+half dot(half3 p0, half3 p1)
+{
+  return p0.x*p1.x + p0.y*p1.y + p0.z*p1.z;
+}
+
+__attribute__((__overloadable__))
+half dot(half4 p0, half4 p1)
+{
+  return p0.x*p1.x + p0.y*p1.y + p0.z*p1.z + p0.w*p1.w;
+}
+#endif
+
 __attribute__((__overloadable__))
 float dot(float p0, float p1)
 {

@@ -1,3 +1,29 @@
+#ifdef cl_khr_fp16
+__attribute__((__overloadable__))
+half normalize(half p)
+{
+  return p * rsqrt(dot(p, p));
+}
+
+__attribute__((__overloadable__))
+half2 normalize(half2 p)
+{
+  return p * rsqrt(dot(p, p));
+}
+
+__attribute__((__overloadable__))
+half3 normalize(half3 p)
+{
+  return p * rsqrt(dot(p, p));
+}
+
+__attribute__((__overloadable__))
+half4 normalize(half4 p)
+{
+  return p * rsqrt(dot(p, p));
+}
+#endif
+
 __attribute__((__overloadable__))
 float normalize(float p)
 {

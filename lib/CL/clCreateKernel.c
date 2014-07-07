@@ -43,6 +43,12 @@ POname(clCreateKernel)(cl_program program,
   lt_dlhandle dlhandle = NULL;
   int i;
   int device_i;
+
+  if (kernel_name == NULL)
+  {
+    errcode = CL_INVALID_VALUE;
+    goto ERROR;
+  }
   
   if (program == NULL || program->num_devices == 0)
   {

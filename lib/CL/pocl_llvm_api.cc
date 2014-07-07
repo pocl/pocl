@@ -360,6 +360,8 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
   *mod = action->takeModule();
+  if (*mod == NULL)
+    return CL_BUILD_PROGRAM_FAILURE;
 
   if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
     write_temporary_file(*mod, binary_file_name);
@@ -377,7 +379,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                                   const char* kernel_name,
                                   const char* device_tmpdir, 
                                   char* descriptor_filename,
-                                  int */*errcode*/)
+                                  int * errcode)
 {
 
   int i;
@@ -451,7 +453,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #endif
 
   llvm::Function *kernel_function = input->getFunction(kernel_name);
-  assert(kernel_function && "TODO: make better check here");
+  if (!kernel_function) {
+    *errcode = CL_INVALID_KERNEL_NAME;
+    return 1;
+  }
 
   DataLayout *TD = 0;
   #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)

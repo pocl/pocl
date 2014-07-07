@@ -120,28 +120,26 @@ vmlfuncs = [
     
 directfuncs = [
     # Section 6.12.2
-    ("acospi"        , [VF         ], VF, "acos(x0)/(scalar_t)M_PI"),
-    ("asinpi"        , [VF         ], VF, "asin(x0)/(scalar_t)M_PI"),
-    ("atanpi"        , [VF         ], VF, "atan(x0)/(scalar_t)M_PI"),
+    ("acospi"        , [VF         ], VF, "acos(x0)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)"),
+    ("asinpi"        , [VF         ], VF, "asin(x0)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)"),
+    ("atanpi"        , [VF         ], VF, "atan(x0)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)"),
     ("atan2"         , [VF, VF     ], VF, """
     ({
       vector_t a = atan(x0/x1);
       x1 > (scalar_t)0 ? a :
-      x1 < (scalar_t)0 ? a + copysign((scalar_t)M_PI, x0) :
-      copysign((scalar_t)M_PI_2, x0);
+      x1 < (scalar_t)0 ? a + copysign(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI), x0) :
+      copysign(TYPED_CONST(scalar_t, M_PI_2_H, M_PI_2_F, M_PI_2), x0);
     })
 """),
-    ("atan2pi"       , [VF, VF     ], VF, "atan2(x0,x1)/(scalar_t)M_PI"),
-    ("cospi"         , [VF         ], VF, "cos((scalar_t)M_PI*x0)"),
+    ("atan2pi"       , [VF, VF     ], VF, "atan2(x0,x1)/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)"),
+    ("cospi"         , [VF         ], VF, "cos(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0)"),
     ("fmax"          , [VF, SF     ], VF, "fmax(x0,(vector_t)x1)"),
     ("fmin"          , [VF, SF     ], VF, "fmin(x0,(vector_t)x1)"),
     ("fract"         , [VF, PVF    ], VF, """
     ({
       *x1=floor(x0);
       scalar_t fract_min =
-        sizeof(scalar_t)==sizeof(float) ?
-        (scalar_t)POCL_FRACT_MIN_F :
-        (scalar_t)POCL_FRACT_MIN;
+        TYPED_CONST(scalar_t, POCL_FRACT_MIN_H, POCL_FRACT_MIN_F, POCL_FRACT_MIN);
       fmin(x0-floor(x0), fract_min);
     })
 """),
@@ -155,8 +153,8 @@ directfuncs = [
     ({
       ivector_t ilogb_(vector_t);
       ivector_t r = ilogb_(x0);
-      iscalar_t jmin = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MIN : (iscalar_t)LONG_MIN;
-      iscalar_t jmax = sizeof(iscalar_t) == sizeof(int) ? (iscalar_t)INT_MAX : (iscalar_t)LONG_MAX;
+      iscalar_t jmin = TYPED_CONST(iscalar_t, SHORT_MIN, INT_MIN, LONG_MIN);
+      iscalar_t jmax = TYPED_CONST(iscalar_t, SHORT_MAX, INT_MAX, LONG_MAX);
       r = r==jmin ? (ivector_t)INT_MIN : r;
       r = r==jmax ? (ivector_t)INT_MAX : r;
       convert_kvector_t(r);
@@ -191,8 +189,8 @@ directfuncs = [
 """),
     ("rootn"         , [VF, VK     ], VF, "pow(x0,(scalar_t)1/convert_vector_t(x1))"),
     ("sincos"        , [VF, PVF    ], VF, "*x1=cos(x0), sin(x0)"),
-    ("sinpi"         , [VF         ], VF, "sin((scalar_t)M_PI*x0)"),
-    ("tanpi"         , [VF         ], VF, "tan((scalar_t)M_PI*x0)"),
+    ("sinpi"         , [VF         ], VF, "sin(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0)"),
+    ("tanpi"         , [VF         ], VF, "tan(TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0)"),
     
     # Section 6.12.2, half_ functions
     ("half_cos"      , [VF         ], VF, "cos(x0)"),
@@ -228,14 +226,14 @@ directfuncs = [
     # Section 6.12.4
     ("clamp"         , [VF, VF, VF ], VF, "fmin(fmax(x0,x1),x2)"),
     ("clamp"         , [VF, SF, SF ], VF, "fmin(fmax(x0,x1),x2)"),
-    ("degrees"       , [VF         ], VF, "(scalar_t)(180/M_PI)*x0"),
+    ("degrees"       , [VF         ], VF, "(scalar_t)180/TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)*x0"),
     ("max"           , [VF, VF     ], VF, "fmax(x0,x1)"),
     ("max"           , [VF, SF     ], VF, "fmax(x0,x1)"),
     ("min"           , [VF, VF     ], VF, "fmin(x0,x1)"),
     ("min"           , [VF, SF     ], VF, "fmin(x0,x1)"),
     ("mix"           , [VF, VF, VF ], VF, "x0+(x1-x0)*x2"),
     ("mix"           , [VF, VF, SF ], VF, "x0+(x1-x0)*x2"),
-    ("radians"       , [VF         ], VF, "(scalar_t)(M_PI/180)*x0"),
+    ("radians"       , [VF         ], VF, "TYPED_CONST(scalar_t, M_PI_H, M_PI_F, M_PI)/(scalar_t)180*x0"),
     ("step"          , [VF, VF     ], VF, "x1<x0 ? (vector_t)(scalar_t)0 : (vector_t)(scalar_t)1"),
     ("step"          , [SF, VF     ], VF, "x1<x0 ? (vector_t)(scalar_t)0 : (vector_t)(scalar_t)1"),
     ("smoothstep"    , [VF, VF, VF ], VF, "({ vector_t t = clamp((x2-x0)/(x1-x0), (scalar_t)0, (scalar_t)1); t*t*((scalar_t)3-(scalar_t)2*t); })"),
@@ -307,24 +305,24 @@ def decl_close():
 
 def mktype(tp, vectype):
     (space, basetype, sizename) = (
-        re.match("(global|local|private)?(float|double)([0-9]*)", vectype).
+        re.match("(global|local|private)?(half|float|double)([0-9]*)", vectype).
         groups())
     size = 1 if sizename=="" else int(sizename)
     if tp==SI:
-        return "int" if basetype=="float" else "long"
+        return {"half": "short", "float": "int", "double": "long"}[basetype]
     if tp==SJ:
         if size==1: return "int"
-        return "int" if basetype=="float" else "long"
+        return {"half": "short", "float": "int", "double": "long"}[basetype]
     if tp==SK:
         return "int"
     if tp==SF:
         return basetype
     if tp==VI:
-        ibasetype = "int" if basetype=="float" else "long"
+        ibasetype = {"half": "short", "float": "int", "double": "long"}[basetype]
         return "%s%s" % (ibasetype, sizename)
     if tp==VJ:
         if size==1: return "int"
-        ibasetype = "int" if basetype=="float" else "long"
+        ibasetype = {"half": "short", "float": "int", "double": "long"}[basetype]
         return "%s%s" % (ibasetype, sizename)
     if tp==VK:
         return "int%s" % sizename
@@ -332,8 +330,8 @@ def mktype(tp, vectype):
         if space=="": raise "wrong address space"
         return "%s int%s*" % (space, sizename)
     if tp==VU:
-        ibasetype = "uint" if basetype=="float" else "ulong"
-        return "%s%s" % (ibasetype, sizename)
+        ubasetype = {"half": "ushort", "float": "uint", "double": "ulong"}[basetype]
+        return "%s%s" % (ubasetype, sizename)
     if tp==VF:
         return "%s%s" % (basetype, sizename)
     if tp==PVF:
@@ -586,7 +584,7 @@ def output_directfunc_direct(func, vectype):
     (name, args, ret, impl) = func
     out("// Implement %s directly" % name)
     (space, basetype, sizename) = (
-        re.match("(global|local|private)?(float|double)([0-9]*)", vectype).
+        re.match("(global|local|private)?(half|float|double)([0-9]*)", vectype).
         groups())
     size = 1 if sizename=="" else int(sizename)
     funcargstr = ", ".join(map(lambda (n, arg):
@@ -646,7 +644,10 @@ def output_vmlfunc(func):
     if prefixed(name) != name:
         decl("#define %s %s" % (name, prefixed(name)))
     out("// %s: %s -> %s" % (name, args, ret))
-    for basetype in ["float", "double"]:
+    for basetype in ["half", "float", "double"]:
+        if basetype=="half":
+            out("")
+            out("#ifdef cl_khr_fp16")
         if basetype=="double":
             out("")
             out("#ifdef cl_khr_fp64")
@@ -688,6 +689,9 @@ def output_vmlfunc(func):
                 out("#else")
                 output_vmlfunc_split(func, vectype)
             out("#endif")
+        if basetype=="half":
+            out("")
+            out("#endif // #ifdef cl_khr_fp16")
         if basetype=="double":
             out("")
             out("#endif // #ifdef cl_khr_fp64")
@@ -703,29 +707,30 @@ def output_directfunc(func):
             "Do not modify.")
         out("")
         out("// Needed for fract()")
+        out("#define POCL_FRACT_MIN_H 0x1.ffcp-1h")
         out("#define POCL_FRACT_MIN   0x1.fffffffffffffp-1")
         out("#define POCL_FRACT_MIN_F 0x1.fffffep-1f")
         out("")
-        out("// If double precision is not supported, then define")
-        out("// single-precision (dummy) values to avoid compiler warnings")
-        out("// for double precision values")
-        out("#ifndef cl_khr_fp64")
-        out("#  undef M_PI")
-        out("#  define M_PI M_PI_F")
-        out("#  undef M_PI_2")
-        out("#  define M_PI_2 M_PI_2_F")
-        out("#  undef LONG_MAX")
-        out("#  define LONG_MAX INT_MAX")
-        out("#  undef LONG_MIN")
-        out("#  define LONG_MIN INT_MIN")
-        out("#  undef POCL_FRACT_MIN")
-        out("#  define POCL_FRACT_MIN POCL_FRACT_MIN_F")
-        out("#endif // #ifndef cl_khr_fp64")
+        out("// Choose a constant with a particular precision")
+        out("#ifdef cl_khr_fp16")
+        out("#  define IF_HALF(TYPE, VAL, OTHER) \\")
+        out("          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))")
+        out("#else")
+        out("#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)")
+        out("#endif")
         out("")
-    else:
+        out("#ifdef cl_khr_fp64")
+        out("#  define IF_DOUBLE(TYPE, VAL, OTHER) \\")
+        out("          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))")
+        out("#else")
+        out("#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)")
+        out("#endif")
         out("")
-        out("")
-        out("")
+        out("#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \\")
+        out("        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))")
+    out("")
+    out("")
+    out("")
     decl("")
     decl("// %s: %s -> %s" % (name, args, ret))
     decl("#undef %s" % name)
@@ -736,10 +741,13 @@ def output_directfunc(func):
         spaces = ["global", "local", "private"]
     else:
         spaces = [""]
-    for basetype in ["float", "double"]:
+    for basetype in ["half", "float", "double"]:
         if ((name.startswith("half_") or name.startswith("native_")) and
-            basetype=="double"):
+            basetype!="float"):
             continue
+        if basetype=="half":
+            out("")
+            out("#ifdef cl_khr_fp16")
         if basetype=="double":
             out("")
             out("#ifdef cl_khr_fp64")
@@ -755,6 +763,9 @@ def output_directfunc(func):
                 out("")
                 out("// %s: VF=%s" % (name, vectype))
                 output_directfunc_direct(func, vectype)
+        if basetype=="half":
+            out("")
+            out("#endif // #ifdef cl_khr_fp16")
         if basetype=="double":
             out("")
             out("#endif // #ifdef cl_khr_fp64")

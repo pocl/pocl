@@ -1,26 +1,185 @@
 // Note: This file has been automatically generated. Do not modify.
 
 // Needed for fract()
+#define POCL_FRACT_MIN_H 0x1.ffcp-1h
 #define POCL_FRACT_MIN   0x1.fffffffffffffp-1
 #define POCL_FRACT_MIN_F 0x1.fffffep-1f
 
-// If double precision is not supported, then define
-// single-precision (dummy) values to avoid compiler warnings
-// for double precision values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#  undef M_PI_2
-#  define M_PI_2 M_PI_2_F
-#  undef LONG_MAX
-#  define LONG_MAX INT_MAX
-#  undef LONG_MIN
-#  define LONG_MIN INT_MIN
-#  undef POCL_FRACT_MIN
-#  define POCL_FRACT_MIN POCL_FRACT_MIN_F
-#endif // #ifndef cl_khr_fp64
+// Choose a constant with a particular precision
+#ifdef cl_khr_fp16
+#  define IF_HALF(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(half) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_HALF(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#ifdef cl_khr_fp64
+#  define IF_DOUBLE(TYPE, VAL, OTHER) \
+          (sizeof(TYPE)==sizeof(double) ? (TYPE)(VAL) : (TYPE)(OTHER))
+#else
+#  define IF_DOUBLE(TYPE, VAL, OTHER) (OTHER)
+#endif
+
+#define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
+        IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
+
+
 
 // fmax: ['VF', 'SF'] -> VF
+
+#ifdef cl_khr_fp16
+
+// fmax: VF=half2
+// Implement fmax directly
+__attribute__((__overloadable__))
+half2 _cl_fmax(half2 x0, half x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short2 ivector_t;
+  typedef short2 jvector_t;
+  typedef int2 kvector_t;
+  typedef half2 vector_t;
+#define convert_ivector_t convert_short2
+#define convert_jvector_t convert_short2
+#define convert_kvector_t convert_int2
+#define convert_vector_t convert_half2
+#define ilogb_ _cl_ilogb_half2
+#define ldexp_scalar_ _cl_ldexp_half2_short
+#define ldexp_vector_ _cl_ldexp_half2_short2
+  return fmax(x0,(vector_t)x1);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
+}
+
+// fmax: VF=half3
+// Implement fmax directly
+__attribute__((__overloadable__))
+half3 _cl_fmax(half3 x0, half x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short3 ivector_t;
+  typedef short3 jvector_t;
+  typedef int3 kvector_t;
+  typedef half3 vector_t;
+#define convert_ivector_t convert_short3
+#define convert_jvector_t convert_short3
+#define convert_kvector_t convert_int3
+#define convert_vector_t convert_half3
+#define ilogb_ _cl_ilogb_half3
+#define ldexp_scalar_ _cl_ldexp_half3_short
+#define ldexp_vector_ _cl_ldexp_half3_short3
+  return fmax(x0,(vector_t)x1);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
+}
+
+// fmax: VF=half4
+// Implement fmax directly
+__attribute__((__overloadable__))
+half4 _cl_fmax(half4 x0, half x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short4 ivector_t;
+  typedef short4 jvector_t;
+  typedef int4 kvector_t;
+  typedef half4 vector_t;
+#define convert_ivector_t convert_short4
+#define convert_jvector_t convert_short4
+#define convert_kvector_t convert_int4
+#define convert_vector_t convert_half4
+#define ilogb_ _cl_ilogb_half4
+#define ldexp_scalar_ _cl_ldexp_half4_short
+#define ldexp_vector_ _cl_ldexp_half4_short4
+  return fmax(x0,(vector_t)x1);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
+}
+
+// fmax: VF=half8
+// Implement fmax directly
+__attribute__((__overloadable__))
+half8 _cl_fmax(half8 x0, half x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short8 ivector_t;
+  typedef short8 jvector_t;
+  typedef int8 kvector_t;
+  typedef half8 vector_t;
+#define convert_ivector_t convert_short8
+#define convert_jvector_t convert_short8
+#define convert_kvector_t convert_int8
+#define convert_vector_t convert_half8
+#define ilogb_ _cl_ilogb_half8
+#define ldexp_scalar_ _cl_ldexp_half8_short
+#define ldexp_vector_ _cl_ldexp_half8_short8
+  return fmax(x0,(vector_t)x1);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
+}
+
+// fmax: VF=half16
+// Implement fmax directly
+__attribute__((__overloadable__))
+half16 _cl_fmax(half16 x0, half x1)
+{
+  typedef short iscalar_t;
+  typedef short jscalar_t;
+  typedef int kscalar_t;
+  typedef half scalar_t;
+  typedef short16 ivector_t;
+  typedef short16 jvector_t;
+  typedef int16 kvector_t;
+  typedef half16 vector_t;
+#define convert_ivector_t convert_short16
+#define convert_jvector_t convert_short16
+#define convert_kvector_t convert_int16
+#define convert_vector_t convert_half16
+#define ilogb_ _cl_ilogb_half16
+#define ldexp_scalar_ _cl_ldexp_half16_short
+#define ldexp_vector_ _cl_ldexp_half16_short16
+  return fmax(x0,(vector_t)x1);
+#undef convert_ivector_t
+#undef convert_jvector_t
+#undef convert_kvector_t
+#undef convert_vector_t
+#undef ilogb_
+#undef ldexp_scalar_
+#undef ldexp_vector_
+}
+
+#endif // #ifdef cl_khr_fp16
 
 // fmax: VF=float2
 // Implement fmax directly

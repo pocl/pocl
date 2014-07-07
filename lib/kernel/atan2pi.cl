@@ -24,8 +24,4 @@
 
 #include "templates.h"
 
-#ifdef cl_khr_fp64
-DEFINE_EXPR_V_VV(atan2pi, atan2(a, b)/(stype)M_PI)
-#else
-DEFINE_EXPR_V_VV(atan2pi, atan2(a, b)/(stype)M_PI_F)
-#endif
+DEFINE_EXPR_V_VV(atan2pi, atan2(a, b)/TYPED_CONST(stype, M_PI_H, M_PI_F, M_PI))

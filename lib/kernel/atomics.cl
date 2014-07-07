@@ -53,6 +53,24 @@
 #  undef MIN
 #  undef MAX
 
+#ifdef cl_khr_int64
+#  define T long
+#  define MIN(a,b) (__builtin_trap(), 0L)
+#  define MAX(a,b) (__builtin_trap(), 0L)
+#  include "atomics.cl"
+#  undef T
+#  undef MIN
+#  undef MAX
+
+#  define T ulong
+#  define MIN(a,b) (__builtin_trap(), 0UL)
+#  define MAX(a,b) (__builtin_trap(), 0UL)
+#  include "atomics.cl"
+#  undef T
+#  undef MIN
+#  undef MAX
+#endif
+
 
 
 // NOTE: Here and below we convert between an address-space qualified

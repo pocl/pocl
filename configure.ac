@@ -109,7 +109,7 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM 3.2 or later.
+Unsupported LLVM version. Please use LLVM version 3.2, 3.3, or 3.4.
    ])
    LLVM_VERSION=
    ;;
@@ -1174,6 +1174,21 @@ AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vect
 AS_IF([test $ac_cv_alignof_float16 -gt $ac_cv_alignof_double16],
       [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_FLOAT16], [Defined to greatest expected alignment for extended types, in bytes.])],
       [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_DOUBLE16], [Defined to greatest expected alignment for extended types, in bytes.])])
+
+AC_MSG_CHECKING([whether __fp16 supports arithmetic operations])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x;]],
+                                   [[x=1; x=x+x;]])],
+                  [
+                    AC_MSG_RESULT([yes])
+                    AC_DEFINE_UNQUOTED([HAVE_WORKING_HALF], 1, [Define to 1 if __fp16 supports arithmetic operations float.])
+                  ],
+                  [
+                    AC_MSG_RESULT([no])
+                    AC_DEFINE_UNQUOTED([HAVE_WORKING_HALF], 0, [Define to 1 if __fp16 supports arithmetic operations float.])
+                    AC_DEFINE_UNQUOTED([_CL_DISABLE_HALF],[],[Disable cl_khr_fp16 on host based devices.])
+                    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_HALF"
+                  ]
+                 )
 
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])

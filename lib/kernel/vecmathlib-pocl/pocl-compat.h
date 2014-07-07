@@ -11,15 +11,7 @@
 #include <cstring>
 
 #define pocl_static_assert(b) typedef char _static_assert[(b)?+1:-1]
-
-// If double precision is not supported, then define single-precision
-// (dummy) values to avoid compiler warnings for double precision
-// values
-#ifndef cl_khr_fp64
-#  undef M_PI
-#  define M_PI M_PI_F
-#endif
-
+ 
 
 
 // Define vector types
@@ -31,6 +23,7 @@ typedef int int4  __attribute__((__ext_vector_type__( 4)));
 typedef int int8  __attribute__((__ext_vector_type__( 8)));
 typedef int int16 __attribute__((__ext_vector_type__(16)));
 
+#undef uint
 #define uint vml_std::uint32_t
 typedef uint uint2  __attribute__((__ext_vector_type__( 2)));
 typedef uint uint3  __attribute__((__ext_vector_type__( 3)));
@@ -39,19 +32,31 @@ typedef uint uint8  __attribute__((__ext_vector_type__( 8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
 #ifdef cl_khr_int64
-#define long vml_std::int64_t
+#define long cl_long
+typedef vml_std::int64_t long;
 typedef long long2  __attribute__((__ext_vector_type__( 2)));
 typedef long long3  __attribute__((__ext_vector_type__( 3)));
 typedef long long4  __attribute__((__ext_vector_type__( 4)));
 typedef long long8  __attribute__((__ext_vector_type__( 8)));
 typedef long long16 __attribute__((__ext_vector_type__(16)));
 
-#define ulong vml_std::uint64_t
+#undef ulong
+#define ulong cl_ulong
+typedef vml_std::uint64_t ulong;
 typedef ulong ulong2  __attribute__((__ext_vector_type__( 2)));
 typedef ulong ulong3  __attribute__((__ext_vector_type__( 3)));
 typedef ulong ulong4  __attribute__((__ext_vector_type__( 4)));
 typedef ulong ulong8  __attribute__((__ext_vector_type__( 8)));
 typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
+#endif
+
+#ifdef cl_khr_fp64
+typedef __fp16 half;
+typedef half half2  __attribute__((__ext_vector_type__( 2)));
+typedef half half3  __attribute__((__ext_vector_type__( 3)));
+typedef half half4  __attribute__((__ext_vector_type__( 4)));
+typedef half half8  __attribute__((__ext_vector_type__( 8)));
+typedef half half16 __attribute__((__ext_vector_type__(16)));
 #endif
 
 typedef float float2  __attribute__((__ext_vector_type__( 2)));
@@ -85,6 +90,15 @@ struct pair_long3  { long3  lo, hi; };
 struct pair_long4  { long4  lo, hi; };
 struct pair_long8  { long8  lo, hi; };
 struct pair_long16 { long16 lo, hi; };
+#endif
+
+#ifdef cl_khr_fp16
+struct pair_half   { half   lo, hi; };
+struct pair_half2  { half2  lo, hi; };
+struct pair_half3  { half3  lo, hi; };
+struct pair_half4  { half4  lo, hi; };
+struct pair_half8  { half8  lo, hi; };
+struct pair_half16 { half16 lo, hi; };
 #endif
 
 struct pair_float   { float   lo, hi; };

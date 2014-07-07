@@ -4,6 +4,205 @@
 
 // ldexp_: ['VF', 'VI'] -> VF
 
+#ifdef cl_khr_fp16
+
+// ldexp_: VF=half
+#if defined VECMATHLIB_HAVE_VEC_HALF_1 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half _cl_ldexp_half_short(half x0, short x1)
+{
+  vecmathlib::realvec<half,1> y0 = bitcast<half,vecmathlib::realvec<half,1> >(x0);
+  vecmathlib::realvec<half,1>::intvec_t y1 = bitcast<short,vecmathlib::realvec<half,1>::intvec_t >(x1);
+  vecmathlib::realvec<half,1> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,1>,half>((r));
+}
+#elif ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling libm
+extern "C" half _cl_ldexp_half_short(half x0, short x1)
+{
+  vecmathlib::realpseudovec<half,1> y0 = x0;
+  vecmathlib::realpseudovec<half,1>::intvec_t y1 = x1;
+  vecmathlib::realpseudovec<half,1> r = ldexp(y0, y1);
+  return (r)[0];
+}
+#else
+// Implement ldexp_ by calling builtin
+extern "C" half _cl_ldexp_half_short(half x0, short x1)
+{
+  vecmathlib::realbuiltinvec<half,1> y0 = x0;
+  vecmathlib::realbuiltinvec<half,1>::intvec_t y1 = x1;
+  vecmathlib::realbuiltinvec<half,1> r = ldexp(y0, y1);
+  return (r)[0];
+}
+#endif
+
+// ldexp_: VF=half2
+#if defined VECMATHLIB_HAVE_VEC_HALF_2 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half2 _cl_ldexp_half2_short2(half2 x0, short2 x1)
+{
+  vecmathlib::realvec<half,2> y0 = bitcast<half2,vecmathlib::realvec<half,2> >(x0);
+  vecmathlib::realvec<half,2>::intvec_t y1 = bitcast<short2,vecmathlib::realvec<half,2>::intvec_t >(x1);
+  vecmathlib::realvec<half,2> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,2>,half2>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half4 _cl_ldexp_half4_short4(half4, short4);
+extern "C" half2 _cl_ldexp_half2_short2(half2 x0, short2 x1)
+{
+  half4 y0 = bitcast<half2,half4>(x0);
+  short4 y1 = bitcast<short2,short4>(x1);
+  half4 r = _cl_ldexp_half4_short4(y0, y1);
+  return bitcast<half4,half2>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half _cl_ldexp_half_short(half, short);
+extern "C" half2 _cl_ldexp_half2_short2(half2 x0, short2 x1)
+{
+  pair_half y0 = bitcast<half2,pair_half>(x0);
+  pair_short y1 = bitcast<short2,pair_short>(x1);
+  pair_half r;
+  r.lo = _cl_ldexp_half_short(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half_short(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half) == sizeof(half2));
+  return bitcast<pair_half,half2>(r);
+}
+#endif
+
+// ldexp_: VF=half3
+#if defined VECMATHLIB_HAVE_VEC_HALF_3 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half3 _cl_ldexp_half3_short3(half3 x0, short3 x1)
+{
+  vecmathlib::realvec<half,3> y0 = bitcast<half3,vecmathlib::realvec<half,3> >(x0);
+  vecmathlib::realvec<half,3>::intvec_t y1 = bitcast<short3,vecmathlib::realvec<half,3>::intvec_t >(x1);
+  vecmathlib::realvec<half,3> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,3>,half3>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half4 _cl_ldexp_half4_short4(half4, short4);
+extern "C" half3 _cl_ldexp_half3_short3(half3 x0, short3 x1)
+{
+  half4 y0 = bitcast<half3,half4>(x0);
+  short4 y1 = bitcast<short3,short4>(x1);
+  half4 r = _cl_ldexp_half4_short4(y0, y1);
+  return bitcast<half4,half3>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half2 _cl_ldexp_half2_short2(half2, short2);
+extern "C" half3 _cl_ldexp_half3_short3(half3 x0, short3 x1)
+{
+  pair_half2 y0 = bitcast<half3,pair_half2>(x0);
+  pair_short2 y1 = bitcast<short3,pair_short2>(x1);
+  pair_half2 r;
+  r.lo = _cl_ldexp_half2_short2(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half2_short2(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half3));
+  return bitcast<pair_half2,half3>(r);
+}
+#endif
+
+// ldexp_: VF=half4
+#if defined VECMATHLIB_HAVE_VEC_HALF_4 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half4 _cl_ldexp_half4_short4(half4 x0, short4 x1)
+{
+  vecmathlib::realvec<half,4> y0 = bitcast<half4,vecmathlib::realvec<half,4> >(x0);
+  vecmathlib::realvec<half,4>::intvec_t y1 = bitcast<short4,vecmathlib::realvec<half,4>::intvec_t >(x1);
+  vecmathlib::realvec<half,4> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,4>,half4>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half8 _cl_ldexp_half8_short8(half8, short8);
+extern "C" half4 _cl_ldexp_half4_short4(half4 x0, short4 x1)
+{
+  half8 y0 = bitcast<half4,half8>(x0);
+  short8 y1 = bitcast<short4,short8>(x1);
+  half8 r = _cl_ldexp_half8_short8(y0, y1);
+  return bitcast<half8,half4>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half2 _cl_ldexp_half2_short2(half2, short2);
+extern "C" half4 _cl_ldexp_half4_short4(half4 x0, short4 x1)
+{
+  pair_half2 y0 = bitcast<half4,pair_half2>(x0);
+  pair_short2 y1 = bitcast<short4,pair_short2>(x1);
+  pair_half2 r;
+  r.lo = _cl_ldexp_half2_short2(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half2_short2(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half4));
+  return bitcast<pair_half2,half4>(r);
+}
+#endif
+
+// ldexp_: VF=half8
+#if defined VECMATHLIB_HAVE_VEC_HALF_8 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half8 _cl_ldexp_half8_short8(half8 x0, short8 x1)
+{
+  vecmathlib::realvec<half,8> y0 = bitcast<half8,vecmathlib::realvec<half,8> >(x0);
+  vecmathlib::realvec<half,8>::intvec_t y1 = bitcast<short8,vecmathlib::realvec<half,8>::intvec_t >(x1);
+  vecmathlib::realvec<half,8> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,8>,half8>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half16 _cl_ldexp_half16_short16(half16, short16);
+extern "C" half8 _cl_ldexp_half8_short8(half8 x0, short8 x1)
+{
+  half16 y0 = bitcast<half8,half16>(x0);
+  short16 y1 = bitcast<short8,short16>(x1);
+  half16 r = _cl_ldexp_half16_short16(y0, y1);
+  return bitcast<half16,half8>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half4 _cl_ldexp_half4_short4(half4, short4);
+extern "C" half8 _cl_ldexp_half8_short8(half8 x0, short8 x1)
+{
+  pair_half4 y0 = bitcast<half8,pair_half4>(x0);
+  pair_short4 y1 = bitcast<short8,pair_short4>(x1);
+  pair_half4 r;
+  r.lo = _cl_ldexp_half4_short4(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half4_short4(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half4) == sizeof(half8));
+  return bitcast<pair_half4,half8>(r);
+}
+#endif
+
+// ldexp_: VF=half16
+#if defined VECMATHLIB_HAVE_VEC_HALF_16 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half16 _cl_ldexp_half16_short16(half16 x0, short16 x1)
+{
+  vecmathlib::realvec<half,16> y0 = bitcast<half16,vecmathlib::realvec<half,16> >(x0);
+  vecmathlib::realvec<half,16>::intvec_t y1 = bitcast<short16,vecmathlib::realvec<half,16>::intvec_t >(x1);
+  vecmathlib::realvec<half,16> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,16>,half16>((r));
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half8 _cl_ldexp_half8_short8(half8, short8);
+extern "C" half16 _cl_ldexp_half16_short16(half16 x0, short16 x1)
+{
+  pair_half8 y0 = bitcast<half16,pair_half8>(x0);
+  pair_short8 y1 = bitcast<short16,pair_short8>(x1);
+  pair_half8 r;
+  r.lo = _cl_ldexp_half8_short8(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half8_short8(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half8) == sizeof(half16));
+  return bitcast<pair_half8,half16>(r);
+}
+#endif
+
+#endif // #ifdef cl_khr_fp16
+
 // ldexp_: VF=float
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_1 && ! defined POCL_VECMATHLIB_BUILTIN
 // Implement ldexp_ by calling vecmathlib
@@ -401,6 +600,175 @@ extern "C" double16 _cl_ldexp_double16_long16(double16 x0, long16 x1)
 
 
 // ldexp_: ['VF', 'SI'] -> VF
+
+#ifdef cl_khr_fp16
+
+// ldexp_: VF=half2
+#if defined VECMATHLIB_HAVE_VEC_HALF_2 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half2 _cl_ldexp_half2_short(half2 x0, short x1)
+{
+  vecmathlib::realvec<half,2> y0 = bitcast<half2,vecmathlib::realvec<half,2> >(x0);
+  vecmathlib::realvec<half,2>::int_t y1 = bitcast<short,vecmathlib::realvec<half,2>::int_t >(x1);
+  vecmathlib::realvec<half,2> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,2>,half2>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half4 _cl_ldexp_half4_short(half4, short);
+extern "C" half2 _cl_ldexp_half2_short(half2 x0, short x1)
+{
+  half4 y0 = bitcast<half2,half4>(x0);
+  short y1 = bitcast<short,short>(x1);
+  half4 r = _cl_ldexp_half4_short(y0, y1);
+  return bitcast<half4,half2>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half _cl_ldexp_half_short(half, short);
+extern "C" half2 _cl_ldexp_half2_short(half2 x0, short x1)
+{
+  pair_half y0 = bitcast<half2,pair_half>(x0);
+  pair_short y1 = bitcast<short,pair_short>(x1);
+  pair_half r;
+  r.lo = _cl_ldexp_half_short(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half_short(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half) == sizeof(half2));
+  return bitcast<pair_half,half2>(r);
+}
+#endif
+
+// ldexp_: VF=half3
+#if defined VECMATHLIB_HAVE_VEC_HALF_3 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half3 _cl_ldexp_half3_short(half3 x0, short x1)
+{
+  vecmathlib::realvec<half,3> y0 = bitcast<half3,vecmathlib::realvec<half,3> >(x0);
+  vecmathlib::realvec<half,3>::int_t y1 = bitcast<short,vecmathlib::realvec<half,3>::int_t >(x1);
+  vecmathlib::realvec<half,3> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,3>,half3>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_4 || defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half4 _cl_ldexp_half4_short(half4, short);
+extern "C" half3 _cl_ldexp_half3_short(half3 x0, short x1)
+{
+  half4 y0 = bitcast<half3,half4>(x0);
+  short y1 = bitcast<short,short>(x1);
+  half4 r = _cl_ldexp_half4_short(y0, y1);
+  return bitcast<half4,half3>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half2 _cl_ldexp_half2_short(half2, short);
+extern "C" half3 _cl_ldexp_half3_short(half3 x0, short x1)
+{
+  pair_half2 y0 = bitcast<half3,pair_half2>(x0);
+  pair_short y1 = bitcast<short,pair_short>(x1);
+  pair_half2 r;
+  r.lo = _cl_ldexp_half2_short(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half2_short(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half3));
+  return bitcast<pair_half2,half3>(r);
+}
+#endif
+
+// ldexp_: VF=half4
+#if defined VECMATHLIB_HAVE_VEC_HALF_4 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half4 _cl_ldexp_half4_short(half4 x0, short x1)
+{
+  vecmathlib::realvec<half,4> y0 = bitcast<half4,vecmathlib::realvec<half,4> >(x0);
+  vecmathlib::realvec<half,4>::int_t y1 = bitcast<short,vecmathlib::realvec<half,4>::int_t >(x1);
+  vecmathlib::realvec<half,4> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,4>,half4>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_8 || defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half8 _cl_ldexp_half8_short(half8, short);
+extern "C" half4 _cl_ldexp_half4_short(half4 x0, short x1)
+{
+  half8 y0 = bitcast<half4,half8>(x0);
+  short y1 = bitcast<short,short>(x1);
+  half8 r = _cl_ldexp_half8_short(y0, y1);
+  return bitcast<half8,half4>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half2 _cl_ldexp_half2_short(half2, short);
+extern "C" half4 _cl_ldexp_half4_short(half4 x0, short x1)
+{
+  pair_half2 y0 = bitcast<half4,pair_half2>(x0);
+  pair_short y1 = bitcast<short,pair_short>(x1);
+  pair_half2 r;
+  r.lo = _cl_ldexp_half2_short(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half2_short(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half2) == sizeof(half4));
+  return bitcast<pair_half2,half4>(r);
+}
+#endif
+
+// ldexp_: VF=half8
+#if defined VECMATHLIB_HAVE_VEC_HALF_8 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half8 _cl_ldexp_half8_short(half8 x0, short x1)
+{
+  vecmathlib::realvec<half,8> y0 = bitcast<half8,vecmathlib::realvec<half,8> >(x0);
+  vecmathlib::realvec<half,8>::int_t y1 = bitcast<short,vecmathlib::realvec<half,8>::int_t >(x1);
+  vecmathlib::realvec<half,8> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,8>,half8>((r));
+}
+#elif (defined VECMATHLIB_HAVE_VEC_HALF_16) && ! defined POCL_VECMATHLIB_BUILTIN 
+// Implement ldexp_ by using a larger vector size
+extern "C" half16 _cl_ldexp_half16_short(half16, short);
+extern "C" half8 _cl_ldexp_half8_short(half8 x0, short x1)
+{
+  half16 y0 = bitcast<half8,half16>(x0);
+  short y1 = bitcast<short,short>(x1);
+  half16 r = _cl_ldexp_half16_short(y0, y1);
+  return bitcast<half16,half8>(r);
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half4 _cl_ldexp_half4_short(half4, short);
+extern "C" half8 _cl_ldexp_half8_short(half8 x0, short x1)
+{
+  pair_half4 y0 = bitcast<half8,pair_half4>(x0);
+  pair_short y1 = bitcast<short,pair_short>(x1);
+  pair_half4 r;
+  r.lo = _cl_ldexp_half4_short(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half4_short(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half4) == sizeof(half8));
+  return bitcast<pair_half4,half8>(r);
+}
+#endif
+
+// ldexp_: VF=half16
+#if defined VECMATHLIB_HAVE_VEC_HALF_16 && ! defined POCL_VECMATHLIB_BUILTIN
+// Implement ldexp_ by calling vecmathlib
+extern "C" half16 _cl_ldexp_half16_short(half16 x0, short x1)
+{
+  vecmathlib::realvec<half,16> y0 = bitcast<half16,vecmathlib::realvec<half,16> >(x0);
+  vecmathlib::realvec<half,16>::int_t y1 = bitcast<short,vecmathlib::realvec<half,16>::int_t >(x1);
+  vecmathlib::realvec<half,16> r = vecmathlib::ldexp(y0, y1);
+  return bitcast<vecmathlib::realvec<half,16>,half16>((r));
+}
+#else
+// Implement ldexp_ by splitting into a smaller vector size
+extern "C" half8 _cl_ldexp_half8_short(half8, short);
+extern "C" half16 _cl_ldexp_half16_short(half16 x0, short x1)
+{
+  pair_half8 y0 = bitcast<half16,pair_half8>(x0);
+  pair_short y1 = bitcast<short,pair_short>(x1);
+  pair_half8 r;
+  r.lo = _cl_ldexp_half8_short(y0.lo, y1.lo);
+  r.hi = _cl_ldexp_half8_short(y0.hi, y1.hi);
+  pocl_static_assert(sizeof(pair_half8) == sizeof(half16));
+  return bitcast<pair_half8,half16>(r);
+}
+#endif
+
+#endif // #ifdef cl_khr_fp16
 
 // ldexp_: VF=float2
 #if defined VECMATHLIB_HAVE_VEC_FLOAT_2 && ! defined POCL_VECMATHLIB_BUILTIN
