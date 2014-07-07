@@ -135,3 +135,6 @@
 
 /* Disable cl_khr_int64 when a clang bug is present */
 #cmakedefine _CL_DISABLE_LONG
+
+/* Disable cl_khr_fp16 because fp16 is not supported */
+#cmakedefine _CL_DISABLE_HALF
