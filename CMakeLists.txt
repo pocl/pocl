@@ -462,6 +462,7 @@ if(LLC_TRIPLE MATCHES "^arm")
     set(DEFAULT_HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} -mfloat-abi=hard")
   else()
     # softfloat
+    set(HOST_FLOAT_SOFT_ABI 1)
     set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -float-abi=soft")
     set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfloat-abi=soft")
     set(DEFAULT_HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} -mfloat-abi=soft")

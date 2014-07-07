@@ -67,7 +67,7 @@
 
 #define HOST_LLC_FLAGS  "@HOST_LLC_FLAGS@"
 
-
+#cmakedefine HOST_FLOAT_SOFT_ABI
 
 #cmakedefine LLC "@LLC@"
 
