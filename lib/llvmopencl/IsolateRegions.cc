@@ -28,6 +28,7 @@
 #include "config.h"
 
 #include <iostream>
+#include "VariableUniformityAnalysis.h"
 
 //#define DEBUG_ISOLATE_REGIONS
 using namespace llvm;
@@ -42,6 +43,7 @@ namespace {
 char IsolateRegions::ID = 0;
 
 void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addPreserved<pocl::VariableUniformityAnalysis>();
 }
 
 /* Ensure Single-Entry Single-Exit Regions are isolated from the

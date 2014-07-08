@@ -143,24 +143,14 @@ load_source( FrontendOptions &fe,
              const char* temp_dir,
              cl_program program )
 {
-// this doesn't work
-#if 0 
-  // TODO: dump also when debugging kernels
-  if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0)==0) {
-    llvm::MemoryBuffer *buf;
-    buf = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(program->source));
-    fe.Inputs.push_back
-      (FrontendInputFile(buf, clang::IK_OpenCL));
-  } else {
-#endif
-    std::string kernel_file(temp_dir);
-    kernel_file += POCL_PROGRAM_CL_FILENAME;
-    std::ofstream ofs(kernel_file.c_str());
-    ofs << program->source;
-    if (!ofs.good())
-      return CL_OUT_OF_HOST_MEMORY;
-    fe.Inputs.push_back
-      (FrontendInputFile(kernel_file, clang::IK_OpenCL));
+  std::string kernel_file(temp_dir);
+  kernel_file += POCL_PROGRAM_CL_FILENAME;
+  std::ofstream ofs(kernel_file.c_str());
+  ofs << program->source;
+  if (!ofs.good())
+    return CL_OUT_OF_HOST_MEMORY;
+  fe.Inputs.push_back
+    (FrontendInputFile(kernel_file, clang::IK_OpenCL));
 
   return 0;
 }
@@ -796,9 +786,9 @@ static PassManager& kernel_compiler_passes
      context restore them with non-PHI code if the value is needed in another PHI). */
 
   std::vector<std::string> passes;
+  passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
-  passes.push_back("workitem-handler-chooser");
   passes.push_back("break-constgeps");
   passes.push_back("automatic-locals");
   passes.push_back("flatten");
@@ -806,9 +796,9 @@ static PassManager& kernel_compiler_passes
   passes.push_back("globaldce");
   passes.push_back("simplifycfg");
   passes.push_back("loop-simplify");
+  passes.push_back("uniformity");
   passes.push_back("phistoallocas");
   passes.push_back("isolate-regions");
-  passes.push_back("uniformity");
   passes.push_back("implicit-loop-barriers");
   passes.push_back("implicit-cond-barriers");
   passes.push_back("loop-barriers");

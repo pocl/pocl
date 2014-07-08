@@ -35,6 +35,8 @@
 #include "llvm/IR/Instructions.h"
 #endif
 
+#include "VariableUniformityAnalysis.h"
+
 #include <iostream>
 #include <algorithm>
 
@@ -65,6 +67,8 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 #endif
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
+
+  AU.addPreserved<VariableUniformityAnalysis>();
 }
 
 bool

@@ -39,6 +39,8 @@
 
 #include <iostream>
 
+#include "VariableUniformityAnalysis.h"
+
 //#define DEBUG_COND_BARRIERS
 
 using namespace llvm;
@@ -64,6 +66,7 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
   #endif
+  AU.addPreserved<VariableUniformityAnalysis>();
 }
 
 /**
