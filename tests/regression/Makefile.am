@@ -22,8 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+noinst_PROGRAMS = test_assign_loop_variable_to_privvar_makes_it_local
 if HAVE_OPENCL_HPP
-noinst_PROGRAMS = test_barrier_between_for_loops test_early_return \
+noinst_PROGRAMS += test_barrier_between_for_loops test_early_return \
 	test_for_with_var_iteration_count test_id_dependent_computation \
 	test_locals test_loop_phi_replication test_multi_level_loops_with_barriers \
 	test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args \
@@ -32,12 +33,11 @@ noinst_PROGRAMS = test_barrier_between_for_loops test_early_return \
 	test_fors_with_var_iteration_counts
 endif
 
+test_assign_loop_variable_to_privvar_makes_it_local_SOURCES = \
+	test_assign_loop_variable_to_privvar_makes_it_local.c
+
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
 AM_CXXFLAGS = @OPENCL_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
-
-
-
-
