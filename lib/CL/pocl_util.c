@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 
 #include "pocl_util.h"
@@ -34,7 +35,7 @@
 #include "utlist.h"
 #include "pocl_mem_management.h"
 
-#define TEMP_DIR_PATH_CHARS 32
+#define TEMP_DIR_PATH_CHARS 512
 
 struct list_item;
 
@@ -54,98 +55,135 @@ remove_directory (const char *path_name)
   free (cmd);
 }
 
+void
+make_directory (const char *path_name)
+{
+  int str_size = 12 + strlen(path_name) + 1;
+  char *cmd = (char*)malloc(str_size);
+  snprintf (cmd, str_size, "mkdir -p '%s'", path_name);
+  system (cmd);
+  free (cmd);
+}
+
+void create_or_update_file(const char* file_name, char* content)
+{
+    FILE *fp = fopen(file_name, "w");
+    if((fp == NULL) || (content == NULL))
+        return NULL;
+
+    fprintf(fp, "%s", content);
+
+    fclose(fp);
+}
+
+char* get_file_contents(const char* file_name)
+{
+    char *str;
+    FILE *fp;
+    struct stat st;
+    int file_size;
+
+    stat(file_name, &st);
+    file_size = (int)st.st_size;
+
+    fp = fopen(file_name, "r");
+    if(fp == NULL)
+        return NULL;
+
+    str = (char*) malloc((file_size + 1) * sizeof(char));
+    fread(str, sizeof(char), file_size, fp);
+
+    return str;
+}
+
 #define POCL_TEMPDIR_ENV "POCL_TEMP_DIR"
 
-char*
-pocl_create_temp_dir() 
-{  
-  char *path_name;
-
-#ifndef ANDROID
-  if (getenv(POCL_TEMPDIR_ENV) != NULL &&
-      access (getenv(POCL_TEMPDIR_ENV), F_OK) == 0) 
-    {
-      path_name = (char*)malloc (strlen(getenv(POCL_TEMPDIR_ENV)) + 1);
-      strcpy (path_name, getenv(POCL_TEMPDIR_ENV));
-    }
-  else 
-    {
-      path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
-
-#ifndef ANDROID
-      strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+#ifdef KERNEL_CACHE
+    #define POCL_DEFAULT_CACHE_DIR "/var/tmp/"
 #else
-      strncpy (path_name, "/sdcard/pocl/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
+    #define POCL_DEFAULT_CACHE_DIR "/tmp/"
 #endif
 
-      mkdtemp (path_name);  
+char*
+pocl_create_temp_dir(char *source, int source_length)
+{  
+    char *path_name, *process_name;
+    char s1[1024], s2[1024];
+
+    path_name = (char*)malloc(TEMP_DIR_PATH_CHARS);
+    process_name = pocl_get_process_name();
+
+#ifdef ANDROID
+    if((getenv(POCL_TEMPDIR_ENV) != NULL) &&
+            (access(getenv(POCL_TEMPDIR_ENV), W_OK) == 0))
+    {
+        // Applications are expected to set POCL_TEMP_DIR to their cache folder
+        sprintf(path_name, "%s/pocl", getenv(POCL_TEMPDIR_ENV));
+    } else
+    {
+        sprintf(s1, "/data/data/%s/cache", process_name);
+        if(access(s1, W_OK) == 0) {
+            sprintf(path_name, "%s/pocl", s1);
+        }
+        else {
+            sprintf(path_name, "/sdcard/pocl/cache/%s", process_name);
+        }
     }
-
 #else
-/* ANDROID -
-   Its ideal to create tmp files in application cache directory
-   Applications are requested to lend some space from getCacheDir() for pocl to use
-   POCL_TEMP_DIR needs to be set with this directory name
-   pocl will try to delete all its footprints in this directory
-*/
-  char *pocl_android_app_cache_dir = getenv("POCL_TEMP_DIR");
+    if((getenv(POCL_TEMPDIR_ENV) != NULL) &&
+            (access(getenv(POCL_TEMPDIR_ENV), W_OK) == 0))
+    {
+        sprintf(path_name, "%s/pocl/%s", getenv(POCL_TEMPDIR_ENV), process_name);
+    } else
+    {
+        if(access(POCL_DEFAULT_CACHE_DIR, W_OK) == 0) {
+            sprintf(path_name, "%s/pocl/%s", POCL_DEFAULT_CACHE_DIR, process_name);
+        }
+        else {
+            sprintf(path_name, "/tmp/pocl/%s", process_name);
+        }
+    }
+#endif
 
-  // First as promised - cleanup
-  if(pocl_android_app_cache_dir && (access(pocl_android_app_cache_dir, W_OK) == 0))
-  {
+    // TODO : delete contents if size exceeds some limit
+
+    // Simple hash-function based on source length. SHA is an overkill
+    int found_in_cache = 0;
     DIR *dp;
     struct dirent *ep;
 
-    dp = opendir(pocl_android_app_cache_dir);
-    if(dp)
+    sprintf(s1, "%s/%d", path_name, source_length);
+    dp = opendir(s1);
+
+    if(dp && source)
     {
-      while(ep = readdir(dp))
-      {
-        // tmp dir is of the form pocl-pid-XXXXXX
-        if(strncmp(ep->d_name, "pocl-", 5) == 0)
+        while((ep = readdir(dp)) && (!found_in_cache))
         {
-          char pid_s[16];
-          sprintf(pid_s, "%d", getpid());
-          char *str1, *str2;
-          for(str1=(ep->d_name)+5, str2=pid_s; (*str1 != '-') && (*str2); str1++, str2++)
-          {                       // Comparing pids
-            if(*str1 != *str2)    // If you are not created by current process
-            {
-              char tmp_s[512];
-              sprintf(tmp_s, "%s/%s", pocl_android_app_cache_dir, ep->d_name);
-              remove_directory(tmp_s);
+            char *content;
+            sprintf(s2, "%s/%s/program.cl", s1, ep->d_name);
+            content = get_file_contents(s2);
+
+            if(content && (strcmp(content, source) == 0))
+            {               // Voila, found same program source in cache
+                sprintf(path_name, "%s/%s", s1, ep->d_name);
+                found_in_cache = 1;
             }
-          }
+            if(content) free(content);
         }
-      }
-      closedir(dp);
+        closedir(dp);
     }
-  }
 
+    if(!found_in_cache)
+    {
+        if(access(s1, F_OK) != 0) {
+            make_directory(s1);
+        }
 
-  // Happy to use /tmp if its available
-  if(access("/tmp/", W_OK) == 0)
-  {
-    path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
-    strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
-    mkdtemp (path_name);
-  }
-  else if(pocl_android_app_cache_dir && (access(pocl_android_app_cache_dir, W_OK) == 0))
-  {
-    path_name = (char*)malloc(512);
-    sprintf(path_name,"%s/pocl-%d-XXXXXX\0",
-              pocl_android_app_cache_dir, getpid());
-    mkdtemp (path_name);
-  }
-  else
-  {
-    path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
-    strncpy(path_name, "/sdcard/pocl/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
-    mkdtemp(path_name);
-  }
-#endif
+        sprintf(path_name, "%s/XXXXXX\0", s1);
+        mkdtemp(path_name);
+    }
 
-  return path_name;
+    return path_name;
 }
 
 uint32_t
@@ -379,4 +417,32 @@ void pocl_command_enqueue(cl_command_queue command_queue,
   #endif
   POCL_UPDATE_EVENT_QUEUED (&node->event, command_queue);
 
+}
+
+char* pocl_get_process_name()
+{
+    char tmpStr[32], *processName;
+    FILE *statusFile;
+
+    sprintf(tmpStr, "/proc/%d/status", getpid());
+    statusFile = fopen(tmpStr, "r");
+    if(statusFile == NULL)
+        return NULL;
+
+    processName = (char*)malloc(64 * sizeof(char));
+
+    // First line will be like this
+    // Name:    process-name
+    if(fgets(processName, 64, statusFile) != NULL)
+    {
+        processName += 5; // Skip "Name:"
+        while((((*processName) == ' ') || ((*processName) == '\t'))
+                    && ((*processName) != '\0'))
+            processName ++;   // Skip empty spaces
+
+        processName[strlen(processName) - 1] = '\0';
+    }
+
+    fclose(statusFile);
+    return processName;
 }

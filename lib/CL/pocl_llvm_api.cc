@@ -382,8 +382,12 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
 
+#ifndef KERNEL_CACHE
   if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
+#endif
+  {
     write_temporary_file(*mod, binary_file_name);
+  }
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.

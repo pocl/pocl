@@ -39,8 +39,9 @@ extern "C" {
  * The returned path name is a string that will be alive
  * until the exit.
  */
-char *pocl_create_temp_dir();
+char *pocl_create_temp_dir(char *source, int source_length);
 void remove_directory (const char *path_name);
+void make_directory (const char *path_name);
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
@@ -117,5 +118,13 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
 void pocl_command_enqueue(cl_command_queue command_queue, 
                           _cl_command_node *node);
+
+// Functions to get process info
+char* pocl_get_process_name();
+
+
+void create_or_update_file(const char* file_name, char* content);
+
+char* get_file_contents(const char* file_name);
 
 #endif

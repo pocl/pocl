@@ -585,6 +585,15 @@ then
 	CFLAGS="$CFLAGS -Wno-unused-result -Werror"
 fi
 
+cache_kernel="no"
+AC_ARG_ENABLE([kernel-cache],
+              [AS_HELP_STRING([--enable-kernel-cache], [Enable persistent kernel cache])],
+              [cache_kernel="yes"])
+if test "$cache_kernel" = "yes"
+then
+  AC_DEFINE([KERNEL_CACHE], [], "Enabled kernel cache feature")
+fi
+
 
 PKG_CHECK_MODULES([GLEW], [glew], 
   [
@@ -1095,12 +1104,12 @@ AC_COMPILE_IFELSE(
 if test "$ANDROID_PRESENT" == ok;
 then
 AC_DEFINE([ANDROID], [1], [Defined to 1 if compiling for Android])
-AM_CONDITIONAL([ANDROID], [test "$ANDROID_PRESENT" = ok])
 AC_DEFINE([ANDROID_POCL_PREFIX],
                    ["/data/data/org.pocl.libs/files"],
                    [Directory  where pocl files are installed in android])
 
 fi
+AM_CONDITIONAL([ANDROID], [test "$ANDROID_PRESENT" = ok])
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.

@@ -56,6 +56,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   char kernel_filename[POCL_FILENAME_LENGTH];
   FILE *kernel_file;
   char parallel_filename[POCL_FILENAME_LENGTH];
+  char so_filename[POCL_FILENAME_LENGTH];
   size_t n;
   int i, count;
   int error;
@@ -212,7 +213,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         }
     }
 
-  if (access (parallel_filename, F_OK) != 0) 
+  error = snprintf
+    (so_filename, POCL_FILENAME_LENGTH,
+     "%s/%s.so", tmpdir, kernel->name);
+
+  if (error < 0)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  if (access (so_filename, F_OK) != 0)
     {
       error = pocl_llvm_generate_workgroup_function
           (command_queue->device,

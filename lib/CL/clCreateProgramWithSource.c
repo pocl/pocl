@@ -112,7 +112,7 @@ POname(clCreateProgramWithSource)(cl_context context,
 
   /* Create the temporary directory where all kernel files and compilation
      (intermediate) results are stored. */
-  program->temp_dir = pocl_create_temp_dir();
+  program->temp_dir = pocl_create_temp_dir(program->source, size);
 
   POCL_RETAIN_OBJECT(context);
 

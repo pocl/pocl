@@ -9,6 +9,7 @@ I_AM=`id -un`
 MY_GROUP=`id -gn`
 ANDROID_TOOLCHAIN=/tmp/android-toolchain/
 
+echo "NDK standalone toolchain setup..."
 $ANDROID_NDK/build/tools/make-standalone-toolchain.sh \
 				--toolchain=arm-linux-androideabi-4.8 \
 				--llvm-version=3.4 \
@@ -25,24 +26,30 @@ if [ ! -e $INSTALL_PREFIX ]; then
 fi
 
 # Prebuilt llvm that runson(android) -> target(android)
-LLVM_HOST_ANDROID_TARGET_ANDROID=$PWD/pocl-prebuilts/arm/llvm/android
+LLVM_HOST_ANDROID_TARGET_ANDROID=$PWD/pocl-android-prebuilts/arm/llvm/android
 if [ ! -e $LLVM_HOST_ANDROID_TARGET_ANDROID/lib/libclang.a ]; then
     echo "Build and place llvm(android) at " $LLVM_HOST_ANDROID_TARGET_ANDROID
     exit
 fi
+
+if [ ! -e $ANDROID_TOOLCHAIN/sysroot/usr/lib/libclang.a ]; then
 echo "Copying llvm libs(android) to sysroot..."
 cp -rf $LLVM_HOST_ANDROID_TARGET_ANDROID/* $ANDROID_TOOLCHAIN/sysroot/usr/
+fi
 
 # Prebuilt llvm that runon(x64) -> target(android)
-LLVM_HOST_x64_TARGET_ANDROID=$PWD/pocl-prebuilts/arm/llvm/cross_compiler_for_android
+LLVM_HOST_x64_TARGET_ANDROID=$PWD/pocl-android-prebuilts/arm/llvm/cross_compiler_for_android
 if [ ! -e $LLVM_HOST_x64_TARGET_ANDROID/bin/clang ]; then
     echo "Build and place llvm runson(x64) -> target(android) at " $LLVM_HOST_x64_TARGET_ANDROID
     exit
 fi
+
+if [ ! -e $ANDROID_TOOLCHAIN/sysroot/usr/bin/clang ]; then
 echo "copying llvm(host) to sysroot...."
 cp -rf $LLVM_HOST_x64_TARGET_ANDROID/* $ANDROID_TOOLCHAIN/sysroot/usr/
+fi
 
-PREBUILT_NCURSES=$PWD/pocl-prebuilts/arm/ncurses
+PREBUILT_NCURSES=$PWD/pocl-android-prebuilts/arm/ncurses
 if [ ! -e $PREBUILT_NCURSES/lib/libncurses.a ]; then
     echo "Build and place ncurses for android at " $PREBUILT_NCURSES
     exit
@@ -51,7 +58,7 @@ echo "copying ncurses to sysroot...."
 cp -rf $PREBUILT_NCURSES/* $ANDROID_TOOLCHAIN/sysroot/usr/
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/lib/libncurses.a $ANDROID_TOOLCHAIN/sysroot/usr/lib/libcurses.a
 
-PREBUILT_LTDL=$PWD/pocl-prebuilts/arm/ltdl
+PREBUILT_LTDL=$PWD/pocl-android-prebuilts/arm/ltdl
 if [ ! -e $PREBUILT_LTDL/lib/libltdl.a ]; then
     echo "Build and place libltdl for android at " $PREBUILT_LTDL
     exit
@@ -59,7 +66,7 @@ fi
 echo "copying ltdl to sysroot...."
 cp -rf $PREBUILT_LTDL/* $ANDROID_TOOLCHAIN/sysroot/usr/
 
-PREBUILT_HWLOC=$PWD/pocl-prebuilts/arm/hwloc
+PREBUILT_HWLOC=$PWD/pocl-android-prebuilts/arm/hwloc
 if [ ! -e $PREBUILT_HWLOC/lib/libhwloc.a ]; then
     echo "Build and place libhwloc for android at " $PREBUILT_HWLOC
     exit
@@ -92,10 +99,10 @@ if [ $# -gt 0 ]  && [ $1 = "release" ] ; then
 fi
 
 if [ $DEBUG_BUILD == 1 ] ; then
-LLC_HOST_CPU="cortex-a9" HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os " CPPFLAGS=" -ffunction-sections -fdata-sections -Os " LDFLAGS=" -Wl,--gc-sections " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/ --enable-debug
+LLC_HOST_CPU="cortex-a9" HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os " CPPFLAGS=" -ffunction-sections -fdata-sections -Os " LDFLAGS=" -Wl,--gc-sections " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/ --enable-kernel-cache --enable-debug
 
 else
-LLC_HOST_CPU="cortex-a9" HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os -flto " CPPFLAGS=" -ffunction-sections -fdata-sections -Os -flto " LDFLAGS=" -Wl,--gc-sections -flto " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/
+LLC_HOST_CPU="cortex-a9" HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os -flto " CPPFLAGS=" -ffunction-sections -fdata-sections -Os -flto " LDFLAGS=" -Wl,--gc-sections -flto " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/ --enable-kernel-cache
 
 fi
 

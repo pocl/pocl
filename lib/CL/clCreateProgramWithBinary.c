@@ -130,7 +130,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->kernels = NULL;
   /* Create the temporary directory where all kernel files and compilation
      (intermediate) results are stored. */
-  program->temp_dir = pocl_create_temp_dir();
+  program->temp_dir = pocl_create_temp_dir(NULL, 0);
 
   pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)

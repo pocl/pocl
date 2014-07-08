@@ -63,10 +63,12 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         }
       free (program->binary_sizes);
 
+#ifndef KERNEL_CACHE
       if (!pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
         {
           remove_directory (program->temp_dir);
         }
+#endif
 
       free (program->llvm_irs);
       free (program->temp_dir);
