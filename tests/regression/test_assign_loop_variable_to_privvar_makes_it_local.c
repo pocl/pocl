@@ -25,6 +25,7 @@
 
 #include <CL/cl.h>
 #include "poclu.h"
+#include <string.h>
 
 const char* kernel_src = 
 "__kernel void draw(const __global int *faceCount) {\n"
