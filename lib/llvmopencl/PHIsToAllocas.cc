@@ -76,15 +76,6 @@ PHIsToAllocas::runOnFunction(Function &F) {
 
   InstructionVec PHIs;
 
-  // Loop iteration variables can be detected only when they are
-  // implemented using PHI nodes. Maintain information of the
-  // split PHI nodes in the VUA by first analyzing the function
-  // with the PHIs intact and propagating the uniformity info
-  // of the PHI nodes.
-  VariableUniformityAnalysis &VUA = 
-      getAnalysis<VariableUniformityAnalysis>();
-//  VUA.runOnFunction(F);
-
   for (Function::iterator bb = F.begin(); bb != F.end(); ++bb) {
     for (BasicBlock::iterator p = bb->begin(); 
          p != bb->end(); ++p) {
@@ -121,6 +112,11 @@ PHIsToAllocas::runOnFunction(Function &F) {
 llvm::Instruction *
 PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
 
+  // Loop iteration variables can be detected only when they are
+  // implemented using PHI nodes. Maintain information of the
+  // split PHI nodes in the VUA by first analyzing the function
+  // with the PHIs intact and propagating the uniformity info
+  // of the PHI nodes.
   VariableUniformityAnalysis &VUA = 
       getAnalysis<VariableUniformityAnalysis>();
 
