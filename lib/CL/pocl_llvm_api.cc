@@ -384,8 +384,8 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
-    llvm::MDString *kernel_prototype = llvm::cast<MDString>(kernel_iter->getOperand(0));
-    std::string name = kernel_prototype->getString().str();
+    llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(kernel_iter->getOperand(0));
+    std::string name = kernel_prototype->getName().str();
     if (name == kernel_name) {
       kernel_metadata = kernel_iter;
       break;
