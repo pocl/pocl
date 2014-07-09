@@ -1,7 +1,7 @@
 /* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs to invoke
    the different kernel compilation phases.
 
-   Copyright (c) 2013 Kalle Raiskila 
+   Copyright (c) 2013 Kalle Raiskila
                  2013-2014 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,6 +33,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+
 #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 #include "llvm/Linker.h"
 #else
@@ -83,6 +84,7 @@
 #include "pocl_runtime_config.h"
 #include "install-paths.h"
 #include "LLVMUtils.h"
+#include "linker.h"
 
 using namespace clang;
 using namespace llvm;
@@ -1178,16 +1180,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   // and/or bitcode for each kernel.
   llvm::Module *libmodule = kernel_library(device, input);
   assert (libmodule != NULL);
-#ifdef LLVM_3_2
-  Linker TheLinker("pocl", input, Linker::PreserveSource);
-  Linker::LinkModules(input, libmodule, Linker::PreserveSource, &errmsg);
-#else
-  Linker TheLinker(input);
-  TheLinker.linkInModule(libmodule, Linker::PreserveSource, &errmsg);
-#endif
-  llvm::Module *linked_bc = TheLinker.getModule();
-
-  assert (linked_bc != NULL);
+  link(input, libmodule);
 
   /* Now finally run the set of passes assembled above */
   // TODO pass these as parameters instead, this is not thread safe!
@@ -1197,16 +1190,16 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   pocl::LocalSize.addValue(local_z);
   KernelName = kernel->name;
 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
-  kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
-  #else
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  kernel_compiler_passes(device, input->getDataLayout()).run(*input);
+#else
   kernel_compiler_passes(device,
-                         linked_bc->getDataLayout()->getStringRepresentation())
-                        .run(*linked_bc);
-  #endif
+                         input->getDataLayout()->getStringRepresentation())
+                        .run(*input);
+#endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  write_temporary_file(linked_bc, parallel_filename);
+  write_temporary_file(input, parallel_filename);
 
 #ifndef LLVM_3_2
   // In LLVM 3.2 the Linker object deletes the associated Modules.
